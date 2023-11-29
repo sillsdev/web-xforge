@@ -13,7 +13,6 @@ import {
   ViewChildren
 } from '@angular/core';
 import { MatLegacyListItem as MatListItem } from '@angular/material/legacy-list';
-import { translate } from '@ngneat/transloco';
 import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -386,14 +385,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
       ? questionDoc.data.text
       : questionDoc.data.audioUrl != null
       ? this.referenceForDisplay(questionDoc)
-      : '';
-  }
-
-  questionTooltip(questionDoc: QuestionDoc): string {
-    return questionDoc.data?.audioUrl
-      ? translate('checking_questions.listen_to_question', {
-          referenceForDisplay: this.referenceForDisplay(questionDoc)
-        })
       : '';
   }
 
