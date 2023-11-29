@@ -1,64 +1,23 @@
-@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
-
-.close-dialog-link {
-  color: #777;
-  font-size: 20px;
-  cursor: pointer;
-
-  mat-icon {
-    font-size: 30px;
-  }
-
-  &:hover {
-    color: #222;
-  }
-}
-
-h1 {
+.mat-dialog-title {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 10px;
-  font-size: 20px;
-  font-weight: 500;
-  margin: 0 0 20px;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
 }
 
-ul {
-  list-style-type: none;
-  max-height: 80vh;
-  margin: 0;
-  padding: 0;
-  font-size: 18px;
-  overflow-y: auto;
+.mat-dialog-content {
+  display: grid;
+  width: 70vw;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1em;
 
-  @include media-breakpoint('>=', md) {
-    column-count: 3;
-    column-gap: 30px;
+  > * {
+    display: flex;
+    column-gap: 0.5em;
   }
-
-  @include media-breakpoint('>=', xl) {
-    column-count: 4;
-    column-gap: 30px;
-  }
-}
-
-li {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
 }
 
 .code {
   font-family: monospace;
   color: #777;
-
-  &::before {
-    content: '(';
-  }
-
-  &::after {
-    content: ')';
-  }
 }
