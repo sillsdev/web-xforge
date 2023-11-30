@@ -179,7 +179,7 @@
     "preview_last_draft_while_active_build": "While the new draft generation is in progress, you can continue working with the previously generated draft.",
     "requirements": "Requirements",
     "sign_up_for_drafting": "Sign up for drafting",
-    "suggested_workflow": "A suggested workflow is to complete at least a chapter before regenerating a draft.",
+    "suggested_workflow": "A suggested workflow is to draft and edit one book before generating a draft for the next book.",
     "warning_generation_faulted_detail": "Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
     "warning_generation_faulted_header": "Last generation attempt failed"
   },
