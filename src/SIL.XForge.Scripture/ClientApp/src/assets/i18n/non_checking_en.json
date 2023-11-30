@@ -329,6 +329,7 @@
     "cancel": "Cancel",
     "learn_more": "Learn More",
     "none": "None",
+    "offline": "Changing roles & permissions is unavailable while offline.",
     "permissions": "Additional Permissions",
     "pt_administrator": "Administrator",
     "pt_consultant": "Consultant/Reviewer/Archivist/Typesetter",
