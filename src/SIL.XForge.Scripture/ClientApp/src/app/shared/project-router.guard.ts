@@ -3,16 +3,21 @@ import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { Observable, from, of } from 'rxjs';
+import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { Observable, from, of, combineLatest } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 abstract class RouterGuard implements CanActivate {
-  constructor(protected authGuard: AuthGuard, protected projectService: SFProjectService) {}
+  constructor(
+    protected authGuard: AuthGuard,
+    protected projectService: SFProjectService
+  ) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     const projectId = 'projectId' in next.params ? next.params['projectId'] : '';
@@ -37,7 +42,11 @@ abstract class RouterGuard implements CanActivate {
   providedIn: 'root'
 })
 export class SettingsAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService
+  ) {
     super(authGuard, projectService);
   }
 
@@ -53,7 +62,11 @@ export class SettingsAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class UsersAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService
+  ) {
     super(authGuard, projectService);
   }
 
@@ -69,7 +82,11 @@ export class UsersAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class SyncAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService
+  ) {
     super(authGuard, projectService);
   }
 
@@ -88,12 +105,38 @@ export class SyncAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class NmtDraftAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService,
+    private readonly featureFlagService: FeatureFlagService
+  ) {
     super(authGuard, projectService);
   }
 
+  allowTransition(projectId: string): Observable<boolean> {
+    // Re-run check when feature flags change
+    return combineLatest([
+      this.featureFlagService.showNmtDrafting.enabled$,
+      this.featureFlagService.allowForwardTranslationNmtDrafting.enabled$
+    ]).pipe(switchMap(() => super.allowTransition(projectId)));
+  }
+
   check(projectDoc: SFProjectProfileDoc): boolean {
-    if (projectDoc.data == null) return false;
+    if (projectDoc.data == null) {
+      return false;
+    }
+
+    if (!this.featureFlagService.showNmtDrafting.enabled) {
+      return false;
+    }
+
+    const isBackTranslationProject = projectDoc.data.translateConfig?.projectType === ProjectType.BackTranslation;
+
+    if (!isBackTranslationProject && !this.featureFlagService.allowForwardTranslationNmtDrafting.enabled) {
+      return false;
+    }
+
     return SF_PROJECT_RIGHTS.hasRight(
       projectDoc.data,
       this.userService.currentUserId,
