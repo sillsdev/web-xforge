@@ -10,7 +10,7 @@
     <p><transloco key="draft_generation.instructions_keep_in_mind"></transloco></p>
     <p>{{ t("instructions_draft_process") }}</p>
 
-    <div *ngIf="isBackTranslationMode" class="requirements">
+    <app-notice *ngIf="isBackTranslationMode" type="normal" [outline]="true" class="requirements">
       <p>
         <transloco key="draft_generation.back_translation_requirement" [params]="{ supportedLanguagesUrl }"></transloco>
       </p>
@@ -32,7 +32,7 @@
           </p>
         </li>
       </ul>
-    </div>
+    </app-notice>
 
     <!-- Only show warnings if target language is supported -->
     <ng-container *ngIf="isTargetLanguageSupported">

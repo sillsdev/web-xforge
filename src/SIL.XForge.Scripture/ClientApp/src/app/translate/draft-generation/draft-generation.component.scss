@@ -1,9 +1,6 @@
 @use 'src/variables';
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
-$requirementsBackgroundColor: #f0f8ff;
-$requirementsBorderColor: darken($requirementsBackgroundColor, 20%);
-
 :host {
   // Needed to style inside <transloco> element
   ::ng-deep {
@@ -26,18 +23,13 @@ h3 {
 }
 
 .requirements {
-  background-color: $requirementsBackgroundColor;
-  padding: 0 20px;
-  border-radius: 4px;
-  border: 2px solid $requirementsBorderColor;
-
   p {
-    margin-bottom: 8px;
+    margin: 0 0 8px;
   }
 
   ul {
     padding-inline-start: 10px;
-    margin-top: 0;
+    margin: 0;
   }
 
   li {
