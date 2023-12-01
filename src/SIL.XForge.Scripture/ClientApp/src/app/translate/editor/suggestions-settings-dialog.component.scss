@@ -41,11 +41,6 @@ mat-dialog-content {
 .suggestions-confidence-field {
   display: flex;
   flex-direction: column;
-  overflow: hidden; // prevent slider from causing scrollbar when rtl
-
-  .mat-slider {
-    margin: 0 2px; // prevent slider thumb from being clipped by hiding of overflow
-  }
 }
 
 mat-option {
