@@ -9,6 +9,7 @@ import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
 import { SFProjectService } from '../core/sf-project.service';
 import { PermissionsService } from '../core/permissions.service';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 
 @Component({
   selector: 'app-projects',
@@ -22,6 +23,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly router: Router,
     private readonly userService: UserService,
     private readonly permissions: PermissionsService,
+    private readonly resumeCheckingService: ResumeCheckingService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -75,36 +77,22 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     const isTranslateAccessible = this.permissions.canAccessTranslate(projectDoc);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(projectDoc);
 
-    // navigate to last location
-    if (
-      (selectedTask === 'translate' && isTranslateAccessible) ||
-      (selectedTask === 'checking' && isCheckingAccessible)
-    ) {
-      const taskRoute = ['projects', projectId, selectedTask];
-      // the user has previously navigated to a location in a task
-      const bookNum = projectUserConfig.selectedBookNum;
-      if (bookNum != null) {
-        taskRoute.push(Canon.bookNumberToId(bookNum));
-      } else if (selectedTask === 'checking') {
-        taskRoute.push('ALL');
-      }
-      this.router.navigate(taskRoute, { replaceUrl: true });
-    } else {
-      // navigate to the default location in the first enabled task
-      let task: string | undefined;
-      if (isTranslateAccessible) {
-        task = 'translate';
-      } else if (isCheckingAccessible) {
-        task = 'checking';
-      }
-      if (task != null) {
-        const taskRoute = ['projects', projectId, task];
-        if (project.texts.length > 0) {
-          taskRoute.push(task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum));
-        }
-        this.router.navigate(taskRoute, { replaceUrl: true });
-      }
+    const tasks = [
+      // first listed task will be treated as default
+      { task: 'translate', accessible: isTranslateAccessible },
+      { task: 'checking', accessible: isCheckingAccessible }
+    ];
+    const task = tasks.find(t => t.task === selectedTask && t.accessible)?.task ?? tasks.find(t => t.accessible)?.task;
+
+    if (task === 'translate') {
+      const bookNum = projectUserConfig.selectedBookNum ?? project.texts[0]?.bookNum ?? Canon.firstBook;
+      const chapterNum = projectUserConfig.selectedChapterNum ?? project.texts[bookNum]?.chapters[0].number ?? 1;
+      const bookId = Canon.bookNumberToId(bookNum);
+      this.router.navigate(['projects', projectId, task, bookId, String(chapterNum)], { replaceUrl: true });
+    } else if (task === 'checking') {
+      this.router.navigate(this.resumeCheckingService.getLink(), { replaceUrl: true });
     }
+
     this.loadingFinished();
   }
 }
