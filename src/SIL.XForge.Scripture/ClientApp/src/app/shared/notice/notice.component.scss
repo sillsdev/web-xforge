@@ -1,34 +1,66 @@
-@use 'src/variables';
+@use 'sass:color';
+@use 'sass:list';
+
+// prettier-ignore
+$colors: (
+  primary:   (#cfe2fd, #305993),
+  secondary: (#d6d4e8, #4a4959),
+  success:   (#c4ead9, #125235),
+  warning:   (#fff3d0, #6a5117),
+  error:     (#f8d7da, #952633),
+  info:      (#d0f4fb, #345564),
+  light:     (#f7f7f7, #6a6b6b),
+  dark:      (#d3d3d4, #181a1d)
+);
 
 :host {
-  display: block;
-}
-
-div {
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: 16px 24px 16px 16px;
   border-radius: 4px;
   column-gap: 16px;
-  &.normal {
-    --notice-color: #{variables.$purpleLight};
-  }
-  &.error {
-    --notice-color: #{variables.$errorColor};
-  }
-  &.warning {
-    --notice-color: #{variables.$orange};
-  }
-  &.outline {
-    border: 1px solid var(--notice-color);
-    color: var(--notice-color);
-  }
-  &:not(.outline) {
-    background-color: var(--notice-color);
-    color: #fff;
-  }
+  border: 2px solid;
+  color: var(--notice-color-text);
+  background-color: var(--notice-color);
+
   mat-icon {
     flex-shrink: 0;
+    color: var(--notice-color-icon);
+  }
+
+  @each $name, $palette in $colors {
+    &.#{$name} {
+      --notice-color: #{list.nth($palette, 1)};
+      --notice-color-text: #{list.nth($palette, 2)};
+      --notice-color-outline-text: #{color.scale(list.nth($palette, 2), $lightness: 20%)};
+      --notice-color-icon: #{color.scale(list.nth($palette, 2), $lightness: 30%)};
+      --notice-color-outline: #{color.scale(list.nth($palette, 1), $lightness: -30%)};
+      --notice-color-light: #{color.scale(list.nth($palette, 1), $lightness: 50%)};
+      --notice-color-extra-dark: #{color.scale(list.nth($palette, 1), $lightness: -50%)};
+    }
+  }
+
+  &.mode-fill-light {
+    border-color: var(--notice-color-outline);
+    background-color: var(--notice-color-light);
+  }
+  &.mode-fill-dark {
+    border-color: var(--notice-color);
+    background-color: var(--notice-color);
+  }
+  &.mode-fill-extra-dark {
+    border-color: var(--notice-color-extra-dark);
+    background-color: var(--notice-color-extra-dark);
+    color: #fff;
+
+    mat-icon {
+      color: #fff;
+    }
+  }
+  &.mode-outline {
+    background-color: unset;
+    border-color: var(--notice-color-outline);
+    color: var(--notice-color-outline-text);
   }
 }
 

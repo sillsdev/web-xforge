@@ -16,7 +16,6 @@ import { TextComponent } from './text/text.component';
 const componentExports = [
   BookChapterChooserComponent,
   InfoComponent,
-  NoticeComponent,
   ShareButtonComponent,
   ShareControlComponent,
   ShareDialogComponent,
@@ -26,8 +25,8 @@ const componentExports = [
 ];
 
 @NgModule({
-  imports: [CommonModule, QuillModule.forRoot(), UICommonModule, TranslocoModule],
+  imports: [CommonModule, QuillModule.forRoot(), UICommonModule, TranslocoModule, NoticeComponent],
   declarations: componentExports,
-  exports: componentExports
+  exports: [...componentExports, NoticeComponent]
 })
 export class SharedModule {}

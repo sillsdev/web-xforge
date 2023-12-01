@@ -38,14 +38,15 @@ const mockedSFProjectService = mock(SFProjectService);
 
 describe('JoinComponent', () => {
   configureTestingModule(() => ({
-    declarations: [JoinComponent, NoticeComponent],
+    declarations: [JoinComponent],
     imports: [
       HttpClientTestingModule,
       NoopAnimationsModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestOnlineStatusModule.forRoot(),
-      UICommonModule
+      UICommonModule,
+      NoticeComponent
     ],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },

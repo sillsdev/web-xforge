@@ -14,6 +14,6 @@ export class InfoComponent {
   constructor() {}
 
   get mirrorRTL(): boolean {
-    return ICONS_TO_MIRROR_RTL.includes(this.icon ?? '');
+    return ICONS_TO_MIRROR_RTL.has(this.icon);
   }
 }
