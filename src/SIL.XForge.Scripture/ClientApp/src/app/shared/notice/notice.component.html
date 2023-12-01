@@ -1,4 +1,2 @@
-<div [ngClass]="{ outline }" [class]="type">
-  <mat-icon *ngIf="icon" [class.mirror-rtl]="mirrorRTL">{{ icon }}</mat-icon>
-  <span class="notice-content"><ng-content></ng-content></span>
-</div>
+<mat-icon *ngIf="icon" [class.mirror-rtl]="mirrorRtl">{{ icon }}</mat-icon>
+<span class="notice-content"><ng-content></ng-content></span>
