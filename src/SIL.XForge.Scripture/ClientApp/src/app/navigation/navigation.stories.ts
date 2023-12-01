@@ -20,7 +20,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { NavigationComponent } from './navigation.component';
@@ -112,6 +112,7 @@ const meta: Meta = {
           { provide: ResumeCheckingService, useValue: instance(mockedResumeCheckingService) },
           { provide: ActivatedProjectService, useValue: testActivatedProjectService },
 
+          { provide: NmtDraftAuthGuard, useClass: NmtDraftAuthGuard },
           { provide: AuthGuard, useClass: AuthGuard },
           { provide: SettingsAuthGuard, useClass: SettingsAuthGuard },
           { provide: SyncAuthGuard, useClass: SyncAuthGuard },
