@@ -274,7 +274,7 @@ export class XmlUtils {
  * Some icons (as as arrows) should be mirrored in certain contexts and not others, or require more attention to detail
  * than merely mirroring. This list is ONLY for those icons that can be mirrored in all contexts.
  */
-export const ICONS_TO_MIRROR_RTL = [
+export const ICONS_TO_MIRROR_RTL = new Set<string | undefined>([
   'book',
   'bookmarks',
   'comment',
@@ -286,4 +286,4 @@ export const ICONS_TO_MIRROR_RTL = [
   'person_add',
   'post_add',
   'question_answer'
-];
+]);
