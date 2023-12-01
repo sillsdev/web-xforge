@@ -6,6 +6,7 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
@@ -124,7 +125,7 @@ describe('DraftGenerationComponent', () => {
         projectId$: of('testProjectId'),
         projectDoc$: of({
           id: 'testProjectId',
-          data: {
+          data: createTestProjectProfile({
             writingSystem: {
               tag: 'en'
             },
@@ -137,7 +138,7 @@ describe('DraftGenerationComponent', () => {
                 }
               }
             }
-          }
+          })
         } as SFProjectProfileDoc)
       });
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
@@ -184,14 +185,14 @@ describe('DraftGenerationComponent', () => {
           projectId: 'testProjectId',
           projectId$: of('testProjectId'),
           projectDoc$: of({
-            data: {
+            data: createTestProjectProfile({
               writingSystem: {
                 tag: 'xyz'
               },
               translateConfig: {
                 projectType: ProjectType.Standard
               }
-            }
+            })
           })
         });
       });
@@ -207,7 +208,7 @@ describe('DraftGenerationComponent', () => {
           projectId: 'testProjectId',
           projectId$: of('testProjectId'),
           projectDoc$: of({
-            data: {
+            data: createTestProjectProfile({
               writingSystem: {
                 tag: 'xyz'
               },
@@ -220,7 +221,7 @@ describe('DraftGenerationComponent', () => {
                   }
                 }
               }
-            }
+            })
           })
         });
       });
@@ -393,7 +394,7 @@ describe('DraftGenerationComponent', () => {
           projectId: 'testProjectId',
           projectId$: of('testProjectId'),
           projectDoc$: of({
-            data: {
+            data: createTestProjectProfile({
               writingSystem: {
                 tag: 'xyz'
               },
@@ -406,7 +407,7 @@ describe('DraftGenerationComponent', () => {
                   }
                 }
               }
-            }
+            })
           })
         });
       });
@@ -431,7 +432,7 @@ describe('DraftGenerationComponent', () => {
           projectId: 'testProjectId',
           projectId$: of('testProjectId'),
           projectDoc$: of({
-            data: {
+            data: createTestProjectProfile({
               writingSystem: {
                 tag: 'xyz'
               },
@@ -444,7 +445,7 @@ describe('DraftGenerationComponent', () => {
                   }
                 }
               }
-            }
+            })
           })
         });
       });
@@ -459,7 +460,7 @@ describe('DraftGenerationComponent', () => {
       let env = new TestEnvironment(() => {
         mockProjectService.getProfile.and.returnValue(
           new Promise<SFProjectProfileDoc>(() => ({
-            data: { texts: [] }
+            data: createTestProjectProfile({ texts: [] })
           }))
         );
       });
