@@ -20,7 +20,7 @@ import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -702,8 +702,8 @@ class TestEnvironment {
       },
       { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
     ]);
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(true));
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
 
     when(mockedSFProjectService.queryAudioText(anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {

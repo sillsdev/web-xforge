@@ -12,7 +12,7 @@ import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -102,12 +102,7 @@ describe('DraftGenerationComponent', () => {
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
-        {
-          allowForwardTranslationNmtDrafting: {
-            enabled: false,
-            enabled$: of(false)
-          } as ObservableFeatureFlag
-        }
+        { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate'], {
@@ -311,12 +306,7 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          {
-            allowForwardTranslationNmtDrafting: {
-              enabled: true,
-              enabled$: of(true)
-            } as ObservableFeatureFlag
-          }
+          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
         );
       });
       env.component.isBackTranslation = false;
@@ -334,12 +324,7 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          {
-            allowForwardTranslationNmtDrafting: {
-              enabled: true,
-              enabled$: of(true)
-            } as ObservableFeatureFlag
-          }
+          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
         );
       });
       env.component.isBackTranslation = false;
@@ -357,12 +342,7 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          {
-            allowForwardTranslationNmtDrafting: {
-              enabled: true,
-              enabled$: of(true)
-            } as ObservableFeatureFlag
-          }
+          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
         );
       });
       env.component.isBackTranslation = true;
@@ -382,12 +362,7 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          {
-            allowForwardTranslationNmtDrafting: {
-              enabled: true,
-              enabled$: of(true)
-            } as ObservableFeatureFlag
-          }
+          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
         );
 
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
@@ -420,12 +395,7 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          {
-            allowForwardTranslationNmtDrafting: {
-              enabled: true,
-              enabled$: of(true)
-            } as ObservableFeatureFlag
-          }
+          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
         );
 
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {

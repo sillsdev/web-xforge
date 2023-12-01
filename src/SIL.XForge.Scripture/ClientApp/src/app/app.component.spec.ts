@@ -12,14 +12,14 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -397,26 +397,11 @@ class TestEnvironment {
       this.comesOnline$.next();
       this.goFullyOnline();
     }
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({
-      enabled: false,
-      enabled$: of(false)
-    } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.allowForwardTranslationNmtDrafting).thenReturn({
-      enabled: false,
-      enabled$: of(false)
-    } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.showFeatureFlags).thenReturn({
-      enabled: false,
-      enabled$: of(false)
-    } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.stillness).thenReturn({
-      enabled: false,
-      enabled$: of(false)
-    } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn({
-      enabled: false,
-      enabled$: of(false)
-    } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.allowForwardTranslationNmtDrafting).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.showFeatureFlags).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
 
