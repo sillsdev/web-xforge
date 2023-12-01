@@ -132,7 +132,6 @@ export class NmtDraftAuthGuard extends RouterGuard {
     }
 
     const isBackTranslationProject = projectDoc.data.translateConfig?.projectType === ProjectType.BackTranslation;
-
     if (!isBackTranslationProject && !this.featureFlagService.allowForwardTranslationNmtDrafting.enabled) {
       return false;
     }
