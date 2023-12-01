@@ -17,10 +17,16 @@ export interface ObservableFeatureFlag extends FeatureFlag {
   enabled$: Observable<boolean>;
 }
 
+interface IFeatureFlagStore {
+  isEnabled(key: string): boolean;
+  isReadOnly(key: string): boolean;
+  setEnabled(key: string, value: boolean): void;
+}
+
 @Injectable({
   providedIn: 'root'
 })
-export class FeatureFlagStore extends SubscriptionDisposable {
+export class FeatureFlagStore extends SubscriptionDisposable implements IFeatureFlagStore {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
 
   private localFlags: { [key: string]: boolean } = {};
@@ -129,7 +135,7 @@ class FeatureFlagFromStorage implements ObservableFeatureFlag {
     readonly key: string,
     readonly description: string,
     readonly position: number,
-    private readonly featureFlagStore: FeatureFlagStore
+    private readonly featureFlagStore: IFeatureFlagStore
   ) {}
 
   get readonly(): boolean {
@@ -143,6 +149,28 @@ class FeatureFlagFromStorage implements ObservableFeatureFlag {
   set enabled(value: boolean) {
     this.featureFlagStore.setEnabled(this.key, value);
     this.enabledSource$.next(value);
+  }
+}
+
+class StaticFeatureFlagStore implements IFeatureFlagStore {
+  private readonly = false;
+
+  constructor(private enabled: boolean, config?: { readonly: boolean }) {
+    if (config != null) {
+      this.readonly = config.readonly;
+    }
+  }
+
+  isEnabled(_key: string): boolean {
+    return this.enabled;
+  }
+
+  isReadOnly(_key: string): boolean {
+    return this.readonly;
+  }
+
+  setEnabled(_key: string, value: boolean): void {
+    this.enabled = value;
   }
 }
 
@@ -210,7 +238,7 @@ export class FeatureFlagService {
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true)
   );
 
   readonly preventOpSubmission: ObservableFeatureFlag = new FeatureFlagFromStorage(
