@@ -6,6 +6,7 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
@@ -18,13 +19,11 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
-import { SharedModule } from '../../shared/shared.module';
-import { DraftGenerationComponent, InfoAlert } from './draft-generation.component';
+import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 
@@ -74,8 +73,6 @@ describe('DraftGenerationComponent', () => {
 
       TestBed.configureTestingModule({
         imports: [
-          UICommonModule,
-          SharedModule,
           TestOnlineStatusModule.forRoot(),
           RouterTestingModule,
           TranslocoMarkupModule,
@@ -128,7 +125,7 @@ describe('DraftGenerationComponent', () => {
         projectId$: of('testProjectId'),
         projectDoc$: of({
           id: 'testProjectId',
-          data: {
+          data: createTestProjectProfile({
             writingSystem: {
               tag: 'en'
             },
@@ -141,7 +138,7 @@ describe('DraftGenerationComponent', () => {
                 }
               }
             }
-          }
+          })
         } as SFProjectProfileDoc)
       });
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
@@ -160,6 +157,10 @@ describe('DraftGenerationComponent', () => {
 
     get preGenerationStepper(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-generation-steps');
+    }
+
+    getElementByTestId(testId: string): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector(`[data-test-id="${testId}"]`);
     }
   }
 
@@ -184,14 +185,14 @@ describe('DraftGenerationComponent', () => {
           projectId: 'testProjectId',
           projectId$: of('testProjectId'),
           projectDoc$: of({
-            data: {
+            data: createTestProjectProfile({
               writingSystem: {
                 tag: 'xyz'
               },
               translateConfig: {
                 projectType: ProjectType.Standard
               }
-            }
+            })
           })
         });
       });
@@ -207,7 +208,7 @@ describe('DraftGenerationComponent', () => {
           projectId: 'testProjectId',
           projectId$: of('testProjectId'),
           projectDoc$: of({
-            data: {
+            data: createTestProjectProfile({
               writingSystem: {
                 tag: 'xyz'
               },
@@ -220,7 +221,7 @@ describe('DraftGenerationComponent', () => {
                   }
                 }
               }
-            }
+            })
           })
         });
       });
@@ -247,81 +248,136 @@ describe('DraftGenerationComponent', () => {
     });
   });
 
+  describe('warnings', () => {
+    describe('source text missing', () => {
+      it('should show warning when source text is missing AND target language is supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-text-missing')).not.toBe(null);
+      });
+
+      it('should not show warning when target language is not supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = false;
+        env.component.isTargetLanguageSupported = false;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-text-missing')).toBe(null);
+      });
+
+      it('should not show warning when source text is not missing', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-text-missing')).toBe(null);
+      });
+    });
+
+    describe('source and target text must be different', () => {
+      it('should show warning when source text is not missing AND source and target are same AND target language is supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).not.toBe(null);
+      });
+
+      it('should not show warning when target language is not supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isTargetLanguageSupported = false;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).toBe(null);
+      });
+
+      it('should not show warning when source and target text are different', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).toBe(null);
+      });
+    });
+  });
+
   describe('getInfoAlert', () => {
-    it('should return NotBackTranslation when isBackTranslation is false', () => {
-      let env = new TestEnvironment();
+    it('should show "approval needed" info alert when isPreTranslationApproved is false and project is not in back translation mode', () => {
+      let env = new TestEnvironment(() => {
+        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+          'FeatureFlagService',
+          {},
+          {
+            allowForwardTranslationNmtDrafting: {
+              enabled: true,
+              enabled$: of(true)
+            } as ObservableFeatureFlag
+          }
+        );
+      });
       env.component.isBackTranslation = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotBackTranslation);
+      env.component.isTargetLanguageSupported = true;
+      env.component.isSourceProjectSet = false;
+      env.component.isSourceAndTargetDifferent = false;
+      env.component.isPreTranslationApproved = false;
+      env.fixture.detectChanges();
+      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.getElementByTestId('approval-needed')).not.toBe(null);
     });
 
-    it('should return NotSupportedLanguage when isTargetLanguageSupported is false', () => {
-      let env = new TestEnvironment();
-      env.component.isBackTranslation = true;
-      env.component.isTargetLanguageSupported = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);
+    it('should not show "approval needed" info alert when isPreTranslationApproved is true', () => {
+      let env = new TestEnvironment(() => {
+        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+          'FeatureFlagService',
+          {},
+          {
+            allowForwardTranslationNmtDrafting: {
+              enabled: true,
+              enabled$: of(true)
+            } as ObservableFeatureFlag
+          }
+        );
+      });
+      env.component.isBackTranslation = false;
+      env.component.isTargetLanguageSupported = true;
+      env.component.isSourceProjectSet = false;
+      env.component.isSourceAndTargetDifferent = false;
+      env.component.isPreTranslationApproved = true;
+      env.fixture.detectChanges();
+      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.getElementByTestId('approval-needed')).toBe(null);
     });
 
-    it('should return NoSourceProjectSet when isSourceProjectSet is false', () => {
-      let env = new TestEnvironment();
+    it('should not show "approval needed" info alert when project is in back translation mode', () => {
+      let env = new TestEnvironment(() => {
+        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+          'FeatureFlagService',
+          {},
+          {
+            allowForwardTranslationNmtDrafting: {
+              enabled: true,
+              enabled$: of(true)
+            } as ObservableFeatureFlag
+          }
+        );
+      });
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NoSourceProjectSet);
-    });
-
-    it('should return SourceAndTargetLanguageIdentical when isSourceAndTargetDifferent is false', () => {
-      let env = new TestEnvironment();
-      env.component.isBackTranslation = true;
-      env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
-    });
-
-    it('should return ApprovalNeeded when isPreTranslationApproved is false and project is not in back translation mode', () => {
-      let env = new TestEnvironment(() => {
-        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
-          'FeatureFlagService',
-          {},
-          {
-            allowForwardTranslationNmtDrafting: {
-              enabled: true,
-              enabled$: of(true)
-            } as ObservableFeatureFlag
-          }
-        );
-      });
-      env.component.isBackTranslation = false;
-      env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = true;
-      env.component.isSourceAndTargetDifferent = true;
-      env.component.isPreTranslationApproved = false;
-      expect(env.component.isBackTranslationMode).toBe(false);
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.ApprovalNeeded);
-    });
-
-    it('should return None when isPreTranslationApproved is false and project is in back translation mode', () => {
-      let env = new TestEnvironment();
-      env.component.isBackTranslation = true;
-      env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = true;
-      env.component.isSourceAndTargetDifferent = true;
-      env.component.isPreTranslationApproved = false;
+      env.component.isPreTranslationApproved = true;
+      env.fixture.detectChanges();
       expect(env.component.isBackTranslationMode).toBe(true);
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
+      expect(env.getElementByTestId('approval-needed')).toBe(null);
     });
+  });
 
-    it('should return None when all back translation requirements are met', () => {
-      let env = new TestEnvironment();
-      env.component.isBackTranslation = true;
-      env.component.isTargetLanguageSupported = true;
-      env.component.isSourceProjectSet = true;
-      env.component.isSourceAndTargetDifferent = true;
-      env.component.isPreTranslationApproved = true;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
-    });
-
-    it('should allow forward translation to override isBackTranslation and isTargetLanguageSupported', () => {
+  describe('requirements', () => {
+    it('should have `isTargetLanguageSupported == true` when project is forward translation', () => {
       let env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
@@ -333,14 +389,30 @@ describe('DraftGenerationComponent', () => {
             } as ObservableFeatureFlag
           }
         );
+
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: createTestProjectProfile({
+              writingSystem: {
+                tag: 'xyz'
+              },
+              translateConfig: {
+                projectType: ProjectType.Standard,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'zyx'
+                  }
+                }
+              }
+            })
+          })
+        });
       });
-      env.component.isBackTranslation = false;
-      env.component.isTargetLanguageSupported = false;
-      env.component.isSourceProjectSet = true;
-      env.component.isSourceAndTargetDifferent = true;
-      env.component.isPreTranslationApproved = true;
       expect(env.component.isForwardTranslationEnabled).toBe(true);
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
+      expect(env.component.isTargetLanguageSupported).toBe(true);
     });
 
     it('should enforce supported language for back translations even when forward translation feature flag is set', () => {
@@ -355,14 +427,31 @@ describe('DraftGenerationComponent', () => {
             } as ObservableFeatureFlag
           }
         );
+
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: createTestProjectProfile({
+              writingSystem: {
+                tag: 'xyz'
+              },
+              translateConfig: {
+                projectType: ProjectType.BackTranslation,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'zyx'
+                  }
+                }
+              }
+            })
+          })
+        });
       });
-      env.component.isBackTranslation = true;
-      env.component.isTargetLanguageSupported = false;
-      env.component.isSourceProjectSet = true;
-      env.component.isSourceAndTargetDifferent = true;
-      env.component.isPreTranslationApproved = true;
       expect(env.component.isForwardTranslationEnabled).toBe(true);
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);
+      expect(env.component.isBackTranslationMode).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
     });
   });
 
@@ -371,7 +460,7 @@ describe('DraftGenerationComponent', () => {
       let env = new TestEnvironment(() => {
         mockProjectService.getProfile.and.returnValue(
           new Promise<SFProjectProfileDoc>(() => ({
-            data: { texts: [] }
+            data: createTestProjectProfile({ texts: [] })
           }))
         );
       });

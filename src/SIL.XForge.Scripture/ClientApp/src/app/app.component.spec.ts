@@ -12,7 +12,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -397,11 +397,25 @@ class TestEnvironment {
       this.comesOnline$.next();
       this.goFullyOnline();
     }
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: false } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.showFeatureFlags).thenReturn({ enabled: false } as ObservableFeatureFlag);
-    when(mockedFeatureFlagService.stillness).thenReturn({ enabled: false } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({
+      enabled: false,
+      enabled$: of(false)
+    } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.allowForwardTranslationNmtDrafting).thenReturn({
+      enabled: false,
+      enabled$: of(false)
+    } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.showFeatureFlags).thenReturn({
+      enabled: false,
+      enabled$: of(false)
+    } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.stillness).thenReturn({
+      enabled: false,
+      enabled$: of(false)
+    } as ObservableFeatureFlag);
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn({
-      enabled: false
+      enabled: false,
+      enabled$: of(false)
     } as ObservableFeatureFlag);
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
