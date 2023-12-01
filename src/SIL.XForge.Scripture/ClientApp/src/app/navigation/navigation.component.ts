@@ -16,7 +16,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 
 @Component({
@@ -37,6 +37,9 @@ export class NavigationComponent extends SubscriptionDisposable {
   /** Whether the user can see at least one of settings, users, or sync page */
   canSeeAdminPages$: Observable<boolean> = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
     map(([settings, users, sync]) => settings || users || sync)
+  );
+  canGenerateDraft$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
+    switchMap(projectId => (projectId == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectId)))
   );
 
   projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -70,6 +73,7 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   constructor(
     readonly i18n: I18nService,
+    private readonly nmtDraftAuthGuard: NmtDraftAuthGuard,
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
     private readonly usersAuthGuard: UsersAuthGuard,
@@ -129,10 +133,6 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   get currentUserId(): string | undefined {
     return this.userService.currentUserId;
-  }
-
-  get canGenerateDraft(): boolean {
-    return this.featureFlags.showNmtDrafting.enabled && this.userHasPermission(SFProjectDomain.Texts, Operation.Edit);
   }
 
   get canManageQuestions(): boolean {

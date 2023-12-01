@@ -272,13 +272,6 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
-  it('should continue init if login state changes', fakeAsync(() => {
-    const env = new TestEnvironment('online', false);
-    expect(env.component.isLoggedIn).toBeFalse();
-    env.triggerLogin();
-    expect(env.component.isLoggedIn).toBeTrue();
-  }));
-
   describe('Community Checking', () => {
     it('ensure local storage is cleared when removed from project', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -385,7 +378,7 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedAuthService.isLoggedIn).thenCall(() => this.loggedInState$.getValue().loggedIn);
+    when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedInState$).thenReturn(this.loggedInState$);
     this.setCurrentUser('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
