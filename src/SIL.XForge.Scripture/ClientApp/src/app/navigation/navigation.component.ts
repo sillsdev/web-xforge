@@ -6,18 +6,18 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { delay, map, startWith, switchMap } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UserService } from 'xforge-common/user.service';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
-import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 
 @Component({
   selector: 'app-navigation',
@@ -33,6 +33,9 @@ export class NavigationComponent extends SubscriptionDisposable {
   );
   canSync$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
     switchMap(projectId => (projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId)))
+  );
+  canGenerateDraft$: Observable<boolean> = this.activatedProjectService.projectId$.pipe(
+    switchMap(projectId => (projectId == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectId)))
   );
   /** Whether the user can see at least one of settings, users, or sync page */
   canSeeAdminPages$: Observable<boolean> = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
@@ -73,6 +76,7 @@ export class NavigationComponent extends SubscriptionDisposable {
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
     private readonly usersAuthGuard: UsersAuthGuard,
+    private readonly nmtDraftAuthGuard: NmtDraftAuthGuard,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
@@ -129,10 +133,6 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   get currentUserId(): string | undefined {
     return this.userService.currentUserId;
-  }
-
-  get canGenerateDraft(): boolean {
-    return this.featureFlags.showNmtDrafting.enabled && this.userHasPermission(SFProjectDomain.Texts, Operation.Edit);
   }
 
   get canManageQuestions(): boolean {
