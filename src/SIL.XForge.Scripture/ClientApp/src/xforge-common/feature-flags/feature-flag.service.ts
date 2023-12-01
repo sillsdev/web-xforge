@@ -224,21 +224,21 @@ export class FeatureFlagService {
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
     2,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true, { readonly: true })
   );
 
   readonly allowForwardTranslationNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
     3,
-    this.featureFlagStore
+    new StaticFeatureFlagStore(true, { readonly: true })
   );
 
   readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,
-    new StaticFeatureFlagStore(true)
+    new StaticFeatureFlagStore(true, { readonly: true })
   );
 
   readonly preventOpSubmission: ObservableFeatureFlag = new FeatureFlagFromStorage(
