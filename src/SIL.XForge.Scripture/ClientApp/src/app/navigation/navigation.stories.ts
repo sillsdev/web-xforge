@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { Meta, StoryObj } from '@storybook/angular';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -18,6 +17,7 @@ import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-com
 import { TestBed } from '@angular/core/testing';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
@@ -39,42 +39,16 @@ function setUpMocks(args: StoryState): void {
   const userId = 'user01';
   const projectId = 'project01';
 
-  const project: SFProjectProfile = {
-    name: 'Test Project',
-    paratextId: 'pt01',
-    shortName: 'TP',
-    writingSystem: {
-      tag: 'en'
-    },
-    translateConfig: {
-      translationSuggestionsEnabled: true,
-      shareEnabled: false,
-      preTranslate: false,
-      draftConfig: {
-        lastSelectedBooks: []
-      }
-    },
-    checkingConfig: {
-      checkingEnabled: args.checkingEnabled,
-      shareEnabled: true,
-      usersSeeEachOthersResponses: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
-    texts: [],
+  const project: SFProjectProfile = createTestProjectProfile({
+    checkingConfig: { checkingEnabled: args.checkingEnabled },
     sync: {
       queuedCount: args.syncInProgress ? 1 : 0,
       lastSyncSuccessful: args.lastSyncSuccessful
     },
-    biblicalTermsConfig: {
-      biblicalTermsEnabled: false,
-      hasRenderings: false
-    },
-    editable: true,
     userRoles: {
       [userId]: args.role
-    },
-    userPermissions: {}
-  };
+    }
+  });
 
   when(mockedAuthService.isLoggedIn).thenResolve(true);
   when(mockedUserService.currentUserId).thenReturn(userId);
