@@ -31,7 +31,7 @@ import { anything, capture, mock, reset, resetCalls, verify, when } from 'ts-moc
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -1056,7 +1056,7 @@ class TestEnvironment {
     );
     this.setCurrentUser(this.adminUser);
 
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(true));
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;

@@ -314,3 +314,7 @@ export class FeatureFlagService {
     return versionNumber;
   }
 }
+
+export function createTestFeatureFlag(value: boolean): ObservableFeatureFlag {
+  return new FeatureFlagFromStorage('', '', 0, new StaticFeatureFlagStore(value));
+}
