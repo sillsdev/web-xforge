@@ -345,6 +345,27 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.timingErrorMessage).toEqual('');
   }));
 
+  it('can correctly handle adobe audition style timing data with point markers', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['s', '0:01', '0:00.000', 'decimal', 'Cue', ''],
+      ['s', '0:01.1', '0:00.000', 'decimal', 'Cue', '']
+    ]);
+
+    const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.component.save();
+    await env.wait();
+    const result: ChapterAudioDialogResult = await promiseForResult;
+
+    expect(env.component.timingErrorMessage).toEqual('');
+    // The "from" value of the next entry
+    expect(result.timingData[0].to).toEqual(1.1);
+    // The end of the audio file
+    expect(result.timingData[1].to).toEqual(1.296);
+  }));
+
   it('will not save or upload if there is no audio', fakeAsync(() => {
     env.component.prepareTimingFileUpload(anything());
     env.component.save();
@@ -441,7 +462,7 @@ describe('ChapterAudioDialogComponent', () => {
   it('will not maintain timing data length errors across audio file uploads if no longer valid', fakeAsync(async () => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
-      ['s', '00:00:01', '00:00:00', 'decimal', 'Cue', '']
+      ['s', '00:00:01', '00:00:00.001', 'decimal', 'Cue', '']
     ]);
 
     await env.component.audioUpdate(env.shortAudioFile);

@@ -339,6 +339,11 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
         to = from + this.parseTimeToSeconds(duration);
       }
 
+      // Allow point (zero duration) markers to be handled by populateToField
+      if (from === to) {
+        to = 0;
+      }
+
       if (textRef === undefined || isNaN(from) || isNaN(to)) {
         continue;
       }
