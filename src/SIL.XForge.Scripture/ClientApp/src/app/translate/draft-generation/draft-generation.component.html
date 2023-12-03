@@ -61,6 +61,19 @@
           [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
         ></transloco>
       </app-notice>
+
+      <app-notice
+        *ngIf="isSourceProjectSet && isSourceAndTargetDifferent && !isSourceAndTrainingSourceLanguageIdentical"
+        type="warning"
+        icon="warning"
+        [outline]="true"
+        data-test-id="warning-source-target-same"
+      >
+        <transloco
+          key="draft_generation.info_alert_different_training_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
     </ng-container>
   </section>
 

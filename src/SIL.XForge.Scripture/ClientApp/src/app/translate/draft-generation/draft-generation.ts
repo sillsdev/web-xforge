@@ -7,6 +7,7 @@ import { BuildStates } from 'src/app/machine-api/build-states';
 export interface BuildConfig {
   projectId: string;
   trainingBooks: number[];
+  translationBooks: number[];
 }
 
 /**

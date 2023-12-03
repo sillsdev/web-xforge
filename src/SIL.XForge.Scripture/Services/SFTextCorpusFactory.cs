@@ -47,19 +47,32 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
     }
 
     public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate: false, Array.Empty<int>()));
+        new DictionaryTextCorpus(
+            await CreateTextsAsync(
+                projects,
+                type,
+                preTranslate: false,
+                useAlternateTrainingSource: false,
+                Array.Empty<int>()
+            )
+        );
 
     public async Task<ITextCorpus> CreateAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool useAlternateTrainingSource,
         ICollection<int> books
-    ) => new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate, books));
+    ) =>
+        new DictionaryTextCorpus(
+            await CreateTextsAsync(projects, type, preTranslate, useAlternateTrainingSource, books)
+        );
 
     private async Task<IReadOnlyList<IText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool useAlternateTrainingSource,
         ICollection<int> books
     )
     {
@@ -78,7 +91,15 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
             switch (type)
             {
                 case TextCorpusType.Source:
-                    if (preTranslate && project.TranslateConfig.DraftConfig.AlternateSource is not null)
+                    if (
+                        useAlternateTrainingSource
+                        && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
+                    )
+                    {
+                        textCorpusProjectId = project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef;
+                        paratextId = project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId;
+                    }
+                    else if (preTranslate && project.TranslateConfig.DraftConfig.AlternateSource is not null)
                     {
                         textCorpusProjectId = project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef;
                         paratextId = project.TranslateConfig.DraftConfig.AlternateSource.ParatextId;

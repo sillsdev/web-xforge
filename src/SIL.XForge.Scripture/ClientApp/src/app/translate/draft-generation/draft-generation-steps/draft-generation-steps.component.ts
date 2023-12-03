@@ -50,14 +50,14 @@ export class DraftGenerationStepsComponent implements OnInit {
       tap((availableBooks: number[]) => {
         // Get the previously selected training books from the target project
         const previousBooks: Set<number> = new Set<number>(
-          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedBooks ?? []
+          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationBooks ?? []
         );
 
         // The intersection is all of the available books in the source project that match the target's previous books
         const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
-        // Set the selected books to the intersection, or if the intersection is empty, just return all available books
-        this.initialSelectedBooks = intersection.length > 0 ? intersection : availableBooks;
+        // Set the selected books to the intersection, or if the intersection is empty, do not select any
+        this.initialSelectedBooks = intersection.length > 0 ? intersection : [];
         this.finalSelectedBooks = this.initialSelectedBooks;
       })
     );
