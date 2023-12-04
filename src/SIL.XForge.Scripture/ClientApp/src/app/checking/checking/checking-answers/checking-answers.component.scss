@@ -14,11 +14,11 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  padding-inline: 4px;
 }
 
 .answer-question {
-  padding-inline: 8px;
   .question {
     display: flex;
     flex-direction: column;
@@ -33,6 +33,9 @@
         justify-content: flex-end;
       }
     }
+  }
+  > .actions {
+    padding-block-start: 8px;
   }
 }
 
