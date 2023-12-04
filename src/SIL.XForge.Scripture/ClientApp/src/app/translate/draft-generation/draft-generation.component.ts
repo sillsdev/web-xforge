@@ -10,10 +10,12 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { isEmpty } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -97,6 +99,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly router: Router,
     private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
+    private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
@@ -319,6 +322,14 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   isDraftFaulted(job?: BuildDto): boolean {
     return (job?.state as BuildStates) === BuildStates.Faulted;
+  }
+
+  canShowAdditionalInfo(job?: BuildDto): boolean {
+    return (
+      job?.additionalInfo != null &&
+      this.isDraftFaulted(job) &&
+      this.authService.currentUserRole === SystemRole.SystemAdmin
+    );
   }
 
   canCancel(job?: BuildDto): boolean {
