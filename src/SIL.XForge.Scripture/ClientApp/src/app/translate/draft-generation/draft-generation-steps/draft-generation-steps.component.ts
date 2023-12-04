@@ -34,19 +34,28 @@ export class DraftGenerationStepsComponent implements OnInit {
   ngOnInit(): void {
     this.availableBooks$ = this.activatedProject.projectDoc$.pipe(
       // Build available book list from source project
-      switchMap(doc => {
+      switchMap(targetDoc => {
         // See if there is an alternate source project set, otherwise use the source project
         let sourceProjectId: string | undefined =
-          doc?.data?.translateConfig.draftConfig.alternateSource?.projectRef ??
-          doc?.data?.translateConfig.source?.projectRef;
+          targetDoc?.data?.translateConfig.draftConfig.alternateSource?.projectRef ??
+          targetDoc?.data?.translateConfig.source?.projectRef;
 
         if (sourceProjectId == null) {
           throw new Error('Source project is not set');
         }
 
-        return from(this.projectService.getProfile(sourceProjectId));
+        return from(this.projectService.getProfile(sourceProjectId)).pipe(map(sourceDoc => ({ targetDoc, sourceDoc })));
       }),
-      map(doc => doc?.data?.texts.map(t => t.bookNum) ?? []),
+      map(({ targetDoc, sourceDoc }) => {
+        // Get the source books
+        const sourceBooks: number[] = sourceDoc?.data?.texts.map(t => t.bookNum) ?? [];
+
+        // Get the books available in the target
+        const targetBooks: Set<number> = new Set<number>(targetDoc?.data?.texts.map(t => t.bookNum) ?? []);
+
+        // The books that are available have to be in the source and target
+        return sourceBooks.filter(bookNum => targetBooks.has(bookNum));
+      }),
       tap((availableBooks: number[]) => {
         // Get the previously selected training books from the target project
         const previousBooks: Set<number> = new Set<number>(

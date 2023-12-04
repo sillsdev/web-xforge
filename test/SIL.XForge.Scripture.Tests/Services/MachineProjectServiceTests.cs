@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -861,6 +862,41 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_FiltersByTrainingBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02, TrainingBooks = { 1, 2 } },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
+                TextCorpusType.Target,
+                preTranslate: true,
+                Arg.Is<HashSet<int>>(b => b.Count == 2 && b.First() == 1 && b.Last() == 2)
+            );
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
+                TextCorpusType.Source,
+                preTranslate: true,
+                Arg.Is<HashSet<int>>(b => b.Count == 2 && b.First() == 1 && b.Last() == 2)
+            );
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_UpdatesRemoteCorpusIfLocalTextChanges()
     {
         // Set up test environment
@@ -1091,10 +1127,10 @@ public class MachineProjectServiceTests
 
             var paratextService = Substitute.For<IParatextService>();
             paratextService.GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns("en");
-            var textCorpusFactory = Substitute.For<ISFTextCorpusFactory>();
+            TextCorpusFactory = Substitute.For<ISFTextCorpusFactory>();
             if (options.LocalSourceTextHasData && options.LocalTargetTextHasData)
             {
-                textCorpusFactory
+                TextCorpusFactory
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         Arg.Any<TextCorpusType>(),
@@ -1105,7 +1141,7 @@ public class MachineProjectServiceTests
             }
             else if (options.LocalSourceTextHasData)
             {
-                textCorpusFactory
+                TextCorpusFactory
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Source,
@@ -1116,7 +1152,7 @@ public class MachineProjectServiceTests
             }
             else if (options.LocalTargetTextHasData)
             {
-                textCorpusFactory
+                TextCorpusFactory
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Target,
@@ -1255,7 +1291,7 @@ public class MachineProjectServiceTests
                 paratextService,
                 ProjectSecrets,
                 realtimeService,
-                textCorpusFactory,
+                TextCorpusFactory,
                 TranslationEnginesClient,
                 userSecrets
             );
@@ -1297,6 +1333,7 @@ public class MachineProjectServiceTests
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
         public IExceptionHandler ExceptionHandler { get; }
+        public ISFTextCorpusFactory TextCorpusFactory { get; }
 
         public async Task SetDataInSync(string projectId, bool preTranslate = false, bool requiresUpdate = false) =>
             await ProjectSecrets.UpdateAsync(
