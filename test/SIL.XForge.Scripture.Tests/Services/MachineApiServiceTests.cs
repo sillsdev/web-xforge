@@ -1585,7 +1585,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
+        Assert.ThrowsAsync<InvalidOperationException>(
             () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }

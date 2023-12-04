@@ -38,19 +38,37 @@ export class NoticeService {
     return this.showSnackBar(message);
   }
 
-  async showError(message: string): Promise<void> {
-    return this.showSnackBar(message, ['snackbar-error']);
+  async showError(
+    message: string,
+    action: string | undefined = undefined,
+    onAction: (() => void) | undefined = undefined
+  ): Promise<void> {
+    return this.showSnackBar(message, ['snackbar-error'], action, onAction);
   }
 
-  private async showSnackBar(message: string, classes: string[] = []): Promise<void> {
+  private async showSnackBar(
+    message: string,
+    classes: string[] = [],
+    action: string | undefined = undefined,
+    onAction: (() => void) | undefined = undefined
+  ): Promise<void> {
     let config: MatSnackBarConfig<any> | undefined;
     config = { panelClass: classes.join(' '), direction: this.i18n.direction, duration: 5000 };
     if (this.messageOnDisplay === message) {
       // Do nothing if the message is the same as one currently on display
       return;
     }
-    const snackBarRef = this.snackBar.open(message, undefined, config);
+    const snackBarRef = this.snackBar.open(message, action, config);
+
+    if (onAction !== undefined) {
+      snackBarRef.onAction().subscribe(() => {
+        onAction();
+        this.messageOnDisplay = undefined;
+      });
+    }
+
     this.messageOnDisplay = message;
+
     snackBarRef
       .afterDismissed()
       .toPromise()
