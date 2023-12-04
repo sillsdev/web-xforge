@@ -47,12 +47,23 @@ export class DraftViewerService {
     }
 
     return targetOps.map(op => {
-      const draftSegmentText: string | undefined = draft[op.attributes?.segment];
-      const isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
+      let draftSegmentText: string | undefined = draft[op.attributes?.segment];
+      let isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
 
-      // No draft (undefined or empty string) for this segment; use any existing translation
+      // No draft (undefined or empty string) for this segment
       if (!isSegmentDraftAvailable) {
-        return op;
+        // See if the source verse is combined
+        const combinedVerseNumbers: string[] = Object.keys(draft).filter(key =>
+          key.startsWith(op.attributes?.segment + '-')
+        );
+        if (combinedVerseNumbers.length > 0) {
+          // Place the combined verse segment in the verse segment
+          draftSegmentText = draft[combinedVerseNumbers[0]];
+          isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
+        } else {
+          // Use the existing translation
+          return op;
+        }
       }
 
       if (isString(op.insert)) {
