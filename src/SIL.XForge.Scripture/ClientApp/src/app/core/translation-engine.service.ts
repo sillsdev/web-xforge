@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { InteractiveTranslator, InteractiveTranslatorFactory, LatinWordTokenizer } from '@sillsdev/machine';
 import { Canon } from '@sillsdev/scripture';
 import * as crc from 'crc-32';
@@ -36,7 +37,8 @@ export class TranslationEngineService extends SubscriptionDisposable {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly machineHttp: HttpClient,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly router: Router
   ) {
     super();
     this.onlineStatus$ = this.onlineStatusService.onlineStatus$.pipe(
@@ -56,7 +58,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     if (!this.translationEngines.has(projectId)) {
       this.translationEngines.set(
         projectId,
-        new RemoteTranslationEngine(projectId, this.machineHttp, this.noticeService)
+        new RemoteTranslationEngine(projectId, this.machineHttp, this.noticeService, this.router)
       );
     }
     return this.translationEngines.get(projectId)!;

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgModule, NgZone } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { TranslationSources, WordGraph } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -456,6 +457,7 @@ class TestEnvironment {
   readonly mockedHttpClient: HttpClient;
   readonly client: RemoteTranslationEngine;
   readonly mockedNoticeService: NoticeService;
+  readonly mockedRouter: Router;
   readonly ngZone: NgZone;
 
   constructor() {
@@ -476,10 +478,12 @@ class TestEnvironment {
       })
     );
     this.mockedNoticeService = mock(NoticeService);
+    this.mockedRouter = mock(Router);
     this.client = new RemoteTranslationEngine(
       'project01',
       instance(this.mockedHttpClient),
-      instance(this.mockedNoticeService)
+      instance(this.mockedNoticeService),
+      instance(this.mockedRouter)
     );
 
     this.ngZone = TestBed.inject(NgZone);

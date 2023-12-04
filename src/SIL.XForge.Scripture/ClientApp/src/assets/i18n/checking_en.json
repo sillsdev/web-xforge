@@ -308,6 +308,7 @@
     "error_occurred_login": "An error occurred during login.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the translation engine.",
     "try_again": "Try Again"
   },
   "exception_handling_service": {
