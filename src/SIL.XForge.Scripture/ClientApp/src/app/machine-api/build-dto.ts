@@ -7,4 +7,13 @@ export interface BuildDto extends ResourceDto {
   message: string;
   state: string;
   queueDepth: number;
+  additionalInfo?: ServalBuildAdditionalInfo;
+}
+
+export interface ServalBuildAdditionalInfo {
+  buildId: string;
+  corporaIds?: string[];
+  dateFinished?: Date;
+  step: number;
+  translationEngineId: string;
 }

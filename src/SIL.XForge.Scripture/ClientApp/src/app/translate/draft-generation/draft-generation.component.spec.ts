@@ -6,11 +6,13 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -28,6 +30,7 @@ import { DraftGenerationService } from './draft-generation.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 
 describe('DraftGenerationComponent', () => {
+  let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
@@ -80,6 +83,7 @@ describe('DraftGenerationComponent', () => {
           NoopAnimationsModule
         ],
         providers: [
+          { provide: AuthService, useValue: mockAuthService },
           { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
@@ -99,6 +103,7 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
+      mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.User });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
@@ -645,6 +650,22 @@ describe('DraftGenerationComponent', () => {
     });
   });
 
+  describe('isDraftFaulted', () => {
+    it('should return true if the draft build is faulted', () => {
+      let env = new TestEnvironment();
+      expect(env.component.isDraftFaulted({ state: BuildStates.Faulted } as BuildDto)).toBe(true);
+    });
+
+    it('should return false if the draft build is not faulted', () => {
+      let env = new TestEnvironment();
+      expect(env.component.isDraftFaulted({ state: BuildStates.Active } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Pending } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+    });
+  });
+
   describe('canCancel', () => {
     it('should return true if the draft build is in progress', () => {
       let env = new TestEnvironment();
@@ -658,6 +679,40 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+    });
+  });
+
+  describe('canShowAdditionalInfo', () => {
+    it('should return true if the draft build is faulted, user is system admin, and build has additional info', () => {
+      let env = new TestEnvironment(() => {
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
+      });
+      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Faulted, additionalInfo: {} } as BuildDto)).toBe(
+        true
+      );
+    });
+
+    it('should return false if the draft build is not faulted', () => {
+      let env = new TestEnvironment(() => {
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
+      });
+      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Active, additionalInfo: {} } as BuildDto)).toBe(
+        false
+      );
+    });
+
+    it('should return false if the draft build has no additional info', () => {
+      let env = new TestEnvironment(() => {
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
+      });
+      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+    });
+
+    it('should return false if the user is not system admin', () => {
+      let env = new TestEnvironment();
+      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Faulted, additionalInfo: {} } as BuildDto)).toBe(
+        false
+      );
     });
   });
 });
