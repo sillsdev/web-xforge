@@ -158,6 +158,7 @@ public class MachineApiServiceTests
             Build01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -185,6 +186,7 @@ public class MachineApiServiceTests
                     Build01,
                     minRevision: 1,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -210,6 +212,7 @@ public class MachineApiServiceTests
                     Build01,
                     minRevision,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -232,6 +235,7 @@ public class MachineApiServiceTests
             Build01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -255,6 +259,7 @@ public class MachineApiServiceTests
                     Build01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -275,6 +280,7 @@ public class MachineApiServiceTests
                     Build01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -295,6 +301,7 @@ public class MachineApiServiceTests
                     Build01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -316,6 +323,7 @@ public class MachineApiServiceTests
                     Build01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -354,6 +362,7 @@ public class MachineApiServiceTests
             Build01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -403,6 +412,7 @@ public class MachineApiServiceTests
             Build01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -415,6 +425,87 @@ public class MachineApiServiceTests
         Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
         Assert.AreEqual(Project01, actual.Engine.Id);
         Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        Assert.IsNull(actual.AdditionalInfo);
+    }
+
+    [Test]
+    public async Task GetBuildAsync_ServalIncludesAdditionalInfo()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Finalizing";
+        const double percentCompleted = 0.95;
+        const int revision = 553;
+        const JobState state = JobState.Active;
+        const int queueDepth = 7;
+        DateTimeOffset dateFinished = DateTimeOffset.UtcNow;
+        const string engineId = "engineId1";
+        const string corpusId1 = "corpusId1";
+        const string corpusId2 = "corpusId2";
+        const int step = 123;
+        env.TranslationEnginesClient
+            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = Build01,
+                        Engine = new ResourceLink { Id = engineId, Url = "https://example.com" },
+                        Message = message,
+                        PercentCompleted = percentCompleted,
+                        Revision = revision,
+                        State = state,
+                        DateFinished = dateFinished,
+                        QueueDepth = queueDepth,
+                        Step = step,
+                        Pretranslate = new List<PretranslateCorpus>
+                        {
+                            new PretranslateCorpus
+                            {
+                                Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" },
+                            },
+                            new PretranslateCorpus
+                            {
+                                Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" },
+                            },
+                        },
+                    }
+                )
+            );
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
+            User01,
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: false,
+            includeAdditionalInfo: true,
+            CancellationToken.None
+        );
+
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(message, actual.Message);
+        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+        Assert.AreEqual(revision, actual.Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
+        Assert.AreEqual(buildDtoId, actual.Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+        Assert.AreEqual(Project01, actual.Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        Assert.AreEqual(queueDepth, actual.QueueDepth);
+        Assert.IsNotNull(actual.AdditionalInfo);
+        Assert.AreEqual(Build01, actual.AdditionalInfo.BuildId);
+        Assert.AreEqual(dateFinished, actual.AdditionalInfo.DateFinished);
+        Assert.AreEqual(step, actual.AdditionalInfo.Step);
+        Assert.AreEqual(engineId, actual.AdditionalInfo.TranslationEngineId);
+        Assert.IsNotNull(actual.AdditionalInfo.CorporaIds);
+        Assert.AreEqual(2, actual.AdditionalInfo.CorporaIds.Count());
+        Assert.AreEqual(corpusId1, actual.AdditionalInfo.CorporaIds.First());
+        Assert.AreEqual(corpusId2, actual.AdditionalInfo.CorporaIds.Last());
     }
 
     [Test]
@@ -433,6 +524,7 @@ public class MachineApiServiceTests
             Build01,
             minRevision: null,
             preTranslate: true,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -457,6 +549,7 @@ public class MachineApiServiceTests
             Build01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -482,6 +575,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -508,6 +602,7 @@ public class MachineApiServiceTests
                     Project01,
                     minRevision: 1,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -532,6 +627,7 @@ public class MachineApiServiceTests
                     Project01,
                     minRevision,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -553,6 +649,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -575,6 +672,7 @@ public class MachineApiServiceTests
                     Project01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -594,6 +692,7 @@ public class MachineApiServiceTests
                     Project01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -613,6 +712,7 @@ public class MachineApiServiceTests
                     "invalid_project_id",
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -636,6 +736,7 @@ public class MachineApiServiceTests
                     Project01,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -656,6 +757,7 @@ public class MachineApiServiceTests
                     Project03,
                     minRevision: null,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -693,6 +795,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -741,6 +844,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -796,6 +900,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: true,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -831,6 +936,7 @@ public class MachineApiServiceTests
                     Project01,
                     minRevision: null,
                     preTranslate: true,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -851,6 +957,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: true,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -874,6 +981,7 @@ public class MachineApiServiceTests
             Project01,
             minRevision: null,
             preTranslate: false,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -1153,6 +1261,7 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -1171,6 +1280,7 @@ public class MachineApiServiceTests
                 env.Service.GetLastCompletedPreTranslationBuildAsync(
                     "invalid_user_id",
                     Project01,
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -1188,6 +1298,7 @@ public class MachineApiServiceTests
                 env.Service.GetLastCompletedPreTranslationBuildAsync(
                     User01,
                     "invalid_project_id",
+                    includeAdditionalInfo: false,
                     CancellationToken.None
                 )
         );
@@ -1202,7 +1313,13 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(
+                    User01,
+                    Project01,
+                    includeAdditionalInfo: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1214,7 +1331,13 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(
+                    User01,
+                    Project03,
+                    includeAdditionalInfo: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1227,7 +1350,13 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(
+                    User01,
+                    Project01,
+                    includeAdditionalInfo: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1266,6 +1395,7 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
+            includeAdditionalInfo: false,
             CancellationToken.None
         );
 
@@ -1665,7 +1795,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None)
         );
     }
 
@@ -1677,7 +1807,13 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.StartBuildAsync("invalid_user_id", Project01, CancellationToken.None)
+            () =>
+                env.Service.StartBuildAsync(
+                    "invalid_user_id",
+                    Project01,
+                    includeAdditionalInfo: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1689,7 +1825,13 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+            () =>
+                env.Service.StartBuildAsync(
+                    User01,
+                    "invalid_project_id",
+                    includeAdditionalInfo: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1705,7 +1847,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None)
         );
     }
 
@@ -1718,7 +1860,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, Project03, CancellationToken.None)
+            () => env.Service.StartBuildAsync(User01, Project03, includeAdditionalInfo: false, CancellationToken.None)
         );
     }
 
@@ -1734,7 +1876,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None)
         );
     }
 
@@ -1749,7 +1891,7 @@ public class MachineApiServiceTests
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
         // SUT
-        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        _ = await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
     }
@@ -1765,7 +1907,7 @@ public class MachineApiServiceTests
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
         // SUT
-        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        _ = await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
     }
@@ -1797,7 +1939,12 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        ServalBuildDto actual = await env.Service.StartBuildAsync(
+            User01,
+            Project01,
+            includeAdditionalInfo: false,
+            CancellationToken.None
+        );
 
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
@@ -1838,7 +1985,12 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        ServalBuildDto actual = await env.Service.StartBuildAsync(
+            User01,
+            Project01,
+            includeAdditionalInfo: false,
+            CancellationToken.None
+        );
 
         await env.MachineProjectService
             .Received(1)
@@ -1869,7 +2021,7 @@ public class MachineApiServiceTests
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
         // SUT
-        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        _ = await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
         await env.MachineProjectService
