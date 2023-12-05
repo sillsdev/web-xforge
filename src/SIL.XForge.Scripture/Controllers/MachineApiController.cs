@@ -299,6 +299,7 @@ public class MachineApiController : ControllerBase
     /// <response code="200">The word graph was successfully generated.</response>
     /// <response code="403">You do not have permission to retrieve the word graph for this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.GetWordGraph)]
     public async Task<ActionResult<WordGraph>> GetWordGraphAsync(
@@ -329,6 +330,10 @@ public class MachineApiController : ControllerBase
         catch (ForbiddenException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
         }
     }
 

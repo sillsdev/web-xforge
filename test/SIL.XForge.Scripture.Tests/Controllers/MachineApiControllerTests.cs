@@ -743,6 +743,25 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetWordGraphAsync_NotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetWordGraphAsync(User01, Project01, string.Empty, CancellationToken.None)
+            .Throws(new InvalidOperationException());
+
+        // SUT
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
+            Project01,
+            string.Empty,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetWordGraphAsync_Success()
     {
         // Set up test environment

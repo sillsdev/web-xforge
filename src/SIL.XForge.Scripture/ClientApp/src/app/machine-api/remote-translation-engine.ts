@@ -1,29 +1,30 @@
+import { Router } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import {
   createRange,
   InteractiveTranslationEngine,
   Phrase,
   ProgressStatus,
   TranslationResult,
+  TranslationSources,
   WordAlignmentMatrix,
   WordGraph,
-  WordGraphArc,
-  TranslationSources
+  WordGraphArc
 } from '@sillsdev/machine';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, expand, filter, map, mergeMap, share, startWith, takeWhile } from 'rxjs/operators';
-import { translate } from '@ngneat/transloco';
 import { NoticeService } from 'xforge-common/notice.service';
 import { AlignedWordPairDto } from './aligned-word-pair-dto';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
-import { HttpClient } from './http-client';
 import { EngineDto } from './engine-dto';
+import { HttpClient } from './http-client';
 import { PhraseDto } from './phrase-dto';
-import { TranslationEngineStats } from './translation-engine-stats';
 import { SegmentPairDto } from './segment-pair-dto';
+import { TranslationEngineStats } from './translation-engine-stats';
 import { TranslationResultDto } from './translation-result-dto';
-import { WordGraphDto } from './word-graph-dto';
 import { TranslationSource } from './translation-source';
+import { WordGraphDto } from './word-graph-dto';
 
 export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   private trainingStatus$?: Observable<ProgressStatus>;
@@ -31,7 +32,8 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   constructor(
     public readonly projectId: string,
     private readonly httpClient: HttpClient,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly router: Router
   ) {}
 
   async translate(segment: string): Promise<TranslationResult> {
@@ -64,8 +66,18 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
         )
         .toPromise();
       return this.createWordGraph(response.data as WordGraphDto);
-    } catch (err) {
-      this.noticeService.showError(translate('error_messages.failed_to_retrieve_suggestions'));
+    } catch (err: any) {
+      if (err.status === 409) {
+        this.noticeService.showError(
+          translate('error_messages.suggestion_engine_requires_retrain'),
+          translate('error_messages.go_to_retrain'),
+          () => {
+            this.router.navigate(['projects', this.projectId, 'translate']);
+          }
+        );
+      } else {
+        this.noticeService.showError(translate('error_messages.failed_to_retrieve_suggestions'));
+      }
     }
 
     return new WordGraph([]);

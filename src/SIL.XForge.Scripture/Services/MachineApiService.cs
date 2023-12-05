@@ -1076,7 +1076,7 @@ public class MachineApiService : IMachineApiService
             case ServalApiException { StatusCode: StatusCodes.Status408RequestTimeout }:
                 return;
             case ServalApiException { StatusCode: StatusCodes.Status409Conflict }:
-                throw new DataNotFoundException("Entity Deleted");
+                throw new InvalidOperationException();
             case BrokenCircuitException
                 when doNotThrowIfInProcessEnabled
                     && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
