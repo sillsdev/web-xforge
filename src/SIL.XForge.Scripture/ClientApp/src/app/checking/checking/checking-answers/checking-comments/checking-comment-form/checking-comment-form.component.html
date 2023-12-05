@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'checking_comment_form'">
   <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" appScrollIntoView>
     <mat-form-field appearance="outline">
-      <mat-label>{{ t("your_comment") }}"</mat-label>
+      <mat-label>{{ t("your_comment") }}</mat-label>
       <input matInput type="text" appAutofocus formControlName="commentText" />
       <mat-error *ngIf="showValidationError">{{ t("comment_cannot_be_blank") }}</mat-error>
     </mat-form-field>

@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
   <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
-    <mat-icon class="mirror-rtl">library_books</mat-icon>
+    <mat-icon class="mirror-rtl">list</mat-icon>
     <h2>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h2>
     <ng-container *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
       <button mat-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
@@ -233,7 +233,7 @@
   </ng-template>
 
   <div class="header">
-    <mat-icon>donut_large</mat-icon>
+    <mat-icon class="mirror-rtl">bar_chart</mat-icon>
     <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
   </div>
 

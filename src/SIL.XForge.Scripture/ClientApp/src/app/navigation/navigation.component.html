@@ -13,7 +13,7 @@
         {{ t("draft_review") }}
       </a>
       <a *ngIf="canGenerateDraft$ | async" mat-list-item [appRouterLink]="draftGenerationLink">
-        <mat-icon mat-list-icon>edit_note</mat-icon>
+        <mat-icon mat-list-icon class="mirror-rtl">model_training</mat-icon>
         {{ t("generate_draft") }} <span class="nav-label">{{ t("beta") }}</span>
       </a>
     </ng-container>
@@ -27,7 +27,7 @@
         {{ t("manage_questions") }}
       </a>
       <a *ngIf="!canManageQuestions" mat-list-item [appRouterLink]="getProjectLink('checking')">
-        <mat-icon mat-list-icon>bar_chart</mat-icon>
+        <mat-icon mat-list-icon class="mirror-rtl">bar_chart</mat-icon>
         {{ t("my_progress") }}
       </a>
       <a mat-list-item [appRouterLink]="answerQuestionsLink" [class.active]="answerQuestionsActive">

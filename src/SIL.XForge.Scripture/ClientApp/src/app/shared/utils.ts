@@ -275,13 +275,16 @@ export class XmlUtils {
  * than merely mirroring. This list is ONLY for those icons that can be mirrored in all contexts.
  */
 export const ICONS_TO_MIRROR_RTL = [
+  'bar_chart',
   'book',
   'bookmarks',
   'comment',
   'forum',
   'help',
   'library_books',
+  'list',
   'live_help',
+  'model_training',
   'people',
   'person_add',
   'post_add',
