@@ -70,19 +70,8 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
       if (err.status === 409) {
         this.noticeService.showError(
           translate('error_messages.suggestion_engine_requires_retrain'),
-          translate('translate_overview.retrain'),
+          translate('error_messages.go_to_retrain'),
           () => {
-            this.getEngine(this.projectId).pipe(
-              mergeMap(e => this.createBuild(e.id)),
-              catchError(err => {
-                if (err.status === 404) {
-                  return of(undefined);
-                } else {
-                  return throwError(err);
-                }
-              })
-            );
-            // Take the user to the translate overview page as this will allow some of the trappable errors to display
             this.router.navigate(['projects', this.projectId, 'translate']);
           }
         );
