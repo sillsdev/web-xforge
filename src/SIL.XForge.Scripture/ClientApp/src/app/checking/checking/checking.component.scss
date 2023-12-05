@@ -7,11 +7,6 @@ $questionsPanelBreakpoint: 700px;
 
 $questionsHeaderInlineStartPadding: 8px;
 
-:host {
-  flex: 1;
-  display: flex;
-}
-
 header {
   display: flex;
   padding: 8px 0;
@@ -278,7 +273,8 @@ header {
     }
 
     @include media-breakpoint('<', sm) {
-      margin: -10px;
+      margin-bottom: -10px;
+      margin-inline: -10px;
     }
   }
 
