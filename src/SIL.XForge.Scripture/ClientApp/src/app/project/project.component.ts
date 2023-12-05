@@ -4,7 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -97,9 +97,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         tasks.find(t => t.task === selectedTask && t.accessible)?.task ?? tasks.find(t => t.accessible)?.task;
 
       if (task === 'translate') {
-        this.navigateToTranslate(projectId, task, project, projectUserConfig);
+        this.navigateToTranslate(projectId, project, projectUserConfig);
       } else if (task === 'checking') {
-        this.navigateToChecking(projectId);
+        await this.navigateToChecking(projectId);
       }
     } finally {
       this.loadingFinished();
@@ -108,9 +108,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
   private navigateToTranslate(
     projectId: string,
-    task: TaskType,
     project: SFProjectProfile,
-    projectUserConfig: SFProjectUserConfig
+    projectUserConfig: SFProjectUserConfig,
+    task: TaskType = 'translate'
   ): void {
     const routePath = ['projects', projectId, task];
     const bookNum: number | undefined = projectUserConfig.selectedBookNum ?? project.texts[0]?.bookNum;
@@ -119,7 +119,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       routePath.push(Canon.bookNumberToId(bookNum));
 
       const chapterNum: number | undefined =
-        projectUserConfig.selectedChapterNum ?? project.texts[bookNum]?.chapters[0].number;
+        projectUserConfig.selectedChapterNum ?? project.texts[bookNum]?.chapters[0]?.number;
 
       if (chapterNum != null) {
         routePath.push(chapterNum.toString());
@@ -129,11 +129,10 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     this.router.navigate(routePath, { replaceUrl: true });
   }
 
-  private navigateToChecking(projectId: string, task: TaskType = 'checking'): void {
+  private async navigateToChecking(projectId: string, task: TaskType = 'checking'): Promise<void> {
     const defaultCheckingLink: string[] = ['/projects', projectId, task];
+    const link = await this.resumeCheckingService.checkingLink$.pipe(first()).toPromise();
 
-    this.resumeCheckingService.getLink().subscribe(link => {
-      this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
-    });
+    this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
   }
 }

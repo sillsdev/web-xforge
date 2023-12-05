@@ -193,7 +193,7 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
 
     // Just mock the response.  Testing of the actual service functionality can be in the service spec.
-    when(mockResumeCheckingService.getLink()).thenReturn(of(['projects', 'project1', 'checking', 'JHN', '1']));
+    when(mockResumeCheckingService.checkingLink$).thenReturn(of(['projects', 'project1', 'checking', 'JHN', '1']));
 
     this.fixture = TestBed.createComponent(ProjectComponent);
     this.component = this.fixture.componentInstance;
