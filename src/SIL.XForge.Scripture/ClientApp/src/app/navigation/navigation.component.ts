@@ -43,7 +43,7 @@ export class NavigationComponent extends SubscriptionDisposable {
   );
 
   projectUserConfigDoc?: SFProjectUserConfigDoc;
-  answerQuestionsLink$: Observable<string[] | undefined> = this.resumeCheckingService.getLink();
+  answerQuestionsLink$: Observable<string[] | undefined> = this.resumeCheckingService.checkingLink$;
 
   @Output() menuItemClicked = new EventEmitter<void>();
 

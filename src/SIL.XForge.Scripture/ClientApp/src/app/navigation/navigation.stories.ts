@@ -1,28 +1,29 @@
 import { CommonModule } from '@angular/common';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { Meta, StoryObj } from '@storybook/angular';
+import { expect } from '@storybook/jest';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
+import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { expect } from '@storybook/jest';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-common/activated-project.service';
-import { TestBed } from '@angular/core/testing';
-import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
-import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
-import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { NavigationComponent } from './navigation.component';
 
 const onlineStatusService = mock(OnlineStatusService);
@@ -58,7 +59,7 @@ function setUpMocks(args: StoryState): void {
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedRouter.url).thenReturn(`/projects/${projectId}/${args.path}`);
   when(mockedRouter.createUrlTree(anything(), anything())).thenCall((portions: any[]) => portions.join('/'));
-  when(mockedResumeCheckingService.getLink()).thenReturn(['']);
+  when(mockedResumeCheckingService.checkingLink$).thenReturn(of(['']));
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({ imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)] });
