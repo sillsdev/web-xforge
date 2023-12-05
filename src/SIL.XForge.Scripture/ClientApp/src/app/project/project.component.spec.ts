@@ -19,6 +19,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -32,6 +33,7 @@ const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPermissions = mock(PermissionsService);
+const mockResumeCheckingService = mock(ResumeCheckingService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -43,7 +45,8 @@ describe('ProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
-      { provide: PermissionsService, useMock: mockedPermissions }
+      { provide: PermissionsService, useMock: mockedPermissions },
+      { provide: ResumeCheckingService, useMock: mockResumeCheckingService }
     ]
   }));
 
@@ -67,34 +70,24 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('navigate to checking tool if a checker and no last selected text', fakeAsync(() => {
+  it('navigate to checking tool if a checker and no last selected task', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.setProjectData({ role: SFProjectRole.CommunityChecker, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'ALL']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'JHN', '1']), anything())).once();
     expect().nothing();
   }));
 
-  it('navigates to last checking question if question stored but bookNum is null', fakeAsync(() => {
+  it('navigates to checking tool if selected task is checking', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setProjectData({ selectedTask: 'checking', memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'ALL']), anything())).once();
-    expect().nothing();
-  }));
-
-  it('navigates to last checking book if the last book was saved', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'checking', selectedBooknum: 41, memberProjectIdSuffixes: [1] });
-    env.fixture.detectChanges();
-    tick();
-
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'MRK']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'JHN', '1']), anything())).once();
     expect().nothing();
   }));
 
@@ -121,7 +114,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
@@ -137,7 +130,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
@@ -198,6 +191,9 @@ class TestEnvironment {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.queryParams = enableSharing ? { sharing: 'true', shareKey: 'shareKey01' } : {};
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
+
+    // Just mock the response.  Testing of the actual service functionality can be in the service spec.
+    when(mockResumeCheckingService.getLink()).thenReturn(of(['projects', 'project1', 'checking', 'JHN', '1']));
 
     this.fixture = TestBed.createComponent(ProjectComponent);
     this.component = this.fixture.componentInstance;

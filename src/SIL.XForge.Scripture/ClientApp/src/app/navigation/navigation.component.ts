@@ -6,18 +6,18 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { delay, map, startWith, switchMap } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UserService } from 'xforge-common/user.service';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
-import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 
 @Component({
   selector: 'app-navigation',
@@ -43,6 +43,7 @@ export class NavigationComponent extends SubscriptionDisposable {
   );
 
   projectUserConfigDoc?: SFProjectUserConfigDoc;
+  answerQuestionsLink$: Observable<string[] | undefined> = this.resumeCheckingService.getLink();
 
   @Output() menuItemClicked = new EventEmitter<void>();
 
@@ -165,10 +166,6 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   get draftGenerationLink(): string[] {
     return this.getProjectLink('draft-generation');
-  }
-
-  get answerQuestionsLink(): string[] {
-    return this.resumeCheckingService.getLink();
   }
 
   // draftReviewActive and answerQuestionsActive are needed because appRouterLink only highlights the link if the url
