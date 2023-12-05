@@ -9,7 +9,6 @@ mat-nav-list .mat-list-item {
     color: variables.$purpleMedium;
     fill: variables.$purpleMedium;
     transition: color 0.15s;
-    padding: 0;
   }
   &:hover {
     mat-icon {
@@ -23,7 +22,8 @@ mat-nav-list .mat-list-item {
   }
 
   ::ng-deep .mat-list-item-content {
-    column-gap: 16px;
+    padding-inline: 12px;
+    column-gap: 12px;
   }
 
   &.activated-nav-item,
@@ -64,6 +64,8 @@ mat-nav-list .mat-list-item {
   color: variables.$errorColor;
   font-weight: normal;
   font-size: 1.4rem;
+  inset-inline-end: -7px;
+  top: -7px;
 }
 
 .navigation-header:hover {
