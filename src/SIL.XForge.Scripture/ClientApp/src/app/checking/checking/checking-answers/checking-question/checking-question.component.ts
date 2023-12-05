@@ -81,18 +81,22 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get scriptureAudioStart(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(
+    // Audio timings are not guaranteed to be in order, some timing files group section headings and verses together
+    const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.startVerse.toString()
-    )?.from;
+    );
+    if (verseTimings == null || verseTimings.length === 0) return;
+    return Math.min(...verseTimings.map(t => t.from));
   }
 
   get scriptureAudioEnd(): number | undefined {
-    // Get the last record of a timing that matches the last verse
+    // Audio timings are not guaranteed to be in order, some timing files group section headings and verses together
+    // Get the timing for the latest record for a verse
     const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.endVerse.toString()
     );
     if (verseTimings == null || verseTimings.length === 0) return;
-    return verseTimings.sort((a, b) => b.to - a.to)[0].to;
+    return Math.max(...verseTimings.map(t => t.to));
   }
 
   get questionText(): string {

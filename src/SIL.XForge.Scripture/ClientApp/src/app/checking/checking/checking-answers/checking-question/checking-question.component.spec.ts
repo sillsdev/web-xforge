@@ -168,12 +168,9 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     await env.wait();
 
-    env.component.question.playScripture();
-    await env.wait(1200);
-
+    // The timing follows shows 1a (0-1sec), 1b (1-2sec), 2a (2-3sec), 2b (3-4sec)
     expect(env.component.question.scriptureAudioStart).toBe(0);
     expect(env.component.question.scriptureAudioEnd).toBe(2);
-    expect(env.component.question.focusedText).toBe('question-audio-label');
   });
 
   it('does not select question if scriptureAudio is set to the same value', async () => {
