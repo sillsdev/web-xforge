@@ -33,7 +33,7 @@ export class ResumeCheckingService {
    * book/chapter in the project.
    * @returns The path tokens, or undefined if project has no texts.
    */
-  getLink(): Observable<string[] | undefined> {
+  get checkingLink$(): Observable<string[] | undefined> {
     return this.questionLink$;
   }
 
