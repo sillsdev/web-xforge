@@ -16,7 +16,7 @@ import jwtDecode from 'jwt-decode';
 import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { BehaviorSubject, Observable, of, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable, of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap, take } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { hasPropWithValue } from '../type-utils';
@@ -201,12 +201,7 @@ export class AuthService {
   }
 
   get loggedIn(): Promise<LoginResult> {
-    return this.loggedInState$
-      .pipe(
-        filter(state => state.loggedIn),
-        take(1)
-      )
-      .toPromise();
+    return firstValueFrom(this.loggedInState$.pipe(filter(state => state.loggedIn)));
   }
 
   get loggedInState$(): Observable<LoginResult> {

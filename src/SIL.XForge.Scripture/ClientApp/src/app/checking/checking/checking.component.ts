@@ -853,7 +853,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         break;
       case 'show-unread':
         // Emit the question doc so that answers and comments get marked as read
-        this.questionsList.activeQuestionDoc$.next(this.questionsList.activeQuestionDoc);
+        if (this.questionsList.activeQuestionDoc != null) {
+          this.questionsList.activeQuestionDoc$.next(this.questionsList.activeQuestionDoc);
+        }
         break;
       case 'show-form':
         break;

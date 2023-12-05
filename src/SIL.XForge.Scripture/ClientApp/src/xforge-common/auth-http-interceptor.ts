@@ -7,7 +7,7 @@ import {
   HttpResponse
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
-import { from, NEVER, Observable, throwError } from 'rxjs';
+import { from, lastValueFrom, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CommandErrorCode } from 'xforge-common/command.service';
 import { AuthService } from './auth.service';
@@ -29,13 +29,13 @@ export class AuthHttpInterceptor implements HttpInterceptor {
       // When authentication fails auth0 is already in the process of redirecting to the login screen
       // Using NEVER is a graceful way of waiting for the browser to complete the redirection
       // without triggering any other errors from an incomplete http request
-      return NEVER.toPromise();
+      return new Promise<never>(() => {});
     }
     // Add access token to the request header
     const authReq = req.clone({
       headers: req.headers.set('Authorization', 'Bearer ' + (await this.authService.getAccessToken()))
     });
-    return await next.handle(authReq).toPromise();
+    return await lastValueFrom(next.handle(authReq));
   }
 
   async handleResponseError(error: any, req: HttpRequest<any>, next: HttpHandler): Promise<HttpEvent<any>> {
@@ -46,7 +46,7 @@ export class AuthHttpInterceptor implements HttpInterceptor {
         await this.authService!.expireToken();
         return await this.handle(req, next);
     }
-    return await throwError(error).toPromise();
+    return await Promise.reject(error);
   }
 
   handleResponseEvent(evt: HttpEvent<any>): HttpEvent<any> {

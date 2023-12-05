@@ -143,7 +143,7 @@ describe('DraftGenerationComponent', () => {
       mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
 
       mockI18nService.getLanguageDisplayName.and.returnValue('English');
-      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(of('').toPromise());
+      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(Promise.resolve(''));
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
