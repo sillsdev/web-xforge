@@ -11,7 +11,7 @@ import {
   WordGraph,
   WordGraphArc
 } from '@sillsdev/machine';
-import { Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, expand, filter, map, mergeMap, share, startWith, takeWhile } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { AlignedWordPairDto } from './aligned-word-pair-dto';
@@ -37,34 +37,34 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   ) {}
 
   async translate(segment: string): Promise<TranslationResult> {
-    const response = await this.httpClient
-      .post<TranslationResultDto>(
+    const response = await lastValueFrom(
+      this.httpClient.post<TranslationResultDto>(
         `translation/engines/project:${this.projectId}/actions/translate`,
         JSON.stringify(segment)
       )
-      .toPromise();
+    );
     return this.createTranslationResult(response.data as TranslationResultDto);
   }
 
   async translateN(n: number, segment: string): Promise<TranslationResult[]> {
-    const response = await this.httpClient
-      .post<TranslationResultDto[]>(
+    const response = await lastValueFrom(
+      this.httpClient.post<TranslationResultDto[]>(
         `translation/engines/project:${this.projectId}/actions/translate/${n}`,
         JSON.stringify(segment)
       )
-      .toPromise();
+    );
     const dto = response.data as TranslationResultDto[];
     return dto.map(dto => this.createTranslationResult(dto));
   }
 
   async getWordGraph(segment: string): Promise<WordGraph> {
     try {
-      const response = await this.httpClient
-        .post<WordGraphDto>(
+      const response = await lastValueFrom(
+        this.httpClient.post<WordGraphDto>(
           `translation/engines/project:${this.projectId}/actions/getWordGraph`,
           JSON.stringify(segment)
         )
-        .toPromise();
+      );
       return this.createWordGraph(response.data as WordGraphDto);
     } catch (err: any) {
       if (err.status === 404 || err.status === 409) {
@@ -122,8 +122,8 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   async getStats(): Promise<TranslationEngineStats> {
-    const engineDto = await this.getEngine(this.projectId)
-      .pipe(
+    const engineDto = await lastValueFrom(
+      this.getEngine(this.projectId).pipe(
         catchError(err => {
           if (err.status === 404) {
             return of({ confidence: 0.0, trainedSegmentCount: 0 });
@@ -132,7 +132,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           }
         })
       )
-      .toPromise();
+    );
     return { confidence: engineDto.confidence, trainedSegmentCount: engineDto.trainedSegmentCount };
   }
 

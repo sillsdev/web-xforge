@@ -75,7 +75,7 @@
     "reconnecting-websocket": "^4.4.0",
     "recordrtc": "^5.6.2",
     "rich-text": "^4.1.0",
-    "rxjs": "^6.6.7",
+    "rxjs": "^7.8.1",
     "sharedb": "^1.9.2",
     "tinycolor2": "^1.4.2",
     "tslib": "^2.4.0",
