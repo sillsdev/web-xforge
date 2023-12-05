@@ -73,7 +73,7 @@ mat-nav-list .mat-list-item {
   cursor: initial;
 }
 .navigation-header ::ng-deep .mat-list-item-content {
-  font-size: small;
+  font-size: 0.95em;
   text-align: center;
   justify-content: space-around;
   color: #777;
@@ -91,7 +91,7 @@ mat-nav-list .mat-list-item {
   color: white;
   padding: 2px 6px;
   border-radius: 100px;
-  font-size: small;
+  font-size: 0.95em;
   background: #4678d6;
   margin-inline-start: auto;
 }
