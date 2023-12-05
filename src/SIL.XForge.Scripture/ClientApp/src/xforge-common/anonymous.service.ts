@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ANONYMOUS_URL } from 'xforge-common/url-constants';
 import { Injectable } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { AnonymousShareKeyResponse } from '../app/join/join.component';
 
 interface GenerateAccountRequest {
@@ -37,23 +38,23 @@ export class AnonymousService {
 
   private get<T>(endPoint: string): Promise<HttpResponse<T>> {
     const url: string = `${ANONYMOUS_URL}/${endPoint}`;
-    return this.http
-      .get<T>(url, {
+    return lastValueFrom(
+      this.http.get<T>(url, {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         responseType: 'json',
         observe: 'response'
       })
-      .toPromise();
+    );
   }
 
   private post<T>(endPoint: string, body?: any): Promise<HttpResponse<T>> {
     const url: string = `${ANONYMOUS_URL}/${endPoint}`;
-    return this.http
-      .post<T>(url, body, {
+    return lastValueFrom(
+      this.http.post<T>(url, body, {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         responseType: 'json',
         observe: 'response'
       })
-      .toPromise();
+    );
   }
 }

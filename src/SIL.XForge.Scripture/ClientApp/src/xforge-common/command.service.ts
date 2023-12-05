@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { v1 as uuidv1 } from 'uuid';
 import { hasNumberProp, hasObjectProp, hasStringProp } from '../type-utils';
 import { BugsnagService } from './bugsnag.service';
@@ -75,9 +76,9 @@ export class CommandService {
       'request'
     );
     try {
-      const response = await this.http
-        .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
-        .toPromise();
+      const response = await lastValueFrom(
+        this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
+      );
       if (response.error != null) {
         throw response.error;
       }

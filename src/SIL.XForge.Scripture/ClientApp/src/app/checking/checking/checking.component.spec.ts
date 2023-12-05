@@ -279,7 +279,6 @@ describe('CheckingComponent', () => {
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
-      discardPeriodicTasks();
     }));
 
     it('responds to remote community checking disabled when checker', fakeAsync(() => {
@@ -293,7 +292,6 @@ describe('CheckingComponent', () => {
       expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
       env.waitForSliderUpdate();
-      discardPeriodicTasks();
     }));
 
     it('responds to remote community checking disabled when observer', fakeAsync(() => {
@@ -305,7 +303,6 @@ describe('CheckingComponent', () => {
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
-      discardPeriodicTasks();
     }));
   });
 
@@ -371,7 +368,6 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const question = env.selectQuestion(1);
       expect(question.classes['selected']).toBe(true);
-      discardPeriodicTasks();
     }));
 
     it('question status change to read', fakeAsync(() => {
@@ -380,7 +376,6 @@ describe('CheckingComponent', () => {
       expect(question.classes['question-read']).toBeUndefined();
       question = env.selectQuestion(3);
       expect(question.classes['question-read']).toBe(true);
-      discardPeriodicTasks();
     }));
 
     it('question status change to answered', fakeAsync(() => {
@@ -402,7 +397,6 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.getUnread(question)).toEqual(0);
       env.waitForAudioPlayer();
-      discardPeriodicTasks();
     }));
 
     it('allows admin to archive a question', fakeAsync(async () => {
@@ -420,7 +414,6 @@ describe('CheckingComponent', () => {
 
       env.archiveQuestionButton.nativeElement.click();
       env.waitForQuestionTimersToComplete();
-      discardPeriodicTasks();
 
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.length).toEqual(13);
@@ -450,7 +443,6 @@ describe('CheckingComponent', () => {
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
       ).times(4);
       expect().nothing();
-      discardPeriodicTasks();
     }));
 
     it('removes audio player when question audio deleted', fakeAsync(() => {
@@ -478,7 +470,6 @@ describe('CheckingComponent', () => {
         5
       );
       flush();
-      discardPeriodicTasks();
     }));
 
     it('uploads audio then updates audio url', fakeAsync(() => {
@@ -523,7 +514,6 @@ describe('CheckingComponent', () => {
       verify(mockedDialogService.confirm(anything(), anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
-      discardPeriodicTasks();
     }));
 
     it('should move highlight and question icon when question is edited to move verses', fakeAsync(() => {
@@ -553,7 +543,6 @@ describe('CheckingComponent', () => {
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
       tick();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
@@ -604,7 +593,6 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(15);
       question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
-      discardPeriodicTasks();
     }));
 
     it('question with audio and no text should display book/chapter as a reference', fakeAsync(() => {
@@ -631,7 +619,7 @@ describe('CheckingComponent', () => {
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
       env.waitForAudioPlayer();
-      discardPeriodicTasks();
+
       const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('John 1:10');
       env.waitForAudioPlayer();
@@ -657,7 +645,6 @@ describe('CheckingComponent', () => {
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q2Id', 'filename2.mp3')
       ).times(8);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
@@ -679,7 +666,6 @@ describe('CheckingComponent', () => {
       expect(env.location.path()).toEqual('/projects/project01/checking/MAT/1?scope=book');
       env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN/1?scope=book');
-      discardPeriodicTasks();
     }));
 
     it('admin can see appropriate filter options', fakeAsync(() => {
@@ -764,7 +750,6 @@ describe('CheckingComponent', () => {
       env.setQuestionFilter(QuestionFilter.StatusExport);
       expect(env.questions.length).toEqual(0);
       expect(env.noQuestionsFound).not.toBeNull();
-      discardPeriodicTasks();
     }));
 
     it('should update question summary when filtered', fakeAsync(() => {
@@ -784,7 +769,6 @@ describe('CheckingComponent', () => {
       // The first question after filter has now been read
       expect(env.component.summary.unread).toEqual(9);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('should reset filtering after a new question is added', fakeAsync(() => {
@@ -806,7 +790,6 @@ describe('CheckingComponent', () => {
       expect(env.component.activeQuestionFilter).toEqual(QuestionFilter.None);
       expect(env.questions.length).toEqual(14);
       env.waitForQuestionTimersToComplete();
-      discardPeriodicTasks();
     }));
 
     it('can narrow questions scope', fakeAsync(() => {
@@ -917,7 +900,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerText(0)).toBe('Just added answer');
       expect(env.getAnswerText(1)).toBe('Answer 7 on question');
       flush();
-      discardPeriodicTasks();
     }));
 
     it('saves the location of the last visited question', fakeAsync(() => {
@@ -934,7 +916,6 @@ describe('CheckingComponent', () => {
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
-      discardPeriodicTasks();
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
@@ -953,7 +934,6 @@ describe('CheckingComponent', () => {
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
       expect(projectUserConfigDoc.selectedChapterNum).toBe(1);
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).twice();
-      discardPeriodicTasks();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
@@ -967,7 +947,6 @@ describe('CheckingComponent', () => {
       expect(env.yourAnswerField).toBeNull();
       expect(env.addAnswerButton).not.toBeNull();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('does not save the answer when storage quota exceeded', fakeAsync(() => {
@@ -1005,7 +984,6 @@ describe('CheckingComponent', () => {
       expect(questionDoc.data!.answers.length).toEqual(0);
       expect(env.saveAnswerButton).not.toBeNull();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can change answering tabs', fakeAsync(() => {
@@ -1016,7 +994,6 @@ describe('CheckingComponent', () => {
       env.clickButton(env.audioTab);
       env.waitForSliderUpdate();
       expect(env.recordButton).not.toBeNull();
-      discardPeriodicTasks();
     }));
 
     it('check answering validation', fakeAsync(() => {
@@ -1027,7 +1004,6 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.yourAnswerContainer.classes['mat-form-field-invalid']).toBe(true);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can edit a new answer', fakeAsync(() => {
@@ -1046,7 +1022,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can edit an existing answer', fakeAsync(() => {
@@ -1085,7 +1060,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(myAnswerIndex)).withContext('should not have been changed').toEqual('Edited answer');
       flush();
-      discardPeriodicTasks();
     }));
 
     it('highlights remotely edited answer', fakeAsync(() => {
@@ -1099,7 +1073,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Question 9 edited answer');
       flush();
-      discardPeriodicTasks();
     }));
 
     it('does not highlight upon sync', fakeAsync(() => {
@@ -1113,7 +1086,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(answerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
       flush();
-      discardPeriodicTasks();
     }));
 
     it('still shows answers as read after canceling an edit', fakeAsync(() => {
@@ -1144,7 +1116,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
@@ -1164,7 +1135,6 @@ describe('CheckingComponent', () => {
       ).once();
       expect().nothing();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('saves audio answer offline and plays from cache', fakeAsync(() => {
@@ -1214,7 +1184,6 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(question.data!.answers.length).toEqual(1);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can delete an answer', fakeAsync(() => {
@@ -1228,7 +1197,6 @@ describe('CheckingComponent', () => {
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
       ).once();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
@@ -1249,7 +1217,6 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(1);
       env.selectQuestion(1);
       expect(env.answers.length).toEqual(0);
-      discardPeriodicTasks();
     }));
 
     it("checker user can like and unlike another's answer", fakeAsync(() => {
@@ -1267,7 +1234,6 @@ describe('CheckingComponent', () => {
       expect(env.getLikeTotal(1)).toBe(0);
       expect(env.likeButtons[1].classes.like).toBeUndefined();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('cannot like your own answer', fakeAsync(() => {
@@ -1291,7 +1257,6 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(0)).toBe(0);
       verify(mockedNoticeService.show("You don't have permission to like answers.")).once();
-      discardPeriodicTasks();
     }));
 
     it("admin user can like and unlike another's answer", fakeAsync(() => {
@@ -1314,7 +1279,6 @@ describe('CheckingComponent', () => {
       expect(env.likeButtons[0].classes.like).toBeUndefined();
       expect(env.likeButtons[1].classes.like).toBeUndefined();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('hides the like icon if see other users responses is disabled', fakeAsync(() => {
@@ -1326,7 +1290,6 @@ describe('CheckingComponent', () => {
       expect(env.likeButtons.length).toEqual(0);
       env.setSeeOtherUserResponses(true);
       expect(env.likeButtons.length).toEqual(1);
-      discardPeriodicTasks();
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
@@ -1349,7 +1312,6 @@ describe('CheckingComponent', () => {
       env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(1);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('can add scripture to an answer', fakeAsync(() => {
@@ -1393,7 +1355,6 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: OBSERVER_USER });
       env.selectQuestion(2);
       expect(env.addAnswerButton).toBeNull();
-      discardPeriodicTasks();
     }));
 
     it('project admins can only edit own answers', fakeAsync(() => {
@@ -1423,7 +1384,6 @@ describe('CheckingComponent', () => {
 
       // We made a recording, so we should not be showing a validation error.
       expect(env.component.answersPanel!.answerForm.valid).toBe(true);
-      discardPeriodicTasks();
     }));
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
@@ -1520,7 +1480,6 @@ describe('CheckingComponent', () => {
       // The total answers header comes back.
       expect(env.totalAnswersMessageCount).toEqual(1);
       flush();
-      discardPeriodicTasks();
     }));
 
     it("new remote answers and banner don't show, if user has not yet answered the question", fakeAsync(() => {
@@ -1594,7 +1553,6 @@ describe('CheckingComponent', () => {
       expect(env.unreadAnswersBannerCount).toEqual(1);
       expect(env.totalAnswersMessageCount).toEqual(4);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('show-remote-answer banner disappears if the un-shown remote answer is deleted', fakeAsync(() => {
@@ -1645,7 +1603,6 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toEqual(3);
       expect(env.unreadAnswersBannerCount).toEqual(1);
       flush();
-      discardPeriodicTasks();
     }));
 
     it('show-remote-answer banner not shown to user if see-others-answers is disabled', fakeAsync(() => {
@@ -1683,7 +1640,6 @@ describe('CheckingComponent', () => {
       // Banner is shown
       expect(env.showUnreadAnswersButton).not.toBeNull();
       flush();
-      discardPeriodicTasks();
     }));
 
     describe('Comments', () => {
@@ -1694,7 +1650,6 @@ describe('CheckingComponent', () => {
         env.commentOnAnswer(0, 'Response to answer');
         expect(env.getAnswerComments(0).length).toBe(1);
         flush();
-        discardPeriodicTasks();
       }));
 
       it('can edit comment on an answer', fakeAsync(() => {
@@ -1713,7 +1668,6 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerCommentText(0, 1)).toBe('Second comment to answer');
         expect(env.getAnswerComments(0).length).toBe(2);
         flush();
-        discardPeriodicTasks();
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
@@ -1776,7 +1730,6 @@ describe('CheckingComponent', () => {
         env.waitForSliderUpdate();
         expect(env.getUnread(question)).toEqual(0);
         flush();
-        discardPeriodicTasks();
       }));
 
       it('displays comments in real-time', fakeAsync(() => {
@@ -1816,7 +1769,6 @@ describe('CheckingComponent', () => {
         expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.length).toEqual(3);
         expect(env.getAnswerComments(0).length).toEqual(4);
         flush();
-        discardPeriodicTasks();
       }));
 
       it('observer cannot comment on an answer', fakeAsync(() => {
@@ -1824,7 +1776,6 @@ describe('CheckingComponent', () => {
         env.selectQuestion(6);
         expect(env.getAddCommentButton(0)).toBeNull();
         env.waitForAudioPlayer();
-        discardPeriodicTasks();
       }));
 
       it('project admins can only edit own comments', fakeAsync(() => {
@@ -1844,7 +1795,6 @@ describe('CheckingComponent', () => {
       env.selectQuestion(5);
       verify(questionDoc!.updateAnswerFileCache()).once();
       expect().nothing();
-      discardPeriodicTasks();
     }));
 
     it('update answer audio cache after save', fakeAsync(() => {
@@ -1859,7 +1809,6 @@ describe('CheckingComponent', () => {
       expect().nothing();
       tick();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('update answer audio cache on remote update to question', fakeAsync(() => {
@@ -1871,7 +1820,6 @@ describe('CheckingComponent', () => {
       expect().nothing();
       tick();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('update answer audio cache on remote removal of an answer', fakeAsync(() => {
@@ -1883,7 +1831,6 @@ describe('CheckingComponent', () => {
       expect().nothing();
       tick();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('only admins can change answer export status', fakeAsync(() => {
@@ -1899,7 +1846,6 @@ describe('CheckingComponent', () => {
           expect(env.getResolveAnswerButton(0)).withContext(`${USER.role} can not see resolve button`).toBeNull();
         }
         env.waitForAudioPlayer();
-        discardPeriodicTasks();
       });
     }));
 
@@ -1981,7 +1927,6 @@ describe('CheckingComponent', () => {
       tick(env.questionReadTimer);
       env.fixture.detectChanges();
       expect(env.currentQuestion).toBe(4);
-      discardPeriodicTasks();
     }));
 
     it('quill editor element lang attribute is set from project language', fakeAsync(() => {
@@ -2025,7 +1970,6 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('highlight-segment')).toBe(true);
       tick();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('is not hidden when project setting did not specify to hide it', fakeAsync(() => {
@@ -2175,7 +2119,6 @@ describe('CheckingComponent', () => {
       verify(audio.stop()).once();
       expect(env.component).toBeDefined();
       flush();
-      discardPeriodicTasks();
     }));
 
     it('pauses audio when question is archived', fakeAsync(() => {
@@ -2192,13 +2135,11 @@ describe('CheckingComponent', () => {
 
       env.archiveQuestionButton.nativeElement.click();
       env.waitForQuestionTimersToComplete();
-      discardPeriodicTasks();
 
       expect(question.isArchived).toBe(true);
 
       verify(audio.pause()).once();
       expect(env.component).toBeDefined();
-      discardPeriodicTasks();
     }));
 
     it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
@@ -2292,7 +2233,6 @@ describe('CheckingComponent', () => {
 
       verify(chapterAudio.pause()).once();
       expect(env.component.showScriptureAudioPlayer).toBe(true);
-      discardPeriodicTasks();
     }));
 
     it('updates user played refs while audio is playing ', fakeAsync(() => {
@@ -2852,7 +2792,6 @@ class TestEnvironment {
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
-    discardPeriodicTasks();
   }
 
   setBookChapter(bookId: string, chapter: number): void {
@@ -3032,9 +2971,12 @@ class TestEnvironment {
     this.waitForTimersToComplete();
   }
 
-  /** Wait for the code in calculateScriptureSliderPosition() to wait for the DOM to update. */
   waitForSliderUpdate(): void {
-    this.waitForTimersToComplete(100);
+    // Question query changes are throttled by 100 ms, so we have to wait for them.
+    // After 100 ms of waiting, the query changes will be emitted, and then the async scheduler will set a 100 ms
+    // timeout before emitting changes again. That 100 ms timeout will get left in the queue, but if we wait past that
+    // time, we don't have to do discardPeriodicTasks() to flush the queue.
+    this.waitForTimersToComplete(200);
   }
 
   waitForQuestionTimersToComplete(): void {

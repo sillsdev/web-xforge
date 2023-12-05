@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { lastValueFrom, Observable, Subject } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -204,12 +204,12 @@ export class FileService extends SubscriptionDisposable {
     formData.append('projectId', projectId);
     formData.append('dataId', dataId);
     formData.append('file', file);
-    const response = await this.http
-      .post<HttpResponse<string>>(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/${fileType}`, formData, {
+    const response = await lastValueFrom(
+      this.http.post<HttpResponse<string>>(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/${fileType}`, formData, {
         headers: { Accept: 'application/json' },
         observe: 'response'
       })
-      .toPromise();
+    );
     const path = response.headers.get('Location')!;
     return path.replace(`${environment.assets}${fileType}/`, '/');
   }
@@ -265,7 +265,7 @@ export class FileService extends SubscriptionDisposable {
   private onlineRequestFile(url: string): Promise<Blob> {
     let headers: HttpHeaders = new HttpHeaders();
     headers = headers.append('Range', 'bytes=0-');
-    return this.http.get(url, { headers: headers, observe: 'body', responseType: 'blob' }).toPromise();
+    return lastValueFrom(this.http.get(url, { headers: headers, observe: 'body', responseType: 'blob' }));
   }
 
   /**

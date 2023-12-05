@@ -99,7 +99,7 @@ class TestEnvironment {
   readonly service: Auth0Service;
 
   constructor() {
-    when(mockedHttpClient.post(anything(), anything(), anything())).thenReturn(of());
+    when(mockedHttpClient.post(anything(), anything(), anything())).thenReturn(of({} as any));
     this.service = TestBed.inject(Auth0Service);
   }
 
