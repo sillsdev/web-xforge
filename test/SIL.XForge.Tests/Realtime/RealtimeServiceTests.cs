@@ -27,34 +27,32 @@ public class RealtimeServiceTests
     public async Task DeleteProjectAsync_RequestsDocRemovalsInCollections()
     {
         var env = new TestEnvironment();
-        string projectId = "project1id";
+        const string projectId = "project1id";
 
         // Set of collections that should be filtered thru to remove matching docs. This set could be different
         // per application (like Scripture Forge, Language Forge, etc.), and the set used here should match what
         // is defined in TestEnvironment.
-        Dictionary<string, IMongoCollection<BsonDocument>> collectionsToBePruned =
-            new Dictionary<string, IMongoCollection<BsonDocument>>();
-        foreach (
-            string collectionName in (
-                new string[]
-                {
-                    "some_projects",
-                    "favorite_numbers",
-                    "favorite_things",
-                    "favorite_verses",
-                    "o_some_projects",
-                    "o_favorite_numbers",
-                    "o_favorite_things",
-                    "o_favorite_verses",
-                }
-            )
-        )
+        var collectionsToBePruned = new Dictionary<string, IMongoCollection<BsonDocument>>();
+        string[] collectionNames =
+        {
+            "some_projects",
+            "favorite_numbers",
+            "favorite_things",
+            "favorite_verses",
+            "o_some_projects",
+            "o_favorite_numbers",
+            "o_favorite_things",
+            "o_favorite_verses",
+            "m_some_projects",
+            "m_favorite_numbers",
+            "m_favorite_things",
+            "m_favorite_verses",
+        };
+        foreach (string collectionName in collectionNames)
         {
             IMongoCollection<BsonDocument> collection = Substitute.For<IMongoCollection<BsonDocument>>();
             collectionsToBePruned.Add(collectionName, collection);
-            env.MongoDatabase
-                .GetCollection<BsonDocument>(collectionName)
-                .Returns<IMongoCollection<BsonDocument>>(collection);
+            env.MongoDatabase.GetCollection<BsonDocument>(collectionName).Returns(collection);
         }
         // SUT
         await env.Service.DeleteProjectAsync(projectId);
@@ -63,6 +61,7 @@ public class RealtimeServiceTests
             // A further enhancement would be checking that the filter._value is the desired regex.
             await collectionToPrune.Received(1).DeleteManyAsync(Arg.Any<FilterDefinition<BsonDocument>>());
         }
+        env.MongoDatabase.Received(collectionNames.Length).GetCollection<BsonDocument>(Arg.Any<string>());
     }
 
     [Test]
@@ -77,22 +76,27 @@ public class RealtimeServiceTests
     public async Task DeleteUserAsync_RequestsDocRemovalsInCollections()
     {
         var env = new TestEnvironment();
-        string projectId = "project1id";
+        const string projectId = "project1id";
 
         // Set of collections that should be filtered thru to remove matching docs.
         // This set could be different
         // per application (like Scripture Forge, Language Forge, etc.), and the set used here should match what
         // is defined in TestEnvironment.
-        Dictionary<string, IMongoCollection<BsonDocument>> collectionsToBePruned =
-            new Dictionary<string, IMongoCollection<BsonDocument>>();
-        string[] collectionNames = new string[] { "users", "o_users", "favorite_animals", "o_favorite_animals", };
+        var collectionsToBePruned = new Dictionary<string, IMongoCollection<BsonDocument>>();
+        string[] collectionNames =
+        {
+            "users",
+            "o_users",
+            "m_users",
+            "favorite_animals",
+            "o_favorite_animals",
+            "m_favorite_animals",
+        };
         foreach (string collectionName in collectionNames)
         {
             IMongoCollection<BsonDocument> collection = Substitute.For<IMongoCollection<BsonDocument>>();
             collectionsToBePruned.Add(collectionName, collection);
-            env.MongoDatabase
-                .GetCollection<BsonDocument>(collectionName)
-                .Returns<IMongoCollection<BsonDocument>>(collection);
+            env.MongoDatabase.GetCollection<BsonDocument>(collectionName).Returns(collection);
         }
         // SUT
         await env.Service.DeleteUserAsync(projectId);
@@ -210,22 +214,22 @@ public class RealtimeServiceTests
                 .Extensions
                 .Options
                 .Options
-                .Create<DataAccessOptions>(new DataAccessOptions() { MongoDatabaseName = "mongoDatabaseName" });
+                .Create(new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" });
             IOptions<RealtimeOptions> realtimeOptions = Microsoft
                 .Extensions
                 .Options
                 .Options
-                .Create<RealtimeOptions>(
-                    new RealtimeOptions()
+                .Create(
+                    new RealtimeOptions
                     {
                         ProjectDoc = new DocConfig("some_projects", typeof(Project)),
                         ProjectDataDocs = new List<DocConfig>
                         {
                             new DocConfig("favorite_numbers", typeof(int)),
                             new DocConfig("favorite_things", typeof(object)),
-                            new DocConfig("favorite_verses", typeof(string))
+                            new DocConfig("favorite_verses", typeof(string)),
                         },
-                        UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)), }
+                        UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)) },
                     }
                 );
             IOptions<AuthOptions> authOptions = Substitute.For<IOptions<AuthOptions>>();
