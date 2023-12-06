@@ -17,7 +17,6 @@ $toolbar-height: 56px;
 
 :host {
   display: flex;
-  flex-direction: column;
   position: relative;
 
   > mat-progress-bar {
@@ -129,6 +128,14 @@ header {
       line-height: 1.5rem;
       font-weight: bold;
     }
+    .install-button {
+      display: flex;
+      column-gap: 16px;
+      align-items: center;
+      mat-icon {
+        margin: unset;
+      }
+    }
   }
 
   &.locale-menu {
@@ -168,7 +175,7 @@ header {
   height: 50px;
 
   &.user-menu-btn {
-    mat-icon {
+    .install-badge {
       position: absolute;
       left: 3px;
       bottom: 3px;
@@ -176,9 +183,9 @@ header {
       color: variables.$purpleLight;
       background: #fff;
       border-radius: 50%;
-      height: 18px;
+      height: 16px;
       width: 16px;
-      line-height: 1.5;
+      line-height: 1.4;
     }
   }
 
@@ -213,7 +220,6 @@ header {
 .mat-drawer-container {
   width: 100%;
   background: initial;
-  flex: 1;
 }
 
 .app-content {

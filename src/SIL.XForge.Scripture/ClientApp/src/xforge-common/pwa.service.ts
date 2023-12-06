@@ -7,13 +7,19 @@ import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from './location.service';
 
 export const PWA_CHECK_FOR_UPDATES = 30_000;
-export const PWA_LAST_PROMPT_SEEN = 'last_pwa_prompt_seen';
+export const PWA_PROMPT_LAST_SEEN = 'pwa_prompt_last_seen';
+export const PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN = 86400 * 7;
+
+// Chromium browsers support an experimental event to prompt users to install a PWA
+// if it is available.
+// https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent
 export interface BeforeInstallPromptEvent {
   prompt: () => Promise<InstallPromptOutcome>;
 }
+// The promise informs the outcome of the users interaction with the prompt from the BeforeInstallPromptEvent
+// https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent/prompt
 export interface InstallPromptOutcome {
   outcome: 'dismissed' | 'accepted';
-  platform: string;
 }
 
 @Injectable({
@@ -53,12 +59,12 @@ export class PwaService extends SubscriptionDisposable {
     }
   }
 
-  get canInstall$(): BehaviorSubject<boolean> {
-    return this._canInstall$;
+  get canInstall$(): Observable<boolean> {
+    return this._canInstall$.asObservable();
   }
 
-  get getLastPromptSeen(): number {
-    return this.localSettings.get(PWA_LAST_PROMPT_SEEN) ?? 0;
+  get installPromptLastShownTime(): number {
+    return this.localSettings.get(PWA_PROMPT_LAST_SEEN) ?? 0;
   }
 
   get hasUpdate$(): Observable<VersionReadyEvent> {
@@ -67,6 +73,10 @@ export class PwaService extends SubscriptionDisposable {
     return this.updates.versionUpdates.pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'));
   }
 
+  /**
+   * Check if the browser instance is running in standalone mode which is typical of an
+   * installed PWA. This is supported across all browsers.
+   */
   get isRunningInstalledApp(): boolean {
     return window.matchMedia('(display-mode: standalone)').matches;
   }
@@ -76,13 +86,14 @@ export class PwaService extends SubscriptionDisposable {
     this.locationService.reload();
   }
 
-  install(): void {
-    if (this.promptEvent != null) {
-      this.promptEvent?.prompt().then((result: InstallPromptOutcome) => {
-        if (result.outcome === 'accepted') {
-          this.canInstall$.next(!this.isRunningInstalledApp);
-        }
-      });
+  async install(): Promise<void> {
+    const result: InstallPromptOutcome | undefined = await this.promptEvent?.prompt();
+    if (result?.outcome === 'accepted') {
+      this._canInstall$.next(!this.isRunningInstalledApp);
     }
+  }
+
+  setInstallPromptLastShownTime(): void {
+    this.localSettings.set(PWA_PROMPT_LAST_SEEN, Date.now());
   }
 }
