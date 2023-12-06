@@ -664,6 +664,26 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetPreTranslationAsync_NotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new InvalidOperationException());
+
+        // SUT
+        ActionResult<PreTranslationDto> actual = await env.Controller.GetPreTranslationAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ConflictResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetPreTranslationAsync_Success()
     {
         // Set up test environment

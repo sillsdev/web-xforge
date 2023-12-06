@@ -1281,6 +1281,21 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetPreTranslationAsync_EngineNotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService
+            .GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(ServalApiExceptions.EngineNotBuilt);
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(
+            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public void GetPreTranslationAsync_NoFeatureFlagEnabled()
     {
         // Set up test environment
@@ -1318,7 +1333,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetPreTranslationsAsync_ServalDown()
+    public void GetPreTranslationAsync_ServalDown()
     {
         // Set up test environment
         var env = new TestEnvironment();

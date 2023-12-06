@@ -140,7 +140,7 @@ export class DraftGenerationService {
         map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}),
         catchError(err => {
           // If no pretranslations exist, return empty dictionary
-          if (err.status === 404) {
+          if (err.status === 404 || err.status === 409) {
             return of({});
           }
           return throwError(err);

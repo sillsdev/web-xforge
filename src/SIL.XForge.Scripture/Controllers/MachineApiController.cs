@@ -255,6 +255,7 @@ public class MachineApiController : ControllerBase
     /// <response code="200">The pre-translations were successfully queried for.</response>
     /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetPreTranslation)]
     public async Task<ActionResult<PreTranslationDto>> GetPreTranslationAsync(
@@ -287,6 +288,10 @@ public class MachineApiController : ControllerBase
         catch (ForbiddenException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
         }
     }
 
