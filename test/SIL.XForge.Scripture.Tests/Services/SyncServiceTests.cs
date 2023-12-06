@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Hangfire;
@@ -22,6 +21,7 @@ public class SyncServiceTests
     private const string Project01 = "project01";
     private const string Project02 = "project02";
     private const string Project03 = "project03";
+    private const string Project04 = "project04";
 
     [Test]
     public async Task SyncAsync_CancelSourceAndTarget()
@@ -31,7 +31,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -74,7 +74,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -117,7 +117,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync("userid", Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
 
         // Verify that the job was queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -158,7 +158,52 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).SyncDisabled, Is.False);
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync("userid", Project01, false));
+        Assert.DoesNotThrowAsync(
+            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" })
+        );
+    }
+
+    [Test]
+    public void SyncAsync_MissingTargetSecret()
+    {
+        var env = new TestEnvironment();
+        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).SyncDisabled, Is.False);
+        // SUT
+        Assert.ThrowsAsync<ArgumentException>(
+            async () => await env.Service.SyncAsync(new SyncConfig { ProjectId = Project04, UserId = "userid" })
+        );
+    }
+
+    [Test]
+    public async Task SyncAsync_EnqueueTargetOnly()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
+
+        // Run sync
+        await env.Service.SyncAsync(
+            new SyncConfig
+            {
+                ProjectId = Project03,
+                TargetOnly = true,
+                UserId = "userid",
+            }
+        );
+
+        // Verify that the jobs were queued correctly
+        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(0));
+        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
+        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
+        Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(0));
+        Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
+        Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
+        Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Is.Empty);
+        Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
+        Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
+        Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.Zero);
+        Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
+        Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
     }
 
     [Test]
@@ -169,7 +214,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -200,7 +245,7 @@ public class SyncServiceTests
             );
 
         // Run sync
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify that the jobs were queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -225,7 +270,7 @@ public class SyncServiceTests
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync("userid", Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
 
         // Verify that the job was queued correctly
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
@@ -247,7 +292,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.SyncAsync("userid", Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
 
         // Verify that the sync metrics ids are recorded in the project secrets
         string syncMetricsId = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
@@ -268,7 +313,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify that the sync metrics ids are recorded in the project secrets
         string syncMetricsId01 = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
@@ -290,7 +335,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify that the sync metrics ids are recorded in the project secrets
         string syncMetricsId01 = env.ProjectSecrets.Get(Project01).SyncMetricsIds.First();
@@ -313,7 +358,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify the sync metrics as queued
         Assert.That(
@@ -344,7 +389,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify the sync metrics
         Assert.That(
@@ -363,7 +408,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify the sync metrics as queued
         Assert.That(
@@ -394,7 +439,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project03, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
 
         // Verify the sync metrics
         string sourceId = env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).Id;
@@ -410,7 +455,7 @@ public class SyncServiceTests
         DateTime beforeSync = DateTime.UtcNow;
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
         DateTime afterSync = DateTime.UtcNow;
 
         // Verify the sync metrics
@@ -428,7 +473,7 @@ public class SyncServiceTests
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
         string curUserId = "userid";
 
-        await env.Service.SyncAsync(curUserId, Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = curUserId });
 
         // Verify the sync metrics
         Assert.That(env.SyncMetrics.Query().Single(s => s.ProjectRef == Project01).UserRef, Is.EqualTo(curUserId));
@@ -440,7 +485,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
 
         // Verify the sync metrics as queued
         Assert.That(
@@ -463,7 +508,7 @@ public class SyncServiceTests
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
 
-        await env.Service.SyncAsync("userid", Project01, false);
+        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = "userid" });
 
         // Verify the sync metrics
         Assert.That(
@@ -477,7 +522,9 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).SyncDisabled, Is.True, "setup");
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync("userid", Project02, false));
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SyncAsync(new SyncConfig { ProjectId = Project02, UserId = "userid" })
+        );
     }
 
     [Test]
@@ -487,25 +534,25 @@ public class SyncServiceTests
 
         env.Service.WarnIfAnomalousQueuedCount(0, "");
         env.MockLogger.AssertNoEvent(
-            (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message.Contains("QueuedCount"),
             "No warning should have been logged for reasonable queued count 0."
         );
 
         env.Service.WarnIfAnomalousQueuedCount(1, "");
         env.MockLogger.AssertNoEvent(
-            (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message.Contains("QueuedCount"),
             "No warning should have been logged for reasonable queued count 1."
         );
 
         env.Service.WarnIfAnomalousQueuedCount(-1, "");
         env.MockLogger.AssertHasEvent(
-            (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message.Contains("QueuedCount"),
             "Warn for unexpected queued count -1."
         );
 
         env.Service.WarnIfAnomalousQueuedCount(2, "");
         env.MockLogger.AssertHasEvent(
-            (LogEvent logEvent) => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message.Contains("QueuedCount"),
             "Warn for less expected queued count 2."
         );
     }
@@ -521,9 +568,9 @@ public class SyncServiceTests
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
                 {
-                    new SFProjectSecret { Id = "project01" },
-                    new SFProjectSecret { Id = "project02" },
-                    new SFProjectSecret { Id = "project03" },
+                    new SFProjectSecret { Id = Project01 },
+                    new SFProjectSecret { Id = Project02 },
+                    new SFProjectSecret { Id = Project03 },
                 }
             );
             SyncMetrics = new MemoryRepository<SyncMetrics>();
@@ -540,31 +587,31 @@ public class SyncServiceTests
                             Id = Project01,
                             Name = "project01",
                             ShortName = "P01",
-                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                            UserRoles = new Dictionary<string, string> { },
                         },
                         new SFProject
                         {
                             Id = Project02,
                             Name = "project02",
                             ShortName = "P02",
-                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                            UserRoles = new Dictionary<string, string> { },
-                            SyncDisabled = true
+                            SyncDisabled = true,
                         },
                         new SFProject
                         {
                             Id = Project03,
                             Name = "project03",
                             ShortName = "P03",
-                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                            UserRoles = new Dictionary<string, string> { },
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource { ProjectRef = Project01 }
-                            }
-                        }
+                                Source = new TranslateSource { ProjectRef = Project01 },
+                            },
+                        },
+                        new SFProject
+                        {
+                            Id = Project04,
+                            Name = "project04",
+                            ShortName = "P04",
+                        },
                     }
                 )
             );

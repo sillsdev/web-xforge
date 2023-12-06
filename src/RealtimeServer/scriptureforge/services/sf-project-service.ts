@@ -149,7 +149,47 @@ export class SFProjectService extends ProjectService<SFProject> {
                 },
                 additionalProperties: false
               },
-              lastSelectedBooks: {
+              alternateTrainingSourceEnabled: {
+                bsonType: 'bool'
+              },
+              alternateTrainingSource: {
+                bsonType: 'object',
+                properties: {
+                  paratextId: {
+                    bsonType: 'string'
+                  },
+                  projectRef: {
+                    bsonType: 'string',
+                    pattern: '^[0-9a-f]+$'
+                  },
+                  name: {
+                    bsonType: 'string'
+                  },
+                  shortName: {
+                    bsonType: 'string'
+                  },
+                  writingSystem: {
+                    bsonType: 'object',
+                    properties: {
+                      tag: {
+                        bsonType: 'string'
+                      }
+                    },
+                    additionalProperties: false
+                  },
+                  isRightToLeft: {
+                    bsonType: 'bool'
+                  }
+                },
+                additionalProperties: false
+              },
+              lastSelectedTrainingBooks: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'int'
+                }
+              },
+              lastSelectedTranslationBooks: {
                 bsonType: 'array',
                 items: {
                   bsonType: 'int'

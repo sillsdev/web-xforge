@@ -68,6 +68,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isBackTranslation = true;
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
+  isSourceAndTrainingSourceLanguageIdentical = true;
 
   jobSubscription?: Subscription;
   isOnline = true;
@@ -112,6 +113,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.isTargetLanguageSupported &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
+      this.isSourceAndTrainingSourceLanguageIdentical &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
   }
@@ -159,6 +161,28 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+
+            // The alternate training source and source languages must match
+            if (
+              (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
+              translateConfig?.draftConfig.alternateTrainingSource != null
+            ) {
+              if (translateConfig?.draftConfig.alternateSource != null) {
+                // Compare the alternate training source with the alternate source
+                this.isSourceAndTrainingSourceLanguageIdentical =
+                  translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag ===
+                  translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
+              } else {
+                // Compare the alternate training source with the source
+                this.isSourceAndTrainingSourceLanguageIdentical =
+                  translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag ===
+                  translateConfig?.source?.writingSystem.tag;
+              }
+            } else {
+              // There is no alternate training source specified
+              this.isSourceAndTrainingSourceLanguageIdentical = true;
+            }
+
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
@@ -270,7 +294,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
     this.navigateToTab('initial');
-    this.startBuild(result.books);
+    this.startBuild(result.trainingBooks, result.translationBooks);
   }
 
   hasDraftQueueDepth(job?: BuildDto): boolean {
@@ -301,13 +325,14 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return job == null || this.isDraftInProgress(job);
   }
 
-  startBuild(trainingBooks: number[]): void {
+  startBuild(trainingBooks: number[], translationBooks: number[]): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService
         .startBuildOrGetActiveBuild({
           projectId: this.activatedProject.projectId!,
-          trainingBooks
+          trainingBooks,
+          translationBooks
         })
         .pipe(
           tap((job?: BuildDto) => {

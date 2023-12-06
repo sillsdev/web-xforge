@@ -221,7 +221,9 @@ describe('SettingsComponent', () => {
                 tag: 'qaa'
               }
             },
-            lastSelectedBooks: []
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: [],
+            alternateTrainingSourceEnabled: false
           }
         });
         when(mockedParatextService.getProjects()).thenResolve([
@@ -254,6 +256,126 @@ describe('SettingsComponent', () => {
         expect(env.alternateSourceSelectProjectsResources.length).toEqual(5);
         expect(env.alternateSourceSelectProjectsResources[1].name).toBe('ParatextP2');
         expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+    });
+
+    describe('Alternate Training Source', () => {
+      it('should change alternate training source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSourceEnabled: true,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          }
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+        expect(env.alternateTrainingSourceSelectValue).toBe('');
+        expect(env.statusDone(env.alternateTrainingSourceStatus)).toBeNull();
+
+        env.setAlternateTrainingSourceValue('paratextId02');
+
+        expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP2');
+        expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
+      }));
+
+      it('should unset alternate training source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            },
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: [],
+            alternateTrainingSourceEnabled: true
+          }
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+        expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP1');
+        expect(env.statusDone(env.alternateTrainingSourceStatus)).toBeNull();
+
+        env.resetAlternateTrainingSourceProject();
+
+        expect(env.alternateTrainingSourceSelectValue).toBe('');
+        expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
+      }));
+
+      it('should hide alternate training source dropdown when alternate training source is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(false);
+        expect(env.alternateTrainingSourceSelect).toBeNull();
+        env.clickElement(env.inputElement(env.alternateTrainingSourceCheckbox));
+        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSourceEnabled: true,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          }
+        });
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+        expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(5);
+        expect(env.alternateTrainingSourceSelectProjectsResources[1].name).toBe('ParatextP2');
+        expect(env.alternateTrainingSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+
+      it('should display alternate training source project even if user is not a member', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            },
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: [],
+            alternateTrainingSourceEnabled: true
+          }
+        });
+        when(mockedParatextService.getProjects()).thenResolve([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        when(mockedParatextService.getResources()).thenResolve([]);
+
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+        expect(env.alternateTrainingSourceSelectValue).toBe('ParatextP1');
+        expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(1);
+        expect(env.alternateTrainingSourceSelectProjectsResources[0].name).toBe('ParatextP2');
       }));
     });
 
@@ -290,7 +412,14 @@ describe('SettingsComponent', () => {
 
       it('should clear the serval config value', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({ draftConfig: { servalConfig: '{}', lastSelectedBooks: [] } });
+        env.setupProject({
+          draftConfig: {
+            servalConfig: '{}',
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: [],
+            alternateTrainingSourceEnabled: false
+          }
+        });
         when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
         env.wait();
         env.wait();
@@ -733,6 +862,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#alternate-source-status'));
   }
 
+  get alternateTrainingSourceSelect(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-project-select#alternateTrainingSourceParatextId'));
+  }
+
+  get alternateTrainingSourceStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#alternate-training-source-status'));
+  }
+
   get servalConfigTextArea(): DebugElement {
     return this.fixture.debugElement.query(By.css('#serval-config'));
   }
@@ -865,6 +1002,24 @@ class TestEnvironment {
     return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
   }
 
+  get alternateTrainingSourceCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-alternate-training-source-enabled'));
+  }
+
+  get alternateTrainingSourceSelectValue(): string {
+    return this.alternateTrainingSourceSelectComponent.paratextIdControl.value?.name || '';
+  }
+
+  get alternateTrainingSourceSelectComponent(): ProjectSelectComponent {
+    return this.alternateTrainingSourceSelect.componentInstance as ProjectSelectComponent;
+  }
+
+  get alternateTrainingSourceSelectProjectsResources(): SelectableProject[] {
+    return (this.alternateTrainingSourceSelectComponent.projects || []).concat(
+      this.alternateTrainingSourceSelectComponent.resources || []
+    );
+  }
+
   makeProjectHaveTextAudio(): void {
     this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
       id: 'sAudio1',
@@ -892,6 +1047,11 @@ class TestEnvironment {
 
   resetBasedOnProject(): void {
     this.basedOnSelectComponent.paratextIdControl.setValue('');
+    this.wait();
+  }
+
+  resetAlternateTrainingSourceProject(): void {
+    this.alternateTrainingSourceSelectComponent.paratextIdControl.setValue('');
     this.wait();
   }
 
@@ -923,6 +1083,11 @@ class TestEnvironment {
     this.wait();
   }
 
+  setAlternateTrainingSourceValue(value: string): void {
+    this.alternateTrainingSourceSelectComponent.value = value;
+    this.wait();
+  }
+
   wait(): void {
     this.fixture.detectChanges();
     tick();
@@ -942,7 +1107,11 @@ class TestEnvironment {
           tag: 'qaa'
         }
       },
-      draftConfig: { lastSelectedBooks: [] }
+      draftConfig: {
+        lastSelectedTrainingBooks: [],
+        lastSelectedTranslationBooks: [],
+        alternateTrainingSourceEnabled: false
+      }
     },
     checkingConfig: Partial<CheckingConfig> = {
       checkingEnabled: false,

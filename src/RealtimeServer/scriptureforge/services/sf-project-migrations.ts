@@ -225,6 +225,33 @@ class SFProjectMigration13 extends DocMigration {
   }
 }
 
+class SFProjectMigration14 extends DocMigration {
+  static readonly VERSION = 14;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'alternateTrainingSourceEnabled'], oi: false });
+    }
+
+    if (doc.data.translateConfig.draftConfig.lastSelectedTrainingBooks == null) {
+      const lastSelectedBooks = doc.data.translateConfig.draftConfig.lastSelectedBooks;
+      if (lastSelectedBooks != null) {
+        ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedBooks'], od: lastSelectedBooks });
+        ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingBooks'], oi: lastSelectedBooks });
+      } else {
+        ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingBooks'], oi: [] });
+      }
+    }
+
+    if (doc.data.translateConfig.draftConfig.lastSelectedTranslationBooks == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedTranslationBooks'], oi: [] });
+    }
+
+    await submitMigrationOp(SFProjectMigration14.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -238,5 +265,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration10,
   SFProjectMigration11,
   SFProjectMigration12,
-  SFProjectMigration13
+  SFProjectMigration13,
+  SFProjectMigration14
 ];
