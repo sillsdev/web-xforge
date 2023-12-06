@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { asyncScheduler, from, merge, Observable, of } from 'rxjs';
-import { map, shareReplay, switchMap, throttleTime } from 'rxjs/operators';
+import { from, merge, Observable, of } from 'rxjs';
+import { distinctUntilChanged, filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
+import { areStringArraysEqual } from 'xforge-common/util/string-util';
 import { CheckingQuestionsService } from './checking-questions.service';
 
 /**
@@ -40,7 +41,20 @@ export class ResumeCheckingService {
   private createLink(): Observable<string[] | undefined> {
     return this.activatedProjectService.projectDoc$.pipe(
       switchMap(projectDoc =>
-        this.getQuestion(projectDoc).pipe(map(question => this.getLinkTokens(projectDoc, question)))
+        this.getQuestion(projectDoc).pipe(
+          map(question => this.getLinkTokens(projectDoc, question)),
+          distinctUntilChanged((prev, curr) => {
+            if (prev == null && curr == null) {
+              return true;
+            }
+
+            if (prev == null || curr == null) {
+              return false;
+            }
+
+            return areStringArraysEqual(prev, curr);
+          })
+        )
       )
     );
   }
@@ -93,10 +107,12 @@ export class ResumeCheckingService {
 
     return from(this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId)).pipe(
       switchMap(query =>
-        merge(query.ready$, query.remoteChanges$, query.localChanges$, query.remoteDocChanges$).pipe(
-          throttleTime(100, asyncScheduler, { leading: false, trailing: true }),
-          map(() => query?.docs[0])
-        )
+        merge(
+          query.ready$.pipe(filter(ready => ready)),
+          query.remoteChanges$,
+          query.localChanges$,
+          query.remoteDocChanges$
+        ).pipe(map(() => query?.docs[0]))
       )
     );
   }
