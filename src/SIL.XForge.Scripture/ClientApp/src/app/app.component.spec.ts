@@ -25,7 +25,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -264,14 +264,13 @@ describe('AppComponent', () => {
     env.wait();
     expect(env.installBadge).not.toBeNull();
 
-    const timeForPromptToBeHidden = 100;
-    when(mockedPwaService.getLastPromptSeen).thenReturn(Date.now() + timeForPromptToBeHidden);
+    when(mockedPwaService.installPromptLastShownTime).thenReturn(Date.now());
     env.avatarIcon.nativeElement.click();
     env.wait();
     expect(env.installBadge).toBeNull();
 
     // The install badge should be visible again
-    tick(timeForPromptToBeHidden);
+    tick(PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN);
     env.wait();
     expect(env.installBadge).not.toBeNull();
 
