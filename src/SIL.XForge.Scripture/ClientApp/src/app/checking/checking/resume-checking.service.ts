@@ -7,6 +7,7 @@ import { distinctUntilChanged, filter, map, shareReplay, switchMap } from 'rxjs/
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { areStringArraysEqual } from 'xforge-common/util/string-util';
 import { CheckingQuestionsService } from './checking-questions.service';
@@ -25,7 +26,8 @@ export class ResumeCheckingService {
   constructor(
     private readonly userService: UserService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly questionService: CheckingQuestionsService
+    private readonly questionService: CheckingQuestionsService,
+    private readonly onlineStatusService: OnlineStatusService
   ) {}
 
   /**
@@ -39,7 +41,7 @@ export class ResumeCheckingService {
   }
 
   private createLink(): Observable<string[] | undefined> {
-    return this.activatedProjectService.projectDoc$.pipe(
+    return this.activatedProjectService.changes$.pipe(
       switchMap(projectDoc =>
         this.getQuestion(projectDoc).pipe(
           map(question => this.getLinkTokens(projectDoc, question)),
@@ -108,7 +110,11 @@ export class ResumeCheckingService {
     return from(this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId)).pipe(
       switchMap(query =>
         merge(
-          query.ready$.pipe(filter(ready => ready)),
+          query.ready$.pipe(
+            // Query 'ready$' will not emit when offline (initial emission of false is due to BehaviorSubject),
+            // but offline docs may be available.
+            filter(isReady => isReady || !this.onlineStatusService.isOnline)
+          ),
           query.remoteChanges$,
           query.localChanges$,
           query.remoteDocChanges$
