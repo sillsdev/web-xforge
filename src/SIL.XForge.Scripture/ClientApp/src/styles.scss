@@ -47,7 +47,8 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   background-color: variables.$errorColor !important;
 }
 
-.mat-flat-button {
+.mat-flat-button,
+.mat-button-toggle-button {
   transition: background-color 0.15s, color 0.15s;
   &:not(:disabled):hover {
     background-color: variables.$greenLight;

@@ -1167,12 +1167,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
     } else {
-      // updated the existing note
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
         getNoteThreadDocId(this.projectId, params.threadDataId)
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
+        // updated the existing note
         if (threadDoc.data?.notes[noteIndex].editable === true) {
           await threadDoc!.submitJson0Op(op => {
             op.set(t => t.notes[noteIndex].content, params.content);

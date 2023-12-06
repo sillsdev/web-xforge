@@ -509,12 +509,12 @@ describe('NoteDialogComponent', () => {
     expect(env.saveOptionsMenu).not.toBeNull();
     // select resolve from the menu
     const resolveMenuItem: DebugElement = env.saveOptionsMenu.query(By.css('button'));
-    expect(resolveMenuItem.nativeElement.textContent).toEqual('Save and resolve');
+    expect(resolveMenuItem.nativeElement.textContent).toEqual('Resolve');
     resolveMenuItem.nativeElement.click();
     tick(10);
     env.fixture.detectChanges();
     expect(env.component.saveOption).toEqual('resolve');
-    expect(env.saveButton.nativeElement.textContent).toEqual('Save and resolve');
+    expect(env.saveButton.nativeElement.textContent).toEqual('Resolve');
   }));
 
   it('hides save options trigger when user is a commenter', fakeAsync(() => {
