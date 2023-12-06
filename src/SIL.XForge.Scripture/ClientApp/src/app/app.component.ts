@@ -9,7 +9,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { Subscription, combineLatest, BehaviorSubject, Observable } from 'rxjs';
+import { Subscription, combineLatest, Observable } from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -23,7 +23,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PWA_LAST_PROMPT_SEEN, PwaService } from 'xforge-common/pwa.service';
+import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -130,12 +130,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  get canInstallOnDevice$(): BehaviorSubject<boolean> {
+  get canInstallOnDevice$(): Observable<boolean> {
     return this.pwaService.canInstall$;
   }
 
-  get canShowInstallIconOnAvatar$(): Observable<boolean> {
-    return this.canInstallOnDevice$.pipe(filter(() => this.pwaService.getLastPromptSeen < Date.now()));
+  get showInstallIconOnAvatar$(): Observable<boolean> {
+    return this.canInstallOnDevice$.pipe(
+      filter(() => this.pwaService.installPromptLastShownTime + PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN < Date.now())
+    );
   }
 
   get showCheckingDisabled(): boolean {
@@ -339,8 +341,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  hideInstallIcon(): void {
-    this.localSettings.set(PWA_LAST_PROMPT_SEEN, Date.now() + 86400 * 7);
+  dismissInstallIcon(): void {
+    this.pwaService.setInstallPromptLastShownTime();
   }
 
   installOnDevice(): void {

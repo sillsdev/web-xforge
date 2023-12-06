@@ -67,10 +67,10 @@
           mat-icon-button
           title="{{ currentUser?.displayName }}"
           [matMenuTriggerFor]="userMenu"
-          (click)="hideInstallIcon()"
+          (click)="dismissInstallIcon()"
           class="user-menu-btn"
         >
-          <mat-icon *ngIf="canShowInstallIconOnAvatar$ | async" class="install-badge">install_mobile</mat-icon>
+          <mat-icon *ngIf="showInstallIconOnAvatar$ | async" class="install-badge">install_mobile</mat-icon>
           <app-avatar id="avatarId" [user]="currentUser"></app-avatar>
           <mat-icon class="offline-indicator" *ngIf="!isAppOnline"> cloud_off</mat-icon>
         </button>
@@ -91,6 +91,10 @@
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">{{ t("project_home") }}</button>
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
             {{ t("change_password") }}
+          </button>
+          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()" class="install-button">
+            {{ t("install_on_device") }}
+            <mat-icon>install_mobile</mat-icon>
           </button>
           <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
           <mat-divider></mat-divider>
