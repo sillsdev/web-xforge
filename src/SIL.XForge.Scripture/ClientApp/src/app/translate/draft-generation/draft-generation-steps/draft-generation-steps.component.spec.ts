@@ -18,6 +18,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockProjectService = mock(SFProjectService);
   const mockTargetProjectDoc = {
     data: {
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
       translateConfig: {
         source: { projectRef: 'test' },
         draftConfig: {}
@@ -26,7 +27,7 @@ describe('DraftGenerationStepsComponent', () => {
   } as SFProjectProfileDoc;
   const mockSourceProjectDoc = {
     data: {
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }]
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }]
     }
   } as SFProjectProfileDoc;
 
@@ -87,6 +88,7 @@ describe('DraftGenerationStepsComponent', () => {
   describe('target contains previously selected books', () => {
     const mockTargetProjectDoc = {
       data: {
+        texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
         translateConfig: {
           source: { projectRef: 'test' },
           draftConfig: { lastSelectedBooks: [2, 3, 4] }

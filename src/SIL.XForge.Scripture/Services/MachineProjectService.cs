@@ -597,7 +597,7 @@ public class MachineProjectService : IMachineProjectService
             new[] { buildConfig.ProjectId },
             TextCorpusType.Target,
             preTranslate,
-            Array.Empty<int>()
+            buildConfig.TrainingBooks
         );
         List<ServalCorpusFile> newTargetCorpusFiles = new List<ServalCorpusFile>();
         corpusUpdated |= await UploadNewCorpusFilesAsync(
