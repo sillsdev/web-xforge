@@ -123,12 +123,14 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.alternateTrainingSourceEnabled.value ?? false;
   }
 
-  get isPreTranslationEnabled(): boolean {
+  get showPreTranslationSettings(): boolean {
     const translateConfig = this.projectDoc?.data?.translateConfig;
     if (translateConfig == null || !this.featureFlags.showNmtDrafting.enabled) {
       return false;
+    } else if (this.authService.currentUserRole === SystemRole.SystemAdmin) {
+      return true;
     } else {
-      return translateConfig.preTranslate === true || translateConfig.projectType === ProjectType.BackTranslation;
+      return translateConfig.preTranslate === true && translateConfig.projectType !== ProjectType.BackTranslation;
     }
   }
 

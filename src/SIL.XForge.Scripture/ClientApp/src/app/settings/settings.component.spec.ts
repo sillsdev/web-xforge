@@ -258,7 +258,32 @@ describe('SettingsComponent', () => {
         expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
       }));
 
-      it('should display for back translations', fakeAsync(() => {
+      it('should display for back translations for system administrators', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          },
+          projectType: ProjectType.BackTranslation
+        });
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+      }));
+
+      it('should display for forward translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+      }));
+
+      it('should not display for back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           preTranslate: false,
@@ -271,15 +296,7 @@ describe('SettingsComponent', () => {
         });
         env.wait();
         env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
-      }));
-
-      it('should display for forward translations', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        env.wait();
-        expect(env.alternateSourceSelect).not.toBeNull();
+        expect(env.alternateSourceSelect).toBeNull();
       }));
 
       it('should not display when the feature flag is disabled', fakeAsync(() => {
@@ -476,7 +493,7 @@ describe('SettingsComponent', () => {
         expect(env.servalConfigTextArea).toBeNull();
       }));
 
-      it('should not display for system administrators on forward translations when not approved', fakeAsync(() => {
+      it('should display for system administrators on forward translations when not approved', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           preTranslate: false,
@@ -489,7 +506,7 @@ describe('SettingsComponent', () => {
         when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
         env.wait();
         env.wait();
-        expect(env.servalConfigTextArea).toBeNull();
+        expect(env.servalConfigTextArea).not.toBeNull();
       }));
 
       it('should change serval config value', fakeAsync(() => {

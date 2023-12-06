@@ -99,8 +99,8 @@
               </mat-error>
             </div>
           </mat-card-content>
-          <mat-divider *ngIf="isPreTranslationEnabled"></mat-divider>
-          <mat-card-content *ngIf="isPreTranslationEnabled">
+          <mat-divider *ngIf="showPreTranslationSettings"></mat-divider>
+          <mat-card-content *ngIf="showPreTranslationSettings">
             <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
             <div class="tool-setting">
               <ng-container *ngIf="mainSettingsLoaded">
