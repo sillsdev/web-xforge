@@ -30,7 +30,6 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
     TranslateOverviewComponent,
-    DraftGenerationComponent,
     DraftViewerComponent,
     HistoryChooserComponent
   ],
