@@ -14,6 +14,6 @@ describe('areStringArraysEqual', () => {
   });
 
   it('should return false if two arrays with different elements are compared', () => {
-    expect(areStringArraysEqual(['a', 'b', 'c'], ['a', 'b'])).toBe(false);
+    expect(areStringArraysEqual(['a', 'b', 'c'], ['x', 'y', 'z'])).toBe(false);
   });
 });
