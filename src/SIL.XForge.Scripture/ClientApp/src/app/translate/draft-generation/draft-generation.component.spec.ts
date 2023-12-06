@@ -683,36 +683,23 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('canShowAdditionalInfo', () => {
-    it('should return true if the draft build is faulted, user is system admin, and build has additional info', () => {
+    it('should return true if the user is system admin, and build has additional info', () => {
       let env = new TestEnvironment(() => {
         mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
       });
-      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Faulted, additionalInfo: {} } as BuildDto)).toBe(
-        true
-      );
-    });
-
-    it('should return false if the draft build is not faulted', () => {
-      let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
-      });
-      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Active, additionalInfo: {} } as BuildDto)).toBe(
-        false
-      );
+      expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build has no additional info', () => {
       let env = new TestEnvironment(() => {
         mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
       });
-      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      expect(env.component.canShowAdditionalInfo({} as BuildDto)).toBe(false);
     });
 
     it('should return false if the user is not system admin', () => {
       let env = new TestEnvironment();
-      expect(env.component.canShowAdditionalInfo({ state: BuildStates.Faulted, additionalInfo: {} } as BuildDto)).toBe(
-        false
-      );
+      expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(false);
     });
   });
 });
