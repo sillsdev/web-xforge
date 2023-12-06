@@ -546,7 +546,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -556,7 +556,13 @@ public class SFProjectServiceTests
             Project02,
             new SFProjectSettings { CheckingShareEnabled = false }
         );
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
+
+        // For 'anyone' links, allow the user to join even when sharing is disabled
+        await env.Service.JoinWithShareKeyAsync(User03, "linksharing02");
+        project = env.GetProject(Project02);
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.True);
+        User user = env.GetUser(User03);
+        Assert.That(user.Sites[SiteId].Projects, Contains.Item(Project02));
     }
 
     [Test]

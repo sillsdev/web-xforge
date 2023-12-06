@@ -805,12 +805,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             string[] availableRoles = new Dictionary<string, bool>
             {
-                {
-                    SFProjectRole.CommunityChecker,
-                    project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
-                },
-                { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
+                { SFProjectRole.CommunityChecker, project.CheckingConfig.CheckingEnabled },
+                { SFProjectRole.Viewer, true },
+                { SFProjectRole.Commenter, true },
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
