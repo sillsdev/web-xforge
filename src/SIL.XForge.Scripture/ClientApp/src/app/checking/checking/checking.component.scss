@@ -7,6 +7,11 @@ $questionsPanelBreakpoint: 700px;
 
 $questionsHeaderInlineStartPadding: 8px;
 
+:host {
+  display: flex;
+  flex: 1;
+}
+
 header {
   display: flex;
   padding: 8px 0;
