@@ -6,6 +6,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.Models;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -91,6 +92,71 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetServalConfig(Project01, servalConfig));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task UpdateSettings_Success()
+    {
+        var env = new TestEnvironment();
+        var settings = new SFProjectSettings();
+
+        // SUT
+        var result = await env.Controller.UpdateSettings(Project01, settings);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+    }
+
+    [Test]
+    public async Task UpdateSettings_Forbidden()
+    {
+        var env = new TestEnvironment();
+        var settings = new SFProjectSettings();
+        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings).Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.UpdateSettings(Project01, settings);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+    }
+
+    [Test]
+    public async Task UpdateSettings_NotFound()
+    {
+        var env = new TestEnvironment();
+        var settings = new SFProjectSettings();
+        const string errorMessage = "Not Found";
+        env.SFProjectService
+            .UpdateSettingsAsync(User01, Project01, settings)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.UpdateSettings(Project01, settings);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+    }
+
+    [Test]
+    public void UpdateSettings_UnknownError()
+    {
+        var env = new TestEnvironment();
+        var settings = new SFProjectSettings
+        {
+            AlternateSourceParatextId = string.Empty,
+            BiblicalTermsEnabled = true,
+            CheckingAnswerExport = string.Empty,
+            CheckingEnabled = true,
+            CheckingShareEnabled = true,
+            HideCommunityCheckingText = true,
+            SourceParatextId = string.Empty,
+            AlternateTrainingSourceEnabled = true,
+            AlternateTrainingSourceParatextId = string.Empty,
+            TranslateShareEnabled = true,
+            TranslationSuggestionsEnabled = true,
+            UsersSeeEachOthersResponses = true,
+        };
+        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings).Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.UpdateSettings(Project01, settings));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 

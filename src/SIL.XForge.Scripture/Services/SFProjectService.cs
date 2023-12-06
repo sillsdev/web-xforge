@@ -144,7 +144,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        await _syncService.SyncAsync(curUserId, projectId, true);
+        await _syncService.SyncAsync(
+            new SyncConfig
+            {
+                ProjectId = projectId,
+                TrainEngine = true,
+                UserId = curUserId,
+            }
+        );
         return projectId;
     }
 
@@ -260,12 +267,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
         bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
+        bool unsetAlternateTrainingSourceProject =
+            settings.AlternateTrainingSourceParatextId == ProjectSettingValueUnset;
 
         // Get the list of projects for setting the source or alternate source
         IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
         if (
             (settings.SourceParatextId != null && !unsetSourceProject)
             || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
+            || (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
         )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -311,6 +321,24 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
+        // Get the alternate training source for pre-translation drafting
+        TranslateSource alternateTrainingSource = null;
+        if (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
+        {
+            alternateTrainingSource = await GetTranslateSourceAsync(
+                curUserId,
+                settings.AlternateTrainingSourceParatextId,
+                syncIfCreated: true,
+                ptProjects,
+                projectDoc.Data.UserRoles
+            );
+            if (alternateTrainingSource.ProjectRef == projectId)
+            {
+                // A project cannot reference itself
+                alternateTrainingSource = null;
+            }
+        }
+
         bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         await projectDoc.SubmitJson0OpAsync(op =>
         {
@@ -327,6 +355,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 p => p.TranslateConfig.DraftConfig.AlternateSource,
                 alternateSource,
                 unsetAlternateSourceProject
+            );
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled,
+                settings.AlternateTrainingSourceEnabled
+            );
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.DraftConfig.AlternateTrainingSource,
+                alternateTrainingSource,
+                unsetAlternateTrainingSourceProject
             );
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
@@ -385,7 +424,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 }
             }
 
-            await _syncService.SyncAsync(curUserId, projectId, trainEngine);
+            await _syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ProjectId = projectId,
+                    TrainEngine = trainEngine,
+                    UserId = curUserId,
+                }
+            );
         }
     }
 
@@ -413,7 +459,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
             throw new ForbiddenException();
 
-        await _syncService.SyncAsync(curUserId, projectId, false);
+        await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
     }
 
     public async Task CancelSyncAsync(string curUserId, string projectId)
@@ -808,6 +854,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 || (
                     p.TranslateConfig.DraftConfig.AlternateSource != null
                     && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
+                )
+                || (
+                    p.TranslateConfig.DraftConfig.AlternateTrainingSource != null
+                    && (p.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef == projectId)
                 )
         );
     }
@@ -1379,7 +1429,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // This is usually because this is an alternate source for drafting
         if (projectCreated && syncIfCreated)
         {
-            await _syncService.SyncAsync(curUserId, sourceProjectRef, trainEngine: false);
+            await _syncService.SyncAsync(new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId });
         }
 
         return new TranslateSource

@@ -17,18 +17,28 @@ public class SFScriptureText : IText
     /// <summary>
     /// Initializes a new instance of the <see cref="SFScriptureText"/> class.
     /// </summary>
+    /// <param name="wordTokenizer">The word tokenizer.</param>
+    /// <param name="projectId">The SF project identifier.</param>
+    /// <param name="book">The book number.</param>
+    /// <param name="chapter">The chapter number.</param>
+    /// <param name="includeBlankSegments">If <c>true</c>, include blank segments. Usually used for pre-translation.</param>
+    /// <param name="doNotSendSegmentText">If <c>true</c>, send segments clear of all text.</param>
+    /// <param name="doc">The doc to generate the text from</param>
     /// <remarks>Builds segments from texts and references.
     /// Will use ops in doc that have an insert and a segment attribute providing reference information.
     /// For example,
     /// { "insert": "In the beginning ...",
     ///   "attributes": { "segment": "verse_1_1" } }
     /// </remarks>
+    /// <exception cref="ArgumentNullException">The doc is empty.</exception>
+    /// <exception cref="ArgumentException">The doc has no ops.</exception>
     public SFScriptureText(
         ITokenizer<string, int, string> wordTokenizer,
         string projectId,
         int book,
         int chapter,
         bool includeBlankSegments,
+        bool doNotSendSegmentText,
         BsonDocument doc
     )
     {
@@ -39,7 +49,9 @@ public class SFScriptureText : IText
             throw new ArgumentException(@"Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
         Id = $"{projectId}_{book}_{chapter}";
-        _segments = GetSegments(wordTokenizer, doc, includeBlankSegments).OrderBy(s => s.SegmentRef).ToArray();
+        _segments = GetSegments(wordTokenizer, doc, includeBlankSegments, doNotSendSegmentText)
+            .OrderBy(s => s.SegmentRef)
+            .ToArray();
     }
 
     public string Id { get; }
@@ -51,7 +63,8 @@ public class SFScriptureText : IText
     private IEnumerable<TextSegment> GetSegments(
         ITokenizer<string, int, string> wordTokenizer,
         BsonDocument doc,
-        bool includeBlankSegments
+        bool includeBlankSegments,
+        bool doNotSendSegmentText
     )
     {
         string prevRef = null;
@@ -95,7 +108,13 @@ public class SFScriptureText : IText
             if (prevRef != null && prevRef != curRef)
             {
                 // Return the previous segment, using the current segment to calculate ss,ir,rs values
-                yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart);
+                yield return CreateSegment(
+                    wordTokenizer,
+                    prevRef,
+                    sb.ToString(),
+                    isSentenceStart,
+                    doNotSendSegmentText
+                );
                 isSentenceStart = sb.ToString().HasSentenceEnding();
                 sb.Clear();
             }
@@ -107,7 +126,7 @@ public class SFScriptureText : IText
 
         if (prevRef != null)
         {
-            yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart);
+            yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart, doNotSendSegmentText);
         }
     }
 
@@ -115,7 +134,8 @@ public class SFScriptureText : IText
         ITokenizer<string, int, string> wordTokenizer,
         string segRef,
         string segmentStr,
-        bool isSentenceStart
+        bool isSentenceStart,
+        bool doNotSendSegmentText
     )
     {
         var keys = new List<string>();
@@ -125,7 +145,7 @@ public class SFScriptureText : IText
             // do not include the paragraph style for sub-segments, so that the segments sort correctly
             keys.AddRange(keys.Count > 0 ? partKeys.Skip(1) : partKeys);
         }
-        string[] segment = wordTokenizer.Tokenize(segmentStr).ToArray();
+        string[] segment = doNotSendSegmentText ? Array.Empty<string>() : wordTokenizer.Tokenize(segmentStr).ToArray();
         return new TextSegment(Id, new TextSegmentRef(keys), segment, isSentenceStart, false, false, !segment.Any());
     }
 }

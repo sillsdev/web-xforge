@@ -676,31 +676,69 @@ public class MachineApiService : IMachineApiService
         }
 
         // Save the selected books
-        await projectDoc.SubmitJson0OpAsync(
-            op =>
-                op.Set(
-                    p => p.TranslateConfig.DraftConfig.LastSelectedBooks,
-                    buildConfig.TrainingBooks.ToList(),
-                    _listIntComparer
-                )
-        );
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingBooks,
+                buildConfig.TrainingBooks.ToList(),
+                _listIntComparer
+            );
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,
+                buildConfig.TranslationBooks.ToList(),
+                _listIntComparer
+            );
+        });
 
         // If we have an alternate source, sync that first
-        string jobId;
+        string? jobId = null;
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
         if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
         {
-            string sourceJobId = await _syncService.SyncAsync(curUserId, alternateSourceProjectId, trainEngine: false);
+            jobId = await _syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ProjectId = alternateSourceProjectId,
+                    TargetOnly = true,
+                    UserId = curUserId,
+                }
+            );
+        }
 
+        // If we have a alternate training source, sync that next
+        string alternateTrainingSourceProjectId = projectDoc
+            .Data
+            .TranslateConfig
+            .DraftConfig
+            .AlternateTrainingSource
+            ?.ProjectRef;
+        if (
+            projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled
+            && !string.IsNullOrWhiteSpace(alternateTrainingSourceProjectId)
+        )
+        {
+            jobId = await _syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ParentJobId = jobId,
+                    ProjectId = alternateTrainingSourceProjectId,
+                    TargetOnly = true,
+                    UserId = curUserId,
+                }
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(jobId))
+        {
             // Run the training after the sync has completed
             jobId = _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
-                sourceJobId,
+                jobId,
                 r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
         }
         else
         {
-            // This will take a while, so we run it in the background
+            // No sync required, just run the training
             jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
                 r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );

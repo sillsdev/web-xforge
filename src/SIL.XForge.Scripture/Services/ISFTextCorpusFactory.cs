@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -11,6 +12,7 @@ public interface ISFTextCorpusFactory
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
-        ICollection<int> books
+        bool useAlternateTrainingSource,
+        BuildConfig buildConfig
     );
 }

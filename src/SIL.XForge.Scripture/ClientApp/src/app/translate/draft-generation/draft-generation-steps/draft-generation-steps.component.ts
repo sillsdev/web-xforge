@@ -9,7 +9,8 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 
 export interface DraftGenerationStepsResult {
-  books: number[];
+  trainingBooks: number[];
+  translationBooks: number[];
 }
 
 @Component({
@@ -23,6 +24,7 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() done = new EventEmitter<DraftGenerationStepsResult>();
 
   availableBooks$?: Observable<number[]>;
+  availableBooks: number[] = [];
   initialSelectedBooks: number[] = [];
   finalSelectedBooks: number[] = [];
 
@@ -57,16 +59,19 @@ export class DraftGenerationStepsComponent implements OnInit {
         return sourceBooks.filter(bookNum => targetBooks.has(bookNum));
       }),
       tap((availableBooks: number[]) => {
+        // The list of available books will be used to calculate what was not selected
+        this.availableBooks = availableBooks;
+
         // Get the previously selected training books from the target project
         const previousBooks: Set<number> = new Set<number>(
-          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedBooks ?? []
+          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingBooks ?? []
         );
 
         // The intersection is all of the available books in the source project that match the target's previous books
         const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
-        // Set the selected books to the intersection, or if the intersection is empty, just return all available books
-        this.initialSelectedBooks = intersection.length > 0 ? intersection : availableBooks;
+        // Set the selected books to the intersection, or if the intersection is empty, do not select any
+        this.initialSelectedBooks = intersection.length > 0 ? intersection : [];
         this.finalSelectedBooks = this.initialSelectedBooks;
       })
     );
@@ -77,6 +82,13 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   onDone(): void {
-    this.done.emit({ books: this.finalSelectedBooks });
+    // Books that are not selected will be our translation books
+    const selectedBooks: Set<number> = new Set<number>(this.finalSelectedBooks);
+    let notSelectedBooks = this.availableBooks.filter(bookNum => !selectedBooks.has(bookNum));
+
+    this.done.emit({
+      trainingBooks: this.finalSelectedBooks,
+      translationBooks: notSelectedBooks
+    });
   }
 }
