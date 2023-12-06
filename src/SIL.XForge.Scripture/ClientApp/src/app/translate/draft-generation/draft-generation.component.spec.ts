@@ -125,6 +125,9 @@ describe('DraftGenerationComponent', () => {
               tag: 'en'
             },
             translateConfig: {
+              draftConfig: {
+                alternateTrainingSourceEnabled: false
+              },
               projectType: ProjectType.BackTranslation,
               source: {
                 projectRef: 'testSourceProjectId',
@@ -171,6 +174,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isTargetLanguageSupported).toBe(true);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
     });
 
@@ -208,6 +212,9 @@ describe('DraftGenerationComponent', () => {
                 tag: 'xyz'
               },
               translateConfig: {
+                draftConfig: {
+                  alternateTrainingSourceEnabled: false
+                },
                 projectType: ProjectType.BackTranslation,
                 source: {
                   projectRef: 'testSourceProjectId',
@@ -225,6 +232,127 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(false);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
+    });
+
+    it('should detect alternate training source language when different to alternate source language', () => {
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: {
+              writingSystem: {
+                tag: 'abc'
+              },
+              translateConfig: {
+                draftConfig: {
+                  alternateTrainingSourceEnabled: true,
+                  alternateTrainingSource: {
+                    projectRef: 'alternateTrainingSourceProjectId',
+                    writingSystem: {
+                      tag: 'def'
+                    }
+                  },
+                  alternateSource: {
+                    projectRef: 'alternateSourceProjectId',
+                    writingSystem: {
+                      tag: 'ghi'
+                    }
+                  }
+                },
+                projectType: ProjectType.BackTranslation,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'def'
+                  }
+                }
+              }
+            }
+          })
+        });
+      });
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(false);
+    });
+
+    it('should detect alternate training source language when different to source language', () => {
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: {
+              writingSystem: {
+                tag: 'abc'
+              },
+              translateConfig: {
+                draftConfig: {
+                  alternateTrainingSourceEnabled: true,
+                  alternateTrainingSource: {
+                    projectRef: 'alternateTrainingSourceProjectId',
+                    writingSystem: {
+                      tag: 'def'
+                    }
+                  }
+                },
+                projectType: ProjectType.BackTranslation,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'xyz'
+                  }
+                }
+              }
+            }
+          })
+        });
+      });
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(false);
+    });
+
+    it('should not detect alternate training source language as different when enabled but null', () => {
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: {
+              writingSystem: {
+                tag: 'abc'
+              },
+              translateConfig: {
+                draftConfig: {
+                  alternateTrainingSourceEnabled: true
+                },
+                projectType: ProjectType.BackTranslation,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'xyz'
+                  }
+                }
+              }
+            }
+          })
+        });
+      });
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
     });
   });
 
@@ -293,6 +421,48 @@ describe('DraftGenerationComponent', () => {
         let env = new TestEnvironment();
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).toBe(null);
+      });
+    });
+
+    describe('source and alternate training source language must be the same', () => {
+      it('should show warning when source and alternate training source are different AND target language is supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).not.toBe(null);
+      });
+
+      it('should not show warning when target language is not supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = false;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).toBe(null);
+      });
+
+      it('should not show warning when the source and target language are the same', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = false;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-target-same')).toBe(null);
+      });
+
+      it('should not show warning when source and alternate training source language are the same', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-target-same')).toBe(null);
@@ -448,10 +618,11 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
-      env.component.startBuild([]);
+      env.component.startBuild([], []);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        trainingBooks: []
+        trainingBooks: [],
+        translationBooks: []
       });
     });
 
@@ -465,10 +636,11 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([]);
+      env.component.startBuild([], []);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        trainingBooks: []
+        trainingBooks: [],
+        translationBooks: []
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -484,10 +656,11 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([]);
+      env.component.startBuild([], []);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        trainingBooks: []
+        trainingBooks: [],
+        translationBooks: []
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -503,10 +676,11 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([]);
+      env.component.startBuild([], []);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        trainingBooks: []
+        trainingBooks: [],
+        translationBooks: []
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -523,10 +697,11 @@ describe('DraftGenerationComponent', () => {
       when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([]);
+      env.component.startBuild([], []);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        trainingBooks: []
+        trainingBooks: [],
+        translationBooks: []
       });
       verify(mockDialogRef.close()).once();
     });

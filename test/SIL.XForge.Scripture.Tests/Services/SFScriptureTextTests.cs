@@ -73,6 +73,7 @@ public class SFScriptureTextTests
             bookNumber,
             chapterNumber,
             includeBlankSegments: false,
+            doNotSendSegmentText: false,
             doc
         );
 
@@ -135,6 +136,7 @@ public class SFScriptureTextTests
             bookNumber,
             chapterNumber,
             includeBlankSegments: false,
+            doNotSendSegmentText: false,
             doc
         );
 
@@ -171,6 +173,7 @@ public class SFScriptureTextTests
             bookNumber,
             chapterNumber,
             includeBlankSegments: false,
+            doNotSendSegmentText: false,
             doc
         );
 
@@ -189,7 +192,16 @@ public class SFScriptureTextTests
 
         // SUT
         Assert.Throws<ArgumentNullException>(
-            () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, includeBlankSegments: false, doc)
+            () =>
+                new SFScriptureText(
+                    tokenizer,
+                    projectId,
+                    bookNumber,
+                    chapterNumber,
+                    includeBlankSegments: false,
+                    doNotSendSegmentText: false,
+                    doc
+                )
         );
     }
 
@@ -209,7 +221,16 @@ public class SFScriptureTextTests
 
         // SUT
         Assert.Throws<ArgumentException>(
-            () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, includeBlankSegments: false, doc)
+            () =>
+                new SFScriptureText(
+                    tokenizer,
+                    projectId,
+                    bookNumber,
+                    chapterNumber,
+                    includeBlankSegments: false,
+                    doNotSendSegmentText: false,
+                    doc
+                )
         );
     }
 
@@ -278,6 +299,7 @@ public class SFScriptureTextTests
             bookNumber,
             chapterNumber,
             includeBlankSegments: false,
+            doNotSendSegmentText: false,
             doc
         );
 
@@ -350,6 +372,7 @@ public class SFScriptureTextTests
             bookNumber,
             chapterNumber,
             includeBlankSegments: true,
+            doNotSendSegmentText: false,
             doc
         );
 

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -47,20 +46,33 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
     }
 
     public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate: false, Array.Empty<int>()));
+        new DictionaryTextCorpus(
+            await CreateTextsAsync(
+                projects,
+                type,
+                preTranslate: false,
+                useAlternateTrainingSource: false,
+                new BuildConfig()
+            )
+        );
 
     public async Task<ITextCorpus> CreateAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
-        ICollection<int> books
-    ) => new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate, books));
+        bool useAlternateTrainingSource,
+        BuildConfig buildConfig
+    ) =>
+        new DictionaryTextCorpus(
+            await CreateTextsAsync(projects, type, preTranslate, useAlternateTrainingSource, buildConfig)
+        );
 
     private async Task<IReadOnlyList<IText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
-        ICollection<int> books
+        bool useAlternateTrainingSource,
+        BuildConfig buildConfig
     )
     {
         StringTokenizer wordTokenizer = new LatinWordTokenizer();
@@ -73,12 +85,21 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
         {
             SFProject project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
             List<TextInfo> projectTexts = project.Texts.Where(t => t.HasSource).ToList();
+            List<int> books = new List<int>();
             string textCorpusProjectId;
             string paratextId;
             switch (type)
             {
                 case TextCorpusType.Source:
-                    if (preTranslate && project.TranslateConfig.DraftConfig.AlternateSource is not null)
+                    if (
+                        useAlternateTrainingSource
+                        && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
+                    )
+                    {
+                        textCorpusProjectId = project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef;
+                        paratextId = project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId;
+                    }
+                    else if (preTranslate && project.TranslateConfig.DraftConfig.AlternateSource is not null)
                     {
                         textCorpusProjectId = project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef;
                         paratextId = project.TranslateConfig.DraftConfig.AlternateSource.ParatextId;
@@ -100,19 +121,33 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                         projectTexts = sourceProject.Texts;
                     }
 
+                    // If we are using the alternate training source, the source will be all of the training books,
+                    // otherwise it will be the training and translation lists combined without duplicates.
+                    books.AddRange(
+                        useAlternateTrainingSource
+                            ? buildConfig.TrainingBooks
+                            : buildConfig.TrainingBooks.Union(buildConfig.TranslationBooks)
+                    );
+
                     break;
 
                 case TextCorpusType.Target:
                     textCorpusProjectId = projectId;
                     paratextId = project.ParatextId;
+
+                    // The target books will be both the training and translation lists combined without duplicates
+                    books.AddRange(buildConfig.TrainingBooks.Union(buildConfig.TranslationBooks));
                     break;
 
                 default:
                     throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType));
             }
 
-            foreach (TextInfo text in projectTexts.Where(p => books.Count == 0 || books.Contains(p.BookNum)))
+            foreach (TextInfo text in projectTexts.Where(t => books.Count == 0 || books.Contains(t.BookNum)))
             {
+                // If we are not training a book, the segments in it must be empty
+                bool doNotSendSegmentText =
+                    preTranslate && type == TextCorpusType.Target && !buildConfig.TrainingBooks.Contains(text.BookNum);
                 foreach (Chapter chapter in text.Chapters)
                 {
                     string id = TextData.GetTextDocId(textCorpusProjectId, text.BookNum, chapter.Number);
@@ -126,6 +161,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                                 text.BookNum,
                                 chapter.Number,
                                 includeBlankSegments: preTranslate,
+                                doNotSendSegmentText,
                                 doc
                             )
                         );

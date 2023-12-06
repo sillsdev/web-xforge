@@ -32,6 +32,7 @@ public class MachineProjectServiceTests
     private const string User01 = "user01";
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
+    private const string Corpus03 = "corpus03";
     private const string File01 = "file01";
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
@@ -342,8 +343,11 @@ public class MachineProjectServiceTests
         );
 
         await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+            .Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -358,6 +362,22 @@ public class MachineProjectServiceTests
         env.TranslationEnginesClient
             .GetAsync(TranslationEngine02, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
+
+        // Return the correctly created corpus
+        env.TranslationEnginesClient
+            .GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
+            .Returns(
+                args =>
+                    Task.FromResult(
+                        new TranslationCorpus
+                        {
+                            Id = args.ArgAt<string>(1),
+                            SourceLanguage = "en",
+                            TargetLanguage = "en_US"
+                        }
+                    )
+            );
+        ;
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -884,7 +904,10 @@ public class MachineProjectServiceTests
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Target,
                 preTranslate: true,
-                Arg.Is<HashSet<int>>(b => b.Count == 2 && b.First() == 1 && b.Last() == 2)
+                useAlternateTrainingSource: false,
+                Arg.Is<BuildConfig>(
+                    b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
+                )
             );
         await env.TextCorpusFactory
             .Received(1)
@@ -892,7 +915,10 @@ public class MachineProjectServiceTests
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Source,
                 preTranslate: true,
-                Arg.Is<HashSet<int>>(b => b.Count == 2 && b.First() == 1 && b.Last() == 2)
+                useAlternateTrainingSource: false,
+                Arg.Is<BuildConfig>(
+                    b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
+                )
             );
     }
 
@@ -1028,6 +1054,149 @@ public class MachineProjectServiceTests
         );
     }
 
+    [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateTrainingSourceEnabled = true,
+            }
+        );
+        await env.SetDataInSync(Project02, true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the generation of the training source
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+
+        // Check for the generation of the alternate training source
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateTrainingSource: true,
+                Arg.Any<BuildConfig>()
+            );
+
+        // The target is shared between the two corpora, so it will only be generated once
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Target,
+                preTranslate: true,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_RecreatesDeletedCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true, }
+        );
+        await env.SetDataInSync(Project02);
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.TranslationEnginesClient
+            .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .UpdateCorpusAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<TranslationCorpusUpdateConfig>(),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_RecreatesCorporaWhenLanguageChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true, }
+        );
+        await env.SetDataInSync(Project02);
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.TranslationEnginesClient
+            .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+            .Returns(
+                args =>
+                    Task.FromResult(
+                        new TranslationCorpus
+                        {
+                            Id = args.ArgAt<string>(1),
+                            SourceLanguage = "fr",
+                            TargetLanguage = "de"
+                        }
+                    )
+            );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .UpdateCorpusAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<TranslationCorpusUpdateConfig>(),
+                CancellationToken.None
+            );
+    }
+
     private class TestEnvironmentOptions
     {
         public bool BuildIsPending { get; init; }
@@ -1037,6 +1206,7 @@ public class MachineProjectServiceTests
         public bool ServalSupport { get; init; } = true;
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
+        public bool AlternateTrainingSourceEnabled { get; init; }
     }
 
     private class TestEnvironment
@@ -1056,7 +1226,7 @@ public class MachineProjectServiceTests
                 .Returns(args => Task.FromResult(new DataFile { Id = args.ArgAt<string>(0) }));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
-                .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
+                .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
             TranslationEnginesClient
                 .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
@@ -1068,8 +1238,8 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine01,
-                            TargetLanguage = "en_GB",
                             SourceLanguage = "en_US",
+                            TargetLanguage = "en_GB",
                         }
                     )
                 );
@@ -1080,10 +1250,36 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine02,
-                            TargetLanguage = "en_US",
                             SourceLanguage = "en",
+                            TargetLanguage = "en_US",
                         }
                     )
+                );
+            TranslationEnginesClient
+                .GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
+                .Returns(
+                    args =>
+                        Task.FromResult(
+                            new TranslationCorpus
+                            {
+                                Id = args.ArgAt<string>(1),
+                                SourceLanguage = "en_US",
+                                TargetLanguage = "en_GB"
+                            }
+                        )
+                );
+            TranslationEnginesClient
+                .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+                .Returns(
+                    args =>
+                        Task.FromResult(
+                            new TranslationCorpus
+                            {
+                                Id = args.ArgAt<string>(1),
+                                SourceLanguage = "en",
+                                TargetLanguage = "en_US"
+                            }
+                        )
                 );
             TranslationEnginesClient
                 .GetAsync(TranslationEngine03, CancellationToken.None)
@@ -1092,8 +1288,8 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine03,
-                            TargetLanguage = "en",
                             SourceLanguage = "en",
+                            TargetLanguage = "en",
                         }
                     )
                 );
@@ -1113,7 +1309,7 @@ public class MachineProjectServiceTests
                         Task.FromResult(
                             new TranslationBuild
                             {
-                                Pretranslate = new List<PretranslateCorpus> { new PretranslateCorpus() }
+                                Pretranslate = new List<PretranslateCorpus> { new PretranslateCorpus() },
                             }
                         )
                     );
@@ -1135,7 +1331,8 @@ public class MachineProjectServiceTests
                         Arg.Any<IEnumerable<string>>(),
                         Arg.Any<TextCorpusType>(),
                         Arg.Any<bool>(),
-                        Arg.Any<ICollection<int>>()
+                        Arg.Any<bool>(),
+                        Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
             }
@@ -1146,7 +1343,8 @@ public class MachineProjectServiceTests
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Source,
                         Arg.Any<bool>(),
-                        Arg.Any<ICollection<int>>()
+                        Arg.Any<bool>(),
+                        Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
             }
@@ -1157,7 +1355,8 @@ public class MachineProjectServiceTests
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Target,
                         Arg.Any<bool>(),
-                        Arg.Any<ICollection<int>>()
+                        Arg.Any<bool>(),
+                        Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
             }
@@ -1190,6 +1389,7 @@ public class MachineProjectServiceTests
                                     new ServalCorpus
                                     {
                                         PreTranslate = false,
+                                        AlternateTrainingSource = false,
                                         SourceFiles = new List<ServalCorpusFile>
                                         {
                                             new ServalCorpusFile { FileId = File01 },
@@ -1205,6 +1405,23 @@ public class MachineProjectServiceTests
                                     new ServalCorpus
                                     {
                                         PreTranslate = true,
+                                        AlternateTrainingSource = false,
+                                        SourceFiles = new List<ServalCorpusFile>
+                                        {
+                                            new ServalCorpusFile { FileId = File01 },
+                                        },
+                                        TargetFiles = new List<ServalCorpusFile>
+                                        {
+                                            new ServalCorpusFile { FileId = File02 },
+                                        },
+                                    }
+                                },
+                                {
+                                    Corpus03,
+                                    new ServalCorpus
+                                    {
+                                        PreTranslate = true,
+                                        AlternateTrainingSource = true,
                                         SourceFiles = new List<ServalCorpusFile>
                                         {
                                             new ServalCorpusFile { FileId = File01 },
@@ -1259,6 +1476,11 @@ public class MachineProjectServiceTests
                             {
                                 ProjectRef = Project03,
                                 WritingSystem = new WritingSystem { Tag = "en" },
+                            },
+                            DraftConfig = new DraftConfig
+                            {
+                                AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
+                                AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
@@ -1328,12 +1550,12 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public IEngineService EngineService { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public ISFTextCorpusFactory TextCorpusFactory { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
         public IExceptionHandler ExceptionHandler { get; }
-        public ISFTextCorpusFactory TextCorpusFactory { get; }
 
         public async Task SetDataInSync(string projectId, bool preTranslate = false, bool requiresUpdate = false) =>
             await ProjectSecrets.UpdateAsync(

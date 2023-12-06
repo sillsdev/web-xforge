@@ -57,20 +57,25 @@ describe('DraftGenerationStepsComponent', () => {
       });
     }));
 
-    it('should select all books initially', () => {
-      expect(component.initialSelectedBooks).toEqual([1, 2, 3]);
-      expect(component.finalSelectedBooks).toEqual([1, 2, 3]);
+    it('should select no books initially', () => {
+      expect(component.initialSelectedBooks).toEqual([]);
+      expect(component.finalSelectedBooks).toEqual([]);
     });
 
     it('should emit the correct selected books when onDone is called', () => {
-      const mockSelectedBooks = [1, 2, 3];
-      component.finalSelectedBooks = mockSelectedBooks;
+      const trainingBooks = [2, 3];
+      const translationBooks = [1];
+      component.availableBooks = translationBooks;
+      component.finalSelectedBooks = trainingBooks;
 
       spyOn(component.done, 'emit');
 
       component.onDone();
 
-      expect(component.done.emit).toHaveBeenCalledWith({ books: mockSelectedBooks } as DraftGenerationStepsResult);
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingBooks,
+        translationBooks
+      } as DraftGenerationStepsResult);
     });
 
     it('should emit the correct selected books when onBookSelect is called', () => {
@@ -91,7 +96,7 @@ describe('DraftGenerationStepsComponent', () => {
         texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
         translateConfig: {
           source: { projectRef: 'test' },
-          draftConfig: { lastSelectedBooks: [2, 3, 4] }
+          draftConfig: { lastSelectedTrainingBooks: [2, 3, 4] }
         }
       }
     } as SFProjectProfileDoc;

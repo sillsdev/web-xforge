@@ -10,6 +10,8 @@ export interface SFProjectSettings {
   translateShareEnabled?: boolean | null;
 
   alternateSourceParatextId?: string | null;
+  alternateTrainingSourceEnabled?: boolean | null;
+  alternateTrainingSourceParatextId?: string | null;
   servalConfig?: string | null;
 
   checkingEnabled?: boolean | null;
