@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
   <ng-container *ngIf="availableBooks$ | async as availableBooks">
     <ng-container *ngIf="availableBooks?.length; else noAvailableBooks">
-      <mat-stepper *ngIf="isAlternateTrainingSourceEnabled; else singleStep" orientation="vertical" linear>
+      <mat-stepper orientation="vertical" linear>
         <mat-step [completed]="userSelectedTrainingBooks.length > 0">
           <ng-template matStepLabel>
             <div class="stepper-multi-header">
@@ -48,23 +48,6 @@
           </div>
         </mat-step>
       </mat-stepper>
-
-      <ng-template #singleStep>
-        <h2>{{ t("choose_books_for_training") }}</h2>
-        <h3>{{ t("choose_books_for_training_subheader") }}</h3>
-
-        <app-book-multi-select
-          [availableBooks]="availableBooks"
-          [selectedBooks]="initialSelectedTrainingBooks"
-          (bookSelect)="onTrainingBookSelect($event)"
-        ></app-book-multi-select>
-
-        <div class="button-strip">
-          <button mat-flat-button [disabled]="!userSelectedTrainingBooks.length" (click)="onDone()" color="primary">
-            {{ t("generate_draft") }}
-          </button>
-        </div>
-      </ng-template>
     </ng-container>
 
     <ng-template #noAvailableBooks>
