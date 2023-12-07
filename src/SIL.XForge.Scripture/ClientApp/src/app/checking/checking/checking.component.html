@@ -84,7 +84,7 @@
                 <button
                   mat-icon-button
                   type="button"
-                  title="{{ t('add_question') }}"
+                  [matTooltip]="t('add_question')"
                   (click)="questionDialog()"
                   class="add-question-button"
                 >
@@ -95,9 +95,10 @@
                   <span>{{ t("add_question") }}</span>
                 </button>
                 <button
-                  *ngIf="canCreateScriptureAudio && !chapterHasAudio"
+                  *ngIf="canCreateScriptureAudio"
                   type="button"
                   mat-icon-button
+                  [matTooltip]="t('manage_audio')"
                   (click)="addAudioTimingData()"
                 >
                   <mat-icon class="material-icons-outlined">audio_file</mat-icon>
@@ -107,6 +108,8 @@
                 *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
                 type="button"
                 mat-icon-button
+                [matTooltip]="t('play_chapter')"
+                [matTooltipDisabled]="isAudioPlaying()"
                 (click)="toggleAudio()"
               >
                 <mat-icon>{{ isAudioPlaying() ? "pause" : "play_circle_outline" }}</mat-icon>

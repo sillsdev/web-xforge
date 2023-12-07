@@ -3,6 +3,7 @@ import { AngularRenderer, componentWrapperDecorator, Meta, moduleMetadata, Story
 import { expect } from '@storybook/jest';
 import { userEvent } from '@storybook/testing-library';
 import { PlayFunction, PlayFunctionContext } from '@storybook/types';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
@@ -11,7 +12,7 @@ export default {
   component: FontSizeComponent,
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule]
+      imports: [CommonModule, UICommonModule, TestTranslocoModule]
     }),
     componentWrapperDecorator(
       story => `
@@ -54,7 +55,7 @@ export const OpenMenuWithEndSpace: Story = {
 
 export const IncreaseFontAllowed: Story = {
   args: { fontSize: 2 },
-  play: playForAdjustFontButton('Increase')
+  play: playForAdjustFontButton('+')
 };
 
 export const IncreaseFontNotAllowed: Story = {
@@ -64,7 +65,7 @@ export const IncreaseFontNotAllowed: Story = {
 
 export const DecreaseFontAllowed: Story = {
   args: { fontSize: 2 },
-  play: playForAdjustFontButton('Decrease')
+  play: playForAdjustFontButton('-')
 };
 
 export const DecreaseFontNotAllowed: Story = {
@@ -75,12 +76,12 @@ export const DecreaseFontNotAllowed: Story = {
 /**
  * Return 'play' function to open menu and click the specified button.
  */
-function playForAdjustFontButton(which: 'Increase' | 'Decrease'): PlayFunction<AngularRenderer, FontSizeComponent> {
+function playForAdjustFontButton(which: '+' | '-'): PlayFunction<AngularRenderer, FontSizeComponent> {
   return (context: PlayFunctionContext<AngularRenderer, FontSizeComponent>) => {
     OpenMenu.play?.(context);
 
     const adjustFontButton: HTMLElement | null = document.body.querySelector(
-      `.font-size-menu  button[title="${which} font size"]`
+      `.font-size-menu button:nth-of-type(${which === '-' ? 1 : 2})`
     );
 
     expect(adjustFontButton).not.toBeNull();
