@@ -205,6 +205,13 @@ describe('CheckingComponent', () => {
       expect(nextQuestion).toEqual(1);
     }));
 
+    it('should display books in canonical order', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER });
+      env.waitForSliderUpdate();
+      expect(env.component.books).toEqual([40, 43]);
+      discardPeriodicTasks();
+    }));
+
     it('should re-calculate scripture slide position on resize', fakeAsync(() => {
       const testProject: SFProject = TestEnvironment.generateTestProject();
       testProject.checkingConfig.hideCommunityCheckingText = true;
