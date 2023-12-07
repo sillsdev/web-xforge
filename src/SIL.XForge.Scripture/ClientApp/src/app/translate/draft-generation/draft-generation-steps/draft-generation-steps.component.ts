@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { MatStepperModule } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { from, Observable } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
@@ -17,7 +18,7 @@ export interface DraftGenerationStepsResult {
   selector: 'app-draft-generation-steps',
   templateUrl: './draft-generation-steps.component.html',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, TranslocoModule, BookMultiSelectComponent],
+  imports: [CommonModule, MatButtonModule, MatStepperModule, TranslocoModule, BookMultiSelectComponent],
   styleUrls: ['./draft-generation-steps.component.scss']
 })
 export class DraftGenerationStepsComponent implements OnInit {
@@ -25,8 +26,13 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   availableBooks$?: Observable<number[]>;
   availableBooks: number[] = [];
-  initialSelectedBooks: number[] = [];
-  finalSelectedBooks: number[] = [];
+
+  initialSelectedTrainingBooks: number[] = [];
+  initialSelectedTranslateBooks: number[] = [];
+  userSelectedTrainingBooks: number[] = [];
+  userSelectedTranslateBooks: number[] = [];
+  isAlternateTrainingSourceEnabled: boolean =
+    this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.alternateTrainingSourceEnabled ?? false;
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
@@ -62,33 +68,58 @@ export class DraftGenerationStepsComponent implements OnInit {
         // The list of available books will be used to calculate what was not selected
         this.availableBooks = availableBooks;
 
-        // Get the previously selected training books from the target project
-        const previousBooks: Set<number> = new Set<number>(
-          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingBooks ?? []
-        );
-
-        // The intersection is all of the available books in the source project that match the target's previous books
-        const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
-
-        // Set the selected books to the intersection, or if the intersection is empty, do not select any
-        this.initialSelectedBooks = intersection.length > 0 ? intersection : [];
-        this.finalSelectedBooks = this.initialSelectedBooks;
+        this.setInitialTrainingBooks(availableBooks);
+        this.setInitialTranslateBooks(availableBooks);
       })
     );
   }
 
-  onBookSelect(selectedBooks: number[]): void {
-    this.finalSelectedBooks = selectedBooks;
+  onTrainingBookSelect(selectedBooks: number[]): void {
+    this.userSelectedTrainingBooks = selectedBooks;
+  }
+
+  onTranslateBookSelect(selectedBooks: number[]): void {
+    this.userSelectedTranslateBooks = selectedBooks;
   }
 
   onDone(): void {
-    // Books that are not selected will be our translation books
-    const selectedBooks: Set<number> = new Set<number>(this.finalSelectedBooks);
-    let notSelectedBooks = this.availableBooks.filter(bookNum => !selectedBooks.has(bookNum));
+    // If alternate training source not enabled, books not selected will be the translation books
+    if (!this.isAlternateTrainingSourceEnabled) {
+      const selectedBooks: Set<number> = new Set<number>(this.userSelectedTrainingBooks);
+      this.userSelectedTranslateBooks = this.availableBooks.filter(bookNum => !selectedBooks.has(bookNum));
+    }
 
     this.done.emit({
-      trainingBooks: this.finalSelectedBooks,
-      translationBooks: notSelectedBooks
+      trainingBooks: this.userSelectedTrainingBooks,
+      translationBooks: this.userSelectedTranslateBooks
     });
+  }
+
+  private setInitialTrainingBooks(availableBooks: number[]): void {
+    // Get the previously selected training books from the target project
+    const previousBooks: Set<number> = new Set<number>(
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingBooks ?? []
+    );
+
+    // The intersection is all of the available books in the source project that match the target's previous books
+    const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+
+    // Set the selected books to the intersection, or if the intersection is empty, do not select any
+    this.initialSelectedTrainingBooks = intersection.length > 0 ? intersection : [];
+    this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks;
+  }
+
+  private setInitialTranslateBooks(availableBooks: number[]): void {
+    // Get the previously selected translation books from the target project
+    const previousBooks: Set<number> = new Set<number>(
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTranslationBooks ?? []
+    );
+
+    // The intersection is all of the available books in the source project that match the target's previous books
+    const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+
+    // Set the selected books to the intersection, or if the intersection is empty, do not select any
+    this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
+    this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks;
   }
 }
