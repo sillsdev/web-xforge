@@ -25,14 +25,11 @@ export class DraftGenerationStepsComponent implements OnInit {
   @Output() done = new EventEmitter<DraftGenerationStepsResult>();
 
   availableBooks$?: Observable<number[]>;
-  availableBooks: number[] = [];
 
   initialSelectedTrainingBooks: number[] = [];
   initialSelectedTranslateBooks: number[] = [];
   userSelectedTrainingBooks: number[] = [];
   userSelectedTranslateBooks: number[] = [];
-  isAlternateTrainingSourceEnabled: boolean =
-    this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.alternateTrainingSourceEnabled ?? false;
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
@@ -65,9 +62,6 @@ export class DraftGenerationStepsComponent implements OnInit {
         return sourceBooks.filter(bookNum => targetBooks.has(bookNum));
       }),
       tap((availableBooks: number[]) => {
-        // The list of available books will be used to calculate what was not selected
-        this.availableBooks = availableBooks;
-
         this.setInitialTrainingBooks(availableBooks);
         this.setInitialTranslateBooks(availableBooks);
       })
@@ -83,12 +77,6 @@ export class DraftGenerationStepsComponent implements OnInit {
   }
 
   onDone(): void {
-    // If alternate training source not enabled, books not selected will be the translation books
-    if (!this.isAlternateTrainingSourceEnabled) {
-      const selectedBooks: Set<number> = new Set<number>(this.userSelectedTrainingBooks);
-      this.userSelectedTranslateBooks = this.availableBooks.filter(bookNum => !selectedBooks.has(bookNum));
-    }
-
     this.done.emit({
       trainingBooks: this.userSelectedTrainingBooks,
       translationBooks: this.userSelectedTranslateBooks
