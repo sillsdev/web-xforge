@@ -593,6 +593,18 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
+
+            // If the translation engine is missing, recreate it
+            if (string.IsNullOrWhiteSpace(translationEngineId))
+            {
+                translationEngineId = await _machineProjectService.AddProjectAsync(
+                    curUserId,
+                    sfProjectId,
+                    preTranslate: false,
+                    cancellationToken
+                );
+            }
+
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try

@@ -58,9 +58,15 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        string actual = await env.Service.AddProjectAsync(
+            User01,
+            Project01,
+            preTranslate: false,
+            CancellationToken.None
+        );
 
         await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
+        Assert.AreEqual(TranslationEngine01, actual);
         Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).ServalData?.TranslationEngineId);
     }
 

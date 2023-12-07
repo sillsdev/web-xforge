@@ -163,9 +163,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     if (this.translationEngine == null) {
       return;
     }
-    this.translationEngine.startTraining();
     this.trainingPercentage = 0;
     this.isTraining = true;
+    this.translationEngine.startTraining().then(() => this.listenForStatus());
   }
 
   getBookName(text: TextInfo): string {
@@ -248,6 +248,16 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
 
     this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
+    this.listenForStatus();
+  }
+
+  private listenForStatus(): void {
+    if (this.translationEngine == null) {
+      return;
+    } else if (this.trainingSub != null) {
+      this.trainingSub.unsubscribe();
+      this.trainingSub = undefined;
+    }
     this.trainingSub = this.translationEngine
       .listenForTrainingStatus()
       .pipe(

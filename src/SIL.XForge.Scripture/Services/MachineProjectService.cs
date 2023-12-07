@@ -75,7 +75,7 @@ public class MachineProjectService : IMachineProjectService
         _userSecrets = userSecrets;
     }
 
-    public async Task AddProjectAsync(
+    public async Task<string> AddProjectAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
@@ -107,7 +107,7 @@ public class MachineProjectService : IMachineProjectService
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             _logger.LogInformation("Serval feature flag is not enabled");
-            return;
+            return string.Empty;
         }
 
         // We may not have the source language tag or target language tag if either is a back translation
@@ -119,7 +119,11 @@ public class MachineProjectService : IMachineProjectService
         )
         {
             // We do not need the returned translation engine id
-            _ = await CreateServalProjectAsync(project, preTranslate, cancellationToken);
+            return await CreateServalProjectAsync(project, preTranslate, cancellationToken);
+        }
+        else
+        {
+            return string.Empty;
         }
     }
 

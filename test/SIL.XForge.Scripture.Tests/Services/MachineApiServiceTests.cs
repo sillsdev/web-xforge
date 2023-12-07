@@ -1725,6 +1725,37 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartBuildAsync_ServalCreatesMissingTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineProjectService
+            .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
+        env.TranslationEnginesClient
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = Build01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        State = JobState.Active,
+                    }
+                )
+            );
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        await env.Service.StartBuildAsync(User01, Project03, CancellationToken.None);
+
+        await env.MachineProjectService
+            .Received(1)
+            .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
+    }
+
+    [Test]
     public void StartBuildAsync_ServalNoTranslationEngine()
     {
         // Set up test environment

@@ -137,6 +137,10 @@ describe('RemoteTranslationEngine', () => {
     const env = new TestEnvironment();
     env.addCreateBuild();
 
+    when(env.mockedHttpClient.post<BuildDto>('translation/builds', JSON.stringify('project01'))).thenReturn(
+      of({ status: 200 })
+    );
+
     await env.client.startTraining();
     expect().nothing();
   });
@@ -145,7 +149,7 @@ describe('RemoteTranslationEngine', () => {
     const env = new TestEnvironment();
     env.addCreateBuild();
 
-    when(env.mockedHttpClient.get<EngineDto>('translation/engines/project:project01')).thenReturn(
+    when(env.mockedHttpClient.post<BuildDto>('translation/builds', JSON.stringify('project01'))).thenReturn(
       throwError(new HttpErrorResponse({ status: 404 }))
     );
 
