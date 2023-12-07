@@ -142,7 +142,7 @@ mat-divider.mat-divider-inset {
 
 @include media-breakpoint('<', sm) {
   // Hide the button icons to save space on mobile
-  .mat-button-base mat-icon {
+  .mat-button-base:not(.backout-button) mat-icon {
     display: none;
   }
 
