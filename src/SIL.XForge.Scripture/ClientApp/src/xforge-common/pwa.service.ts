@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { BehaviorSubject, interval, Observable } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
+import { WINDOW } from 'xforge-common/browser-globals';
 import { LocationService } from './location.service';
 
 export const PWA_CHECK_FOR_UPDATES = 30_000;
@@ -32,7 +33,8 @@ export class PwaService extends SubscriptionDisposable {
   constructor(
     private readonly updates: SwUpdate,
     private readonly locationService: LocationService,
-    private readonly localSettings: LocalSettingsService
+    private readonly localSettings: LocalSettingsService,
+    @Inject(WINDOW) private window: Window
   ) {
     super();
 
@@ -51,7 +53,7 @@ export class PwaService extends SubscriptionDisposable {
 
     if (this.updates.isEnabled && !this.isRunningInstalledApp) {
       // Currently beforeinstallprompt is only supported by Chromium browsers
-      window.addEventListener('beforeinstallprompt', (event: any) => {
+      this.window.addEventListener('beforeinstallprompt', (event: any) => {
         event.preventDefault();
         this.promptEvent = event;
         this._canInstall$.next(true);
@@ -78,7 +80,7 @@ export class PwaService extends SubscriptionDisposable {
    * installed PWA. This is supported across all browsers.
    */
   get isRunningInstalledApp(): boolean {
-    return window.matchMedia('(display-mode: standalone)').matches;
+    return this.window.matchMedia('(display-mode: standalone)').matches;
   }
 
   activateUpdates(): void {
