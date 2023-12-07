@@ -65,6 +65,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _audioBlob?: string;
   private _audioErrorText?: I18nKey;
   private _timingErrorText?: I18nKey;
+  private _timingParseErrorText?: I18nKey;
   private _loadingAudio: boolean = false;
 
   constructor(
@@ -195,7 +196,11 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.timing = [];
     this.timing_processed = [];
     this._timingErrorText = undefined;
-    this.fileDropzone!.nativeElement.value = '';
+    this._timingParseErrorText = undefined;
+
+    if (this.fileDropzone) {
+      this.fileDropzone.nativeElement.value = '';
+    }
   }
 
   ngAfterViewInit(): void {
@@ -225,20 +230,24 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   async prepareTimingFileUpload(file: File): Promise<void> {
-    // TODO: Add support for Adobe Audition marker exports
     const result: string[][] = await this.csvService.parse(file);
-    const timing: AudioTiming[] = [];
-    for (const [_, row] of result.entries()) {
-      const textRef: string = row[2];
-      const from: number = this.parseTimeToSeconds(row[0]);
-      const to: number = this.parseTimeToSeconds(row[1]);
-      if (textRef === undefined || isNaN(from) || isNaN(to)) continue;
-      timing.push({
-        textRef,
-        from,
-        to
-      } as AudioTiming);
+
+    this.deleteTimingData();
+
+    let timing: AudioTiming[] = [];
+
+    if (result.length !== 0) {
+      if (result[0].length === 6 && result[0][0] === 'Name') {
+        // Adobe Audition style timing files have 6 columns and the first heading is "Name"
+        timing = this.parseAdobeAuditionStyleTimingFile(result);
+      } else if (result[0].length === 3) {
+        // Audacity style timing files have 3 columns
+        timing = this.parseAudacityStyleTimingFile(result);
+      } else {
+        this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_timing_file_format';
+      }
     }
+
     timing.sort((a, b) => a.from - b.from);
     this.timing = timing;
     this.validateTimingEntries(this._audioLength);
@@ -299,6 +308,85 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.processUploadedFiles(el.files);
   }
 
+  private parseAdobeAuditionStyleTimingFile(data: string[][]): AudioTiming[] {
+    // Remove the column headers
+    data.shift();
+
+    let timing: AudioTiming[] = [];
+
+    for (const row of data) {
+      if (row.length !== 6) {
+        continue;
+      }
+
+      const [textRef, start, duration, timeFormat] = row;
+
+      if (timeFormat !== 'decimal' && !timeFormat.endsWith('fps')) {
+        // TODO: There is also a time format based on number of audio samples rather than time stamps directly.
+        this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_time_format';
+        return [];
+      }
+
+      let from, to;
+
+      // Decimal timing has the sub-second precision as part of the seconds i.e. 1:23.450 but FPS timing has it as a
+      // distinct value in centiseconds i.e. 1:23:45
+      if (timeFormat !== 'decimal') {
+        from = this.parseTimeToSecondsWithCentiseconds(start);
+        to = from + this.parseTimeToSecondsWithCentiseconds(duration);
+      } else {
+        from = this.parseTimeToSeconds(start);
+        to = from + this.parseTimeToSeconds(duration);
+      }
+
+      // Allow point (zero duration) markers to be handled by populateToField
+      if (from === to) {
+        to = 0;
+      }
+
+      if (textRef === undefined || isNaN(from) || isNaN(to)) {
+        continue;
+      }
+
+      timing.push({
+        textRef,
+        from,
+        to
+      } as AudioTiming);
+    }
+
+    return timing;
+  }
+
+  /**
+   * Parse a timing file in the audacity style format.
+   * https://manual.audacityteam.org/man/importing_and_exporting_labels.html
+   */
+  private parseAudacityStyleTimingFile(data: string[][]): AudioTiming[] {
+    let timing: AudioTiming[] = [];
+
+    for (const row of data) {
+      if (row.length !== 3) {
+        continue;
+      }
+
+      const from = this.parseTimeToSeconds(row[0]);
+      const to = this.parseTimeToSeconds(row[1]);
+
+      if (row[2] === undefined || isNaN(from) || isNaN(to)) {
+        continue;
+      }
+
+      timing.push({
+        textRef: row[2],
+        from,
+        to
+      } as AudioTiming);
+    }
+
+    return timing;
+  }
+
   private checkForPreexistingAudio(): void {
     const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(this.book)];
     const textChapter: Chapter | undefined = text?.chapters.find(c => c.number === this.chapter);
@@ -343,7 +431,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   /**
-   * It supports multiple time formats: ss, mm:ss, hh:mm:ss
+   * It supports multiple time formats: ss, mm:ss, hh:mm:ss, dd:hh:mm:ss
    */
   private parseTimeToSeconds(time: string): number {
     const a: string[] = time?.split(':');
@@ -353,9 +441,22 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       return +a[0] * 60 + +a[1];
     } else if (a?.length === 3) {
       return +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
+    } else if (a?.length === 4) {
+      return +a[0] * 60 * 60 * 24 + +a[1] * 60 * 60 + +a[2] * 60 + +a[3];
     }
 
     return NaN;
+  }
+
+  /**
+   * Parse time strings which include a distinct centisecond value e.g. mm:ss:cs
+   */
+  private parseTimeToSecondsWithCentiseconds(time: string): number {
+    const a: string[] = time?.split(':');
+
+    let centiseconds = parseFloat(a.pop() as string) / 100;
+
+    return this.parseTimeToSeconds(a.join(':')) + centiseconds;
   }
 
   private populateExistingData(): void {
@@ -428,7 +529,13 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   private validateTimingEntries(audioLength: number): void {
+    if (this._timingParseErrorText !== undefined) {
+      this._timingErrorText = this._timingParseErrorText;
+      return;
+    }
+
     this._timingErrorText = undefined;
+
     this.timing_processed = cloneDeep(this.timing);
 
     if (this.timing_processed.length === 0) {
@@ -442,7 +549,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     }
 
     // Check if one or more ending values end before their beginning values
-    const firstValidation: AudioTiming[] = this.timing_processed.filter(t => t.from < t.to);
+    const firstValidation: AudioTiming[] = this.timing_processed.filter(t => t.from <= t.to);
     if (firstValidation.length !== this.timing_processed.length) {
       this._timingErrorText = 'chapter_audio_dialog.from_timing_past_to_timing';
     }
