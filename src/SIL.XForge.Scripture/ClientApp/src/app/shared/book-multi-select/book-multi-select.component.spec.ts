@@ -29,7 +29,7 @@ describe('BookMultiSelectComponent', () => {
       { bookNum: 3, bookId: 'LEV', selected: true }
     ];
 
-    component.ngOnChanges({});
+    component.ngOnChanges();
 
     expect(component.bookOptions).toEqual(mockBookOptions);
   });

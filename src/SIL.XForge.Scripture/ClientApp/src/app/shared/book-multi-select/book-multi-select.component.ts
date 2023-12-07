@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -25,11 +25,8 @@ export class BookMultiSelectComponent implements OnChanges {
 
   bookOptions: BookOption[] = [];
 
-  ngOnChanges(changes: SimpleChanges): void {
-    // Ignore the first change, which is array initialization to empty array
-    if (!changes.availableBooks?.firstChange) {
-      this.initBookOptions();
-    }
+  ngOnChanges(): void {
+    this.initBookOptions();
   }
 
   initBookOptions(): void {
