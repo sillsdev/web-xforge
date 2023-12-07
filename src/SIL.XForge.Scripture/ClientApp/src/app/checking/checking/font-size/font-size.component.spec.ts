@@ -7,6 +7,7 @@ import {
   MatLegacyMenuItemHarness as MatMenuItemHarness
 } from '@angular/material/legacy-menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
@@ -33,7 +34,7 @@ describe('FontSizeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [UICommonModule, NoopAnimationsModule],
+      imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule],
       declarations: [FontSizeComponent]
     }).compileComponents();
 
