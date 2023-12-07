@@ -14,35 +14,16 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  padding-inline: 4px;
 }
 
 .answer-question {
-  padding-inline-start: 15px;
-  position: relative;
-  &:before {
-    position: absolute;
-    content: '';
-    background-color: transparent;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 5px;
-  }
-  &.question-unread {
-    &:before {
-      background-color: checking-vars.$questionUnread;
-    }
-  }
-  &.question-answered {
-    &:before {
-      background-color: checking-vars.$questionAnswered;
-    }
-  }
   .question {
-    > * {
-      margin-bottom: 10px;
-    }
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+
     .question-text {
       font-weight: bold;
     }
@@ -52,6 +33,9 @@
         justify-content: flex-end;
       }
     }
+  }
+  > .actions {
+    padding-block-start: 8px;
   }
 }
 
