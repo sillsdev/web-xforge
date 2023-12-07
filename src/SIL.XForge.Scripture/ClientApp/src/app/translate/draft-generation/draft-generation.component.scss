@@ -141,8 +141,8 @@ mat-divider.mat-divider-inset {
 }
 
 @include media-breakpoint('<', sm) {
-  // Hide the button icons to save space on mobile
-  .mat-button-base:not(.backout-button) mat-icon {
+  // Hide the button icons on side-by-side buttons to save space on mobile
+  .button-strip mat-icon {
     display: none;
   }
 
@@ -162,7 +162,7 @@ section {
     'header progress'
     'text progress'
     'button progress';
-  grid-template-columns: minmax(220px, 380px) minmax(100px, 150px);
+  grid-template-columns: minmax(208px, 380px) minmax(100px, 150px);
   place-items: center start;
 
   h3 {
