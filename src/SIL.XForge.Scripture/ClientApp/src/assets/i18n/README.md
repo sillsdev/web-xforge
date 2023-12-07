@@ -1,0 +1,6 @@
+# A few notes about localization files in this directory
+
+- These JSON files are used for localization of the application itself (currently the home pages are localized using a completely different system)
+- The file locales.json at src/SIL.XForge.Scripture/locales.json is the source of truth for supported locales. It's used by the front and back end.
+- Localization strings are split between checking_en.json and non_checking_en.json. The rationale is that community checking will need to be localized into more languages than any other part of the application, and by keeping all strings that community checkers would see in that file, it becomes possible to focus localization efforts on that file. The object definitions in the two files get merged at runtime to create a single tree of localization strings. It's a deep merge, so the granularity is at the string level.
+- Non-English files do not need to be updated when adding or removing strings. The English files need to be uploaded to Crowdin, and then when localizations are downloaded, they will overwrite the non-English localization files. If a string is not present in the non-English files, the app falls back to the English strings.
