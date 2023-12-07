@@ -159,8 +159,10 @@
   },
   "checking": {
     "filter_questions": "Filter questions",
+    "manage_audio": "Manage audio",
     "me": "Me",
     "next": "Next",
+    "play_chapter": "Play chapter",
     "previous": "Previous",
     "questions": "Questions",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
@@ -322,6 +324,9 @@
     "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
     "i_understand": "I understand",
     "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\nBe aware your bug report will be publicly available. Never submit passwords or other secrets.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
