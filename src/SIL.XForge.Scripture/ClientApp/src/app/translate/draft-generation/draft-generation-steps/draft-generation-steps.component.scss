@@ -7,15 +7,33 @@ h2 {
 h3 {
   font-size: 15px;
   font-weight: 400;
+  font-style: italic;
   margin-top: 4px;
   color: #777;
 }
 
-button {
-  margin-top: 20px;
+.stepper-multi-header {
+  h2 {
+    font-size: inherit;
+    font-weight: inherit;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 0.9em;
+    font-weight: inherit;
+    margin: 2px 0 0;
+  }
 }
 
 app-book-multi-select {
   display: block;
   margin-top: 4px;
+}
+
+.button-strip {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
 }
