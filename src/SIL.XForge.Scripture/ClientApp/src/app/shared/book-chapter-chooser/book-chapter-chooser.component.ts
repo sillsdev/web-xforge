@@ -11,7 +11,6 @@ import { I18nService } from 'xforge-common/i18n.service';
   styleUrls: ['./book-chapter-chooser.component.scss']
 })
 export class BookChapterChooserComponent {
-  @Input() books: number[] = [];
   @Input() book?: number;
   @Input() chapters: number[] = [];
   @Input() chapter?: number;
@@ -22,7 +21,17 @@ export class BookChapterChooserComponent {
   @Output() chapterChange = new EventEmitter<number>();
   @Output() bookChange = new EventEmitter<number>();
 
+  private _books: number[] = [];
+
   constructor(readonly i18n: I18nService) {}
+
+  @Input() set books(value: number[]) {
+    this._books = Object.values(value).sort((a, b) => a - b);
+  }
+
+  get books(): number[] {
+    return this._books;
+  }
 
   bookName(book: number): string {
     return this.i18n.localizeBook(book);
