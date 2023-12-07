@@ -1,29 +1,22 @@
-<button
-  #trigger="matMenuTrigger"
-  mat-icon-button
-  [mat-menu-trigger-for]="menu"
-  class="font-size-menu-trigger"
-  [ngClass]="{ 'menu-open': trigger.menuOpen }"
->
-  <mat-icon>format_size</mat-icon>
-</button>
-<mat-menu #menu="matMenu" class="font-size-menu" [xPosition]="'before'">
-  <div mat-menu-item disableRipple class="button-group">
-    <button
-      mat-icon-button
-      (click)="adjustFontSize($event, -1)"
-      [disabled]="fontSize === min"
-      title="Decrease font size"
-    >
-      <mat-icon>remove</mat-icon>
-    </button>
-    <button
-      mat-icon-button
-      (click)="adjustFontSize($event, 1)"
-      [disabled]="fontSize === max"
-      title="Increase font size"
-    >
-      <mat-icon>add</mat-icon>
-    </button>
-  </div>
-</mat-menu>
+<ng-container *transloco="let t; read: 'font_size'">
+  <button
+    #trigger="matMenuTrigger"
+    mat-icon-button
+    [mat-menu-trigger-for]="menu"
+    class="font-size-menu-trigger"
+    [ngClass]="{ 'menu-open': trigger.menuOpen }"
+    [matTooltip]="t('text_size')"
+  >
+    <mat-icon>format_size</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu" class="font-size-menu" [xPosition]="'before'">
+    <div mat-menu-item disableRipple class="button-group">
+      <button mat-icon-button (click)="adjustFontSize($event, -1)" [disabled]="fontSize === min">
+        <mat-icon>remove</mat-icon>
+      </button>
+      <button mat-icon-button (click)="adjustFontSize($event, 1)" [disabled]="fontSize === max">
+        <mat-icon>add</mat-icon>
+      </button>
+    </div>
+  </mat-menu>
+</ng-container>
