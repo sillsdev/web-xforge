@@ -414,6 +414,12 @@
     "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
   },
+  "text": {
+    "book_does_not_exist": "This book does not exist.",
+    "book_is_empty": "This book is empty. Add chapters in Paratext.",
+    "loading": "Loading...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
+  },
   "text_chooser_dialog": {
     "cancel": "Cancel",
     "save": "Save",
