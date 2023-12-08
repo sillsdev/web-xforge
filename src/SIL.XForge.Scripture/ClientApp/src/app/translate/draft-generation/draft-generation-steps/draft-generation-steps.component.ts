@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { from, Observable } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
+import { SharedModule } from '../../../shared/shared.module';
 
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
@@ -17,12 +19,13 @@ export interface DraftGenerationStepsResult {
 @Component({
   selector: 'app-draft-generation-steps',
   templateUrl: './draft-generation-steps.component.html',
+  styleUrls: ['./draft-generation-steps.component.scss'],
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatStepperModule, TranslocoModule, BookMultiSelectComponent],
-  styleUrls: ['./draft-generation-steps.component.scss']
+  imports: [CommonModule, SharedModule, MatButtonModule, MatStepperModule, TranslocoModule, BookMultiSelectComponent]
 })
 export class DraftGenerationStepsComponent implements OnInit {
   @Output() done = new EventEmitter<DraftGenerationStepsResult>();
+  @ViewChild(MatStepper) stepper!: MatStepper;
 
   availableBooks$?: Observable<number[]>;
 
@@ -31,9 +34,12 @@ export class DraftGenerationStepsComponent implements OnInit {
   userSelectedTrainingBooks: number[] = [];
   userSelectedTranslateBooks: number[] = [];
 
+  showBookSelectionError = false;
+
   constructor(
     private readonly activatedProject: ActivatedProjectService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly formBuilder: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -70,17 +76,41 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   onTrainingBookSelect(selectedBooks: number[]): void {
     this.userSelectedTrainingBooks = selectedBooks;
+    this.clearErrorMessage();
   }
 
   onTranslateBookSelect(selectedBooks: number[]): void {
     this.userSelectedTranslateBooks = selectedBooks;
+    this.clearErrorMessage();
   }
 
-  onDone(): void {
-    this.done.emit({
-      trainingBooks: this.userSelectedTrainingBooks,
-      translationBooks: this.userSelectedTranslateBooks
-    });
+  onStepChange(): void {
+    this.clearErrorMessage();
+  }
+
+  tryAdvanceStep(): void {
+    if (!this.validateCurrentStep()) {
+      return;
+    }
+
+    if (this.stepper.selected !== this.stepper.steps.last) {
+      this.stepper.next();
+    } else {
+      this.done.emit({
+        trainingBooks: this.userSelectedTrainingBooks,
+        translationBooks: this.userSelectedTranslateBooks
+      });
+    }
+  }
+
+  private validateCurrentStep(): boolean {
+    const isValid = this.stepper.selected?.completed!;
+    this.showBookSelectionError = !isValid;
+    return isValid;
+  }
+
+  private clearErrorMessage(): void {
+    this.showBookSelectionError = false;
   }
 
   private setInitialTrainingBooks(availableBooks: number[]): void {
