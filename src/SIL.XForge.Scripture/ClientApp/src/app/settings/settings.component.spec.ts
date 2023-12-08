@@ -15,7 +15,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
-import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { ProjectType, TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -224,7 +224,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: false
-          }
+          },
+          preTranslate: true
         });
         when(mockedParatextService.getProjects()).thenResolve([
           {
@@ -251,11 +252,75 @@ describe('SettingsComponent', () => {
         env.setupProject();
         env.wait();
         env.wait();
-        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.alternateSourceSelect).not.toBeNull();
         expect(env.alternateSourceSelectProjectsResources.length).toEqual(5);
         expect(env.alternateSourceSelectProjectsResources[1].name).toBe('ParatextP2');
         expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+
+      it('should display for back translations for system administrators', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          },
+          projectType: ProjectType.BackTranslation
+        });
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+      }));
+
+      it('should display for forward translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+      }));
+
+      it('should not display for back translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          },
+          projectType: ProjectType.BackTranslation
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).toBeNull();
+      }));
+
+      it('should not display when the feature flag is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).toBeNull();
+      }));
+
+      it('should not display for forward translations when not approved', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          }
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).toBeNull();
       }));
     });
 
@@ -267,7 +332,8 @@ describe('SettingsComponent', () => {
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: []
-          }
+          },
+          preTranslate: true
         });
         env.wait();
         env.wait();
@@ -297,7 +363,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: true
-          }
+          },
+          preTranslate: true
         });
         env.wait();
         env.wait();
@@ -329,7 +396,8 @@ describe('SettingsComponent', () => {
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: []
-          }
+          },
+          preTranslate: true
         });
         env.wait();
         env.wait();
@@ -356,7 +424,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: true
-          }
+          },
+          preTranslate: true
         });
         when(mockedParatextService.getProjects()).thenResolve([
           {
@@ -386,6 +455,58 @@ describe('SettingsComponent', () => {
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).toBeNull();
+      }));
+
+      it('should display for system administrators on back translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          },
+          projectType: ProjectType.BackTranslation
+        });
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).not.toBeNull();
+      }));
+
+      it('should display for system administrators on forward translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).not.toBeNull();
+      }));
+
+      it('should not display for system administrators when the feature flag is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).toBeNull();
+      }));
+
+      it('should display for system administrators on forward translations when not approved', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: []
+          }
+        });
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).not.toBeNull();
       }));
 
       it('should change serval config value', fakeAsync(() => {
@@ -418,7 +539,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: false
-          }
+          },
+          preTranslate: true
         });
         when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
         env.wait();
@@ -1097,6 +1219,7 @@ class TestEnvironment {
 
   setupProject(
     translateConfig: Partial<TranslateConfig> = {
+      preTranslate: true,
       translationSuggestionsEnabled: true,
       source: {
         paratextId: 'paratextId01',
