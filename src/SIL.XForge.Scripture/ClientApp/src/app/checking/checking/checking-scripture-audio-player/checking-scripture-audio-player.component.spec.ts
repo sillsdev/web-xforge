@@ -156,6 +156,24 @@ describe('ScriptureAudioComponent', () => {
     expect(env.currentTime).toEqual(3);
   }));
 
+  it('skipping next or previous goes to the next or previous verse when timing is phrase level', fakeAsync(() => {
+    const env = new TestEnvironment({
+      timings: [
+        { textRef: '1a', from: 0.0, to: 1.0 },
+        { textRef: '1b', from: 1.0, to: 2.0 },
+        { textRef: '2a', from: 2.0, to: 3.0 },
+        { textRef: '2b', from: 3.0, to: 4.0 }
+      ]
+    });
+
+    expect(env.currentTime).toEqual(0);
+    env.clickNextRef();
+    expect(env.currentTime).toEqual(2);
+    env.currentTime = 3.5;
+    env.clickPreviousRef();
+    expect(env.currentTime).toEqual(0);
+  }));
+
   it('emits once when chapter audio finishes', fakeAsync(() => {
     const env = new TestEnvironment();
 

@@ -94,7 +94,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       // The first timing index doesn't always start at zero so this allows skipping to the start of the first reference
       this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].from;
     } else {
-      this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].to;
+      this.audioPlayer.audio.currentTime = this.getNextVerseRefTime(currentTimingIndex);
     }
     this.verseLabel = this.currentVerseLabel;
   }
@@ -124,7 +124,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       // The first timing index doesn't always start at zero so this forces it to the beginning of the audio
       this.audioPlayer.audio.currentTime = 0;
     } else {
-      this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex - 1].from;
+      this.audioPlayer.audio.currentTime = this.getPreviousVerseRefTime(currentTimingIndex);
     }
     this.verseLabel = this.currentVerseLabel;
   }
@@ -139,6 +139,40 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   private getRefIndexInTimings(currentTime: number): number {
     return this._timing.findIndex(t => t.to > currentTime);
+  }
+
+  private getNextVerseRefTime(currentTimingIndex: number): number {
+    const currentTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(
+      this._timing[currentTimingIndex].textRef
+    );
+    let i: number = currentTimingIndex + 1;
+    while (i < this._timing.length) {
+      const textRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this._timing[i].textRef);
+      if (currentTextRef?.verseStr === textRef?.verseStr) {
+        i++;
+        continue;
+      }
+      return this._timing[i].from;
+    }
+    return this._timing[this._timing.length - 1].to;
+  }
+
+  private getPreviousVerseRefTime(currentTimingIndex: number): number {
+    const currentTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(
+      this._timing[currentTimingIndex].textRef
+    );
+    let i: number = currentTimingIndex - 1;
+    while (i >= 0) {
+      const textRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this._timing[i].textRef);
+      const isSameVerseString: boolean = currentTextRef?.verseStr === textRef?.verseStr;
+      const isInitialVersePhrase: boolean = textRef?.phrase == null || textRef.phrase === 'a';
+      if (isSameVerseString || !isInitialVersePhrase) {
+        i--;
+        continue;
+      }
+      return this._timing[i].from;
+    }
+    return this._timing[0].from;
   }
 
   private doAudioSubscriptions(): void {
