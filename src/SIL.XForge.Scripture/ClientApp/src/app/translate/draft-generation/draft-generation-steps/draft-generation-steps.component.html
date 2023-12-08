@@ -1,7 +1,29 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
   <ng-container *ngIf="availableBooks$ | async as availableBooks">
     <ng-container *ngIf="availableBooks?.length; else noAvailableBooks">
-      <mat-stepper orientation="vertical" linear>
+      <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
+        <mat-step [completed]="userSelectedTranslateBooks.length > 0">
+          <ng-template matStepLabel>
+            {{ t("choose_books_to_translate") }}
+          </ng-template>
+
+          <app-book-multi-select
+            [availableBooks]="availableBooks"
+            [selectedBooks]="initialSelectedTranslateBooks"
+            (bookSelect)="onTranslateBookSelect($event)"
+          ></app-book-multi-select>
+
+          <app-notice *ngIf="showBookSelectionError" type="error" [outline]="true">{{
+            t("choose_books_to_translate_error")
+          }}</app-notice>
+
+          <div class="button-strip">
+            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+              {{ t("next") }}
+            </button>
+          </div>
+        </mat-step>
+
         <mat-step [completed]="userSelectedTrainingBooks.length > 0">
           <ng-template matStepLabel>
             <div class="stepper-multi-header">
@@ -16,33 +38,13 @@
             (bookSelect)="onTrainingBookSelect($event)"
           ></app-book-multi-select>
 
-          <div class="button-strip">
-            <button mat-flat-button [disabled]="!userSelectedTrainingBooks.length" matStepperNext color="primary">
-              {{ t("next") }}
-            </button>
-          </div>
-        </mat-step>
-
-        <mat-step>
-          <ng-template matStepLabel>
-            {{ t("choose_books_to_translate") }}
-          </ng-template>
-
-          <app-book-multi-select
-            [availableBooks]="availableBooks"
-            [selectedBooks]="initialSelectedTranslateBooks"
-            (bookSelect)="onTranslateBookSelect($event)"
-          ></app-book-multi-select>
+          <app-notice *ngIf="showBookSelectionError" type="error" [outline]="true">{{
+            t("choose_books_for_training_error")
+          }}</app-notice>
 
           <div class="button-strip">
-            <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-            <button
-              mat-flat-button
-              [disabled]="!userSelectedTranslateBooks.length"
-              matStepperNext
-              (click)="onDone()"
-              color="primary"
-            >
+            <button mat-button matStepperPrevious>{{ t("back") }}</button>
+            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
               {{ t("generate_draft") }}
             </button>
           </div>
