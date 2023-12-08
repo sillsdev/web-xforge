@@ -36,7 +36,7 @@ describe('PreTranslationSignupUrlService', () => {
       const url = await service.generateSignupUrl();
 
       expect(url).toBe(
-        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Project%20Short%20Name=project&Language%20of%20Translation%20Project=eng'
+        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Paratext%20Project%20Short%20Name=project&Project%20Language%20ISO%20Code=eng'
       );
     });
 
@@ -47,7 +47,7 @@ describe('PreTranslationSignupUrlService', () => {
       const url = await service.generateSignupUrl();
 
       expect(url).toBe(
-        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=&Email=&Project%20Short%20Name=&'
+        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=&Email=&Paratext%20Project%20Short%20Name=&'
       );
     });
 
@@ -63,7 +63,7 @@ describe('PreTranslationSignupUrlService', () => {
       const url = await service.generateSignupUrl();
 
       expect(url).toBe(
-        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Project%20Short%20Name=project&'
+        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Paratext%20Project%20Short%20Name=project&'
       );
     });
   });
