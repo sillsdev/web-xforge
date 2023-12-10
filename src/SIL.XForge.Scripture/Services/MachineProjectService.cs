@@ -32,8 +32,8 @@ namespace SIL.XForge.Scripture.Services;
 public class MachineProjectService : IMachineProjectService
 {
     // Supported translation engines
-    private const string Echo = "Echo";
-    private const string Nmt = "Nmt";
+    internal const string Echo = "Echo";
+    internal const string Nmt = "Nmt";
     internal const string SmtTransfer = "SmtTransfer";
 
     private readonly IDataFilesClient _dataFilesClient;
@@ -161,11 +161,18 @@ public class MachineProjectService : IMachineProjectService
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Ensure we have a translation engine id or a pre-translation engine id
+        // Ensure we have a translation engine id or a pre-translation engine id, and that it exists
         string translationEngineId = preTranslate
             ? projectSecret.ServalData?.PreTranslationEngineId
             : projectSecret.ServalData?.TranslationEngineId;
-        if (string.IsNullOrWhiteSpace(translationEngineId))
+        if (
+            !await TranslationEngineExistsAsync(
+                buildConfig.ProjectId,
+                translationEngineId,
+                preTranslate,
+                cancellationToken
+            )
+        )
         {
             // We do not have one, likely because the translation is a back translation
             // We can only get the language tags for back translations from the ScrText,
@@ -209,6 +216,22 @@ public class MachineProjectService : IMachineProjectService
                 }
             }
 
+            // Clear the existing translation engine id
+            await _projectSecrets.UpdateAsync(
+                projectDoc.Id,
+                u =>
+                {
+                    if (preTranslate)
+                    {
+                        u.Unset(p => p.ServalData.PreTranslationEngineId);
+                    }
+                    else
+                    {
+                        u.Unset(p => p.ServalData.TranslationEngineId);
+                    }
+                }
+            );
+
             // If the pre-translate flag is not set, set it now for the front-end UI
             if (preTranslate && !projectDoc.Data.TranslateConfig.PreTranslate)
             {
@@ -229,7 +252,7 @@ public class MachineProjectService : IMachineProjectService
             bool recreateTranslationEngine = false;
 
             // See if the target language has changed
-            string projectTargetLanguage = GetTargetLanguage(projectDoc.Data, translationEngine.Type == Echo);
+            string projectTargetLanguage = await GetTargetLanguageAsync(projectDoc.Data);
             if (translationEngine.TargetLanguage != projectTargetLanguage)
             {
                 string message =
@@ -521,7 +544,7 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Used to return whether or not the corpus was updated
+        // Used to return whether the corpus was updated
         bool corpusUpdated = false;
 
         // Ensure that the Serval feature flag is enabled
@@ -694,6 +717,42 @@ public class MachineProjectService : IMachineProjectService
     }
 
     /// <summary>
+    /// Determines whether a translation engine exists for the specified project.
+    /// </summary>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <param name="translationEngineId">The Serval translation engine identifier.</param>
+    /// <param name="preTranslate">The Serval translation engine identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
+    public async Task<bool> TranslationEngineExistsAsync(
+        string projectId,
+        string? translationEngineId,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    )
+    {
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            return false;
+        }
+
+        try
+        {
+            TranslationEngine translationEngine = await _translationEnginesClient.GetAsync(
+                translationEngineId,
+                cancellationToken
+            );
+            string type = await GetTranslationEngineTypeAsync(preTranslate);
+            return translationEngine.Name == projectId && translationEngine.Type == type;
+        }
+        catch (ServalApiException e)
+            when (e.StatusCode is StatusCodes.Status403Forbidden or StatusCodes.Status404NotFound)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Gets the source language for the project.
     /// </summary>
     /// <param name="project">The project.</param>
@@ -714,16 +773,6 @@ public class MachineProjectService : IMachineProjectService
             ?? project.TranslateConfig.Source?.WritingSystem.Tag
             ?? throw new ArgumentNullException(nameof(project));
     }
-
-    /// <summary>
-    /// Gets the target language for the project
-    /// </summary>
-    /// <param name="project">The project.</param>
-    /// <param name="useEcho">If <c>true</c>, the echo translation engine is in use.</param>
-    /// <returns>The target language.</returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    private static string GetTargetLanguage(SFProject project, bool useEcho) =>
-        useEcho ? GetSourceLanguage(project, useAlternateTrainingSource: false) : project.WritingSystem.Tag;
 
     /// <summary>
     /// Gets the segments from the text with Unix/Linux line endings.
@@ -826,19 +875,12 @@ public class MachineProjectService : IMachineProjectService
             : projectSecret.ServalData?.TranslationEngineId;
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
-            bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-            string type = preTranslate switch
-            {
-                true when useEcho => Echo,
-                true => Nmt,
-                false => SmtTransfer,
-            };
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
             {
                 Name = sfProject.Id,
                 SourceLanguage = GetSourceLanguage(sfProject, useAlternateTrainingSource: false),
-                TargetLanguage = GetTargetLanguage(sfProject, useEcho),
-                Type = type,
+                TargetLanguage = await GetTargetLanguageAsync(sfProject),
+                Type = await GetTranslationEngineTypeAsync(preTranslate),
             };
 
             // Add the project to Serval
@@ -892,6 +934,35 @@ public class MachineProjectService : IMachineProjectService
     }
 
     /// <summary>
+    /// Gets the target language for the project
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <returns>The target language.</returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    private async Task<string> GetTargetLanguageAsync(SFProject project)
+    {
+        // Echo requires the target and source language to be the same, as it outputs your source texts
+        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+        return useEcho ? GetSourceLanguage(project, useAlternateTrainingSource: false) : project.WritingSystem.Tag;
+    }
+
+    /// <summary>
+    /// Gets the translation engine type string for Serval.
+    /// </summary>
+    /// <param name="preTranslate">If <c>true</c>, then the translation engine is for pre-translation.</param>
+    /// <returns>The translation engine type string for Serval.</returns>
+    private async Task<string> GetTranslationEngineTypeAsync(bool preTranslate)
+    {
+        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+        return preTranslate switch
+        {
+            true when useEcho => Echo,
+            true => Nmt,
+            false => SmtTransfer,
+        };
+    }
+
+    /// <summary>
     /// Updates the corpus configuration in the project secrets.
     /// </summary>
     /// <param name="project">The project.</param>
@@ -916,9 +987,6 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Echo requires the target and source language to be the same, as it outputs your source texts
-        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-
         // Create or update the corpus
         TranslationCorpus corpus;
         TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
@@ -931,7 +999,7 @@ public class MachineProjectService : IMachineProjectService
             TargetFiles = targetCorpusFiles
                 .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                 .ToList(),
-            TargetLanguage = GetTargetLanguage(project, useEcho),
+            TargetLanguage = await GetTargetLanguageAsync(project),
         };
 
         // See if we need to create or update the corpus
@@ -1028,7 +1096,7 @@ public class MachineProjectService : IMachineProjectService
     }
 
     /// <summary>
-    /// Syncs an <see cref="ITextCorpus"/> to Serval, creating files on Serval as necessary.
+    /// Syncs the <see cref="ITextCorpus"/> to Serval, creating files on Serval as necessary.
     /// </summary>
     /// <param name="projectId">The project identifier.</param>
     /// <param name="includeBlankSegments">
@@ -1051,7 +1119,7 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Used to return whether or not the corpus files were created or updated
+        // Used to return whether the corpus files were created or updated
         bool corpusUpdated = false;
 
         // Sync each text

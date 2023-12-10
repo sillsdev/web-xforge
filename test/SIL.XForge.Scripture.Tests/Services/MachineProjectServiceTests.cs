@@ -37,7 +37,6 @@ public class MachineProjectServiceTests
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
     private const string TranslationEngine02 = "translationEngine02";
-    private const string TranslationEngine03 = "translationEngine03";
 
     [Test]
     public void AddProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
@@ -186,6 +185,36 @@ public class MachineProjectServiceTests
             User01,
             new BuildConfig { ProjectId = Project01 },
             preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient
+            .Received()
+            .CreateAsync(
+                Arg.Is<TranslationEngineConfig>(
+                    t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
+                ),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_CreatesServalProjectIfRemoved()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions());
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine02, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+        string sourceLanguage = env.Projects.Get(Project02).TranslateConfig.Source!.WritingSystem.Tag;
+        string targetLanguage = env.Projects.Get(Project02).WritingSystem.Tag;
+        Assert.AreNotEqual(sourceLanguage, targetLanguage);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -379,7 +408,7 @@ public class MachineProjectServiceTests
                         {
                             Id = args.ArgAt<string>(1),
                             SourceLanguage = "en",
-                            TargetLanguage = "en_US"
+                            TargetLanguage = "en_US",
                         }
                     )
             );
@@ -491,8 +520,10 @@ public class MachineProjectServiceTests
                     new TranslationEngine
                     {
                         Id = TranslationEngine02,
+                        Name = Project02,
                         SourceLanguage = "old_source_language",
                         TargetLanguage = "old_target_language",
+                        Type = MachineProjectService.SmtTransfer,
                     }
                 )
             );
@@ -1203,6 +1234,165 @@ public class MachineProjectServiceTests
             );
     }
 
+    [Test]
+    public async Task TranslationEngineExistsAsync_Forbidden_False()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.Forbidden);
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_NotFound_False()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_NullTranslationId_False()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            translationEngineId: null,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_WrongProjectId_False()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project02,
+                        Type = MachineProjectService.SmtTransfer,
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_Type_False()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project01,
+                        Type = MachineProjectService.Nmt,
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project01,
+                        Type = MachineProjectService.SmtTransfer,
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+    }
+
+    [Test]
+    public void TranslationEngineExistsAsync_ThrowsOtherErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.InternalServerError);
+
+        // SUT
+        Assert.ThrowsAsync<ServalApiException>(
+            () =>
+                env.Service.TranslationEngineExistsAsync(
+                    Project01,
+                    TranslationEngine01,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
     private class TestEnvironmentOptions
     {
         public bool BuildIsPending { get; init; }
@@ -1244,8 +1434,10 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine01,
+                            Name = Project01,
                             SourceLanguage = "en_US",
                             TargetLanguage = "en_GB",
+                            Type = MachineProjectService.SmtTransfer,
                         }
                     )
                 );
@@ -1256,8 +1448,10 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine02,
+                            Name = Project02,
                             SourceLanguage = "en",
                             TargetLanguage = "en_US",
+                            Type = MachineProjectService.SmtTransfer,
                         }
                     )
                 );
@@ -1270,7 +1464,7 @@ public class MachineProjectServiceTests
                             {
                                 Id = args.ArgAt<string>(1),
                                 SourceLanguage = "en_US",
-                                TargetLanguage = "en_GB"
+                                TargetLanguage = "en_GB",
                             }
                         )
                 );
@@ -1283,21 +1477,9 @@ public class MachineProjectServiceTests
                             {
                                 Id = args.ArgAt<string>(1),
                                 SourceLanguage = "en",
-                                TargetLanguage = "en_US"
+                                TargetLanguage = "en_US",
                             }
                         )
-                );
-            TranslationEnginesClient
-                .GetAsync(TranslationEngine03, CancellationToken.None)
-                .Returns(
-                    Task.FromResult(
-                        new TranslationEngine
-                        {
-                            Id = TranslationEngine03,
-                            SourceLanguage = "en",
-                            TargetLanguage = "en",
-                        }
-                    )
                 );
             TranslationEnginesClient
                 .UpdateCorpusAsync(
@@ -1596,6 +1778,20 @@ public class MachineProjectServiceTests
                     if (preTranslate)
                     {
                         u.Set(p => p.ServalData.PreTranslationEngineId, TranslationEngine02);
+                        TranslationEnginesClient
+                            .GetAsync(TranslationEngine02, CancellationToken.None)
+                            .Returns(
+                                Task.FromResult(
+                                    new TranslationEngine
+                                    {
+                                        Id = TranslationEngine02,
+                                        Name = Project02,
+                                        SourceLanguage = "en",
+                                        TargetLanguage = "en_US",
+                                        Type = MachineProjectService.Nmt,
+                                    }
+                                )
+                            );
                     }
                 }
             );

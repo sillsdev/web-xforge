@@ -37,4 +37,10 @@ public interface IMachineProjectService
         bool preTranslate,
         CancellationToken cancellationToken
     );
+    Task<bool> TranslationEngineExistsAsync(
+        string projectId,
+        string translationEngineId,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    );
 }
