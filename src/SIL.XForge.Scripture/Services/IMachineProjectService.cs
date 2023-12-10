@@ -7,7 +7,12 @@ namespace SIL.XForge.Scripture.Services;
 
 public interface IMachineProjectService
 {
-    Task AddProjectAsync(string curUserId, string sfProjectId, bool preTranslate, CancellationToken cancellationToken);
+    Task<string> AddProjectAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    );
     Task<TranslationBuild?> BuildProjectAsync(
         string curUserId,
         BuildConfig buildConfig,
@@ -29,6 +34,12 @@ public interface IMachineProjectService
     Task<bool> SyncProjectCorporaAsync(
         string curUserId,
         BuildConfig buildConfig,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    );
+    Task<bool> TranslationEngineExistsAsync(
+        string projectId,
+        string translationEngineId,
         bool preTranslate,
         CancellationToken cancellationToken
     );
