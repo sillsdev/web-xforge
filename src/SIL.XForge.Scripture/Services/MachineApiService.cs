@@ -592,7 +592,55 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
+            string? translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
+            try
+            {
+                // If the translation engine is missing or does not exist, recreate it
+                if (
+                    !await _machineProjectService.TranslationEngineExistsAsync(
+                        sfProjectId,
+                        translationEngineId,
+                        preTranslate: false,
+                        cancellationToken
+                    )
+                )
+                {
+                    // Clear the existing translation engine id
+                    if (!string.IsNullOrWhiteSpace(translationEngineId))
+                    {
+                        await _projectSecrets.UpdateAsync(
+                            sfProjectId,
+                            u => u.Unset(p => p.ServalData.TranslationEngineId)
+                        );
+                    }
+
+                    translationEngineId = await _machineProjectService.AddProjectAsync(
+                        curUserId,
+                        sfProjectId,
+                        preTranslate: false,
+                        cancellationToken
+                    );
+                }
+            }
+            catch (Exception e)
+            {
+                // We do not want to throw the error if we are returning from In Process API below
+                await ProcessServalApiExceptionAsync(
+                    e,
+                    doNotThrowIfInProcessEnabled: true,
+                    metadata: new Dictionary<string, string>
+                    {
+                        { "method", "StartBuildAsync" },
+                        { "curUserId", curUserId },
+                        { "sfProjectId", sfProjectId },
+                        { "translationEngineId", translationEngineId },
+                    }
+                );
+
+                // Ensure that the translation engine id is null so a Serval build isn't started
+                translationEngineId = null;
+            }
+
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
@@ -705,7 +753,7 @@ public class MachineApiService : IMachineApiService
             );
         }
 
-        // If we have a alternate training source, sync that next
+        // If we have an alternate training source, sync that next
         string alternateTrainingSourceProjectId = projectDoc
             .Data
             .TranslateConfig
