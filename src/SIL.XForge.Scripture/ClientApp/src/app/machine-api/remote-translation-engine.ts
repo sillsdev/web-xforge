@@ -67,7 +67,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
         .toPromise();
       return this.createWordGraph(response.data as WordGraphDto);
     } catch (err: any) {
-      if (err.status === 409) {
+      if (err.status === 404 || err.status === 409) {
         this.noticeService.showError(
           translate('error_messages.suggestion_engine_requires_retrain'),
           translate('error_messages.go_to_retrain'),
@@ -97,10 +97,9 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
     );
   }
 
-  async startTraining(): Promise<void> {
-    await this.getEngine(this.projectId)
+  async startTraining(): Promise<BuildDto | undefined> {
+    return this.createBuild(this.projectId)
       .pipe(
-        mergeMap(e => this.createBuild(e.id)),
         catchError(err => {
           if (err.status === 404) {
             return of(undefined);
@@ -171,13 +170,6 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
           throw new Error('Error occurred during build: ' + res.data.message);
         }
         return res.data;
-      }),
-      catchError(err => {
-        if (err.status === 404) {
-          return of(undefined);
-        } else {
-          return throwError(err);
-        }
       })
     );
   }
