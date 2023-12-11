@@ -3,7 +3,7 @@ import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { from, merge, Observable, of } from 'rxjs';
-import { distinctUntilChanged, filter, map, shareReplay, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -21,7 +21,7 @@ import { CheckingQuestionsService } from './checking-questions.service';
  */
 @Injectable({ providedIn: 'root' })
 export class ResumeCheckingService {
-  private readonly questionLink$: Observable<string[] | undefined> = this.createLink().pipe(shareReplay(1));
+  private readonly questionLink$: Observable<string[] | undefined> = this.createLink();
 
   constructor(
     private readonly userService: UserService,
