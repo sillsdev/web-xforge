@@ -175,7 +175,7 @@
     "back": "Back",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_subheader": "Select books that have been proofed.",
-    "choose_books_for_training": "Choose books for training the generator",
+    "choose_books_for_training": "Choose books for training the language model",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
     "choose_books_to_translate": "Choose books to translate",
     "generate_draft": "Generate draft",

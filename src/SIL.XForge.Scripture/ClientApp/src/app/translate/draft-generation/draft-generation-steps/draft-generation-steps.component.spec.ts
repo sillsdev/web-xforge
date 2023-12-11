@@ -65,7 +65,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.userSelectedTranslateBooks).toEqual([]);
     });
 
-    it('should emit the correct selected books when onDone is called', () => {
+    it('should emit the correct selected books when done', () => {
       const trainingBooks = [2, 3];
       const translationBooks = [1, 2];
 
@@ -74,7 +74,11 @@ describe('DraftGenerationStepsComponent', () => {
 
       spyOn(component.done, 'emit');
 
-      component.onDone();
+      // Advance to the next step when at last step should emit books result
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.tryAdvanceStep();
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingBooks,
@@ -92,10 +96,10 @@ describe('DraftGenerationStepsComponent', () => {
       const bookMultiSelects = fixture.debugElement.queryAll(By.css('app-book-multi-select'));
 
       bookMultiSelects[0].triggerEventHandler('bookSelect', mockSelectedBooks);
-      expect(component.onTrainingBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
+      expect(component.onTranslateBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
 
       bookMultiSelects[1].triggerEventHandler('bookSelect', mockSelectedBooks);
-      expect(component.onTranslateBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
+      expect(component.onTrainingBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
     }));
   });
 
