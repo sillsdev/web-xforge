@@ -74,7 +74,7 @@ header {
     column-gap: 1em;
     img {
       @include media-breakpoint-up(sm, variables.$grid-breakpoints) {
-        margin-left: 8px;
+        margin-inline-start: 8px;
       }
     }
   }
