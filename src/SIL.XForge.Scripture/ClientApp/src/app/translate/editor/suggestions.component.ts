@@ -265,7 +265,10 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
 
     let newLeft;
     if (referenceLeft + suggestions.width > editor.width) {
-      newLeft = editor.width - suggestions.width; //right align
+      // Most cases are fine with simply referenceLeft, but when the cursor
+      // is at the far right of the editor, the suggestions don't have enough
+      // room, even when auto-sized.
+      newLeft = referenceLeft - 20;
     } else if (clientLeft < body.left) {
       const shift = body.left - clientLeft;
       newLeft = referenceLeft + shift;
@@ -273,7 +276,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
       newLeft = referenceLeft;
     }
 
-    return newLeft > 0 ? newLeft : 0;
+    return newLeft;
   }
 
   private isSuggestionEvent(event: KeyboardEvent): boolean {
