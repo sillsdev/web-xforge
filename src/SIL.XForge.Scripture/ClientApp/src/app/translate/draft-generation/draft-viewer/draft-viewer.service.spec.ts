@@ -77,5 +77,21 @@ describe('DraftViewerService', () => {
       ];
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
     });
+
+    it('should allow combined verses in the target that are separated in the source', () => {
+      const draft: DraftSegmentMap = {
+        verse_1_1: 'In the beginning ',
+        verse_1_2: 'The earth was formless',
+        verse_1_3: 'Then God said'
+      };
+      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_1_1-3' } }];
+      const expectedResult: DeltaOperation[] = [
+        {
+          insert: 'In the beginning The earth was formless Then God said',
+          attributes: { segment: 'verse_1_1-3', draft: true }
+        }
+      ];
+      expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
+    });
   });
 });
