@@ -50,7 +50,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
 
         IDocument<User> userDoc = await GetUserDocAsync(curUserId, conn);
 
-        if (userDoc.Data.Role != SystemRole.SystemAdmin || projectRole == null)
+        if (!userDoc.Data.Roles.Contains(SystemRole.SystemAdmin) || projectRole is null)
         {
             Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
             if (!attempt.TryResult(out projectRole))

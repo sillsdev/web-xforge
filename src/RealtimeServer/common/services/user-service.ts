@@ -24,7 +24,7 @@ export class UserService extends JsonDocService<User> {
   protected readonly immutableProps: ObjPathTemplate[] = [
     this.pathTemplate(u => u.authId),
     this.pathTemplate(u => u.paratextId!),
-    this.pathTemplate(u => u.role),
+    this.pathTemplate(u => u.roles),
     this.pathTemplate(u => u.avatarUrl),
     this.pathTemplate(u => u.email),
     this.pathTemplate(u => u.name),
@@ -51,8 +51,11 @@ export class UserService extends JsonDocService<User> {
       paratextId: {
         bsonType: 'string'
       },
-      role: {
-        bsonType: 'string'
+      roles: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'string'
+        }
       },
       isDisplayNameConfirmed: {
         bsonType: 'bool'
@@ -103,7 +106,7 @@ export class UserService extends JsonDocService<User> {
   }
 
   protected allowRead(docId: string, doc: User, session: ConnectSession): boolean {
-    if (session.isServer || session.role === SystemRole.SystemAdmin) {
+    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin)) {
       return true;
     }
     if (docId === session.userId) {
@@ -120,7 +123,7 @@ export class UserService extends JsonDocService<User> {
   }
 
   protected allowUpdate(docId: string, _oldDoc: User, _newDoc: User, ops: any, session: ConnectSession): boolean {
-    if (session.isServer || session.role === SystemRole.SystemAdmin) {
+    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin)) {
       return true;
     }
     if (docId !== session.userId) {
