@@ -517,7 +517,7 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Used to return whether or not the corpus was updated
+        // Used to return whether the corpus was updated
         bool corpusUpdated = false;
 
         // Ensure that the Serval feature flag is enabled
@@ -585,7 +585,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Reuse the SFTextCorpusFactory implementation
-        ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(
+        IEnumerable<ISFText> texts = await _textCorpusFactory.CreateAsync(
             new[] { project.Id },
             TextCorpusType.Source,
             preTranslate,
@@ -596,7 +596,7 @@ public class MachineProjectService : IMachineProjectService
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
             includeBlankSegments: false,
-            textCorpus,
+            texts,
             oldSourceCorpusFiles,
             newSourceCorpusFiles,
             cancellationToken
@@ -609,7 +609,7 @@ public class MachineProjectService : IMachineProjectService
             oldTargetCorpusFiles = projectSecret.ServalData.Corpora[corpusId].TargetFiles;
         }
 
-        textCorpus = await _textCorpusFactory.CreateAsync(
+        texts = await _textCorpusFactory.CreateAsync(
             new[] { project.Id },
             TextCorpusType.Target,
             preTranslate,
@@ -620,7 +620,7 @@ public class MachineProjectService : IMachineProjectService
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
             preTranslate,
-            textCorpus,
+            texts,
             oldTargetCorpusFiles,
             newTargetCorpusFiles,
             cancellationToken
@@ -640,7 +640,7 @@ public class MachineProjectService : IMachineProjectService
                     .SourceFiles;
             }
 
-            textCorpus = await _textCorpusFactory.CreateAsync(
+            texts = await _textCorpusFactory.CreateAsync(
                 new[] { project.Id },
                 TextCorpusType.Source,
                 preTranslate: true,
@@ -650,7 +650,7 @@ public class MachineProjectService : IMachineProjectService
             corpusUpdated |= await UploadNewCorpusFilesAsync(
                 project.Id,
                 includeBlankSegments: true,
-                textCorpus,
+                texts,
                 oldAlternateTrainingSourceCorpusFiles,
                 newAlternateTrainingSourceCorpusFiles,
                 cancellationToken
@@ -724,17 +724,18 @@ public class MachineProjectService : IMachineProjectService
     /// <summary>
     /// Gets the segments from the text with Unix/Linux line endings.
     /// </summary>
-    /// <param name="text">The IText</param>
+    /// <param name="text">The <see cref="ISFText"/>.</param>
     /// <param name="includeBlankSegments">
     /// <c>true</c> if we are to include blank segments (usually for a pre-translation target); otherwise <c>false</c>.
     /// </param>
     /// <returns>The text file data to be uploaded to Serval.</returns>
-    private static string GetTextFileData(IText text, bool includeBlankSegments)
+    private static string GetTextFileData(ISFText text, bool includeBlankSegments)
     {
         var sb = new StringBuilder();
 
+        // TODO: Only send verse segments
         // For pre-translation, we must upload empty lines with segment refs for the correct references to be returned
-        foreach (TextSegment segment in text.GetSegments().Where(s => !s.IsEmpty || includeBlankSegments))
+        foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty || includeBlankSegments))
         {
             // We pad the verse number so the string based key comparisons in Machine will be accurate.
             // If the int does not parse successfully, it will be because it is a Biblical Term - which has a Greek or
@@ -747,7 +748,7 @@ public class MachineProjectService : IMachineProjectService
             // Strip characters from the key that will corrupt the line
             sb.Append(key.Replace('\n', '_').Replace('\t', '_'));
             sb.Append('\t');
-            sb.Append(string.Join(' ', segment.Segment));
+            sb.Append(segment.SegmentText);
             sb.Append('\t');
             if (segment.IsSentenceStart)
             {
@@ -1024,13 +1025,13 @@ public class MachineProjectService : IMachineProjectService
     }
 
     /// <summary>
-    /// Syncs an <see cref="ITextCorpus"/> to Serval, creating files on Serval as necessary.
+    /// Syncs a collection of <see cref="ISFText"/> to Serval, creating files on Serval as necessary.
     /// </summary>
     /// <param name="projectId">The project identifier.</param>
     /// <param name="includeBlankSegments">
     /// <c>true</c> if we are to include blank segments (usually for a pre-translation target); otherwise <c>false</c>.
     /// </param>
-    /// <param name="textCorpus">The text corpus created by <see cref="SFTextCorpusFactory"/>.</param>
+    /// <param name="texts">The texts created by <see cref="SFTextCorpusFactory"/>.</param>
     /// <param name="oldCorpusFiles">The existing corpus files (optional).</param>
     /// <param name="newCorpusFiles">The updated list of corpus files.</param>
     /// <param name="cancellationToken"></param>
@@ -1041,17 +1042,17 @@ public class MachineProjectService : IMachineProjectService
     private async Task<bool> UploadNewCorpusFilesAsync(
         string projectId,
         bool includeBlankSegments,
-        ITextCorpus? textCorpus,
+        IEnumerable<ISFText> texts,
         ICollection<ServalCorpusFile>? oldCorpusFiles,
         ICollection<ServalCorpusFile> newCorpusFiles,
         CancellationToken cancellationToken
     )
     {
-        // Used to return whether or not the corpus files were created or updated
+        // Used to return whether the corpus files were created or updated
         bool corpusUpdated = false;
 
         // Sync each text
-        foreach (IText text in textCorpus?.Texts ?? Array.Empty<IText>())
+        foreach (ISFText text in texts)
         {
             string textFileData = GetTextFileData(text, includeBlankSegments);
             if (!string.IsNullOrWhiteSpace(textFileData))

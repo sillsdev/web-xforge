@@ -10,7 +10,6 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
-using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -1521,27 +1520,25 @@ public class MachineProjectServiceTests
 
         private static string MockTextCorpusChecksum => StringUtils.ComputeMd5Hash("segRef\tsegment01\n");
 
-        private static Task<ITextCorpus> MockTextCorpus =>
-            Task.FromResult<ITextCorpus>(
-                new MockTextCorpus
+        private static Task<IEnumerable<ISFText>> MockTextCorpus =>
+            Task.FromResult<IEnumerable<ISFText>>(
+                new[]
                 {
-                    Texts = new[]
+                    new MockText
                     {
-                        new MockText
+                        Id = "textId",
+                        Segments = new List<SFTextSegment>
                         {
-                            Id = "textId",
-                            Segments = new List<TextSegment>
-                            {
-                                new TextSegment(
-                                    "textId",
-                                    "segRef",
-                                    new string[] { "segment01" },
-                                    false,
-                                    false,
-                                    false,
-                                    false
-                                ),
-                            },
+                            new SFTextSegment(
+                                "textId",
+                                "segRef",
+                                "segment01",
+                                new string[] { "segment01" },
+                                false,
+                                false,
+                                false,
+                                false
+                            ),
                         },
                     },
                 }
