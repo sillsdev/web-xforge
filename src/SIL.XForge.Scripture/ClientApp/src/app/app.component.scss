@@ -72,6 +72,11 @@ header {
     display: flex;
     align-items: center;
     column-gap: 1em;
+    img {
+      @include media-breakpoint-up(sm, variables.$grid-breakpoints) {
+        margin-inline-start: 8px;
+      }
+    }
   }
 
   .update-banner {
