@@ -9,6 +9,7 @@ import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/te
 import { filter } from 'rxjs/operators';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService, formatFileSource } from 'xforge-common/file.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -72,7 +73,8 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     private readonly fileService: FileService,
     private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    protected readonly externalUrlService: ExternalUrlService
   ) {
     super();
     this.getStartingLocation();
