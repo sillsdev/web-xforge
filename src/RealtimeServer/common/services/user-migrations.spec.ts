@@ -9,13 +9,13 @@ import { SchemaVersionRepository } from '../../common/schema-version-repository'
 import { createDoc, fetchDoc } from '../../common/utils/test-utils';
 import { UserService } from './user-service';
 
-describe('SFProjectMigrations', () => {
+describe('UserMigrations', () => {
   describe('version 1', () => {
     it('migrates users with a role', async () => {
       const env = new TestEnvironment(0);
       const conn = env.server.connect();
       await createDoc(conn, USERS_COLLECTION, 'user01', {
-        roles: [SystemRole.SystemAdmin]
+        role: SystemRole.SystemAdmin
       });
       await env.server.migrateIfNecessary();
 

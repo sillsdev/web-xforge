@@ -76,6 +76,31 @@ public class UserAccessorTests
     }
 
     [Test]
+    public void UserAccessor_Name_NoIdentity()
+    {
+        var env = new TestEnvironment();
+        env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal();
+
+        // SUT
+        string actual = env.Service.Name;
+        Assert.AreEqual(string.Empty, actual);
+    }
+
+    [Test]
+    public void UserAccessor_NoClaims()
+    {
+        var env = new TestEnvironment();
+        env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(new ClaimsIdentity(null, string.Empty));
+
+        // SUT
+        Assert.AreEqual(string.Empty, env.Service.AuthId);
+        Assert.IsFalse(env.Service.IsAuthenticated);
+        Assert.AreEqual(string.Empty, env.Service.Name);
+        Assert.IsEmpty(env.Service.SystemRoles);
+        Assert.AreEqual(string.Empty, env.Service.UserId);
+    }
+
+    [Test]
     public void UserAccessor_NullHttpContext()
     {
         var env = new TestEnvironment { HttpContextAccessor = { HttpContext = null } };

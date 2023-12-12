@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SIL.Extensions;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -90,9 +91,20 @@ public class UserService : IUserService
                 op.Set(u => u.Name, name);
                 op.Set(u => u.Email, (string)userProfile["email"]);
                 op.Set(u => u.AvatarUrl, avatarUrl);
-                string? role = (string?)userProfile["app_metadata"]?["xf_role"];
-                string[] roles = role is null ? Array.Empty<string>() : new[] { role };
-                op.Set(u => u.Roles, roles.ToList(), _listStringComparer);
+                List<string> roles = new List<string>();
+                if (userProfile["app_metadata"]?["xf_role"] is JArray)
+                {
+                    roles.AddRange(userProfile["app_metadata"]["xf_role"].Select(r => r.ToString()));
+                }
+                else
+                {
+                    string? role = (string?)userProfile["app_metadata"]?["xf_role"];
+                    if (role is not null)
+                    {
+                        roles.Add(role);
+                    }
+                }
+                op.Set(u => u.Roles, roles, _listStringComparer);
                 if (ptIdentity != null)
                 {
                     var ptId = (string)ptIdentity["user_id"];

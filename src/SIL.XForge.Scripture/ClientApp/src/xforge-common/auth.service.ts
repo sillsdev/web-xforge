@@ -47,7 +47,7 @@ export const AUTH0_SCOPE = `openid profile email ${environment.scope} offline_ac
 /**
  * @deprecated This value is deprecated, but maintained to ensure compatibility with older login sessions
  */
-const ROLE_SETTING = 'role';
+export const ROLE_SETTING = 'role';
 
 export interface AuthState {
   returnUrl: string;
