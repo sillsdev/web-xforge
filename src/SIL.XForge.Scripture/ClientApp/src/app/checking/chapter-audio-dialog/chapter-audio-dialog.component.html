@@ -66,6 +66,10 @@
     </app-notice>
   </mat-dialog-content>
   <mat-dialog-actions>
+    <a mat-button [href]="externalUrlService.chapterAudioHelpPage" target="_blank"
+      ><mat-icon>help</mat-icon> {{ t("app.help") }}</a
+    >
+    <span class="flex-spacer"></span>
     <div class="uploading" *ngIf="isLoadingAudio">
       <span>Uploading...</span>
       <mat-spinner diameter="24"></mat-spinner>
