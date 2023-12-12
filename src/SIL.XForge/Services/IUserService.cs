@@ -11,5 +11,5 @@ public interface IUserService
     Task<Dictionary<string, string>> DisplayNamesFromUserIds(string curUserId, string[] userId);
     Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId);
     Task UpdateInterfaceLanguageAsync(string curUserId, string authId, string language);
-    Task DeleteAsync(string curUserId, string systemRole, string userId);
+    Task DeleteAsync(string curUserId, string[] systemRoles, string userId);
 }

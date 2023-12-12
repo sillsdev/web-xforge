@@ -1005,9 +1005,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
-    public async Task SetPreTranslateAsync(string curUserId, string systemRole, string projectId, bool preTranslate)
+    public async Task SetPreTranslateAsync(string curUserId, string[] systemRoles, string projectId, bool preTranslate)
     {
-        if (systemRole != SystemRole.SystemAdmin)
+        if (!systemRoles.Contains(SystemRole.SystemAdmin))
             throw new ForbiddenException();
 
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
@@ -1015,9 +1015,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.PreTranslate, preTranslate));
     }
 
-    public async Task SetServalConfigAsync(string curUserId, string systemRole, string projectId, string? servalConfig)
+    public async Task SetServalConfigAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        string? servalConfig
+    )
     {
-        if (systemRole != SystemRole.SystemAdmin)
+        if (!systemRoles.Contains(SystemRole.SystemAdmin))
             throw new ForbiddenException();
 
         // Normalize whitespace and empty values to null

@@ -1,3 +1,4 @@
+using System;
 using System.Security.Claims;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
@@ -11,26 +12,22 @@ public class UserAccessor : IUserAccessor
 
     public UserAccessor(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
 
-    private ClaimsPrincipal User => _httpContextAccessor.HttpContext.User;
+    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
-    public bool IsAuthenticated => User.Identity.IsAuthenticated;
-    public string UserId => User.FindFirst(XFClaimTypes.UserId)?.Value;
-    public string SystemRole => User.FindFirst(XFClaimTypes.Role)?.Value;
+    public string AuthId => User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
     public string Name
     {
         get
         {
-            string name = User.Identity.Name;
+            string name = User?.Identity?.Name;
             if (!string.IsNullOrWhiteSpace(name))
                 return name;
 
-            Claim sub = User.FindFirst(JwtClaimTypes.Subject);
-            if (sub != null)
-                return sub.Value;
-
-            return string.Empty;
+            return User?.FindFirst(JwtClaimTypes.Subject)?.Value ?? string.Empty;
         }
     }
-
-    public string AuthId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    public string[] SystemRoles =>
+        (User?.FindFirst(XFClaimTypes.Role)?.Value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries);
+    public string UserId => User?.FindFirst(XFClaimTypes.UserId)?.Value ?? string.Empty;
 }
