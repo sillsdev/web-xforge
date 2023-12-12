@@ -43,4 +43,8 @@ export class LocationService {
   reload(): void {
     window.location.reload();
   }
+
+  openInNewTab(url: string): void {
+    window.open(url, '_blank');
+  }
 }

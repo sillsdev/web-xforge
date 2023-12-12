@@ -66,6 +66,8 @@
     </app-notice>
   </mat-dialog-content>
   <mat-dialog-actions>
+    <button mat-button id="help-button" (click)="help()"><i class="material-icons">help</i> Help</button>
+    <span class="flex-spacer"></span>
     <div class="uploading" *ngIf="isLoadingAudio">
       <span>Uploading...</span>
       <mat-spinner diameter="24"></mat-spinner>
