@@ -335,7 +335,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   canShowAdditionalInfo(job?: BuildDto): boolean {
-    return job?.additionalInfo != null && this.authService.currentUserRole === SystemRole.SystemAdmin;
+    return job?.additionalInfo != null && this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
   }
 
   canCancel(job?: BuildDto): boolean {
