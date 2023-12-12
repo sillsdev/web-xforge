@@ -22,6 +22,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { filter } from 'rxjs/operators';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
@@ -76,7 +77,8 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     private readonly fileService: FileService,
     private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    protected readonly externalUrlService: ExternalUrlService
   ) {
     super();
     this.getStartingLocation();
