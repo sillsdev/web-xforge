@@ -56,8 +56,8 @@
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
     <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
-    <mat-button-toggle-group>
-      <mat-button-toggle *ngIf="canInsertNote" class="save-button save-options" (click)="submit()">{{
+    <mat-button-toggle-group *ngIf="canInsertNote">
+      <mat-button-toggle class="save-button save-options" (click)="submit()">{{
         t(saveOption === "save" ? "save" : "resolve")
       }}</mat-button-toggle>
       <mat-button-toggle *ngIf="canResolve" class="save-options-trigger save-options" [matMenuTriggerFor]="saveMenu">
