@@ -158,7 +158,7 @@ export const Administrator: Story = {
   play: async ({ canvasElement }) => {
     expect(menuItems(canvasElement)).toEqual([
       'Overview',
-      'Draft & review',
+      'Edit & review',
       'Generate draft',
       'Manage questions',
       'Questions & answers',
@@ -174,7 +174,7 @@ export const Translator: Story = {
   play: async ({ canvasElement }) => {
     expect(menuItems(canvasElement)).toEqual([
       'Overview',
-      'Draft & review',
+      'Edit & review',
       'Generate draft',
       'My progress',
       'Questions & answers',
@@ -186,14 +186,14 @@ export const Translator: Story = {
 export const Consultant: Story = {
   args: { ...Default.args, role: SFProjectRole.ParatextConsultant },
   play: async ({ canvasElement }) => {
-    expect(menuItems(canvasElement)).toEqual(['Overview', 'Draft & review', 'My progress', 'Questions & answers']);
+    expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review', 'My progress', 'Questions & answers']);
   }
 };
 
 export const Observer: Story = {
   args: { ...Default.args, role: SFProjectRole.ParatextObserver },
   play: async ({ canvasElement }) => {
-    expect(menuItems(canvasElement)).toEqual(['Overview', 'Draft & review', 'My progress', 'Questions & answers']);
+    expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review', 'My progress', 'Questions & answers']);
   }
 };
 
@@ -207,14 +207,14 @@ export const Checker: Story = {
 export const Viewer: Story = {
   args: { ...Default.args, role: SFProjectRole.Viewer },
   play: async ({ canvasElement }) => {
-    expect(menuItems(canvasElement)).toEqual(['Overview', 'Draft & review']);
+    expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review']);
   }
 };
 
 export const Commenter: Story = {
   args: { ...Default.args, role: SFProjectRole.Commenter },
   play: async ({ canvasElement }) => {
-    expect(menuItems(canvasElement)).toEqual(['Overview', 'Draft & review']);
+    expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review']);
   }
 };
 
@@ -247,7 +247,7 @@ export const CheckingDisabled: Story = {
   play: async ({ canvasElement }) => {
     expect(menuItems(canvasElement)).toEqual([
       'Overview',
-      'Draft & review',
+      'Edit & review',
       'Generate draft',
       'Synchronize',
       'Users',
@@ -266,7 +266,7 @@ export const TranslateOverviewActive: Story = {
 export const TranslateEditorActive: Story = {
   args: { ...Administrator.args, path: 'translate/GEN' },
   play: async ({ canvasElement }) => {
-    expect(activeMenuItemText(canvasElement)).toBe('Draft & review');
+    expect(activeMenuItemText(canvasElement)).toBe('Edit & review');
   }
 };
 

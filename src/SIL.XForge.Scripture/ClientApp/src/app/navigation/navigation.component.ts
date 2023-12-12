@@ -48,7 +48,7 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   projectUserConfigDoc$ = new BehaviorSubject<SFProjectUserConfigDoc | undefined>(undefined);
 
-  draftReviewLink$ = combineLatest([
+  translateLink$ = combineLatest([
     this.activatedProjectService.changes$,
     this.projectUserConfigDoc$.pipe(
       switchMap(doc => doc?.changes$.pipe(startWith(undefined)) ?? of(undefined)),
