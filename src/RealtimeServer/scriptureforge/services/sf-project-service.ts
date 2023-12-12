@@ -457,7 +457,7 @@ export class SFProjectService extends ProjectService<SFProject> {
   }
 
   protected allowRead(docId: string, doc: SFProject, session: ConnectSession): boolean {
-    if (session.isServer || session.role === SystemRole.SystemAdmin || Object.keys(doc).length === 0) {
+    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin) || Object.keys(doc).length === 0) {
       return true;
     }
     if (this.hasRight(session.userId, doc, Operation.View)) {

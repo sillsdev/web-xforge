@@ -1394,7 +1394,7 @@ public class SFProjectServiceTests
 
         // User04 is a system admin, but not a project-admin or even a user on Project03
         Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
-        Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
+        Assert.That(env.GetUser(User04).Roles.First(), Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
             () => (env.Service.InvitedUsersAsync(User04, Project03)),
@@ -1412,7 +1412,7 @@ public class SFProjectServiceTests
             Is.Not.EqualTo(SFProjectRole.Administrator),
             "test setup"
         );
-        Assert.That(env.GetUser(User02).Role, Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
+        Assert.That(env.GetUser(User02).Roles.First(), Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.InvitedUsersAsync(User02, Project01),
             "should have been forbidden"
@@ -1561,7 +1561,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         // User04 is a system admin, but not a project-admin or even a user on Project03
         Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
-        Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
+        Assert.That(env.GetUser(User04).Roles.First(), Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"),
@@ -3179,91 +3179,91 @@ public class SFProjectServiceTests
                             Id = User01,
                             Email = "user01@example.com",
                             ParatextId = "pt-user01",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01, Project03, SourceOnly } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User02,
                             Email = "user02@example.com",
                             ParatextId = "pt-user02",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01, Project02, Project03, Project04, Project06 } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User03,
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
-                            Role = SystemRole.User,
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Roles = new List<string> { SystemRole.User },
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
                         {
                             Id = User04,
                             Email = "user04@example.com",
+                            Roles = new List<string> { SystemRole.SystemAdmin },
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
-                            Role = SystemRole.SystemAdmin
                         },
                         new User
                         {
                             Id = LinkExpiredUser,
                             Email = "expired@example.com",
-                            Role = SystemRole.User,
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Roles = new List<string> { SystemRole.User },
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
                         {
                             Id = User05,
                             Email = "user05@example.com",
                             ParatextId = "pt-user05",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01 } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User06,
                             Email = "user06@example.com",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01 } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User07,
                             Email = "user07@example.com",
-                            Role = SystemRole.SystemAdmin,
+                            Roles = new List<string> { SystemRole.SystemAdmin },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project06 } }
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     }
                 )
             );
