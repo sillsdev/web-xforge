@@ -4,7 +4,7 @@ import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/lega
 import { ActivatedRoute, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { ProjectType, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
@@ -121,6 +121,17 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isAlternateTrainingSourceEnabled(): boolean {
     return this.alternateTrainingSourceEnabled.value ?? false;
+  }
+
+  get showPreTranslationSettings(): boolean {
+    const translateConfig = this.projectDoc?.data?.translateConfig;
+    if (translateConfig == null || !this.featureFlags.showNmtDrafting.enabled) {
+      return false;
+    } else if (this.authService.currentUserRole === SystemRole.SystemAdmin) {
+      return true;
+    } else {
+      return translateConfig.preTranslate === true && translateConfig.projectType !== ProjectType.BackTranslation;
+    }
   }
 
   get projectId(): string {

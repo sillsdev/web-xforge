@@ -18,8 +18,9 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
+import { getAudioTimingsPhraseLevel } from '../../../checking-test.utils';
+import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedSFProjectService = mock(SFProjectService);
@@ -47,8 +48,8 @@ class MockComponent {
     when(mockedQuestion.audioUrl).thenReturn('test-audio-player.webm');
     const verseRef: VerseRefData = {
       bookNum: 8,
-      chapterNum: 22,
-      verseNum: 17
+      chapterNum: 1,
+      verseNum: 1
     };
     when(mockedQuestion.verseRef).thenReturn(verseRef);
     when(mockedQuestionDoc.data).thenReturn(instance(mockedQuestion));
@@ -93,7 +94,7 @@ describe('CheckingQuestionComponent', () => {
 
   it('selects question when scripture audio has already been played', async () => {
     const env = new TestEnvironment();
-    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 22:17']);
+    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 1:1']);
     await env.wait();
     await env.wait();
 
@@ -104,12 +105,12 @@ describe('CheckingQuestionComponent', () => {
 
   it('selects scripture if not all scripture audio has already been played for question', async () => {
     const env = new TestEnvironment();
-    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 22:17']);
+    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 1:1']);
     const verseRef: VerseRefData = {
       bookNum: 8,
-      chapterNum: 22,
-      verseNum: 17,
-      verse: '17-18'
+      chapterNum: 1,
+      verseNum: 1,
+      verse: '1-2'
     };
     when(mockedQuestion.verseRef).thenReturn(verseRef);
     await env.wait();
@@ -160,6 +161,16 @@ describe('CheckingQuestionComponent', () => {
 
     await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
+  });
+
+  it('plays the entire verse when timing files are phrase level', async () => {
+    const env = new TestEnvironment();
+    await env.wait();
+    await env.wait();
+
+    // The timing follows shows 1a (0-1sec), 1b (1-2sec), 2a (2-3sec), 2b (3-4sec)
+    expect(env.component.question.scriptureAudioStart).toBe(0);
+    expect(env.component.question.scriptureAudioEnd).toBe(2);
   });
 
   it('does not select question if scriptureAudio is set to the same value', async () => {
@@ -269,7 +280,7 @@ class TestEnvironment {
   readonly queryChanged$: Subject<void> = new Subject<void>();
 
   constructor() {
-    const audio1 = this.createTextAudioDoc(getTextAudioId('project01', 8, 22), 'test-audio-player-b.webm');
+    const audio1 = this.createTextAudioDoc(getTextAudioId('project01', 8, 1), 'test-audio-player-b.webm');
     const audio2 = this.createTextAudioDoc(getTextAudioId('project01', 1, 11), 'test-audio-player.webm');
 
     when(this.query.remoteChanges$).thenReturn(this.queryChanged$);
@@ -289,7 +300,7 @@ class TestEnvironment {
     const audioDoc = mock(TextAudioDoc);
     const textAudio = mock<TextAudio>();
     when(textAudio.audioUrl).thenReturn(url);
-    when(textAudio.timings).thenReturn([]);
+    when(textAudio.timings).thenReturn(getAudioTimingsPhraseLevel());
     when(audioDoc.data).thenReturn(instance(textAudio));
     when(audioDoc.id).thenReturn(id);
 
