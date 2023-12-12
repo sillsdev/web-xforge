@@ -235,13 +235,12 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.deleteTimingData();
 
     let timing: AudioTiming[] = [];
-
     if (result.length !== 0) {
       if (result[0].length === 6 && result[0][0] === 'Name') {
         // Adobe Audition style timing files have 6 columns and the first heading is "Name"
         timing = this.parseAdobeAuditionStyleTimingFile(result);
-      } else if (result[0].length === 3) {
-        // Audacity style timing files have 3 columns
+      } else if (result.some(row => row.length === 3)) {
+        // Assume Audacity style timing files with 3 columns
         timing = this.parseAudacityStyleTimingFile(result);
       } else {
         this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_timing_file_format';

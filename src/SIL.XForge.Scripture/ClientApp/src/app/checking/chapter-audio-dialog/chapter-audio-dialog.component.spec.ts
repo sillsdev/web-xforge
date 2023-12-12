@@ -321,6 +321,21 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.timingErrorMessage).toEqual('');
   }));
 
+  it('can parse audacity style timing data with headings', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['\\id ROM'],
+      ['\\c 1'],
+      ['\\level verse'],
+      ['0.0', '0.5', '1'],
+      ['0.5', '1.0', '2']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+
+    expect(env.component.timingErrorMessage).toEqual('');
+  }));
+
   it('can also parse adobe audition style timing data with decimal time format', fakeAsync(async () => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
