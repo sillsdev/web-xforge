@@ -476,7 +476,8 @@ export class RealtimeServer extends ShareDB {
     let session: ConnectSession;
     if (context.req != null && context.req.user != null) {
       const userId: string = context.req.user[XF_USER_ID_CLAIM];
-      const roles: string[] = [context.req.user[XF_ROLE_CLAIM]];
+      const role: string | undefined = context.req.user[XF_ROLE_CLAIM];
+      const roles: string[] = role?.split(',') ?? [];
       session = {
         userId,
         roles,

@@ -23,7 +23,7 @@ public abstract class RpcControllerBase : RpcController
     }
 
     protected string UserId => _userAccessor.UserId;
-    protected string SystemRole => _userAccessor.SystemRole;
+    protected string[] SystemRoles => _userAccessor.SystemRoles;
     protected string AuthId => _userAccessor.AuthId;
 
     protected IRpcMethodResult InvalidParamsError(string message) => Error((int)RpcErrorCode.InvalidParams, message);

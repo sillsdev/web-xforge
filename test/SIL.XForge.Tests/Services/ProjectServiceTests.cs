@@ -150,7 +150,7 @@ public class ProjectServiceTests
 
         await env.Service.UpdateRoleAsync(
             User02,
-            SystemRole.SystemAdmin,
+            new string[] { SystemRole.SystemAdmin },
             Project01,
             User02,
             TestProjectRole.Administrator
@@ -164,7 +164,13 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.UpdateRoleAsync(User01, SystemRole.User, Project01, User02, TestProjectRole.Administrator);
+        await env.Service.UpdateRoleAsync(
+            User01,
+            new string[] { SystemRole.User },
+            Project01,
+            User02,
+            TestProjectRole.Administrator
+        );
         TestProject project = env.GetProject(Project01);
         Assert.That(project.UserRoles[User02], Is.EqualTo(TestProjectRole.Administrator));
     }
@@ -175,7 +181,14 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
 
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, User02, TestProjectRole.Administrator)
+            () =>
+                env.Service.UpdateRoleAsync(
+                    User02,
+                    new string[] { SystemRole.User },
+                    Project01,
+                    User02,
+                    TestProjectRole.Administrator
+                )
         );
     }
 
@@ -185,15 +198,23 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         // SUT 1
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.SetSyncDisabledAsync(User03, SystemRole.User, Project01, false)
+            async () =>
+                await env.Service.SetSyncDisabledAsync(User03, new string[] { SystemRole.User }, Project01, false)
         );
         // SUT 2
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.SetSyncDisabledAsync(User03, SystemRole.None, Project01, false)
+            async () =>
+                await env.Service.SetSyncDisabledAsync(User03, new string[] { SystemRole.None }, Project01, false)
         );
         // SUT 3
         Assert.DoesNotThrowAsync(
-            async () => await env.Service.SetSyncDisabledAsync(User03, SystemRole.SystemAdmin, Project01, false)
+            async () =>
+                await env.Service.SetSyncDisabledAsync(
+                    User03,
+                    new string[] { SystemRole.SystemAdmin },
+                    Project01,
+                    false
+                )
         );
     }
 
@@ -204,12 +225,12 @@ public class ProjectServiceTests
 
         Assert.That(env.GetProject(Project01).SyncDisabled, Is.EqualTo(false));
         // SUT 1
-        await env.Service.SetSyncDisabledAsync(User01, SystemRole.SystemAdmin, Project01, true);
+        await env.Service.SetSyncDisabledAsync(User01, new string[] { SystemRole.SystemAdmin }, Project01, true);
         Assert.That(env.GetProject(Project01).SyncDisabled, Is.EqualTo(true));
 
         Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(true));
         // SUT 2
-        await env.Service.SetSyncDisabledAsync(User01, SystemRole.SystemAdmin, Project02, false);
+        await env.Service.SetSyncDisabledAsync(User01, new string[] { SystemRole.SystemAdmin }, Project02, false);
         Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(false));
     }
 

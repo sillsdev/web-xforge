@@ -149,7 +149,7 @@ public class UsersRpcController : RpcControllerBase
     {
         try
         {
-            await _userService.DeleteAsync(UserId, SystemRole, userId);
+            await _userService.DeleteAsync(UserId, SystemRoles, userId);
             return Ok();
         }
         catch (ForbiddenException)
