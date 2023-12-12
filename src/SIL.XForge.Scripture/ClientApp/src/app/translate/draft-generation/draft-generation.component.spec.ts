@@ -103,7 +103,7 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.User });
+      mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.User] });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
@@ -866,14 +866,14 @@ describe('DraftGenerationComponent', () => {
   describe('canShowAdditionalInfo', () => {
     it('should return true if the user is system admin, and build has additional info', () => {
       let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.SystemAdmin] });
       });
       expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build has no additional info', () => {
       let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRole: SystemRole.SystemAdmin });
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.SystemAdmin] });
       });
       expect(env.component.canShowAdditionalInfo({} as BuildDto)).toBe(false);
     });
