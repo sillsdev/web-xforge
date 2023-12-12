@@ -17,7 +17,7 @@ public class SFProjectsRpcControllerTests
 {
     private const string Project01 = "project01";
     private const string User01 = "user01";
-    private const string Role = SystemRole.User;
+    private static readonly string[] Roles = { SystemRole.User };
 
     [Test]
     public async Task InvitedUsers_Available()
@@ -56,7 +56,8 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
-        env.SFProjectService.SetServalConfigAsync(User01, Role, Project01, servalConfig)
+        env.SFProjectService
+            .SetServalConfigAsync(User01, Roles, Project01, servalConfig)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -70,7 +71,8 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
         const string errorMessage = "Not Found";
-        env.SFProjectService.SetServalConfigAsync(User01, Role, Project01, servalConfig)
+        env.SFProjectService
+            .SetServalConfigAsync(User01, Roles, Project01, servalConfig)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -84,7 +86,8 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
-        env.SFProjectService.SetServalConfigAsync(User01, Role, Project01, servalConfig)
+        env.SFProjectService
+            .SetServalConfigAsync(User01, Roles, Project01, servalConfig)
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -164,7 +167,7 @@ public class SFProjectsRpcControllerTests
             SFProjectService = Substitute.For<ISFProjectService>();
             var userAccessor = Substitute.For<IUserAccessor>();
             userAccessor.UserId.Returns(User01);
-            userAccessor.SystemRole.Returns(Role);
+            userAccessor.SystemRoles.Returns(Roles);
             Controller = new SFProjectsRpcController(userAccessor, SFProjectService, ExceptionHandler);
         }
 

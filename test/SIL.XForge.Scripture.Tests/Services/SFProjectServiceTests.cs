@@ -3039,15 +3039,23 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         // SUT 1
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.User, Project01, false)
+            async () =>
+                await env.Service.SetPreTranslateAsync(User03, new string[] { SystemRole.User }, Project01, false)
         );
         // SUT 2
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.None, Project01, false)
+            async () =>
+                await env.Service.SetPreTranslateAsync(User03, new string[] { SystemRole.None }, Project01, false)
         );
         // SUT 3
         Assert.DoesNotThrowAsync(
-            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.SystemAdmin, Project01, false)
+            async () =>
+                await env.Service.SetPreTranslateAsync(
+                    User03,
+                    new string[] { SystemRole.SystemAdmin },
+                    Project01,
+                    false
+                )
         );
     }
 
@@ -3058,12 +3066,12 @@ public class SFProjectServiceTests
 
         Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(false));
         // SUT 1
-        await env.Service.SetPreTranslateAsync(User01, SystemRole.SystemAdmin, Project02, true);
+        await env.Service.SetPreTranslateAsync(User01, new string[] { SystemRole.SystemAdmin }, Project02, true);
         Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(true));
 
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(true));
         // SUT 2
-        await env.Service.SetPreTranslateAsync(User01, SystemRole.SystemAdmin, Project01, false);
+        await env.Service.SetPreTranslateAsync(User01, new string[] { SystemRole.SystemAdmin }, Project01, false);
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(false));
     }
 
@@ -3088,7 +3096,12 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig: null);
+        await env.Service.SetServalConfigAsync(
+            User01,
+            new string[] { SystemRole.SystemAdmin },
+            Project01,
+            servalConfig: null
+        );
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3103,7 +3116,13 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<JsonReaderException>(
-            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig)
+            () =>
+                env.Service.SetServalConfigAsync(
+                    User01,
+                    new string[] { SystemRole.SystemAdmin },
+                    Project01,
+                    servalConfig
+                )
         );
     }
 
@@ -3114,7 +3133,12 @@ public class SFProjectServiceTests
         const string servalConfig = "  ";
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+        await env.Service.SetServalConfigAsync(
+            User01,
+            new string[] { SystemRole.SystemAdmin },
+            Project01,
+            servalConfig
+        );
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3129,7 +3153,13 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, "invalid_project", servalConfig)
+            () =>
+                env.Service.SetServalConfigAsync(
+                    User01,
+                    new string[] { SystemRole.SystemAdmin },
+                    "invalid_project",
+                    servalConfig
+                )
         );
     }
 
@@ -3144,7 +3174,12 @@ public class SFProjectServiceTests
         Assert.IsNotNull(project.TranslateConfig.DraftConfig);
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+        await env.Service.SetServalConfigAsync(
+            User01,
+            new string[] { SystemRole.SystemAdmin },
+            Project01,
+            servalConfig
+        );
 
         // Verify project document
         project = env.GetProject(Project01);
@@ -3159,7 +3194,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetServalConfigAsync(User01, SystemRole.User, Project01, servalConfig)
+            () => env.Service.SetServalConfigAsync(User01, new string[] { SystemRole.User }, Project01, servalConfig)
         );
     }
 

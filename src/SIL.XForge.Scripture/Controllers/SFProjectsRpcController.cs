@@ -219,7 +219,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.UpdateRoleAsync(UserId, SystemRole, projectId, userId, projectRole);
+            await _projectService.UpdateRoleAsync(UserId, SystemRoles, projectId, userId, projectRole);
             return Ok();
         }
         catch (ForbiddenException)
@@ -545,7 +545,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SetPreTranslateAsync(UserId, SystemRole, projectId, preTranslate);
+            await _projectService.SetPreTranslateAsync(UserId, SystemRoles, projectId, preTranslate);
             return Ok();
         }
         catch (ForbiddenException)
@@ -574,7 +574,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SetSyncDisabledAsync(UserId, SystemRole, projectId, isDisabled);
+            await _projectService.SetSyncDisabledAsync(UserId, SystemRoles, projectId, isDisabled);
             return Ok();
         }
         catch (ForbiddenException)
@@ -603,7 +603,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SetServalConfigAsync(UserId, SystemRole, projectId, servalConfig);
+            await _projectService.SetServalConfigAsync(UserId, SystemRoles, projectId, servalConfig);
             return Ok();
         }
         catch (ForbiddenException)
