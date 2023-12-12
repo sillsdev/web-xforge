@@ -125,7 +125,7 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    // Translate | Overview | Draft & review | Community Checking | Manage questions | Questions & answers |
+    // Translate | Overview | Edit & review | Community Checking | Manage questions | Questions & answers |
     // Synchronize | Users | Settings
     expect(env.menuLength).toEqual(9);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project01')).once();
