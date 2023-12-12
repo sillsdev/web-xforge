@@ -6,7 +6,7 @@ public class User : Json0Snapshot
 {
     public string Name { get; set; }
     public string Email { get; set; }
-    public string Role { get; set; }
+    public List<string> Roles { get; set; } = new List<string>();
     public string AvatarUrl { get; set; }
 
     /// <summary>PT user id, as determined from auth0 profile, from authenticating with Paratext.</summary>

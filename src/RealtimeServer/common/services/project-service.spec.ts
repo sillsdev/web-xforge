@@ -123,7 +123,7 @@ class TestEnvironment {
       'systemAdmin',
       createTestUser(
         {
-          role: SystemRole.SystemAdmin
+          roles: [SystemRole.SystemAdmin]
         },
         1
       )

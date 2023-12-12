@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -20,8 +21,11 @@ namespace SIL.XForge.Services;
 /// </summary>
 public class UserService : IUserService
 {
-    public static readonly string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
+    private const string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
     private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
+    private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
+        EqualityComparer<string>.Default
+    );
 
     private readonly IRealtimeService _realtimeService;
     private readonly IOptions<SiteOptions> _siteOptions;
@@ -86,7 +90,9 @@ public class UserService : IUserService
                 op.Set(u => u.Name, name);
                 op.Set(u => u.Email, (string)userProfile["email"]);
                 op.Set(u => u.AvatarUrl, avatarUrl);
-                op.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
+                string? role = (string?)userProfile["app_metadata"]?["xf_role"];
+                string[] roles = role is null ? Array.Empty<string>() : new[] { role };
+                op.Set(u => u.Roles, roles.ToList(), _listStringComparer);
                 if (ptIdentity != null)
                 {
                     var ptId = (string)ptIdentity["user_id"];

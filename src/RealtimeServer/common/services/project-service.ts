@@ -53,7 +53,7 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
   };
 
   protected allowRead(_docId: string, doc: T, session: ConnectSession): boolean {
-    if (session.isServer || session.role === SystemRole.SystemAdmin || Object.keys(doc).length === 0) {
+    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin) || Object.keys(doc).length === 0) {
       return true;
     }
 
@@ -61,7 +61,7 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
   }
 
   protected allowUpdate(_docId: string, _oldDoc: T, newDoc: T, ops: any, session: ConnectSession): boolean {
-    if (session.isServer || session.role === SystemRole.SystemAdmin) {
+    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin)) {
       return true;
     }
 

@@ -73,7 +73,9 @@ describe('UserService', () => {
 
     const conn = clientConnect(env.server, 'user01', SystemRole.SystemAdmin);
     await expect(
-      submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops => ops.set<string>(u => u.role, SystemRole.SystemAdmin))
+      submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops =>
+        ops.set<string[]>(u => u.roles, [SystemRole.SystemAdmin])
+      )
     ).resolves.not.toThrow();
   });
 
@@ -83,7 +85,9 @@ describe('UserService', () => {
 
     const conn = clientConnect(env.server, 'user02', SystemRole.User);
     await expect(
-      submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops => ops.set<string>(u => u.role, SystemRole.SystemAdmin))
+      submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops =>
+        ops.set<string[]>(u => u.roles, [SystemRole.SystemAdmin])
+      )
     ).rejects.toThrow();
   });
 
@@ -154,7 +158,7 @@ class TestEnvironment {
       'user01',
       createTestUser(
         {
-          role: SystemRole.SystemAdmin
+          roles: [SystemRole.SystemAdmin]
         },
         1
       )
