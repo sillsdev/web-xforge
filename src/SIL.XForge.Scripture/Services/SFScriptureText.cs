@@ -6,14 +6,13 @@ using MongoDB.Bson;
 using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
 using SIL.Machine.Utils;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>Set of Scripture text segments.</summary>
-public class SFScriptureText : IText
+public class SFScriptureText : ISFText
 {
-    private readonly IEnumerable<TextSegment> _segments;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="SFScriptureText"/> class.
     /// </summary>
@@ -49,18 +48,20 @@ public class SFScriptureText : IText
             throw new ArgumentException(@"Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
         Id = $"{projectId}_{book}_{chapter}";
-        _segments = GetSegments(wordTokenizer, doc, includeBlankSegments, doNotSendSegmentText)
+        Segments = GetSegments(wordTokenizer, doc, includeBlankSegments, doNotSendSegmentText)
             .OrderBy(s => s.SegmentRef)
             .ToArray();
     }
 
     public string Id { get; }
 
+    public IEnumerable<SFTextSegment> Segments { get; }
+
     public string SortKey => Id;
 
-    public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => _segments;
+    public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => Segments;
 
-    private IEnumerable<TextSegment> GetSegments(
+    private IEnumerable<SFTextSegment> GetSegments(
         ITokenizer<string, int, string> wordTokenizer,
         BsonDocument doc,
         bool includeBlankSegments,
@@ -130,7 +131,7 @@ public class SFScriptureText : IText
         }
     }
 
-    private TextSegment CreateSegment(
+    private SFTextSegment CreateSegment(
         ITokenizer<string, int, string> wordTokenizer,
         string segRef,
         string segmentStr,
@@ -145,7 +146,22 @@ public class SFScriptureText : IText
             // do not include the paragraph style for sub-segments, so that the segments sort correctly
             keys.AddRange(keys.Count > 0 ? partKeys.Skip(1) : partKeys);
         }
-        string[] segment = doNotSendSegmentText ? Array.Empty<string>() : wordTokenizer.Tokenize(segmentStr).ToArray();
-        return new TextSegment(Id, new TextSegmentRef(keys), segment, isSentenceStart, false, false, !segment.Any());
+        string[] segment = Array.Empty<string>();
+        string segmentText = string.Empty;
+        if (!doNotSendSegmentText)
+        {
+            segment = wordTokenizer.Tokenize(segmentStr).ToArray();
+            segmentText = segmentStr;
+        }
+        return new SFTextSegment(
+            Id,
+            new TextSegmentRef(keys),
+            segmentText,
+            segment,
+            isSentenceStart,
+            false,
+            false,
+            !segment.Any()
+        );
     }
 }
