@@ -8,9 +8,9 @@
         <mat-icon mat-list-icon>apps</mat-icon>
         {{ t("overview") }}
       </a>
-      <a mat-list-item [appRouterLink]="(draftReviewLink$ | async) || ['']" [class.active]="draftReviewActive">
-        <mat-icon mat-list-icon class="material-icons-outlined mirror-rtl">article</mat-icon>
-        {{ t("draft_review") }}
+      <a mat-list-item [appRouterLink]="(translateLink$ | async) || ['']" [class.active]="draftReviewActive">
+        <mat-icon mat-list-icon>edit_note</mat-icon>
+        {{ t("edit_review") }}
       </a>
       <a *ngIf="canGenerateDraft$ | async" mat-list-item [appRouterLink]="draftGenerationLink">
         <mat-icon mat-list-icon class="mirror-rtl">model_training</mat-icon>
