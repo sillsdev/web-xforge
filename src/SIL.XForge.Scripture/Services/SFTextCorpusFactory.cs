@@ -56,18 +56,15 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
             )
         );
 
-    public async Task<ITextCorpus> CreateAsync(
+    public Task<IEnumerable<ISFText>> CreateAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
         bool useAlternateTrainingSource,
         BuildConfig buildConfig
-    ) =>
-        new DictionaryTextCorpus(
-            await CreateTextsAsync(projects, type, preTranslate, useAlternateTrainingSource, buildConfig)
-        );
+    ) => CreateTextsAsync(projects, type, preTranslate, useAlternateTrainingSource, buildConfig);
 
-    private async Task<IReadOnlyList<IText>> CreateTextsAsync(
+    private async Task<IEnumerable<ISFText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
@@ -80,7 +77,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
         IMongoCollection<BsonDocument> textDataColl = database.GetCollection<BsonDocument>(
             _realtimeService.GetCollectionName<TextData>()
         );
-        var texts = new List<IText>();
+        var texts = new List<ISFText>();
         foreach (string projectId in projects)
         {
             SFProject project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
@@ -121,7 +118,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                         projectTexts = sourceProject.Texts;
                     }
 
-                    // If we are using the alternate training source, the source will be all of the training books,
+                    // If we are using the alternate training source, the source will be all the training books,
                     // otherwise it will be the training and translation lists combined without duplicates.
                     books.AddRange(
                         useAlternateTrainingSource
