@@ -10,7 +10,7 @@
     <p><transloco key="draft_generation.instructions_keep_in_mind"></transloco></p>
     <p>{{ t("instructions_draft_process") }}</p>
 
-    <app-notice *ngIf="isBackTranslationMode" type="normal" [outline]="true" class="requirements">
+    <app-notice *ngIf="isBackTranslationMode" type="primary" class="requirements">
       <p>
         <transloco key="draft_generation.back_translation_requirement" [params]="{ supportedLanguagesUrl }"></transloco>
       </p>
@@ -36,13 +36,7 @@
 
     <!-- Only show warnings if target language is supported -->
     <ng-container *ngIf="isTargetLanguageSupported">
-      <app-notice
-        *ngIf="!isSourceProjectSet"
-        type="warning"
-        icon="warning"
-        [outline]="true"
-        data-test-id="warning-source-text-missing"
-      >
+      <app-notice *ngIf="!isSourceProjectSet" type="warning" icon="warning" data-test-id="warning-source-text-missing">
         <transloco
           key="draft_generation.info_alert_source_text_not_selected"
           [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
@@ -53,7 +47,6 @@
         *ngIf="isSourceProjectSet && !isSourceAndTargetDifferent"
         type="warning"
         icon="warning"
-        [outline]="true"
         data-test-id="warning-source-target-same"
       >
         <transloco
@@ -66,7 +59,6 @@
         *ngIf="isSourceProjectSet && isSourceAndTargetDifferent && !isSourceAndTrainingSourceLanguageIdentical"
         type="warning"
         icon="warning"
-        [outline]="true"
         data-test-id="warning-source-target-same"
       >
         <transloco

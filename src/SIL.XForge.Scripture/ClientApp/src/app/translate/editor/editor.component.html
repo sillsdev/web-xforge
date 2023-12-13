@@ -60,13 +60,7 @@
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
       <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
         <div class="language-label">{{ sourceLabel }}</div>
-        <app-notice
-          *ngIf="hasSourceCopyrightBanner"
-          icon="copyright"
-          type="warning"
-          [outline]="true"
-          class="copyright-banner"
-        >
+        <app-notice *ngIf="hasSourceCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
           <div>
             {{ sourceCopyrightBanner }}
             <span class="copyright-more-info" (click)="showCopyrightNotice('source')">{{ t("more_info") }}</span>
@@ -108,13 +102,7 @@
         ngClass.xs="text-area-full-width"
       >
         <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs>{{ targetLabel }}</div>
-        <app-notice
-          *ngIf="hasTargetCopyrightBanner"
-          icon="copyright"
-          type="warning"
-          [outline]="true"
-          class="copyright-banner"
-        >
+        <app-notice *ngIf="hasTargetCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
           <div>
             {{ targetCopyrightBanner }}
             <span class="copyright-more-info" (click)="showCopyrightNotice('target')">{{ t("more_info") }}</span>

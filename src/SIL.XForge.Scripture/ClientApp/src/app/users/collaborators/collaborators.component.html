@@ -3,7 +3,7 @@
     <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
       t("connect_network_to_manage_users")
     }}</span>
-    <app-notice icon="live_help" [outline]="true">
+    <app-notice icon="live_help">
       <div class="help-message">
         {{ t("uses_roles_to_access_project") }}
         <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>

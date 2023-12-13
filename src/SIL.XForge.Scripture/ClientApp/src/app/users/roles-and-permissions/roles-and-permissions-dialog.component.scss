@@ -48,8 +48,8 @@ h3 {
 }
 
 .learn-more-btn {
-  background-color: var(--notice-color);
-  color: #fff;
+  background-color: var(--notice-color-button-bg);
+  color: var(--notice-color-button-text);
   flex-shrink: 0;
 }
 
