@@ -1,17 +1,23 @@
 @use 'sass:color';
 @use 'sass:list';
+@use 'src/variables' as sfColors;
 
 // prettier-ignore
 $colors: (
-  primary:   (#cfe2fd, #305993),
-  secondary: (#d6d4e8, #4a4959),
-  success:   (#c4ead9, #125235),
-  warning:   (#fff3d0, #6a5117),
-  error:     (#f8d7da, #952633),
-  info:      (#d0f4fb, #345564),
-  light:     (#f7f7f7, #6a6b6b),
-  dark:      (#d3d3d4, #181a1d)
+  primary:   (sfColors.$blueMedium, #cfe2fd),
+  secondary: (sfColors.$purpleDark, #d6d4e8),
+  success:   (#125235, #c4ead9),
+  warning:   (#6a5117, #fff3d0),
+  error:     (sfColors.$errorColor, #f8d7da),
+  info:      (#345564, #d0f4fb),
+  light:     (#6a6b6b, #f7f7f7),
+  dark:      (#181a1d, #d3d3d4),
 );
+
+// Helper function just to clean up the syntax
+@function scaleLightness($color, $lightness) {
+  @return color.scale($color, $lightness: $lightness);
+}
 
 :host {
   display: flex;
@@ -24,8 +30,8 @@ $colors: (
   color: var(--notice-color-text);
   background-color: var(--notice-color);
 
-  --notice-color-button-bg: var(--notice-color-outline);
   --notice-color-button-text: #fff;
+  --notice-color-button-hover-text: var(--notice-color-button-text);
 
   mat-icon {
     flex-shrink: 0;
@@ -33,14 +39,26 @@ $colors: (
   }
 
   @each $name, $palette in $colors {
+    $colorDark: list.nth($palette, 1);
+    $colorLight: list.nth($palette, 2);
+
     &.#{$name} {
-      --notice-color: #{list.nth($palette, 1)};
-      --notice-color-text: #{list.nth($palette, 2)};
-      --notice-color-outline-text: #{color.scale(list.nth($palette, 2), $lightness: 20%)};
-      --notice-color-icon: #{color.scale(list.nth($palette, 2), $lightness: 30%)};
-      --notice-color-outline: #{color.scale(list.nth($palette, 1), $lightness: -30%)};
-      --notice-color-light: #{color.scale(list.nth($palette, 1), $lightness: 50%)};
-      --notice-color-extra-dark: #{color.scale(list.nth($palette, 1), $lightness: -50%)};
+      --notice-color: #{$colorLight};
+      --notice-color-text: #{$colorDark};
+      --notice-color-outline-text: #{scaleLightness($colorDark, 20%)};
+      --notice-color-icon: #{scaleLightness($colorDark, 30%)};
+      --notice-color-outline: #{scaleLightness($colorLight, -30%)};
+      --notice-color-light: #{scaleLightness($colorLight, 50%)};
+      --notice-color-extra-dark: #{scaleLightness($colorLight, -50%)};
+
+      // Used for buttons inside all notice types except 'extra-dark'
+      --notice-color-button-bg: #{scaleLightness($colorLight, -40%)};
+      --notice-color-button-hover-bg: #{scaleLightness($colorLight, -50%)};
+
+      // Used for button inside 'extra-dark' notice type
+      --notice-color-button-bg-alt: #{scaleLightness($colorLight, 20%)};
+      --notice-color-button-hover-bg-alt: #{scaleLightness($colorLight, 80%)};
+      --notice-color-button-text-alt: #{scaleLightness($colorLight, -60%)};
     }
   }
 
@@ -57,6 +75,11 @@ $colors: (
     background-color: var(--notice-color-extra-dark);
     color: #fff;
 
+    // Extra dark mode button need different colors for contrast
+    --notice-color-button-bg: var(--notice-color-button-bg-alt);
+    --notice-color-button-text: var(--notice-color-button-text-alt);
+    --notice-color-button-hover-bg: var(--notice-color-button-hover-bg-alt);
+
     mat-icon {
       color: #fff;
     }
@@ -65,6 +88,18 @@ $colors: (
     background-color: unset;
     border-color: var(--notice-color-outline);
     color: var(--notice-color-outline-text);
+  }
+
+  // Style buttons inside notices
+  ::ng-deep .mat-button-base {
+    flex-shrink: 0;
+    background-color: var(--notice-color-button-bg);
+    color: var(--notice-color-button-text);
+
+    &:hover {
+      background-color: var(--notice-color-button-hover-bg);
+      color: var(--notice-color-button-hover-text);
+    }
   }
 }
 

@@ -20,7 +20,7 @@ describe('NoticeComponent', () => {
     expect(env.icon).toBeTruthy();
   });
 
-  for (const type of noticeTypes.filter(t => t !== 'normal')) {
+  for (const type of noticeTypes) {
     it(`should set "${type}" class`, () => {
       const template = `<app-notice type="${type}">This is a ${type}</app-notice>`;
       const env = new TestEnvironment(template);
@@ -42,24 +42,10 @@ describe('NoticeComponent', () => {
     expect(env.container.classes['primary']).toBeTrue();
   });
 
-  it('should set "mode-fill-dark" class if no mode specified', () => {
+  it('should set "mode-fill-light" class if no mode specified', () => {
     const template = '<app-notice>This is a notice</app-notice>';
     const env = new TestEnvironment(template);
-    expect(env.container.classes['mode-fill-dark']).toBeTrue();
-  });
-
-  describe('legacy props', () => {
-    it('should set "primary" class if "normal" type specified', () => {
-      const template = '<app-notice type="normal">This is a notice</app-notice>';
-      const env = new TestEnvironment(template);
-      expect(env.container.classes['primary']).toBeTrue();
-    });
-
-    it('should set "mode-outline" class if "outline" specified', () => {
-      const template = '<app-notice [outline]="true">This is a notice</app-notice>';
-      const env = new TestEnvironment(template);
-      expect(env.container.classes['mode-outline']).toBeTrue();
-    });
+    expect(env.container.classes['mode-fill-light']).toBeTrue();
   });
 });
 
