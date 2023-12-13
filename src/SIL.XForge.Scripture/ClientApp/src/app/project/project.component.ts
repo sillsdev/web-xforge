@@ -1,14 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
-import { SFProjectService } from '../core/sf-project.service';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { PermissionsService } from '../core/permissions.service';
+import { SFProjectService } from '../core/sf-project.service';
+
+type TaskType = 'translate' | 'checking';
 
 @Component({
   selector: 'app-projects',
@@ -22,6 +27,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly router: Router,
     private readonly userService: UserService,
     private readonly permissions: PermissionsService,
+    private readonly resumeCheckingService: ResumeCheckingService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -64,47 +70,69 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
 
   private async navigateToProject(projectId: string): Promise<void> {
     this.loadingStarted();
-    const projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
-    const projectUserConfig = projectUserConfigDoc.data;
-    const projectDoc = await this.projectService.getProfile(projectId);
-    const project = projectDoc.data;
-    if (project == null || projectUserConfig == null) {
-      return;
-    }
-    const selectedTask = projectUserConfig.selectedTask;
-    const isTranslateAccessible = this.permissions.canAccessTranslate(projectDoc);
-    const isCheckingAccessible = this.permissions.canAccessCommunityChecking(projectDoc);
 
-    // navigate to last location
-    if (
-      (selectedTask === 'translate' && isTranslateAccessible) ||
-      (selectedTask === 'checking' && isCheckingAccessible)
-    ) {
-      const taskRoute = ['projects', projectId, selectedTask];
-      // the user has previously navigated to a location in a task
-      const bookNum = projectUserConfig.selectedBookNum;
-      if (bookNum != null) {
-        taskRoute.push(Canon.bookNumberToId(bookNum));
-      } else if (selectedTask === 'checking') {
-        taskRoute.push('ALL');
+    try {
+      const [projectUserConfigDoc, projectDoc] = await Promise.all([
+        this.projectService.getUserConfig(projectId, this.userService.currentUserId),
+        this.projectService.getProfile(projectId)
+      ]);
+
+      const projectUserConfig = projectUserConfigDoc.data;
+      const project = projectDoc.data;
+
+      if (project == null || projectUserConfig == null) {
+        return;
       }
-      this.router.navigate(taskRoute, { replaceUrl: true });
-    } else {
-      // navigate to the default location in the first enabled task
-      let task: string | undefined;
-      if (isTranslateAccessible) {
-        task = 'translate';
-      } else if (isCheckingAccessible) {
-        task = 'checking';
+
+      const selectedTask = projectUserConfig.selectedTask;
+      const isTranslateAccessible = this.permissions.canAccessTranslate(projectDoc);
+      const isCheckingAccessible = this.permissions.canAccessCommunityChecking(projectDoc);
+
+      const tasks: { task: TaskType; accessible: boolean }[] = [
+        // first listed task will be treated as default
+        { task: 'translate', accessible: isTranslateAccessible },
+        { task: 'checking', accessible: isCheckingAccessible }
+      ];
+      const task =
+        tasks.find(t => t.task === selectedTask && t.accessible)?.task ?? tasks.find(t => t.accessible)?.task;
+
+      if (task === 'translate') {
+        this.navigateToTranslate(projectId, project, projectUserConfig);
+      } else if (task === 'checking') {
+        await this.navigateToChecking(projectId);
       }
-      if (task != null) {
-        const taskRoute = ['projects', projectId, task];
-        if (project.texts.length > 0) {
-          taskRoute.push(task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum));
-        }
-        this.router.navigate(taskRoute, { replaceUrl: true });
+    } finally {
+      this.loadingFinished();
+    }
+  }
+
+  private navigateToTranslate(
+    projectId: string,
+    project: SFProjectProfile,
+    projectUserConfig: SFProjectUserConfig,
+    task: TaskType = 'translate'
+  ): void {
+    const routePath = ['projects', projectId, task];
+    const bookNum: number | undefined = projectUserConfig.selectedBookNum ?? project.texts[0]?.bookNum;
+
+    if (bookNum != null) {
+      routePath.push(Canon.bookNumberToId(bookNum));
+
+      const chapterNum: number | undefined =
+        projectUserConfig.selectedChapterNum ?? project.texts[bookNum]?.chapters[0]?.number;
+
+      if (chapterNum != null) {
+        routePath.push(chapterNum.toString());
       }
     }
-    this.loadingFinished();
+
+    this.router.navigate(routePath, { replaceUrl: true });
+  }
+
+  private async navigateToChecking(projectId: string, task: TaskType = 'checking'): Promise<void> {
+    const defaultCheckingLink: string[] = ['/projects', projectId, task];
+    const link = await this.resumeCheckingService.checkingLink$.pipe(first()).toPromise();
+
+    this.router.navigate(link ?? defaultCheckingLink, { replaceUrl: true });
   }
 }

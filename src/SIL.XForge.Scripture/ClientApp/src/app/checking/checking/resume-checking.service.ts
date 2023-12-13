@@ -1,13 +1,16 @@
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { UserService } from 'xforge-common/user.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { QuestionDoc } from 'src/app/core/models/question-doc';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Injectable } from '@angular/core';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Canon } from '@sillsdev/scripture';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { from, merge, Observable, of } from 'rxjs';
+import { distinctUntilChanged, filter, map, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { areStringArraysEqual } from 'xforge-common/util/string-util';
 import { CheckingQuestionsService } from './checking-questions.service';
 
 /**
@@ -16,77 +19,114 @@ import { CheckingQuestionsService } from './checking-questions.service';
  *
  * At present, this means sending the user to the first question that is unanswered, and limiting the scope of questions
  * to the chapter level.
- *
- * TODO Consider making question and link observable.
  */
 @Injectable({ providedIn: 'root' })
-export class ResumeCheckingService extends SubscriptionDisposable {
-  firstUnansweredQuestionQuery?: RealtimeQuery<QuestionDoc>;
+export class ResumeCheckingService {
+  private readonly questionLink$: Observable<string[] | undefined> = this.createLink();
 
   constructor(
     private readonly userService: UserService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly questionService: CheckingQuestionsService
-  ) {
-    super();
-    this.subscribe(this.activatedProjectService.projectDoc$, projectDoc => this.refreshQuestionQuery(projectDoc));
-  }
+    private readonly questionService: CheckingQuestionsService,
+    private readonly onlineStatusService: OnlineStatusService
+  ) {}
 
   /**
-   * @returns The question for the user to resume community checking on, or undefined, if no project is selected, the
-   * question has not yet been loaded, or no question matches the criteria (e.g. user has answered all questions'
-   * already)
+   * Gets a path to navigate to the community checking component and resume checking. In general, this will lead
+   * the user to first unanswered question.  If there are no unanswered questions, the path will be to the first
+   * book/chapter in the project.
+   * @returns The path tokens, or undefined if project has no texts.
    */
-  getQuestion(): QuestionDoc | undefined {
-    return this.firstUnansweredQuestionQuery?.docs[0];
+  get checkingLink$(): Observable<string[] | undefined> {
+    return this.questionLink$;
   }
 
-  /**
-   * @returns An path to navigate to the community checking component and resume checking. In general this will lead
-   * the user to first unanswered question.
-   */
-  getLink(): string[] {
-    const verseRef = this.getQuestion()?.data?.verseRef;
-    const projectId = this.activatedProjectService.projectId;
+  private createLink(): Observable<string[] | undefined> {
+    let projectId: string = '';
 
-    // TODO Make the code that ultimately consumes this value capable of handling the case where there is no link at
-    // this time without having to resort to this workaround.
-    if (projectId == null) return [''];
+    return this.activatedProjectService.changes$.pipe(
+      filterNullish(),
+      tap(projectDoc => (projectId = projectDoc.id)),
+      switchMap(projectDoc =>
+        this.getQuestion(projectDoc).pipe(
+          map(question => this.getLinkTokens(projectDoc, question)),
+          distinctUntilChanged((prev, curr) => {
+            if (prev == null && curr == null) {
+              return true;
+            }
 
-    let book: string;
-    let chapter: number;
+            if (prev == null || curr == null) {
+              return false;
+            }
+
+            return areStringArraysEqual(prev, curr);
+          })
+        )
+      ),
+      shareReplay(1),
+      filter(link => link == null || link[1] === projectId) // Ensure link is for current project
+    );
+  }
+
+  private getLinkTokens(
+    projectDoc: SFProjectProfileDoc | undefined,
+    questionDoc: QuestionDoc | undefined
+  ): string[] | undefined {
+    if (projectDoc == null) {
+      return undefined;
+    }
+
+    const verseRef = questionDoc?.data?.verseRef;
+    let bookNum: number;
+    let chapterNum: number;
+
     if (verseRef != null) {
-      book = Canon.bookNumberToId(verseRef.bookNum);
-      chapter = verseRef.chapterNum;
-    } else if (this.activatedProjectService.projectDoc != null) {
-      const projectDoc = this.activatedProjectService.projectDoc;
-      const firstText = projectDoc.data?.texts[0];
-      book = Canon.bookNumberToId(firstText?.bookNum ?? Canon.firstBook);
-      chapter = firstText?.chapters[0]?.number ?? 1;
+      bookNum = verseRef.bookNum;
+      chapterNum = verseRef.chapterNum;
     } else {
-      book = Canon.bookNumberToId(Canon.firstBook);
-      chapter = 1;
+      // No questions, or all questions already answered.  Send user to first book/chapter.
+      const firstTextWithChapters = projectDoc.data?.texts.find(t => t.chapters.length > 0);
+
+      if (firstTextWithChapters == null) {
+        return undefined;
+      }
+
+      bookNum = firstTextWithChapters.bookNum;
+      chapterNum = firstTextWithChapters.chapters[0].number;
     }
-    return ['projects', projectId, 'checking', book, String(chapter)];
+
+    return ['projects', projectDoc.id, 'checking', Canon.bookNumberToId(bookNum), chapterNum.toString()];
   }
 
-  private async refreshQuestionQuery(projectDoc: SFProjectProfileDoc | undefined): Promise<void> {
-    this.firstUnansweredQuestionQuery = undefined;
+  /**
+   * Gets the question for the user to resume community checking on.
+   * @returns A question doc, or undefined if no project is selected
+   * or no question matches the criteria (e.g. user has answered all questions' already)
+   */
+  private getQuestion(projectDoc: SFProjectProfileDoc | undefined): Observable<QuestionDoc | undefined> {
     if (projectDoc?.data == null) {
-      return;
+      return of(undefined);
     }
 
-    // ensure user has permission to view questions
+    // Ensure user has permission to view questions
     const userId = this.userService.currentUserId;
     if (!SF_PROJECT_RIGHTS.hasRight(projectDoc.data, userId, SFProjectDomain.Answers, Operation.View)) {
-      return;
+      return of(undefined);
     }
 
-    const query = await this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId);
-
-    // ensure the project has not changed while awaiting the query
-    if (this.activatedProjectService.projectId === projectDoc.id) {
-      this.firstUnansweredQuestionQuery = query;
-    }
+    return from(this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId)).pipe(
+      switchMap(query =>
+        merge(
+          query.ready$.pipe(
+            // Query 'ready$' will not emit when offline (initial emission of false is due to BehaviorSubject),
+            // but offline docs may be available.
+            filter(isReady => isReady || !this.onlineStatusService.isOnline)
+          ),
+          query.remoteChanges$,
+          query.localChanges$,
+          query.remoteDocChanges$
+        ).pipe(map(() => query?.docs[0]))
+      )
+    );
   }
 }
