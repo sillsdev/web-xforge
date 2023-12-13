@@ -13,7 +13,7 @@
     <app-notice *ngIf="isParatextUser()" icon="live_help">
       <div class="help-message">
         {{ t("roles_from_pt_cannot_be_changed") }}
-        <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+        <a mat-flat-button [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
       </div>
     </app-notice>
     <span class="offline-text" *ngIf="form.disabled">{{ t("offline") }}</span>

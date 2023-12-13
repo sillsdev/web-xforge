@@ -64,8 +64,6 @@ const Template: Story = {
 
         button {
           display: ${args.showButton ? 'block' : 'none'};
-          background-color: var(--notice-color-button-bg);
-          color: var(--notice-color-button-text);
           margin-inline-start: 20px;
         }
       </style>
