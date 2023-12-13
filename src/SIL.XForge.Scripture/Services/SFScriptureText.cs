@@ -20,7 +20,10 @@ public class SFScriptureText : ISFText
     /// <param name="projectId">The SF project identifier.</param>
     /// <param name="book">The book number.</param>
     /// <param name="chapter">The chapter number.</param>
-    /// <param name="includeBlankSegments">If <c>true</c>, include blank segments. Usually used for pre-translation.</param>
+    /// <param name="preTranslate">
+    /// If <c>true</c>, we are pre-translating.
+    /// In this case, we are including blank segments and only getting verse segments.
+    /// </param>
     /// <param name="doNotSendSegmentText">If <c>true</c>, send segments clear of all text.</param>
     /// <param name="doc">The doc to generate the text from</param>
     /// <remarks>Builds segments from texts and references.
@@ -36,9 +39,9 @@ public class SFScriptureText : ISFText
         string projectId,
         int book,
         int chapter,
-        bool includeBlankSegments,
+        bool preTranslate,
         bool doNotSendSegmentText,
-        BsonDocument doc
+        BsonDocument? doc
     )
     {
         if (doc == null)
@@ -48,7 +51,7 @@ public class SFScriptureText : ISFText
             throw new ArgumentException(@"Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
         Id = $"{projectId}_{book}_{chapter}";
-        Segments = GetSegments(wordTokenizer, doc, includeBlankSegments, doNotSendSegmentText)
+        Segments = GetSegments(wordTokenizer, doc, preTranslate, doNotSendSegmentText)
             .OrderBy(s => s.SegmentRef)
             .ToArray();
     }
@@ -64,11 +67,11 @@ public class SFScriptureText : ISFText
     private IEnumerable<SFTextSegment> GetSegments(
         ITokenizer<string, int, string> wordTokenizer,
         BsonDocument doc,
-        bool includeBlankSegments,
+        bool preTranslate,
         bool doNotSendSegmentText
     )
     {
-        string prevRef = null;
+        string? prevRef = null;
         bool isSentenceStart = true;
         var sb = new StringBuilder();
         var ops = (BsonArray)doc["ops"];
@@ -79,9 +82,9 @@ public class SFScriptureText : ISFText
                 // Ensure there is an insert op
                 continue;
             }
-            else if (includeBlankSegments && value.BsonType != BsonType.String)
+            else if (preTranslate && value.BsonType != BsonType.String)
             {
-                // If we are to include blank segments, ensure this one is blank
+                // If we are pre-translating, include blank segments, ensuring this one is blank
                 BsonDocument insert = value.AsBsonDocument;
                 if (
                     !insert.TryGetValue("blank", out BsonValue blankValue)
@@ -106,6 +109,11 @@ public class SFScriptureText : ISFText
                 continue;
 
             string curRef = segmentValue.AsString;
+
+            // If we are pre-translating, only include verse segments
+            if (preTranslate && !curRef.StartsWith("verse_", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             if (prevRef != null && prevRef != curRef)
             {
                 // Return the previous segment, using the current segment to calculate ss,ir,rs values

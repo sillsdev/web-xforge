@@ -157,7 +157,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                                 projectId,
                                 text.BookNum,
                                 chapter.Number,
-                                includeBlankSegments: preTranslate,
+                                preTranslate,
                                 doNotSendSegmentText,
                                 doc
                             )
@@ -165,6 +165,11 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                 }
             }
 
+            // If we are pre-translating, do not get Biblical Terms
+            if (preTranslate)
+                break;
+
+            // Get the Biblical Terms
             List<BiblicalTerm> biblicalTerms = await _realtimeService
                 .QuerySnapshots<BiblicalTerm>()
                 .Where(b => b.ProjectRef == textCorpusProjectId)

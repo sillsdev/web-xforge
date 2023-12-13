@@ -595,7 +595,7 @@ public class MachineProjectService : IMachineProjectService
         var newSourceCorpusFiles = new List<ServalCorpusFile>();
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
-            includeBlankSegments: false,
+            includeBlankSegments: true,
             texts,
             oldSourceCorpusFiles,
             newSourceCorpusFiles,
@@ -733,7 +733,6 @@ public class MachineProjectService : IMachineProjectService
     {
         var sb = new StringBuilder();
 
-        // TODO: Only send verse segments
         // For pre-translation, we must upload empty lines with segment refs for the correct references to be returned
         foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty || includeBlankSegments))
         {
