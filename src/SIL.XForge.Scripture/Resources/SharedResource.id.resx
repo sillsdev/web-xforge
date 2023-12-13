@@ -126,7 +126,7 @@
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
   <data name="CommunitySupport" xml:space="preserve">
-    <value>Community Support</value>
+    <value>Dukungan Komunitas</value>
   </data>
   <data name="EmailBad" xml:space="preserve">
     <value>Masukkan alamat surel yang valid</value>

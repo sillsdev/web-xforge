@@ -7,12 +7,12 @@
     "change_password": "Сменить пароль",
     "community_checking": "Проверка сообщества",
     "community_support": "Community Support",
-    "connect_project": "Подключить проект",
     "help": "Справка",
     "language": "Язык",
     "log_out": "Выйти",
     "logged_in_as": "Вы зашли как",
     "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
     "open_source_licenses": "Open source licenses",
@@ -22,6 +22,7 @@
     "product_version": "Версия продукта: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Домашняя страница проекта",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Обновить",
     "report_issue_email": "электронная почта {{ email }}",
@@ -158,10 +159,13 @@
   },
   "checking": {
     "filter_questions": "Filter questions",
+    "manage_audio": "Manage audio",
     "me": "Я",
     "next": "Далее",
+    "play_chapter": "Play chapter",
     "previous": "Назад",
     "questions": "Вопросы",
+    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers marked for export",
     "question_filter_has_answers": "Has answers",
@@ -170,6 +174,7 @@
     "question_filter_not_answered": "Not answered",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
+    "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "All books",
     "question_scope_book": "Current book",
     "question_scope_chapter": "Current chapter",
@@ -191,7 +196,6 @@
     "marked_for_export": "Marked for export",
     "mark_for_export": "Mark for export",
     "no_scripture_selected": "Пока ещё не выбрано ни одного текста Библии.",
-    "record_upload": "Запись/загрузка",
     "record": "Запись",
     "recording_automatically_stopped": "Запись вашего ответа была автоматически остановлена.",
     "resolve": "Resolve",
@@ -216,10 +220,13 @@
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
+    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
     "save": "Сохранить",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "Загрузить",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
@@ -266,7 +273,8 @@
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
-    "questions": "Вопросы"
+    "questions": "Вопросы",
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -303,6 +311,8 @@
     "error_occurred_login": "An error occurred during login.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
+    "go_to_retrain": "Go to Overview",
     "try_again": "Попробуйте ещё раз"
   },
   "exception_handling_service": {
@@ -315,6 +325,9 @@
     "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
     "i_understand": "I understand",
     "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "Спасибо, что сообщили о проблеме!\nЭто поможет нам, если вы заполните часть сведений ниже, но, пожалуйста, отправьте, даже если вы не можете дать исчерпывающую информацию.\nЕсли вы запрашиваете функцию, многие из полей могут быть неприменимы.\nПомните, что ваше сообщение об ошибке будет общедоступно. Никогда не сообщайте пароли и другие секреты.\n\nСообщение об ошибке\nЧёткое и краткое описание того, что это за ошибка.\n\nШаги для воспроизведения\nНапример:\n1. Перейти к ...\n2. Нажмите на ...\n3. Прокрутите вниз до ...\n4. См. ошибку\n\nРеальное поведение\nПожалуйста, опишите, что реально происходит в описываемой ситуации.\n\nОжидаемое поведение\nЧёткое и краткое описание того, что вы ожидали увидеть.\n\nСнимки экрана\nЕсли применимо, добавьте снимки экрана, чтобы помочь объяснить проблему.\n\nДополнительный контекст\nДобавьте сюда любые другие дополнительные сведения о проблеме.\n\nВозможное решение\nДобавьте сюда любые возможные способы решения проблемы.\n\nВаше окружение:\nВерсия программного обеспечения\n-----------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nID ошибки: {{ errorId }}",
@@ -339,6 +352,9 @@
   "dialog": {
     "cancel": "Отменить",
     "close": "Закрыть"
+  },
+  "navigation-project_selector": {
+    "connect_project": "Подключить проект"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Выберите книгу",
@@ -403,6 +419,12 @@
     "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
     "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
+  },
+  "text": {
+    "book_does_not_exist": "This book does not exist.",
+    "book_is_empty": "This book is empty. Add chapters in Paratext.",
+    "loading": "Загрузка...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "text_chooser_dialog": {
     "cancel": "Отменить",

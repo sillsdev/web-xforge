@@ -7,12 +7,12 @@
     "change_password": "Schimbă parola",
     "community_checking": "Verificare în comunitate",
     "community_support": "Suport comunitar",
-    "connect_project": "Conectează proiectul",
     "help": "Ajutor",
     "language": "Limba",
     "log_out": "Deconectare",
     "logged_in_as": "Autentificat ca",
     "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
     "open_source_licenses": "Open source licenses",
@@ -22,6 +22,7 @@
     "product_version": "Versiune produs: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Pagina principală a proiectului",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecționare în câteva momente...",
     "refresh": "Reîncarcă",
     "report_issue_email": "email {{ email }}",
@@ -158,10 +159,13 @@
   },
   "checking": {
     "filter_questions": "Filtrează întrebările",
+    "manage_audio": "Manage audio",
     "me": "Eu",
     "next": "Următor",
+    "play_chapter": "Play chapter",
     "previous": "Anterior",
     "questions": "Întrebări",
+    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers marked for export",
     "question_filter_has_answers": "Has answers",
@@ -170,6 +174,7 @@
     "question_filter_not_answered": "Not answered",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
+    "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "All books",
     "question_scope_book": "Current book",
     "question_scope_chapter": "Current chapter",
@@ -191,7 +196,6 @@
     "marked_for_export": "Marked for export",
     "mark_for_export": "Mark for export",
     "no_scripture_selected": "Încă nu a fost selectat niciun text biblic.",
-    "record_upload": "Înregistrare audio/Încărcare",
     "record": "Înregistrare audio",
     "recording_automatically_stopped": "Înregistrarea răspunsului dvs. a fost oprită automat.",
     "resolve": "Resolve",
@@ -216,10 +220,13 @@
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
+    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
     "save": "Salvează",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "Încarcă",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
@@ -266,7 +273,8 @@
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
-    "questions": "Întrebări"
+    "questions": "Întrebări",
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -303,6 +311,8 @@
     "error_occurred_login": "A apărut o eroare la autentificare.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
+    "go_to_retrain": "Go to Overview",
     "try_again": "Încearcă din nou"
   },
   "exception_handling_service": {
@@ -315,6 +325,9 @@
     "failed_to_save": "Nu s-a reușit salvarea modificărilor. Vă rugăm, verificați dacă dispuneți de cel puțin 500 MB spațiu liber pe dispozitivul dvs.",
     "i_understand": "Am înțeles",
     "storage_space_is_limited": "Spațiul de stocare de pe acest dispozitiv este limitat. Se recomandă să aveți cel puțin 500 MB spațiu liber, pentru a vă asigura că toate funcționaltățile sunt disponibile. Vă rugăm să eliberați spațiu de stocare."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "Vă mulțumim că ați raportat problema!\nNe-ar ajuta dacă ați completa unele dintre informațiile de mai jos, dar vă rugăm să ni le trimiteți chiar dacă nu completați prea multe.\nDacă solicitați o nouă funcționalitate, este posibil ca unele dintre câmpurile de mai jos să nu fie aplicabile.\nRețineți că raportul dvs. de eroare va fi public. Nu trimiteți niciodată parole sau alte secrete.\n\nRaport de eroare\nO descriere clară și concisă a problemei.\n\nPași pentru reproducere\nDe exemplu:\n1. Mergeți la ...\n2. Faceți clic pe ...\n3. Derulați în jos până la ...\n4. Vezi eroarea\n\nComportamentul observat\nDescrieți modul în care se manifestă problema observată.\n\nComportamentul așteptat\nO descriere clară și concisă a ceea ce vă așteptați să se întâmple.\n\nCapturi de ecran\nDacă este cazul, adăugați capturi de ecran pentru a ne ajuta să înțelegem problema.\n\nContext suplimentar\nAdăugați aici orice alt context referitor la problemă.\n\nSoluție posibilă\nAdăugați aici orice soluție posibilă a problemei.\n\nMediul dumneavoastră:\nVersiunea de software\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nId. eroare: {{ errorId }}",
@@ -339,6 +352,9 @@
   "dialog": {
     "cancel": "Renunță",
     "close": "Închide"
+  },
+  "navigation-project_selector": {
+    "connect_project": "Conectează proiectul"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Alegeți cartea",
@@ -403,6 +419,12 @@
     "some_features_may_not_work": "Unele dintre funcționalități ale acestui site ar putea să nu funcționeze corect cu browserul dumneavoastră.",
     "upgrade_chrome_firefox": "{{ newLine }}Vă recomandăm să faceți upgrade la cea mai recentă versiune {{ chromeLink }} sau {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }}Vă recomandăm să faceți upgrade la cea mai recentă versiune {{ safariLink }}."
+  },
+  "text": {
+    "book_does_not_exist": "Această carte nu există.",
+    "book_is_empty": "Această carte este goală. Adăugați capitole în Paratext.",
+    "loading": "Se încarcă...",
+    "not_available_offline": "Acest text nu este disponibil offline. Conectați-vă la internet pentru a vedea textul."
   },
   "text_chooser_dialog": {
     "cancel": "Renunță",

@@ -7,12 +7,12 @@
     "change_password": "请稍后再试或在“帮助”菜单中报告问题",
     "community_checking": "语言社区中的查看",
     "community_support": "Community Support",
-    "connect_project": "连接项目",
     "help": "帮助",
     "language": "Language",
     "log_out": "登出",
     "logged_in_as": "登录为",
     "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
     "open_source_licenses": "Open source licenses",
@@ -22,6 +22,7 @@
     "product_version": "产品版本：v {{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "项目首页",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
     "report_issue_email": "电子邮件{{ email }}",
@@ -158,10 +159,13 @@
   },
   "checking": {
     "filter_questions": "Filter questions",
+    "manage_audio": "Manage audio",
     "me": "我",
     "next": "下一个",
+    "play_chapter": "Play chapter",
     "previous": "前一个",
     "questions": "问题",
+    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers marked for export",
     "question_filter_has_answers": "Has answers",
@@ -170,6 +174,7 @@
     "question_filter_not_answered": "Not answered",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
+    "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "All books",
     "question_scope_book": "Current book",
     "question_scope_chapter": "Current chapter",
@@ -191,7 +196,6 @@
     "marked_for_export": "Marked for export",
     "mark_for_export": "Mark for export",
     "no_scripture_selected": "尚未选择经文。",
-    "record_upload": "记录/上传",
     "record": "录制音频",
     "recording_automatically_stopped": "您答案的录音已自动停止。",
     "resolve": "Resolve",
@@ -216,10 +220,13 @@
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
+    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
     "save": "保存",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "上载",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
@@ -266,7 +273,8 @@
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
-    "questions": "问题"
+    "questions": "问题",
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -303,6 +311,8 @@
     "error_occurred_login": "An error occurred during login.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
+    "go_to_retrain": "Go to Overview",
     "try_again": "再试一次"
   },
   "exception_handling_service": {
@@ -315,6 +325,9 @@
     "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
     "i_understand": "I understand",
     "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\nBe aware your bug report will be publicly available. Never submit passwords or other secrets.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
@@ -339,6 +352,9 @@
   "dialog": {
     "cancel": "取消",
     "close": "关闭"
+  },
+  "navigation-project_selector": {
+    "connect_project": "连接项目"
   },
   "scripture_chooser_dialog": {
     "choose_book": "选择书卷",
@@ -403,6 +419,12 @@
     "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
     "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
+  },
+  "text": {
+    "book_does_not_exist": "This book does not exist.",
+    "book_is_empty": "This book is empty. Add chapters in Paratext.",
+    "loading": "Loading...",
+    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "text_chooser_dialog": {
     "cancel": "取消",
