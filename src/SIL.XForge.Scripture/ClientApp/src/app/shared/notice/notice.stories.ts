@@ -1,26 +1,40 @@
-import { Meta, StoryObj } from '@storybook/angular';
+import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { NoticeMode } from './notice.types';
+import { NoticeMode, noticeModes } from './notice.types';
 
 interface NoticeComponentStoryState {
   mode: NoticeMode;
   showIcon: boolean;
+  showButton: boolean;
   inline: boolean;
 }
 
 const defaultArgs: NoticeComponentStoryState = {
   mode: 'fill-dark',
   showIcon: true,
+  showButton: false,
   inline: false
 };
 
 export default {
   title: 'Utility/Notice',
   component: NoticeComponent,
+  decorators: [
+    moduleMetadata({
+      imports: [MatButtonModule]
+    })
+  ],
   args: defaultArgs,
   parameters: {
     controls: {
       include: Object.keys(defaultArgs)
+    }
+  },
+  argTypes: {
+    mode: {
+      options: noticeModes,
+      control: { type: 'radio' }
     }
   }
 } as Meta<NoticeComponentStoryState>;
@@ -36,22 +50,35 @@ const Template: Story = {
           margin-bottom: 20px;
         }
 
-        div {
+        .notices {
           display: ${args.inline ? 'flex' : 'block'};
           flex-direction: column;
           align-items: flex-start;
         }
+
+        .innards {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        button {
+          display: ${args.showButton ? 'block' : 'none'};
+          background-color: var(--notice-color-button-bg);
+          color: var(--notice-color-button-text);
+          margin-inline-start: 20px;
+        }
       </style>
 
-      <div>
-        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="primary" [mode]="mode">Primary notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="secondary" [mode]="mode">Secondary notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'check'): null" type="success" [mode]="mode">Success notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'warning'): null" type="warning" [mode]="mode">Warning notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'error'): null" type="error" [mode]="mode">Error notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="info" [mode]="mode">Info notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="light" [mode]="mode">Light notice - stuff happened!</app-notice>
-        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="dark" [mode]="mode">Dark notice - stuff happened!</app-notice>
+      <div class="notices">
+        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="primary" [mode]="mode"><div class="innards">Primary notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="secondary" [mode]="mode"><div class="innards">Secondary notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'check'): null" type="success" [mode]="mode"><div class="innards">Success notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'warning'): null" type="warning" [mode]="mode"><div class="innards">Warning notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'error'): null" type="error" [mode]="mode"><div class="innards">Error notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="info" [mode]="mode"><div class="innards">Info notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="light" [mode]="mode"><div class="innards">Light notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
+        <app-notice [icon]="showIcon ? (icon || 'info'): null" type="dark" [mode]="mode"><div class="innards">Dark notice - stuff happened! <button mat-flat-button>Learn more</button></div></app-notice>
       </div>
     `
   })
@@ -82,6 +109,22 @@ export const Outline: Story = {
   ...Template,
   args: {
     mode: 'outline'
+  }
+};
+
+export const NoIcon: Story = {
+  ...Template,
+  args: {
+    mode: 'fill-light',
+    showIcon: false
+  }
+};
+
+export const WithButton: Story = {
+  ...Template,
+  args: {
+    mode: 'fill-light',
+    showButton: true
   }
 };
 

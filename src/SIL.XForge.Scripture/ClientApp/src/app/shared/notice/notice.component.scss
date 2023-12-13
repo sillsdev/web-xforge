@@ -16,12 +16,16 @@ $colors: (
 :host {
   display: flex;
   align-items: center;
-  padding: 16px 24px 16px 16px;
+  padding: 16px;
+  padding-inline: 16px 24px; // Extra right padding for inline notices
   border-radius: 4px;
   column-gap: 16px;
   border: 2px solid;
   color: var(--notice-color-text);
   background-color: var(--notice-color);
+
+  --notice-color-button-bg: var(--notice-color-outline);
+  --notice-color-button-text: #fff;
 
   mat-icon {
     flex-shrink: 0;
