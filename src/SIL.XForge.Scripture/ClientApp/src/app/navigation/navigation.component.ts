@@ -48,7 +48,7 @@ export class NavigationComponent extends SubscriptionDisposable {
 
   projectUserConfigDoc$ = new BehaviorSubject<SFProjectUserConfigDoc | undefined>(undefined);
 
-  draftReviewLink$ = combineLatest([
+  translateLink$ = combineLatest([
     this.activatedProjectService.changes$,
     this.projectUserConfigDoc$.pipe(
       switchMap(doc => doc?.changes$.pipe(startWith(undefined)) ?? of(undefined)),
@@ -66,8 +66,8 @@ export class NavigationComponent extends SubscriptionDisposable {
       return this.getProjectLink('translate', [bookId, String(chapterNum)]);
     }),
     // The selected book and chapter is updated by CheckingQuestionsComponent in the middle of a change detection cycle.
-    // This causes the draft & review link to cause ExpressionChangedAfterItHasBeenCheckedError. To avoid this, delay
-    // the link update until the next change detection cycle.
+    // This causes the link to the translate page to cause ExpressionChangedAfterItHasBeenCheckedError. To avoid this,
+    // delay the link update until the next change detection cycle.
     delay(0)
   );
 

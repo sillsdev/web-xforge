@@ -64,5 +64,18 @@ describe('DraftViewerService', () => {
       const targetOps: DeltaOperation[] = [{ insert: 'existing translation', attributes: { segment: 'verse_1_1' } }];
       expect(service.toDraftOps(draft, targetOps)).toEqual(targetOps);
     });
+
+    it('should allow combined verses in the source that are separated in the target', () => {
+      const draft: DraftSegmentMap = { 'verse_1_1-2': 'In the beginning' };
+      const targetOps: DeltaOperation[] = [
+        { insert: '', attributes: { segment: 'verse_1_1' } },
+        { insert: 'Existing verse 2', attributes: { segment: 'verse_1_2' } }
+      ];
+      const expectedResult: DeltaOperation[] = [
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'Existing verse 2', attributes: { segment: 'verse_1_2' } }
+      ];
+      expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
+    });
   });
 });

@@ -60,6 +60,7 @@ public class MachineApiV2Controller : ControllerBase
                     sfProjectId,
                     minRevision,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -68,6 +69,7 @@ public class MachineApiV2Controller : ControllerBase
                     buildId,
                     minRevision,
                     preTranslate: false,
+                    includeAdditionalInfo: false,
                     cancellationToken
                 );
 
@@ -164,6 +166,7 @@ public class MachineApiV2Controller : ControllerBase
             BuildDto build = await _machineApiService.StartBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
+                includeAdditionalInfo: false,
                 cancellationToken
             );
             return Ok(UpdateDto(build));

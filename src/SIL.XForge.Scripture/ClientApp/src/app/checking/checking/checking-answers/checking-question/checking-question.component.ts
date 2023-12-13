@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -80,15 +81,22 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get scriptureAudioStart(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(
+    // Audio timings are not guaranteed to be in order, some timing files group section headings and verses together
+    const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.startVerse.toString()
-    )?.from;
+    );
+    if (verseTimings == null || verseTimings.length === 0) return;
+    return Math.min(...verseTimings.map(t => t.from));
   }
 
   get scriptureAudioEnd(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(
+    // Audio timings are not guaranteed to be in order, some timing files group section headings and verses together
+    // Get the timing for the latest record for a verse
+    const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.endVerse.toString()
-    )?.to;
+    );
+    if (verseTimings == null || verseTimings.length === 0) return;
+    return Math.max(...verseTimings.map(t => t.to));
   }
 
   get questionText(): string {

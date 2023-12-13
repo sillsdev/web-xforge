@@ -26,6 +26,12 @@ mat-nav-list .mat-list-item {
     column-gap: 12px;
   }
 
+  &.navigation-header ::ng-deep .mat-list-item-content {
+    font-size: 0.95em;
+    color: #777;
+    padding-inline-start: 18px;
+  }
+
   &.activated-nav-item,
   &.active {
     background-color: #e7e8e7;
@@ -72,12 +78,8 @@ mat-nav-list .mat-list-item {
   background-color: initial;
   cursor: initial;
 }
-.navigation-header ::ng-deep .mat-list-item-content {
-  font-size: 0.95em;
-  text-align: center;
-  justify-content: space-around;
-  color: #777;
-  padding: 0;
+.navigation-header:not(:first-child) {
+  margin-top: 2em;
 }
 
 .mat-nav-list.disabled-offline .mat-list-item {

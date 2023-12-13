@@ -38,15 +38,8 @@ header {
   }
 
   img {
-    width: 50px;
+    width: 230px;
     height: auto;
-    @include media-breakpoint-down(xs) {
-      width: 35px;
-    }
-  }
-
-  span {
-    font-size: 25px;
   }
 
   a {
