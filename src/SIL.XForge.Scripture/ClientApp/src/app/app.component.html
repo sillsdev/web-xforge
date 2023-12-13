@@ -11,10 +11,10 @@
           <mat-icon>menu</mat-icon>
         </button>
         <span (click)="goHome()" class="title">
-          <button mat-icon-button>
-            <img id="nav-logo" src="/assets/images/logo-sf.svg" height="24" />
+          <img src="/assets/images/sf_logo_with_name.svg" height="40" fxHide.xs />
+          <button mat-icon-button fxHide.gt-xs>
+            <img src="/assets/images/sf.svg" height="38" />
           </button>
-          <span fxHide.xs>{{ appName }}</span>
         </span>
         <span class="toolbar-spacer"></span>
         <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu" *ngIf="isAppOnline">

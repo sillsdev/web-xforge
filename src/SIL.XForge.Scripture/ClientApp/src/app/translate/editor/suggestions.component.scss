@@ -4,7 +4,6 @@
   background-color: #faf9f7;
   position: absolute;
   z-index: 2;
-  white-space: nowrap;
   font-size: 14px;
   border-radius: 2px;
   overflow: hidden;
@@ -49,12 +48,12 @@ mat-selection-list[dense] {
   padding: 0;
 
   > mat-list-option {
-    height: 30px;
+    height: auto;
   }
 }
 
 .mat-list-option ::ng-deep .mat-list-item-content {
-  padding: 0 8px !important;
+  padding: 6px 8px !important;
   .mat-list-text {
     padding: 0 !important;
   }

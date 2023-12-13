@@ -21,6 +21,15 @@ export function getAudioTimingWithHeadings(): AudioTiming[] {
   ];
 }
 
+export function getAudioTimingsPhraseLevel(): AudioTiming[] {
+  return [
+    { textRef: '1a', from: 0.0, to: 1.0 },
+    { textRef: '1b', from: 1.0, to: 2.0 },
+    { textRef: '2a', from: 2.0, to: 3.0 },
+    { textRef: '2b', from: 3.0, to: 4.0 }
+  ];
+}
+
 export class AudioPlayerStub extends AudioPlayer {
   htmlAudioMock: HTMLAudioElement = mock(HTMLAudioElement);
   protected override audio: HTMLAudioElement = instance(this.htmlAudioMock);

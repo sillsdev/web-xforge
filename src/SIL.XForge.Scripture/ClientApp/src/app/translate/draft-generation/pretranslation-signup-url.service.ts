@@ -20,8 +20,8 @@ export const PRE_TRANSLATION_SIGNUP_URL_CONFIG = new InjectionToken<PreTranslati
       baseLink: 'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc',
       nameParam: 'Name',
       emailParam: 'Email',
-      projectParam: 'Project Short Name',
-      languageParam: 'Language of Translation Project'
+      projectParam: 'Paratext Project Short Name',
+      languageParam: 'Project Language ISO Code'
     })
   }
 );
