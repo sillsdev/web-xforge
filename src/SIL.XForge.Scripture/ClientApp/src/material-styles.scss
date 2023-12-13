@@ -105,6 +105,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.badge-theme($material-app-theme);
 @include mat.bottom-sheet-theme($material-app-theme);
 @include mat.legacy-button-theme($material-app-theme);
+@include mat.button-toggle-theme($material-app-theme);
 @include mat.legacy-card-theme($material-app-theme);
 @include mat.legacy-checkbox-theme($material-app-theme);
 @include mat.chips-theme($material-app-theme);
@@ -136,7 +137,6 @@ $material-theme-accent-error: mat.define-light-theme(
 
 // Other components that appear to not be used at this time
 
-// @include mat.button-toggle-theme($material-app-theme);
 // @include mat.grid-list-theme($material-app-theme);
 // @include mat.slide-toggle-theme($material-app-theme);
 // @include mat.sort-theme($material-app-theme);

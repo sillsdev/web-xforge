@@ -108,11 +108,12 @@ import { TranslateMetricsSession } from './translate-metrics-session';
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
 export interface SaveNoteParameters {
-  content: string;
+  content?: string;
   dataId?: string;
   threadDataId?: string;
   verseRef?: VerseRef;
   biblicalTermId?: string;
+  status?: NoteStatus;
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
@@ -1142,7 +1143,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       content: params.content,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
-      status: NoteStatus.Todo,
+      status: params.status ?? NoteStatus.Todo,
       deleted: false,
       editable: true,
       versionNumber: 1
@@ -1166,12 +1167,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
     } else {
-      // updated the existing note
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
         getNoteThreadDocId(this.projectId, params.threadDataId)
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
+        // updated the existing note
         if (threadDoc.data?.notes[noteIndex].editable === true) {
           await threadDoc!.submitJson0Op(op => {
             op.set(t => t.notes[noteIndex].content, params.content);
@@ -1182,7 +1183,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       } else {
         note.threadId = threadDoc.data!.threadId;
-        await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));
+        await threadDoc.submitJson0Op(op => {
+          op.add(t => t.notes, note);
+          // also set the status of the thread to be the status of the note
+          op.set(t => t.status, note.status);
+        });
         await this.updateNoteReadRefs(note.dataId);
       }
     }
@@ -1257,12 +1262,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
 
     if (result != null) {
-      if (result.noteContent != null) {
+      if (result.noteContent != null || result.status != null) {
         await this.saveNote({
           content: result.noteContent,
           threadDataId: threadDataId,
           dataId: result.noteDataId,
-          verseRef: currentVerseRef
+          verseRef: currentVerseRef,
+          status: result.status
         });
       }
       this.toggleNoteThreadVerseRefs$.next();
