@@ -67,7 +67,7 @@
   </mat-dialog-content>
   <mat-dialog-actions>
     <div class="uploading" *ngIf="isLoadingAudio">
-      <span>Uploading...</span>
+      <span>{{ t("chapter_audio_dialog.uploading") }}</span>
       <mat-spinner diameter="24"></mat-spinner>
     </div>
     <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">

@@ -230,6 +230,7 @@
     "upload": "Upload",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
+    "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
   "checking_audio_combined": {
