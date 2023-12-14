@@ -7,12 +7,12 @@
     "change_password": "تغيير كلمة المرور",
     "community_checking": "المراجعة المجتمعية",
     "community_support": "دعم المجتمع",
-    "connect_project": "الاتصال بالمشروع",
     "help": "المساعدة",
     "language": "اللغة",
     "log_out": "تسجيل الخروج",
     "logged_in_as": "تسجيل الدخول بحساب",
     "manual": "Manual",
+    "my_progress": "مستوى التقدُّم",
     "offline": "غير متصل بالانترنت",
     "online": "متّصل بالإنترنت",
     "open_source_licenses": "Open source licenses",
@@ -22,6 +22,7 @@
     "product_version": "نسخة المنتج: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "الصفحة الرئيسية للمشروع",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "إعادة التوجيه في لحظات قليلة...",
     "refresh": "تحديث",
     "report_issue_email": "البريد الإلكتروني {{ email }}",
@@ -158,10 +159,13 @@
   },
   "checking": {
     "filter_questions": "تصفية الأسئلة",
+    "manage_audio": "Manage audio",
     "me": "إجابتي",
     "next": "التالي",
+    "play_chapter": "Play chapter",
     "previous": "السابق",
     "questions": "أسئلة",
+    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers marked for export",
     "question_filter_has_answers": "Has answers",
@@ -170,6 +174,7 @@
     "question_filter_not_answered": "Not answered",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
+    "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "All books",
     "question_scope_book": "Current book",
     "question_scope_chapter": "Current chapter",
@@ -191,7 +196,6 @@
     "marked_for_export": "Marked for export",
     "mark_for_export": "Mark for export",
     "no_scripture_selected": "لم يتمّ تحديد مقطع كتابي بعد.",
-    "record_upload": "تسجيل/ تحميل",
     "record": "سجِّل",
     "recording_automatically_stopped": "تمّ إيقاف تسجيل إجابتك بصورةآلية.",
     "resolve": "Resolve",
@@ -216,10 +220,13 @@
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
+    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
     "save": "حفظ",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "تحميل",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
@@ -266,7 +273,8 @@
     "my_contributions": "مساهماتي",
     "my_progress": "مستوى التقدُّم",
     "project_stats": "تحديثات المشروع",
-    "questions": "أسئلة"
+    "questions": "أسئلة",
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -303,6 +311,8 @@
     "error_occurred_login": "حدث خطأ أثناء تسجيل الدخول.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
+    "go_to_retrain": "Go to Overview",
     "try_again": "حاول ثانيةً"
   },
   "exception_handling_service": {
@@ -315,6 +325,9 @@
     "failed_to_save": "لم نتمكن من حفظ تعديلاتك. يُرجى التأكد من أن في جهاز الـ500 ميغابايت الموصى بها من المساحة الحرّة.",
     "i_understand": "أفهم",
     "storage_space_is_limited": "مساحة التخزين على هذا الجهاز محدودة. يُوصى بأن تتوفر في جهازك مساحة 500 ميغابيت على الأقل من أجل أن تكون جميع ميزات البرنامج متاحة. يُرجى توفير مساحة للتخزين."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "شكرا على الإبلاغ عن المشكلة!\nتساعدنا بملئك بعض المعلومات المطلوبة أدناه، ولكن يُرجى إرسال الإبلاغ حتى إذا لم تستطع ملء الكثير.\nإذا كنت تطلب ميزة ما قد لا يكون العديد من الحقول قابلا للتطبيق.\nكن على علم بأن تقرير الأخطاء الخاص بك سيكون متاحاً للجمهور. لا تقدم أبدً كلمات المرور أو أية معلومات سرية أخرى.\n\nتقرير عن الأخطاء\nوصف واضح وموجز لماهية الخطأ.\n\nخطوات الاستنساخ\nعلى سبيل المثال:\n1. انتقل إلى ...\n2. انقر فوق ...\n3. مرر لأسفل إلى ...\n4. راجع الخطأ\n\nالسلوك الفعلي\nالرجاء وصف السلوك الفعلي للمشكلة التي تلاحظها.\n\nالسلوك المتوقع\nوصف واضح وموجز لما كنت تتوقع حدوثه.\n\nلقطات الشاشة\nإذا كان  ممكناً، أضف لقطات شاشة للمساعدة في شرح مشكلتك.\n\nالسياق الإضافي\nإضافة أي سياق آخر بشأن المشكلة هنا.\n\nحل ممكن\nأضِف أية حلول ممكنة للمشكلة هنا.\n\nبيئتك:\nإصدار البرمجيات\n-------------------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nتحديد الخطأ: {{ errorId }}",
@@ -339,6 +352,9 @@
   "dialog": {
     "cancel": "إلغاء",
     "close": "إغلاق"
+  },
+  "navigation-project_selector": {
+    "connect_project": "الاتصال بالمشروع"
   },
   "scripture_chooser_dialog": {
     "choose_book": "اختيار سفر/ كتاب",
@@ -403,6 +419,12 @@
     "some_features_may_not_work": "قد لا تعمل بعض ميزات هذا الموقع بشكل صحيح في هذا المتصفح.",
     "upgrade_chrome_firefox": "{{ newLine }} نوصي بتحديث متصفّح الإنترنت بالضغط على {{ chromeLink }} أو {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }} نوصي بتحديث متصفّح الإنترنت بالضغط على {{ safariLink }}."
+  },
+  "text": {
+    "book_does_not_exist": "هذا السفر/ الكتاب غير موجود.",
+    "book_is_empty": "هذا السفر/ الكتاب فارغ. أضِف فصولاً في Paratext.",
+    "loading": "التحميل جارٍ...",
+    "not_available_offline": "هذا النص غير متوفر دون اتّصال بالإنترنت. اتصل بالإنترنت للوصول إلى النص."
   },
   "text_chooser_dialog": {
     "cancel": "إلغاء",

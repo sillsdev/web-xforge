@@ -7,12 +7,12 @@
     "change_password": "Gizli şifrəni dəyişin. ",
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
     "community_support": "İcmai dəstəyi",
-    "connect_project": "Layihəni qoşmaq",
     "help": "Kömək",
     "language": "Dil",
     "log_out": "Çıxış",
     "logged_in_as": "Bu adla daxil oldu.",
     "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Oflayn",
     "online": "Onlayn",
     "open_source_licenses": "Open source licenses",
@@ -22,6 +22,7 @@
     "product_version": "Yekun variant: {{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Layihənin ana səhifəsi",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Bir neçə anda yenidən istiqamət verir...",
     "refresh": "Təzələmək",
     "report_issue_email": "e-poçt {{ email }}",
@@ -158,10 +159,13 @@
   },
   "checking": {
     "filter_questions": "Sualları süzgəcdən keçirmək",
+    "manage_audio": "Manage audio",
     "me": "Mən",
     "next": "Növbəti",
+    "play_chapter": "Play chapter",
     "previous": "Əvvəlki",
     "questions": "Suallar",
+    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers marked for export",
     "question_filter_has_answers": "Has answers",
@@ -170,6 +174,7 @@
     "question_filter_not_answered": "Not answered",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
+    "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "All books",
     "question_scope_book": "Current book",
     "question_scope_chapter": "Current chapter",
@@ -191,7 +196,6 @@
     "marked_for_export": "Marked for export",
     "mark_for_export": "Mark for export",
     "no_scripture_selected": "Hələ Kəlam seçilməyib. ",
-    "record_upload": "Səs yazın/Yükləyin.",
     "record": "Səs yazın",
     "recording_automatically_stopped": "Sizin cavabınız səslə yazılarkən öz-özünə dayandı.",
     "resolve": "Resolve",
@@ -216,10 +220,13 @@
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
+    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
     "save": "Yadda saxlamaq",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "Yükləmək",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
@@ -266,7 +273,8 @@
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
-    "questions": "Suallar"
+    "questions": "Suallar",
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -303,6 +311,8 @@
     "error_occurred_login": "Giriş edəndə bir səhv baş verdi.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
+    "go_to_retrain": "Go to Overview",
     "try_again": "Yenidən çalışın"
   },
   "exception_handling_service": {
@@ -315,6 +325,9 @@
     "failed_to_save": "Dəyişiklikləri saxlaya bilmədi. Zəhmət olmasa cihazınızda tövsiyə olunan 500 MB boş yerin olduğunu yoxlayın.",
     "i_understand": "Başa düşürəm",
     "storage_space_is_limited": "Bu cihazdakı saxlama sahəsi məhduddur. Bütün xüsusiyyətlərin mövcudluğunu təmin etmək üçün ən azı 500 MB boş yerə malik olmağa təklif olunur. Zəhmət olmasa saxlama yerini boşaltın."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "Problemi bildirdiyiniz üçün təşəkkür edirik!\nSiz bizə aşağıda ətraflı məlumat versəniz, bu bizə çox kömək edər, amma xahiş edirik ki, çox məlumat verə bilməsəniz də, problem barədə bizə bildirəsiniz. \nƏgər siz hansısa xüsusiyyəti sorğulayırsınızsa, sahələrin çoxu uyğun olmaya bilər. Amma bilin ki, sizin səhvlə bağlı hesabatınızı hamı görə biləcək. Heç vaxt şifrələri və ya başqa sirləri göndərməyin.\n\nSəhvlə bağlı hesabat\nSəhvin aydın və yığcam təsvirini verin.\n\nHəll etmək üçün addımlar\nMəsələn:\n1. Daxil olun...\n2. Klikləyin...\n3. Aşağı sürüşdürün...\n4. Səhvə baxın\n\nFaktiki davranış\n\nZəhmət olmazsa, müşahidə etdiyiniz səhvin faktiki davranışını təsvir edin.\n\nGözlənilən davranış\n\nNəyin baş verəcəyini gözlədiyinizi aydın və yığcam təsvir edin.\n\nEkran şəkilləri\n\nƏgər uyğundursa, problemi izah etmək üçün kömək edəcək ekran şəkilləri əlavə edin.\n\nƏlavə məzmun\n\nSəhvlə bağlı istənilən başqa məzmunu buraya əlavə edin.\n\nMümkün həll\nİstənilən mümkün həlli buraya əlavə edin.\n\nSizin əməliyyat sisteminiz:\nProgram təminatı      Versiya\n\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nVebsayt ünvanı: {{ url }}\nSəhv id: {{ errorId }}",
@@ -339,6 +352,9 @@
   "dialog": {
     "cancel": "Ləğv etmək",
     "close": "Bağla"
+  },
+  "navigation-project_selector": {
+    "connect_project": "Layihəni qoşmaq"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Kitabı seçin",
@@ -403,6 +419,12 @@
     "some_features_may_not_work": "Bu veb saytın bəzi xüsusiyyətləri brauzerinizlə düzgün işləməyə bilər.",
     "upgrade_chrome_firefox": "{{newLine}} Ən son {{chromeLink}} və ya {{firefoxLink}} səviyyəsinə keçməyi məsləhət görürük.",
     "upgrade_safari": "{{newLine}} Ən son {{safariLink}} səviyyəsinə keçməyi məsləhət görürük."
+  },
+  "text": {
+    "book_does_not_exist": "Bu kitab mövcud deyil.",
+    "book_is_empty": "Bu kitab boşdur. Paratext proqramın köməyi ilə fəsillər əlavə edin.",
+    "loading": "Yüklənir...",
+    "not_available_offline": "Bu mətn oflayn olaraq mövcud deyil. Mətni görmək üçün İnternetə qoşulun."
   },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",

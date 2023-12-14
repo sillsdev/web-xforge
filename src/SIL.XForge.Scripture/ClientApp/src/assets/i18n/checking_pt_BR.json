@@ -7,12 +7,12 @@
     "change_password": "Alterar senha",
     "community_checking": "Verificação da Comunidade",
     "community_support": "Apoio da Comunidade",
-    "connect_project": "Conectar projeto",
     "help": "Ajuda",
     "language": "Idioma",
     "log_out": "Sair",
     "logged_in_as": "Conectado como",
     "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
     "open_source_licenses": "Open source licenses",
@@ -22,6 +22,7 @@
     "product_version": "Versão do produto: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Página inicial do projeto",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecionando em alguns instantes...",
     "refresh": "Atualizar",
     "report_issue_email": "e-mail {{ email }}",
@@ -158,10 +159,13 @@
   },
   "checking": {
     "filter_questions": "Filtrar perguntas",
+    "manage_audio": "Manage audio",
     "me": "Eu",
     "next": "Próximo",
+    "play_chapter": "Play chapter",
     "previous": "Anterior",
     "questions": "Perguntas",
+    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
     "question_filter_exportable": "Answers marked for export",
     "question_filter_has_answers": "Has answers",
@@ -170,6 +174,7 @@
     "question_filter_not_answered": "Not answered",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
+    "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "All books",
     "question_scope_book": "Current book",
     "question_scope_chapter": "Current chapter",
@@ -191,7 +196,6 @@
     "marked_for_export": "Marked for export",
     "mark_for_export": "Mark for export",
     "no_scripture_selected": "Nenhum Texto Bíblico selecionado ainda.",
-    "record_upload": "Registrar/Carregar",
     "record": "Registrar",
     "recording_automatically_stopped": "O registro da sua resposta foi interrompido automaticamente.",
     "resolve": "Resolve",
@@ -216,10 +220,13 @@
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
+    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
     "save": "Salvar",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "Carregar",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
@@ -266,7 +273,8 @@
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
-    "questions": "Perguntas"
+    "questions": "Perguntas",
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -303,6 +311,8 @@
     "error_occurred_login": "Ocorreu um erro durante o login.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
+    "go_to_retrain": "Go to Overview",
     "try_again": "Tente Novamente"
   },
   "exception_handling_service": {
@@ -315,6 +325,9 @@
     "failed_to_save": "Falha ao salvar as alterações. Por favor, verifique se você tem os 500 MB de espaço livre recomendado no seu dispositivo.",
     "i_understand": "Entendo",
     "storage_space_is_limited": "O espaço de armazenamento neste dispositivo é limitado. É recomendado ter um mínimo de 500 MB de espaço livre para garantir que todos os recursos estejam disponíveis. Por favor, libere espaço de armazenamento."
+  },
+  "font_size": {
+    "text_size": "Text size"
   },
   "issue_email": {
     "body": "Obrigado por relatar o problema!\nVocê nos ajudaria se preenchesse algumas das informações abaixo, mas por favor envie mesmo que não consiga preencher muita informação.\nSe você está solicitando um recurso, muitos campos podem não ser aplicáveis.\nLembre-se de que seu relatório de  bug estará disponível publicamente. Nunca envie senhas ou outros segredos.\n\nRelatório de bug\nUma descrição clara e concisa de qual é o bug.\n\nPassos a reproduzir\nPor exemplo:\n1. Vá para ...\n2. Clique em ...\n3. Desça até ...\n4. Veja o erro\n\nComportamento real\nPor favor, descreva o comportamento real do problema que você está observando.\n\nComportamento esperado\nUma descrição clara e concisa do que você esperava que acontecesse.\n\nCapturas de tela\nSe for o caso, adicione capturas de tela para ajudar a explicar seu problema.\n\nContexto Adicional\nAdicione qualquer outro contexto sobre o problema aqui.\n\nPossível solução\nAdicione qualquer solução possível para o problema aqui.\n\nSeu ambiente:\nVersão do Software\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
@@ -339,6 +352,9 @@
   "dialog": {
     "cancel": "Cancelar",
     "close": "Fechar"
+  },
+  "navigation-project_selector": {
+    "connect_project": "Conectar projeto"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Selecionar Livro",
@@ -403,6 +419,12 @@
     "some_features_may_not_work": "Alguns recursos deste site podem não funcionar corretamente com seu navegador.",
     "upgrade_chrome_firefox": "{{ newLine }} Recomendamos atualizar para a versão mais recente de {{ chromeLink }} ou {{ firefoxLink }}.",
     "upgrade_safari": "{{ newLine }} Recomendamos atualizar para a versão mais recente de {{ safariLink }}."
+  },
+  "text": {
+    "book_does_not_exist": "Este livro não existe.",
+    "book_is_empty": "Este livro está vazio. Adicione capítulos no Paratext.",
+    "loading": "Carregando...",
+    "not_available_offline": "Este texto não está disponível offline. Conecte-se à Internet para ver o texto."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",
