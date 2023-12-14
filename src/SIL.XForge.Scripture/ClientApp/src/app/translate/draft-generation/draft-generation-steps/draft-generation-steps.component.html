@@ -13,7 +13,7 @@
             (bookSelect)="onTranslateBookSelect($event)"
           ></app-book-multi-select>
 
-          <app-notice *ngIf="showBookSelectionError" type="error" [outline]="true">{{
+          <app-notice *ngIf="showBookSelectionError" type="error">{{
             t("choose_books_to_translate_error")
           }}</app-notice>
 
@@ -38,7 +38,7 @@
             (bookSelect)="onTrainingBookSelect($event)"
           ></app-book-multi-select>
 
-          <app-notice *ngIf="showBookSelectionError" type="error" [outline]="true">{{
+          <app-notice *ngIf="showBookSelectionError" type="error">{{
             t("choose_books_for_training_error")
           }}</app-notice>
 
