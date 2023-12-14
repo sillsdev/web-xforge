@@ -61,7 +61,7 @@
         >
       </div>
     </div>
-    <app-notice id="offline-error" *ngIf="!isOnline" [type]="'error'" [outline]="true" [icon]="'cloud_off'">
+    <app-notice id="offline-error" *ngIf="!isOnline" type="error" icon="cloud_off">
       {{ t("chapter_audio_dialog.not_upload_audio_offline") }}
     </app-notice>
   </mat-dialog-content>

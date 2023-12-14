@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -71,8 +71,8 @@ const meta: Meta = {
   },
   decorators: [
     moduleMetadata({
-      imports: [UICommonModule, CommonModule, I18nStoryModule],
-      declarations: [NoticeComponent, GenericDialogComponent],
+      imports: [UICommonModule, CommonModule, I18nStoryModule, NoticeComponent],
+      declarations: [GenericDialogComponent],
       providers: [
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         { provide: AnonymousService, useValue: instance(mockedAnonymousService) },

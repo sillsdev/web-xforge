@@ -44,9 +44,8 @@
     <app-notice
       id="warning-some-actions-unavailable-offline"
       *ngIf="!isOnline && (canCreateScriptureAudio || canDeleteScriptureAudio)"
-      [icon]="'cloud_off'"
-      [type]="'warning'"
-      [outline]="true"
+      icon="cloud_off"
+      type="warning"
       >{{ t("some_actions_unavailable_offline") }}</app-notice
     >
     <ng-container *ngFor="let text of texts">

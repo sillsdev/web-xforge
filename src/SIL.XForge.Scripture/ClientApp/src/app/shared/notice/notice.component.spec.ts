@@ -1,9 +1,8 @@
+import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { Component, DebugElement, ElementRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoticeComponent } from './notice.component';
+import { noticeModes, noticeTypes } from './notice.types';
 
 describe('NoticeComponent', () => {
   it('should create', () => {
@@ -12,7 +11,7 @@ describe('NoticeComponent', () => {
     expect(env.fixture.componentInstance).toBeTruthy();
     expect(env.noticeText).toEqual('This is a notice');
     expect(env.icon).toBeFalsy();
-    expect(env.container.classes['normal']).toBeTrue();
+    expect(env.container.classes['primary']).toBeTrue();
   });
 
   it('should show icon', () => {
@@ -21,22 +20,38 @@ describe('NoticeComponent', () => {
     expect(env.icon).toBeTruthy();
   });
 
-  it('should set error class', () => {
-    const template = '<app-notice type="error">This is an error</app-notice>';
+  for (const type of noticeTypes) {
+    it(`should set "${type}" class`, () => {
+      const template = `<app-notice type="${type}">This is a ${type}</app-notice>`;
+      const env = new TestEnvironment(template);
+      expect(env.container.classes[type]).toBeTrue();
+    });
+  }
+
+  for (const mode of noticeModes) {
+    it(`should set "mode-${mode}" class`, () => {
+      const template = `<app-notice mode="${mode}">This is a ${mode}</app-notice>`;
+      const env = new TestEnvironment(template);
+      expect(env.container.classes[`mode-${mode}`]).toBeTrue();
+    });
+  }
+
+  it('should set "primary" class if no type specified', () => {
+    const template = '<app-notice>This is a notice</app-notice>';
     const env = new TestEnvironment(template);
-    expect(env.container.classes['error']).toBeTrue();
+    expect(env.container.classes['primary']).toBeTrue();
   });
 
-  it('should set warning class', () => {
-    const template = '<app-notice type="warning">This is a warning</app-notice>';
+  it('should set "mode-fill-light" class if no mode specified', () => {
+    const template = '<app-notice>This is a notice</app-notice>';
     const env = new TestEnvironment(template);
-    expect(env.container.classes['warning']).toBeTrue();
+    expect(env.container.classes['mode-fill-light']).toBeTrue();
   });
 });
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild('container', { static: true }) container!: ElementRef;
+  @ViewChild(NoticeComponent, { static: true }) component!: NoticeComponent;
 }
 
 class TestEnvironment {
@@ -44,17 +59,18 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, NoticeComponent],
-      imports: [TestTranslocoModule, UICommonModule]
+      declarations: [HostComponent],
+      imports: [NoticeComponent]
     });
 
     TestBed.overrideComponent(HostComponent, { set: { template } });
     this.fixture = TestBed.createComponent(HostComponent);
+    this.fixture.componentInstance.component.ngOnChanges();
     this.fixture.detectChanges();
   }
 
   get container(): DebugElement {
-    return this.fetchElement('div');
+    return this.fetchElement('app-notice');
   }
 
   get icon(): DebugElement {

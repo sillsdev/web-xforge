@@ -70,9 +70,10 @@ describe('FeatureFlagsComponent', () => {
     ReactiveFormsModule,
     TestTranslocoModule,
     NoopAnimationsModule,
-    HttpClientTestingModule
+    HttpClientTestingModule,
+    NoticeComponent
   ],
-  declarations: [FeatureFlagsDialogComponent, NoticeComponent],
+  declarations: [FeatureFlagsDialogComponent],
   exports: [FeatureFlagsDialogComponent]
 })
 class DialogTestModule {}
