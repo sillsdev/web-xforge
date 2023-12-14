@@ -1874,9 +1874,6 @@ public class MachineApiServiceTests
         env.MachineProjectService
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine01));
-        env.MachineProjectService
-            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
-            .Returns(Task.FromResult(false));
         env.TranslationEnginesClient
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
             .Returns(
@@ -1891,9 +1888,13 @@ public class MachineApiServiceTests
                 )
             );
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+        // The following substitution is Serval stating that a translation engine SF expects to exist has been removed
+        env.MachineProjectService
+            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
         await env.MachineProjectService
             .Received(1)
@@ -1912,7 +1913,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
         // SUT
-        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
         await env.MachineProjectService
             .DidNotReceiveWithAnyArgs()
@@ -1947,7 +1948,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.StartBuildAsync(User01, Project03, CancellationToken.None);
+        await env.Service.StartBuildAsync(User01, Project03, includeAdditionalInfo: false, CancellationToken.None);
 
         await env.MachineProjectService
             .Received(1)
