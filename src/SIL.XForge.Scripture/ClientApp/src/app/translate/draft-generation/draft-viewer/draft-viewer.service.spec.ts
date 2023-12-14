@@ -80,15 +80,61 @@ describe('DraftViewerService', () => {
 
     it('should allow combined verses in the target that are separated in the source', () => {
       const draft: DraftSegmentMap = {
-        verse_1_1: 'In the beginning ',
-        verse_1_2: 'The earth was formless',
-        verse_1_3: 'Then God said'
+        verse_150_1: 'Praise ye the Lord. ',
+        verse_150_2: 'Praise him for his mighty acts: ',
+        verse_150_3: 'Praise him with the sound of the trumpet: '
       };
-      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_1_1-3' } }];
+      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_150_1-3' } }];
       const expectedResult: DeltaOperation[] = [
         {
-          insert: 'In the beginning The earth was formless Then God said',
-          attributes: { segment: 'verse_1_1-3', draft: true }
+          insert: 'Praise ye the Lord. Praise him for his mighty acts: Praise him with the sound of the trumpet: ',
+          attributes: { segment: 'verse_150_1-3', draft: true }
+        }
+      ];
+      expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
+    });
+
+    it('should allow combined verses in the target that are combined in the source', () => {
+      const draft: DraftSegmentMap = {
+        'verse_150_1-3':
+          'Praise ye the Lord. Praise him for his mighty acts: Praise him with the sound of the trumpet: '
+      };
+      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_150_1-3' } }];
+      const expectedResult: DeltaOperation[] = [
+        {
+          insert: 'Praise ye the Lord. Praise him for his mighty acts: Praise him with the sound of the trumpet: ',
+          attributes: { segment: 'verse_150_1-3', draft: true }
+        }
+      ];
+      expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
+    });
+
+    it('should allow partially combined verses in the target that are combined in the source', () => {
+      const draft: DraftSegmentMap = {
+        'verse_150_1-3':
+          'Praise ye the Lord. Praise him for his mighty acts: Praise him with the sound of the trumpet: '
+      };
+      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_150_1-2' } }];
+      const expectedResult: DeltaOperation[] = [
+        {
+          insert: 'Praise ye the Lord. Praise him for his mighty acts: Praise him with the sound of the trumpet: ',
+          attributes: { segment: 'verse_150_1-2', draft: true }
+        }
+      ];
+      expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
+    });
+
+    it('should allow partially combined verses in the target that are combined in the source', () => {
+      const draft: DraftSegmentMap = {
+        'verse_150_1-2': 'Praise ye the Lord. Praise him for his mighty acts: ',
+        // Known issue: This verse will not be merged into 1-3 in the target
+        verse_150_1_3: 'Praise him with the sound of the trumpet: '
+      };
+      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_150_1-3' } }];
+      const expectedResult: DeltaOperation[] = [
+        {
+          insert: 'Praise ye the Lord. Praise him for his mighty acts: ',
+          attributes: { segment: 'verse_150_1-3', draft: true }
         }
       ];
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
