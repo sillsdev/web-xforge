@@ -983,7 +983,8 @@ public class ParatextService : DisposableBase, IParatextService
                     {
                         TagId = t.Id,
                         Icon = t.Icon,
-                        Name = t.Name
+                        Name = t.Name,
+                        CreatorResolve = t.CreatorResolve
                     }
             );
 

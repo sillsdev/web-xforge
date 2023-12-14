@@ -3388,10 +3388,13 @@ public class ParatextServiceTests
             TagId = 5,
             Icon = "sf05",
             Name = "SF Note Tag",
+            CreatorResolve = true
         };
         env.SetupCommentTags(env.ProjectScrText, noteTag);
         ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
-        Assert.That(settings?.NoteTags.Any(t => t.Name == noteTag.Name), Is.True);
+        NoteTag? resultTag = settings?.NoteTags.Single(t => t.Name == noteTag.Name);
+        Assert.That(resultTag, Is.Not.Null);
+        Assert.That(resultTag.CreatorResolve, Is.True);
     }
 
     [Test]
@@ -3405,7 +3408,8 @@ public class ParatextServiceTests
         {
             TagId = CommentTag.notSetId,
             Icon = "sf05",
-            Name = "SF Note Tag"
+            Name = "SF Note Tag",
+            CreatorResolve = false
         };
         ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
         Assert.That(settings?.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
@@ -5410,9 +5414,18 @@ public class ParatextServiceTests
                 if (tagId < TagCount)
                 {
                     if (noteTag != null && tagId == noteTag.TagId)
-                        tags.Add(new CommentTag(noteTag.Name, noteTag.Icon, tagId));
+                    {
+                        tags.Add(
+                            new CommentTag(noteTag.Name, noteTag.Icon, tagId)
+                            {
+                                CreatorResolve = noteTag.CreatorResolve
+                            }
+                        );
+                    }
                     else
-                        tags.Add(new CommentTag($"tag{tagId}", $"icon{tagId}", tagId));
+                    {
+                        tags.Add(new CommentTag($"tag{tagId}", $"icon{tagId}", tagId) { CreatorResolve = false });
+                    }
                 }
             }
 
