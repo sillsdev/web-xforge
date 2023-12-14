@@ -1867,6 +1867,95 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartBuildAsync_ServalCreatesRemovedTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineProjectService
+            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
+        env.TranslationEnginesClient
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = Build01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        State = JobState.Active,
+                    }
+                )
+            );
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+        // The following substitution is Serval stating that a translation engine SF expects to exist has been removed
+        env.MachineProjectService
+            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(false));
+
+        // SUT
+        await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
+
+        await env.MachineProjectService
+            .Received(1)
+            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task StartBuildAsync_ServalTranslationEngineRecreationErrorsDoNotCrashIfInProcess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
+        env.MachineProjectService
+            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
+            .Throws(ServalApiExceptions.InternalServerError);
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
+
+        // SUT
+        await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
+
+        await env.MachineProjectService
+            .DidNotReceiveWithAnyArgs()
+            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
+    }
+
+    [Test]
+    public async Task StartBuildAsync_ServalCreatesMissingTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineProjectService
+            .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
+        env.TranslationEnginesClient
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = Build01,
+                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                        State = JobState.Active,
+                    }
+                )
+            );
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        await env.Service.StartBuildAsync(User01, Project03, includeAdditionalInfo: false, CancellationToken.None);
+
+        await env.MachineProjectService
+            .Received(1)
+            .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
+    }
+
+    [Test]
     public void StartBuildAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
@@ -2987,6 +3076,14 @@ public class MachineApiServiceTests
             FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
+            MachineProjectService
+                .TranslationEngineExistsAsync(
+                    Project01,
+                    TranslationEngine01,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+                .Returns(Task.FromResult(true));
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
