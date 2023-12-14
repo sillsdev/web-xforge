@@ -11,11 +11,17 @@
             [availableBooks]="availableBooks"
             [selectedBooks]="initialSelectedTranslateBooks"
             (bookSelect)="onTranslateBookSelect($event)"
+            data-test-id="draft-stepper-translate-books"
           ></app-book-multi-select>
 
-          <app-notice *ngIf="showBookSelectionError" type="error">{{
-            t("choose_books_to_translate_error")
-          }}</app-notice>
+          <div *ngIf="targetOnlyBooks.length" class="unusable-books">
+            <h4>{{ t("these_books_cannot_be_used_for_translating") }}</h4>
+            <app-book-multi-select [availableBooks]="targetOnlyBooks" [readonly]="true"></app-book-multi-select>
+          </div>
+
+          <app-notice *ngIf="showBookSelectionError" type="error">
+            {{ t("choose_books_to_translate_error") }}
+          </app-notice>
 
           <div class="button-strip">
             <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
@@ -36,11 +42,17 @@
             [availableBooks]="availableBooks"
             [selectedBooks]="initialSelectedTrainingBooks"
             (bookSelect)="onTrainingBookSelect($event)"
+            data-test-id="draft-stepper-training-books"
           ></app-book-multi-select>
 
-          <app-notice *ngIf="showBookSelectionError" type="error">{{
-            t("choose_books_for_training_error")
-          }}</app-notice>
+          <div *ngIf="sourceOnlyBooks.length" class="unusable-books">
+            <h4>{{ t("these_books_cannot_be_used_for_training") }}</h4>
+            <app-book-multi-select [availableBooks]="sourceOnlyBooks" [readonly]="true"></app-book-multi-select>
+          </div>
+
+          <app-notice *ngIf="showBookSelectionError" type="error">
+            {{ t("choose_books_for_training_error") }}
+          </app-notice>
 
           <div class="button-strip">
             <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>

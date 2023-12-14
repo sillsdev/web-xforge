@@ -19,7 +19,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockProjectService = mock(SFProjectService);
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }],
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
       translateConfig: {
         source: { projectRef: 'test' },
         draftConfig: {}
@@ -28,7 +28,7 @@ describe('DraftGenerationStepsComponent', () => {
   } as SFProjectProfileDoc;
   const mockSourceProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }]
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }]
     })
   } as SFProjectProfileDoc;
 
@@ -55,6 +55,13 @@ describe('DraftGenerationStepsComponent', () => {
     it('should set availableBooks$ correctly', fakeAsync(() => {
       component.availableBooks$?.subscribe(books => {
         expect(books).toEqual([1, 2, 3]);
+      });
+    }));
+
+    it('should set "sourceOnlyBooks" and "targetOnlyBooks" correctly', fakeAsync(() => {
+      component.availableBooks$?.subscribe(() => {
+        expect(component.sourceOnlyBooks).toEqual([4, 5]);
+        expect(component.targetOnlyBooks).toEqual([6, 7]);
       });
     }));
 
@@ -93,12 +100,17 @@ describe('DraftGenerationStepsComponent', () => {
       spyOn(component, 'onTranslateBookSelect');
 
       fixture.detectChanges();
-      const bookMultiSelects = fixture.debugElement.queryAll(By.css('app-book-multi-select'));
+      const translateBooks = fixture.debugElement.query(
+        By.css('app-book-multi-select[data-test-id="draft-stepper-translate-books"]')
+      );
+      const trainingBooks = fixture.debugElement.query(
+        By.css('app-book-multi-select[data-test-id="draft-stepper-training-books"]')
+      );
 
-      bookMultiSelects[0].triggerEventHandler('bookSelect', mockSelectedBooks);
+      translateBooks.triggerEventHandler('bookSelect', mockSelectedBooks);
       expect(component.onTranslateBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
 
-      bookMultiSelects[1].triggerEventHandler('bookSelect', mockSelectedBooks);
+      trainingBooks.triggerEventHandler('bookSelect', mockSelectedBooks);
       expect(component.onTrainingBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
     }));
   });

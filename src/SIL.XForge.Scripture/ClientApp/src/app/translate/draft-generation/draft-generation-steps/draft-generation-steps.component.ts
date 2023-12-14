@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
-import { from, Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -29,6 +28,10 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   availableBooks$?: Observable<number[]>;
 
+  // Unusable books
+  targetOnlyBooks: number[] = [];
+  sourceOnlyBooks: number[] = [];
+
   initialSelectedTrainingBooks: number[] = [];
   initialSelectedTranslateBooks: number[] = [];
   userSelectedTrainingBooks: number[] = [];
@@ -38,8 +41,7 @@ export class DraftGenerationStepsComponent implements OnInit {
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
-    private readonly projectService: SFProjectService,
-    private readonly formBuilder: FormBuilder
+    private readonly projectService: SFProjectService
   ) {}
 
   ngOnInit(): void {
@@ -58,14 +60,31 @@ export class DraftGenerationStepsComponent implements OnInit {
         return from(this.projectService.getProfile(sourceProjectId)).pipe(map(sourceDoc => ({ targetDoc, sourceDoc })));
       }),
       map(({ targetDoc, sourceDoc }) => {
-        // Get the source books
-        const sourceBooks: number[] = sourceDoc?.data?.texts.map(t => t.bookNum) ?? [];
+        const intersectionBooks = new Set<number>();
+        const sourceOnlyBooks = new Set<number>();
+        const targetOnlyBooks: number[] = [];
 
-        // Get the books available in the target
-        const targetBooks: Set<number> = new Set<number>(targetDoc?.data?.texts.map(t => t.bookNum) ?? []);
+        for (const text of sourceDoc?.data?.texts ?? []) {
+          sourceOnlyBooks.add(text.bookNum); // 'intersection' books will be removed from this set
+        }
 
-        // The books that are available have to be in the source and target
-        return sourceBooks.filter(bookNum => targetBooks.has(bookNum));
+        for (const text of targetDoc?.data?.texts ?? []) {
+          const bookNum = text.bookNum;
+
+          if (sourceOnlyBooks.has(bookNum)) {
+            intersectionBooks.add(bookNum);
+            sourceOnlyBooks.delete(bookNum); // Remove 'intersection' books from source-only set
+          } else {
+            targetOnlyBooks.push(bookNum);
+          }
+        }
+
+        // Set unusable books
+        this.sourceOnlyBooks = Array.from(sourceOnlyBooks);
+        this.targetOnlyBooks = targetOnlyBooks;
+
+        // The books that are available have to be in both the source and target
+        return Array.from(intersectionBooks);
       }),
       tap((availableBooks: number[]) => {
         this.setInitialTrainingBooks(availableBooks);
