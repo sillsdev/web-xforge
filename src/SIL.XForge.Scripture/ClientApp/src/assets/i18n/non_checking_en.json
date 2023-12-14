@@ -172,9 +172,15 @@
     "warning_generation_faulted_header": "Last generation attempt failed"
   },
   "draft_generation_steps": {
-    "choose_books_for_training": "Choose books for training",
+    "back": "Back",
+    "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_subheader": "Select books that have been proofed.",
-    "generate_draft": "Generate draft"
+    "choose_books_for_training": "Choose books for training the language model",
+    "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
+    "choose_books_to_translate": "Choose books to translate",
+    "generate_draft": "Generate draft",
+    "next": "Next",
+    "no_available_books": "You have no books available for drafting."
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",

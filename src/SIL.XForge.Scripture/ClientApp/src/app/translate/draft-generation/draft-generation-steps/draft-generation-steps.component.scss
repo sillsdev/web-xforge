@@ -1,21 +1,32 @@
-h2 {
-  font-size: 20px;
-  font-weight: 500;
-  margin-bottom: 0;
-}
+.stepper-multi-header {
+  h2 {
+    font-size: inherit;
+    font-weight: inherit;
+    margin: 0;
+  }
 
-h3 {
-  font-size: 15px;
-  font-weight: 400;
-  margin-top: 4px;
-  color: #777;
-}
-
-button {
-  margin-top: 20px;
+  h3 {
+    font-size: 0.9em;
+    font-weight: inherit;
+    font-style: italic;
+    margin: 2px 0 0;
+    color: #777;
+  }
 }
 
 app-book-multi-select {
   display: block;
   margin-top: 4px;
+}
+
+.button-strip {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+app-notice {
+  margin-top: 20px;
+  display: inline-block;
 }
