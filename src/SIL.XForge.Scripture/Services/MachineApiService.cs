@@ -609,13 +609,34 @@ public class MachineApiService : IMachineApiService
                     )
                 )
                 {
-                    // Clear the existing translation engine id
+                    // Clear the existing translation engine id and corpora
+                    // AddProjectAsync() requires the id to be not defined to create the new translation engine
                     if (!string.IsNullOrWhiteSpace(translationEngineId))
                     {
-                        await _projectSecrets.UpdateAsync(
-                            sfProjectId,
-                            u => u.Unset(p => p.ServalData.TranslationEngineId)
-                        );
+                        // Load the project secret, so we can get the corpora ID to delete
+                        if (
+                            (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(
+                                out SFProjectSecret projectSecret
+                            )
+                        )
+                        {
+                            string? corporaId = projectSecret
+                                .ServalData
+                                ?.Corpora
+                                .FirstOrDefault(c => !c.Value.PreTranslate)
+                                .Key;
+                            await _projectSecrets.UpdateAsync(
+                                sfProjectId,
+                                u =>
+                                {
+                                    u.Unset(p => p.ServalData.TranslationEngineId);
+                                    if (!string.IsNullOrWhiteSpace(corporaId))
+                                    {
+                                        u.Unset(p => p.ServalData.Corpora[corporaId]);
+                                    }
+                                }
+                            );
+                        }
                     }
 
                     translationEngineId = await _machineProjectService.AddProjectAsync(

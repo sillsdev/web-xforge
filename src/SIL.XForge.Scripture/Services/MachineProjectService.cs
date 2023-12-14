@@ -118,7 +118,6 @@ public class MachineProjectService : IMachineProjectService
             && !string.IsNullOrWhiteSpace(machineProject.TargetLanguageTag)
         )
         {
-            // We do not need the returned translation engine id
             return await CreateServalProjectAsync(project, preTranslate, cancellationToken);
         }
 
@@ -215,7 +214,12 @@ public class MachineProjectService : IMachineProjectService
                 }
             }
 
-            // Clear the existing translation engine id
+            // Clear the existing translation engine id and corpora
+            string? corporaId = projectSecret
+                .ServalData
+                ?.Corpora
+                .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
+                .Key;
             await _projectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
@@ -227,6 +231,11 @@ public class MachineProjectService : IMachineProjectService
                     else
                     {
                         u.Unset(p => p.ServalData.TranslationEngineId);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(corporaId))
+                    {
+                        u.Unset(p => p.ServalData.Corpora[corporaId]);
                     }
                 }
             );
@@ -284,8 +293,12 @@ public class MachineProjectService : IMachineProjectService
         {
             // A 404 means that the translation engine does not exist
             _logger.LogInformation($"Translation Engine {translationEngineId} does not exist.");
-
-            // Clear the existing translation engine id
+            string? corporaId = projectSecret
+                .ServalData
+                ?.Corpora
+                .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
+                .Key;
+            // Clear the existing translation engine id and corpora
             await _projectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
@@ -297,6 +310,11 @@ public class MachineProjectService : IMachineProjectService
                     else
                     {
                         u.Unset(p => p.ServalData.TranslationEngineId);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(corporaId))
+                    {
+                        u.Unset(p => p.ServalData.Corpora[corporaId]);
                     }
                 }
             );

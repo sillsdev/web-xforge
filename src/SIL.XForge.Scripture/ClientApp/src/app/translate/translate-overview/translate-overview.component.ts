@@ -254,10 +254,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   private listenForStatus(): void {
     if (this.translationEngine == null) {
       return;
-    } else if (this.trainingSub != null) {
-      this.trainingSub.unsubscribe();
-      this.trainingSub = undefined;
     }
+    this.trainingSub?.unsubscribe();
     this.trainingSub = this.translationEngine
       .listenForTrainingStatus()
       .pipe(
