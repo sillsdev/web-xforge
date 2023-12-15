@@ -17,6 +17,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockProjectService = mock(SFProjectService);
+
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
       texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
@@ -26,9 +27,16 @@ describe('DraftGenerationStepsComponent', () => {
       }
     })
   } as SFProjectProfileDoc;
+
   const mockSourceProjectDoc = {
     data: createTestProjectProfile({
       texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }]
+    })
+  } as SFProjectProfileDoc;
+
+  const mockAlternateTrainingSourceProjectDoc = {
+    data: createTestProjectProfile({
+      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }]
     })
   } as SFProjectProfileDoc;
 
@@ -40,7 +48,49 @@ describe('DraftGenerationStepsComponent', () => {
     ]
   }));
 
-  describe('no previously selected books', () => {
+  describe('alternate training source project', () => {
+    beforeEach(fakeAsync(() => {
+      const mockTargetProjectDoc = {
+        data: createTestProjectProfile({
+          texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
+          translateConfig: {
+            source: { projectRef: 'sourceProject' },
+            draftConfig: {
+              alternateTrainingSourceEnabled: true,
+              alternateTrainingSource: { projectRef: 'alternateTrainingProject' }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
+
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockProjectService.getProfile('sourceProject')).thenResolve(mockSourceProjectDoc);
+      when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
+        mockAlternateTrainingSourceProjectDoc
+      );
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
+      expect(component.availableTranslateBooks).toEqual([1, 2, 3]);
+    }));
+
+    it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
+      expect(component.availableTrainingBooks).toEqual([2, 3]);
+    }));
+
+    it('should set "unusableTranslateBooks" and "unusableTrainingBooks" correctly', fakeAsync(() => {
+      expect(component.unusableTranslateBooks).toEqual([6, 7]);
+      expect(component.unusableTrainingBooks).toEqual([1, 6, 7]);
+    }));
+  });
+
+  describe('NO alternate training source project', () => {
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
@@ -52,17 +102,17 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set availableBooks$ correctly', fakeAsync(() => {
-      component.availableBooks$?.subscribe(books => {
-        expect(books).toEqual([1, 2, 3]);
-      });
+    it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
+      expect(component.availableTranslateBooks).toEqual([1, 2, 3]);
     }));
 
-    it('should set "sourceOnlyBooks" and "targetOnlyBooks" correctly', fakeAsync(() => {
-      component.availableBooks$?.subscribe(() => {
-        expect(component.sourceOnlyBooks).toEqual([4, 5]);
-        expect(component.targetOnlyBooks).toEqual([6, 7]);
-      });
+    it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
+      expect(component.availableTrainingBooks).toEqual([1, 2, 3]);
+    }));
+
+    it('should set "unusableTranslateBooks" and "unusableTrainingBooks" correctly', fakeAsync(() => {
+      expect(component.unusableTranslateBooks).toEqual([6, 7]);
+      expect(component.unusableTrainingBooks).toEqual([6, 7]);
     }));
 
     it('should select no books initially', () => {
@@ -88,8 +138,8 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        trainingBooks,
-        translationBooks
+        translationBooks,
+        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book))
       } as DraftGenerationStepsResult);
     });
 

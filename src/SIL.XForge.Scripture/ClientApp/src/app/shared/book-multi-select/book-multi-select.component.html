@@ -3,7 +3,7 @@
     [multiple]="true"
     [selectable]="!readonly"
     class="book-multi-select"
-    [class.readonly]="readonly"
+    [disabled]="readonly"
     (change)="onChipListChange($event)"
   >
     <mat-chip-option *ngFor="let book of bookOptions" [value]="book" [selected]="book.selected">

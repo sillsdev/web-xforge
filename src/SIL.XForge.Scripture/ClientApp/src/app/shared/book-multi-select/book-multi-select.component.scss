@@ -5,23 +5,4 @@
       --mdc-chip-elevated-container-color: #4a79c9;
     }
   }
-
-  &.readonly {
-    .mat-mdc-standard-chip {
-      --mdc-chip-elevated-container-color: #ececec;
-      --mdc-chip-label-text-color: #7a7a7a;
-
-      &.mat-mdc-chip-selected,
-      &.mat-mdc-chip-highlighted {
-        --mdc-chip-elevated-container-color: #8996a9;
-        --mdc-chip-label-text-color: #fff;
-      }
-    }
-
-    ::ng-deep {
-      .mat-mdc-chip-action {
-        cursor: unset;
-      }
-    }
-  }
 }

@@ -1,71 +1,79 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  <ng-container *ngIf="availableBooks$ | async as availableBooks">
-    <ng-container *ngIf="availableBooks?.length; else noAvailableBooks">
-      <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
-        <mat-step [completed]="userSelectedTranslateBooks.length > 0">
-          <ng-template matStepLabel>
-            {{ t("choose_books_to_translate") }}
-          </ng-template>
+  <ng-container *ngIf="availableTranslateBooks.length; else noAvailableBooks">
+    <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
+      <mat-step [completed]="userSelectedTranslateBooks.length > 0">
+        <ng-template matStepLabel>
+          {{ t("choose_books_to_translate") }}
+        </ng-template>
 
-          <app-book-multi-select
-            [availableBooks]="availableBooks"
-            [selectedBooks]="initialSelectedTranslateBooks"
-            (bookSelect)="onTranslateBookSelect($event)"
-            data-test-id="draft-stepper-translate-books"
-          ></app-book-multi-select>
+        <app-book-multi-select
+          [availableBooks]="availableTranslateBooks"
+          [selectedBooks]="initialSelectedTranslateBooks"
+          (bookSelect)="onTranslateBookSelect($event)"
+          data-test-id="draft-stepper-translate-books"
+        ></app-book-multi-select>
 
-          <div *ngIf="targetOnlyBooks.length" class="unusable-books">
-            <h4>{{ t("these_books_cannot_be_used_for_translating") }}</h4>
-            <app-book-multi-select [availableBooks]="targetOnlyBooks" [readonly]="true"></app-book-multi-select>
+        <app-notice *ngIf="unusableTranslateBooks.length" type="light" class="unusable-books">
+          <h4>
+            <transloco
+              key="draft_generation_steps.these_books_cannot_be_used_for_translating"
+              [params]="{ draftingSourceProjectName }"
+            ></transloco>
+          </h4>
+          <app-book-multi-select [availableBooks]="unusableTranslateBooks" [readonly]="true"></app-book-multi-select>
+        </app-notice>
+
+        <app-notice *ngIf="showBookSelectionError" type="error">
+          {{ t("choose_books_to_translate_error") }}
+        </app-notice>
+
+        <div class="button-strip">
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            {{ t("next") }}
+          </button>
+        </div>
+      </mat-step>
+
+      <mat-step [completed]="userSelectedTrainingBooks.length > 0">
+        <ng-template matStepLabel>
+          <div class="stepper-multi-header">
+            <h2>{{ t("choose_books_for_training") }}</h2>
+            <h3>{{ t("choose_books_for_training_subheader") }}</h3>
           </div>
+        </ng-template>
 
-          <app-notice *ngIf="showBookSelectionError" type="error">
-            {{ t("choose_books_to_translate_error") }}
-          </app-notice>
+        <app-book-multi-select
+          [availableBooks]="availableTrainingBooks"
+          [selectedBooks]="initialSelectedTrainingBooks"
+          (bookSelect)="onTrainingBookSelect($event)"
+          data-test-id="draft-stepper-training-books"
+        ></app-book-multi-select>
 
-          <div class="button-strip">
-            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
-              {{ t("next") }}
-            </button>
-          </div>
-        </mat-step>
+        <div *ngIf="unusableTrainingBooks.length" class="unusable-books">
+          <h4>
+            <transloco
+              key="draft_generation_steps.these_books_cannot_be_used_for_training"
+              [params]="{ trainingSourceProjectName }"
+            ></transloco>
+          </h4>
+          <app-book-multi-select [availableBooks]="unusableTrainingBooks" [readonly]="true"></app-book-multi-select>
+        </div>
 
-        <mat-step [completed]="userSelectedTrainingBooks.length > 0">
-          <ng-template matStepLabel>
-            <div class="stepper-multi-header">
-              <h2>{{ t("choose_books_for_training") }}</h2>
-              <h3>{{ t("choose_books_for_training_subheader") }}</h3>
-            </div>
-          </ng-template>
+        <app-notice *ngIf="showBookSelectionError" type="error">
+          {{ t("choose_books_for_training_error") }}
+        </app-notice>
 
-          <app-book-multi-select
-            [availableBooks]="availableBooks"
-            [selectedBooks]="initialSelectedTrainingBooks"
-            (bookSelect)="onTrainingBookSelect($event)"
-            data-test-id="draft-stepper-training-books"
-          ></app-book-multi-select>
-
-          <div *ngIf="sourceOnlyBooks.length" class="unusable-books">
-            <h4>{{ t("these_books_cannot_be_used_for_training") }}</h4>
-            <app-book-multi-select [availableBooks]="sourceOnlyBooks" [readonly]="true"></app-book-multi-select>
-          </div>
-
-          <app-notice *ngIf="showBookSelectionError" type="error">
-            {{ t("choose_books_for_training_error") }}
-          </app-notice>
-
-          <div class="button-strip">
-            <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
-              {{ t("generate_draft") }}
-            </button>
-          </div>
-        </mat-step>
-      </mat-stepper>
-    </ng-container>
-
-    <ng-template #noAvailableBooks>
-      <p>{{ t("no_available_books") }}</p>
-    </ng-template>
+        <div class="button-strip">
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            {{ t("generate_draft") }}
+          </button>
+        </div>
+      </mat-step>
+    </mat-stepper>
   </ng-container>
+
+  <ng-template #noAvailableBooks>
+    <p>{{ t("no_available_books") }}</p>
+  </ng-template>
 </ng-container>
