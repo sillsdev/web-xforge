@@ -180,7 +180,6 @@ public class MachineApiService : IMachineApiService
         string buildId,
         long? minRevision,
         bool preTranslate,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     )
     {
@@ -212,7 +211,7 @@ public class MachineApiService : IMachineApiService
                     minRevision,
                     cancellationToken
                 );
-                buildDto = CreateDto(translationBuild, includeAdditionalInfo);
+                buildDto = CreateDto(translationBuild);
             }
             catch (Exception e)
             {
@@ -237,7 +236,6 @@ public class MachineApiService : IMachineApiService
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     )
     {
@@ -269,7 +267,7 @@ public class MachineApiService : IMachineApiService
                 .MaxBy(b => b.DateFinished);
             if (translationBuild is not null)
             {
-                buildDto = CreateDto(translationBuild, includeAdditionalInfo);
+                buildDto = CreateDto(translationBuild);
             }
         }
         catch (Exception e)
@@ -291,7 +289,6 @@ public class MachineApiService : IMachineApiService
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     )
     {
@@ -337,7 +334,7 @@ public class MachineApiService : IMachineApiService
                         ).MaxBy(b => b.DateFinished) ?? throw new DataNotFoundException("Entity Deleted");
                 }
 
-                buildDto = CreateDto(translationBuild, includeAdditionalInfo);
+                buildDto = CreateDto(translationBuild);
             }
             catch (Exception e)
             {
@@ -584,7 +581,6 @@ public class MachineApiService : IMachineApiService
     public async Task<ServalBuildDto> StartBuildAsync(
         string curUserId,
         string sfProjectId,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     )
     {
@@ -677,7 +673,7 @@ public class MachineApiService : IMachineApiService
                         new TranslationBuildConfig(),
                         cancellationToken
                     );
-                    buildDto = CreateDto(translationBuild, includeAdditionalInfo);
+                    buildDto = CreateDto(translationBuild);
                 }
                 catch (Exception e)
                 {
@@ -1039,9 +1035,8 @@ public class MachineApiService : IMachineApiService
     /// Creates the Build DTO for the front end.
     /// </summary>
     /// <param name="translationBuild">The translation build from Serval.</param>
-    /// <param name="includeAdditionalInfo">If <c>true</c>, include additional information for system admins.</param>
     /// <returns>The build DTO.</returns>
-    private static ServalBuildDto CreateDto(TranslationBuild translationBuild, bool includeAdditionalInfo) =>
+    private static ServalBuildDto CreateDto(TranslationBuild translationBuild) =>
         new ServalBuildDto
         {
             Id = translationBuild.Id,
@@ -1050,16 +1045,14 @@ public class MachineApiService : IMachineApiService
             Message = translationBuild.Message,
             QueueDepth = translationBuild.QueueDepth ?? 0,
             State = translationBuild.State.ToString().ToUpperInvariant(),
-            AdditionalInfo = includeAdditionalInfo
-                ? new ServalBuildAdditionalInfo
-                {
-                    BuildId = translationBuild.Id,
-                    CorporaIds = translationBuild.Pretranslate?.Select(p => p.Corpus.Id),
-                    DateFinished = translationBuild.DateFinished,
-                    Step = translationBuild.Step,
-                    TranslationEngineId = translationBuild.Engine.Id,
-                }
-                : null,
+            AdditionalInfo = new ServalBuildAdditionalInfo
+            {
+                BuildId = translationBuild.Id,
+                CorporaIds = translationBuild.Pretranslate?.Select(p => p.Corpus.Id),
+                DateFinished = translationBuild.DateFinished,
+                Step = translationBuild.Step,
+                TranslationEngineId = translationBuild.Engine.Id,
+            }
         };
 
     private static EngineDto CreateDto(Engine engine) =>
