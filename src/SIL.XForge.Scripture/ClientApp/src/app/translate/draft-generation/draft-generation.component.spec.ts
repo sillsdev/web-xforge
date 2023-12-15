@@ -828,7 +828,11 @@ describe('DraftGenerationComponent', () => {
   describe('isDraftFaulted', () => {
     it('should return true if the draft build is faulted', () => {
       let env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.fixture.detectChanges();
       expect(env.component.isDraftFaulted({ state: BuildStates.Faulted } as BuildDto)).toBe(true);
+      expect(env.getElementByTestId('warning-generation-failed')).not.toBe(null);
+      expect(env.getElementByTestId('technical-details')).not.toBe(null);
     });
 
     it('should return false if the draft build is not faulted', () => {
@@ -838,6 +842,8 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftFaulted({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftFaulted({ state: BuildStates.Pending } as BuildDto)).toBe(false);
       expect(env.component.isDraftFaulted({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+      expect(env.getElementByTestId('warning-generation-failed')).toBe(null);
+      expect(env.getElementByTestId('technical-details')).toBe(null);
     });
   });
 

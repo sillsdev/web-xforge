@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Machine.WebApi;
-using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -125,7 +124,6 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     minRevision,
                     preTranslate,
-                    includeAdditionalInfo: _userAccessor.SystemRole == SystemRole.SystemAdmin,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -134,7 +132,6 @@ public class MachineApiController : ControllerBase
                     buildId,
                     minRevision,
                     preTranslate,
-                    includeAdditionalInfo: _userAccessor.SystemRole == SystemRole.SystemAdmin,
                     cancellationToken
                 );
 
@@ -218,7 +215,6 @@ public class MachineApiController : ControllerBase
             ServalBuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
-                includeAdditionalInfo: _userAccessor.SystemRole == SystemRole.SystemAdmin,
                 cancellationToken
             );
 
@@ -363,7 +359,6 @@ public class MachineApiController : ControllerBase
             ServalBuildDto build = await _machineApiService.StartBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
-                includeAdditionalInfo: _userAccessor.SystemRole == SystemRole.SystemAdmin,
                 cancellationToken
             );
             return Ok(build);
