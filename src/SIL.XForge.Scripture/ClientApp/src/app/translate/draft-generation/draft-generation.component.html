@@ -91,21 +91,17 @@
 
         <div *ngIf="isDraftJobFetched">
           <ng-container *ngIf="isGenerationSupported">
-            <ng-container *ngIf="isDraftFaulted(draftJob)">
-              <section>
-                <h3><mat-icon color="warn">warning</mat-icon>{{ t("warning_generation_faulted_header") }}</h3>
-                <p>
-                  <transloco
-                    key="draft_generation.warning_generation_faulted_detail"
-                    [params]="{
-                      generateButtonText: hasAnyCompletedBuild
-                        ? t('generate_new_draft_button')
-                        : t('generate_draft_button')
-                    }"
-                  ></transloco>
-                </p>
-              </section>
-              <mat-divider inset></mat-divider>
+            <ng-container *ngIf="true">
+              <app-notice type="error" icon="error">
+                <div>
+                  <h3>{{ t("warning_generation_faulted_header") }}</h3>
+                  <a href="" mat-button>Report problem</a>
+                </div>
+                <div>
+                  <p>Technical details:</p>
+                  <p [ngTemplateOutlet]="buildDiagnostics"></p>
+                </div>
+              </app-notice>
             </ng-container>
 
             <section *ngIf="!isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
@@ -239,16 +235,20 @@
   <mat-expansion-panel class="diagnostic-info">
     <mat-expansion-panel-header><h3>Diagnostic Information</h3></mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-      <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
-      <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
-      <div><strong>Date Finished:</strong> {{ draftJob?.additionalInfo?.dateFinished?.toLocaleString() }}</div>
-      <div><strong>Message:</strong> {{ draftJob?.message }}</div>
-      <div><strong>Percent Completed:</strong> {{ draftJob?.percentCompleted }}</div>
-      <div><strong>Revision:</strong> {{ draftJob?.revision }}</div>
-      <div><strong>Queue Depth:</strong> {{ draftJob?.queueDepth }}</div>
-      <div><strong>State:</strong> {{ draftJob?.state }}</div>
-      <div><strong>Step:</strong> {{ draftJob?.additionalInfo?.step }}</div>
-      <div><strong>Translation Engine Id:</strong> {{ draftJob?.additionalInfo?.translationEngineId }}</div>
+      <ng-template [ngTemplateOutlet]="buildDiagnostics"></ng-template>
     </ng-template>
   </mat-expansion-panel>
 </section>
+
+<ng-template #buildDiagnostics>
+  <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
+  <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
+  <div><strong>Date Finished:</strong> {{ draftJob?.additionalInfo?.dateFinished?.toLocaleString() }}</div>
+  <div><strong>Message:</strong> {{ draftJob?.message }}</div>
+  <div><strong>Percent Completed:</strong> {{ draftJob?.percentCompleted }}</div>
+  <div><strong>Revision:</strong> {{ draftJob?.revision }}</div>
+  <div><strong>Queue Depth:</strong> {{ draftJob?.queueDepth }}</div>
+  <div><strong>State:</strong> {{ draftJob?.state }}</div>
+  <div><strong>Step:</strong> {{ draftJob?.additionalInfo?.step }}</div>
+  <div><strong>Translation Engine Id:</strong> {{ draftJob?.additionalInfo?.translationEngineId }}</div>
+</ng-template>
