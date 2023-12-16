@@ -1,19 +1,8 @@
 .book-multi-select {
-  .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-selected,
-  .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-highlighted {
-    --mdc-chip-elevated-container-color: #4a79c9;
-  }
-
-  &.readonly {
-    .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-selected,
-    .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-highlighted {
-      --mdc-chip-elevated-container-color: #627186;
-    }
-
-    ::ng-deep {
-      .mat-mdc-chip-action {
-        cursor: unset;
-      }
+  .mat-mdc-standard-chip {
+    &.mat-mdc-chip-selected,
+    &.mat-mdc-chip-highlighted {
+      --mdc-chip-elevated-container-color: #4a79c9;
     }
   }
 }
