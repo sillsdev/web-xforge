@@ -3522,6 +3522,45 @@ describe('EditorComponent', () => {
       );
       env.dispose();
     }));
+
+    it('shows the history selector only if the user is an administrator or translator', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+
+      // Paratext Consultant
+      env.setCurrentUser('user02');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      // Paratext Translator
+      env.setCurrentUser('user03');
+      expect(env.component.showHistoryChooser).toBeTruthy();
+
+      // Paratext Administrator
+      env.setCurrentUser('user04');
+      expect(env.component.showHistoryChooser).toBeTruthy();
+
+      // Commenter
+      env.setCurrentUser('user05');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      // Paratext Observer
+      env.setCurrentUser('user06');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      // Paratext Viewer
+      env.setCurrentUser('user07');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      env.dispose();
+    }));
   });
 
   describe('Back translation draft', () => {

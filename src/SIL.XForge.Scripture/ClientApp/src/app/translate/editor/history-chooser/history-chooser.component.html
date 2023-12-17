@@ -9,8 +9,8 @@
     <mat-icon>history</mat-icon>
   </button>
   <ng-container *ngIf="showHistory && appOnline">
-    <mat-form-field appearance="outline">
-      <mat-select id="history-select" [(value)]="historyRevision" [disabled]="isLoading">
+    <mat-form-field id="history-select" appearance="outline">
+      <mat-select [(value)]="historyRevision" [disabled]="isLoading">
         <mat-option *ngFor="let r of historyRevisions" [value]="r">{{ formatRevision(r) }}</mat-option>
       </mat-select>
     </mat-form-field>

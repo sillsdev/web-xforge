@@ -86,7 +86,7 @@ import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -547,7 +547,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get snapshotLabel(): string {
     if (this.historyChooser?.historyRevision?.key != null) {
-      var date = new Date(this.historyChooser?.historyRevision?.key);
+      const date = new Date(this.historyChooser?.historyRevision?.key);
       const options: Intl.DateTimeFormatOptions = {
         weekday: 'short',
         year: 'numeric',
@@ -559,9 +559,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         second: 'numeric'
       };
       return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
-    } else {
-      return '';
     }
+
+    return '';
   }
 
   get projectId(): string | undefined {
@@ -747,18 +747,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.snapshot = undefined;
           if (this.historyChooser != null) {
             this.snapshotSub = merge(this.historyChooser.snapshot$, this.historyChooser.showDiff$)
-              ?.pipe(
+              .pipe(
                 startWith(undefined),
                 delay(0),
                 tap(async () => {
                   this.snapshot = this.historyChooser?.snapshot;
-                  let snapshotContents = new Delta(this.snapshot?.data.ops);
+                  let snapshotContents: DeltaStatic = new Delta(this.snapshot?.data.ops);
                   this.snapshotText?.editor?.setContents(snapshotContents, 'api');
 
                   // Show the diff, if requested
                   if (this.historyChooser?.showDiff && this.target?.id != null) {
-                    const textDoc = await this.projectService.getText(this.target.id);
-                    let targetContents = new Delta(textDoc.data?.ops);
+                    const textDoc: TextDoc = await this.projectService.getText(this.target.id);
+                    let targetContents: DeltaStatic = new Delta(textDoc.data?.ops);
 
                     // Remove the cid whenever it is found, as this is confusing the diff
                     function removeCid(obj: any): void {
@@ -771,7 +771,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                     snapshotContents.forEach(obj => removeCid(obj));
                     targetContents.forEach(obj => removeCid(obj));
 
-                    let diff = snapshotContents.diff(targetContents);
+                    let diff: DeltaStatic = snapshotContents.diff(targetContents);
 
                     // Process each op in the diff
                     for (const op of diff.ops ?? []) {

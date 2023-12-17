@@ -1977,7 +1977,7 @@ public class ParatextService : DisposableBase, IParatextService
             VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
             string usfm = version.GetText(verseRef, true, false);
             string usx = UsfmToUsx.ConvertToXmlString(scrText, verseRef.BookNum, usfm, false);
-            var usxDoc = XDocument.Parse(usx);
+            XDocument usxDoc = XDocument.Parse(usx);
             snapshot = new Snapshot<TextData>
             {
                 Id = id,

@@ -7,8 +7,13 @@ import { AuthService } from 'xforge-common/auth.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { ParatextProject } from './models/paratext-project';
 
+/**
+ * A point-in-time revision of a document.
+ */
 export interface Revision {
+  /** The date and time of the revision in UTC. */
   key: string;
+  /** A brief summary of the revision. */
   value: string;
 }
 
@@ -53,16 +58,16 @@ export class ParatextService {
       );
   }
 
-  getRevisions(projectId: string, book: string, chapter: number): Promise<Revision[] | undefined> {
-    return this.http
+  async getRevisions(projectId: string, book: string, chapter: number): Promise<Revision[] | undefined> {
+    return await this.http
       .get<Revision[] | undefined>(`paratext-api/history/revisions/${projectId}_${book}_${chapter}_target`, {
         headers: this.headers
       })
       .toPromise();
   }
 
-  getSnapshot(projectId: string, book: string, chapter: number, timestamp: string): Promise<Snapshot<TextData>> {
-    return this.http
+  async getSnapshot(projectId: string, book: string, chapter: number, timestamp: string): Promise<Snapshot<TextData>> {
+    return await this.http
       .get<Snapshot<TextData>>(
         `paratext-api/history/snapshot/${projectId}_${book}_${chapter}_target?timestamp=${timestamp}`,
         {
