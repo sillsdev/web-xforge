@@ -25,7 +25,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 3;
-        const int numberSegments = 1;
+        const int expectedNumberSegments = 1;
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -44,7 +44,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 2;
-        const int numberSegments = 0;
+        const int expectedNumberSegments = 0;
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -83,7 +83,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -101,7 +101,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 0;
-        const int numberSegments = 0;
+        const int expectedNumberSegments = 0;
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -120,7 +120,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -187,7 +187,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 3;
-        const int numberSegments = 0;
+        const int expectedNumberSegments = 0;
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -206,7 +206,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -221,7 +221,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 3;
-        const int numberSegments = 1;
+        const int expectedNumberSegments = 1;
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -240,11 +240,11 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
-    public void Create_ExcludeNonScriptureSegmentsIfPreTranslateFalse()
+    public void Create_IncludeNonScriptureSegmentsIfPreTranslateFalse()
     {
         var doc = new BsonDocument
         {
@@ -255,7 +255,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 4;
-        const int numberSegments = 2; // The heading and the verse text
+        const int expectedNumberSegments = 2; // The heading and the verse text
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -274,7 +274,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -289,7 +289,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 4;
-        const int numberSegments = 1; // Just the verse text
+        const int expectedNumberSegments = 1; // Just the verse text
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -308,7 +308,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -323,7 +323,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 4;
-        const int numberSegments = 2; // The verse text and the paragraph in the verse
+        const int expectedNumberSegments = 2; // The verse text and the paragraph in the verse
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -342,7 +342,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -357,7 +357,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 4;
-        const int numberSegments = 1; // Just the verse text
+        const int expectedNumberSegments = 1; // Just the verse text
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -376,7 +376,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
         Assert.That(text.Segments.First().SegmentText, Is.EqualTo(string.Empty));
     }
 
@@ -392,7 +392,7 @@ public class SFScriptureTextTests
             },
         };
         const int numberOps = 4;
-        const int numberSegments = 1; // Just the verse text
+        const int expectedNumberSegments = 1; // Just the verse text
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
@@ -411,7 +411,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
         Assert.That(text.Segments.First().SegmentText, Is.EqualTo("First verse text here"));
     }
 
