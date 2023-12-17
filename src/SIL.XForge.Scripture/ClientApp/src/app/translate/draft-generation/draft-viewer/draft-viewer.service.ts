@@ -77,7 +77,9 @@ export class DraftViewerService {
               } else if (draftSegmentText[draftSegmentText.length - 1] !== ' ') {
                 draftSegmentText += ' ';
               }
-              draftSegmentText += draft[verseSlug(verseRef)];
+              if (draft[verseSlug(verseRef)] != null) {
+                draftSegmentText += draft[verseSlug(verseRef)];
+              }
             }
             isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
           }

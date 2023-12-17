@@ -139,5 +139,20 @@ describe('DraftViewerService', () => {
       ];
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
     });
+
+    it('should allow combined verses in the target that only one exists in the source', () => {
+      const draft: DraftSegmentMap = {
+        verse_150_1: 'Praise ye the Lord. ',
+        verse_150_2: 'Praise him for his mighty acts: '
+      };
+      const targetOps: DeltaOperation[] = [{ insert: '', attributes: { segment: 'verse_150_1-3' } }];
+      const expectedResult: DeltaOperation[] = [
+        {
+          insert: 'Praise ye the Lord. Praise him for his mighty acts: ',
+          attributes: { segment: 'verse_150_1-3', draft: true }
+        }
+      ];
+      expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
+    });
   });
 });
