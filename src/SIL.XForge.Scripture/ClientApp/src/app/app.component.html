@@ -64,7 +64,7 @@
         </mat-menu>
 
         <button mat-icon-button title="{{ currentUser?.displayName }}" [matMenuTriggerFor]="userMenu">
-          <app-avatar id="avatarId" [user]="currentUser" [round]="true" [showOnlineStatus]="true"></app-avatar>
+          <app-avatar id="avatarId" [user]="currentUser" [showOnlineStatus]="true"></app-avatar>
         </button>
         <mat-menu #userMenu="matMenu" class="user-menu">
           <div class="pseudo-menu-item user-info">
