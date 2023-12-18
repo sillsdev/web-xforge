@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation } from 'quill';
 import { isString } from '../../../../type-utils';
+import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
 
 @Injectable({
@@ -47,19 +49,40 @@ export class DraftViewerService {
     }
 
     return targetOps.map(op => {
-      let draftSegmentText: string | undefined = draft[op.attributes?.segment];
+      const segmentRef: string | undefined = op.attributes?.segment;
+      if (segmentRef == null) return op;
+      let draftSegmentText: string | undefined = draft[segmentRef];
       let isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
 
       // No draft (undefined or empty string) for this segment
       if (!isSegmentDraftAvailable) {
         // See if the source verse is combined
+        // Note: this will work with combining 1 and 1-2, and 1-3 and 1-2 with the proviso that verse 3 is not merged
         const combinedVerseNumbers: string[] = Object.keys(draft).filter(key =>
-          key.startsWith(op.attributes?.segment + '-')
+          key.startsWith(segmentRef.split('-')[0] + '-')
         );
         if (combinedVerseNumbers.length > 0) {
           // Place the combined verse segment in the verse segment
           draftSegmentText = draft[combinedVerseNumbers[0]];
           isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
+        } else if (segmentRef.startsWith('verse_') && segmentRef.indexOf('-') > -1) {
+          // Otherwise, if the target verse is combined
+          // Get the verse ref from the segment. We don't use the book number, so just specify Genesis
+          let segmentVerseRef: VerseRef | undefined = getVerseRefFromSegmentRef(1, segmentRef);
+          if (segmentVerseRef != null) {
+            // Add the drafts for all of the verses in the segment
+            for (var verseRef of segmentVerseRef?.allVerses()) {
+              if (draftSegmentText == null) {
+                draftSegmentText = '';
+              } else if (draftSegmentText[draftSegmentText.length - 1] !== ' ') {
+                draftSegmentText += ' ';
+              }
+              if (draft[verseSlug(verseRef)] != null) {
+                draftSegmentText += draft[verseSlug(verseRef)];
+              }
+            }
+            isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
+          }
         }
 
         // Use the existing translation, if there is still no draft available
