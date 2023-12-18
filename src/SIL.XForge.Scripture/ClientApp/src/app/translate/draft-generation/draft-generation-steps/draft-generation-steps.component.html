@@ -13,7 +13,7 @@
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
 
-        <app-notice *ngIf="unusableTranslateBooks.length" type="light" class="unusable-books">
+        <app-notice *ngIf="unusableTranslateBooks.length" type="light">
           <h4>
             <transloco
               key="draft_generation_steps.these_books_cannot_be_used_for_translating"
@@ -49,7 +49,7 @@
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
 
-        <div *ngIf="unusableTrainingBooks.length" class="unusable-books">
+        <app-notice *ngIf="unusableTrainingBooks.length" type="light">
           <h4>
             <transloco
               key="draft_generation_steps.these_books_cannot_be_used_for_training"
@@ -57,7 +57,7 @@
             ></transloco>
           </h4>
           <app-book-multi-select [availableBooks]="unusableTrainingBooks" [readonly]="true"></app-book-multi-select>
-        </div>
+        </app-notice>
 
         <app-notice *ngIf="showBookSelectionError" type="error">
           {{ t("choose_books_for_training_error") }}
