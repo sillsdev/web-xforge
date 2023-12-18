@@ -1,8 +1,13 @@
-<div class="wrapper" [style.--size]="size + 'px'" [style.--avatar-color]="avatarColorFromDisplayName">
+<div
+  class="wrapper"
+  [style.--avatar-size]="size + 'px'"
+  [style.--avatar-color]="avatarColorFromDisplayName"
+  [style.--avatar-border-color]="borderColor"
+>
   <img
-    *ngIf="user?.avatarUrl && mode === 'image'"
-    [src]="user?.avatarUrl"
-    [alt]="user?.displayName"
+    *ngIf="avatarUrl && mode === 'image'"
+    [src]="avatarUrl"
+    [alt]="name"
     [width]="size"
     [height]="size"
     referrerpolicy="no-referrer"
