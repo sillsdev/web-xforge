@@ -275,6 +275,7 @@ class TestEnvironment {
     when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    when(this.mockedRemoteTranslationEngine.startTraining()).thenResolve();
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
