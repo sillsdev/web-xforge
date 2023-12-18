@@ -5,7 +5,6 @@ import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/lega
 import { RouterModule } from '@angular/router';
 import { TranslocoModule, TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
-import { AvatarModule } from 'ngx-avatar';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
@@ -24,7 +23,6 @@ import { UICommonModule } from './ui-common.module';
 import { WriteStatusComponent } from './write-status/write-status.component';
 
 const componentExports = [
-  AvatarComponent,
   GenericDialogComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,
@@ -36,16 +34,7 @@ const componentExports = [
 ];
 
 @NgModule({
-  imports: [
-    // AvatarModule included here rather than `ui-common.module.ts` so unit tests don't access the internet
-    AvatarModule,
-    CommonModule,
-    ngfModule,
-    RouterModule,
-    UICommonModule,
-    TranslocoModule,
-    MatDialogModule
-  ],
+  imports: [CommonModule, ngfModule, RouterModule, UICommonModule, TranslocoModule, MatDialogModule, AvatarComponent],
   declarations: componentExports,
   exports: componentExports,
   providers: [
