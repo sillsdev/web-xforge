@@ -110,8 +110,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
         {
             if (
-                this.RealtimeService
-                    .QuerySnapshots<SFProject>()
+                this.RealtimeService.QuerySnapshots<SFProject>()
                     .Any((SFProject sfProject) => sfProject.ParatextId == project.ParatextId)
             )
             {
@@ -596,8 +595,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
         // Link sharing keys have Email set to null and ExpirationTime set to null.
         string key = projectSecret
-            .ShareKeys
-            .FirstOrDefault(
+            .ShareKeys.FirstOrDefault(
                 sk =>
                     sk.Email == null
                     && sk.ProjectRole == role
@@ -713,8 +711,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         DateTime now = DateTime.UtcNow;
         return projectSecret
-            .ShareKeys
-            .Where(s => s.Email != null)
+            .ShareKeys.Where(s => s.Email != null)
             .Select(
                 sk =>
                     new InviteeStatus

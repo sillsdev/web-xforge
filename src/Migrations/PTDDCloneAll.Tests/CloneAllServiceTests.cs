@@ -28,8 +28,7 @@ namespace PTDDCloneAll
             IEnumerable<SFProject> projectsToClone = await env.GetSFProjects(projectIds);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             await env.PTDDSyncRunner.Received(1).RunAsync("project01", "user01", Arg.Any<bool>(), Arg.Any<bool>());
-            await env.PTDDSyncRunner
-                .DidNotReceive()
+            await env.PTDDSyncRunner.DidNotReceive()
                 .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
 
@@ -41,8 +40,7 @@ namespace PTDDCloneAll
             IEnumerable<SFProject> projectsToClone = await env.GetSFProjects(projectIds);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             await env.PTDDSyncRunner.Received(1).RunAsync("project01", "user01", Arg.Any<bool>(), Arg.Any<bool>());
-            await env.PTDDSyncRunner
-                .Received(1)
+            await env.PTDDSyncRunner.Received(1)
                 .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
 
@@ -56,11 +54,9 @@ namespace PTDDCloneAll
             env.FileSystemService.DirectoryExists(project01Path).Returns(true);
             await env.Service.CloneSFProjects(CloneAllService.CLONE, projectsToClone);
             env.FileSystemService.Received(2).DirectoryExists(Arg.Any<string>());
-            await env.PTDDSyncRunner
-                .DidNotReceive()
+            await env.PTDDSyncRunner.DidNotReceive()
                 .RunAsync("project01", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
-            await env.PTDDSyncRunner
-                .Received(1)
+            await env.PTDDSyncRunner.Received(1)
                 .RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>());
         }
     }

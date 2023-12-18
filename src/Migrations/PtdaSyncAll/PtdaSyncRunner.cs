@@ -417,8 +417,7 @@ namespace PtdaSyncAll
                 var oldUsxDoc = new XDocument(bookTextElem.Element("usx"));
                 XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
                     oldUsxDoc,
-                    text.Chapters
-                        .OrderBy(c => c.Number)
+                    text.Chapters.OrderBy(c => c.Number)
                         .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, dbChapterDocs[c.Number].Data))
                 );
 

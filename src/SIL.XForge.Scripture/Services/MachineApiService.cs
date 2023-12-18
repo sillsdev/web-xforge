@@ -618,8 +618,7 @@ public class MachineApiService : IMachineApiService
                     )
                     {
                         string? corporaId = projectSecret
-                            .ServalData
-                            ?.Corpora
+                            .ServalData?.Corpora
                             .FirstOrDefault(c => !c.Value.PreTranslate)
                             .Key;
                         await _projectSecrets.UpdateAsync(

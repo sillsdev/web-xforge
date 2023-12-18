@@ -32,11 +32,9 @@ public static class AuthServiceCollectionExtensions
                         string? accessToken = context.Request.Query["access_token"];
                         if (
                             !string.IsNullOrEmpty(accessToken)
-                            && context
-                                .HttpContext
-                                .Request
-                                .Path
-                                .StartsWithSegments($"/{UrlConstants.ProjectNotifications}")
+                            && context.HttpContext.Request.Path.StartsWithSegments(
+                                $"/{UrlConstants.ProjectNotifications}"
+                            )
                         )
                         {
                             // Get the token from the query string

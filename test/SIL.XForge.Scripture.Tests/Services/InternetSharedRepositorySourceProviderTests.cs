@@ -72,16 +72,14 @@ public class InternetSharedRepositorySourceProviderTests
             RegistryU.Implementation = new DotNetCoreRegistry();
             InternetAccess.RawStatus = InternetUse.Enabled;
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions
-                .Value
-                .Returns(
-                    new SiteOptions
-                    {
-                        Name = "xForge",
-                        Origin = new Uri("http://localhost"),
-                        SiteDir = "xforge"
-                    }
-                );
+            siteOptions.Value.Returns(
+                new SiteOptions
+                {
+                    Name = "xForge",
+                    Origin = new Uri("http://localhost"),
+                    SiteDir = "xforge"
+                }
+            );
             Provider = new InternetSharedRepositorySourceProvider(
                 MockJwtTokenHelper,
                 siteOptions,

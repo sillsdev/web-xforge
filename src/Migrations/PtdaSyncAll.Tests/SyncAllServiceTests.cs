@@ -30,14 +30,11 @@ namespace PtdaSyncAll
             await env.Service.SynchronizeAllProjectsAsync(false);
 
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
-            await env.ParatextSyncRunner
-                .DidNotReceive()
+            await env.ParatextSyncRunner.DidNotReceive()
                 .RunAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(Arg.Is<string>((string message) => message.Contains("Starting an asynchronous synchronization")));
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(
                     Arg.Is<string>((string message) => message.Contains("Waiting for synchronization tasks to finish"))
                 );
@@ -48,8 +45,7 @@ namespace PtdaSyncAll
         {
             var env = new TestEnvironment();
             Task syncTask = null;
-            env.ParatextSyncRunner
-                .RunAsync("project01", "user01", Arg.Any<bool>())
+            env.ParatextSyncRunner.RunAsync("project01", "user01", Arg.Any<bool>())
                 .Returns(
                     (callInfo) =>
                     {
@@ -69,8 +65,7 @@ namespace PtdaSyncAll
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -79,8 +74,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -107,8 +101,7 @@ namespace PtdaSyncAll
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
             await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -117,8 +110,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -129,8 +121,7 @@ namespace PtdaSyncAll
             env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P01")));
             env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P02")));
 
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(Arg.Is<string>((string message) => message.Contains("subset of projects")));
         }
 
@@ -155,8 +146,7 @@ namespace PtdaSyncAll
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
             await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -165,8 +155,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -177,8 +166,7 @@ namespace PtdaSyncAll
             env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P01")));
             env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P02")));
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(Arg.Is<string>((string message) => message.Contains("subset of projects")));
         }
 
@@ -202,8 +190,7 @@ namespace PtdaSyncAll
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
             await env.ParatextSyncRunner.DidNotReceive().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -212,8 +199,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -222,12 +208,10 @@ namespace PtdaSyncAll
                 );
 
             env.ProgramLogger.Received().Log(Arg.Is<string>((string message) => message.Contains("> PT project P01")));
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(Arg.Is<string>((string message) => message.Contains("> PT project P02")));
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(Arg.Is<string>((string message) => message.Contains("subset of projects")));
         }
 
@@ -236,8 +220,7 @@ namespace PtdaSyncAll
         {
             var env = new TestEnvironment();
             Task syncTask = null;
-            env.ParatextSyncRunner
-                .RunAsync("project01", "user01", Arg.Any<bool>())
+            env.ParatextSyncRunner.RunAsync("project01", "user01", Arg.Any<bool>())
                 .Returns(
                     (callInfo) =>
                     {
@@ -255,16 +238,14 @@ namespace PtdaSyncAll
 
             // Exceptions thrown from the synchronization are reported.
             Assert.That(syncTask?.Status, Is.EqualTo(TaskStatus.Faulted));
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
                             message.Contains("There was a problem with one or more synchronization tasks")
                     )
                 );
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) => message.Contains("One or more sync tasks did not complete successfully")
@@ -294,8 +275,7 @@ namespace PtdaSyncAll
             // intentionally use the admin user that was requested to be used for project01.
             await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
 
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -304,8 +284,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -314,8 +293,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -324,8 +302,7 @@ namespace PtdaSyncAll
                             )
                     )
                 );
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>
@@ -335,11 +312,9 @@ namespace PtdaSyncAll
                     )
                 );
 
-            env.ProgramLogger
-                .DidNotReceive()
+            env.ProgramLogger.DidNotReceive()
                 .Log(Arg.Is<string>((string message) => message.Contains("For SF Project project02")));
-            env.ProgramLogger
-                .Received()
+            env.ProgramLogger.Received()
                 .Log(
                     Arg.Is<string>(
                         (string message) =>

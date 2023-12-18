@@ -216,8 +216,7 @@ public class MachineProjectService : IMachineProjectService
 
             // Clear the existing translation engine id and corpora
             string? corporaId = projectSecret
-                .ServalData
-                ?.Corpora
+                .ServalData?.Corpora
                 .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                 .Key;
             await _projectSecrets.UpdateAsync(
@@ -294,8 +293,7 @@ public class MachineProjectService : IMachineProjectService
             // A 404 means that the translation engine does not exist
             _logger.LogInformation($"Translation Engine {translationEngineId} does not exist.");
             string? corporaId = projectSecret
-                .ServalData
-                ?.Corpora
+                .ServalData?.Corpora
                 .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                 .Key;
             // Clear the existing translation engine id and corpora
@@ -464,10 +462,8 @@ public class MachineProjectService : IMachineProjectService
         {
             foreach (
                 string fileId in projectSecret
-                    .ServalData
-                    .Corpora[corpusId]
-                    .SourceFiles
-                    .Concat(projectSecret.ServalData.Corpora[corpusId].TargetFiles)
+                    .ServalData.Corpora[corpusId]
+                    .SourceFiles.Concat(projectSecret.ServalData.Corpora[corpusId].TargetFiles)
                     .Select(f => f.FileId)
             )
             {
@@ -601,9 +597,9 @@ public class MachineProjectService : IMachineProjectService
 
         // See if there is a translation corpus
         string? corpusId = projectSecret
-            .ServalData
-            .Corpora
-            .FirstOrDefault(c => c.Value.PreTranslate == preTranslate && !c.Value.AlternateTrainingSource)
+            .ServalData.Corpora.FirstOrDefault(
+                c => c.Value.PreTranslate == preTranslate && !c.Value.AlternateTrainingSource
+            )
             .Key;
 
         // See if there is a training corpus
@@ -615,9 +611,7 @@ public class MachineProjectService : IMachineProjectService
         if (useAlternateTrainingSource)
         {
             alternateTrainingSourceCorpusId = projectSecret
-                .ServalData
-                .Corpora
-                .FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
+                .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
                 .Key;
         }
 
@@ -858,14 +852,12 @@ public class MachineProjectService : IMachineProjectService
         {
             Options = draftConfig.ServalConfig is null ? null : JObject.Parse(draftConfig.ServalConfig),
             Pretranslate = servalData
-                .Corpora
-                .Where(s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource)
+                .Corpora.Where(s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource)
                 .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
                 .ToList(),
             TrainOn = draftConfig.AlternateTrainingSourceEnabled
                 ? servalData
-                    .Corpora
-                    .Where(s => s.Value.PreTranslate && s.Value.AlternateTrainingSource)
+                    .Corpora.Where(s => s.Value.PreTranslate && s.Value.AlternateTrainingSource)
                     .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
                     .ToList()
                 : null,

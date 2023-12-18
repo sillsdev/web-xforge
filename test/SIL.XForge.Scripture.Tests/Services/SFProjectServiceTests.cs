@@ -53,8 +53,7 @@ public class SFProjectServiceTests
         const string role = SFProjectRole.CommunityChecker;
 
         await env.Service.InviteAsync(User01, Project01, email, "en", role);
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 email,
                 Arg.Any<string>(),
@@ -76,8 +75,7 @@ public class SFProjectServiceTests
         const string role = SFProjectRole.CommunityChecker;
 
         await env.Service.InviteAsync(User01, Project03, email, "en", role);
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 email,
                 Arg.Any<string>(),
@@ -104,13 +102,12 @@ public class SFProjectServiceTests
         await env.Service.InviteAsync(User02, Project04, observerEmail, "en", SFProjectRole.Viewer);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(s => s.Email == observerEmail && s.Key == observerKey && s.ProjectRole == SFProjectRole.Viewer),
+            projectSecret.ShareKeys.Any(
+                s => s.Email == observerEmail && s.Key == observerKey && s.ProjectRole == SFProjectRole.Viewer
+            ),
             Is.True
         );
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 observerEmail,
                 Arg.Any<string>(),
@@ -125,13 +122,12 @@ public class SFProjectServiceTests
         await env.Service.InviteAsync(User02, Project04, reviewerEmail, "en", SFProjectRole.Commenter);
         projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(s => s.Email == reviewerEmail && s.Key == reviewerKey && s.ProjectRole == SFProjectRole.Commenter),
+            projectSecret.ShareKeys.Any(
+                s => s.Email == reviewerEmail && s.Key == reviewerKey && s.ProjectRole == SFProjectRole.Commenter
+            ),
             Is.True
         );
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 reviewerEmail,
                 Arg.Any<string>(),
@@ -167,8 +163,7 @@ public class SFProjectServiceTests
 
         await env.Service.InviteAsync(User01, Project03, email, "en", endingRole);
         // Invitation email was resent but with original code and updated time
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 Arg.Is(email),
                 Arg.Any<string>(),
@@ -215,8 +210,7 @@ public class SFProjectServiceTests
         env.SecurityService.GenerateKey().Returns("newkey");
         await env.Service.InviteAsync(User01, Project03, email, "en", role);
         // Invitation email was sent with a new code
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 Arg.Is(email),
                 Arg.Any<string>(),
@@ -244,8 +238,7 @@ public class SFProjectServiceTests
         const string role = SFProjectRole.CommunityChecker;
         // SUT
         await env.Service.InviteAsync(User02, Project02, email, "en", role);
-        await env.EmailService
-            .Received(1)
+        await env.EmailService.Received(1)
             .SendEmailAsync(
                 email,
                 Arg.Any<string>(),
@@ -310,15 +303,13 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(
-                    sk =>
-                        sk.Key == "maxUsersReached"
-                        && sk.ShareLinkType == ShareLinkType.Recipient
-                        && sk.ProjectRole == SFProjectRole.Viewer
-                        && sk.UsersGenerated == 250
-                ),
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "maxUsersReached"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.UsersGenerated == 250
+            ),
             Is.True,
             "setup"
         );
@@ -333,16 +324,14 @@ public class SFProjectServiceTests
         Assert.That(shareLink, Is.EqualTo("newKey"));
         projectSecret = env.ProjectSecrets.Get(Project06);
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(
-                    sk =>
-                        sk.Key == "newKey"
-                        && sk.ShareLinkType == ShareLinkType.Recipient
-                        && sk.ProjectRole == SFProjectRole.Viewer
-                        && sk.Reserved == null
-                        && sk.UsersGenerated == 0
-                ),
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "newKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.Reserved == null
+                    && sk.UsersGenerated == 0
+            ),
             Is.True
         );
     }
@@ -354,14 +343,12 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(
-                    sk =>
-                        sk.Key == "reservedKey"
-                        && sk.ShareLinkType == ShareLinkType.Recipient
-                        && sk.ProjectRole == SFProjectRole.Viewer
-                ),
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "reservedKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+            ),
             Is.True,
             "setup"
         );
@@ -376,15 +363,13 @@ public class SFProjectServiceTests
         Assert.That(shareLink, Is.EqualTo("newKey"));
         projectSecret = env.ProjectSecrets.Get(Project06);
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(
-                    sk =>
-                        sk.Key == "newKey"
-                        && sk.ShareLinkType == ShareLinkType.Recipient
-                        && sk.ProjectRole == SFProjectRole.Viewer
-                        && sk.Reserved == null
-                ),
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "newKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.Reserved == null
+            ),
             Is.True
         );
     }
@@ -580,8 +565,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
 
         await env.Service.JoinWithShareKeyAsync(User03, "linksharing04");
@@ -757,21 +741,21 @@ public class SFProjectServiceTests
             "setup. role should be different than community checker for purposes of part of what this test is testing."
         );
         string shareKeyCode = "key12345";
-        ShareKey shareKeyForUserInvitation = env.ProjectSecrets
-            .Get(project.Id)
-            .ShareKeys
-            .First((ShareKey shareKey) => shareKey.Key == shareKeyCode);
+        ShareKey shareKeyForUserInvitation = env.ProjectSecrets.Get(project.Id)
+            .ShareKeys.First((ShareKey shareKey) => shareKey.Key == shareKeyCode);
         Assert.That(
             shareKeyForUserInvitation.ProjectRole,
             Is.EqualTo(SFProjectRole.CommunityChecker),
             "setup. the user should be being invited as a community checker."
         );
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
@@ -802,32 +786,29 @@ public class SFProjectServiceTests
         };
         const int bookValueToIndicateWholeResource = 0;
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            bookValueToIndicateWholeResource,
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
@@ -903,8 +884,7 @@ public class SFProjectServiceTests
         );
 
         // The get permission methods shouldn't have even been called.
-        await env.ParatextService
-            .DidNotReceiveWithAnyArgs()
+        await env.ParatextService.DidNotReceiveWithAnyArgs()
             .GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Any<SFProject>(),
@@ -912,8 +892,7 @@ public class SFProjectServiceTests
                 Arg.Any<int>(),
                 Arg.Any<int>()
             );
-        await env.ParatextService
-            .DidNotReceiveWithAnyArgs()
+        await env.ParatextService.DidNotReceiveWithAnyArgs()
             .GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
@@ -964,27 +943,27 @@ public class SFProjectServiceTests
         // and in ParatextService.CallApiAsync() there originates a System.Net.Http.HttpRequestException or perhaps
         // EdjCase.JsonRpc.Common.RpcException. Our test should not end up doing down a path that causes this
         // exception.
-        env.ParatextService
-            .GetParatextUsernameMappingAsync(
-                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<CancellationToken>()
-            )
+        env.ParatextService.GetParatextUsernameMappingAsync(
+            Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+            Arg.Is((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(
                 Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
             );
 
         string userRoleOnPTProject = null;
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.None;
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
-        env.ParatextService
-            .GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
+        env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
             .Returns(x => throw new Exception("Probably can not do this."));
 
         // PT could answer with these permissions.
@@ -1005,32 +984,29 @@ public class SFProjectServiceTests
         };
         const int bookValueToIndicateWholeResource = 0;
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            bookValueToIndicateWholeResource,
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
@@ -1082,8 +1058,7 @@ public class SFProjectServiceTests
         // getting called is a helpful indication of expected operation.
         // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
         // place in case they begin to be used.
-        await env.ParatextService
-            .DidNotReceive()
+        await env.ParatextService.DidNotReceive()
             .GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
@@ -1091,8 +1066,7 @@ public class SFProjectServiceTests
                 Arg.Any<int>(),
                 Arg.Any<int>()
             );
-        await env.ParatextService
-            .DidNotReceive()
+        await env.ParatextService.DidNotReceive()
             .GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
@@ -1149,23 +1123,24 @@ public class SFProjectServiceTests
         );
         Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
-        env.ParatextService
-            .GetParatextUsernameMappingAsync(
-                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<CancellationToken>()
-            )
+        env.ParatextService.GetParatextUsernameMappingAsync(
+            Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+            Arg.Is((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(
                 Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
             );
 
         string userRoleOnPTProject = null;
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         var bookList = new List<int>() { 40, 41 };
@@ -1190,32 +1165,29 @@ public class SFProjectServiceTests
         };
         const int bookValueToIndicateWholeResource = 0;
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            bookValueToIndicateWholeResource,
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
@@ -1244,8 +1216,7 @@ public class SFProjectServiceTests
 
         // User03 is not on project project05PTId, but they have access to the source resource. So
         // UpdatePermissionsAsync() should be inquiring about this and setting permissions as appropriate.
-        await env.ParatextService
-            .Received()
+        await env.ParatextService.Received()
             .GetResourcePermissionAsync(Resource01PTId, User03, Arg.Any<CancellationToken>());
         resource = env.GetProject(Resource01);
         Assert.That(
@@ -1272,8 +1243,7 @@ public class SFProjectServiceTests
         // don't get applied. But for now, not getting called is a helpful indication of expected operation.
         // The mocks above regarding env.ParatextService.GetPermissionsAsync(for the target project) are left in
         // place in case they begin to be used.
-        await env.ParatextService
-            .DidNotReceive()
+        await env.ParatextService.DidNotReceive()
             .GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Project05),
@@ -1281,8 +1251,7 @@ public class SFProjectServiceTests
                 Arg.Any<int>(),
                 Arg.Any<int>()
             );
-        await env.ParatextService
-            .Received(1)
+        await env.ParatextService.Received(1)
             .GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>((SFProject sfProject) => sfProject.Id == Resource01),
@@ -1499,8 +1468,7 @@ public class SFProjectServiceTests
         Assert.IsTrue(env.GetProject(projectId).UserRoles.ContainsKey(userToRemove));
 
         // Delete the project user config
-        int deleted = await env.RealtimeService
-            .GetRepository<SFProjectUserConfig>()
+        int deleted = await env.RealtimeService.GetRepository<SFProjectUserConfig>()
             .DeleteAllAsync(p => p.Id == projectUserConfigId);
         Assert.AreEqual(1, deleted);
 
@@ -1610,8 +1578,11 @@ public class SFProjectServiceTests
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
         await env.Service.AddUserAsync(User03, Project03, null);
@@ -1624,8 +1595,7 @@ public class SFProjectServiceTests
     public void AddUserAsync_SourceProjectUnavailable_SkipProject()
     {
         var env = new TestEnvironment();
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
         Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User03, Project04, SFProjectRole.Translator));
         var project = env.GetProject(Project04);
@@ -1671,12 +1641,14 @@ public class SFProjectServiceTests
         Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
         string userRoleOnPTProject = SFProjectRole.Translator;
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         var bookList = new List<int>() { 40, 41 };
@@ -1700,32 +1672,29 @@ public class SFProjectServiceTests
         };
         const int bookValueToIndicateWholeResource = 0;
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project05PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            bookValueToIndicateWholeResource,
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptSourcePermissions));
 
         string projectRoleSpecifiedFromConnectProjectPage = null;
@@ -1771,8 +1740,7 @@ public class SFProjectServiceTests
         Assert.That(source.UserRoles.ContainsKey(User03), Is.False, "setup");
         User user = env.GetUser(User03);
         Assert.That(user.Sites[SiteId].Projects, Is.Empty);
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
         await env.Service.AddUserAsync(User03, Project03, SFProjectRole.Translator);
@@ -1791,16 +1759,14 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(
-                    sk =>
-                        sk.Key == "toBeReservedKey"
-                        && sk.ShareLinkType == ShareLinkType.Recipient
-                        && sk.ProjectRole == SFProjectRole.Commenter
-                        && sk.ExpirationTime == null
-                        && sk.Reserved == null
-                ),
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "toBeReservedKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Commenter
+                    && sk.ExpirationTime == null
+                    && sk.Reserved == null
+            ),
             Is.True,
             "setup"
         );
@@ -1810,16 +1776,14 @@ public class SFProjectServiceTests
         projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret
-                .ShareKeys
-                .Any(
-                    sk =>
-                        sk.Key == "toBeReservedKey"
-                        && sk.ShareLinkType == ShareLinkType.Recipient
-                        && sk.ProjectRole == SFProjectRole.Commenter
-                        && sk.ExpirationTime > DateTime.Now
-                        && sk.Reserved == true
-                ),
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "toBeReservedKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Commenter
+                    && sk.ExpirationTime > DateTime.Now
+                    && sk.Reserved == true
+            ),
             Is.True
         );
     }
@@ -1860,23 +1824,21 @@ public class SFProjectServiceTests
             { User02, TextInfoPermission.Read },
         };
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
 
         sfProject = env.GetProject(Project01);
@@ -1936,23 +1898,21 @@ public class SFProjectServiceTests
             { User02, TextInfoPermission.Read },
         };
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
 
         SFProject sfProject = env.GetProject(Project01);
@@ -1991,23 +1951,21 @@ public class SFProjectServiceTests
             { User02, TextInfoPermission.None },
         };
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
 
         SFProject sfProject = env.GetProject(Project01);
@@ -2053,32 +2011,29 @@ public class SFProjectServiceTests
         };
         const int bookValueToIndicateWholeResource = 0;
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == project01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == Resource01PTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            bookValueToIndicateWholeResource,
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptSourcePermissions));
 
         SFProject sfProject = env.GetProject(Project01);
@@ -2172,11 +2127,9 @@ public class SFProjectServiceTests
         Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.Null);
         Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.Null);
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2211,11 +2164,9 @@ public class SFProjectServiceTests
         Assert.That(alternateSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
         Assert.That(alternateSourceProject.Name, Is.EqualTo("NewSource"));
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
 
@@ -2244,11 +2195,9 @@ public class SFProjectServiceTests
         Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ParatextId, Is.Null);
         Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.Name, Is.Null);
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2282,11 +2231,9 @@ public class SFProjectServiceTests
         Assert.That(alternateTrainingSourceProject.ParatextId, Is.EqualTo("changedId"));
         Assert.That(alternateTrainingSourceProject.Name, Is.EqualTo("NewSource"));
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
 
@@ -2311,11 +2258,9 @@ public class SFProjectServiceTests
         SFProject project = env.GetProject(Project01);
         Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled, Is.True);
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2335,11 +2280,9 @@ public class SFProjectServiceTests
         Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
         Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-        await env.MachineProjectService
-            .Received()
+        await env.MachineProjectService.Received()
             .RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.MachineProjectService
-            .Received()
+        await env.MachineProjectService.Received()
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2359,11 +2302,9 @@ public class SFProjectServiceTests
         Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
         Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2382,11 +2323,9 @@ public class SFProjectServiceTests
         Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
         Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("Source Only Project"));
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .Received()
+        await env.MachineProjectService.Received()
             .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2409,11 +2348,9 @@ public class SFProjectServiceTests
         Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
         Assert.That(project.TranslateConfig.Source, Is.Null);
 
-        await env.MachineProjectService
-            .Received()
+        await env.MachineProjectService.Received()
             .RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2428,11 +2365,9 @@ public class SFProjectServiceTests
         SFProject project = env.GetProject(Project01);
         Assert.That(project.CheckingConfig.CheckingEnabled, Is.True);
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2447,11 +2382,9 @@ public class SFProjectServiceTests
         SFProject project = env.GetProject(Project01);
         Assert.That(project.CheckingConfig.ShareEnabled, Is.True);
 
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService
-            .DidNotReceive()
+        await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
@@ -2469,8 +2402,7 @@ public class SFProjectServiceTests
         Assert.That(env.ContainsProject(Project01), Is.False);
         User user = env.GetUser(User01);
         Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
-        await env.MachineProjectService
-            .Received()
+        await env.MachineProjectService.Received()
             .RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
         env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
@@ -2481,8 +2413,7 @@ public class SFProjectServiceTests
         await env.Service.DeleteProjectAsync(User01, SourceOnly);
 
         await env.SyncService.Received().CancelSyncAsync(User01, SourceOnly);
-        await env.MachineProjectService
-            .Received()
+        await env.MachineProjectService.Received()
             .RemoveProjectAsync(User01, SourceOnly, preTranslate: false, CancellationToken.None);
         env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
         Assert.That(env.ContainsProject(SourceOnly), Is.False);
@@ -2495,8 +2426,11 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
@@ -2518,11 +2452,13 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(TextInfoPermission.Read));
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
@@ -2542,8 +2478,7 @@ public class SFProjectServiceTests
         );
 
         // The source should have a later ID than the target in the project repository
-        var projects = env.RealtimeService
-            .GetRepository<SFProject>()
+        var projects = env.RealtimeService.GetRepository<SFProject>()
             .Query()
             .Where(p => p.ParatextId == "ptProject123" || p.ParatextId == "resource_project")
             .OrderBy(p => p.Id);
@@ -2561,8 +2496,11 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
         SFProject existingSfProject = env.GetProject(Project01);
         // SUT
@@ -2606,12 +2544,14 @@ public class SFProjectServiceTests
         Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
         string userRoleOnPTProject = SFProjectRole.Administrator;
-        env.ParatextService
-            .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        env.ParatextService.TryGetProjectRoleAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>()
+        )
             .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         var bookList = new List<int>() { 40, 41 };
@@ -2638,32 +2578,29 @@ public class SFProjectServiceTests
         };
         const int bookValueToIndicateWholeResource = 0;
         const int chapterValueToIndicateWholeBook = 0;
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptBookPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                Arg.Any<int>(),
-                Arg.Is<int>((int arg) => arg > 0)
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == targetProjectPTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            Arg.Any<int>(),
+            Arg.Is<int>((int arg) => arg > 0)
+        )
             .Returns(Task.FromResult(ptChapterPermissions));
-        env.ParatextService
-            .GetPermissionsAsync(
-                Arg.Any<UserSecret>(),
-                Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId),
-                Arg.Any<IReadOnlyDictionary<string, string>>(),
-                bookValueToIndicateWholeResource,
-                chapterValueToIndicateWholeBook
-            )
+        env.ParatextService.GetPermissionsAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Is<SFProject>((SFProject project) => project.ParatextId == sourceProjectPTId),
+            Arg.Any<IReadOnlyDictionary<string, string>>(),
+            bookValueToIndicateWholeResource,
+            chapterValueToIndicateWholeBook
+        )
             .Returns(Task.FromResult(ptSourcePermissions));
 
         resource = env.GetProject(Resource01);
@@ -2697,8 +2634,7 @@ public class SFProjectServiceTests
 
         // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
         // permissions on them.
-        await env.SyncService
-            .Received()
+        await env.SyncService.Received()
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && s.TrainEngine && s.UserId == User03));
 
         // Don't check that permissions were added to the target project, because we mock the Sync functionality.
@@ -2756,8 +2692,7 @@ public class SFProjectServiceTests
     public async Task AddUserToResourceProjectAsync_UserResourcePermission()
     {
         var env = new TestEnvironment();
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(TextInfoPermission.Read));
 
         User user = env.GetUser(User01);
@@ -2773,8 +2708,7 @@ public class SFProjectServiceTests
     public void AddUserToResourceProjectAsync_UserResourceNoPermission()
     {
         var env = new TestEnvironment();
-        env.ParatextService
-            .GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(TextInfoPermission.None));
 
         User user = env.GetUser(User01);
@@ -3681,17 +3615,15 @@ public class SFProjectServiceTests
                 )
             );
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions
-                .Value
-                .Returns(
-                    new SiteOptions
-                    {
-                        Id = SiteId,
-                        Name = "xForge",
-                        Origin = new Uri("http://localhost"),
-                        SiteDir = "xforge"
-                    }
-                );
+            siteOptions.Value.Returns(
+                new SiteOptions
+                {
+                    Id = SiteId,
+                    Name = "xForge",
+                    Origin = new Uri("http://localhost"),
+                    SiteDir = "xforge"
+                }
+            );
             var audioService = Substitute.For<IAudioService>();
             EmailService = Substitute.For<IEmailService>();
             var currentTime = DateTime.Now;

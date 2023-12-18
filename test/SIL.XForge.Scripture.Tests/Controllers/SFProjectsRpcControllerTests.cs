@@ -56,8 +56,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
-        env.SFProjectService
-            .SetServalConfigAsync(User01, Role, Project01, servalConfig)
+        env.SFProjectService.SetServalConfigAsync(User01, Role, Project01, servalConfig)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -71,8 +70,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
         const string errorMessage = "Not Found";
-        env.SFProjectService
-            .SetServalConfigAsync(User01, Role, Project01, servalConfig)
+        env.SFProjectService.SetServalConfigAsync(User01, Role, Project01, servalConfig)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -86,8 +84,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
-        env.SFProjectService
-            .SetServalConfigAsync(User01, Role, Project01, servalConfig)
+        env.SFProjectService.SetServalConfigAsync(User01, Role, Project01, servalConfig)
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -124,8 +121,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         var settings = new SFProjectSettings();
         const string errorMessage = "Not Found";
-        env.SFProjectService
-            .UpdateSettingsAsync(User01, Project01, settings)
+        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT

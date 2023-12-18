@@ -202,18 +202,14 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
@@ -227,8 +223,7 @@ namespace PtdaSyncAll
             Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
 
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
@@ -251,18 +246,14 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService
-                .Received()
+            await env.ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService
-                .Received()
+            await env.ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
@@ -296,22 +287,17 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService
-                .Received()
+            await env.ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService
-                .Received()
+            await env.ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService
-                .DidNotReceive()
+            await env.ParatextService.DidNotReceive()
                 .UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
@@ -411,8 +397,7 @@ namespace PtdaSyncAll
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(false, true, true, books);
             env.FileSystemService.FileExists(TestEnvironment.GetUsxFileName(TextType.Target, "MAT")).Returns(false);
-            env.FileSystemService
-                .EnumerateFiles(TestEnvironment.GetProjectPath(TextType.Target))
+            env.FileSystemService.EnumerateFiles(TestEnvironment.GetProjectPath(TextType.Target))
                 .Returns(new[] { "MRK.xml" });
             env.SetupPTData(books);
 
@@ -435,8 +420,7 @@ namespace PtdaSyncAll
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
-            env.ParatextService
-                .GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -456,8 +440,7 @@ namespace PtdaSyncAll
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
-            env.ParatextService
-                .GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
             await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -476,8 +459,7 @@ namespace PtdaSyncAll
         {
             var env = new TestEnvironment();
             env.SetupSFData(false, false, false, new Book("MAT", 2), new Book("MRK", 2));
-            env.RealtimeService
-                .GetRepository<TextData>()
+            env.RealtimeService.GetRepository<TextData>()
                 .Add(
                     new TextData(Delta.New().InsertText("old text"))
                     {
@@ -837,11 +819,9 @@ namespace PtdaSyncAll
 
             public TestEnvironment()
             {
-                IOptions<SiteOptions> siteOptions = Microsoft
-                    .Extensions
-                    .Options
-                    .Options
-                    .Create(new SiteOptions() { SiteDir = "scriptureforge" });
+                IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
+                    new SiteOptions() { SiteDir = "scriptureforge" }
+                );
                 var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = "user01" } });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[] { new SFProjectSecret { Id = "project01" } }
