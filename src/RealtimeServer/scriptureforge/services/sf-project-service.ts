@@ -195,6 +195,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                   bsonType: 'int'
                 }
               },
+              sendAllSegments: {
+                bsonType: 'bool'
+              },
               servalConfig: {
                 bsonType: 'string'
               }

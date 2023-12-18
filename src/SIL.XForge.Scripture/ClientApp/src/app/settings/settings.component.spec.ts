@@ -223,7 +223,8 @@ describe('SettingsComponent', () => {
             },
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
-            alternateTrainingSourceEnabled: false
+            alternateTrainingSourceEnabled: false,
+            sendAllSegments: false
           },
           preTranslate: true
         });
@@ -265,7 +266,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           },
           projectType: ProjectType.BackTranslation
         });
@@ -290,7 +292,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           },
           projectType: ProjectType.BackTranslation
         });
@@ -315,7 +318,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           }
         });
         env.wait();
@@ -331,7 +335,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           },
           preTranslate: true
         });
@@ -362,7 +367,8 @@ describe('SettingsComponent', () => {
             },
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
-            alternateTrainingSourceEnabled: true
+            alternateTrainingSourceEnabled: true,
+            sendAllSegments: false
           },
           preTranslate: true
         });
@@ -395,7 +401,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           },
           preTranslate: true
         });
@@ -423,7 +430,8 @@ describe('SettingsComponent', () => {
             },
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
-            alternateTrainingSourceEnabled: true
+            alternateTrainingSourceEnabled: true,
+            sendAllSegments: false
           },
           preTranslate: true
         });
@@ -464,7 +472,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           },
           projectType: ProjectType.BackTranslation
         });
@@ -500,7 +509,8 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
-            lastSelectedTranslationBooks: []
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false
           }
         });
         when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
@@ -538,7 +548,8 @@ describe('SettingsComponent', () => {
             servalConfig: '{}',
             lastSelectedTrainingBooks: [],
             lastSelectedTranslationBooks: [],
-            alternateTrainingSourceEnabled: false
+            alternateTrainingSourceEnabled: false,
+            sendAllSegments: false
           },
           preTranslate: true
         });
@@ -1233,7 +1244,8 @@ class TestEnvironment {
       draftConfig: {
         lastSelectedTrainingBooks: [],
         lastSelectedTranslationBooks: [],
-        alternateTrainingSourceEnabled: false
+        alternateTrainingSourceEnabled: false,
+        sendAllSegments: false
       }
     },
     checkingConfig: Partial<CheckingConfig> = {
