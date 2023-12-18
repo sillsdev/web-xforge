@@ -12,7 +12,7 @@ import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FileService } from 'xforge-common/file.service';
+import { FileService, formatFileSource } from 'xforge-common/file.service';
 import { I18nKey, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -401,7 +401,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       audio.addEventListener('error', () => {
         reject(new Error(`Audio Load Failed Code ${audio.error?.code ?? 'Unknown'}: ${audio.error?.message}`));
       });
-      audio.src = url;
+      audio.src = formatFileSource(FileType.Audio, url);
     });
   }
 
