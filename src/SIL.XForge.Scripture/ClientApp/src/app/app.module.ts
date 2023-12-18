@@ -9,6 +9,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { defaultTranslocoMarkupTranspilers, provideTranslationMarkupTranspiler } from 'ngx-transloco-markup';
 import { translocoMarkupRouterLinkRenderer } from 'ngx-transloco-markup-router-link';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { ErrorDialogComponent } from 'xforge-common/error-dialog/error-dialog.component';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
@@ -77,7 +78,8 @@ import { NavigationComponent } from './navigation/navigation.component';
     TranslocoModule,
     AppRoutingModule,
     SharedModule,
-    NavigationProjectSelectorComponent
+    NavigationProjectSelectorComponent,
+    AvatarComponent
   ],
   providers: [
     CookieService,

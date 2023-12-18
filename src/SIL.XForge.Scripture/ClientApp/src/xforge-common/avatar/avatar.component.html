@@ -1,10 +1,15 @@
-<ngx-avatar
-  [src]="avatarUrl"
-  [name]="name"
-  [size]="size"
-  [round]="round"
-  [cornerRadius]="3"
-  [borderColor]="borderColor"
-  [bgColor]="borderColor"
-></ngx-avatar>
-<mat-icon *ngIf="showOnlineStatus && (onlineStatusService.onlineStatus$ | async) === false">cloud_off</mat-icon>
+<div class="wrapper" [style.--size]="size + 'px'" [style.--avatar-color]="avatarColorFromDisplayName">
+  <img
+    *ngIf="user?.avatarUrl && mode === 'image'"
+    [src]="user?.avatarUrl"
+    [alt]="user?.displayName"
+    [width]="size"
+    [height]="size"
+    referrerpolicy="no-referrer"
+  />
+  <mat-icon *ngIf="mode === 'user_icon'" class="user-icon">account_circle</mat-icon>
+  <div *ngIf="mode === 'initials'" class="initials">{{ initials }}</div>
+  <mat-icon class="offline-indicator" *ngIf="showOnlineStatus && (onlineStatusService.onlineStatus$ | async) === false">
+    cloud_off
+  </mat-icon>
+</div>
