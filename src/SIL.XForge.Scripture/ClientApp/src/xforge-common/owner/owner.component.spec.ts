@@ -1,9 +1,8 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
-import { AvatarService } from 'ngx-avatar';
 import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -87,7 +86,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
 
   readonly mockedAuthService = mock(AuthService);
-  readonly mockedAvatarService = mock(AvatarService);
   readonly mockedBugsnagService = mock(BugsnagService);
   readonly mockedCookieService = mock(CookieService);
   readonly mockedTranslocoService = mock(TranslocoService);
@@ -106,7 +104,6 @@ class TestEnvironment {
       ],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
         { provide: BugsnagService, useFactory: () => instance(this.mockedBugsnagService) },
         { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },

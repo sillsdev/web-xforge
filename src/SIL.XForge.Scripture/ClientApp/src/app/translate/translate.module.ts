@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { AngularSplitModule } from 'angular-split';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
@@ -39,7 +40,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
-    TranslocoMarkupModule
+    TranslocoMarkupModule,
+    AvatarComponent
   ]
 })
 export class TranslateModule {}
