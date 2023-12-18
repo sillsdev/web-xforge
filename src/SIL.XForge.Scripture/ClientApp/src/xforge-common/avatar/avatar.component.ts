@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+
+type AvatarMode = 'image' | 'initials' | 'user_icon';
 
 @Component({
   selector: 'app-avatar',
@@ -11,43 +13,53 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
   standalone: true,
   imports: [CommonModule, MatIconModule]
 })
-export class AvatarComponent {
+export class AvatarComponent implements OnChanges {
   @Input() round: boolean = false;
   @Input() size: number = 32;
   @Input() user?: UserProfile;
-  @Input() borderColor?: string;
-  @Input() showOnlineStatus: boolean = false;
+  @Input() borderColor: string = 'transparent';
+  @Input() showOnlineStatus: boolean = true;
+
+  name?: string;
+  avatarUrl?: string;
+  avatarColorFromDisplayName?: string;
+  initials?: string;
+  mode: AvatarMode = 'user_icon';
 
   constructor(readonly onlineStatusService: OnlineStatusService) {}
 
-  get mode(): 'image' | 'initials' | 'user_icon' {
+  ngOnChanges(): void {
+    this.name = this.user?.displayName;
+    this.avatarUrl = this.user?.avatarUrl;
+    this.avatarColorFromDisplayName = this.getAvatarColorFromDisplayName();
+    this.mode = this.getMode();
+  }
+
+  getMode(): AvatarMode {
     if (this.avatarUrl != null && this.avatarUrl !== '') {
       return 'image';
     }
+
+    this.initials = this.getInitials();
     if (this.initials != null) {
       return 'initials';
     }
+
     return 'user_icon';
   }
 
-  get avatarUrl(): string | undefined {
-    return this.user?.avatarUrl;
-  }
-
-  get name(): string | undefined {
-    return this.user?.displayName;
-  }
-
-  get initials(): string | undefined {
+  getInitials(): string | undefined {
     if (this.name == null) {
       return undefined;
     }
+
     const characters = this.name
-      .split(' ')
+      .split(/\s+/) // Split on whitespace
       .filter(s => s.length > 0)
       .map(s => s[0])
       // filter out non-latin characters
       .filter(c => c.toUpperCase() !== c.toLowerCase());
+
     if (characters.length === 0) {
       return undefined;
     } else if (characters.length === 1) {
@@ -58,19 +70,21 @@ export class AvatarComponent {
   }
 
   /** Generates a hue (0 to 360) based on a hash of the user display name */
-  get avatarHueFromDisplayName(): number {
+  getAvatarHueFromDisplayName(): number {
     if (this.name == null) {
-      return 0;
+      return 200; // Blue
     }
+
     let hash = 0;
     for (let i = 0; i < this.name.length; i++) {
       hash = (hash << 5) - hash + this.name.charCodeAt(i);
       hash |= 0; // Convert to 32bit integer
     }
+
     return Math.abs(hash) % 360;
   }
 
-  get avatarColorFromDisplayName(): string {
-    return `hsl(${this.avatarHueFromDisplayName}, 60%, 50%)`;
+  getAvatarColorFromDisplayName(): string {
+    return `hsl(${this.getAvatarHueFromDisplayName()}, 60%, 50%)`;
   }
 }
