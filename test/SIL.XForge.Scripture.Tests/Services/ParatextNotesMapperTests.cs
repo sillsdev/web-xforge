@@ -968,11 +968,9 @@ public class ParatextNotesMapperTests
                 .GetUsernameFromUserId(Arg.Any<string>(), Arg.Any<string>())
                 .Returns(x => Task.FromResult(userIdToUsername[(string)x[1]]));
 
-            var options = Microsoft
-                .Extensions
-                .Options
-                .Options
-                .Create(new LocalizationOptions { ResourcesPath = "Resources" });
+            var options = Microsoft.Extensions.Options.Options.Create(
+                new LocalizationOptions { ResourcesPath = "Resources" }
+            );
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
             var localizer = new StringLocalizer<SharedResource>(factory);
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();

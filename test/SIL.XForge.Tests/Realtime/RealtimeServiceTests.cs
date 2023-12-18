@@ -121,8 +121,7 @@ public class RealtimeServiceTests
         var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
         cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
         cursorMock.Current.Returns(new[] { doc });
-        env.MongoDatabase
-            .GetCollection<BsonDocument>("o_users")
+        env.MongoDatabase.GetCollection<BsonDocument>("o_users")
             .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(), Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
             .Returns(Task.FromResult(cursorMock));
 
@@ -144,8 +143,7 @@ public class RealtimeServiceTests
         var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
         cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
         cursorMock.Current.Returns(new[] { doc });
-        env.MongoDatabase
-            .GetCollection<BsonDocument>("o_users")
+        env.MongoDatabase.GetCollection<BsonDocument>("o_users")
             .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(), Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
             .Returns(Task.FromResult(cursorMock));
 
@@ -167,8 +165,7 @@ public class RealtimeServiceTests
         var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
         cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
         cursorMock.Current.Returns(new[] { doc });
-        env.MongoDatabase
-            .GetCollection<BsonDocument>("o_users")
+        env.MongoDatabase.GetCollection<BsonDocument>("o_users")
             .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(), Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
             .Returns(Task.FromResult(cursorMock));
 
@@ -191,8 +188,7 @@ public class RealtimeServiceTests
         var cursorMock = Substitute.For<IAsyncCursor<BsonDocument>>();
         cursorMock.MoveNextAsync().Returns(Task.FromResult(true), Task.FromResult(false));
         cursorMock.Current.Returns(new[] { doc2, doc1 });
-        env.MongoDatabase
-            .GetCollection<BsonDocument>("o_users")
+        env.MongoDatabase.GetCollection<BsonDocument>("o_users")
             .FindAsync(Arg.Any<FilterDefinition<BsonDocument>>(), Arg.Any<FindOptions<BsonDocument, BsonDocument>>())
             .Returns(Task.FromResult(cursorMock));
 
@@ -210,28 +206,22 @@ public class RealtimeServiceTests
         {
             IRealtimeServer realtimeServer = Substitute.For<IRealtimeServer>();
             IOptions<SiteOptions> siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            IOptions<DataAccessOptions> dataAccessOptions = Microsoft
-                .Extensions
-                .Options
-                .Options
-                .Create(new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" });
-            IOptions<RealtimeOptions> realtimeOptions = Microsoft
-                .Extensions
-                .Options
-                .Options
-                .Create(
-                    new RealtimeOptions
+            IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
+                new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
+            );
+            IOptions<RealtimeOptions> realtimeOptions = Microsoft.Extensions.Options.Options.Create(
+                new RealtimeOptions
+                {
+                    ProjectDoc = new DocConfig("some_projects", typeof(Project)),
+                    ProjectDataDocs = new List<DocConfig>
                     {
-                        ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                        ProjectDataDocs = new List<DocConfig>
-                        {
-                            new DocConfig("favorite_numbers", typeof(int)),
-                            new DocConfig("favorite_things", typeof(object)),
-                            new DocConfig("favorite_verses", typeof(string)),
-                        },
-                        UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)) },
-                    }
-                );
+                        new DocConfig("favorite_numbers", typeof(int)),
+                        new DocConfig("favorite_things", typeof(object)),
+                        new DocConfig("favorite_verses", typeof(string)),
+                    },
+                    UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)) },
+                }
+            );
             IOptions<AuthOptions> authOptions = Substitute.For<IOptions<AuthOptions>>();
 
             IMongoClient mongoClient = Substitute.For<IMongoClient>();

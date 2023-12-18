@@ -115,8 +115,7 @@ public class ServalMigrator : DisposableBase
 
             // Get the admin users
             List<string> projectSfAdminUserIds = project
-                .UserRoles
-                .Where(ur => ur.Value == SFProjectRole.Administrator)
+                .UserRoles.Where(ur => ur.Value == SFProjectRole.Administrator)
                 .Select(ur => ur.Key)
                 .ToList();
             if (!projectSfAdminUserIds.Any())

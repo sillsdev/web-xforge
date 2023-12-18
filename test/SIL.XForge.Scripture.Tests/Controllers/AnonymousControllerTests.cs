@@ -55,8 +55,7 @@ public class AnonymousControllerTests
             Name = CookieConstants.TransparentAuthentication,
             Value = Uri.EscapeDataString(Newtonsoft.Json.JsonConvert.SerializeObject(credentials))
         };
-        env.AnonymousService
-            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+        env.AnonymousService.GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Returns(Task.FromResult(credentials));
 
         // SUT
@@ -77,8 +76,7 @@ public class AnonymousControllerTests
             DisplayName = "Test User",
             Language = "en"
         };
-        env.AnonymousService
-            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+        env.AnonymousService.GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Throws(new DataNotFoundException(""));
 
         // SUT
@@ -96,8 +94,7 @@ public class AnonymousControllerTests
             DisplayName = "Test User",
             Language = "en"
         };
-        env.AnonymousService
-            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+        env.AnonymousService.GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Throws(new HttpRequestException(""));
 
         // SUT
@@ -115,8 +112,7 @@ public class AnonymousControllerTests
             DisplayName = "Test User",
             Language = "en"
         };
-        env.AnonymousService
-            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+        env.AnonymousService.GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Throws(new SecurityException());
 
         // SUT
@@ -134,8 +130,7 @@ public class AnonymousControllerTests
             DisplayName = "Test User",
             Language = "en"
         };
-        env.AnonymousService
-            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+        env.AnonymousService.GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Throws(new TaskCanceledException());
 
         // SUT

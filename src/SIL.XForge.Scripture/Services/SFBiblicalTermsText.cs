@@ -111,8 +111,7 @@ public class SFBiblicalTermsText : ISFText
 
         foreach (
             XElement termRenderingElem in termRenderingsDoc
-                .Root
-                .Elements("TermRendering")
+                .Root.Elements("TermRendering")
                 .Where(t => !(bool)t.Attribute("Guess"))
                 .OrderBy(t => t.Attribute("Id")?.Value)
         )

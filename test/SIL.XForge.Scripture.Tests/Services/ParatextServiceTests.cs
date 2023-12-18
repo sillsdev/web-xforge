@@ -229,19 +229,20 @@ public class ParatextServiceTests
                 Assert.That(
                     (await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
                         .Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId)
-                        .UserRoles
-                        .ContainsKey(testCase.sfUserId),
+                        .UserRoles.ContainsKey(testCase.sfUserId),
                     Is.EqualTo(testCase.sfUserIsOnSfProject),
                     "not set up - whether user is on existing sf project or not"
                 );
             }
             Assert.That(
-                env.MockInternetSharedRepositorySourceProvider
-                    .GetSource(testCase.userSecret, string.Empty, string.Empty)
+                env.MockInternetSharedRepositorySourceProvider.GetSource(
+                    testCase.userSecret,
+                    string.Empty,
+                    string.Empty
+                )
                     .GetRepositories()
                     .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId.Id == testCase.paratextProjectId)
-                    .SourceUsers
-                    .GetRole(testCase.ptUsername) == UserRoles.Administrator,
+                    .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
                 Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
                 "not set up - whether pt user is an admin on pt project"
             );
@@ -290,8 +291,7 @@ public class ParatextServiceTests
         Assert.DoesNotThrowAsync(async () => resources = await env.Service.GetResourcesAsync(env.User02));
         // "Don't crash when permission problem");
         Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
-        env.MockExceptionHandler
-            .Received()
+        env.MockExceptionHandler.Received()
             .ReportException(
                 Arg.Is<Exception>((Exception e) => e.Message.Contains("inquire about resources and is ignoring error"))
             );
@@ -386,13 +386,12 @@ public class ParatextServiceTests
     {
         // Set up environment
         var env = new TestEnvironment();
-        env.MockJwtTokenHelper
-            .RefreshAccessTokenAsync(
-                Arg.Any<ParatextOptions>(),
-                Arg.Any<Tokens>(),
-                Arg.Any<HttpClient>(),
-                CancellationToken.None
-            )
+        env.MockJwtTokenHelper.RefreshAccessTokenAsync(
+            Arg.Any<ParatextOptions>(),
+            Arg.Any<Tokens>(),
+            Arg.Any<HttpClient>(),
+            CancellationToken.None
+        )
             .Throws(new HttpRequestException("Bad Request", null, HttpStatusCode.BadRequest));
 
         // SUT
@@ -400,8 +399,7 @@ public class ParatextServiceTests
         var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
 
         Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
-        await env.MockJwtTokenHelper
-            .Received()
+        await env.MockJwtTokenHelper.Received()
             .RefreshAccessTokenAsync(
                 Arg.Any<ParatextOptions>(),
                 Arg.Any<Tokens>(),
@@ -2396,8 +2394,14 @@ public class ParatextServiceTests
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
-        IList<NoteThreadChange> changes = env.Service
-            .GetNoteThreadChanges(userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
+        IList<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+            userSecret,
+            ptProjectId,
+            40,
+            noteThreadDocs,
+            chapterDeltas,
+            ptProjectUsers
+        )
             .ToList();
         // We fetched a single change, of one new note to create.
 
@@ -3480,13 +3484,12 @@ public class ParatextServiceTests
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
         env.SetupSuccessfulSendReceive();
         // Setup share changes to be unsuccessful
-        env.MockSharingLogicWrapper
-            .ShareChanges(
-                Arg.Any<List<SharedProject>>(),
-                Arg.Any<SharedRepositorySource>(),
-                out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Any<List<SharedProject>>()
-            )
+        env.MockSharingLogicWrapper.ShareChanges(
+            Arg.Any<List<SharedProject>>(),
+            Arg.Any<SharedRepositorySource>(),
+            out Arg.Any<List<SendReceiveResult>>(),
+            Arg.Any<List<SharedProject>>()
+        )
             .Returns(false);
 
         InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
@@ -3531,13 +3534,12 @@ public class ParatextServiceTests
         env.SetupSuccessfulSendReceive();
         // Setup share changes to be unsuccessful, but return true
         // This scenario occurs if a project is locked on the PT server
-        env.MockSharingLogicWrapper
-            .ShareChanges(
-                Arg.Any<List<SharedProject>>(),
-                Arg.Any<SharedRepositorySource>(),
-                out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Any<List<SharedProject>>()
-            )
+        env.MockSharingLogicWrapper.ShareChanges(
+            Arg.Any<List<SharedProject>>(),
+            Arg.Any<SharedRepositorySource>(),
+            out Arg.Any<List<SendReceiveResult>>(),
+            Arg.Any<List<SharedProject>>()
+        )
             .Returns(x =>
             {
                 x[2] = new List<SendReceiveResult>
@@ -3575,8 +3577,7 @@ public class ParatextServiceTests
 
         // SUT 1
         await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
-        env.MockSharingLogicWrapper
-            .Received(1)
+        env.MockSharingLogicWrapper.Received(1)
             .ShareChanges(
                 Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId),
                 Arg.Any<SharedRepositorySource>(),
@@ -3599,8 +3600,7 @@ public class ParatextServiceTests
                 )
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
-        env.MockSharingLogicWrapper
-            .DidNotReceive()
+        env.MockSharingLogicWrapper.DidNotReceive()
             .ShareChanges(default, Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), default);
     }
 
@@ -3675,8 +3675,7 @@ public class ParatextServiceTests
         // Better may be to assert that each SharedProject.Permissions.GetUser()
         // returns a desired PT username, if the test environment wasn't
         // mired in mock.
-        env.MockSharingLogicWrapper
-            .Received(2)
+        env.MockSharingLogicWrapper.Received(2)
             .ShareChanges(
                 Arg.Is<List<SharedProject>>(
                     list =>
@@ -3698,8 +3697,7 @@ public class ParatextServiceTests
         string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
 
         // Only set the the new source ScrText when it is "cloned" to the filesystem
-        env.MockFileSystemService
-            .When(fs => fs.CreateDirectory(sourcePath))
+        env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath))
             .Do(_ =>
             {
                 ScrText newSourceScrText = env.GetScrText(associatedPtUser, newSourceProjectId);
@@ -4317,8 +4315,11 @@ public class ParatextServiceTests
 
         IInternetSharedRepositorySource mockSource = Substitute.For<IInternetSharedRepositorySource>();
 
-        env.MockInternetSharedRepositorySourceProvider
-            .GetSource(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>())
+        env.MockInternetSharedRepositorySourceProvider.GetSource(
+            Arg.Any<UserSecret>(),
+            Arg.Any<string>(),
+            Arg.Any<string>()
+        )
             .Returns(mockSource);
         mockSource.CanUserAuthenticateToPTArchives().Returns(false);
 
@@ -4552,10 +4553,9 @@ public class ParatextServiceTests
         var associatedPtUser = new SFParatextUser(env.Username01);
         string projectPTId = env.SetupProject(env.Project01, associatedPtUser);
         string rev = "some-desired-revision";
-        env.MockHgWrapper
-            .GetRepoRevision(
-                Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Combine(projectPTId, "target")))
-            )
+        env.MockHgWrapper.GetRepoRevision(
+            Arg.Is<string>((string repoPath) => repoPath.EndsWith(Path.Combine(projectPTId, "target")))
+        )
             .Returns(rev);
         // SUT
         env.Service.SetRepoToRevision(

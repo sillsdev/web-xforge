@@ -28,8 +28,12 @@ public class PreTranslationServiceTests
         const int bookNum = 64;
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
-        env.TranslationEnginesClient
-            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId,
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
                     new List<Pretranslation>
@@ -110,8 +114,12 @@ public class PreTranslationServiceTests
         const int bookNum = 40;
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
-        env.TranslationEnginesClient
-            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId,
+            CancellationToken.None
+        )
             .Returns(Task.FromResult<IList<Pretranslation>>(new List<Pretranslation>()));
 
         // SUT
@@ -133,8 +141,12 @@ public class PreTranslationServiceTests
         const int bookNum = 40;
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
-        env.TranslationEnginesClient
-            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId,
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
                     new List<Pretranslation>

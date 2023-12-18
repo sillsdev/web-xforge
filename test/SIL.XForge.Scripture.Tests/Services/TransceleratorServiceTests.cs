@@ -17,8 +17,7 @@ public class TransceleratorServiceTests
     {
         var env = new TestEnvironment();
         env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
-        env.FileSystemService
-            .EnumerateFiles(Arg.Any<string>())
+        env.FileSystemService.EnumerateFiles(Arg.Any<string>())
             .Returns(new string[] { "Translated Checking Questions for GEN.xml" });
         env.FileSystemService.FileReadText(Arg.Any<string>()).Returns(TestEnvironment.XmlFileText("1.1"));
 
@@ -38,8 +37,7 @@ public class TransceleratorServiceTests
     {
         var env = new TestEnvironment();
         env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
-        env.FileSystemService
-            .EnumerateFiles(Arg.Any<string>())
+        env.FileSystemService.EnumerateFiles(Arg.Any<string>())
             .Returns(new string[] { "Translated Checking Questions for GEN.xml" });
         env.FileSystemService.FileReadText(Arg.Any<string>()).Returns(TestEnvironment.XmlFileText("1.0"));
         Assert.Throws<DataNotFoundException>(() => env.Service.Questions(Project01));
@@ -52,11 +50,9 @@ public class TransceleratorServiceTests
         public TestEnvironment()
         {
             FileSystemService = Substitute.For<IFileSystemService>();
-            IOptions<SiteOptions> siteOptions = Microsoft
-                .Extensions
-                .Options
-                .Options
-                .Create(new SiteOptions() { SiteDir = "scriptureforge" });
+            IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
+                new SiteOptions() { SiteDir = "scriptureforge" }
+            );
             Service = new TransceleratorService(FileSystemService, siteOptions);
         }
 
