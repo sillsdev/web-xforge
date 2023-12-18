@@ -38,8 +38,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: false,
+            includeBlankSegments: false,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -77,8 +78,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: false,
+            includeBlankSegments: false,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -114,8 +116,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: false,
+            includeBlankSegments: false,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -139,8 +142,9 @@ public class SFScriptureTextTests
                     projectId,
                     bookNumber,
                     chapterNumber,
-                    preTranslate: false,
+                    includeBlankSegments: false,
                     doNotSendSegmentText: false,
+                    sendAllSegments: false,
                     doc: null
                 )
         );
@@ -168,15 +172,16 @@ public class SFScriptureTextTests
                     projectId,
                     bookNumber,
                     chapterNumber,
-                    preTranslate: false,
+                    includeBlankSegments: false,
                     doNotSendSegmentText: false,
+                    sendAllSegments: false,
                     doc
                 )
         );
     }
 
     [Test]
-    public void Create_ExcludeBlankSegmentsIfPreTranslateFalse()
+    public void Create_ExcludeBlankSegmentsIfIncludeBlankSegmentsFalse()
     {
         var doc = new BsonDocument
         {
@@ -200,8 +205,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: false,
+            includeBlankSegments: false,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -210,7 +216,7 @@ public class SFScriptureTextTests
     }
 
     [Test]
-    public void Create_IncludeBlankSegmentsIfPreTranslateTrue()
+    public void Create_IncludeBlankSegmentsIfIncludeBlankSegmentsTrue()
     {
         var doc = new BsonDocument
         {
@@ -234,8 +240,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: true,
+            includeBlankSegments: true,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -244,7 +251,7 @@ public class SFScriptureTextTests
     }
 
     [Test]
-    public void Create_IncludeNonScriptureSegmentsIfPreTranslateFalse()
+    public void Create_IncludeNonScriptureSegmentsIfSendAllSegmentsTrue()
     {
         var doc = new BsonDocument
         {
@@ -268,8 +275,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: false,
+            includeBlankSegments: false,
             doNotSendSegmentText: false,
+            sendAllSegments: true,
             doc
         );
 
@@ -278,7 +286,7 @@ public class SFScriptureTextTests
     }
 
     [Test]
-    public void Create_ExcludeNonScriptureSegmentsIfPreTranslateTrue()
+    public void Create_ExcludeNonScriptureSegmentsIfSendAllSegmentsFalse()
     {
         var doc = new BsonDocument
         {
@@ -302,8 +310,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: true,
+            includeBlankSegments: false,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -336,8 +345,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: true,
+            includeBlankSegments: true,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
@@ -370,8 +380,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: true,
+            includeBlankSegments: true,
             doNotSendSegmentText: true,
+            sendAllSegments: false,
             doc
         );
 
@@ -405,8 +416,9 @@ public class SFScriptureTextTests
             projectId,
             bookNumber,
             chapterNumber,
-            preTranslate: true,
+            includeBlankSegments: true,
             doNotSendSegmentText: false,
+            sendAllSegments: false,
             doc
         );
 
