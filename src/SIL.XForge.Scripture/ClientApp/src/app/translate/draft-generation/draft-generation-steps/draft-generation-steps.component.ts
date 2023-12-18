@@ -80,7 +80,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
             throw new Error('Source project is not set');
           }
 
-          const trainingSourceProjectId = translateConfig?.draftConfig.alternateTrainingSource?.projectRef;
+          const trainingSourceProjectId = translateConfig?.draftConfig.alternateTrainingSourceEnabled
+            ? translateConfig.draftConfig.alternateTrainingSource?.projectRef
+            : undefined;
 
           // Include alternate training source project if it exists
           return from(
