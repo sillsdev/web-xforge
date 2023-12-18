@@ -479,6 +479,10 @@ public class MachineApiService : IMachineApiService
                 {
                     State = BuildStateFaulted,
                     Message = projectSecret.ServalData.PreTranslationErrorMessage,
+                    AdditionalInfo = new ServalBuildAdditionalInfo
+                    {
+                        TranslationEngineId = projectSecret.ServalData.PreTranslationEngineId ?? string.Empty,
+                    },
                 };
             }
 
@@ -495,6 +499,10 @@ public class MachineApiService : IMachineApiService
                 {
                     State = BuildStateFaulted,
                     Message = "The build failed to upload to the server.",
+                    AdditionalInfo = new ServalBuildAdditionalInfo
+                    {
+                        TranslationEngineId = projectSecret.ServalData.PreTranslationEngineId ?? string.Empty,
+                    },
                 };
             }
 
@@ -503,6 +511,10 @@ public class MachineApiService : IMachineApiService
             {
                 State = BuildStateQueued,
                 Message = "The build is being uploaded to the server.",
+                AdditionalInfo = new ServalBuildAdditionalInfo
+                {
+                    TranslationEngineId = projectSecret.ServalData?.PreTranslationEngineId ?? string.Empty,
+                },
             };
         }
 

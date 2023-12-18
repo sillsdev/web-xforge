@@ -113,12 +113,15 @@
                 <div>
                   <p class="error-text">Technical details:</p>
                   <div>
-                    <div><strong>Message:</strong> {{ draftJob?.message }}</div>
+                    <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
                     <div>
-                      <strong>Translation Engine Id:</strong> {{ draftJob?.additionalInfo?.translationEngineId }}
+                      <strong>Translation Engine Id:</strong>
+                      {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
                     </div>
-                    <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
-                    <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
+                    <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
+                    <div>
+                      <strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
+                    </div>
                   </div>
                 </div>
               </section>

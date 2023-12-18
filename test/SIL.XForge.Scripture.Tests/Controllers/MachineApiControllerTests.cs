@@ -294,7 +294,8 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        await env.MachineApiService.Received(1).GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None);
+        await env.MachineApiService.Received(1)
+            .GetBuildAsync(User01, Project01, Build01, null, false, CancellationToken.None);
     }
 
     [Test]
