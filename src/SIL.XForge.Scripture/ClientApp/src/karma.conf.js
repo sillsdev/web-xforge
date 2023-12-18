@@ -51,6 +51,11 @@ module.exports = function (config) {
         pattern: 'app/checking/checking/test-audio/test-audio-short.webm',
         watched: false,
         included: false
+      },
+      {
+        pattern: 'app/checking/checking/test-audio/test-audio-short.mp3',
+        watched: false,
+        included: false
       }
     ],
     proxies: {
