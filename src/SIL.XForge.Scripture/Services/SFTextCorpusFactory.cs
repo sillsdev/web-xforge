@@ -145,6 +145,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                 // If we are not training a book, the segments in it must be empty
                 bool doNotSendSegmentText =
                     preTranslate && type == TextCorpusType.Target && !buildConfig.TrainingBooks.Contains(text.BookNum);
+                bool sendAllSegments = preTranslate && project.TranslateConfig.DraftConfig.SendAllSegments;
                 foreach (Chapter chapter in text.Chapters)
                 {
                     string id = TextData.GetTextDocId(textCorpusProjectId, text.BookNum, chapter.Number);
@@ -157,8 +158,9 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                                 projectId,
                                 text.BookNum,
                                 chapter.Number,
-                                preTranslate,
+                                includeBlankSegments: preTranslate,
                                 doNotSendSegmentText,
+                                sendAllSegments,
                                 doc
                             )
                         );

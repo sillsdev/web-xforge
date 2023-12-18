@@ -9,5 +9,6 @@ public class DraftConfig
     public TranslateSource? AlternateTrainingSource { get; set; }
     public IList<int> LastSelectedTrainingBooks { get; set; } = new List<int>();
     public IList<int> LastSelectedTranslationBooks { get; set; } = new List<int>();
+    public bool SendAllSegments { get; set; }
     public string? ServalConfig { get; set; }
 }

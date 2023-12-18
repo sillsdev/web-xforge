@@ -122,6 +122,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "AlternateSourceParatextId", settings?.AlternateSourceParatextId },
                     { "AlternateTrainingSourceEnabled", settings?.AlternateTrainingSourceEnabled?.ToString() },
                     { "AlternateTrainingSourceParatextId", settings?.AlternateTrainingSourceParatextId },
+                    { "SendAllSegments", settings?.SendAllSegments?.ToString() },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
