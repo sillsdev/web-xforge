@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -15,7 +15,6 @@ import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import * as RichText from 'rich-text';
 import { LocalPresence } from 'sharedb/lib/sharedb';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
@@ -25,7 +24,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -36,7 +35,7 @@ import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
-import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
+import { PRESENCE_EDITOR_ACTIVE_TIMEOUT, PresenceData, RemotePresences, TextComponent } from './text.component';
 
 const mockedBugsnagService = mock(BugsnagService);
 const mockedProjectService = mock(SFProjectService);
@@ -49,7 +48,6 @@ describe('TextComponent', () => {
   configureTestingModule(() => ({
     declarations: [HostComponent],
     imports: [
-      AvatarTestingModule,
       CommonModule,
       UICommonModule,
       SharedModule,
@@ -103,8 +101,12 @@ describe('TextComponent', () => {
     env.id = new TextDocId('project01', 40, 1);
     tick();
     env.fixture.detectChanges();
-    expect(env.component.editor?.getText()).withContext('setup').toContain('chapter 1, verse 6.');
-    expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(25);
+    expect(env.component.editor?.getText())
+      .withContext('setup')
+      .toContain('chapter 1, verse 6.');
+    expect(env.component.editor?.getContents().ops?.length)
+      .withContext('setup')
+      .toEqual(25);
 
     env.component.editor?.updateContents(new Delta().retain(109).retain(31, { para: null }));
     flush();
@@ -587,7 +589,7 @@ describe('TextComponent', () => {
       const startContainer: Node = targetElement!.childNodes[0] as Node;
       // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
-        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
+        ({ startOffset: desiredIndexInSegment, startContainer }) as Range;
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
@@ -1534,7 +1536,7 @@ class TestEnvironment {
 
     // eslint-disable-next-line deprecation/deprecation
     document.caretRangeFromPoint = (_x: number, _y: number) =>
-      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node }) as Range;
 
     const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
       dataTransfer,
