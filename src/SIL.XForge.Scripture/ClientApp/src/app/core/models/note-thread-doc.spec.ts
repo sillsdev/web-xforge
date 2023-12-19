@@ -162,6 +162,14 @@ describe('NoteThreadDoc', () => {
     expect(noteThreadDoc.canUserResolveThread('user03', SFProjectRole.ParatextTranslator, env.noteTags)).toBe(true);
   });
 
+  it('should default to the to do tag when no tag set', async () => {
+    const noteThreadDoc = await env.setupDoc([]);
+    const noteTags: NoteTag[] = [...env.noteTags];
+    noteTags[0].creatorResolve = true;
+    expect(noteThreadDoc.canUserResolveThread('user01', SFProjectRole.ParatextAdministrator, noteTags)).toBe(true);
+    expect(noteThreadDoc.canUserResolveThread('user02', SFProjectRole.ParatextTranslator, noteTags)).toBe(false);
+  });
+
   it('reports the reattached verse reference', async () => {
     const reattachParts: string[] = ['MAT 1:2', 'reattached selected text', '0', '', ''];
     const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
