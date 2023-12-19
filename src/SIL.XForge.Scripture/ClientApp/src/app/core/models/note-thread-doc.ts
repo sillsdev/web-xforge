@@ -124,9 +124,9 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     if (this.data == null) return;
 
     const iconDefinedNotes: Note[] = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
-    let tagId: number | undefined =
-      iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
-    if (tagId == null) return;
+    let tagId: number =
+      iconDefinedNotes.length === 0 ? TO_DO_TAG_ID : iconDefinedNotes[iconDefinedNotes.length - 1].tagId!;
+
     return noteTags.find(t => t.tagId === tagId);
   }
 

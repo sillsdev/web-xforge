@@ -1,6 +1,7 @@
 import { Doc, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
+import { NoteTag } from '../models/note-tag';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
 import { TranslateShareLevel } from '../models/translate-config';
@@ -252,6 +253,20 @@ class SFProjectMigration14 extends DocMigration {
   }
 }
 
+class SFProjectMigration15 extends DocMigration {
+  static readonly VERSION = 15;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    for (let i = 0; i < doc.data.noteTags.length; i++) {
+      const noteTag: NoteTag = doc.data.noteTags[i];
+      ops.push({ p: ['noteTags', i, 'creatorResolve'], od: noteTag.creatorResolve });
+      ops.push({ p: ['noteTags', i, 'creatorResolve'], oi: true });
+    }
+    await submitMigrationOp(SFProjectMigration13.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -266,5 +281,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration11,
   SFProjectMigration12,
   SFProjectMigration13,
-  SFProjectMigration14
+  SFProjectMigration14,
+  SFProjectMigration15
 ];
