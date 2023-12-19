@@ -1,6 +1,6 @@
 import { Meta } from '@storybook/angular';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { MatDialogLaunchComponent, matDialogStory } from '../../../.storybook/util/mat-dialog-launch';
-import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 
 export default {
@@ -9,7 +9,7 @@ export default {
 } as Meta;
 
 export const DeleteUserDialog = matDialogStory(SaDeleteDialogComponent, {
-  imports: [AvatarTestingModule]
+  imports: [AvatarComponent]
 });
 
 DeleteUserDialog.args = {

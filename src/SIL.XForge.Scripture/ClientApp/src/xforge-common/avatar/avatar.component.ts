@@ -14,7 +14,6 @@ type AvatarMode = 'image' | 'initials' | 'user_icon';
   imports: [CommonModule, MatIconModule]
 })
 export class AvatarComponent implements OnChanges {
-  @Input() round: boolean = false;
   @Input() size: number = 32;
   @Input() user?: UserProfile;
   @Input() borderColor: string = 'transparent';
