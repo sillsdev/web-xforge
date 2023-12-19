@@ -14,10 +14,10 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { environment } from '../../environments/environment';
-import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
 import { NoticeService } from '../notice.service';
@@ -41,12 +41,12 @@ describe('SaUsersComponent', () => {
     imports: [
       NoopAnimationsModule,
       RouterTestingModule,
-      AvatarTestingModule,
       UICommonModule,
       DialogTestModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
-      HttpClientTestingModule
+      HttpClientTestingModule,
+      AvatarComponent
     ],
     declarations: [SaUsersComponent],
     providers: [
@@ -159,7 +159,7 @@ class TestProjectDoc extends ProjectDoc {
 }
 
 @NgModule({
-  imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
+  imports: [NoopAnimationsModule, UICommonModule],
   exports: [SaDeleteDialogComponent],
   declarations: [SaDeleteDialogComponent]
 })
