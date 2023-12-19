@@ -83,7 +83,8 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   canUserResolveThread(userId: string, userRole: string, noteTags: NoteTag[]): boolean {
     if (this.data == null) return true;
     if (userRole === SFProjectRole.ParatextAdministrator) return true;
-    const noteTagOnThread: NoteTag | undefined = this.getActiveTagOnThread(noteTags);
+    const noteTagOnThread: NoteTag | undefined =
+      this.getActiveTagOnThread(noteTags) ?? noteTags.find(t => t.tagId === TO_DO_TAG_ID);
     if (noteTagOnThread?.creatorResolve !== true) return isParatextRole(userRole);
 
     const notesInOrder: Note[] = this.notesInOrderClone(this.data.notes);
@@ -124,8 +125,8 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     if (this.data == null) return;
 
     const iconDefinedNotes: Note[] = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
-    let tagId: number =
-      iconDefinedNotes.length === 0 ? TO_DO_TAG_ID : iconDefinedNotes[iconDefinedNotes.length - 1].tagId!;
+    let tagId: number | undefined =
+      iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
 
     return noteTags.find(t => t.tagId === tagId);
   }
