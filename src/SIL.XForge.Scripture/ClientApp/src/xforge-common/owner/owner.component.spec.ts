@@ -8,7 +8,7 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -96,12 +96,7 @@ class TestEnvironment {
   constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, OwnerComponent],
-      imports: [
-        AvatarTestingModule,
-        UICommonModule,
-        TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-        HttpClientTestingModule
-      ],
+      imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), HttpClientTestingModule, AvatarComponent],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: BugsnagService, useFactory: () => instance(this.mockedBugsnagService) },
