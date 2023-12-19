@@ -17,7 +17,7 @@ import { clone } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, firstValueFrom, Observable, of, Subscription, timer } from 'rxjs';
-import { filter, mergeMap, take } from 'rxjs/operators';
+import { filter, map, mergeMap, take } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { hasPropWithValue } from '../type-utils';
 import { Auth0Service, TransparentAuthenticationCookie } from './auth0.service';
@@ -32,6 +32,7 @@ import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
+import { filterNullish } from './util/rxjs-util';
 import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
@@ -150,54 +151,15 @@ export class AuthService {
   }
 
   get isLoggedInUserAnonymous(): Promise<boolean> {
-    const state: LoginResult | undefined = this._loggedInState$.getValue();
-    if (state == null) {
-      return new Promise<boolean>(resolve =>
-        this._loggedInState$
-          .pipe(
-            filter(result => result != null),
-            take(1)
-          )
-          .subscribe(result => {
-            resolve(result!.anonymousUser);
-          })
-      );
-    }
-    return Promise.resolve(state.anonymousUser);
+    return firstValueFrom(this.loggedInState$.pipe(map(state => state.anonymousUser)));
   }
 
   get isLoggedIn(): Promise<boolean> {
-    const state: LoginResult | undefined = this._loggedInState$.getValue();
-    if (state == null) {
-      return new Promise<boolean>(resolve =>
-        this._loggedInState$
-          .pipe(
-            filter(result => result != null),
-            take(1)
-          )
-          .subscribe(result => {
-            resolve(result!.loggedIn);
-          })
-      );
-    }
-    return Promise.resolve(state.loggedIn);
+    return firstValueFrom(this.loggedInState$.pipe(map(state => state.loggedIn)));
   }
 
   get isNewlyLoggedIn(): Promise<boolean> {
-    const state: LoginResult | undefined = this._loggedInState$.getValue();
-    if (state == null) {
-      return new Promise<boolean>(resolve =>
-        this._loggedInState$
-          .pipe(
-            filter(result => result != null),
-            take(1)
-          )
-          .subscribe(result => {
-            resolve(result!.newlyLoggedIn);
-          })
-      );
-    }
-    return Promise.resolve(state.newlyLoggedIn);
+    return firstValueFrom(this.loggedInState$.pipe(map(state => state.newlyLoggedIn)));
   }
 
   get loggedIn(): Promise<LoginResult> {
@@ -205,7 +167,7 @@ export class AuthService {
   }
 
   get loggedInState$(): Observable<LoginResult> {
-    return this._loggedInState$.asObservable().pipe(filter(state => state != null)) as Observable<LoginResult>;
+    return this._loggedInState$.asObservable().pipe(filterNullish());
   }
 
   private get isLoginUrl(): boolean {
