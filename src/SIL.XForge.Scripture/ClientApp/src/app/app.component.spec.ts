@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
@@ -112,10 +112,6 @@ describe('AppComponent', () => {
     ]
   }));
 
-  afterEach(fakeAsync(() => {
-    discardPeriodicTasks();
-  }));
-
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
@@ -130,7 +126,6 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(9);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project01')).once();
     tick();
-    discardPeriodicTasks();
   }));
 
   it('navigate to different project', fakeAsync(() => {
@@ -145,7 +140,6 @@ describe('AppComponent', () => {
     // Expect: Community Checking | Manage Questions | Overview | Sync | Settings | Users
     expect(env.menuLength).toEqual(6);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
-    discardPeriodicTasks();
   }));
 
   it('change project', fakeAsync(() => {
@@ -239,7 +233,6 @@ describe('AppComponent', () => {
     env.wait();
     verify(mockedPwaService.activateUpdates()).once();
     tick();
-    discardPeriodicTasks();
   }));
 
   it('user added to project after init', fakeAsync(() => {
@@ -252,7 +245,6 @@ describe('AppComponent', () => {
     env.wait();
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project04');
-    discardPeriodicTasks();
   }));
 
   it('user data is set for Bugsnag', fakeAsync(() => {
