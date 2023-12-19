@@ -260,10 +260,12 @@ class SFProjectMigration15 extends DocMigration {
     const ops: Op[] = [];
     for (let i = 0; i < doc.data.noteTags.length; i++) {
       const noteTag: NoteTag = doc.data.noteTags[i];
-      ops.push({ p: ['noteTags', i, 'creatorResolve'], od: noteTag.creatorResolve });
-      ops.push({ p: ['noteTags', i, 'creatorResolve'], oi: true });
+      if (!noteTag.creatorResolve) {
+        ops.push({ p: ['noteTags', i, 'creatorResolve'], od: noteTag.creatorResolve });
+        ops.push({ p: ['noteTags', i, 'creatorResolve'], oi: true });
+      }
     }
-    await submitMigrationOp(SFProjectMigration13.VERSION, doc, ops);
+    await submitMigrationOp(SFProjectMigration15.VERSION, doc, ops);
   }
 }
 
