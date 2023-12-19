@@ -6,7 +6,9 @@ using NSubstitute;
 using NUnit.Framework;
 using Serval.Client;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
@@ -37,7 +39,7 @@ public class PreTranslationServiceTests
                         new Pretranslation
                         {
                             TextId = "64_1",
-                            Refs = { "64_1:h_001" },
+                            Refs = { "64_1:mt1_001" },
                             Translation = "3 John",
                         },
                         new Pretranslation
@@ -71,11 +73,72 @@ public class PreTranslationServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(1, actual.Length);
-        Assert.AreEqual("3JN 1:1", actual.First().Reference);
+        Assert.AreEqual("verse_1_1", actual.First().Reference);
         Assert.AreEqual(
-            "By the old man, To my dear friend Gaius, whom I love in the truth:",
+            "By the old man, To my dear friend Gaius, whom I love in the truth: ",
             actual.First().Translation
         );
+    }
+
+    [Test]
+    public async Task GetPreTranslationsAsync_AllowsSegmentedVersesAndHeadingsWhenSendAllSegmentsTrue()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(sendAllSegments: true);
+        const int bookNum = 64;
+        const int chapterNum = 1;
+        string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
+        env.TranslationEnginesClient
+            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>(
+                    new List<Pretranslation>
+                    {
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:mt1_001" },
+                            Translation = "3 John",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001" },
+                            Translation = "By the old man,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001_001" },
+                            Translation = "To my dear friend Gaius,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001_002" },
+                            Translation = "whom I love in the truth:",
+                        },
+                    }
+                )
+            );
+
+        // SUT
+        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
+            User01,
+            Project01,
+            bookNum,
+            chapterNum,
+            CancellationToken.None
+        );
+        Assert.AreEqual(4, actual.Length);
+        Assert.AreEqual("mt1_1", actual[0].Reference);
+        Assert.AreEqual("3 John ", actual[0].Translation);
+        Assert.AreEqual("verse_1_1", actual[1].Reference);
+        Assert.AreEqual("By the old man, ", actual[1].Translation);
+        Assert.AreEqual("verse_1_1_1", actual[2].Reference);
+        Assert.AreEqual("To my dear friend Gaius, ", actual[2].Translation);
+        Assert.AreEqual("verse_1_1_2", actual[3].Reference);
+        Assert.AreEqual("whom I love in the truth: ", actual[3].Translation);
     }
 
     [Test]
@@ -167,21 +230,21 @@ public class PreTranslationServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(2, actual.Length);
-        Assert.AreEqual("MAT 1:1", actual.First().Reference);
+        Assert.AreEqual("verse_1_1", actual.First().Reference);
         Assert.AreEqual(
-            "The book of the birth of Jesus Christ, the son of David, the son of Abraham.",
+            "The book of the birth of Jesus Christ, the son of David, the son of Abraham. ",
             actual.First().Translation
         );
-        Assert.AreEqual("MAT 1:2", actual.Last().Reference);
+        Assert.AreEqual("verse_1_2", actual.Last().Reference);
         Assert.AreEqual(
-            "Abraham was the father of Isaac, Isaac was the father of James, and James was the father of Jude and his brethren.",
+            "Abraham was the father of Isaac, Isaac was the father of James, and James was the father of Jude and his brethren. ",
             actual.Last().Translation
         );
     }
 
     private class TestEnvironment
     {
-        public TestEnvironment()
+        public TestEnvironment(bool sendAllSegments = false)
         {
             var projectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
@@ -208,8 +271,19 @@ public class PreTranslationServiceTests
                     new SFProjectSecret { Id = Project02 },
                 }
             );
+
+            var realtimeService = new SFMemoryRealtimeService();
+            SFProject[] sfProjects =
+            {
+                new SFProject
+                {
+                    Id = Project01,
+                    TranslateConfig = new TranslateConfig { DraftConfig = { SendAllSegments = sendAllSegments, }, },
+                },
+            };
+            realtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
-            Service = new PreTranslationService(projectSecrets, TranslationEnginesClient);
+            Service = new PreTranslationService(projectSecrets, realtimeService, TranslationEnginesClient);
         }
 
         public PreTranslationService Service { get; }
