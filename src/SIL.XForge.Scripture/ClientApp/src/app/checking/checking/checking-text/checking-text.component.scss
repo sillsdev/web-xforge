@@ -1,6 +1,7 @@
 @import '../checking-global-vars';
 
 :host {
+  position: absolute;
   height: 100%;
   display: flex;
   overflow-y: auto;
