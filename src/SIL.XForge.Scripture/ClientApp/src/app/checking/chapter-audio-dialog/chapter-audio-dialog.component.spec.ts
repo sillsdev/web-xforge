@@ -528,7 +528,7 @@ describe('ChapterAudioDialogComponent', () => {
       .toContain('internet');
   }));
 
-  it('populate with existing data if available', fakeAsync(() => {
+  it('populate with existing data if available', async () => {
     const expectedBook = 1;
     const expectedChapter = 3;
     const config: MatDialogConfig<ChapterAudioDialogData> = {
@@ -540,13 +540,17 @@ describe('ChapterAudioDialogComponent', () => {
         currentChapter: expectedChapter
       }
     };
+    let result: ChapterAudioDialogResult;
 
     // Close the dialog opened from beforeEach
     env.closeDialog();
 
     env = new TestEnvironment(config);
-    tick();
-    env.fixture.detectChanges();
+    await env.wait();
+
+    env.dialogRef.afterClosed().subscribe((_result: ChapterAudioDialogResult) => {
+      result = _result;
+    });
 
     expect(env.component.book).toEqual(expectedBook);
     expect(env.component.chapter).toEqual(expectedChapter);
@@ -555,7 +559,14 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.chapterSelect.classList.contains('mat-select-disabled')).toBe(true);
     expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
     expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
-  }));
+
+    await env.component.prepareTimingFileUpload(anything());
+    await env.component.save();
+    await env.wait();
+
+    expect(result!.timingData.length).toBeGreaterThan(0);
+    expect(result!.timingData.every(t => t.to > 0)).toBe(true);
+  });
 });
 
 @NgModule({
@@ -638,7 +649,7 @@ class TestEnvironment {
     when(
       mockedFileService.uploadFile(
         FileType.Audio,
-        'project01',
+        anything(),
         TextAudioDoc.COLLECTION,
         anything(),
         anything(),
@@ -665,7 +676,8 @@ class TestEnvironment {
       dataCollection: TextAudioDoc.COLLECTION,
       filename: this.audioFile.fileName,
       blob: this.audioFile.blob,
-      url: this.audioFile.url
+      url: this.audioFile.url,
+      onlineUrl: this.audioFile.fileName
     } as FileOfflineData);
 
     this.shortAudioFile = {
