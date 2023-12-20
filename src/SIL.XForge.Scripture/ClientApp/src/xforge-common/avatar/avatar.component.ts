@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 
 type AvatarMode = 'image' | 'initials' | 'user_icon';
 
@@ -23,22 +22,22 @@ export class AvatarComponent implements OnChanges {
   avatarColorFromDisplayName?: string;
   initials?: string;
   mode: AvatarMode = 'user_icon';
-
-  constructor(readonly onlineStatusService: OnlineStatusService) {}
+  imageLoadFailed: boolean = false;
 
   ngOnChanges(): void {
     this.name = this.user?.displayName;
     this.avatarUrl = this.user?.avatarUrl;
-    this.avatarColorFromDisplayName = this.getAvatarColorFromDisplayName();
     this.mode = this.getMode();
   }
 
   getMode(): AvatarMode {
-    if (this.avatarUrl != null && this.avatarUrl !== '') {
+    if (this.avatarUrl && !this.imageLoadFailed) {
       return 'image';
     }
 
+    this.avatarColorFromDisplayName = this.getAvatarColorFromDisplayName();
     this.initials = this.getInitials();
+
     if (this.initials != null) {
       return 'initials';
     }
@@ -84,5 +83,10 @@ export class AvatarComponent implements OnChanges {
 
   getAvatarColorFromDisplayName(): string {
     return `hsl(${this.getAvatarHueFromDisplayName()}, 60%, 50%)`;
+  }
+
+  onImageError(): void {
+    this.imageLoadFailed = true;
+    this.mode = this.getMode();
   }
 }

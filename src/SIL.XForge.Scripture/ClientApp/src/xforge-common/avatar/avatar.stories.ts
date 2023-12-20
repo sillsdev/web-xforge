@@ -2,25 +2,35 @@ import { Meta, StoryObj } from '@storybook/angular';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { AvatarComponent } from './avatar.component';
 
-const meta: Meta<AvatarComponent> = {
+export default {
   title: 'Utility/Avatar',
-  component: AvatarComponent
-};
-export default meta;
+  component: AvatarComponent,
+  parameters: {
+    controls: {
+      include: ['user', 'size', 'borderColor']
+    }
+  },
+  args: {
+    size: 32
+  }
+} as Meta<AvatarComponent>;
 
 type Story = StoryObj<AvatarComponent>;
-
-export const Default: Story = {
-  args: {
-    user: createTestUserProfile()
-  }
-};
 
 export const WithImage: Story = {
   args: {
     user: createTestUserProfile({
-      avatarUrl: 'https://lh3.googleusercontent.com/a/AAcHTtcyQUN11i9S3aHfAPpIKzvsqjWOz3fKQnMfigwpklWc4q4=s96-c',
-      displayName: 'John Doe'
+      displayName: 'John Doe',
+      avatarUrl: 'https://cdn.drawception.com/drawings/O6Bfl1QP5R.png'
+    })
+  }
+};
+
+export const WithFailedImage: Story = {
+  args: {
+    user: createTestUserProfile({
+      displayName: 'John Doe',
+      avatarUrl: 'https://example.com/non-existent.png'
     })
   }
 };
@@ -40,6 +50,68 @@ export const WithThreeNames: Story = {
       displayName: 'John Doe Junior',
       avatarUrl: ''
     })
+  }
+};
+
+export const WithVariedSizes: Story = {
+  parameters: {
+    controls: {
+      include: []
+    }
+  },
+  render: () => ({
+    props: {
+      borderColor: 'blue',
+      user1: createTestUserProfile({
+        displayName: 'John Doe',
+        avatarUrl: ''
+      }),
+      user2: createTestUserProfile({
+        displayName: 'John Doe',
+        avatarUrl: 'https://cdn.drawception.com/drawings/O6Bfl1QP5R.png'
+      }),
+      user3: createTestUserProfile({
+        displayName: '李小龙',
+        avatarUrl: 'https://example.com/non-existent.png'
+      })
+    },
+    template: `
+      <style>
+        .set {
+          display: grid;
+          justify-content: start;
+          grid-template-columns: repeat(3, auto);
+          gap: 4px;
+          margin-bottom: 40px;
+        }
+      </style>
+
+      ${[24, 32, 40, 64, 96]
+        .map(
+          size => `
+        <h2>${size}px</h2>
+        <div class="set">
+          <app-avatar [user]="user1" [size]="${size}"></app-avatar>
+          <app-avatar [user]="user2" [size]="${size}"></app-avatar>
+          <app-avatar [user]="user3" [size]="${size}"></app-avatar>
+          <app-avatar [user]="user1" [size]="${size}" [borderColor]="borderColor"></app-avatar>
+          <app-avatar [user]="user2" [size]="${size}" [borderColor]="borderColor"></app-avatar>
+          <app-avatar [user]="user3" [size]="${size}" [borderColor]="borderColor"></app-avatar>
+        </div>
+      `
+        )
+        .join('')}
+    `
+  })
+};
+
+export const WithBorder: Story = {
+  args: {
+    user: createTestUserProfile({
+      displayName: 'John Doe',
+      avatarUrl: ''
+    }),
+    borderColor: 'blue'
   }
 };
 
