@@ -58,8 +58,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string projectRole = SFProjectRole.Viewer;
-        env.SFProjectService
-            .UpdateRoleAsync(User01, Roles, Project01, User02, projectRole)
+        env.SFProjectService.UpdateRoleAsync(User01, Roles, Project01, User02, projectRole)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -73,8 +72,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const string projectRole = SFProjectRole.Viewer;
         const string errorMessage = "Not Found";
-        env.SFProjectService
-            .UpdateRoleAsync(User01, Roles, Project01, User02, projectRole)
+        env.SFProjectService.UpdateRoleAsync(User01, Roles, Project01, User02, projectRole)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -88,8 +86,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string projectRole = SFProjectRole.Viewer;
-        env.SFProjectService
-            .UpdateRoleAsync(User01, Roles, Project01, User02, projectRole)
+        env.SFProjectService.UpdateRoleAsync(User01, Roles, Project01, User02, projectRole)
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -114,8 +111,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const bool preTranslate = true;
-        env.SFProjectService
-            .SetPreTranslateAsync(User01, Roles, Project01, preTranslate)
+        env.SFProjectService.SetPreTranslateAsync(User01, Roles, Project01, preTranslate)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -129,8 +125,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const bool preTranslate = true;
         const string errorMessage = "Not Found";
-        env.SFProjectService
-            .SetPreTranslateAsync(User01, Roles, Project01, preTranslate)
+        env.SFProjectService.SetPreTranslateAsync(User01, Roles, Project01, preTranslate)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -144,8 +139,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const bool preTranslate = true;
-        env.SFProjectService
-            .SetPreTranslateAsync(User01, Roles, Project01, preTranslate)
+        env.SFProjectService.SetPreTranslateAsync(User01, Roles, Project01, preTranslate)
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -170,8 +164,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const bool syncDisabled = true;
-        env.SFProjectService
-            .SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled)
+        env.SFProjectService.SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -185,8 +178,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const bool syncDisabled = true;
         const string errorMessage = "Not Found";
-        env.SFProjectService
-            .SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled)
+        env.SFProjectService.SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -200,8 +192,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const bool syncDisabled = true;
-        env.SFProjectService
-            .SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled)
+        env.SFProjectService.SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled)
             .Throws(new ArgumentNullException());
 
         // SUT
@@ -225,8 +216,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
-        env.SFProjectService
-            .SetServalConfigAsync(User01, Roles, Project01, servalConfig)
+        env.SFProjectService.SetServalConfigAsync(User01, Roles, Project01, servalConfig)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -240,8 +230,7 @@ public class SFProjectsRpcControllerTests
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
         const string errorMessage = "Not Found";
-        env.SFProjectService
-            .SetServalConfigAsync(User01, Roles, Project01, servalConfig)
+        env.SFProjectService.SetServalConfigAsync(User01, Roles, Project01, servalConfig)
             .Throws(new DataNotFoundException(errorMessage));
 
         // SUT
@@ -255,8 +244,7 @@ public class SFProjectsRpcControllerTests
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
-        env.SFProjectService
-            .SetServalConfigAsync(User01, Roles, Project01, servalConfig)
+        env.SFProjectService.SetServalConfigAsync(User01, Roles, Project01, servalConfig)
             .Throws(new ArgumentNullException());
 
         // SUT
