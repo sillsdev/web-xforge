@@ -132,10 +132,10 @@ header {
   #split-container {
     display: flex;
     flex: 1;
-    max-height: calc(100dvh - 194px);
+    max-height: calc(100vh - 194px);
 
     @include media-breakpoint('<', md) {
-      max-height: calc(100dvh - 180px);
+      max-height: calc(100vh - 180px);
     }
 
     > as-split {
