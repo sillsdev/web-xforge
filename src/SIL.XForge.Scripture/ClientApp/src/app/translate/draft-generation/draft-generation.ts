@@ -8,6 +8,7 @@ export interface BuildConfig {
   projectId: string;
   trainingBooks: number[];
   translationBooks: number[];
+  fastTraining: boolean;
 }
 
 /**
