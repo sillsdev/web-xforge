@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
-import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
-import { MatStepper, MatStepperModule } from '@angular/material/stepper';
+import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -9,7 +8,9 @@ import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { from } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
@@ -18,6 +19,7 @@ import { NllbLanguageService } from '../../nllb-language.service';
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
   translationBooks: number[];
+  fastTraining: boolean;
 }
 
 @Component({
@@ -28,8 +30,7 @@ export interface DraftGenerationStepsResult {
   imports: [
     CommonModule,
     SharedModule,
-    MatButtonModule,
-    MatStepperModule,
+    UICommonModule,
     TranslocoModule,
     TranslocoMarkupModule,
     BookMultiSelectComponent
@@ -60,8 +61,11 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   showBookSelectionError = false;
   isTrainingOptional = false;
 
+  fastTraining: boolean = false;
+
   constructor(
     private readonly activatedProject: ActivatedProjectService,
+    readonly featureFlags: FeatureFlagService,
     private readonly projectService: SFProjectService,
     private readonly nllbLanguageService: NllbLanguageService
   ) {
@@ -192,7 +196,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     } else {
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,
-        translationBooks: this.userSelectedTranslateBooks
+        translationBooks: this.userSelectedTranslateBooks,
+        fastTraining: this.fastTraining
       });
     }
   }

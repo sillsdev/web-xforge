@@ -623,11 +623,17 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
-      env.component.startBuild([], []);
+      env.component.startBuild({
+        trainingBooks: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: 'testProjectId'
+      });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
-        translationBooks: []
+        translationBooks: [],
+        fastTraining: false
       });
     });
 
@@ -641,11 +647,17 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([], []);
+      env.component.startBuild({
+        trainingBooks: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: 'testProjectId'
+      });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
-        translationBooks: []
+        translationBooks: [],
+        fastTraining: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -661,11 +673,17 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([], []);
+      env.component.startBuild({
+        trainingBooks: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: 'testProjectId'
+      });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
-        translationBooks: []
+        translationBooks: [],
+        fastTraining: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -681,11 +699,17 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([], []);
+      env.component.startBuild({
+        trainingBooks: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: 'testProjectId'
+      });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
-        translationBooks: []
+        translationBooks: [],
+        fastTraining: false
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -702,11 +726,17 @@ describe('DraftGenerationComponent', () => {
       when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild([], []);
+      env.component.startBuild({
+        trainingBooks: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: 'testProjectId'
+      });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
-        translationBooks: []
+        translationBooks: [],
+        fastTraining: false
       });
       verify(mockDialogRef.close()).once();
     });
