@@ -29,8 +29,7 @@ public class ParatextControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ParatextService
-            .GetRevisionHistoryAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter)
+        env.ParatextService.GetRevisionHistoryAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -59,8 +58,7 @@ public class ParatextControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ParatextService
-            .GetRevisionHistoryAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter)
+        env.ParatextService.GetRevisionHistoryAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter)
             .Throws(new DataNotFoundException("Not Found"));
 
         // SUT
@@ -97,8 +95,7 @@ public class ParatextControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ParatextService
-            .GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
+        env.ParatextService.GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -135,8 +132,7 @@ public class ParatextControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ParatextService
-            .GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
+        env.ParatextService.GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
             .Throws(new DataNotFoundException("Not Found"));
 
         // SUT

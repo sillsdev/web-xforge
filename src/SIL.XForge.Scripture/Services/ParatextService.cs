@@ -1959,8 +1959,8 @@ public class ParatextService : DisposableBase, IParatextService
             VersionedText versionedText = VersioningManager.Get(scrText);
             HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
             DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp, TimeSpan.Zero);
-            HgRevision? revision = revisionCollection.MutableCollection
-                .Where(r => r.CommitTimeStamp <= timeStampOffset)
+            HgRevision? revision = revisionCollection
+                .MutableCollection.Where(r => r.CommitTimeStamp <= timeStampOffset)
                 .MaxBy(r => r.CommitTimeStamp);
 
             // No revision was before than the timestamp, so get the first revision
