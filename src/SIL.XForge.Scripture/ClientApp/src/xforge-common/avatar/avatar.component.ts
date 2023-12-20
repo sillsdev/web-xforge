@@ -17,7 +17,6 @@ export class AvatarComponent implements OnChanges {
   @Input() size: number = 32;
   @Input() user?: UserProfile;
   @Input() borderColor: string = 'transparent';
-  @Input() showOnlineStatus: boolean = true;
 
   name?: string;
   avatarUrl?: string;
