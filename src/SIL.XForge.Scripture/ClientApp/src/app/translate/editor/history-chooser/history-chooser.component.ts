@@ -15,6 +15,10 @@ import { ParatextService, Revision } from '../../../core/paratext.service';
   styleUrls: ['./history-chooser.component.scss']
 })
 export class HistoryChooserComponent extends DataLoadingComponent implements OnInit {
+  appOnline: boolean = false;
+  showHistory: boolean = false;
+  historyRevisions: Revision[] = [];
+
   private _bookNum?: number;
   private bookNum$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   private _chapter?: number;
@@ -26,10 +30,6 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
   private _snapshot$ = new BehaviorSubject<Snapshot<TextData> | undefined>(undefined);
   private _showDiff: boolean = false;
   private _showDiff$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-
-  appOnline: boolean = false;
-  showHistory: boolean = false;
-  historyRevisions: Revision[] = [];
 
   constructor(
     private readonly i18n: I18nService,
@@ -134,6 +134,8 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
   async loadHistory(): Promise<void> {
     if (this._projectId != null && this._bookNum != null && this._chapter != null) {
       this.loadingStarted();
+      // Clear the history revisions, so the revisions from the previous book or chapter are not visible while awaiting
+      // the getRevisions API callback.
       this.historyRevisions = [];
       this.historyRevisions =
         (await this.paratextService.getRevisions(
