@@ -135,7 +135,18 @@
             <!-- Splitter area sizes are controlled programmatically. -->
             <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize" [dir]="i18n.direction">
               <div class="panel-content" #scripturePanelContainer>
-                <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
+                <div class="scripture">
+                  <app-checking-text
+                    #textPanel
+                    [id]="textDocId"
+                    [fontSize]="scriptureFontSize"
+                    [activeVerse]="activeQuestionVerseRef"
+                    [questionVerses]="questionVerseRefs"
+                    (questionVerseSelected)="verseRefClicked($event)"
+                    [isRightToLeft]="isRightToLeft"
+                    [class.hidden]="hideChapterText"
+                  ></app-checking-text>
+                </div>
                 <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
                   <app-checking-scripture-audio-player
                     [source]="chapterAudioSource"
@@ -146,16 +157,6 @@
                     (closed)="hideChapterAudio()"
                   ></app-checking-scripture-audio-player>
                 </div>
-                <app-checking-text
-                  #textPanel
-                  [id]="textDocId"
-                  [fontSize]="scriptureFontSize"
-                  [activeVerse]="activeQuestionVerseRef"
-                  [questionVerses]="questionVerseRefs"
-                  (questionVerseSelected)="verseRefClicked($event)"
-                  [isRightToLeft]="isRightToLeft"
-                  [class.hidden]="hideChapterText"
-                ></app-checking-text>
               </div>
             </as-split-area>
             <as-split-area [size]="0" [dir]="i18n.direction">
