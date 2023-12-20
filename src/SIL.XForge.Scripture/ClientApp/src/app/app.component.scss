@@ -171,6 +171,15 @@ header {
   }
 }
 
+.offline-indicator {
+  position: absolute;
+  bottom: 0;
+  inset-inline-end: 0;
+  direction: inherit; // needed to override direction: rtl from .material-icons
+  font-size: 12px;
+  color: white;
+}
+
 ::ng-deep .mat-menu-item.report-issue {
   display: flex;
   flex-direction: column;

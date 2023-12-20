@@ -14,7 +14,4 @@
   />
   <mat-icon *ngIf="mode === 'user_icon'" class="user-icon">account_circle</mat-icon>
   <div *ngIf="mode === 'initials'" class="initials">{{ initials }}</div>
-  <mat-icon class="offline-indicator" *ngIf="showOnlineStatus && (onlineStatusService.onlineStatus$ | async) === false">
-    cloud_off
-  </mat-icon>
 </div>
