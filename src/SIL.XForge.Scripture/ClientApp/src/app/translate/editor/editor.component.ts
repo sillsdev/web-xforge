@@ -1368,7 +1368,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     let bounds = elem.getBoundingClientRect();
     // add bottom padding
     let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    this.targetSplitHeight = `calc(100dvh - ${top}px)`;
+    this.targetSplitHeight = `calc(100vh - ${top}px)`;
 
     // Do the same for the source, as it will not have warnings like the target
     if (this.source == null || this.sourceSplitContainer == null) {
@@ -1377,7 +1377,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     elem = this.sourceSplitContainer.nativeElement;
     bounds = elem.getBoundingClientRect();
     top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    this.sourceSplitHeight = `calc(100dvh - ${top}px)`;
+    this.sourceSplitHeight = `calc(100vh - ${top}px)`;
   }
 
   private async changeText(): Promise<void> {

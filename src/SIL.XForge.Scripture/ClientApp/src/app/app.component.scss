@@ -7,7 +7,7 @@ $toolbar-height: 56px;
 // Set height of the app to 100% so that the app will fill the entire screen.
 // Don't use 100vh because that will cause the app to be too tall on mobile devices when the browser's address bar is
 // visible.
-// Newer browsers support dvh (dynamic viewport height) units, starting with Safari 15.4 and Chrome 108.
+// Newer browsers support dvh (dynamic viewport height) units, but they are not supported in Safari 15.4 and Chrome 108.
 // Setting the height to 100% seems to work just as well.
 ::ng-deep html,
 ::ng-deep body,
