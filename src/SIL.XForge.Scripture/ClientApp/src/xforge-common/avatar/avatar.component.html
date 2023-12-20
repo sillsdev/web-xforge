@@ -10,6 +10,7 @@
     [alt]="name"
     [width]="size"
     [height]="size"
+    (error)="onImageError()"
     referrerpolicy="no-referrer"
   />
   <mat-icon *ngIf="mode === 'user_icon'" class="user-icon">account_circle</mat-icon>

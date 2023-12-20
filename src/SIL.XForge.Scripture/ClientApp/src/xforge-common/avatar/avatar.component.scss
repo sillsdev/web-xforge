@@ -6,8 +6,9 @@
   overflow: hidden;
   width: var(--avatar-size);
   height: var(--avatar-size);
-  border: 1px solid var(--avatar-border-color);
+  border: 0.05em solid var(--avatar-border-color);
   box-sizing: content-box;
+  font-size: var(--avatar-size);
 }
 
 .initials {
@@ -18,13 +19,14 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+  font-size: 0.5em;
 }
 
 .user-icon {
   width: 100%;
   height: 100%;
-  font-size: var(--avatar-size);
   color: var(--avatar-color);
   scale: 1.25;
   line-height: 1em;
+  font-size: 1em;
 }
