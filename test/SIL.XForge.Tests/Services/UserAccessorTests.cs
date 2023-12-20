@@ -117,9 +117,14 @@ public class UserAccessorTests
     public void UserAccessor_SystemRoles_MultipleRoles()
     {
         var env = new TestEnvironment();
-        const string role = $"{SystemRole.SystemAdmin},{SystemRole.User}";
         env.HttpContextAccessor.HttpContext!.User = new ClaimsPrincipal(
-            new ClaimsIdentity(new[] { new Claim(XFClaimTypes.Role, role) })
+            new ClaimsIdentity(
+                new[]
+                {
+                    new Claim(XFClaimTypes.Role, SystemRole.SystemAdmin),
+                    new Claim(XFClaimTypes.Role, SystemRole.User),
+                }
+            )
         );
 
         // SUT

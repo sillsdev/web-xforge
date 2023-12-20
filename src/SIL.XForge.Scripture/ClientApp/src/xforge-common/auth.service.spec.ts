@@ -249,6 +249,31 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
+  it('should handle a role array', fakeAsync(() => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isNewlyLoggedIn: true,
+      auth0Response: {
+        token: {
+          id_token: '12345',
+          access_token: TestEnvironment.encodeAccessToken({
+            [XF_ROLE_CLAIM]: [SystemRole.SystemAdmin, SystemRole.User],
+            [XF_USER_ID_CLAIM]: TestEnvironment.userId
+          }),
+          expires_in: 720
+        },
+        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
+        loginResult: {
+          appState: JSON.stringify({ returnUrl: '' })
+        }
+      }
+    });
+
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
+    expect(env.localSettings.get(ROLES_SETTING)).toEqual([SystemRole.SystemAdmin, SystemRole.User]);
+    env.discardTokenExpiryTimer();
+  }));
+
   it('should renew tokens if expired and authenticating', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
     expect(env.isAuthenticated).toBe(true);
@@ -683,7 +708,7 @@ interface TestEnvironmentConstructorArgs {
 }
 
 interface Auth0AccessToken {
-  [XF_ROLE_CLAIM]?: SystemRole;
+  [XF_ROLE_CLAIM]?: SystemRole | SystemRole[];
   [XF_USER_ID_CLAIM]?: string;
 }
 

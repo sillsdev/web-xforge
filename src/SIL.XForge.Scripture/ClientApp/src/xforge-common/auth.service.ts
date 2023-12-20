@@ -642,7 +642,7 @@ export class AuthService {
   private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {
     const claims: any = jwtDecode(accessToken);
     const prevUserId: string | undefined = this.currentUserId;
-    const role: string | undefined = claims[XF_ROLE_CLAIM];
+    const role: string | string[] | undefined = claims[XF_ROLE_CLAIM];
     const userId: string | undefined = claims[XF_USER_ID_CLAIM];
     if (prevUserId != null && prevUserId !== userId) {
       await this.offlineStore.deleteDB();
@@ -655,7 +655,7 @@ export class AuthService {
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.remove(ROLE_SETTING);
-    this.localSettings.set(ROLES_SETTING, role == null ? [] : role.split(','));
+    this.localSettings.set(ROLES_SETTING, typeof role === 'string' ? [role] : role || []);
     this.scheduleRenewal();
     this.bugsnagService.leaveBreadcrumb(
       'Local Login',

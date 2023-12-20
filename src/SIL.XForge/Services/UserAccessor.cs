@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Security.Claims;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +29,6 @@ public class UserAccessor : IUserAccessor
         }
     }
     public string[] SystemRoles =>
-        (User?.FindFirst(XFClaimTypes.Role)?.Value ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries);
+        User?.FindAll(XFClaimTypes.Role).Select(c => c.Value).ToArray() ?? Array.Empty<string>();
     public string UserId => User?.FindFirst(XFClaimTypes.UserId)?.Value ?? string.Empty;
 }
