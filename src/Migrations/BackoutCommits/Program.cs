@@ -118,9 +118,9 @@ public class Program
         foreach (CommitData commit in relevantCommits)
         {
             foreach (
-                string notesFile in commit
-                    .Files
-                    .Where(f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0)
+                string notesFile in commit.Files.Where(
+                    f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0
+                )
             )
             {
                 ProblemCommit problemCommit = await ProcessNotesFileAsync(commit, notesFile);
@@ -174,9 +174,7 @@ public class Program
         }
 
         string adminUser = projectDoc
-            .Data
-            .UserRoles
-            .Where(ur => ur.Value == SFProjectRole.Administrator)
+            .Data.UserRoles.Where(ur => ur.Value == SFProjectRole.Administrator)
             .Select(ur => projectDoc.Data.ParatextUsers.SingleOrDefault(pu => pu.SFUserId == ur.Key)?.Username)
             .FirstOrDefault(user => !string.IsNullOrEmpty(user));
         if (string.IsNullOrEmpty(adminUser))

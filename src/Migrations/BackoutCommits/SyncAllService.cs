@@ -72,8 +72,7 @@ public class SyncAllService : ISyncAllService
                     + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}."
             );
             List<string> projectSfAdminUserIds = sfProject
-                .UserRoles
-                .Where(ur => ur.Value == SFProjectRole.Administrator)
+                .UserRoles.Where(ur => ur.Value == SFProjectRole.Administrator)
                 .Select(ur => ur.Key)
                 .ToList<string>();
             if (projectSfAdminUserIds.Count < 1)

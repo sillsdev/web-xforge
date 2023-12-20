@@ -196,10 +196,7 @@ namespace PTDDCloneAll
                     {
                         // Add new users who are in the target project, but not the source project
                         List<string> usersToAdd = _projectDoc
-                            .Data
-                            .UserRoles
-                            .Keys
-                            .Except(sourceProject.Data.UserRoles.Keys)
+                            .Data.UserRoles.Keys.Except(sourceProject.Data.UserRoles.Keys)
                             .ToList();
                         foreach (string uid in usersToAdd)
                         {
@@ -437,8 +434,7 @@ namespace PTDDCloneAll
             var oldUsxDoc = XDocument.Parse(bookText);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
                 oldUsxDoc,
-                text.Chapters
-                    .OrderBy(c => c.Number)
+                text.Chapters.OrderBy(c => c.Number)
                     .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data))
             );
 

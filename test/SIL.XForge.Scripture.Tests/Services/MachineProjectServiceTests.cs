@@ -94,8 +94,7 @@ public class MachineProjectServiceTests
         await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -162,8 +161,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -181,8 +179,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -203,8 +200,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .CreateAsync(
                 Arg.Is<TranslationEngineConfig>(
                     t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
@@ -218,8 +214,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(new TestEnvironmentOptions());
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine02, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine02, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
         string sourceLanguage = env.Projects.Get(Project02).TranslateConfig.Source!.WritingSystem.Tag;
         string targetLanguage = env.Projects.Get(Project02).WritingSystem.Tag;
@@ -233,8 +228,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .CreateAsync(
                 Arg.Is<TranslationEngineConfig>(
                     t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
@@ -260,8 +254,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .CreateAsync(
                 Arg.Is<TranslationEngineConfig>(
                     t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == sourceLanguage
@@ -293,16 +286,13 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
 
         // Ensure no methods that update the corpus or files were called
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
                 TranslationEngine02,
                 Corpus02,
@@ -310,11 +300,9 @@ public class MachineProjectServiceTests
                 CancellationToken.None
             );
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
-        await env.DataFilesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None);
         Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueuedAt);
@@ -334,8 +322,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -373,8 +360,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -392,11 +378,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -409,13 +393,11 @@ public class MachineProjectServiceTests
         );
 
         // Make the Serval API return the error code for a missing translation engine
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine02, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine02, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
         // Return the correctly created corpus
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
+        env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
             .Returns(
                 args =>
                     Task.FromResult(
@@ -437,11 +419,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -455,8 +435,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true);
 
         // Make the Serval API return the error code for a missing translation engine
-        env.DataFilesClient
-            .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None)
+        env.DataFilesClient.UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
@@ -467,11 +446,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.DataFilesClient
-            .Received()
+        await env.DataFilesClient.Received()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
     }
 
@@ -511,8 +488,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         project = env.Projects.Get(Project03);
         Assert.IsNotNull(project.WritingSystem.Tag);
@@ -528,8 +504,7 @@ public class MachineProjectServiceTests
         );
 
         // Make the Serval API return the error code for a missing translation engine
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine02, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine02, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationEngine
@@ -551,12 +526,10 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         await env.TranslationEnginesClient.Received().DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -574,8 +547,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient
-            .Received()
+        await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -606,8 +578,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
-        env.TranslationEnginesClient
-            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
             .Throws(new TaskCanceledException());
 
         // SUT
@@ -652,8 +623,7 @@ public class MachineProjectServiceTests
 
         // Ensure that the translation engine, corpus and any files are deleted
         await env.TranslationEnginesClient.Received(1).DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .DeleteCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync(File01, CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync(File02, CancellationToken.None);
@@ -669,11 +639,9 @@ public class MachineProjectServiceTests
         await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         // Ensure that the translation engine, corpus and any files were not deleted
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(File01, CancellationToken.None);
     }
@@ -688,11 +656,9 @@ public class MachineProjectServiceTests
         await env.Service.RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         // Ensure that the translation engine, corpus and any files were not deleted
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteAsync(TranslationEngine01, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(TranslationEngine01, Corpus01, CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(File01, CancellationToken.None);
     }
@@ -758,8 +724,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .AddCorpusAsync(
                 Arg.Any<string>(),
                 Arg.Is<TranslationCorpusConfig>(
@@ -768,8 +733,7 @@ public class MachineProjectServiceTests
                 CancellationToken.None
             );
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .Received(1)
+        await env.DataFilesClient.Received(1)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).ServalData?.Corpora[Corpus01].SourceFiles.Count);
     }
@@ -794,8 +758,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .AddCorpusAsync(
                 Arg.Any<string>(),
                 Arg.Is<TranslationCorpusConfig>(
@@ -804,8 +767,7 @@ public class MachineProjectServiceTests
                 CancellationToken.None
             );
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .Received(1)
+        await env.DataFilesClient.Received(1)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).ServalData?.Corpora[Corpus01].SourceFiles.Count);
     }
@@ -828,8 +790,7 @@ public class MachineProjectServiceTests
         );
         Assert.IsTrue(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .ReceivedWithAnyArgs(1)
+        await env.DataFilesClient.ReceivedWithAnyArgs(1)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, string.Empty, CancellationToken.None);
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].SourceFiles.Count);
         Assert.AreEqual(0, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].TargetFiles.Count);
@@ -853,8 +814,7 @@ public class MachineProjectServiceTests
         );
         Assert.IsFalse(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
     }
 
@@ -872,11 +832,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsFalse(actual);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
                 TranslationEngine02,
                 Corpus01,
@@ -901,11 +859,9 @@ public class MachineProjectServiceTests
         );
         Assert.IsFalse(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
-        await env.DataFilesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None);
     }
 
@@ -917,8 +873,11 @@ public class MachineProjectServiceTests
         await env.BeforeFirstSync(Project01);
 
         // Make adding the corpus to fail due to an API issue
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.AddCorpusAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationCorpusConfig>(),
+            CancellationToken.None
+        )
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -950,8 +909,7 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsFalse(actual);
-        await env.TextCorpusFactory
-            .Received(1)
+        await env.TextCorpusFactory.Received(1)
             .CreateAsync(
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Target,
@@ -961,8 +919,7 @@ public class MachineProjectServiceTests
                     b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
                 )
             );
-        await env.TextCorpusFactory
-            .Received(1)
+        await env.TextCorpusFactory.Received(1)
             .CreateAsync(
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Source,
@@ -1010,12 +967,10 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.DataFilesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .ReceivedWithAnyArgs(1)
+        await env.DataFilesClient.ReceivedWithAnyArgs(1)
             .UpdateAsync("File03", Arg.Any<FileParameter>(), CancellationToken.None);
     }
 
@@ -1061,8 +1016,7 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync("File04", CancellationToken.None);
-        await env.DataFilesClient
-            .Received(2)
+        await env.DataFilesClient.Received(2)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, "textId", CancellationToken.None);
     }
 
@@ -1130,8 +1084,7 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
 
         // Check for the generation of the training source
-        await env.TextCorpusFactory
-            .Received(1)
+        await env.TextCorpusFactory.Received(1)
             .CreateAsync(
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Source,
@@ -1141,8 +1094,7 @@ public class MachineProjectServiceTests
             );
 
         // Check for the generation of the alternate training source
-        await env.TextCorpusFactory
-            .Received(1)
+        await env.TextCorpusFactory.Received(1)
             .CreateAsync(
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Source,
@@ -1152,8 +1104,7 @@ public class MachineProjectServiceTests
             );
 
         // The target is shared between the two corpora, so it will only be generated once
-        await env.TextCorpusFactory
-            .Received(1)
+        await env.TextCorpusFactory.Received(1)
             .CreateAsync(
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Target,
@@ -1173,8 +1124,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02);
 
         // Make the Serval API return the error code for a missing translation engine
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+        env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
@@ -1185,14 +1135,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -1211,8 +1158,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02);
 
         // Make the Serval API return the error code for a missing translation engine
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+        env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
             .Returns(
                 args =>
                     Task.FromResult(
@@ -1233,14 +1179,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -1254,8 +1197,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
@@ -1273,8 +1215,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
@@ -1308,8 +1249,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationEngine
@@ -1336,8 +1276,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationEngine
@@ -1364,8 +1303,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationEngine
@@ -1392,8 +1330,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.InternalServerError);
 
         // SUT

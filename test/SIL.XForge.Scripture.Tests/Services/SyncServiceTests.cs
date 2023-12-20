@@ -237,8 +237,7 @@ public class SyncServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
-        await env.RealtimeService
-            .GetRepository<SFProject>()
+        await env.RealtimeService.GetRepository<SFProject>()
             .UpdateAsync(
                 p => p.Id == "project03",
                 u => u.Set(pr => pr.TranslateConfig.TranslationSuggestionsEnabled, false)

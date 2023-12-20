@@ -16,8 +16,7 @@ public class JwtInternetSharedRepositorySourceTests
     public void CanUserAuthenticateToPTArchives_Works()
     {
         var env = new TestEnvironment();
-        env.MockPTArchivesClient
-            .Configure()
+        env.MockPTArchivesClient.Configure()
             .Get(Arg.Any<string>())
             .Returns(
                 _ =>
@@ -29,8 +28,7 @@ public class JwtInternetSharedRepositorySourceTests
         // One SUT
         Assert.That(env.RepoSource.CanUserAuthenticateToPTArchives(), Is.False, "problem when using server");
 
-        env.MockPTArchivesClient
-            .Configure()
+        env.MockPTArchivesClient.Configure()
             .Get(Arg.Any<string>())
             .Returns(
                 "<repos><repo><proj>ABCD</proj><projid>4011111111111111111111111111111111111111"

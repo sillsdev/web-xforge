@@ -27,8 +27,7 @@ public class AnonymousServiceTests
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
         env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(projectSecret);
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(project));
-        env.SFProjectService
-            .CheckShareKeyValidity(shareKey)
+        env.SFProjectService.CheckShareKeyValidity(shareKey)
             .Returns(
                 Task.FromResult(
                     new ValidShareKey()
@@ -67,8 +66,7 @@ public class AnonymousServiceTests
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
         env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(projectSecret);
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(project));
-        env.SFProjectService
-            .CheckShareKeyValidity(shareKey)
+        env.SFProjectService.CheckShareKeyValidity(shareKey)
             .Returns(
                 Task.FromResult(
                     new ValidShareKey()
@@ -142,8 +140,7 @@ public class AnonymousServiceTests
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
         env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
-        env.SFProjectService
-            .CheckShareKeyValidity(shareKey)
+        env.SFProjectService.CheckShareKeyValidity(shareKey)
             .Returns(
                 Task.FromResult(
                     new ValidShareKey()

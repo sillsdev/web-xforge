@@ -104,8 +104,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .CancelBuildAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.CancelBuildAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.NotSupported);
 
         // SUT
@@ -147,8 +146,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Builds
-            .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
+        env.Builds.GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
             .Returns(Task.FromResult<Build>(null));
 
         // SUT
@@ -173,8 +171,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
-        env.Builds
-            .SubscribeAsync(Build01, CancellationToken.None)
+        env.Builds.SubscribeAsync(Build01, CancellationToken.None)
             .Returns(Task.FromResult(new Subscription<Build>(Build01, null, _ => { })));
 
         // SUT
@@ -199,8 +196,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const int minRevision = 0;
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-        env.TranslationEnginesClient
-            .GetBuildAsync(TranslationEngine01, Build01, minRevision, CancellationToken.None)
+        env.TranslationEnginesClient.GetBuildAsync(TranslationEngine01, Build01, minRevision, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
@@ -224,8 +220,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-        env.TranslationEnginesClient
-            .GetBuildAsync(TranslationEngine01, Build01, null, CancellationToken.None)
+        env.TranslationEnginesClient.GetBuildAsync(TranslationEngine01, Build01, null, CancellationToken.None)
             .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
@@ -339,8 +334,7 @@ public class MachineApiServiceTests
         const double percentCompleted = 0.95;
         const int revision = 553;
         const string state = "ACTIVE";
-        env.Builds
-            .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
+        env.Builds.GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new Build
@@ -387,8 +381,12 @@ public class MachineApiServiceTests
         const double percentCompleted = 0.95;
         const int revision = 553;
         const JobState state = JobState.Active;
-        env.TranslationEnginesClient
-            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetBuildAsync(
+            TranslationEngine01,
+            Build01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -444,8 +442,12 @@ public class MachineApiServiceTests
         const string corpusId1 = "corpusId1";
         const string corpusId2 = "corpusId2";
         const int step = 123;
-        env.TranslationEnginesClient
-            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetBuildAsync(
+            TranslationEngine01,
+            Build01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -513,8 +515,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetBuildAsync(
+            TranslationEngine01,
+            Build01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Returns(Task.FromResult(new TranslationBuild()));
 
         // SUT
@@ -528,11 +534,9 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.Builds
-            .DidNotReceiveWithAnyArgs()
+        await env.Builds.DidNotReceiveWithAnyArgs()
             .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None);
     }
 
@@ -554,8 +558,7 @@ public class MachineApiServiceTests
         );
 
         await env.Builds.Received(1).GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None);
     }
 
@@ -565,8 +568,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Builds
-            .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
+        env.Builds.GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<Build>(null));
 
         // SUT
@@ -590,8 +592,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
-        env.Builds
-            .SubscribeByEngineIdAsync(TranslationEngine01, CancellationToken.None)
+        env.Builds.SubscribeByEngineIdAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult(new Subscription<Build>(TranslationEngine01, null, _ => { })));
 
         // SUT
@@ -615,8 +616,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const int minRevision = 0;
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-        env.TranslationEnginesClient
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision, CancellationToken.None)
+        env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, minRevision, CancellationToken.None)
             .Throws(ServalApiExceptions.NoContent);
 
         // SUT
@@ -639,8 +639,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-        env.TranslationEnginesClient
-            .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
+        env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
             .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
@@ -724,8 +723,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -773,8 +771,7 @@ public class MachineApiServiceTests
         const double percentCompleted = 0.95;
         const int revision = 553;
         const string state = "ACTIVE";
-        env.Builds
-            .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
+        env.Builds.GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new Build
@@ -820,8 +817,11 @@ public class MachineApiServiceTests
         const double percentCompleted = 0.95;
         const int revision = 553;
         const JobState state = JobState.Active;
-        env.TranslationEnginesClient
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetCurrentBuildAsync(
+            TranslationEngine01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -869,11 +869,13 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
-        env.TranslationEnginesClient
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetCurrentBuildAsync(
+            TranslationEngine01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Throws(ServalApiExceptions.NoContent);
-        env.TranslationEnginesClient
-            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
                     new List<TranslationBuild>
@@ -920,11 +922,13 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetCurrentBuildAsync(
+            TranslationEngine01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Throws(ServalApiExceptions.NoContent);
-        env.TranslationEnginesClient
-            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>(new List<TranslationBuild>()));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -947,8 +951,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+        env.TranslationEnginesClient.GetCurrentBuildAsync(
+            TranslationEngine01,
+            minRevision: null,
+            CancellationToken.None
+        )
             .Returns(Task.FromResult(new TranslationBuild()));
 
         // SUT
@@ -961,11 +968,9 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.Builds
-            .DidNotReceiveWithAnyArgs()
+        await env.Builds.DidNotReceiveWithAnyArgs()
             .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
     }
 
@@ -985,11 +990,9 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.Builds
-            .Received(1)
+        await env.Builds.Received(1)
             .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
     }
 
@@ -1037,8 +1040,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -1052,11 +1054,9 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.InternalServerError);
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult(new Engine()));
 
         // SUT
@@ -1071,8 +1071,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
@@ -1099,8 +1098,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -1115,11 +1113,9 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult(new Engine()));
 
         // SUT
@@ -1137,8 +1133,7 @@ public class MachineApiServiceTests
         const string targetLanguageTag = "en_NZ";
         const double confidence = 0.96;
         const int corpusSize = 472;
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new Engine
@@ -1178,8 +1173,7 @@ public class MachineApiServiceTests
         const string targetLanguageTag = "en_NZ";
         const double confidence = 96.0;
         const int corpusSize = 472;
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationEngine
@@ -1218,11 +1212,9 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult(new TranslationEngine()));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult(new Engine()));
 
         // SUT
@@ -1237,8 +1229,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
                     new List<TranslationBuild>
@@ -1370,8 +1361,7 @@ public class MachineApiServiceTests
         const double percentCompleted = 0;
         const int revision = 43;
         const JobState state = JobState.Completed;
-        env.TranslationEnginesClient
-            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
                     new List<TranslationBuild>
@@ -1415,8 +1405,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService
-            .GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
             .Throws(ServalApiExceptions.EngineNotBuilt);
 
         // SUT
@@ -1467,8 +1456,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService
-            .GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -1484,8 +1472,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const string reference = "MAT 1:1";
         const string translation = "The book of the generations of Jesus Christ, the son of David, the son of Abraham.";
-        env.PreTranslationService
-            .GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new PreTranslation[]
@@ -1552,8 +1539,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -1580,8 +1566,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -1596,11 +1581,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(ServalApiExceptions.EngineNotBuilt);
-        env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.GetWordGraphAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(Task.FromResult(new MachineWordGraph(Array.Empty<MachineWordGraphArc>(), Array.Empty<int>())));
 
         // SUT
@@ -1614,11 +1600,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.GetWordGraphAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(Task.FromResult(new MachineWordGraph(Array.Empty<MachineWordGraphArc>(), Array.Empty<int>())));
 
         // SUT
@@ -1633,8 +1620,10 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const float initialStateScore = -91.43696f;
-        env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.GetWordGraphAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(
                 Task.FromResult(
                     new MachineWordGraph(
@@ -1672,8 +1661,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const float initialStateScore = -91.43696f;
-        env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new WordGraph
@@ -1701,21 +1689,20 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, Segment)
+        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment)
             .Returns(Task.FromResult(new WordGraph()));
-        env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.GetWordGraphAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(Task.FromResult(new MachineWordGraph()));
 
         // SUT
         _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
 
-        await env.EngineService
-            .Received(1)
+        await env.EngineService.Received(1)
             .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None);
     }
 
@@ -1724,8 +1711,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, Segment)
+        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment)
             .Throws(ServalApiExceptions.EngineNotBuilt);
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -1856,8 +1842,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -1871,11 +1856,13 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineProjectService
-            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
+        env.MachineProjectService.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine01));
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -1889,15 +1876,18 @@ public class MachineApiServiceTests
             );
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
         // The following substitution is Serval stating that a translation engine SF expects to exist has been removed
-        env.MachineProjectService
-            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
+        env.MachineProjectService.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        )
             .Returns(Task.FromResult(false));
 
         // SUT
         await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
-        await env.MachineProjectService
-            .Received(1)
+        await env.MachineProjectService.Received(1)
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
     }
 
@@ -1907,19 +1897,21 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
-        env.MachineProjectService
-            .TranslationEngineExistsAsync(Project01, TranslationEngine01, preTranslate: false, CancellationToken.None)
+        env.MachineProjectService.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        )
             .Throws(ServalApiExceptions.InternalServerError);
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
         // SUT
         await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
-        await env.MachineProjectService
-            .DidNotReceiveWithAnyArgs()
+        await env.MachineProjectService.DidNotReceiveWithAnyArgs()
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
     }
@@ -1929,11 +1921,13 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineProjectService
-            .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None)
+        env.MachineProjectService.AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None)
             .Returns(Task.FromResult(TranslationEngine01));
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -1950,8 +1944,7 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.StartBuildAsync(User01, Project03, includeAdditionalInfo: false, CancellationToken.None);
 
-        await env.MachineProjectService
-            .Received(1)
+        await env.MachineProjectService.Received(1)
             .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
     }
 
@@ -1973,8 +1966,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -1989,8 +1985,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Throws(ServalApiExceptions.Forbidden);
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
@@ -2005,8 +2004,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Throws(new BrokenCircuitException());
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
@@ -2026,8 +2028,7 @@ public class MachineApiServiceTests
         const double percentCompleted = 0.01;
         const int revision = 2;
         const string state = "ACTIVE";
-        env.EngineService
-            .StartBuildAsync(TranslationEngine01)
+        env.EngineService.StartBuildAsync(TranslationEngine01)
             .Returns(
                 Task.FromResult(
                     new Build
@@ -2070,8 +2071,11 @@ public class MachineApiServiceTests
         const double percentCompleted = 0.01;
         const int revision = 2;
         const JobState state = JobState.Active;
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -2096,8 +2100,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.MachineProjectService
-            .Received(1)
+        await env.MachineProjectService.Received(1)
             .SyncProjectCorporaAsync(
                 User01,
                 Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
@@ -2119,8 +2122,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
             .Returns(Task.FromResult(new TranslationBuild()));
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
@@ -2128,16 +2134,14 @@ public class MachineApiServiceTests
         _ = await env.Service.StartBuildAsync(User01, Project01, includeAdditionalInfo: false, CancellationToken.None);
 
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
-        await env.MachineProjectService
-            .Received(1)
+        await env.MachineProjectService.Received(1)
             .SyncProjectCorporaAsync(
                 User01,
                 Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
                 preTranslate: false,
                 CancellationToken.None
             );
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -2154,8 +2158,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService
-            .Received(1)
+        await env.SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -2189,11 +2192,9 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService
-            .Received(1)
+        await env.SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
-        await env.SyncService
-            .Received(1)
+        await env.SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -2357,8 +2358,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService
-            .Received(1)
+        await env.SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -2396,8 +2396,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -2424,8 +2423,11 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None)
+        env.TranslationEnginesClient.TrainSegmentAsync(
+            TranslationEngine01,
+            Arg.Any<SegmentPair>(),
+            CancellationToken.None
+        )
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -2446,16 +2448,18 @@ public class MachineApiServiceTests
             SourceSegment = Segment,
             TargetSegment = TargetSegment,
         };
-        env.TranslationEnginesClient
-            .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None)
+        env.TranslationEnginesClient.TrainSegmentAsync(
+            TranslationEngine01,
+            Arg.Any<SegmentPair>(),
+            CancellationToken.None
+        )
             .Throws(ServalApiExceptions.InternalServerError);
-        env.EngineService
-            .TrainSegmentAsync(
-                TranslationEngine01,
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
-                segmentPair.SentenceStart
-            )
+        env.EngineService.TrainSegmentAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
+            segmentPair.SentenceStart
+        )
             .Returns(Task.FromResult(true));
 
         // SUT
@@ -2475,16 +2479,18 @@ public class MachineApiServiceTests
             SourceSegment = Segment,
             TargetSegment = TargetSegment,
         };
-        env.TranslationEnginesClient
-            .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None)
+        env.TranslationEnginesClient.TrainSegmentAsync(
+            TranslationEngine01,
+            Arg.Any<SegmentPair>(),
+            CancellationToken.None
+        )
             .Throws(new BrokenCircuitException());
-        env.EngineService
-            .TrainSegmentAsync(
-                TranslationEngine01,
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
-                segmentPair.SentenceStart
-            )
+        env.EngineService.TrainSegmentAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
+            segmentPair.SentenceStart
+        )
             .Returns(Task.FromResult(true));
 
         // SUT
@@ -2509,8 +2515,7 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
 
-        await env.EngineService
-            .Received(1)
+        await env.EngineService.Received(1)
             .TrainSegmentAsync(
                 TranslationEngine01,
                 Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
@@ -2529,8 +2534,7 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None);
 
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None);
     }
 
@@ -2549,16 +2553,14 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
 
-        await env.EngineService
-            .Received(1)
+        await env.EngineService.Received(1)
             .TrainSegmentAsync(
                 TranslationEngine01,
                 Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
                 Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
                 segmentPair.SentenceStart
             );
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None);
     }
 
@@ -2606,8 +2608,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -2634,8 +2635,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -2650,11 +2650,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(ServalApiExceptions.NoContent);
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
@@ -2679,11 +2680,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
@@ -2708,8 +2710,10 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
@@ -2743,8 +2747,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationResult
@@ -2779,8 +2782,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationResult
@@ -2795,8 +2797,10 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
@@ -2813,11 +2817,9 @@ public class MachineApiServiceTests
         // SUT
         _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
 
-        await env.EngineService
-            .Received(1)
+        await env.EngineService.Received(1)
             .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None);
     }
 
@@ -2854,8 +2856,7 @@ public class MachineApiServiceTests
         const int n = 1;
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines
-            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
 
         // SUT
@@ -2884,8 +2885,7 @@ public class MachineApiServiceTests
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -2901,11 +2901,13 @@ public class MachineApiServiceTests
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Throws(ServalApiExceptions.NotSupported);
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            n,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
 
         // SUT
@@ -2920,11 +2922,13 @@ public class MachineApiServiceTests
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            n,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
 
         // SUT
@@ -2939,8 +2943,11 @@ public class MachineApiServiceTests
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            n,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(
                 Task.FromResult(
                     new[]
@@ -2984,8 +2991,7 @@ public class MachineApiServiceTests
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
+        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationResult>>(
                     new[]
@@ -3031,18 +3037,19 @@ public class MachineApiServiceTests
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+        env.EngineService.TranslateAsync(
+            TranslationEngine01,
+            n,
+            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
+        )
             .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
 
         // SUT
         _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
 
-        await env.EngineService
-            .Received(1)
+        await env.EngineService.Received(1)
             .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
-        await env.TranslationEnginesClient
-            .Received(1)
+        await env.TranslationEnginesClient.Received(1)
             .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None);
     }
 

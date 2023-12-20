@@ -557,8 +557,7 @@ public class SFInstallableDblResource : InstallableResource
                         )
                         {
                             string revisionFilename = entry
-                                .FileName
-                                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                                .FileName.Split('/', StringSplitOptions.RemoveEmptyEntries)
                                 .Last();
                             if (!int.TryParse(revisionFilename, out revision))
                             {

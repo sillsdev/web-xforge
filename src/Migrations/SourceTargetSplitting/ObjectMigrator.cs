@@ -124,8 +124,7 @@ namespace SourceTargetSplitting
         public async Task CreateProjectFromSourceAsync(string sourceId, string targetId)
         {
             // Get the administrator for the specified project
-            var targetProject = this._realtimeService
-                .QuerySnapshots<SFProject>()
+            var targetProject = this._realtimeService.QuerySnapshots<SFProject>()
                 .FirstOrDefault(p => p.ParatextId == targetId);
             if (targetProject == null)
             {
@@ -134,8 +133,7 @@ namespace SourceTargetSplitting
 
             // Get the highest ranked for this project, that probably has source access
             string[] userIds = targetProject
-                .UserRoles
-                .Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
+                .UserRoles.Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
                 .OrderBy(ur => ur.Value)
                 .Select(ur => ur.Key)
                 .ToArray();
@@ -414,8 +412,7 @@ namespace SourceTargetSplitting
             }
 
             // Get every user id and username from the user secrets
-            Dictionary<string, string> userMapping = await this._userSecrets
-                .Query()
+            Dictionary<string, string> userMapping = await this._userSecrets.Query()
                 .ToDictionaryAsync(u => u.Id, u => this._paratextService.GetParatextUsername(u));
 
             // Iterate over every project
@@ -482,9 +479,10 @@ namespace SourceTargetSplitting
                             else
                             {
                                 string textInfoPermission = TextInfoPermission.Read;
-                                IEnumerable<int> editable = scrText
-                                    .Permissions
-                                    .GetEditableBooks(Paratext.Data.Users.PermissionSet.Merged, userName);
+                                IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
+                                    Paratext.Data.Users.PermissionSet.Merged,
+                                    userName
+                                );
                                 if (editable == null || !editable.Any())
                                 {
                                     // If there are no editable book permissions, check if they can edit all books
@@ -526,14 +524,12 @@ namespace SourceTargetSplitting
                                 else
                                 {
                                     string textInfoPermission = TextInfoPermission.Read;
-                                    IEnumerable<int>? editable = scrText
-                                        .Permissions
-                                        .GetEditableChapters(
-                                            project.Texts[i].BookNum,
-                                            scrText.Settings.Versification,
-                                            userName,
-                                            Paratext.Data.Users.PermissionSet.Merged
-                                        );
+                                    IEnumerable<int>? editable = scrText.Permissions.GetEditableChapters(
+                                        project.Texts[i].BookNum,
+                                        scrText.Settings.Versification,
+                                        userName,
+                                        Paratext.Data.Users.PermissionSet.Merged
+                                    );
                                     if (editable?.Contains(project.Texts[i].Chapters[j].Number) ?? false)
                                     {
                                         textInfoPermission = TextInfoPermission.Write;
@@ -594,8 +590,7 @@ namespace SourceTargetSplitting
         public async Task MigrateTargetPermissionsAsync(string sourceId, string targetId)
         {
             // Get the target project
-            var targetProject = this._realtimeService
-                .QuerySnapshots<SFProject>()
+            var targetProject = this._realtimeService.QuerySnapshots<SFProject>()
                 .FirstOrDefault(p => p.ParatextId == targetId);
             if (targetProject == null)
             {
@@ -603,8 +598,7 @@ namespace SourceTargetSplitting
             }
 
             // Get the source project
-            var sourceProject = this._realtimeService
-                .QuerySnapshots<SFProject>()
+            var sourceProject = this._realtimeService.QuerySnapshots<SFProject>()
                 .FirstOrDefault(p => p.ParatextId == sourceId);
             if (sourceProject == null)
             {
@@ -613,8 +607,7 @@ namespace SourceTargetSplitting
 
             // Get the highest ranked for this project, that probably has source access
             string[] userIds = targetProject
-                .UserRoles
-                .Select(ur => ur.Key)
+                .UserRoles.Select(ur => ur.Key)
                 .Where(u => !sourceProject.UserRoles.Keys.Contains(u))
                 .ToArray();
 
@@ -670,8 +663,7 @@ namespace SourceTargetSplitting
                         string usfm = scrText.GetText(bookNum);
                         string bookText = UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
                         var usxDoc = XDocument.Parse(bookText);
-                        Dictionary<int, ChapterDelta> deltas = this._deltaUsxMapper
-                            .ToChapterDeltas(usxDoc)
+                        Dictionary<int, ChapterDelta> deltas = this._deltaUsxMapper.ToChapterDeltas(usxDoc)
                             .ToDictionary(cd => cd.Number);
                         var chapters = new List<Chapter>();
                         foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
@@ -686,8 +678,7 @@ namespace SourceTargetSplitting
                 }
 
                 // See that at least one user in the target project has permission to create the source project
-                var targetProject = this._realtimeService
-                    .QuerySnapshots<SFProject>()
+                var targetProject = this._realtimeService.QuerySnapshots<SFProject>()
                     .FirstOrDefault(p => p.ParatextId == targetId);
                 if (targetProject == null)
                 {
@@ -696,8 +687,9 @@ namespace SourceTargetSplitting
 
                 // Get the highest ranked users for this project, that probably have source access
                 string[] userIds = targetProject
-                    .UserRoles
-                    .Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
+                    .UserRoles.Where(
+                        ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator
+                    )
                     .OrderBy(ur => ur.Value)
                     .Select(ur => ur.Key)
                     .ToArray();
@@ -773,8 +765,7 @@ namespace SourceTargetSplitting
             string bookText = this._paratextService.GetBookText(userSecret, paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
-            Dictionary<int, ChapterDelta> deltas = this._deltaUsxMapper
-                .ToChapterDeltas(usxDoc)
+            Dictionary<int, ChapterDelta> deltas = this._deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
             foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
