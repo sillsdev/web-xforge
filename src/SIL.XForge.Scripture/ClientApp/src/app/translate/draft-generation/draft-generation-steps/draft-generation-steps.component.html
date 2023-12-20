@@ -91,6 +91,26 @@
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
+          </button>
+        </div>
+      </mat-step>
+      <mat-step *ngIf="featureFlags.allowFastTraining.enabled" [completed]="true">
+        <ng-template matStepLabel>
+          <div class="stepper-multi-header">
+            <h2>{{ t("draft_generation") }}</h2>
+            <h3>{{ t("draft_generation_subheader") }}</h3>
+          </div>
+        </ng-template>
+        <div>
+          <mat-checkbox [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
+        </div>
+        <app-notice *ngIf="fastTraining" icon="warning" type="warning" class="warning">{{
+          t("fast_training_warning")
+        }}</app-notice>
+        <div class="button-strip">
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ t("generate_draft") }}
           </button>
         </div>

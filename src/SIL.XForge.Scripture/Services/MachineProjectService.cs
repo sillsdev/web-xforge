@@ -340,7 +340,8 @@ public class MachineProjectService : IMachineProjectService
                 // Execute a complete pre-translation
                 translationBuildConfig = GetTranslationBuildConfig(
                     projectSecret.ServalData,
-                    projectDoc.Data.TranslateConfig.DraftConfig
+                    projectDoc.Data.TranslateConfig.DraftConfig,
+                    buildConfig
                 );
             }
             else
@@ -845,12 +846,35 @@ public class MachineProjectService : IMachineProjectService
     /// <param name="draftConfig">
     /// The Draft configuration from <see cref="SFProject"/>.<see cref="TranslateConfig"/>.
     /// </param>
+    /// <param name="buildConfig">The build configuration from the user, specified on the front end.</param>
     /// <returns>The TranslationBuildConfig for a Pre-Translate build.</returns>
     /// <remarks>Do not use with SMT builds.</remarks>
-    private static TranslationBuildConfig GetTranslationBuildConfig(ServalData servalData, DraftConfig draftConfig) =>
-        new TranslationBuildConfig
+    private static TranslationBuildConfig GetTranslationBuildConfig(
+        ServalData servalData,
+        DraftConfig draftConfig,
+        BuildConfig buildConfig
+    )
+    {
+        // Load the Serval Config from the Draft Config
+        JObject? servalConfig = null;
+        if (draftConfig.ServalConfig is not null)
         {
-            Options = draftConfig.ServalConfig is null ? null : JObject.Parse(draftConfig.ServalConfig),
+            servalConfig = JObject.Parse(draftConfig.ServalConfig);
+        }
+
+        // If Fast Training is enabled, override the max_steps
+        if (buildConfig.FastTraining)
+        {
+            // Ensure that there is a servalConfig JSON object
+            servalConfig ??= new JObject();
+
+            // 20 is the number of steps used on Serval QA by default
+            servalConfig["max_steps"] = 20;
+        }
+
+        return new TranslationBuildConfig
+        {
+            Options = servalConfig,
             Pretranslate = servalData
                 .Corpora.Where(s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource)
                 .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
@@ -862,6 +886,7 @@ public class MachineProjectService : IMachineProjectService
                     .ToList()
                 : null,
         };
+    }
 
     /// <summary>
     /// Creates a project in Serval.
