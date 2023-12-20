@@ -151,8 +151,8 @@ describe('DraftGenerationService', () => {
       const preTranslationData = {
         data: {
           preTranslations: [
-            { reference: 'JHN 3:16', translation: 'For God so loved the world' },
-            { reference: 'JHN 1:1', translation: 'In the beginning was the Word' }
+            { reference: 'verse_3_16', translation: 'For God so loved the world' },
+            { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
           ]
         }
       };
@@ -182,30 +182,6 @@ describe('DraftGenerationService', () => {
       httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({});
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-        );
-        done();
-      });
-    });
-
-    it('should handle invalid verse references', done => {
-      const book = 43;
-      const chapter = 3;
-      const preTranslationData = {
-        data: {
-          preTranslations: [
-            { reference: 'Invalid Reference', translation: 'This should be ignored' },
-            { reference: 'JHN 3:16', translation: 'For God so loved the world' }
-          ]
-        }
-      };
-
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
-      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual({
-          verse_3_16: 'For God so loved the world '
-        });
         expect(httpClient.get).toHaveBeenCalledWith(
           `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
         );
