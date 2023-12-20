@@ -69,6 +69,8 @@ jobs:
           onlyChanged: true
           externals: |
             - '*.scss'
+          # Force a rebuild even if Chromatic thinks there are no changes
+          forceRebuild: true
       - name: Run Storybook tests
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run test-storybook -- --no-index-json
         env:
