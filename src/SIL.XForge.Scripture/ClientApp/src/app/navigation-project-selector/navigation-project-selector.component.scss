@@ -2,7 +2,7 @@
 ::ng-deep .app-navigation-project-selector-panel.mdc-menu-surface.mat-mdc-select-panel {
   // Top app bar height is 56px, this project selector's height is 56px, and we want 32px of space at the bottom.
   // 56 + 56 + 32 = 144
-  max-height: calc(100dvh - 144px);
+  max-height: calc(100vh - 144px);
 
   // .project-option added to increase CSS rule specificity
   mat-option.project-option {
