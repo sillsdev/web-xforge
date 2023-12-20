@@ -334,7 +334,7 @@ describe('version 12', () => {
         translateConfig: { draftConfig: {} }
       });
       let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-      expect(projectDoc.data.translateConfig.draftConfig.sendAllSegments).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.draftConfig.sendAllSegments).toBeUndefined();
 
       await env.server.migrateIfNecessary();
 

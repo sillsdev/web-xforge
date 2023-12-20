@@ -456,6 +456,42 @@ describe('SettingsComponent', () => {
       }));
     });
 
+    describe('Send All Segments', () => {
+      it('should update when the send all segments checkbox is ticked', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        expect(env.statusDone(env.sendAllSegmentsStatus)).toBeNull();
+        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(false);
+        env.clickElement(env.inputElement(env.sendAllSegmentsCheckbox));
+        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(true);
+        env.wait();
+
+        expect(env.statusDone(env.sendAllSegmentsStatus)).not.toBeNull();
+      }));
+
+      it('should update when the send all segments checkbox is unticked', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: true
+          },
+          preTranslate: true
+        });
+        env.wait();
+        expect(env.statusDone(env.sendAllSegmentsStatus)).toBeNull();
+        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(true);
+        env.clickElement(env.inputElement(env.sendAllSegmentsCheckbox));
+        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(false);
+        env.wait();
+
+        expect(env.statusDone(env.sendAllSegmentsStatus)).not.toBeNull();
+      }));
+    });
+
     describe('Serval Config TextArea', () => {
       it('should not display for non-system administrators', fakeAsync(() => {
         const env = new TestEnvironment();
@@ -1151,6 +1187,14 @@ class TestEnvironment {
     return (this.alternateTrainingSourceSelectComponent.projects || []).concat(
       this.alternateTrainingSourceSelectComponent.resources || []
     );
+  }
+
+  get sendAllSegmentsCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-pre-translation-send-all-segments'));
+  }
+
+  get sendAllSegmentsStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#pre-translation-send-all-segments-status'));
   }
 
   makeProjectHaveTextAudio(): void {
