@@ -28,7 +28,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates } from './draft-generation';
+import { activeBuildStates, BuildConfig } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -297,7 +297,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
     this.navigateToTab('initial');
-    this.startBuild(result.trainingBooks, result.translationBooks);
+    this.startBuild({
+      projectId: this.activatedProject.projectId!,
+      trainingBooks: result.trainingBooks,
+      translationBooks: result.translationBooks,
+      fastTraining: result.fastTraining
+    });
   }
 
   hasDraftQueueDepth(job?: BuildDto): boolean {
@@ -332,30 +337,24 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return job == null || this.isDraftInProgress(job);
   }
 
-  startBuild(trainingBooks: number[], translationBooks: number[]): void {
+  startBuild(buildConfig: BuildConfig): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
-      this.draftGenerationService
-        .startBuildOrGetActiveBuild({
-          projectId: this.activatedProject.projectId!,
-          trainingBooks,
-          translationBooks
-        })
-        .pipe(
-          tap((job?: BuildDto) => {
-            // Handle automatic closing of dialog if job finishes while cancel dialog is open
-            if (!this.canCancel(job)) {
-              if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-                this.cancelDialogRef.close();
-              }
+      this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig).pipe(
+        tap((job?: BuildDto) => {
+          // Handle automatic closing of dialog if job finishes while cancel dialog is open
+          if (!this.canCancel(job)) {
+            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+              this.cancelDialogRef.close();
             }
+          }
 
-            // Ensure flag is set for case where first completed build happens while component is loaded
-            if (this.isDraftComplete(job)) {
-              this.hasAnyCompletedBuild = true;
-            }
-          })
-        ),
+          // Ensure flag is set for case where first completed build happens while component is loaded
+          if (this.isDraftComplete(job)) {
+            this.hasAnyCompletedBuild = true;
+          }
+        })
+      ),
       (job?: BuildDto) => (this.draftJob = job)
     );
   }

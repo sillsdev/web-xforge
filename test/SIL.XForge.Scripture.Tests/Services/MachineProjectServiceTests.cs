@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -181,6 +182,76 @@ public class MachineProjectServiceTests
 
         await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_PassesFastTrainingConfiguration()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, FastTraining = true },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine01,
+                Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 20),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_MergesFastTrainingConfiguration()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { BuildIsPending = false, ServalConfig = @"{""max_steps"":35}" }
+        );
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, FastTraining = true },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine01,
+                Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 20),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_PassesServalConfig()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { BuildIsPending = false, ServalConfig = @"{""max_steps"":35}" }
+        );
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine01,
+                Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 35),
+                CancellationToken.None
+            );
     }
 
     [Test]
@@ -409,7 +480,6 @@ public class MachineProjectServiceTests
                         }
                     )
             );
-        ;
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -1355,6 +1425,7 @@ public class MachineProjectServiceTests
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
         public bool AlternateTrainingSourceEnabled { get; init; }
+        public string? ServalConfig { get; set; }
     }
 
     private class TestEnvironment
@@ -1599,6 +1670,7 @@ public class MachineProjectServiceTests
                                 ProjectRef = Project02,
                                 WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
+                            DraftConfig = new DraftConfig { ServalConfig = options.ServalConfig, },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_GB" },
                     },
