@@ -97,7 +97,7 @@ export class CheckingUtils {
     // return if the text ref is for a heading and not a verse
     if (audioTimingMatch == null) return;
     const audioTextRef: AudioTextRef = { verseStr: audioTimingMatch[1] };
-    if (audioTimingMatch[2] !== '') audioTextRef.phrase = audioTimingMatch[2];
+    if (audioTimingMatch[2] !== '') audioTextRef.phrase = audioTimingMatch[2].toLowerCase();
     return audioTextRef;
   }
 
