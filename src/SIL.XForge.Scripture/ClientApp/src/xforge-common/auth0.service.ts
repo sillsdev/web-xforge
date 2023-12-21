@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { AUTH0_SCOPE } from 'xforge-common/auth.service';
 import { CookieService } from 'ngx-cookie-service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { lastValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 
 interface ResourceOwnerTokenEndpoint {
@@ -80,8 +81,8 @@ export class Auth0Service {
 
   private post(endPoint: string, body?: any): Promise<string> {
     const url: string = `https://${environment.authDomain}/${endPoint}`;
-    return this.http
-      .post(url, body, { headers: { 'Content-Type': 'application/json' }, responseType: 'text' })
-      .toPromise();
+    return lastValueFrom(
+      this.http.post(url, body, { headers: { 'Content-Type': 'application/json' }, responseType: 'text' })
+    );
   }
 }

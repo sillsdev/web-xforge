@@ -1232,9 +1232,12 @@ class TestEnvironment {
     this.waitForProjectDocChanges();
   }
 
-  // Project doc changes are throttled by 1000 ms, so we have to wait for them
   waitForProjectDocChanges(): void {
-    tick(1000);
+    // Project doc changes are throttled by 1000 ms, so we have to wait for them.
+    // After 1000 ms of waiting, the project changes will be emitted, and then the async scheduler will set a 1000 ms
+    // timeout before emitting changes again. That 1000 ms timeout will get left in the queue, but if we wait past that
+    // time, we don't have to do discardPeriodicTasks() to flush the queue.
+    tick(2000);
     this.fixture.detectChanges();
   }
 
