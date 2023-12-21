@@ -15,11 +15,11 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
-import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -39,9 +39,9 @@ import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
 import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
+import { NavigationComponent } from './navigation/navigation.component';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
-import { NavigationComponent } from './navigation/navigation.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
@@ -83,14 +83,14 @@ describe('AppComponent', () => {
   configureTestingModule(() => ({
     declarations: [AppComponent, MockComponent, NavigationComponent],
     imports: [
-      AvatarTestingModule,
       UICommonModule,
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NavigationProjectSelectorComponent
+      NavigationProjectSelectorComponent,
+      AvatarComponent
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },

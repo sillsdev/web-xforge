@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -17,7 +17,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -57,13 +57,13 @@ describe('CollaboratorsComponent', () => {
     declarations: [CollaboratorsComponent],
     imports: [
       NoopAnimationsModule,
-      AvatarTestingModule,
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       SharedModule,
       TestOnlineStatusModule.forRoot(),
-      HttpClientTestingModule
+      HttpClientTestingModule,
+      AvatarComponent
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },

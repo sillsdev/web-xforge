@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import {
   MatLegacyDialog as MatDialog,
   MatLegacyDialogConfig as MatDialogConfig,
@@ -9,7 +9,7 @@ import {
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { AvatarTestingModule } from '../avatar/avatar-testing.module';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { ChildViewContainerComponent, configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
@@ -35,7 +35,7 @@ describe('DeleteDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [AvatarTestingModule, CommonModule, UICommonModule, NoopAnimationsModule],
+  imports: [CommonModule, UICommonModule, AvatarComponent, NoopAnimationsModule],
   declarations: [SaDeleteDialogComponent],
   exports: [SaDeleteDialogComponent]
 })

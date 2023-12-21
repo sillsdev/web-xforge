@@ -38,10 +38,10 @@ import { first } from 'rxjs/operators';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -159,9 +159,9 @@ describe('CheckingComponent', () => {
       ngfModule,
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
-      AvatarTestingModule,
       SharedModule,
       UICommonModule,
+      AvatarComponent,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
