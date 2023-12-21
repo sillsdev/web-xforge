@@ -20,7 +20,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
+      texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
       translateConfig: {
         source: { projectRef: 'test' },
         draftConfig: {}
@@ -102,11 +102,11 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set "availableTranslateBooks" correctly', fakeAsync(() => {
+    it('should set "availableTranslateBooks" correctly and with canonical book order', fakeAsync(() => {
       expect(component.availableTranslateBooks).toEqual([1, 2, 3]);
     }));
 
-    it('should set "availableTrainingBooks" correctly', fakeAsync(() => {
+    it('should set "availableTrainingBooks" correctly and with canonical book order', fakeAsync(() => {
       expect(component.availableTrainingBooks).toEqual([1, 2, 3]);
     }));
 
