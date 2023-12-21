@@ -92,21 +92,41 @@
         <div *ngIf="isDraftJobFetched">
           <ng-container *ngIf="isGenerationSupported">
             <ng-container *ngIf="isDraftFaulted(draftJob)">
-              <section>
-                <h3><mat-icon color="warn">warning</mat-icon>{{ t("warning_generation_faulted_header") }}</h3>
-                <p>
-                  <transloco
-                    key="draft_generation.warning_generation_faulted_detail"
-                    [params]="{
-                      generateButtonText: hasAnyCompletedBuild
-                        ? t('generate_new_draft_button')
-                        : t('generate_draft_button')
-                    }"
-                  ></transloco>
-                </p>
+              <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
+                <div class="draft-generation-failed-message">
+                  <span
+                    ><transloco
+                      key="draft_generation.warning_generation_faulted"
+                      [params]="{
+                        generateButtonText: hasAnyCompletedBuild
+                          ? t('generate_new_draft_button')
+                          : t('generate_draft_button')
+                      }"
+                    ></transloco
+                  ></span>
+                  <a mat-button target="_blank" [href]="issueMailTo">
+                    {{ t("report_problem") }}
+                  </a>
+                </div>
+              </app-notice>
+              <section data-test-id="technical-details">
+                <div>
+                  <p class="error-text">Technical details:</p>
+                  <div>
+                    <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
+                    <div>
+                      <strong>Translation Engine Id:</strong>
+                      {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
+                    </div>
+                    <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
+                    <div>
+                      <strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
+                    </div>
+                  </div>
+                </div>
               </section>
-              <mat-divider inset></mat-divider>
             </ng-container>
+            <mat-divider inset></mat-divider>
 
             <section *ngIf="!isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
               <h3>{{ t("generate_draft_header") }}</h3>

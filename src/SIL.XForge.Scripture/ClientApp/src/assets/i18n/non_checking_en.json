@@ -166,10 +166,10 @@
     "preview_last_draft_header": "Preview last draft",
     "preview_last_draft_while_active_build_button": "Preview last draft",
     "preview_last_draft_while_active_build": "While the new draft generation is in progress, you can continue working with the previously generated draft.",
+    "report_problem": "Report problem",
     "sign_up_for_drafting": "Sign up for drafting",
     "suggested_workflow": "A suggested workflow is to draft and edit one book before generating a draft for the next book.",
-    "warning_generation_faulted_detail": "Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
-    "warning_generation_faulted_header": "Last generation attempt failed"
+    "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again."
   },
   "draft_generation_steps": {
     "back": "Back",

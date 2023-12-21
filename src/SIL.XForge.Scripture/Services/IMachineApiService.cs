@@ -15,7 +15,6 @@ public interface IMachineApiService
         string buildId,
         long? minRevision,
         bool preTranslate,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     );
     Task<ServalBuildDto?> GetCurrentBuildAsync(
@@ -23,14 +22,12 @@ public interface IMachineApiService
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     );
     Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
-        bool includeAdditionalInfo,
         CancellationToken cancellationToken
     );
     Task<PreTranslationDto> GetPreTranslationAsync(
@@ -51,12 +48,7 @@ public interface IMachineApiService
         string segment,
         CancellationToken cancellationToken
     );
-    Task<ServalBuildDto> StartBuildAsync(
-        string curUserId,
-        string sfProjectId,
-        bool includeAdditionalInfo,
-        CancellationToken cancellationToken
-    );
+    Task<ServalBuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(
         string curUserId,

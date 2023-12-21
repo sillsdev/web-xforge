@@ -152,6 +152,16 @@ mat-divider.mat-divider-inset {
   }
 }
 
+.draft-generation-failed-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-text {
+  color: variables.$errorColor;
+}
+
 section {
   padding: 10px 0;
 }

@@ -23,6 +23,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { issuesEmailTemplate } from 'xforge-common/utils';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
@@ -138,6 +139,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   get isForwardTranslationEnabled(): boolean {
     return this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
+  }
+
+  get issueMailTo(): string {
+    return issuesEmailTemplate();
   }
 
   ngOnInit(): void {
