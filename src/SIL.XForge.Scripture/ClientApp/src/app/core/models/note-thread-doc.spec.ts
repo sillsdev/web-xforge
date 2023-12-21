@@ -1,5 +1,8 @@
+import { TestBed } from '@angular/core/testing';
+import { VerseRef } from '@sillsdev/scripture';
 import { mock } from 'ts-mockito';
-import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   getNoteThreadDocId,
   NoteConflictType,
@@ -7,12 +10,10 @@ import {
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { TestBed } from '@angular/core/testing';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { VerseRef } from '@sillsdev/scripture';
-import { DEFAULT_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { SFProjectService } from '../sf-project.service';
 import { NoteThreadDoc, NoteThreadIcon } from './note-thread-doc';
 import { SF_TYPE_REGISTRY } from './sf-type-registry';
@@ -43,9 +44,10 @@ describe('NoteThreadDoc', () => {
 
   it('should use default to do icon if tag cannot be found', async () => {
     const noteThreadDoc = await env.setupDoc([], 5);
+    const defaultIcon: string = env.noteTags.find(t => t.tagId === 1)!.icon;
     const expectedIcon: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/' + DEFAULT_TAG_ICON + '.png);',
-      url: '/assets/icons/TagIcons/' + DEFAULT_TAG_ICON + '.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/' + defaultIcon + '.png);',
+      url: '/assets/icons/TagIcons/' + defaultIcon + '.png'
     };
     expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
   });
@@ -138,12 +140,42 @@ describe('NoteThreadDoc', () => {
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
 
+  it('should report if user can resolve a thread', async () => {
+    const notes: Note[] = [
+      {
+        dataId: 'note01',
+        type: NoteType.Normal,
+        conflictType: NoteConflictType.DefaultValue,
+        threadId: 'thread01',
+        content: 'note content',
+        deleted: false,
+        tagId: 4,
+        status: NoteStatus.Todo,
+        ownerRef: 'user03',
+        dateCreated: '2021-11-10T12:00:00',
+        dateModified: '2021-11-10T12:00:00'
+      }
+    ];
+    const noteThreadDoc: NoteThreadDoc = await env.setupDoc(notes);
+    expect(noteThreadDoc.canUserResolveThread('user01', SFProjectRole.ParatextAdministrator, env.noteTags)).toBe(true);
+    expect(noteThreadDoc.canUserResolveThread('user02', SFProjectRole.ParatextTranslator, env.noteTags)).toBe(false);
+    expect(noteThreadDoc.canUserResolveThread('user03', SFProjectRole.ParatextTranslator, env.noteTags)).toBe(true);
+  });
+
+  it('should default to the to do tag when no tag set', async () => {
+    const noteThreadDoc = await env.setupDoc([]);
+    const noteTags: NoteTag[] = [...env.noteTags];
+    noteTags[0].creatorResolve = true;
+    expect(noteThreadDoc.canUserResolveThread('user01', SFProjectRole.ParatextAdministrator, noteTags)).toBe(true);
+    expect(noteThreadDoc.canUserResolveThread('user02', SFProjectRole.ParatextTranslator, noteTags)).toBe(false);
+  });
+
   it('reports the reattached verse reference', async () => {
     const reattachParts: string[] = ['MAT 1:2', 'reattached selected text', '0', '', ''];
     const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
-    const notes = [
+    const notes: Note[] = [
       {
         dataId: 'note01',
         type,
@@ -154,7 +186,6 @@ describe('NoteThreadDoc', () => {
         tagId: 2,
         status: NoteStatus.Todo,
         ownerRef: 'user01',
-        extUserId: 'user01',
         dateCreated: '2021-11-10T12:00:00',
         dateModified: '2021-11-10T12:00:00'
       },
@@ -167,7 +198,6 @@ describe('NoteThreadDoc', () => {
         deleted: false,
         status: NoteStatus.Unspecified,
         ownerRef: 'user01',
-        extUserId: 'user01',
         dateCreated: '2021-11-10T13:00:00',
         dateModified: '2021-11-10T13:00:00',
         reattached
@@ -187,7 +217,7 @@ class TestEnvironment {
     { tagId: 1, name: 'SF 1', icon: 'flag1', creatorResolve: false },
     { tagId: 2, name: 'SF 2', icon: 'flag2', creatorResolve: false },
     { tagId: 3, name: 'SF 3', icon: 'flag3', creatorResolve: false },
-    { tagId: 4, name: 'SF 4', icon: 'flag4', creatorResolve: false }
+    { tagId: 4, name: 'SF 4', icon: 'flag4', creatorResolve: true }
   ];
 
   constructor() {}

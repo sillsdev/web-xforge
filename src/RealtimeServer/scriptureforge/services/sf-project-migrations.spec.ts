@@ -325,6 +325,24 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toEqual([1, 2, 3]);
     });
   });
+
+  describe('version 15', () => {
+    it('adds create resolve property to note tag', async () => {
+      const env = new TestEnvironment(14);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        noteTags: [{ tagId: 1, name: 'Tag 01', icon: '01flag1', creatorResolve: false }]
+      });
+
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.noteTags[0].creatorResolve).toBe(false);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.noteTags[0].creatorResolve).toBe(true);
+    });
+  });
 });
 
 class TestEnvironment {

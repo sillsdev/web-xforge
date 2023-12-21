@@ -531,6 +531,28 @@ describe('NoteDialogComponent', () => {
     expect(env.dialogResult).toEqual(undefined);
   }));
 
+  it('hides save options trigger when tag on note thread is restricted resolve', fakeAsync(() => {
+    const noteThread: NoteThread = TestEnvironment.getNoteThread();
+    const note: Note = {
+      dataId: 'note03',
+      threadId: noteThread.dataId,
+      ownerRef: 'user04',
+      content: 'translator note',
+      dateCreated: '',
+      dateModified: '',
+      deleted: true,
+      type: NoteType.Normal,
+      status: NoteStatus.Resolved,
+      conflictType: NoteConflictType.DefaultValue,
+      tagId: 5
+    };
+    noteThread.notes.push(note);
+    env = new TestEnvironment({ noteThread, currentUserId: 'user04' });
+    expect(env.saveOptionsButton).toBeNull();
+    env.closeDialog();
+    expect(env.dialogResult).toEqual(undefined);
+  }));
+
   it('show notes in correct date order', fakeAsync(() => {
     const noteThread = TestEnvironment.getNoteThread();
     const currentTime = new Date('2023-03-14T23:00:00Z').getTime();
@@ -624,7 +646,8 @@ class TestEnvironment {
   static userRoles: { [userId: string]: string } = {
     user01: SFProjectRole.ParatextAdministrator,
     user02: SFProjectRole.Viewer,
-    user03: SFProjectRole.Commenter
+    user03: SFProjectRole.Commenter,
+    user04: SFProjectRole.ParatextTranslator
   };
   static testProjectProfile: SFProjectProfile = createTestProjectProfile({
     texts: [TestEnvironment.matthewText],
@@ -633,7 +656,7 @@ class TestEnvironment {
       { tagId: 2, name: 'PT Tag 2', icon: 'circle01', creatorResolve: false },
       { tagId: 3, name: 'PT Tag 3', icon: 'star01', creatorResolve: false },
       { tagId: 4, name: 'PT Tag 4', icon: 'tag01', creatorResolve: false },
-      { tagId: 5, name: 'PT Tag 5', icon: 'asterisk01', creatorResolve: false },
+      { tagId: 5, name: 'PT Tag 5', icon: 'asterisk01', creatorResolve: true },
       { tagId: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
     ],
     userRoles: TestEnvironment.userRoles

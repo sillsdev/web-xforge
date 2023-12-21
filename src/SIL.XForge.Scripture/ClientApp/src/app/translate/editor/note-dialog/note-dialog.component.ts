@@ -186,8 +186,15 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get canResolve(): boolean {
-    // a note thread can be resolved only by paratext users who have edit rights and when the thread has existing notes
-    return this.canInsertNote && isParatextRole(this.userRole) && this.threadDataId != null;
+    if (this.threadDoc == null || this.projectProfileDoc?.data == null) return false;
+    const userRole: string = this.projectProfileDoc.data.userRoles[this.userService.currentUserId];
+    // A note thread can be resolved only by paratext users who have edit rights and when the thread has existing notes
+    // Additionally, a thread can be tagged with a tag that restricts resolve
+    return (
+      this.canInsertNote &&
+      this.threadDoc.canUserResolveThread(this.userService.currentUserId, userRole, this.noteTags) &&
+      this.threadDataId != null
+    );
   }
 
   private get defaultNoteTagId(): number | undefined {

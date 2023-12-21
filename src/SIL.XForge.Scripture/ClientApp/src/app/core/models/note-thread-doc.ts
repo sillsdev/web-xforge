@@ -16,6 +16,7 @@ import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 
 /** Returns the given tag icon formatted for retrieval in the html template, or the default icon. */
 export function defaultNoteThreadIcon(tagIcon: string | undefined): NoteThreadIcon {
@@ -79,6 +80,17 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return new VerseRef(verseStr);
   }
 
+  canUserResolveThread(userId: string, userRole: string, noteTags: NoteTag[]): boolean {
+    if (this.data == null) return true;
+    if (userRole === SFProjectRole.ParatextAdministrator) return true;
+    const noteTagOnThread: NoteTag | undefined =
+      this.getActiveTagOnThread(noteTags) ?? noteTags.find(t => t.tagId === TO_DO_TAG_ID);
+    if (noteTagOnThread?.creatorResolve !== true) return isParatextRole(userRole);
+
+    const notesInOrder: Note[] = this.notesInOrderClone(this.data.notes);
+    return notesInOrder.length === 0 || notesInOrder[0].ownerRef === userId;
+  }
+
   isAssignedToOtherUser(currentUserId: string, paratextProjectUsers: ParatextUserProfile[]): boolean {
     switch (this.data?.assignment) {
       case AssignedUsers.TeamUser:
@@ -101,14 +113,22 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
       return '';
     }
 
-    const iconDefinedNotes: Note[] = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
-    let tagId: number | undefined =
-      iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
-    if (tagId == null) {
+    const noteTagOnThread: NoteTag | undefined = this.getActiveTagOnThread(noteTags);
+    if (noteTagOnThread == null) {
       if (this.data.publishedToSF === true) return SF_TAG_ICON;
       return noteTags.find(t => t.tagId === TO_DO_TAG_ID)?.icon ?? DEFAULT_TAG_ICON;
     }
-    return noteTags.find(t => t.tagId === tagId)?.icon ?? DEFAULT_TAG_ICON;
+    return noteTagOnThread.icon;
+  }
+
+  private getActiveTagOnThread(noteTags: NoteTag[]): NoteTag | undefined {
+    if (this.data == null) return;
+
+    const iconDefinedNotes: Note[] = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
+    let tagId: number | undefined =
+      iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
+
+    return noteTags.find(t => t.tagId === tagId);
   }
 
   private getResolvedTag(iconTag: string = ''): string {
