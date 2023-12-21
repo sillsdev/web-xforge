@@ -15,7 +15,7 @@
       This is a non-standard way to use the component and causes a slight UI glitch where the
       tab text jumps a few pixels when navigating between tabs. -->
       <div class="tab-selector">
-        <mat-tab-group (selectedIndexChange)="currentTabIndex = $event">
+        <mat-tab-group [mat-stretch-tabs]="false" (selectedIndexChange)="currentTabIndex = $event">
           <mat-tab label="{{ t('all') }}"></mat-tab>
           <mat-tab label="{{ t('paratext_members') }}"></mat-tab>
           <mat-tab label="{{ t('project_guests') }}"></mat-tab>

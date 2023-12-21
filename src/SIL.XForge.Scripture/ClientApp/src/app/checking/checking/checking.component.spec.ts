@@ -2625,7 +2625,7 @@ class TestEnvironment {
   }
 
   get audioTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.mat-tab-label:nth-child(2)'));
+    return this.fixture.debugElement.query(By.css('.mat-mdc-tab:nth-child(2)'));
   }
 
   get removeAudioButton(): DebugElement {
@@ -2658,7 +2658,7 @@ class TestEnvironment {
   }
 
   get selectTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.mat-tab-label:nth-child(3)'));
+    return this.fixture.debugElement.query(By.css('.mat-mdc-tab:nth-child(3)'));
   }
 
   get selectVersesButton(): DebugElement {
