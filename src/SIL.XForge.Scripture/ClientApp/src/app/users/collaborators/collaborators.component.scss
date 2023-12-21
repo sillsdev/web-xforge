@@ -77,6 +77,6 @@ td.mat-cell:last-of-type {
 }
 
 // prevent undesirable flicker effect when changing tabs
-:host ::ng-deep .mat-tab-body-wrapper {
+:host ::ng-deep .mat-mdc-tab-body-wrapper {
   display: none;
 }
