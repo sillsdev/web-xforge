@@ -9,13 +9,8 @@
   max-height: 150px;
 }
 
-tr td:not(:last-child) {
-  padding-inline-end: 1em;
-}
-
-.mat-header-cell {
-  color: black;
-  background-color: darken(#ffffff, 10%);
+.mat-mdc-header-cell {
+  background-color: darken(#fff, 10%);
 }
 
 .mat-dialog-actions {

@@ -18,12 +18,22 @@ h3 {
   height: 24px;
 }
 
-td.mat-cell:last-of-type {
-  padding: 0;
+// Add bottom border to last row that was removed in Material v15+
+.mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-.mat-cell.mat-column-role {
-  padding: 0 30px;
+// Padding only for the start of first column and around the 'role' column
+.mat-mdc-cell {
+  padding-inline-end: 0;
+
+  &:not(:first-of-type) {
+    padding-inline-start: 0;
+  }
+
+  &.mat-column-role {
+    padding: 0 30px;
+  }
 }
 
 .text-entry {

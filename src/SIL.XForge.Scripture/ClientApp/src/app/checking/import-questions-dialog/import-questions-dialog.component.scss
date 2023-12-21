@@ -97,10 +97,6 @@
 
 // Section: Question list screen
 
-.mat-table {
-  width: 100%;
-}
-
 ::ng-deep .filter-text {
   padding: 0;
 
@@ -171,10 +167,6 @@
 :not(mat-form-field) > .mat-error {
   margin-top: 10px;
   font-size: 14px;
-}
-
-.question-list td:first-child {
-  padding-right: 1em;
 }
 
 // Section: Importing screen
