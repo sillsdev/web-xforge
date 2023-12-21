@@ -19,6 +19,8 @@ import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+import { MAT_LEGACY_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/legacy-form-field';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -88,7 +90,9 @@ import { NavigationComponent } from './navigation/navigation.component';
     translocoMarkupRouterLinkRenderer(),
     defaultTranslocoMarkupTranspilers(),
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
-    { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
+    { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
+    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
+    { provide: MAT_LEGACY_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } }
   ],
   bootstrap: [AppComponent]
 })
