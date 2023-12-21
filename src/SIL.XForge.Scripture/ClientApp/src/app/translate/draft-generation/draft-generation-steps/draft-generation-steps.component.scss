@@ -33,12 +33,16 @@ app-book-multi-select {
 }
 
 app-notice {
-  margin-top: 20px;
-  display: inline-block;
+  margin: 20px 0 10px;
+  display: inline-flex;
 
   h4 {
     font-style: italic;
     font-weight: 400;
     margin: 0 0 16px;
+  }
+
+  p {
+    margin: 8px 0 0;
   }
 }

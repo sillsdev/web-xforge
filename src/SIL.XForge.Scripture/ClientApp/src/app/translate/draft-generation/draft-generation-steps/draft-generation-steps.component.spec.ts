@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -21,17 +21,25 @@ describe('DraftGenerationStepsComponent', () => {
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
       texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
+      writingSystem: { tag: 'eng' },
       translateConfig: {
-        source: { projectRef: 'test' },
-        draftConfig: {}
+        source: { projectRef: 'test' }
       }
     })
   } as SFProjectProfileDoc;
 
-  const mockSourceProjectDoc = {
+  const mockSourceNonNllbProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }]
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }],
+      writingSystem: { tag: 'xyz' }
     })
+  } as SFProjectProfileDoc;
+
+  const mockSourceNllbProjectDoc = {
+    data: {
+      ...mockSourceNonNllbProjectDoc.data,
+      writingSystem: { tag: 'spa' }
+    }
   } as SFProjectProfileDoc;
 
   const mockAlternateTrainingSourceProjectDoc = {
@@ -39,6 +47,8 @@ describe('DraftGenerationStepsComponent', () => {
       texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }]
     })
   } as SFProjectProfileDoc;
+
+  const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
 
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
@@ -64,8 +74,8 @@ describe('DraftGenerationStepsComponent', () => {
       } as SFProjectProfileDoc;
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
-      when(mockProjectService.getProfile('sourceProject')).thenResolve(mockSourceProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockProjectService.getProfile('sourceProject')).thenResolve(mockSourceNonNllbProjectDoc);
       when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
         mockAlternateTrainingSourceProjectDoc
       );
@@ -93,8 +103,8 @@ describe('DraftGenerationStepsComponent', () => {
   describe('NO alternate training source project', () => {
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
-      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -163,6 +173,17 @@ describe('DraftGenerationStepsComponent', () => {
       trainingBooks.triggerEventHandler('bookSelect', mockSelectedBooks);
       expect(component.onTrainingBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
     }));
+
+    it('should set "isTrainingOptional == false" when either target or source are not in NLLB', fakeAsync(() => {
+      expect(component.isTrainingOptional).toBe(false);
+    }));
+
+    fit('should set "isTrainingOptional == true" when target and source are both in NLLB', fakeAsync(() => {
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNllbProjectDoc);
+      targetProjectDoc$.next(mockTargetProjectDoc); // Trigger re-init on project changes
+      tick();
+      expect(component.isTrainingOptional).toBe(true);
+    }));
   });
 
   describe('target contains previously selected books', () => {
@@ -181,8 +202,8 @@ describe('DraftGenerationStepsComponent', () => {
 
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
-      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
