@@ -130,7 +130,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
         // If book exists in both target and source, add to available books.
         // Otherwise, add to unusable books.
-        for (const text of target.texts ?? []) {
+        // Ensure books are displayed in ascending canonical order.
+        for (const text of target.texts.sort((a, b) => a.bookNum - b.bookNum)) {
           const bookNum = text.bookNum;
 
           // Translate books
