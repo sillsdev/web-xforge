@@ -205,7 +205,13 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   private getCurrentVerseStr(currentTime: number): string {
-    const index: number = this.getCurrentIndexInTimings(currentTime);
+    let index: number = this.getRefIndexInTimings(currentTime);
+
+    // If the index is -1 we are past the end of the timing data, in that case we should use the last valid entry
+    if (index === -1) {
+      index = this._timing.length - 1;
+    }
+
     for (let i = index; i >= 0; i--) {
       const audioRef: AudioTextRef | undefined = CheckingUtils.parseAudioRefByTime(this._timing, this._timing[i].from);
       if (audioRef != null) return audioRef.verseStr;
