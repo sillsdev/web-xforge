@@ -2,8 +2,7 @@
 @use '../checking-global-vars' as checking-vars;
 @use 'bootstrap/scss/mixins/breakpoints';
 
-:host ::ng-deep .mat-tab-label {
-  min-width: unset;
+:host ::ng-deep .mat-mdc-tab {
   padding-inline: 16px;
 }
 

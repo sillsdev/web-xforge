@@ -61,7 +61,7 @@ app-notice {
 
 // Hide the tab headers
 mat-tab-group {
-  ::ng-deep .mat-tab-header {
+  ::ng-deep .mat-mdc-tab-header {
     display: none;
   }
 }
