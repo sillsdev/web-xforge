@@ -23,6 +23,7 @@ import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { getCombinedVerseTextDoc, getTextDoc } from '../../../shared/test-utils';
+import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { CheckingTextComponent } from './checking-text.component';
 
 const mockedSFProjectService = mock(SFProjectService);
@@ -221,7 +222,7 @@ class TestEnvironment {
 
   wait(): void {
     this.fixture.detectChanges();
-    tick();
+    tick(EDITOR_READY_TIMEOUT);
     this.fixture.detectChanges();
   }
 

@@ -22,6 +22,7 @@ import { configureTestingModule, MockTranslocoDirective, TestTranslocoModule } f
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { isBadDelta } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
@@ -103,6 +104,12 @@ describe('DraftViewerComponent', () => {
       this.fixture.detectChanges();
       tick();
     }
+
+    waitForEditor(): void {
+      this.fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+      this.fixture.detectChanges();
+    }
   }
 
   configureTestingModule(() => ({
@@ -142,10 +149,7 @@ describe('DraftViewerComponent', () => {
   it('should call populateDraftText method after both editors are loaded', fakeAsync(() => {
     const env = new TestEnvironment();
     const spyPopulateDraftText = spyOn(env.component, 'populateDraftText').and.callThrough();
-
-    tick();
-    env.fixture.detectChanges();
-    tick();
+    env.waitForEditor();
 
     expect(env.component.isDraftApplied).toBe(false);
     expect(env.component.preDraftTargetDelta).toEqual(delta_no_verse_2);
@@ -157,10 +161,7 @@ describe('DraftViewerComponent', () => {
 
   it('should populate draft text correctly', fakeAsync(() => {
     const env = new TestEnvironment();
-
-    tick();
-    env.fixture.detectChanges();
-    tick();
+    env.waitForEditor();
 
     verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).once();
     expect(env.component.hasDraft).toBeTrue();
@@ -169,10 +170,7 @@ describe('DraftViewerComponent', () => {
 
   it('should apply draft correctly', fakeAsync(() => {
     const env = new TestEnvironment();
-
-    tick();
-    env.fixture.detectChanges();
-    tick();
+    env.waitForEditor();
 
     const draftEditor = env.component.targetEditor.editor!;
 
