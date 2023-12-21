@@ -115,6 +115,35 @@ describe('ScriptureAudioComponent', () => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   }));
 
+  it('emits correct verse label when using timing data with gaps', fakeAsync(() => {
+    const env = new TestEnvironment({
+      timings: [
+        { textRef: '1', from: 0, to: 1 },
+        { textRef: '2', from: 2, to: 3 }
+      ]
+    });
+
+    env.audioPlayer.audio.currentTime = 1.5;
+    env.audioPlayer.audio.timeUpdated$.next();
+    env.wait();
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
+  }));
+
+  it('emits correct verse label after timing data finishes', fakeAsync(() => {
+    const env = new TestEnvironment({
+      timings: [
+        { textRef: '1', from: 0, to: 1 },
+        { textRef: '2', from: 1, to: 2 },
+        { textRef: '', from: 2, to: 3 }
+      ]
+    });
+
+    env.audioPlayer.audio.currentTime = 3.5;
+    env.audioPlayer.audio.timeUpdated$.next();
+    env.wait();
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
+  }));
+
   it('pauses and emits on close', fakeAsync(() => {
     const env = new TestEnvironment();
 
