@@ -142,6 +142,13 @@ $material-theme-accent-error: mat.define-light-theme(
 // @include mat.sort-theme($material-app-theme);
 // @include mat.tree-theme($material-app-theme);
 
+// Remove letter spacing (added by Material v15+) that may not work with some language scripts (e.g. Arabic).
+// TODO: Add to this list as needed as we migrate to Material v15+
+.mdc-tab,
+.mdc-button {
+  letter-spacing: initial;
+}
+
 .card-outline {
   @include mat.elevation(0);
   border: 1px solid #e0e0e0;
@@ -153,4 +160,9 @@ button.mat-icon-button {
   &:not([disabled]):hover {
     color: $greenLight !important;
   }
+}
+
+// Restore the tab header underline from Material pre-v15
+.mat-mdc-tab-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
