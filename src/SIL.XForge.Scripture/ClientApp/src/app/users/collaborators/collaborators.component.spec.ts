@@ -557,7 +557,7 @@ class TestEnvironment {
   }
 
   tabElementFromIndex(index: number): DebugElement {
-    return this.tabControl.queryAll(By.css('.mat-tab-label'))[index];
+    return this.tabControl.queryAll(By.css('.mat-mdc-tab'))[index];
   }
 
   clickElement(element: HTMLElement | DebugElement): void {

@@ -42,7 +42,7 @@
       </div>
       <div *ngIf="answerFormVisible">
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
-          <mat-tab-group #answerTabs animationDuration="0ms">
+          <mat-tab-group #answerTabs [mat-stretch-tabs]="false" animationDuration="0ms">
             <mat-tab>
               <ng-template matTabLabel>
                 <span class="tab-label">

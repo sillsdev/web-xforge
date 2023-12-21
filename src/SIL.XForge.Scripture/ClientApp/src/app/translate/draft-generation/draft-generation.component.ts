@@ -4,7 +4,7 @@ import {
   MatLegacyDialogRef as MatDialogRef,
   MatLegacyDialogState as MatDialogState
 } from '@angular/material/legacy-dialog';
-import { MatLegacyTabGroup as MatTabGroup } from '@angular/material/legacy-tabs';
+import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { isEmpty } from 'lodash-es';
