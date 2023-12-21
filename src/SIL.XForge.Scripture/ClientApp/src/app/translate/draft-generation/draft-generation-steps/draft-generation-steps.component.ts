@@ -13,6 +13,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
+import { NllbLanguageService } from '../../nllb-language.service';
 
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
@@ -57,10 +58,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   trainingSourceProjectName?: string;
 
   showBookSelectionError = false;
+  isTrainingOptional = false;
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly nllbLanguageService: NllbLanguageService
   ) {
     super();
   }
@@ -154,6 +157,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
         this.setInitialTrainingBooks(this.availableTrainingBooks);
         this.setInitialTranslateBooks(this.availableTranslateBooks);
+
+        // If both source and target project languages are in the NLLB,
+        // training book selection is optional (and discouraged).
+        this.isTrainingOptional =
+          this.nllbLanguageService.isNllbLanguage(target.writingSystem.tag) &&
+          this.nllbLanguageService.isNllbLanguage(draftingSource.writingSystem.tag);
       }
     );
   }
