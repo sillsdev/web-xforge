@@ -34,7 +34,7 @@
         </div>
       </mat-step>
 
-      <mat-step [completed]="userSelectedTrainingBooks.length > 0">
+      <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
         <ng-template matStepLabel>
           <div class="stepper-multi-header">
             <h2>{{ t("choose_books_for_training") }}</h2>
@@ -42,12 +42,26 @@
           </div>
         </ng-template>
 
+        <app-notice *ngIf="isTrainingOptional" type="warning" icon="info" mode="fill-light">
+          {{ t("training_book_selection_discouraged_info_part1") }}
+          <p><transloco key="draft_generation_steps.training_book_selection_discouraged_info_part2"></transloco></p>
+        </app-notice>
+
         <app-book-multi-select
           [availableBooks]="availableTrainingBooks"
           [selectedBooks]="initialSelectedTrainingBooks"
           (bookSelect)="onTrainingBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
+
+        <app-notice
+          *ngIf="isTrainingOptional && userSelectedTrainingBooks.length > 0"
+          type="warning"
+          icon="warning"
+          mode="fill-extra-dark"
+        >
+          {{ t("training_book_selection_discouraged_warning") }}
+        </app-notice>
 
         <app-notice *ngIf="unusableTrainingBooks.length" type="light">
           <h4>

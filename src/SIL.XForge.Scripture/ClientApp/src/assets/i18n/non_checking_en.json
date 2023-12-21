@@ -182,7 +182,10 @@
     "next": "Next",
     "no_available_books": "You have no books available for drafting.",
     "these_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
-    "these_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }})."
+    "these_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
+    "training_book_selection_discouraged_info_part1": "Both your source and target languages are in the set of pre-trained language models.",
+    "training_book_selection_discouraged_info_part2": "[em]We recommend that you skip this training book selection step and continue to \"{{ draft_generation_steps.generate_draft }}\".[/em]",
+    "training_book_selection_discouraged_warning": "Selecting training data for these languages will slow your build time and may reduce draft quality!"
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
