@@ -258,7 +258,7 @@ class SFProjectMigration15 extends DocMigration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
-    for (let i = 0; i < doc.data.noteTags.length; i++) {
+    for (let i = 0; i < (doc.data.noteTags?.length ?? 0); i++) {
       const noteTag: NoteTag = doc.data.noteTags[i];
       if (!noteTag.creatorResolve) {
         ops.push({ p: ['noteTags', i, 'creatorResolve'], od: noteTag.creatorResolve });
