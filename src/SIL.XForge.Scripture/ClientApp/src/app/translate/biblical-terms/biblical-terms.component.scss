@@ -7,7 +7,7 @@
 }
 
 /* Space out the cells a little bit */
-.mat-cell {
+.mat-mdc-cell {
   padding: 5px;
 }
 
@@ -17,13 +17,13 @@
 }
 
 /* Fix the menu appearing below the table header */
-.mat-header-cell {
+.mat-mdc-header-cell {
   padding: 5px;
   z-index: 2 !important;
 }
 
 /* Stretch the table across the page */
-.mat-table {
+.mat-mdc-table {
   width: 100%;
 }
 
@@ -66,7 +66,7 @@
 }
 
 /* The table heading */
-.mat-table caption {
+.mat-mdc-table caption {
   font-size: 0.9em;
   font-weight: bold;
   padding: 5px 0 5px 20px;
@@ -74,6 +74,6 @@
 }
 
 /* RTL support for the table heading */
-.mat-table caption[dir='rtl'] {
+.mat-mdc-table caption[dir='rtl'] {
   text-align: right;
 }
