@@ -63,6 +63,25 @@ ClickToLastChapter.play = async ({ canvasElement, args }) => {
   expect(nextButton).toBeDisabled();
 };
 
+export const ChaptersInOrder = Template.bind({});
+ChaptersInOrder.args = {
+  books: [2, 1],
+  book: 1,
+  chapters: arrayOfIntsFromOne(50),
+  chapter: 1
+};
+ChaptersInOrder.play = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const [bookSelect, _chapterSelect] = await canvas.findAllByRole('combobox');
+  userEvent.click(bookSelect);
+  const overlay = within(getOverlay(canvasElement));
+  const menu = await overlay.findByRole('listbox');
+  const options = await within(menu).findAllByRole('option');
+  expect(options).toHaveLength(2);
+  expect(options[0]).toHaveTextContent('Genesis');
+  expect(options[1]).toHaveTextContent('Exodus');
+};
+
 export const Mobile = Template.bind({});
 Mobile.args = { ...defaultArgs };
 Mobile.parameters = {
