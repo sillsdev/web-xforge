@@ -22,7 +22,7 @@ import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
 import { getTextDoc } from '../../shared/test-utils';
-import { TextComponent } from '../../shared/text/text.component';
+import { EDITOR_READY_TIMEOUT, TextComponent } from '../../shared/text/text.component';
 import {
   ACTIVE_EDIT_TIMEOUT,
   EDIT_TIMEOUT,
@@ -474,10 +474,9 @@ class TestEnvironment {
       this.testOnlineStatusService,
       instance(mockedReportingService)
     );
-
     this.sourceFixture.detectChanges();
     this.targetFixture.detectChanges();
-    tick();
+    tick(EDITOR_READY_TIMEOUT);
   }
 
   /** @param timeSpanMs Optional milliseconds delay between pressing and releasing key. */

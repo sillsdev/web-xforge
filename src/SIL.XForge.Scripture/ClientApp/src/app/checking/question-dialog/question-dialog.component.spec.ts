@@ -46,6 +46,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { getTextDoc } from '../../shared/test-utils';
+import { EDITOR_READY_TIMEOUT } from '../../shared/text/text.component';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
@@ -401,6 +402,9 @@ describe('QuestionDialogComponent', () => {
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
+    env.fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');

@@ -35,7 +35,13 @@ import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
-import { PRESENCE_EDITOR_ACTIVE_TIMEOUT, PresenceData, RemotePresences, TextComponent } from './text.component';
+import {
+  EDITOR_READY_TIMEOUT,
+  PRESENCE_EDITOR_ACTIVE_TIMEOUT,
+  PresenceData,
+  RemotePresences,
+  TextComponent
+} from './text.component';
 
 const mockedBugsnagService = mock(BugsnagService);
 const mockedProjectService = mock(SFProjectService);
@@ -99,8 +105,7 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
     env.component.onEditorCreated(mockedQuill);
     env.id = new TextDocId('project01', 40, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
     expect(env.component.editor?.getText()).withContext('setup').toContain('chapter 1, verse 6.');
     expect(env.component.editor?.getContents().ops?.length).withContext('setup').toEqual(25);
 
@@ -120,8 +125,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 41, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
     env.hostComponent.isReadOnly = true;
 
     // segments overlaps on verse 2
@@ -151,8 +155,7 @@ describe('TextComponent', () => {
     const env: TestEnvironment = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 40, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     // document starts with no description on title
     const titleSegment = env.component.editor!.container.querySelector('usx-para[data-style="s"] usx-segment')!;
@@ -182,8 +185,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 42, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     const verseSegments: string[] = env.component.getVerseSegments(new VerseRef('LUK 1:1'));
     expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
@@ -195,8 +197,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 43, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     const range: RangeStatic = env.component.getSegmentRange('s_3')!;
     env.component.editor!.setSelection(range.index + 1, 'user');
@@ -216,8 +217,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 43, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
     env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
@@ -256,8 +256,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.id = new TextDocId('project01', 40, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
     env.embedNoteAtVerse(1);
     tick();
     env.fixture.detectChanges();
@@ -292,8 +291,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
       const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
 
@@ -310,8 +308,7 @@ describe('TextComponent', () => {
       env.onlineStatus = false;
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
       const cursors: QuillCursors = env.component.editor!.getModule('cursors');
       const cursorRemoveSpy = spyOn<any>(cursors, 'removeCursor').and.callThrough();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
@@ -333,8 +330,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
       const onSelectionChangedSpy = spyOn<any>(env.component, 'onSelectionChanged').and.callThrough();
       const localPresenceSubmitSpy = spyOn<any>(env.localPresenceDoc, 'submit').and.callThrough();
 
@@ -366,8 +362,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment({ callback });
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
 
       env.component.onSelectionChanged({ index: 0, length: 0 });
 
@@ -381,8 +376,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
       const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.component as any).presenceChange, 'emit');
 
       expect(Object.keys(env.remoteDocPresences).length)
@@ -408,8 +402,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
 
       env.addRemotePresence('remote-person-1');
       env.addRemotePresence('remote-person-2');
@@ -433,8 +426,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
       const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
 
       const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
@@ -458,8 +450,7 @@ describe('TextComponent', () => {
       env.hostComponent.isReadOnly = true;
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
 
       const presenceDocSubmit = spyOn<any>(env.localPresenceDoc, 'submit');
       const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
@@ -475,8 +466,7 @@ describe('TextComponent', () => {
       const presenceChangeEmitSpy: jasmine.Spy<any> = spyOn<any>((env.component as any).presenceChange, 'emit');
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
 
       expect(env.localPresenceDoc).toBeUndefined();
       expect(env.localPresenceChannel).toBeUndefined();
@@ -487,8 +477,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
 
       const remotePresence = 'remote-person-1';
       const remoteSegmentRef = 'verse_1_1';
@@ -522,8 +511,7 @@ describe('TextComponent', () => {
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
-      env.fixture.detectChanges();
+      env.waitForEditor();
       const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
       const userDoc: UserDoc = env.getUserDoc('user01');
       expect(userDoc.data?.avatarUrl).not.toEqual(updatedAvatarUrl);
@@ -543,7 +531,7 @@ describe('TextComponent', () => {
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      tick();
+      env.waitForEditor();
       const initialTextInDoc = 'target: chapter 1, verse 4.';
       const textToDropIn = 'Hello\nHello\r\nHello';
       // A successful drag of the text would result in the final text being
@@ -648,6 +636,7 @@ describe('TextComponent', () => {
     ];
 
     const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+    env.waitForEditor();
     const usxCharElements: NodeListOf<Element> = env.component.editor!.container.querySelectorAll('usx-char');
     expect(usxCharElements.length).withContext('unexpected number of formatted character runs').toEqual(2);
     expect(usxCharElements[0].attributes.getNamedItem('data-style')?.value)
@@ -682,8 +671,7 @@ describe('TextComponent', () => {
 
     const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
 
-    env.fixture.detectChanges();
-    tick();
+    env.waitForEditor();
     env.component.setSegment(segmentRef);
     tick();
     const segmentRange: RangeStatic | undefined = env.component.getSegmentRange(segmentRef);
@@ -887,8 +875,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.component.id = new TextDocId('project01', 40, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
     const initialContents: string = env.component.getSegmentText('verse_1_1');
@@ -913,8 +900,7 @@ describe('TextComponent', () => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     env.component.id = new TextDocId('project01', 40, 1);
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
     env.component.editor!.setSelection(range.index, 0, 'user');
@@ -1009,8 +995,7 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
     env.component.id = new TextDocId('project01', 40, 1);
     env.onlineStatus = false;
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     let range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
     let verse1Contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
@@ -1170,9 +1155,7 @@ describe('TextComponent', () => {
       }
     ];
     const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.waitForEditor();
 
     [TextNoteType.Footnote, TextNoteType.EndNote, TextNoteType.CrossReference].forEach(noteStyle => {
       const note = env.quillEditor.querySelector('usx-note[data-style="' + noteStyle + '"]') as HTMLElement;
@@ -1443,6 +1426,11 @@ class TestEnvironment {
     return (this.component as any).localPresenceDoc;
   }
 
+  waitForEditor(): void {
+    tick(EDITOR_READY_TIMEOUT);
+    this.fixture.detectChanges();
+  }
+
   getUserDoc(userId: string): UserDoc {
     return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
   }
@@ -1710,8 +1698,7 @@ function basicSimpleText(): { env: TestEnvironment; segmentRange: RangeStatic } 
 
   const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
 
-  env.fixture.detectChanges();
-  tick();
+  env.waitForEditor();
   env.component.setSegment(segmentRef);
   tick();
   const segmentRange: RangeStatic | undefined = env.component.getSegmentRange(segmentRef);

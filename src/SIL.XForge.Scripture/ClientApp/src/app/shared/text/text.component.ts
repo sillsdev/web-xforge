@@ -40,6 +40,7 @@ import { EditorRange, TextViewModel } from './text-view-model';
 
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
+export const EDITOR_READY_TIMEOUT = 100;
 
 const USX_FORMATS = registerScripture();
 
