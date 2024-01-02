@@ -1,5 +1,6 @@
 @use '@angular/material' as mat;
-@import 'variables';
+@use 'sass:color';
+@use 'variables' as *;
 
 // TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
 //  The following line adds:
@@ -26,10 +27,15 @@ $mat-sf-purple: (
 );
 
 $mat-sf-grey: (
-  100: $greyLight,
+  100: color.scale($greyLight, $lightness: 10%),
   200: $greyLight,
-  700: $greyDark,
+  300: color.scale($greyLight, $lightness: -10%),
+  400: color.scale($greyDark, $lightness: 30%),
+  500: color.scale($greyDark, $lightness: 20%),
+  600: color.scale($greyDark, $lightness: 10%),
+  700: color.scale($greyDark, $lightness: 5%),
   800: $greyDark,
+  900: color.scale($greyDark, $lightness: -5%),
   contrast: (
     200: rgba(black, 0.87),
     800: white
@@ -38,9 +44,13 @@ $mat-sf-grey: (
 
 $mat-sf-green: (
   200: #dcedc8,
+  300: color.scale($greenLight, $lightness: 30%),
+  400: color.scale($greenLight, $lightness: 15%),
   500: $greenLight,
-  700: $greenDark,
+  600: color.scale($greenDark, $lightness: 20%),
+  700: color.scale($greenDark, $lightness: 10%),
   800: $greenDark,
+  900: color.scale($greenDark, $lightness: -5%),
   contrast: (
     200: rgba(black, 0.87),
     500: rgba(black, 0.87),
@@ -123,7 +133,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.radio-theme($material-app-theme);
 @include mat.select-theme($material-app-theme);
 @include mat.sidenav-theme($material-app-theme);
-@include mat.legacy-slide-toggle-theme($material-app-theme);
+@include mat.slide-toggle-theme($material-app-theme);
 @include mat.slider-theme($material-app-theme);
 @include mat.snack-bar-theme($material-app-theme);
 @include mat.button-theme($material-app-theme);

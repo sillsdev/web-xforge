@@ -117,7 +117,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
 
     expect(env.suggestionsEnabledCheckbox.disabled).toBe(true);
-    expect(env.suggestionsEnabledCheckbox.checked).toBe(true);
+    expect(env.isSwitchChecked(env.suggestionsEnabledCheckbox)).toBe(true);
     env.closeDialog();
   }));
 
@@ -188,7 +188,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
 
     expect(env.component!.transliterateBiblicalTerms).toBe(true);
     expect(env.transliterateBiblicalTermsCheckbox.disabled).toBe(true);
-    expect(env.transliterateBiblicalTermsCheckbox.checked).toBe(true);
+    expect(env.isSwitchChecked(env.transliterateBiblicalTermsCheckbox)).toBe(true);
     env.closeDialog();
   }));
 
@@ -246,7 +246,7 @@ class TestEnvironment {
   }
 
   get suggestionsEnabledCheckbox(): HTMLInputElement {
-    return this.suggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    return this.suggestionsEnabledSwitch.querySelector('button[role=switch]') as HTMLInputElement;
   }
 
   get numSuggestionsSelect(): MatSelect {
@@ -258,7 +258,7 @@ class TestEnvironment {
   }
 
   get biblicalTermsEnabledCheckbox(): HTMLInputElement {
-    return this.biblicalTermsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    return this.biblicalTermsEnabledSwitch.querySelector('button[role=switch]') as HTMLInputElement;
   }
 
   get transliterateBiblicalTermsSwitch(): HTMLElement {
@@ -266,7 +266,7 @@ class TestEnvironment {
   }
 
   get transliterateBiblicalTermsCheckbox(): HTMLInputElement {
-    return this.transliterateBiblicalTermsSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    return this.transliterateBiblicalTermsSwitch.querySelector('button[role=switch]') as HTMLInputElement;
   }
 
   get offlineText(): DebugElement {
@@ -347,9 +347,13 @@ class TestEnvironment {
     );
   }
 
+  isSwitchChecked(switchButton: HTMLElement): boolean {
+    return switchButton.classList.contains('mdc-switch--checked');
+  }
+
   clickSwitch(element: HTMLElement): void {
-    const inputElem = element.querySelector('input')!;
-    this.click(inputElem);
+    const button = element.querySelector('button[role=switch]') as HTMLInputElement;
+    this.click(button);
   }
 
   click(element: HTMLElement): void {
