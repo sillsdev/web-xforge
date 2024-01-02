@@ -183,5 +183,13 @@
   "cli": {
     "analytics": "62cc4c83-1f58-4311-beb3-55e7dd022de8",
     "schematicCollections": ["@angular-eslint/schematics"]
+  },
+  "schematics": {
+    "@angular-eslint/schematics:application": {
+      "setParserOptionsProject": true
+    },
+    "@angular-eslint/schematics:library": {
+      "setParserOptionsProject": true
+    }
   }
 }

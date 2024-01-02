@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -13,7 +13,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 
-abstract class RouterGuard implements CanActivate {
+abstract class RouterGuard {
   constructor(protected authGuard: AuthGuard, protected projectService: SFProjectService) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
