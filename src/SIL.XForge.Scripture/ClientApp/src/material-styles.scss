@@ -127,7 +127,8 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.sidenav-theme($material-app-theme);
 @include mat.legacy-slide-toggle-theme($material-app-theme);
 @include mat.slider-theme($material-app-theme);
-@include mat.legacy-snack-bar-theme($material-app-theme);
+@include mat.snack-bar-theme($material-app-theme);
+@include mat.button-theme($material-app-theme);
 @include mat.stepper-theme($material-app-theme);
 @include mat.table-theme($material-app-theme);
 @include mat.tabs-theme($material-app-theme);

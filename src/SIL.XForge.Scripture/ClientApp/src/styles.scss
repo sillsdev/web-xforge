@@ -3,7 +3,6 @@
 // This creates css variables for common breakpoints (needed when using MediaBreakpointService with BreakpointObserver)
 @use 'src/xforge-common/media-breakpoints/css-vars';
 
-@import 'variables';
 @import 'fonts';
 /* Only import relevant Bootstrap 4.x styles */
 @import 'bootstrap/scss/bootstrap-grid';
@@ -43,8 +42,8 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   padding-top: 5px !important;
 }
 
-.snackbar-error {
-  background-color: variables.$errorColor !important;
+.mdc-snackbar.snackbar-error {
+  --mdc-snackbar-container-color: #{variables.$errorColor};
 }
 
 .mat-flat-button,
@@ -61,7 +60,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .locale-fonts mat-option {
-  font-family: $languageFonts;
+  font-family: variables.$languageFonts;
 }
 
 // Allows checkbox label word-wrap
