@@ -85,6 +85,6 @@ function playForAdjustFontButton(which: '+' | '-'): PlayFunction<AngularRenderer
     );
 
     expect(adjustFontButton).not.toBeNull();
-    userEvent.click(adjustFontButton!, undefined, { skipPointerEventsCheck: true });
+    userEvent.click(adjustFontButton!);
   };
 }

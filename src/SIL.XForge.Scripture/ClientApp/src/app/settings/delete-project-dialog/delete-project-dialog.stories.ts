@@ -34,6 +34,8 @@ DeleteProjectValidDialog.play = async ({ canvasElement }) => {
 
   const projectInput = overlay.getByRole('textbox');
   userEvent.type(projectInput, 'My Project');
+  // wait for the input to be validated
+  await new Promise(resolve => setTimeout(resolve, 200));
 
   expect(submitButton).toBeEnabled();
 };
