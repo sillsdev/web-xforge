@@ -44,7 +44,18 @@
 
         <app-notice *ngIf="isTrainingOptional" type="warning" icon="info" mode="fill-light">
           {{ t("training_book_selection_discouraged_info_part1") }}
-          <p><transloco key="draft_generation_steps.training_book_selection_discouraged_info_part2"></transloco></p>
+          <p>
+            <transloco
+              *ngIf="userSelectedTrainingBooks.length === 0"
+              key="draft_generation_steps.training_book_selection_discouraged_info_part2_skip_step"
+            ></transloco>
+          </p>
+          <p>
+            <transloco
+              *ngIf="userSelectedTrainingBooks.length > 0"
+              key="draft_generation_steps.training_book_selection_discouraged_info_part2_clear_selection"
+            ></transloco>
+          </p>
         </app-notice>
 
         <app-book-multi-select

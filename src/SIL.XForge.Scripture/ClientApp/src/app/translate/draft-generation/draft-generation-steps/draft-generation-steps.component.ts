@@ -115,6 +115,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       ),
       // Build book lists
       ({ target, draftingSource, trainingSource }) => {
+        // If both source and target project languages are in the NLLB,
+        // training book selection is optional (and discouraged).
+        this.isTrainingOptional =
+          this.nllbLanguageService.isNllbLanguage(target.writingSystem.tag) &&
+          this.nllbLanguageService.isNllbLanguage(draftingSource.writingSystem.tag);
+
         const draftingSourceBooks = new Set<number>();
         let trainingSourceBooks = new Set<number>();
 
@@ -157,12 +163,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
         this.setInitialTrainingBooks(this.availableTrainingBooks);
         this.setInitialTranslateBooks(this.availableTranslateBooks);
-
-        // If both source and target project languages are in the NLLB,
-        // training book selection is optional (and discouraged).
-        this.isTrainingOptional =
-          this.nllbLanguageService.isNllbLanguage(target.writingSystem.tag) &&
-          this.nllbLanguageService.isNllbLanguage(draftingSource.writingSystem.tag);
       }
     );
   }
