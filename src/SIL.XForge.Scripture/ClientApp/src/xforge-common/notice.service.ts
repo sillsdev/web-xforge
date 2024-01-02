@@ -1,8 +1,6 @@
-import {
-  MatLegacySnackBarConfig as MatSnackBarConfig,
-  MatLegacySnackBar as MatSnackBar
-} from '@angular/material/legacy-snack-bar';
 import { Injectable } from '@angular/core';
+import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 import { I18nService } from './i18n.service';
 
 /** Manages and provides access to notices shown to user on the web site. */
@@ -69,9 +67,6 @@ export class NoticeService {
 
     this.messageOnDisplay = message;
 
-    snackBarRef
-      .afterDismissed()
-      .toPromise()
-      .then(() => (this.messageOnDisplay = undefined));
+    firstValueFrom(snackBarRef.afterDismissed()).then(() => (this.messageOnDisplay = undefined));
   }
 }
