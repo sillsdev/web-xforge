@@ -1,10 +1,6 @@
 /** Record of a log item. */
 export class LogItem {
-  constructor(
-    public readonly logLevel: LogLevel,
-    public readonly message?: any,
-    public readonly params?: any[]
-  ) {}
+  constructor(public readonly logLevel: LogLevel, public readonly message?: any, public readonly params?: any[]) {}
 }
 
 export enum LogLevel {
