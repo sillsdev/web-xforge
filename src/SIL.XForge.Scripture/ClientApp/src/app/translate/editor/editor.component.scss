@@ -51,19 +51,6 @@
   margin: 0 6px;
 }
 
-.text-area {
-  width: 50%;
-
-  &.text-area-full-width {
-    width: 100%;
-  }
-}
-
-.text-container {
-  position: relative;
-  height: 100%;
-}
-
 app-text {
   height: 100%;
 }
@@ -139,4 +126,48 @@ app-text {
   &:hover {
     text-decoration: underline;
   }
+}
+
+.content {
+  height: calc(100vh - 84px);
+  display: grid;
+  grid-template-areas:
+    'toolbar toolbar'
+    'source target';
+  column-gap: 10px;
+
+  grid-template-rows: 72px minmax(0, 1fr);
+  grid-template-columns: 1fr 1fr;
+  justify-items: stretch;
+}
+
+.toolbar {
+  grid-area: toolbar;
+}
+
+.source {
+  grid-area: source;
+}
+
+.target {
+  grid-area: target;
+}
+
+.text-container {
+  height: 100%;
+  position: relative;
+}
+
+.text-area.text-area-full-width {
+  grid-column: 1 / span 2;
+}
+
+.text-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.container-for-split {
+  overflow: hidden;
+  height: 100%;
 }

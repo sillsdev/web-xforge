@@ -590,7 +590,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
-      this.setTextHeight();
       this.positionInsertNoteFab();
     });
     this.subscribe(
@@ -691,7 +690,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
-            setTimeout(() => this.setTextHeight());
           });
 
           if (this.metricsSession != null) {
@@ -727,8 +725,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.checkForPreTranslations();
       }
     );
-
-    setTimeout(() => this.setTextHeight());
   }
 
   ngOnDestroy(): void {
@@ -1358,28 +1354,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private setTextHeight(): void {
-    if (this.target == null || this.targetSplitContainer == null) {
-      return;
-    }
-    // this is a horrible hack to set the height of the text components
-    // we don't want to use flexbox because it makes editing very slow
-    let elem: HTMLElement = this.targetSplitContainer.nativeElement;
-    let bounds = elem.getBoundingClientRect();
-    // add bottom padding
-    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    this.targetSplitHeight = `calc(100vh - ${top}px)`;
-
-    // Do the same for the source, as it will not have warnings like the target
-    if (this.source == null || this.sourceSplitContainer == null) {
-      return;
-    }
-    elem = this.sourceSplitContainer.nativeElement;
-    bounds = elem.getBoundingClientRect();
-    top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    this.sourceSplitHeight = `calc(100vh - ${top}px)`;
-  }
-
   private async changeText(): Promise<void> {
     if (this.projectDoc == null || this.text == null || this._chapter == null) {
       this.source!.id = undefined;
@@ -1421,7 +1395,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
 
     await this.loadNoteThreadDocs(this.projectDoc.id, this.text.bookNum, this._chapter);
-    setTimeout(() => this.setTextHeight());
   }
 
   private onStartTranslating(): void {

@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'editor'">
-  <div class="content" fxLayout="column">
+  <div class="content">
     <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
       <div fxFlex fxLayout="row wrap">
         <app-book-chapter-chooser
@@ -57,162 +57,160 @@
         </div>
       </ng-container>
     </div>
-    <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
-      <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
-        <div class="language-label">{{ sourceLabel }}</div>
-        <app-notice *ngIf="hasSourceCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
-          <div>
-            {{ sourceCopyrightBanner }}
-            <span class="copyright-more-info" (click)="showCopyrightNotice('source')">{{ t("more_info") }}</span>
-          </div>
-        </app-notice>
-        <div #sourceSplitContainer>
-          <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
-          <as-split direction="vertical" [style.height]="sourceSplitHeight" [dir]="i18n.direction">
-            <as-split-area [size]="75" [minSize]="20">
-              <div #sourceContainer class="text-container">
-                <app-text
-                  #source
-                  [isReadOnly]="true"
-                  [highlightSegment]="targetFocused"
-                  (loaded)="onTextLoaded('source')"
-                  (updated)="onSourceUpdated($event.delta != null)"
-                  [isRightToLeft]="isSourceRightToLeft"
-                  [fontSize]="sourceFontSize"
-                ></app-text>
-              </div>
-            </as-split-area>
-            <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForSource" [dir]="i18n.direction">
-              <app-biblical-terms
-                id="source-biblical-terms"
-                [bookNum]="bookNum"
-                [chapter]="chapter"
-                [verse]="verse"
-                [configProjectId]="projectId"
-                [projectId]="sourceProjectId"
-              ></app-biblical-terms>
-            </as-split-area>
-          </as-split>
+    <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
+      <div class="language-label">{{ sourceLabel }}</div>
+      <app-notice *ngIf="hasSourceCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
+        <div>
+          {{ sourceCopyrightBanner }}
+          <span class="copyright-more-info" (click)="showCopyrightNotice('source')">{{ t("more_info") }}</span>
         </div>
+      </app-notice>
+      <div #sourceSplitContainer class="container-for-split">
+        <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
+        <as-split direction="vertical" [style.height]="sourceSplitHeight" [dir]="i18n.direction">
+          <as-split-area [size]="75" [minSize]="20">
+            <div #sourceContainer class="text-container">
+              <app-text
+                #source
+                [isReadOnly]="true"
+                [highlightSegment]="targetFocused"
+                (loaded)="onTextLoaded('source')"
+                (updated)="onSourceUpdated($event.delta != null)"
+                [isRightToLeft]="isSourceRightToLeft"
+                [fontSize]="sourceFontSize"
+              ></app-text>
+            </div>
+          </as-split-area>
+          <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForSource" [dir]="i18n.direction">
+            <app-biblical-terms
+              id="source-biblical-terms"
+              [bookNum]="bookNum"
+              [chapter]="chapter"
+              [verse]="verse"
+              [configProjectId]="projectId"
+              [projectId]="sourceProjectId"
+            ></app-biblical-terms>
+          </as-split-area>
+        </as-split>
       </div>
-      <div
-        id="target-text-area"
-        class="text-area"
-        [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
-        ngClass.xs="text-area-full-width"
-      >
-        <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs>{{ targetLabel }}</div>
-        <app-notice *ngIf="hasTargetCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
-          <div>
-            {{ targetCopyrightBanner }}
-            <span class="copyright-more-info" (click)="showCopyrightNotice('target')">{{ t("more_info") }}</span>
-          </div>
-        </app-notice>
-        <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
-          <mat-icon>warning</mat-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
+    </div>
+    <div
+      id="target-text-area"
+      class="text-area"
+      [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
+      ngClass.xs="text-area-full-width"
+    >
+      <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs>{{ targetLabel }}</div>
+      <app-notice *ngIf="hasTargetCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
+        <div>
+          {{ targetCopyrightBanner }}
+          <span class="copyright-more-info" (click)="showCopyrightNotice('target')">{{ t("more_info") }}</span>
         </div>
-        <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
-          <mat-icon>warning</mat-icon> {{ t("project_data_out_of_sync") }}
-        </div>
-        <div *ngIf="target.areOpsCorrupted && hasEditRight" class="doc-corrupted-warning">
-          <mat-icon>error</mat-icon> {{ t("text_doc_corrupted") }}
-          <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
-        </div>
-        <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
-          <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
-        </div>
-        <div *ngIf="showNoEditPermissionMessage" class="no-edit-permission-message">
-          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
-        </div>
-        <div #targetSplitContainer>
-          <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
-          <as-split direction="vertical" [style.height]="targetSplitHeight">
-            <as-split-area [size]="75" [minSize]="20" [dir]="i18n.direction">
-              <div
-                #targetContainer
-                class="text-container"
-                [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
-                [ngClass]="{ 'has-draft': showPreviewDraft }"
-              >
-                <app-text
-                  #target
-                  [isReadOnly]="!canEdit"
-                  (updated)="
-                    onTargetUpdated(
-                      $event.segment,
-                      $event.delta,
-                      $event.prevSegment,
-                      $event.affectedEmbeds,
-                      $event.isLocalUpdate
-                    )
-                  "
-                  (loaded)="onTextLoaded('target')"
-                  (focused)="targetFocused = $event"
-                  (segmentRefChange)="onSegmentRefChange($event)"
-                  (presenceChange)="onPresenceChange($event)"
-                  [highlightSegment]="targetFocused && canEdit"
-                  [enablePresence]="true"
-                  [markInvalid]="true"
-                  [isRightToLeft]="isTargetRightToLeft"
-                  [fontSize]="fontSize"
-                  [selectableVerses]="showAddCommentUI"
-                  [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
-                ></app-text>
-                <app-suggestions
-                  class="mat-elevation-z2"
-                  [show]="showSuggestions && translationSuggestionsEnabled"
-                  [suggestions]="suggestions"
-                  [text]="target"
-                  (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
-                  (showChange)="showSuggestions = $event"
-                ></app-suggestions>
-                <ng-template #fabBottomSheet>
-                  <div class="fab-bottom-sheet" [dir]="direction">
-                    <b>{{ currentSegmentReference }}</b>
-                    <button
-                      *ngIf="!addingMobileNote && !hasEditRight"
-                      mat-flat-button
-                      (click)="toggleAddingMobileNote()"
-                      color="accent"
-                    >
-                      <mat-icon>add_comment</mat-icon>
-                      {{ t("add_comment") }}
-                    </button>
-                    <form *ngIf="addingMobileNote">
-                      <mat-form-field class="full-width" appearance="outline">
-                        <mat-label>{{ t("your_comment") }}</mat-label>
-                        <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
-                      </mat-form-field>
-                      <div class="fab-action-buttons">
-                        <button mat-button class="close-button" (click)="toggleAddingMobileNote()">
-                          {{ t("cancel") }}
-                        </button>
-                        <button mat-flat-button class="save-button" color="primary" (click)="saveMobileNote()">
-                          {{ t("save") }}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </ng-template>
-                <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
-                  <button mat-mini-fab title="{{ t('add_comment') }}" (click)="insertNote()">
+      </app-notice>
+      <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
+        <mat-icon>warning</mat-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
+      </div>
+      <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
+        <mat-icon>warning</mat-icon> {{ t("project_data_out_of_sync") }}
+      </div>
+      <div *ngIf="target.areOpsCorrupted && hasEditRight" class="doc-corrupted-warning">
+        <mat-icon>error</mat-icon> {{ t("text_doc_corrupted") }}
+        <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
+      </div>
+      <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
+        <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
+      </div>
+      <div *ngIf="showNoEditPermissionMessage" class="no-edit-permission-message">
+        <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
+      </div>
+      <div #targetSplitContainer class="container-for-split">
+        <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
+        <as-split direction="vertical" [style.height]="targetSplitHeight">
+          <as-split-area [size]="75" [minSize]="20" [dir]="i18n.direction">
+            <div
+              #targetContainer
+              class="text-container"
+              [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
+              [ngClass]="{ 'has-draft': showPreviewDraft }"
+            >
+              <app-text
+                #target
+                [isReadOnly]="!canEdit"
+                (updated)="
+                  onTargetUpdated(
+                    $event.segment,
+                    $event.delta,
+                    $event.prevSegment,
+                    $event.affectedEmbeds,
+                    $event.isLocalUpdate
+                  )
+                "
+                (loaded)="onTextLoaded('target')"
+                (focused)="targetFocused = $event"
+                (segmentRefChange)="onSegmentRefChange($event)"
+                (presenceChange)="onPresenceChange($event)"
+                [highlightSegment]="targetFocused && canEdit"
+                [enablePresence]="true"
+                [markInvalid]="true"
+                [isRightToLeft]="isTargetRightToLeft"
+                [fontSize]="fontSize"
+                [selectableVerses]="showAddCommentUI"
+                [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
+              ></app-text>
+              <app-suggestions
+                class="mat-elevation-z2"
+                [show]="showSuggestions && translationSuggestionsEnabled"
+                [suggestions]="suggestions"
+                [text]="target"
+                (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
+                (showChange)="showSuggestions = $event"
+              ></app-suggestions>
+              <ng-template #fabBottomSheet>
+                <div class="fab-bottom-sheet" [dir]="direction">
+                  <b>{{ currentSegmentReference }}</b>
+                  <button
+                    *ngIf="!addingMobileNote && !hasEditRight"
+                    mat-flat-button
+                    (click)="toggleAddingMobileNote()"
+                    color="accent"
+                  >
                     <mat-icon>add_comment</mat-icon>
+                    {{ t("add_comment") }}
                   </button>
+                  <form *ngIf="addingMobileNote">
+                    <mat-form-field class="full-width" appearance="outline">
+                      <mat-label>{{ t("your_comment") }}</mat-label>
+                      <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
+                    </mat-form-field>
+                    <div class="fab-action-buttons">
+                      <button mat-button class="close-button" (click)="toggleAddingMobileNote()">
+                        {{ t("cancel") }}
+                      </button>
+                      <button mat-flat-button class="save-button" color="primary" (click)="saveMobileNote()">
+                        {{ t("save") }}
+                      </button>
+                    </div>
+                  </form>
                 </div>
+              </ng-template>
+              <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
+                <button mat-mini-fab title="{{ t('add_comment') }}" (click)="insertNote()">
+                  <mat-icon>add_comment</mat-icon>
+                </button>
               </div>
-            </as-split-area>
-            <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget" [dir]="i18n.direction">
-              <app-biblical-terms
-                id="target-biblical-terms"
-                [bookNum]="bookNum"
-                [chapter]="chapter"
-                [verse]="verse"
-                [configProjectId]="projectId"
-                [projectId]="projectId"
-              ></app-biblical-terms>
-            </as-split-area>
-          </as-split>
-        </div>
+            </div>
+          </as-split-area>
+          <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget" [dir]="i18n.direction">
+            <app-biblical-terms
+              id="target-biblical-terms"
+              [bookNum]="bookNum"
+              [chapter]="chapter"
+              [verse]="verse"
+              [configProjectId]="projectId"
+              [projectId]="projectId"
+            ></app-biblical-terms>
+          </as-split-area>
+        </as-split>
       </div>
     </div>
   </div>

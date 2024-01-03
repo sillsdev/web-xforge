@@ -82,7 +82,8 @@ export interface EmbedsByVerse {
 /** View of an editable text document. Used for displaying Scripture. */
 @Component({
   selector: 'app-text',
-  templateUrl: './text.component.html'
+  templateUrl: './text.component.html',
+  styleUrls: ['./text.component.scss']
 })
 export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
