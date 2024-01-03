@@ -14,7 +14,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, merge, Subscription } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, merge, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -320,14 +320,15 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         data: noteDialogData
       }
     );
-    const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+    const result: NoteDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (result != null) {
-      if (result.noteContent != null) {
+      if (result.noteContent != null || result.status != null) {
         await this.saveNote({
           content: result.noteContent,
           threadDataId: row.noteDataId,
           dataId: result.noteDataId,
-          biblicalTermId: row.id
+          biblicalTermId: row.id,
+          status: result.status
         });
       }
     }
@@ -478,7 +479,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       content: params.content,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
-      status: NoteStatus.Todo,
+      status: params.status ?? NoteStatus.Todo,
       deleted: false,
       editable: true,
       versionNumber: 1
@@ -520,7 +521,11 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         });
       } else {
         note.threadId = threadDoc.data!.threadId;
-        await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));
+        await threadDoc.submitJson0Op(op => {
+          op.add(t => t.notes, note);
+          // also set the status of the thread to be the status of the note
+          op.set(t => t.status, note.status);
+        });
       }
     }
   }
