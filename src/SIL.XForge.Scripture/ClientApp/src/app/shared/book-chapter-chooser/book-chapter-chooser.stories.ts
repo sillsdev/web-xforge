@@ -1,10 +1,10 @@
-import { userEvent, within } from '@storybook/testing-library';
 import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { expect } from '@storybook/jest';
-import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
+import { userEvent, within } from '@storybook/testing-library';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { getOverlay } from '../../../../.storybook/story-utils';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
 
@@ -57,7 +57,7 @@ ClickToLastChapter.play = async ({ canvasElement, args }) => {
   expect(prevButton).toBeDisabled();
   for (const _chapter of args.chapters.slice(1)) {
     expect(nextButton).not.toBeDisabled();
-    userEvent.click(nextButton);
+    await userEvent.click(nextButton);
     expect(prevButton).not.toBeDisabled();
   }
   expect(nextButton).toBeDisabled();
@@ -73,7 +73,7 @@ ChaptersInOrder.args = {
 ChaptersInOrder.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [bookSelect, _chapterSelect] = await canvas.findAllByRole('combobox');
-  userEvent.click(bookSelect);
+  await userEvent.click(bookSelect);
   const overlay = within(getOverlay(canvasElement));
   const menu = await overlay.findByRole('listbox');
   const options = await within(menu).findAllByRole('option');
@@ -93,7 +93,7 @@ SelectBook.args = { ...defaultArgs };
 SelectBook.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [bookSelect, _chapterSelect] = await canvas.findAllByRole('combobox');
-  userEvent.click(bookSelect);
+  await userEvent.click(bookSelect);
   const overlay = within(getOverlay(canvasElement));
   const menu = await overlay.findByRole('listbox');
   const book2 = await within(menu).findByText('Exodus');
@@ -105,11 +105,11 @@ SelectChapter.args = { ...defaultArgs };
 SelectChapter.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [_bookSelect, chapterSelect] = await canvas.findAllByRole('combobox');
-  userEvent.click(chapterSelect);
+  await userEvent.click(chapterSelect);
   const overlay = within(getOverlay(canvasElement));
   const menu = await overlay.findByRole('listbox');
   const chapter2 = await within(menu).findByText('2');
-  userEvent.click(chapter2);
+  await userEvent.click(chapter2);
 };
 
 export const Arabic = Template.bind({});
