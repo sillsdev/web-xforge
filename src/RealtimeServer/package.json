@@ -22,7 +22,7 @@
   "private": true,
   "dependencies": {
     "@bugsnag/js": "^7.21.0",
-    "@sillsdev/scripture": "^1.4.0",
+    "@sillsdev/scripture": "1.4.1",
     "@types/ajv-bsontype": "^1.0.1",
     "ajv": "^8.12.0",
     "ajv-bsontype": "^1.0.7",
