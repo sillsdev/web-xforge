@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { expect } from '@storybook/jest';
+import { userEvent, within } from '@storybook/testing-library';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingCommentFormComponent } from './checking-comment-form.component';
 
 const meta: Meta<CheckingCommentFormComponent> = {
@@ -38,7 +38,7 @@ export const InvalidForm: Story = {
     // Only necessary because the autofocus directive has to use setTimeout
     await new Promise(resolve => setTimeout(resolve, 0));
     const saveButton: HTMLElement = canvas.getByRole('button', { name: /Save/i });
-    userEvent.click(saveButton);
+    await userEvent.click(saveButton);
     const error: HTMLElement = canvas.getByText(/You need to enter your comment before saving/i);
     expect(error).toBeInTheDocument();
   }

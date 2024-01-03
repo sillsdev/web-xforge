@@ -12,7 +12,6 @@
       "plugins": ["@typescript-eslint", "eslint-plugin-import", "eslint-plugin-jsdoc", "prettier", "deprecation"],
       "extends": [
         "plugin:@angular-eslint/recommended",
-        "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
         "plugin:@angular-eslint/template/process-inline-templates",
         "prettier"
       ],
