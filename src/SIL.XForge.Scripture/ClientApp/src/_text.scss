@@ -4,6 +4,7 @@
 
 quill-editor {
   height: 100%;
+  display: unset !important;
   > .ql-container {
     letter-spacing: 0.03125em;
     > .ql-editor {
