@@ -14,7 +14,7 @@
     "test:gha": "KARMA_REPORTERS=mocha,coverage-istanbul ng test --browsers xForgeChromiumHeadless --watch false --code-coverage --source-map",
     "//": "The environment variable is set in a way compatible with both sh and cmd. There is no space before '&& ng'.",
     "test:headless": "echo;export KARMA_REPORTERS=mocha && set KARMA_REPORTERS=mocha&& ng test --browsers xForgeChromiumHeadless --source-map",
-    "test-storybook": "test-storybook",
+    "test-storybook": "npx playwright install && test-storybook",
     "lint": "ng lint",
     "prettier": "prettier --write \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
     "prettier:tc": "npm run prettier:ci",
