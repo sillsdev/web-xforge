@@ -1,8 +1,58 @@
-import { AbstractFunctionLogger, LogLevel } from '@triviality/logger';
-
 /** Record of a log item. */
-class LogItem {
-  constructor(public readonly logLevel: LogLevel, public readonly message?: any, public readonly params?: any[]) {}
+export class LogItem {
+  constructor(
+    public readonly logLevel: LogLevel,
+    public readonly message?: any,
+    public readonly params?: any[]
+  ) {}
+}
+
+export enum LogLevel {
+  Trace,
+  Debug,
+  Info,
+  Warn,
+  Error
+}
+
+export interface LoggerInterface {
+  trace(message?: any, ...optionalParams: any[]): void;
+  debug(message?: any, ...optionalParams: any[]): void;
+  info(message?: any, ...optionalParams: any[]): void;
+  warn(message?: any, ...optionalParams: any[]): void;
+  error(message?: any, ...optionalParams: any[]): void;
+
+  log(level: LogLevel, message: any, ...optionalParams: any[]): void;
+}
+
+export abstract class AbstractFunctionLogger implements LoggerInterface {
+  public abstract trace(message?: any, ...optionalParams: any[]): void;
+  public abstract debug(message?: any, ...optionalParams: any[]): void;
+  public abstract info(message?: any, ...optionalParams: any[]): void;
+  public abstract warn(message?: any, ...optionalParams: any[]): void;
+  public abstract error(message?: any, ...optionalParams: any[]): void;
+
+  public log(level: LogLevel, message?: any, ...optionalParams: any[]): void {
+    switch (level) {
+      case LogLevel.Trace:
+        this.trace(message, ...optionalParams);
+        break;
+      case LogLevel.Debug:
+        this.debug(message, ...optionalParams);
+        break;
+      case LogLevel.Info:
+        this.info(message, ...optionalParams);
+        break;
+      case LogLevel.Warn:
+        this.warn(message, ...optionalParams);
+        break;
+      case LogLevel.Error:
+        this.error(message, ...optionalParams);
+        break;
+      default:
+        throw new Error(`Log level "${level}" not supported`);
+    }
+  }
 }
 
 /** Implementation of LoggerInterface that keeps a record of each log usage, for later examination.
@@ -38,35 +88,35 @@ export class MockConsole extends AbstractFunctionLogger {
   }
 
   trace(message?: any, ...optionalParams: any[]): void {
-    this.logs.push(new LogItem(LogLevel.trace, message, optionalParams));
+    this.logs.push(new LogItem(LogLevel.Trace, message, optionalParams));
     if (this.hushes.filter((husher: RegExp) => husher.test(message)).length === 0) {
       this.originalConsole.trace(message, optionalParams);
     }
   }
 
   debug(message?: any, ...optionalParams: any[]): void {
-    this.logs.push(new LogItem(LogLevel.debug, message, optionalParams));
+    this.logs.push(new LogItem(LogLevel.Debug, message, optionalParams));
     if (this.hushes.filter((husher: RegExp) => husher.test(message)).length === 0) {
       this.originalConsole.debug(message, optionalParams);
     }
   }
 
   info(message?: any, ...optionalParams: any[]): void {
-    this.logs.push(new LogItem(LogLevel.info, message, optionalParams));
+    this.logs.push(new LogItem(LogLevel.Info, message, optionalParams));
     if (this.hushes.filter((husher: RegExp) => husher.test(message)).length === 0) {
       this.originalConsole.info(message, optionalParams);
     }
   }
 
   warn(message?: any, ...optionalParams: any[]): void {
-    this.logs.push(new LogItem(LogLevel.warn, message, optionalParams));
+    this.logs.push(new LogItem(LogLevel.Warn, message, optionalParams));
     if (this.hushes.filter((husher: RegExp) => husher.test(message)).length === 0) {
       this.originalConsole.warn(message, optionalParams);
     }
   }
 
   error(message?: any, ...optionalParams: any[]): void {
-    this.logs.push(new LogItem(LogLevel.error, message, optionalParams));
+    this.logs.push(new LogItem(LogLevel.Error, message, optionalParams));
     if (this.hushes.filter((husher: RegExp) => husher.test(message)).length === 0) {
       this.originalConsole.error(message, optionalParams);
     }
