@@ -1,0 +1,3 @@
+quill-editor {
+  display: block;
+}
