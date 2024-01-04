@@ -12,7 +12,6 @@
       "plugins": ["@typescript-eslint", "eslint-plugin-import", "eslint-plugin-jsdoc", "prettier", "deprecation"],
       "extends": [
         "plugin:@angular-eslint/recommended",
-        "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
         "plugin:@angular-eslint/template/process-inline-templates",
         "prettier"
       ],
@@ -47,7 +46,13 @@
             "accessibility": "explicit"
           }
         ],
-        "@typescript-eslint/naming-convention": ["error", { "selector": "enumMember", "format": ["PascalCase"] }],
+        "@typescript-eslint/naming-convention": [
+          "error",
+          {
+            "selector": "enumMember",
+            "format": ["PascalCase"]
+          }
+        ],
         "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unused-vars": [
@@ -59,7 +64,13 @@
         ],
         "brace-style": ["error", "1tbs"],
         "deprecation/deprecation": "warn",
-        "eqeqeq": ["error", "always", { "null": "ignore" }],
+        "eqeqeq": [
+          "error",
+          "always",
+          {
+            "null": "ignore"
+          }
+        ],
         "id-blacklist": "off",
         "id-match": "off",
         "import/order": "error",
@@ -79,7 +90,12 @@
       "files": ["*.html"],
       "extends": ["plugin:@angular-eslint/template/recommended"],
       "rules": {
-        "@angular-eslint/template/eqeqeq": ["error", { "allowNullOrUndefined": true }],
+        "@angular-eslint/template/eqeqeq": [
+          "error",
+          {
+            "allowNullOrUndefined": true
+          }
+        ],
         "deprecation/deprecation": "warn"
       }
     }

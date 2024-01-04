@@ -1,6 +1,6 @@
 import { Meta } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
+import { userEvent, within } from '@storybook/testing-library';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 import { getOverlay, MatDialogLaunchComponent, matDialogStory } from '.storybook/story-utils';
 
@@ -19,7 +19,7 @@ DeleteProjectInvalidDialog.play = async ({ canvasElement }) => {
   expect(submitButton).toBeDisabled();
 
   const projectInput = overlay.getByRole('textbox');
-  userEvent.type(projectInput, 'Other Project');
+  await userEvent.type(projectInput, 'Other Project');
 
   expect(submitButton).toBeDisabled();
 };
@@ -33,7 +33,7 @@ DeleteProjectValidDialog.play = async ({ canvasElement }) => {
   expect(submitButton).toBeDisabled();
 
   const projectInput = overlay.getByRole('textbox');
-  userEvent.type(projectInput, 'My Project');
+  await userEvent.type(projectInput, 'My Project');
 
   expect(submitButton).toBeEnabled();
 };
