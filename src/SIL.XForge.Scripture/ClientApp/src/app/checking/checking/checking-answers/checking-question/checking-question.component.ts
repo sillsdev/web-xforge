@@ -27,7 +27,7 @@ import { CheckingUtils } from '../../../checking.utils';
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
-  @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
+  @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent | undefined) {
     if (this._scriptureAudio === comp) return;
     this._scriptureAudio = comp;
     if (comp) {
@@ -114,6 +114,10 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     return this._questionDoc?.data?.audioUrl;
   }
 
+  get scriptureAudio(): SingleButtonAudioPlayerComponent | undefined {
+    return this._scriptureAudio;
+  }
+
   private get audioId(): string {
     if (this.projectId == null) {
       return '';
@@ -146,7 +150,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   playScripture(): void {
     if (this._scriptureAudio?.audio?.isPlaying) {
-      this._scriptureAudio?.stop();
+      this._scriptureAudio.stop();
     } else {
       this._scriptureAudio?.play();
       this.audioPlayed.emit();
@@ -154,7 +158,16 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   playQuestion(): void {
-    this.questionAudio?.audio?.isPlaying ? this.questionAudio?.stop() : this.questionAudio?.play();
+    this.questionAudio?.audio?.isPlaying ? this.questionAudio.stop() : this.questionAudio?.play();
+  }
+
+  stopAudio(): void {
+    if (this.questionAudio?.audio?.isPlaying) {
+      this.questionAudio.stop();
+    }
+    if (this._scriptureAudio?.audio?.isPlaying) {
+      this._scriptureAudio.stop();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
