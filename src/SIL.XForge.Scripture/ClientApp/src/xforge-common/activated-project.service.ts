@@ -15,7 +15,9 @@ interface IActiveProjectIdService {
 @Injectable({ providedIn: 'root' })
 export class ActiveProjectIdService implements IActiveProjectIdService {
   projectId$: Observable<string | undefined> = this.router.events.pipe(
-    filter(event => event instanceof ActivationEnd),
+    // filter out router events that include the old style link with sharing query parameter
+    // to prevent a permission denied error that occurs before the user has successfully joined
+    filter(event => event instanceof ActivationEnd && event.snapshot.queryParams['sharing'] !== 'true'),
     map(event => (event as ActivationEnd).snapshot.params.projectId),
     startWith(this.getProjectIdFromUrl(this.router.routerState.snapshot.url))
   );
