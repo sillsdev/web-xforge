@@ -50,7 +50,7 @@
           {{ t("segments_found", { segments: numberOfTimingSegments }) }}
         </span>
         <span *ngIf="!hasTimingBeenUploaded && !hasTimingDataError">{{ t("no_timing_data_uploaded") }}</span>
-        <span *ngIf="hasTimingDataError">{{ t(timingErrorMessage) }}</span>
+        <span *ngIf="hasTimingDataError">{{ timingErrorMessage }}</span>
         <mat-icon *ngIf="hasTimingBeenUploaded && !hasTimingDataError" (click)="deleteTimingData()" class="delete"
           >delete</mat-icon
         >

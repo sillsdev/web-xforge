@@ -3,6 +3,7 @@ import {
   MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
   MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
+import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
@@ -157,7 +158,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   get timingErrorMessage(): string {
-    return this._timingErrorText ?? '';
+    return this._timingErrorText == null ? '' : translate(this._timingErrorText);
   }
 
   protected get isOnline(): boolean {

@@ -197,7 +197,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('Zero segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -208,7 +208,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('Zero segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -223,7 +223,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('timing_past_audio_length');
+    expect(env.component.timingErrorMessage).toContain('timing values extend past');
     expect(env.wrapperTiming.innerText).not.toContain('segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
@@ -238,7 +238,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('unrecognized_timing_file_format');
+    expect(env.component.timingErrorMessage).toContain('Unrecognized timing file format');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -252,7 +252,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('unrecognized_time_format');
+    expect(env.component.timingErrorMessage).toContain('Unrecognized time format');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -265,7 +265,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('Zero segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -279,7 +279,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('Zero segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -293,7 +293,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('Zero segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -465,12 +465,12 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('unrecognized_time_format');
+    expect(env.component.timingErrorMessage).toContain('Unrecognized time format');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
 
     await env.component.audioUpdate(env.audioFile);
 
-    expect(env.component.timingErrorMessage).toContain('unrecognized_time_format');
+    expect(env.component.timingErrorMessage).toContain('Unrecognized time format');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
@@ -484,7 +484,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('chapter_audio_dialog.timing_past_audio_length');
+    expect(env.component.timingErrorMessage).toContain('timing values extend past');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
 
     await env.component.audioUpdate(env.audioFile);
