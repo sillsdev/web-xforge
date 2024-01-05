@@ -43,7 +43,6 @@
     "@angular/service-worker": "^16.2.12",
     "@auth0/auth0-spa-js": "^2.0.4",
     "@bugsnag/js": "^7.21.0",
-    "@bugsnag/plugin-angular": "^7.16.5",
     "@microsoft/signalr": "^7.0.0",
     "@ngneat/transloco": "^4.3.0",
     "@ngneat/transloco-locale": "^4.1.0",

@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
-import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
 import versionData from '../../../version.json';
 import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
@@ -30,7 +29,7 @@ export class AppError extends Error {
 }
 
 @Injectable()
-export class ExceptionHandlingService extends BugsnagErrorHandler {
+export class ExceptionHandlingService {
   static initBugsnag(): void {
     const config: BrowserConfig = {
       apiKey: environment.bugsnagApiKey,
@@ -135,9 +134,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
   private alertQueue: ErrorAlertData[] = [];
   private dialogOpen = false;
 
-  constructor(private readonly injector: Injector) {
-    super();
-  }
+  constructor(private readonly injector: Injector) {}
 
   async handleError(originalError: unknown, silently: boolean = false): Promise<void> {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
