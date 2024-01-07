@@ -87,20 +87,45 @@ public class MemoryConnection : IConnection
     /// <summary>
     /// Fetches a document snapshot at a point in time asynchronously.
     /// </summary>
-    /// <exception cref="NotImplementedException">
-    /// This is not supported by a <see cref="MemoryConnection" />.
-    /// </exception>
-    public Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
-        where T : IIdentifiable => throw new NotImplementedException();
+    public async Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
+        where T : IIdentifiable
+    {
+        var doc = Get<T>(id);
+        await doc.FetchAsync();
+        return new Snapshot<T>
+        {
+            Data = doc.Data,
+            Id = doc.Id,
+            Version = doc.Version,
+        };
+    }
 
     /// <summary>
     /// Gets the ops for a document.
     /// </summary>
-    /// <exception cref="NotImplementedException">
-    /// This is not supported by a <see cref="MemoryConnection" />.
-    /// </exception>
+    /// <returns>A default Op array for test purposes.</returns>
     public Task<Op[]> GetOpsAsync<T>(string id)
-        where T : IIdentifiable => throw new NotImplementedException();
+        where T : IIdentifiable =>
+        Task.FromResult(
+            new Op[]
+            {
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-30) },
+                    Version = 1,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-10) },
+                    Version = 2,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow },
+                    Version = 3,
+                },
+            }
+        );
 
     public IDocument<T> Get<T>(string id)
         where T : IIdentifiable

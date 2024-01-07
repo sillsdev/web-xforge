@@ -282,12 +282,12 @@ public class Connection : DisposableBase, IConnection
     }
 
     /// <summary>
-    /// Fetches a document snapshot at the specified timestamp asynchronously.
+    /// Gets all the ops for the specified document.
     /// </summary>
     /// <typeparam name="T">The document type.</typeparam>
     /// <param name="id">The identifier.</param>
     /// <returns>
-    /// A snapshot of the fetched document from the realtime server.
+    /// The ops for the document from the realtime server.
     /// </returns>
     public async Task<Op[]> GetOpsAsync<T>(string id)
         where T : IIdentifiable

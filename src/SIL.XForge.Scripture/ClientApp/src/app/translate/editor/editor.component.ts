@@ -45,13 +45,25 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextData, TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
+import {
+  debounceTime,
+  delay,
+  delayWhen,
+  filter,
+  first,
+  repeat,
+  retryWhen,
+  startWith,
+  switchMap,
+  take,
+  tap
+} from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -60,6 +72,7 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -73,7 +86,7 @@ import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -96,6 +109,7 @@ import {
 import { DraftSegmentMap } from '../draft-generation/draft-generation';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
+import { HistoryChooserComponent } from './history-chooser/history-chooser.component';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -147,18 +161,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   sourceSplitHeight: string = '';
   targetSplitHeight: string = '';
+  snapshotSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
   hasDraft = false;
 
   @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
   @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
+  @ViewChild('snapshotContainer') snapshotContainer?: ElementRef;
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
+  @ViewChild('snapshotText') snapshotText?: TextComponent;
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('historyChooser') historyChooser?: HistoryChooserComponent;
 
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
@@ -196,6 +214,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
+  private snapshot?: Snapshot<TextData>;
+  private snapshotSub?: Subscription;
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
@@ -287,7 +307,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc?.data?.ownerRef]
         : undefined;
     return (
-      (this.showSource && this.translationSuggestionsProjectEnabled) ||
+      (this.hasSource && this.hasSourceViewRight && this.translationSuggestionsProjectEnabled) ||
       (this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
         userRole != null &&
         SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
@@ -359,7 +379,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get showSource(): boolean {
-    return this.hasSource && this.hasSourceViewRight;
+    return this.hasSource && this.hasSourceViewRight && !this.showSnapshot;
   }
 
   get hasEditRight(): boolean {
@@ -514,6 +534,34 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       SFProjectDomain.SFNoteThreads,
       Operation.Create
     );
+  }
+
+  get showHistoryChooser(): boolean {
+    // The user must be an administrator or translator. No specific edit permission for the chapter is required
+    return this.userHasGeneralEditRight;
+  }
+
+  get showSnapshot(): boolean {
+    return this.snapshot != null;
+  }
+
+  get snapshotLabel(): string {
+    if (this.historyChooser?.historyRevision?.key != null) {
+      const date = new Date(this.historyChooser?.historyRevision?.key);
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour12: true,
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      };
+      return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
+    }
+
+    return '';
   }
 
   get projectId(): string | undefined {
@@ -691,6 +739,63 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.setupTranslationEngine();
             }
           });
+
+          if (this.snapshotSub != null) {
+            this.snapshotSub.unsubscribe();
+          }
+          this.snapshot = undefined;
+          if (this.historyChooser != null) {
+            this.snapshotSub = this.subscribe(
+              merge(this.historyChooser.snapshot$, this.historyChooser.showDiff$).pipe(
+                startWith(undefined),
+                delay(0),
+                tap(async () => {
+                  this.snapshot = this.historyChooser?.snapshot;
+                  let snapshotContents: DeltaStatic = new Delta(this.snapshot?.data.ops);
+                  this.snapshotText?.editor?.setContents(snapshotContents, 'api');
+
+                  // Show the diff, if requested
+                  if (this.historyChooser?.showDiff && this.target?.id != null) {
+                    const textDoc: TextDoc = await this.projectService.getText(this.target.id);
+                    let targetContents: DeltaStatic = new Delta(textDoc.data?.ops);
+
+                    // Remove the cid whenever it is found, as this is confusing the diff
+                    function removeCid(obj: any): void {
+                      if (obj.cid != null) delete obj.cid;
+                      for (let subObj in obj) {
+                        if (typeof obj[subObj] === 'object') removeCid(obj[subObj]);
+                      }
+                    }
+
+                    snapshotContents.forEach(obj => removeCid(obj));
+                    targetContents.forEach(obj => removeCid(obj));
+
+                    let diff: DeltaStatic = snapshotContents.diff(targetContents);
+
+                    // Process each op in the diff
+                    for (const op of diff.ops ?? []) {
+                      if (op.hasOwnProperty('insert')) {
+                        // Color insertions as green
+                        op.attributes = {
+                          'insert-segment': true
+                        };
+                      } else if (op.hasOwnProperty('delete')) {
+                        // Color deletions red and strikethrough
+                        op.retain = op.delete;
+                        delete op.delete;
+                        op.attributes = {
+                          'delete-segment': true
+                        };
+                      }
+                    }
+
+                    this.snapshotText?.editor?.updateContents(diff, 'api');
+                  }
+                  setTimeout(() => this.setTextHeight());
+                })
+              )
+            );
+          }
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
