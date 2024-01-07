@@ -171,7 +171,7 @@ app-text {
 }
 
 .text-area.text-area-full-width {
-  grid-column: 1 / span 2;
+  grid-column: 1 / span 2 !important;
 }
 
 .text-area {
