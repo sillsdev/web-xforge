@@ -72,6 +72,7 @@ describe('DraftGenerationStepsComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
+      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
@@ -178,7 +179,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.isTrainingOptional).toBe(false);
     }));
 
-    fit('should set "isTrainingOptional == true" when target and source are both in NLLB', fakeAsync(() => {
+    it('should set "isTrainingOptional == true" when target and source are both in NLLB', fakeAsync(() => {
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNllbProjectDoc);
       targetProjectDoc$.next(mockTargetProjectDoc); // Trigger re-init on project changes
       tick();
