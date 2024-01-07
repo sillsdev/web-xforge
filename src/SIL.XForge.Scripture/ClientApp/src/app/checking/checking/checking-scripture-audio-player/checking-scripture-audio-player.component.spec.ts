@@ -115,7 +115,7 @@ describe('ScriptureAudioComponent', () => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   }));
 
-  it('emits correct verse label when using timing data with gaps', fakeAsync(() => {
+  it('emits the next verse label when in between verses', fakeAsync(() => {
     const env = new TestEnvironment({
       timings: [
         { textRef: '1', from: 0, to: 1 },
@@ -129,7 +129,7 @@ describe('ScriptureAudioComponent', () => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
   }));
 
-  it('emits correct verse label after timing data finishes', fakeAsync(() => {
+  it('emits the last verse label after timing data finishes', fakeAsync(() => {
     const env = new TestEnvironment({
       timings: [
         { textRef: '1', from: 0, to: 1 },
