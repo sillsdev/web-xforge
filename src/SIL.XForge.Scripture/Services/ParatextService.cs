@@ -1891,7 +1891,7 @@ public class ParatextService : DisposableBase, IParatextService
         return scrText.Language.Id;
     }
 
-    public void FreeCommentManager(UserSecret userSecret, string paratextId)
+    public void ClearParatextDataCaches(UserSecret userSecret, string paratextId)
     {
         ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
         if (scrText is not null)
@@ -1899,6 +1899,9 @@ public class ParatextService : DisposableBase, IParatextService
             // The comment manager is kept in a MRU cache
             CommentManager.RemoveCommentManager(scrText);
         }
+
+        // Clear the versioning manager cache
+        VersioningManager.Reset();
     }
 
     public void InitializeCommentManager(UserSecret userSecret, string paratextId)
@@ -1946,21 +1949,19 @@ public class ParatextService : DisposableBase, IParatextService
         Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
 
         // We do not have a snapshot, so retrieve the data from Paratext
+        // Note: The following code is not testable due to ParatextData limitations
         if (snapshot.Data is null)
         {
             // Load the Paratext project
             string ptProjectId = projectDoc.Data.ParatextId;
             using ScrText scrText = GetScrText(userSecret, ptProjectId);
 
-            // Clear the versioning manager cache
-            VersioningManager.Reset();
-
             // Retrieve the first revision before or at the timestamp
             VersionedText versionedText = VersioningManager.Get(scrText);
             HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
             DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp, TimeSpan.Zero);
-            HgRevision? revision = revisionCollection.MutableCollection
-                .Where(r => r.CommitTimeStamp <= timeStampOffset)
+            HgRevision? revision = revisionCollection
+                .MutableCollection.Where(r => r.CommitTimeStamp <= timeStampOffset)
                 .MaxBy(r => r.CommitTimeStamp);
 
             // No revision was before than the timestamp, so get the first revision
@@ -1975,7 +1976,7 @@ public class ParatextService : DisposableBase, IParatextService
             VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
             string usfm = version.GetText(verseRef, true, false);
             string usx = UsfmToUsx.ConvertToXmlString(scrText, verseRef.BookNum, usfm, false);
-            var usxDoc = XDocument.Parse(usx);
+            XDocument usxDoc = XDocument.Parse(usx);
             snapshot = new Snapshot<TextData>
             {
                 Id = id,
@@ -2019,7 +2020,7 @@ public class ParatextService : DisposableBase, IParatextService
         const int interval = 15;
         const string status = "Updated in Scripture Forge";
         DateTime milestonePeriod = DateTime.MaxValue;
-        DateTime milestoneTimestamp = DateTime.Now;
+        DateTime milestoneTimestamp = DateTime.UtcNow;
         int milestoneOps = 0;
         for (int i = ops.Length - 1; i >= 0; i--)
         {
@@ -2060,6 +2061,7 @@ public class ParatextService : DisposableBase, IParatextService
         string ptProjectId = projectDoc.Data.ParatextId;
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
 
+        // Note: The following code is not testable due to ParatextData limitations
         // Iterate over the Paratext commits earlier than the earliest MongoOp
         DateTimeOffset timeStampOffset = new DateTimeOffset(milestonePeriod, TimeSpan.Zero);
         HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);

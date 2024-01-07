@@ -24,12 +24,12 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using NetLoc;
-using Paratext.Data.Repository;
-using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data;
+using Paratext.Data.ProjectSettingsAccess;
+using Paratext.Data.Repository;
 using SIL.Scripture;
 using SIL.XForge.Scripture.Services;
 

@@ -85,6 +85,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
@@ -96,6 +97,7 @@ import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.compone
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { HistoryChooserComponent } from './history-chooser/history-chooser.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
@@ -113,6 +115,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedParatextService = mock(ParatextService);
 
 class MockComponent {}
 
@@ -136,7 +139,13 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [BiblicalTermsComponent, EditorComponent, SuggestionsComponent, TrainingProgressComponent],
+    declarations: [
+      BiblicalTermsComponent,
+      EditorComponent,
+      HistoryChooserComponent,
+      SuggestionsComponent,
+      TrainingProgressComponent
+    ],
     imports: [
       AngularSplitModule,
       NoopAnimationsModule,
@@ -162,7 +171,8 @@ describe('EditorComponent', () => {
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: ParatextService, useMock: mockedParatextService }
     ]
   }));
 
@@ -3475,6 +3485,79 @@ describe('EditorComponent', () => {
       tick();
       env.fixture.detectChanges();
       expect(dialogMessage).toHaveBeenCalledTimes(1);
+
+      env.dispose();
+    }));
+
+    it('shows the history diff when selected', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      when(mockedParatextService.getRevisions(anything(), anything(), anything())).thenResolve([
+        { key: 'date_here', value: 'description_here' }
+      ]);
+      when(mockedParatextService.getSnapshot(anything(), anything(), anything(), anything())).thenResolve({
+        data: {},
+        id: 'id',
+        type: '',
+        v: 1
+      });
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+      env.component.historyChooser!.historyRevision = { key: 'date_here', value: 'description_here' };
+      env.component.historyChooser!.showDiff = true;
+      env.wait();
+
+      expect(env.component.historyChooser!.snapshot).not.toBeNull();
+
+      // "date_here" is not a valid date
+      expect(env.fixture.nativeElement.querySelectorAll('#snapshot-text-area .language-label')[0].innerHTML).toEqual(
+        'Invalid Date'
+      );
+      env.dispose();
+    }));
+
+    it('shows the history selector only if the user is an administrator or translator', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+
+      // Paratext Consultant
+      env.setCurrentUser('user02');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      // Paratext Translator
+      env.setCurrentUser('user03');
+      expect(env.component.showHistoryChooser).toBeTruthy();
+
+      // Paratext Administrator
+      env.setCurrentUser('user04');
+      expect(env.component.showHistoryChooser).toBeTruthy();
+
+      // Commenter
+      env.setCurrentUser('user05');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      // Paratext Observer
+      env.setCurrentUser('user06');
+      expect(env.component.showHistoryChooser).toBeFalsy();
+
+      // Paratext Viewer
+      env.setCurrentUser('user07');
+      expect(env.component.showHistoryChooser).toBeFalsy();
 
       env.dispose();
     }));
