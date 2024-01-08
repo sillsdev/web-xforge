@@ -31,6 +31,7 @@ export interface TextAroundTemplate {
 export const en = merge(enChecking, enNonChecking);
 
 export type I18nKey = ObjectPaths<typeof en>;
+export type I18nKeyForComponent<T extends keyof typeof en> = ObjectPaths<(typeof en)[T]>;
 // TODO create a I18nRoleKey and I18nRoleDescriptionKey type (e.g. `keyof typeof en.roles`). Right now the existence of
 // pt_read and pt_write_note in the SFProjectRole definition causes the type system to correctly conclude that there are
 // not corresponding localization strings for all of the roles we have defined. Determining the proper way to reconcile
