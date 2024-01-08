@@ -66,7 +66,12 @@ export class ParatextService {
       .toPromise();
   }
 
-  async getSnapshot(projectId: string, book: string, chapter: number, timestamp: string): Promise<Snapshot<TextData>> {
+  async getSnapshot(
+    projectId: string,
+    book: string,
+    chapter: number,
+    timestamp: string
+  ): Promise<Snapshot<TextData> | undefined> {
     return await this.http
       .get<Snapshot<TextData>>(
         `paratext-api/history/snapshot/${projectId}_${book}_${chapter}_target?timestamp=${timestamp}`,
