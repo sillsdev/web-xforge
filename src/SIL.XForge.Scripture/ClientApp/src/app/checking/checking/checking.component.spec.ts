@@ -2898,7 +2898,7 @@ class TestEnvironment {
   }
 
   getQuestionText(question: DebugElement): string {
-    return question.query(By.css('.question-title span')).nativeElement.textContent;
+    return question.query(By.css('.question-text')).nativeElement.textContent;
   }
 
   getSaveCommentButton(answerIndex: number): DebugElement {
