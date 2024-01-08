@@ -18,7 +18,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subject, Subscription } from 'rxjs';
@@ -381,11 +381,19 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
 
   questionText(questionDoc: QuestionDoc): string {
     if (questionDoc?.data == null) return '';
+
     return questionDoc.data.text
       ? questionDoc.data.text
       : questionDoc.data.audioUrl != null
       ? this.referenceForDisplay(questionDoc)
       : '';
+  }
+
+  questionVerseRef(questionDoc: QuestionDoc): string {
+    if (questionDoc?.data == null) return '';
+
+    const { bookNum, chapterNum, verseNum, verse } = questionDoc.data.verseRef;
+    return `${this.i18n.localizeBook(bookNum)} ${chapterNum}:${verse || verseNum}`;
   }
 
   private scrollToActiveQuestion(): void {
