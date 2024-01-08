@@ -131,47 +131,36 @@ app-text {
 .content {
   height: calc(100vh - 84px);
   display: grid;
-  grid-template-areas:
-    'toolbar toolbar'
-    'source target';
   column-gap: 10px;
 
   grid-template-rows: 72px minmax(0, 1fr);
   grid-template-columns: 1fr 1fr;
-
-  &.reverse-columns {
-    grid-template-areas:
-      'toolbar toolbar'
-      'target source';
-  }
-}
-
-@include media-breakpoint-only(xs) {
-  .content {
-    grid-template-columns: 1fr;
-    grid-template-areas: 'toolbar' 'target';
-  }
 }
 
 .toolbar {
-  grid-area: toolbar;
+  grid-column: 1 / span 2;
 }
 
-#source-text-area {
-  grid-area: source;
+.text-area.text-area-full-width {
+  grid-column: 1 / span 2;
 }
 
-#target-text-area {
-  grid-area: target;
+.text-area {
+  grid-row-start: 2;
+}
+
+.reverse-columns {
+  #source-text-area {
+    grid-column-start: 2;
+  }
+  #target-text-area {
+    grid-column-start: 1;
+  }
 }
 
 .text-container {
   height: 100%;
   position: relative;
-}
-
-.text-area.text-area-full-width {
-  grid-column: 1 / span 2;
 }
 
 .text-area {
