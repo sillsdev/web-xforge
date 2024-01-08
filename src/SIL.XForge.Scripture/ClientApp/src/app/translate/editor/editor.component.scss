@@ -150,7 +150,8 @@ app-text {
 }
 
 .reverse-columns {
-  #source-text-area {
+  #source-text-area,
+  #snapshot-text-area {
     grid-column-start: 2;
   }
   #target-text-area {

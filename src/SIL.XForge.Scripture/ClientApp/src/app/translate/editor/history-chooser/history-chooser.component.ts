@@ -118,17 +118,7 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
   }
 
   formatRevision(revision: Revision): string {
-    var date = new Date(revision.key);
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour12: true,
-      hour: 'numeric',
-      minute: 'numeric'
-    };
-    return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
+    return this.i18n.formatDate(new Date(revision.key));
   }
 
   async loadHistory(): Promise<void> {

@@ -161,7 +161,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   sourceSplitHeight: string = '';
   targetSplitHeight: string = '';
-  snapshotSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
   hasDraft = false;
@@ -791,7 +790,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
                     this.snapshotText?.editor?.updateContents(diff, 'api');
                   }
-                  setTimeout(() => this.setTextHeight());
+
+                  // Return focus to the target, and position the note fab
+                  // If we do not do this, the selection gets confused and the fab disappears
+                  if (this.snapshot != null) {
+                    this.target?.focus();
+                    this.positionInsertNoteFab();
+                  }
                 })
               )
             );
