@@ -382,6 +382,8 @@
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",
     "pre_translation_drafting_description": "Configure options for generating translation drafts.",
+    "pre_translation_send_all_segments": "Pre-translate headings and non-verse material",
+    "pre_translation_send_all_segments_info": "For these to be pre-translated, your translation structure must match your source exactly.",
     "pre_translation_source_text_placeholder": "Alternate drafting source text (optional)",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",

@@ -8,22 +8,27 @@ using Serval.Client;
 using SIL.Machine.Corpora;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services;
 
 public class PreTranslationService : IPreTranslationService
 {
     private readonly IRepository<SFProjectSecret> _projectSecrets;
+    private readonly IRealtimeService _realtimeService;
     private readonly ITranslationEnginesClient _translationEnginesClient;
 
     public PreTranslationService(
         IRepository<SFProjectSecret> projectSecrets,
+        IRealtimeService realtimeService,
         ITranslationEnginesClient translationEnginesClient
     )
     {
         _projectSecrets = projectSecrets;
+        _realtimeService = realtimeService;
         _translationEnginesClient = translationEnginesClient;
     }
 
@@ -43,6 +48,13 @@ public class PreTranslationService : IPreTranslationService
         if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        // Load the project from the realtime service
+        Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        if (!attempt.TryResult(out SFProject project))
+        {
+            throw new DataNotFoundException("The project does not exist.");
         }
 
         // Ensure we have the parameters to retrieve the pre-translation
@@ -92,25 +104,42 @@ public class PreTranslationService : IPreTranslationService
             }
 
             // Ensure this is for a verse - we do not support headings and metadata
-            if (!reference.StartsWith("verse_"))
-            {
-                continue;
-            }
-
             referenceParts = reference.Split('_', StringSplitOptions.RemoveEmptyEntries);
-            if (
-                referenceParts.Length < 3
-                || !int.TryParse(referenceParts[1], out int refChapterNum)
-                || refChapterNum != chapterNum
-            )
+            if (reference.StartsWith("verse_"))
+            {
+                // The reference is in the form verse_001_001 or verse_001_001_001
+                if (
+                    referenceParts.Length < 3
+                    || !int.TryParse(referenceParts[1], out int refChapterNum)
+                    || refChapterNum != chapterNum
+                )
+                {
+                    continue;
+                }
+
+                // Get the reference in the form verse_1_1, if we did not send all segments
+                // This will allow us to combine multiple paragraphs or poetry lines in the same verse
+                if (!project.TranslateConfig.DraftConfig.SendAllSegments)
+                {
+                    string verse = referenceParts[2];
+                    VerseRef verseRef = new VerseRefData(bookNum, chapterNum, verse).ToVerseRef();
+                    reference = $"verse_{verseRef.ChapterNum}_{verseRef.Verse}";
+                }
+            }
+
+            // Parse the reference for non-verse segments, if we sent them for pre-translation
+            if (project.TranslateConfig.DraftConfig.SendAllSegments)
+            {
+                // The reference is in the format abc_001, abc_001_001, etc. Convert it to the format abc_1 or abc_1_1
+                reference = string.Join(
+                    '_',
+                    referenceParts.Select(part => int.TryParse(part, out int number) ? number.ToString() : part)
+                );
+            }
+            else if (!reference.StartsWith("verse_"))
             {
                 continue;
             }
-
-            // Get the reference in the form MAT 1:2
-            string verse = referenceParts[2];
-            VerseRef verseRef = new VerseRefData(bookNum, chapterNum, verse).ToVerseRef();
-            reference = verseRef.Text;
 
             // Build the translation string
             StringBuilder sb = new StringBuilder();
@@ -135,11 +164,13 @@ public class PreTranslationService : IPreTranslationService
             // Add the pre-translation, or update if this is a segment of it
             if (preTranslations.Any(p => p.Reference == reference))
             {
-                preTranslations.First(p => p.Reference == reference).Translation += " " + translation;
+                preTranslations.First(p => p.Reference == reference).Translation += translation.TrimEnd() + " ";
             }
             else
             {
-                preTranslations.Add(new PreTranslation { Reference = reference, Translation = translation });
+                preTranslations.Add(
+                    new PreTranslation { Reference = reference, Translation = translation.TrimEnd() + " " }
+                );
             }
         }
 

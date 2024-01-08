@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { VerseRef } from '@sillsdev/scripture';
 import { Observable, of, throwError, timer, EMPTY } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -166,17 +165,11 @@ export class DraftGenerationService {
     const draftSegmentMap: DraftSegmentMap = {};
 
     for (let preTranslation of preTranslations) {
-      const { success, verseRef } = VerseRef.tryParse(preTranslation.reference);
-
-      if (success) {
-        const segmentRef: string = `verse_${verseRef.chapter}_${verseRef.verse}`;
-
-        // Ensure single space at end to not crowd a following verse number.
-        // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space?
-        // TODO: ... and investigate if there is a better way to display a space before the next verse marker
-        // TODO: ... without counting the space as part of the verse text.
-        draftSegmentMap[segmentRef] = preTranslation.translation.trimEnd() + ' ';
-      }
+      // Ensure single space at end to not crowd a following verse number.
+      // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space?
+      // TODO: ... and investigate if there is a better way to display a space before the next verse marker
+      // TODO: ... without counting the space as part of the verse text.
+      draftSegmentMap[preTranslation.reference] = preTranslation.translation.trimEnd() + ' ';
     }
 
     return draftSegmentMap;

@@ -366,6 +366,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 alternateTrainingSource,
                 unsetAlternateTrainingSourceProject
             );
+            UpdateSetting(op, p => p.TranslateConfig.DraftConfig.SendAllSegments, settings.SendAllSegments);
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
