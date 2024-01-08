@@ -93,7 +93,7 @@ describe('SyncProgressComponent', () => {
   }));
 
   it('does not access source project if user does not have a paratext role', fakeAsync(() => {
-    const env = new TestEnvironment({ userId: 'user01' });
+    const env = new TestEnvironment({ userId: 'user02', sourceProject: 'sourceProject02' });
     env.setupProjectDoc();
     env.updateSyncProgress(0, 'testProject01');
     env.updateSyncProgress(0, 'sourceProject02');
@@ -102,6 +102,15 @@ describe('SyncProgressComponent', () => {
     env.updateSyncProgress(0.5, 'testProject01');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
     env.emitSyncComplete(true, 'testProject01');
+  }));
+
+  it('does not throw error if get project role times out', fakeAsync(() => {
+    const env = new TestEnvironment({ userId: 'user01', sourceProject: 'sourceProject02' });
+    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenReject(new Error('504: Gateway Timeout'));
+    env.setupProjectDoc();
+    verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
+    verify(mockedProjectService.get('sourceProject02')).never();
+    expect(env.progressBar).not.toBeNull();
   }));
 });
 
