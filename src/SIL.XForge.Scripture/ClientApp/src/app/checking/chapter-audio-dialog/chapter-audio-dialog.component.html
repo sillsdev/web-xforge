@@ -23,7 +23,7 @@
           <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
         </mat-select>
       </div>
-      <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: audioErrorMessage !== '' }">
+      <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: isAudioInvalid }">
         <ng-container *ngIf="hasAudioBeenUploaded">
           <app-single-button-audio-player
             #chapterAudio

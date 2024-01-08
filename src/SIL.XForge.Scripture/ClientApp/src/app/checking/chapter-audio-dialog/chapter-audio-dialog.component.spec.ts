@@ -11,10 +11,9 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
+import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { QuestionDoc } from 'src/app/core/models/question-doc';
-import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
-import { TextsByBookId } from 'src/app/core/models/texts-by-book-id';
+import { firstValueFrom } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -34,11 +33,13 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
+import { QuestionDoc } from '../../core/models/question-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { TextAudioDoc } from '../../core/models/text-audio-doc';
+import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
-import { SFProjectService } from '../../core/sf-project.service';
 import {
   ChapterAudioDialogComponent,
   ChapterAudioDialogData,
@@ -367,7 +368,7 @@ describe('ChapterAudioDialogComponent', () => {
       ['s', '0:01.1', '0:00.000', 'decimal', 'Cue', '']
     ]);
 
-    const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
+    const promiseForResult: Promise<ChapterAudioDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
     await env.component.save();
@@ -484,7 +485,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.timingErrorMessage).toContain('chapter_audio_dialog.timing_past_audio_length');
+    expect(env.component.timingErrorMessage).toContain('timing_past_audio_length');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
 
     await env.component.audioUpdate(env.audioFile);

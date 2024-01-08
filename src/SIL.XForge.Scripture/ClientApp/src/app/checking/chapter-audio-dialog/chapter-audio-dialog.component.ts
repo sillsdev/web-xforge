@@ -13,7 +13,7 @@ import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService, formatFileSource } from 'xforge-common/file.service';
-import { I18nKey, I18nService } from 'xforge-common/i18n.service';
+import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { objectId } from 'xforge-common/utils';
@@ -63,9 +63,9 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _selectionHasAudioAlready: boolean = false;
   private _audioLength: number = 0;
   private _audioBlob?: string;
-  private _audioErrorText?: I18nKey;
-  private _timingErrorText?: I18nKey;
-  private _timingParseErrorText?: I18nKey;
+  private _audioErrorText?: I18nKeyForComponent<'chapter_audio_dialog'>;
+  private _timingErrorText?: I18nKeyForComponent<'chapter_audio_dialog'>;
+  private _timingParseErrorText?: I18nKeyForComponent<'chapter_audio_dialog'>;
   private _loadingAudio: boolean = false;
 
   constructor(
@@ -82,8 +82,8 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.getStartingLocation();
   }
 
-  get audioErrorMessage(): string {
-    return this._audioErrorText ?? '';
+  get isAudioInvalid(): boolean {
+    return this._audioErrorText != null;
   }
 
   get audioFilename(): string {
@@ -243,7 +243,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
         // Assume Audacity style timing files with 3 columns
         timing = this.parseAudacityStyleTimingFile(result);
       } else {
-        this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_timing_file_format';
+        this._timingParseErrorText = 'unrecognized_timing_file_format';
       }
     }
 
@@ -260,10 +260,10 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       this.book != null &&
       this.chapter != null;
     if (!this.hasTimingBeenUploaded) {
-      this._timingErrorText = 'chapter_audio_dialog.no_timing_data_uploaded';
+      this._timingErrorText = 'no_timing_data_uploaded';
     }
     if (!this.hasAudioBeenUploaded) {
-      this._audioErrorText = 'chapter_audio_dialog.no_audio_file_uploaded';
+      this._audioErrorText = 'no_audio_file_uploaded';
     }
     if (!canSave) {
       return;
@@ -322,7 +322,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
 
       if (timeFormat !== 'decimal' && !timeFormat.endsWith('fps')) {
         // TODO: There is also a time format based on number of audio samples rather than time stamps directly.
-        this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_time_format';
+        this._timingParseErrorText = 'unrecognized_time_format';
         return [];
       }
 
@@ -538,7 +538,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.timing_processed = cloneDeep(this.timing);
 
     if (this.timing_processed.length === 0) {
-      this._timingErrorText = 'chapter_audio_dialog.zero_segments';
+      this._timingErrorText = 'zero_segments';
     }
 
     if (audioLength === 0) return;
@@ -550,13 +550,13 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     // Check if one or more ending values end before their beginning values
     const firstValidation: AudioTiming[] = this.timing_processed.filter(t => t.from <= t.to);
     if (firstValidation.length !== this.timing_processed.length) {
-      this._timingErrorText = 'chapter_audio_dialog.from_timing_past_to_timing';
+      this._timingErrorText = 'from_timing_past_to_timing';
     }
 
     // Check if one or more timing values extend past the end of the audio file
     const validated: AudioTiming[] = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
     if (validated.length !== firstValidation.length) {
-      this._timingErrorText = 'chapter_audio_dialog.timing_past_audio_length';
+      this._timingErrorText = 'timing_past_audio_length';
     }
   }
 }
