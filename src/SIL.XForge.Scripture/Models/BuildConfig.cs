@@ -35,7 +35,7 @@ public class BuildConfig
     /// <summary>
     /// Gets or sets a value that configures the Serval build to run with a minimum number of steps.
     /// </summary>
-    /// <value><c>true</c> if we ar performing a fast training build; otherwise, <c>false</c>.</value>
+    /// <value><c>true</c> if we are performing a fast training build; otherwise, <c>false</c>.</value>
     /// <remarks>
     /// A fast training build will be very inaccurate. Only use this value if you are testing or debugging.
     /// </remarks>

@@ -75,6 +75,7 @@ describe('DraftGenerationStepsComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
+      const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
@@ -183,7 +184,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.isTrainingOptional).toBe(false);
     }));
 
-    fit('should set "isTrainingOptional == true" when target and source are both in NLLB', fakeAsync(() => {
+    it('should set "isTrainingOptional == true" when target and source are both in NLLB', fakeAsync(() => {
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNllbProjectDoc);
       targetProjectDoc$.next(mockTargetProjectDoc); // Trigger re-init on project changes
       tick();
@@ -194,9 +195,9 @@ describe('DraftGenerationStepsComponent', () => {
   describe('allow fast training feature flag is enabled', () => {
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
-      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
