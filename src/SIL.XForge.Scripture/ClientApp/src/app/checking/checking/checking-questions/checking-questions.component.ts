@@ -385,15 +385,14 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     return questionDoc.data.text
       ? questionDoc.data.text
       : questionDoc.data.audioUrl != null
-        ? this.referenceForDisplay(questionDoc)
-        : '';
+      ? this.referenceForDisplay(questionDoc)
+      : '';
   }
 
   questionVerseRef(questionDoc: QuestionDoc): string {
     if (questionDoc?.data == null) return '';
 
-    const { bookNum, chapterNum, verseNum, verse } = questionDoc.data.verseRef;
-    return `${this.i18n.localizeBook(bookNum)} ${chapterNum}:${verse || verseNum}`;
+    return this.i18n.localizeReference(toVerseRef(questionDoc.data.verseRef));
   }
 
   private scrollToActiveQuestion(): void {
