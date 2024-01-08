@@ -195,9 +195,9 @@ describe('DraftGenerationStepsComponent', () => {
   describe('allow fast training feature flag is enabled', () => {
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
-      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
-      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
