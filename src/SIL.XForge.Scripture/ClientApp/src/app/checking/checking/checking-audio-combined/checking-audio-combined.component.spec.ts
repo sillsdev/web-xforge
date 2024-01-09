@@ -11,7 +11,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -130,11 +130,11 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
   get stopRecordingButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.stop-recording'));
+    return this.fixture.debugElement.query(By.css('.stop'));
   }
 
   get tryAgainButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.try-again'));
+    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
 
   get uploadAudioButton(): DebugElement {
