@@ -3,6 +3,8 @@ import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
+import { CommandError } from 'xforge-common/command.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -27,7 +29,8 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   constructor(
     private readonly projectService: SFProjectService,
     private readonly projectNotificationService: ProjectNotificationService,
-    private readonly featureFlags: FeatureFlagService
+    private readonly featureFlags: FeatureFlagService,
+    private readonly errorReportingService: ErrorReportingService
   ) {
     super();
 
@@ -74,7 +77,10 @@ export class SyncProgressComponent extends SubscriptionDisposable {
           }
         } catch (error) {
           this.sourceProjectDoc = undefined;
-          console.log(error);
+          this.errorReportingService.silentError(
+            'Error while accessing source project',
+            ErrorReportingService.normalizeError(error)
+          );
         }
       } else {
         this.sourceProjectDoc = undefined;

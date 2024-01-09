@@ -3,13 +3,14 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { mock, verify, when } from 'ts-mockito';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { anything, mock, verify, when } from 'ts-mockito';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -20,6 +21,7 @@ import { ProgressState, SyncProgressComponent } from './sync-progress.component'
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
+const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
@@ -33,7 +35,8 @@ describe('SyncProgressComponent', () => {
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
   }));
 
@@ -110,6 +113,7 @@ describe('SyncProgressComponent', () => {
     env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
     verify(mockedProjectService.get('sourceProject02')).never();
+    verify(mockedErrorReportingService.silentError(anything(), anything())).once();
     expect(env.progressBar).not.toBeNull();
   }));
 });
