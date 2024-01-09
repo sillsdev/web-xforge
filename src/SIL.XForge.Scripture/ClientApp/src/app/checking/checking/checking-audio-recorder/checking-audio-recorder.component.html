@@ -1,22 +1,24 @@
 <ng-container *transloco="let t; read: 'checking_audio_recorder'">
   <ng-container *ngIf="!hasAudioAttachment">
-    <button *ngIf="!isRecording" mat-flat-button color="primary" (click)="startRecording()" class="record">
+    <button *ngIf="!isRecording" mat-button (click)="startRecording()" class="record" [matTooltip]="t('record_audio')">
       <mat-icon>mic</mat-icon>
-      {{ t("record") }}
+      <span *ngIf="!compact">{{ t("record") }}</span>
     </button>
-    <button *ngIf="isRecording" mat-flat-button color="primary" (click)="stopRecording()" class="stop-recording">
-      <mat-icon>stop</mat-icon>
-      {{ t("stop_recording") }}
+    <button *ngIf="isRecording" mat-button (click)="stopRecording()" class="stop" [matTooltip]="t('stop_recording')">
+      <div class="stop-recording-content">
+        <mat-icon>stop</mat-icon>
+        {{ t("recording") }}
+      </div>
     </button>
   </ng-container>
   <div *ngIf="hasAudioAttachment" class="has-attachment">
-    <button mat-button fxHide.xs (click)="resetRecording()" class="try-again">
-      <mat-icon>refresh</mat-icon>
-      {{ t("try_again") }}
+    <app-single-button-audio-player *ngIf="!!audioUrl && compact" [source]="audioUrl" (click)="toggleAudio()">
+      <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
+    </app-single-button-audio-player>
+    <button mat-button (click)="resetRecording()" [matTooltip]="t('delete')" class="remove-audio-file">
+      <mat-icon>delete</mat-icon>
     </button>
-    <button mat-icon-button fxHide.gt-xs (click)="resetRecording()" class="try-again">
-      <mat-icon>refresh</mat-icon>
-    </button>
-    <app-checking-audio-player *ngIf="!!audioUrl" [source]="audioUrl"></app-checking-audio-player>
+    <span *ngIf="compact">{{ t("has_attachment") }}</span>
+    <app-checking-audio-player *ngIf="!!audioUrl && !compact" [source]="audioUrl"></app-checking-audio-player>
   </div>
 </ng-container>
