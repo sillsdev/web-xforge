@@ -3,13 +3,14 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { mock, verify, when } from 'ts-mockito';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { anything, mock, verify, when } from 'ts-mockito';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -20,6 +21,7 @@ import { ProgressState, SyncProgressComponent } from './sync-progress.component'
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
+const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
@@ -33,7 +35,8 @@ describe('SyncProgressComponent', () => {
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
   }));
 
@@ -93,7 +96,7 @@ describe('SyncProgressComponent', () => {
   }));
 
   it('does not access source project if user does not have a paratext role', fakeAsync(() => {
-    const env = new TestEnvironment({ userId: 'user01' });
+    const env = new TestEnvironment({ userId: 'user02', sourceProject: 'sourceProject02' });
     env.setupProjectDoc();
     env.updateSyncProgress(0, 'testProject01');
     env.updateSyncProgress(0, 'sourceProject02');
@@ -102,6 +105,16 @@ describe('SyncProgressComponent', () => {
     env.updateSyncProgress(0.5, 'testProject01');
     expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
     env.emitSyncComplete(true, 'testProject01');
+  }));
+
+  it('does not throw error if get project role times out', fakeAsync(() => {
+    const env = new TestEnvironment({ userId: 'user01', sourceProject: 'sourceProject02' });
+    when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenReject(new Error('504: Gateway Timeout'));
+    env.setupProjectDoc();
+    verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
+    verify(mockedProjectService.get('sourceProject02')).never();
+    verify(mockedErrorReportingService.silentError(anything(), anything())).once();
+    expect(env.progressBar).not.toBeNull();
   }));
 });
 

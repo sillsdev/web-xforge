@@ -3,6 +3,7 @@ import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -27,7 +28,8 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   constructor(
     private readonly projectService: SFProjectService,
     private readonly projectNotificationService: ProjectNotificationService,
-    private readonly featureFlags: FeatureFlagService
+    private readonly featureFlags: FeatureFlagService,
+    private readonly errorReportingService: ErrorReportingService
   ) {
     super();
 
@@ -63,16 +65,24 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
-        const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
-        // Only show progress for the source project when the user has sync
-        if (isParatextRole(role)) {
-          this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
+        try {
+          const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
+          // Only show progress for the source project when the user has sync
+          if (isParatextRole(role)) {
+            this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
 
-          // Subscribe to SignalR notifications for the source project
-          await this.projectNotificationService.subscribeToProject(this.sourceProjectDoc.id);
-        } else {
+            // Subscribe to SignalR notifications for the source project
+            await this.projectNotificationService.subscribeToProject(this.sourceProjectDoc.id);
+          }
+        } catch (error) {
           this.sourceProjectDoc = undefined;
+          this.errorReportingService.silentError(
+            'Error while accessing source project',
+            ErrorReportingService.normalizeError(error)
+          );
         }
+      } else {
+        this.sourceProjectDoc = undefined;
       }
     }
 
