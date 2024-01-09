@@ -8,7 +8,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRefData, fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -31,8 +31,10 @@ import {
 } from '../../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
-import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
-import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
+import {
+  AudioAttachment,
+  CheckingAudioRecorderComponent
+} from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
@@ -82,7 +84,7 @@ enum LikeAnswerResponse {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
@@ -104,7 +106,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   selectionEndClipped?: boolean;
   verseRef?: VerseRef;
   answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
-  saveAnswerDisabled: boolean = false;
+  submittingAnswer: boolean = false;
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
@@ -508,12 +510,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   async submit(): Promise<void> {
-    if (
-      this.audio.status === 'recording' &&
-      this.audioCombinedComponent != null &&
-      this.audioCombinedComponent.audioRecorderComponent != null
-    ) {
-      await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+    if (this.audio.status === 'recording' && this.audioComponent != null) {
+      await this.audioComponent.stopRecording();
       this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
     }
     this.applyTextAudioValidators();
@@ -521,7 +519,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.answerForm.invalid) {
       return;
     }
-    this.saveAnswerDisabled = true;
+    this.submittingAnswer = true;
     const userDoc = await this.userService.getCurrentUser();
     if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
@@ -620,7 +618,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       questionDoc: this.questionDoc,
       savedCallback: () => {
         this.hideAnswerForm();
-        this.saveAnswerDisabled = false;
+        this.submittingAnswer = false;
         this.justEditedAnswer = true;
         this.updateQuestionDocAudioUrls();
       }

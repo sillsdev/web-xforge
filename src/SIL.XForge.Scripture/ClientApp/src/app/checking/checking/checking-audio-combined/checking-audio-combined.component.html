@@ -20,9 +20,10 @@
         accept="audio/*"
         class="upload-audio-file"
         [(lastInvalids)]="lastInvalids"
+        [matTooltip]="t('upload_audio_file')"
       >
         <mat-icon>cloud_upload</mat-icon>
-        <span fxShow fxHide.lt-sm>{{ t("upload_audio_file") }}</span> <span fxHide fxShow.xs>{{ t("upload") }}</span>
+        <span>{{ t("upload") }}</span>
       </button>
       <button
         *ngIf="source"

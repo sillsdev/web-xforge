@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
+import { DialogService } from 'xforge-common/dialog.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import {
@@ -9,6 +10,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { objectId } from 'xforge-common/utils';
+import { SingleButtonAudioPlayerComponent } from '../single-button-audio-player/single-button-audio-player.component';
 
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
@@ -23,8 +25,10 @@ export interface AudioAttachment {
   styleUrls: ['./checking-audio-recorder.component.scss']
 })
 export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
+  @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
-  audioUrl: string = '';
+  @Input() audioUrl: string = '';
+  @Input() compact: boolean = false;
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
@@ -102,6 +106,10 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
         }
       });
     });
+  }
+
+  toggleAudio(): void {
+    this.audioPlayer?.playing ? this.audioPlayer?.stop() : this.audioPlayer?.play();
   }
 
   private errorCallback(error: any): void {
