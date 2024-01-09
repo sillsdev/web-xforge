@@ -44,8 +44,11 @@
 }
 
 #answer-form {
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
   .answer-tab {
-    margin: 10px 0;
+    margin: 0;
     display: flex;
     align-items: center;
     &.answer-record-upload {
@@ -82,13 +85,16 @@
   .form-helper-text {
     color: variables.$errorColor;
     font-size: 0.75em;
-    padding-left: 15px;
-    margin-bottom: 1em;
+    padding-inline: 10px;
     font-weight: 400;
     text-align: center;
     &:not(.visible) {
       display: none;
     }
+  }
+  .bottom-row {
+    display: flex;
+    justify-content: space-between;
   }
   .form-actions {
     display: flex;
