@@ -7,13 +7,13 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
-import { UserService } from 'xforge-common/user.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { TestTranslocoModule, configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -130,11 +130,11 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
   get stopRecordingButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.stop-recording'));
+    return this.fixture.debugElement.query(By.css('.stop'));
   }
 
   get tryAgainButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.try-again'));
+    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
 
   get uploadAudioButton(): DebugElement {

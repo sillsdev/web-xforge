@@ -13,7 +13,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
@@ -142,11 +142,11 @@ class TestEnvironment {
   }
 
   get stopRecordingButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.stop-recording'));
+    return this.fixture.debugElement.query(By.css('.stop'));
   }
 
   get tryAgainButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.try-again'));
+    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
 
   clickButton(button: DebugElement): void {
