@@ -1,9 +1,32 @@
+.stop-recording-content {
+  font-style: italic;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 6px;
+  padding-inline-end: 4px;
+}
+
+button {
+  line-height: unset;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0px 8px;
+
+  span {
+    margin-inline-start: 4px;
+  }
+}
+
 .has-attachment {
   display: flex;
   align-items: center;
-  button {
-    margin-right: 15px;
-  }
+  column-gap: 4px;
+  padding-inline-start: 4px;
+
+  font-style: italic;
+  font-size: 14px;
+
   app-checking-audio-player {
     flex: 1;
   }

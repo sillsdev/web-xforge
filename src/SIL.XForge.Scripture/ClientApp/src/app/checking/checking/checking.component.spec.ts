@@ -993,16 +993,6 @@ describe('CheckingComponent', () => {
       flush();
     }));
 
-    it('can change answering tabs', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CHECKER_USER });
-      env.selectQuestion(2);
-      env.clickButton(env.addAnswerButton);
-      env.waitForSliderUpdate();
-      env.clickButton(env.audioTab);
-      env.waitForSliderUpdate();
-      expect(env.recordButton).not.toBeNull();
-    }));
-
     it('check answering validation', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
@@ -1131,8 +1121,6 @@ describe('CheckingComponent', () => {
       when(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', 'a6Id', '/audio.mp3')).thenResolve(data);
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
-      env.waitForSliderUpdate();
-      env.clickButton(env.audioTab);
       env.waitForSliderUpdate();
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
@@ -1333,7 +1321,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-      env.clickButton(env.selectTextTab);
+      // env.clickButton(env.selectTextTab);
       expect(env.scriptureText).toBeFalsy();
       // Add scripture
       env.clickButton(env.selectVersesButton);
@@ -1349,7 +1337,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(John 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
-      env.clickButton(env.selectTextTab);
+      // env.clickButton(env.selectTextTab);
       env.waitForSliderUpdate();
       env.clickButton(env.clearScriptureButton);
       env.clickButton(env.saveAnswerButton);
@@ -1382,8 +1370,8 @@ describe('CheckingComponent', () => {
       expect(env.component.answersPanel!.answerForm.invalid).withContext('setup').toBe(true);
       expect(env.answerFormErrors.length).withContext('setup').toEqual(1);
       expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('record');
-      env.clickButton(env.audioTab);
-      env.waitForSliderUpdate();
+      // env.clickButton(env.audioTab);
+      env.waitForSliderUpdate(); //delete
 
       // SUT
       env.clickButton(env.recordButton);
@@ -2638,10 +2626,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#answer-form button.record'));
   }
 
-  get audioTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.mat-mdc-tab:nth-child(2)'));
-  }
-
   get removeAudioButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
@@ -2669,10 +2653,6 @@ class TestEnvironment {
 
   get clearScriptureButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.clear-selection'));
-  }
-
-  get selectTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.mat-mdc-tab:nth-child(3)'));
   }
 
   get selectVersesButton(): DebugElement {
@@ -3008,7 +2988,7 @@ class TestEnvironment {
 
   /** To use if the Stop Recording button isn't showing up in the test DOM. */
   simulateAudioRecordingFinishedProcessing(): void {
-    this.component.answersPanel!.audioCombinedComponent!.audioRecorderComponent!.status.emit({
+    this.component.answersPanel!.audioComponent!.status.emit({
       status: 'processed',
       url: 'example.com/foo.mp3'
     });
