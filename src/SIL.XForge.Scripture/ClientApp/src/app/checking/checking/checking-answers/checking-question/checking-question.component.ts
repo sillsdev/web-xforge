@@ -27,7 +27,7 @@ import { CheckingUtils } from '../../../checking.utils';
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
-  @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent | undefined) {
+  @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
     if (this._scriptureAudio === comp) return;
     this._scriptureAudio = comp;
     if (comp) {
@@ -112,10 +112,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   get questionAudioUrl(): string | undefined {
     return this._questionDoc?.data?.audioUrl;
-  }
-
-  get scriptureAudio(): SingleButtonAudioPlayerComponent | undefined {
-    return this._scriptureAudio;
   }
 
   private get audioId(): string {

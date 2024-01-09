@@ -2096,13 +2096,13 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('pauses audio when changing chapter', fakeAsync(() => {
+    it('stops audio when changing chapter', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.component.chapter = 2;
 
-      verify(audio.pause()).once();
+      verify(audio.stop()).once();
       expect(env.component).toBeDefined();
       flush();
       discardPeriodicTasks();

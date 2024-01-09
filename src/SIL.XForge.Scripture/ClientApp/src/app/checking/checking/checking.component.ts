@@ -207,7 +207,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
 
-      this._scriptureAudioPlayer?.pause();
+      this._scriptureAudioPlayer?.stop();
 
       if (!this.chapterHasAudio && !this.hideChapterText) {
         this.hideChapterAudio();
