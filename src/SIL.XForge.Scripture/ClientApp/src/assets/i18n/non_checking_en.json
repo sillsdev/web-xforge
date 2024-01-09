@@ -373,7 +373,7 @@
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "export_all": "All answers",
     "export_checking_answers": "Set which answers will be exported as comments when syncing with Paratext.",
-    "export_marked_for_export": "Answers marked for export",
+    "export_marked_for_export": "Answers flagged for review",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
     "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
