@@ -23,7 +23,7 @@
           <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
         </mat-select>
       </div>
-      <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: audioErrorMessage !== '' }">
+      <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: isAudioInvalid }">
         <ng-container *ngIf="hasAudioBeenUploaded">
           <app-single-button-audio-player
             #chapterAudio
@@ -43,14 +43,14 @@
       </div>
       <div
         class="wrapper wrapper-timing"
-        [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessage !== '' }"
+        [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessageKey !== '' }"
       >
         <mat-icon class="material-icons-outlined">timer</mat-icon>
         <span *ngIf="hasTimingBeenUploaded && !hasTimingDataError">
           {{ t("segments_found", { segments: numberOfTimingSegments }) }}
         </span>
         <span *ngIf="!hasTimingBeenUploaded && !hasTimingDataError">{{ t("no_timing_data_uploaded") }}</span>
-        <span *ngIf="hasTimingDataError">{{ t(timingErrorMessage) }}</span>
+        <span *ngIf="hasTimingDataError">{{ t(timingErrorMessageKey) }}</span>
         <mat-icon *ngIf="hasTimingBeenUploaded && !hasTimingDataError" (click)="deleteTimingData()" class="delete"
           >delete</mat-icon
         >
