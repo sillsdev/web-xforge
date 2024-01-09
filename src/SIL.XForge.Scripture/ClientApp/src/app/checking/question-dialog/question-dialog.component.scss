@@ -3,10 +3,22 @@
 }
 
 mat-form-field {
-  margin-bottom: 1em;
+  .scripture-helper-text .scripture-reference {
+    max-width: 248px;
+    .mat-form-field-suffix {
+      top: 0.5em;
+    }
+  }
   &.question-container {
     width: 100%;
+    margin-bottom: 0;
   }
+}
+
+app-checking-audio-combined {
+  margin-block-end: 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .dialog-container {
@@ -15,7 +27,7 @@ mat-form-field {
 
 .text-container {
   height: 10em;
-  margin-bottom: 1em;
+  margin-bottom: 3em;
   app-checking-text {
     position: relative;
   }

@@ -1,8 +1,8 @@
 .record-upload-container {
   display: flex;
   align-items: center;
-  min-height: 75px;
   column-gap: 8px;
+  justify-content: center;
 
   button {
     span {
@@ -14,10 +14,8 @@
     }
   }
 
-  &.recorder-active {
-    app-checking-audio-recorder {
-      flex: 1;
-    }
+  .upload-audio-file {
+    padding: 0 8px;
   }
 
   &.recorder-active,
