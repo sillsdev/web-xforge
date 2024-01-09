@@ -2149,6 +2149,29 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_ParatextZip()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+            .Returns(Task.FromResult(true));
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project02 && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
+    }
+
+    [Test]
     public void StartPreTranslationBuildAsync_NoPermission()
     {
         // Set up test environment

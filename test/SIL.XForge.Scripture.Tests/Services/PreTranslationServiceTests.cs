@@ -88,7 +88,7 @@ public class PreTranslationServiceTests
     public async Task GetPreTranslationsAsync_AllowsSegmentedVersesAndHeadingsWhenSendAllSegmentsTrue()
     {
         // Set up test environment
-        var env = new TestEnvironment(sendAllSegments: true);
+        var env = new TestEnvironment(new TestEnvironmentOptions { SendAllSegments = true });
         const int bookNum = 64;
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
@@ -174,7 +174,36 @@ public class PreTranslationServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationsAsync_ReturnsEmptyArrayIfNoPreTranslations()
+    public async Task GetPreTranslationsAsync_ReturnsEmptyArrayIfNoPreTranslations_Paratext()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+        const int bookNum = 40;
+        const int chapterNum = 1;
+        string textId = PreTranslationService.GetTextId(bookNum);
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId,
+            CancellationToken.None
+        )
+            .Returns(Task.FromResult<IList<Pretranslation>>(new List<Pretranslation>()));
+
+        // SUT
+        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
+            User01,
+            Project01,
+            bookNum,
+            chapterNum,
+            CancellationToken.None
+        );
+        Assert.Zero(actual.Length);
+        await env.TranslationEnginesClient.Received()
+            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task GetPreTranslationsAsync_ReturnsEmptyArrayIfNoPreTranslations_Text()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -198,10 +227,70 @@ public class PreTranslationServiceTests
             CancellationToken.None
         );
         Assert.Zero(actual.Length);
+        await env.TranslationEnginesClient.Received()
+            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None);
     }
 
     [Test]
-    public async Task GetPreTranslationsAsync_ReturnsUsablePreTranslations()
+    public async Task GetPreTranslationsAsync_ReturnsUsablePreTranslations_Paratext()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+        const int bookNum = 40;
+        const int chapterNum = 1;
+        string textId = PreTranslationService.GetTextId(bookNum);
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId,
+            CancellationToken.None
+        )
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>(
+                    new List<Pretranslation>
+                    {
+                        new Pretranslation { TextId = "40_1", Translation = "Matthew" },
+                        new Pretranslation
+                        {
+                            TextId = "MAT",
+                            Refs = { "MAT 1:1" },
+                            Translation =
+                                "The book of the birth of Jesus Christ , the son of David , the son of Abraham .",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "MAT",
+                            Refs = { "MAT 1:2" },
+                            Translation =
+                                "Abraham was the father of Isaac , Isaac was the father of James , and James was the father of Jude and his brethren .",
+                        },
+                    }
+                )
+            );
+
+        // SUT
+        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
+            User01,
+            Project01,
+            bookNum,
+            chapterNum,
+            CancellationToken.None
+        );
+        Assert.AreEqual(2, actual.Length);
+        Assert.AreEqual("verse_1_1", actual.First().Reference);
+        Assert.AreEqual(
+            "The book of the birth of Jesus Christ, the son of David, the son of Abraham. ",
+            actual.First().Translation
+        );
+        Assert.AreEqual("verse_1_2", actual.Last().Reference);
+        Assert.AreEqual(
+            "Abraham was the father of Isaac, Isaac was the father of James, and James was the father of Jude and his brethren. ",
+            actual.Last().Translation
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationsAsync_ReturnsUsablePreTranslations_Text()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -258,10 +347,17 @@ public class PreTranslationServiceTests
         );
     }
 
+    private class TestEnvironmentOptions
+    {
+        public bool SendAllSegments { get; init; }
+        public bool UseParatextZipFile { get; init; }
+    }
+
     private class TestEnvironment
     {
-        public TestEnvironment(bool sendAllSegments = false)
+        public TestEnvironment(TestEnvironmentOptions? options = null)
         {
+            options ??= new TestEnvironmentOptions();
             var projectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
                 {
@@ -275,11 +371,15 @@ public class PreTranslationServiceTests
                             {
                                 {
                                     "another_corpus",
-                                    new ServalCorpus { PreTranslate = false, }
+                                    new ServalCorpus { PreTranslate = false }
                                 },
                                 {
                                     Corpus01,
-                                    new ServalCorpus { PreTranslate = true, }
+                                    new ServalCorpus
+                                    {
+                                        PreTranslate = true,
+                                        UploadParatextZipFile = options.UseParatextZipFile,
+                                    }
                                 },
                             },
                         },
@@ -294,7 +394,10 @@ public class PreTranslationServiceTests
                 new SFProject
                 {
                     Id = Project01,
-                    TranslateConfig = new TranslateConfig { DraftConfig = { SendAllSegments = sendAllSegments, }, },
+                    TranslateConfig = new TranslateConfig
+                    {
+                        DraftConfig = { SendAllSegments = options.SendAllSegments }
+                    },
                 },
             };
             realtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));

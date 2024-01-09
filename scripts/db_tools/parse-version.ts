@@ -33,7 +33,8 @@ class ParseVersion {
     'Stillness (non-distracting progress indicators)',
     'Use In-Process Machine for Suggestions',
     'Use Serval for Suggestions',
-    'Use Echo for Pre-Translation Drafting'
+    'Use Echo for Pre-Translation Drafting',
+    'Upload Paratext Zip Files for Pre-Translation Drafting'
   ];
 
   constructor() {
