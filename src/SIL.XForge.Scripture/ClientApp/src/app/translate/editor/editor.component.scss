@@ -71,19 +71,7 @@ app-text {
 .doc-corrupted-warning,
 .project-text-not-editable,
 .no-edit-permission-message {
-  color: #ff4118;
-  border: 1px solid $border-color;
-  padding: 5px 10px;
-  margin-bottom: 10px;
-
-  @include media-breakpoint-only(xs) {
-    margin-left: 10px;
-    margin-right: 10px;
-  }
-
-  mat-icon {
-    vertical-align: bottom;
-  }
+  margin-bottom: 4px;
 }
 
 .no-edit-permission-message,

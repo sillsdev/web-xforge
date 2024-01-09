@@ -394,7 +394,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get userRoleStr(): string {
-    return this.i18n.localizeRole(this.userRole || '');
+    return this.userRole == null ? '' : this.i18n.localizeRole(this.userRole);
   }
 
   get hasSourceViewRight(): boolean {
