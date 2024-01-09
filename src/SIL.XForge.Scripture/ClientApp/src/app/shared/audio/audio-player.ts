@@ -16,7 +16,6 @@ export enum AudioStatus {
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audioDataLoaded: boolean = false;
-  private doingAudioDurationCalculation = false;
 
   protected audio: HTMLAudioElement = new Audio();
   // See explanatory comment where this number is used
@@ -58,11 +57,6 @@ export class AudioPlayer extends SubscriptionDisposable {
     });
 
     this.audio.addEventListener('error', () => {
-      // Sometimes the duration calculation within audioIsLoaded will throw an error - we can safely ignore this
-      if (this.doingAudioDurationCalculation) {
-        return;
-      }
-
       if (isLocalBlobUrl(this.audio.src)) {
         this.status$.next(AudioStatus.LocalNotAvailable);
       } else {
@@ -174,18 +168,13 @@ export class AudioPlayer extends SubscriptionDisposable {
     // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
     // audio playback to skip to the end of the audio when the user presses play in Chromium.
     if (this.audio.duration === Infinity) {
-      this.doingAudioDurationCalculation = true;
-
       const audioDurationCalculationFinishedCallback = (): void => {
-        this.doingAudioDurationCalculation = false;
         this.audio.removeEventListener('seeked', audioDurationCalculationFinishedCallback);
-        this.audio.removeEventListener('error', audioDurationCalculationFinishedCallback);
 
         this.audioIsReady();
       };
 
       this.audio.addEventListener('seeked', audioDurationCalculationFinishedCallback);
-      this.audio.addEventListener('error', audioDurationCalculationFinishedCallback);
 
       this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
     } else {
