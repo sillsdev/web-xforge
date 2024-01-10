@@ -140,8 +140,8 @@ describe('I18nService', () => {
     const service = getI18nService();
     expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1:2-3');
     service.setLocale('ar', mockedAuthService);
-    // Expect right to left mark before : and - characters
-    expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1\u200F:2\u200F-3');
+    // Expect right-to-left mark before chapter num, ':', and '-' characters
+    expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis \u200F1\u200F:2\u200F-3');
   });
 
   describe('getLanguageDisplayName', () => {
