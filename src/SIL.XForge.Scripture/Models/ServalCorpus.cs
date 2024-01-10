@@ -25,6 +25,17 @@ public class ServalCorpus
     public bool AlternateTrainingSource { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to upload the project as a Paratext zip file.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if we are uploading a Paratext zip file; otherwise, <c>false</c> if this corpus is for translation.
+    /// </value>
+    /// <remarks>
+    /// This is only for use with Pre-translation - not with SMT.
+    /// </remarks>
+    public bool UploadParatextZipFile { get; set; }
+
+    /// <summary>
     /// Gets or sets the source files uploaded to Serval.
     /// </summary>
     /// <value>

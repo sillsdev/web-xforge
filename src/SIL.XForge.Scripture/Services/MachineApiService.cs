@@ -766,14 +766,36 @@ public class MachineApiService : IMachineApiService
             );
         });
 
-        // If we have an alternate source, sync that first
+        // If support for uploading Paratext zip files is enabled
         string? jobId = null;
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation))
+        {
+            // Sync the project if this is a pre-translation project using Paratext Zip format
+            // If a build has not been run, we will still need to sync, as the upload will be a zip by default
+            if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+            {
+                throw new DataNotFoundException("The project secret cannot be found.");
+            }
+            string? corpusId = projectSecret
+                .ServalData?.Corpora
+                .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+                .Key;
+            if (corpusId is null || projectSecret.ServalData?.Corpora[corpusId].UploadParatextZipFile == true)
+            {
+                jobId = await _syncService.SyncAsync(
+                    new SyncConfig { ProjectId = buildConfig.ProjectId, UserId = curUserId }
+                );
+            }
+        }
+
+        // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
         if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
         {
             jobId = await _syncService.SyncAsync(
                 new SyncConfig
                 {
+                    ParentJobId = jobId,
                     ProjectId = alternateSourceProjectId,
                     TargetOnly = true,
                     UserId = curUserId,
