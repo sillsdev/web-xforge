@@ -107,22 +107,32 @@
           <span class="copyright-more-info" (click)="showCopyrightNotice('target')">{{ t("more_info") }}</span>
         </div>
       </app-notice>
-      <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
-        <mat-icon>warning</mat-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
-      </div>
-      <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
-        <mat-icon>warning</mat-icon> {{ t("project_data_out_of_sync") }}
-      </div>
-      <div *ngIf="target.areOpsCorrupted && hasEditRight" class="doc-corrupted-warning">
-        <mat-icon>error</mat-icon> {{ t("text_doc_corrupted") }}
+      <app-notice *ngIf="!isUsfmValid && hasEditRight" type="warning" icon="warning" class="formatting-invalid-warning">
+        {{ t("cannot_edit_chapter_formatting_invalid") }}
+      </app-notice>
+      <app-notice *ngIf="!dataInSync && hasEditRight" type="warning" icon="warning" class="out-of-sync-warning">
+        {{ t("project_data_out_of_sync") }}
+      </app-notice>
+      <app-notice
+        *ngIf="target.areOpsCorrupted && hasEditRight"
+        type="error"
+        icon="error"
+        class="doc-corrupted-warning"
+      >
+        {{ t("text_doc_corrupted") }}
         <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
-      </div>
-      <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
-        <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
-      </div>
-      <div *ngIf="showNoEditPermissionMessage" class="no-edit-permission-message">
-        <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
-      </div>
+      </app-notice>
+      <app-notice
+        *ngIf="projectTextNotEditable && hasEditRight"
+        type="info"
+        icon="info"
+        class="project-text-not-editable"
+      >
+        {{ t("project_text_not_editable") }}
+      </app-notice>
+      <app-notice *ngIf="showNoEditPermissionMessage" type="info" icon="info" class="no-edit-permission-message">
+        {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
+      </app-notice>
       <div #targetSplitContainer class="container-for-split">
         <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
         <as-split direction="vertical" [style.height]="targetSplitHeight">
