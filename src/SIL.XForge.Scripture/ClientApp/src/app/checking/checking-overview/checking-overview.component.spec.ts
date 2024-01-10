@@ -416,7 +416,7 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.textArchivedRows.length).toEqual(1);
-      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 question');
       env.clickExpanderAtRow(0);
       env.clickExpanderAtRow(1);
       expect(env.textRows.length).toEqual(9);
@@ -433,7 +433,7 @@ describe('CheckingOverviewComponent', () => {
       expect(archivedQuestion.textContent).toContain('Archived on');
       env.clickElement(env.questionPublishButtons[2]);
       expect(env.textArchivedRows.length).toEqual(3);
-      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 question');
       expect(env.textRows.length).toEqual(9);
     }));
 
@@ -454,7 +454,7 @@ describe('CheckingOverviewComponent', () => {
       // that chapter should have 6 questions
       expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('6 questions');
       // and one question has been archived already
-      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 question');
 
       // ARCHIVE QUESTIONS IN A CHAPTER
 
@@ -494,7 +494,7 @@ describe('CheckingOverviewComponent', () => {
       // Expect two books with archived questions
       expect(env.textArchivedRows.length).toEqual(2);
       expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('7 questions');
-      expect(env.getArchivedQuestionsCountTextByRow(1)).toContain('1 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(1)).toContain('1 question');
 
       // REPUBLISH QUESTIONS ONE BOOK AT A TIME
 
@@ -508,7 +508,7 @@ describe('CheckingOverviewComponent', () => {
       // and two books with published questions
       expect(env.textRows.length).toEqual(2);
       expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
-      expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('1 questions');
+      expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('1 question');
     }));
   });
 
@@ -696,6 +696,16 @@ describe('CheckingOverviewComponent', () => {
     env.waitForQuestions();
     expect(env.component.questionCount(41, 1)).toEqual(0);
   }));
+
+  it('should get the correct question and answer labels depending on count', () => {
+    const env = new TestEnvironment();
+    expect(env.component.questionCountLabel(1)).toEqual('checking_overview.single_question_count_label');
+    expect(env.component.questionCountLabel(2)).toEqual('checking_overview.question_count_label');
+
+    expect(env.component.answerCountLabel(0)).toEqual('');
+    expect(env.component.answerCountLabel(1)).toEqual('checking_overview.single_answer_count_label');
+    expect(env.component.answerCountLabel(2)).toEqual('checking_overview.answer_count_label');
+  });
 });
 
 @NgModule({

@@ -337,7 +337,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCountLabel(count: number): string {
-    return translate('checking_overview.question_count_label', { count: count });
+    return count === 1
+      ? translate('checking_overview.single_question_count_label')
+      : translate('checking_overview.question_count_label', { count: count });
   }
 
   timeArchivedStamp(date: string | undefined): string {
@@ -385,7 +387,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   answerCountLabel(count?: number): string {
-    return count != null && count > 0 ? translate('checking_overview.answer_count_label', { count: count }) : '';
+    if (count === undefined || count === 0) {
+      return '';
+    } else if (count === 1) {
+      return translate('checking_overview.single_answer_count_label');
+    } else {
+      return translate('checking_overview.answer_count_label', { count: count });
+    }
   }
 
   async setArchiveStatusForQuestionsInBook(text: TextInfo, archive: boolean): Promise<void> {

@@ -62,6 +62,8 @@
     "question_count_label": "{{ count }} questions",
     "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Republish",
+    "single_answer_count_label": "1 answer",
+    "single_question_count_label": "1 question",
     "time_archived_stamp": "Archived on {{ timeStamp }}"
   },
   "collaborators": {
