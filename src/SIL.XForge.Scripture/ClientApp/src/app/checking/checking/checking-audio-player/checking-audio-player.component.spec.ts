@@ -8,6 +8,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -226,14 +227,23 @@ class TestEnvironment {
 
   async waitForPlayer(ms: number): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
+
+    // Wait until the AudioPlayers have initialized if they exist
+    const player1Audio = this.component.player1.audioPlayer?.audio;
+    const player2Audio = this.component.player2.audioPlayer?.audio;
     await Promise.all([
-      this.component.player1.audioPlayer?.audio?.status$
-        .pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing))
-        .toPromise(),
-      this.component.player2.audioPlayer?.audio?.status$
-        .pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing))
-        .toPromise()
+      player1Audio === undefined
+        ? undefined
+        : lastValueFrom(
+            player1Audio.status$.pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing, true))
+          ),
+      player2Audio === undefined
+        ? undefined
+        : lastValueFrom(
+            player2Audio.status$.pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing, true))
+          )
     ]);
+
     this.fixture.detectChanges();
   }
 }
