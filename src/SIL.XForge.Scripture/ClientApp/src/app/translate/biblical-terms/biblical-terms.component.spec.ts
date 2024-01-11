@@ -272,6 +272,23 @@ describe('BiblicalTermsComponent', () => {
     const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('project01', 'user01');
     expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.notes[1].dataId);
   }));
+
+  it('can resolve a note for a biblical term', fakeAsync(() => {
+    const projectId = 'project01';
+    const env = new TestEnvironment(projectId, 1, 1);
+    env.setupProjectData('en');
+    env.wait();
+
+    env.biblicalTermsNotesButton.click();
+    env.wait();
+    env.mockNoteDialogRef.close({ status: NoteStatus.Resolved });
+    env.wait();
+
+    verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+    const noteThread: NoteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
+    expect(noteThread.status).toEqual(NoteStatus.Resolved);
+    expect(noteThread.notes[1].content).toBeUndefined();
+  }));
 });
 
 class TestEnvironment {
