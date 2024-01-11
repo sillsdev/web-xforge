@@ -221,10 +221,12 @@ export class I18nService {
     // Add RTL mark before colon and hyphen characters, if in a RTL script.
     // See https://software.sil.org/arabicfonts/support/faq/ for description of this solution, under the section
     // "How do I get correct display for “Chapter:Verse” references using a regular “Roman” colon?"
+    // In addition to suggested solution, direction mark is added before chapter number for the case
+    // where non-localized book names are in a rtl environment so the chapter number displays with the verse.
     const directionMark = this.locale.direction === 'ltr' ? '' : '\u200F';
     // TODO Some ranges use a comma (and possibly other characters?) as a separator
     const range = verse.verse.split('-').join(directionMark + '-');
-    return `${this.localizeBook(verse.bookNum)} ${verse.chapterNum}${directionMark}:${range}`;
+    return `${this.localizeBook(verse.bookNum)} ${directionMark}${verse.chapterNum}${directionMark}:${range}`;
   }
 
   localizeRole(role: string): string {

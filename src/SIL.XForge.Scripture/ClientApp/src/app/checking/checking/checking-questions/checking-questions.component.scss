@@ -13,6 +13,43 @@ mat-icon {
   flex-shrink: 0; // Text should shrink, not icons
 }
 
+.question-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  padding: 0.6em 0 0.3em;
+  font-size: 15px;
+  width: 100%;
+
+  &:before {
+    position: absolute;
+    content: '';
+    background-color: transparent;
+    inset-inline-start: 0;
+    top: 0;
+    height: 100%;
+    width: 5px;
+  }
+}
+
+.question-text {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.question-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  align-items: center;
+  height: 24px;
+}
+
+.question-verse {
+  font-style: italic;
+}
+
 .mat-list {
   width: 100%;
   display: flex;
@@ -21,45 +58,13 @@ mat-icon {
 
   .mat-list-item {
     cursor: pointer;
-    font-size: 14px;
-    height: 40px;
-    overflow: hidden;
+    height: auto;
 
     // Separator between questions.
     // Use inset box-shadow instead of border to avoid border showing under the 'answered question' marker.
     // This color flattened would be #eceff1, but using alpha channel allows the background color to show through,
     // which improves the separator look for 'selected' and 'read' backgrounds.
     box-shadow: inset 0 -1px 0 0 #64798f1f;
-
-    ::ng-deep {
-      .mat-list-item-content {
-        justify-content: space-between; // Between question text and 'has answers' icon
-        gap: 5px;
-      }
-    }
-
-    .question-title {
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      gap: 5px;
-
-      &:before {
-        position: absolute;
-        content: '';
-        background-color: transparent;
-        inset-inline-start: 0;
-        top: 0;
-        height: 100%;
-        width: 5px;
-      }
-    }
-
-    .question-text {
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
 
     &.question-read {
       background-color: vars.$questionReadBGColor;
@@ -71,13 +76,20 @@ mat-icon {
     }
 
     &.question-unread {
-      .question-text {
+      .question-item {
         font-weight: bold;
+      }
+
+      // Don't bold the selected verse, as the inverted colors with the small font makes it hard to see
+      &.selected {
+        .question-verse {
+          font-weight: 400;
+        }
       }
     }
 
     &.question-answered {
-      .question-title {
+      .question-item {
         &:before {
           background-color: vars.$questionAnswered;
         }
