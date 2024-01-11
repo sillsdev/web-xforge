@@ -207,7 +207,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
 
-      this._scriptureAudioPlayer?.pause();
+      this._scriptureAudioPlayer?.stop();
 
       if (!this.chapterHasAudio && !this.hideChapterText) {
         this.hideChapterAudio();
@@ -981,6 +981,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     // Set so that questions query knows that it doesn't need to
     this.isCreatingNewQuestion = true;
+    this._scriptureAudioPlayer?.pause();
+    this.answersPanel?.questionComponent?.stopAudio();
 
     const data: QuestionDialogData = {
       questionDoc: undefined,
@@ -1380,8 +1382,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   private updateActiveQuestionVerseRef(questionDoc: QuestionDoc | undefined): void {
+    // If the chapter has changed, stop the audio player. Book changes are handled elsewhere
+    const hasActiveChapterChanged: boolean =
+      this._activeQuestionVerseRef?.chapterNum !== questionDoc?.data?.verseRef.chapterNum;
     this._activeQuestionVerseRef = questionDoc?.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
-    if (this.isAudioPlaying()) {
+    if (hasActiveChapterChanged && this.isAudioPlaying()) {
       this._scriptureAudioPlayer?.stop();
     }
   }
