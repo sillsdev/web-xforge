@@ -70,6 +70,18 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
+  it('navigate to first text when last selected text missing', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const missingBookNum = 44;
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: missingBookNum, memberProjectIdSuffixes: [1] });
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'ACT']), anything())).never();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
+    expect().nothing();
+  }));
+
   it('navigate to checking tool if a checker and no last selected task', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
