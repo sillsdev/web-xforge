@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
@@ -12,6 +15,7 @@ using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Machine.WebApi.Services;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -26,6 +30,9 @@ namespace SIL.XForge.Scripture.Services;
 [TestFixture]
 public class MachineProjectServiceTests
 {
+    private const string Paratext01 = "paratext01";
+    private const string Paratext02 = "paratext02";
+    private const string Paratext03 = "paratext03";
     private const string Project01 = "project01";
     private const string Project02 = "project02";
     private const string Project03 = "project03";
@@ -309,6 +316,27 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public void BuildProjectAsync_DirectoryNotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { BuildIsPending = false, UploadParatextZipForPreTranslation = true }
+        );
+        env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<DirectoryNotFoundException>(
+            () =>
+                env.Service.BuildProjectAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: true,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public async Task BuildProjectAsync_SpecifiesTheSameSourceAndTargetLanguageForEcho()
     {
         // Set up test environment
@@ -372,7 +400,7 @@ public class MachineProjectServiceTests
             );
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs()
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+            .CreateAsync(Arg.Any<FileParameter>(), Arg.Any<FileFormat>(), Arg.Any<string>(), CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None);
         Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -496,7 +524,39 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_CreatesDataFilesOnServalIfMissing()
+    public async Task BuildProjectAsync_CreatesDataFilesOnServalIfMissing_Paratext()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // Make the Serval API return the error code for a missing data file
+        env.DataFilesClient.UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.DataFilesClient.Received()
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_CreatesDataFilesOnServalIfMissing_Text()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -504,9 +564,8 @@ public class MachineProjectServiceTests
         );
         await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true);
 
-        // Make the Serval API return the error code for a missing translation engine
-        env.DataFilesClient.UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None)
-            .Throws(ServalApiExceptions.NotFound);
+        // Make the Serval API return the error code for a missing data file
+        env.DataFilesClient.GetAsync(Arg.Any<string>(), CancellationToken.None).Throws(ServalApiExceptions.NotFound);
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -573,7 +632,7 @@ public class MachineProjectServiceTests
             new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
         );
 
-        // Make the Serval API return the error code for a missing translation engine
+        // Make the Serval API return the translation engine
         env.TranslationEnginesClient.GetAsync(TranslationEngine02, CancellationToken.None)
             .Returns(
                 Task.FromResult(
@@ -1029,6 +1088,10 @@ public class MachineProjectServiceTests
                 )
         );
 
+        // Make the Serval API return a data file
+        env.DataFilesClient.GetAsync(Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(new DataFile()));
+
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(
             User01,
@@ -1193,7 +1256,7 @@ public class MachineProjectServiceTests
         );
         await env.SetDataInSync(Project02);
 
-        // Make the Serval API return the error code for a missing translation engine
+        // Make the Serval API return the error code for a missing corpus
         env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
@@ -1227,7 +1290,7 @@ public class MachineProjectServiceTests
         );
         await env.SetDataInSync(Project02);
 
-        // Make the Serval API return the error code for a missing translation engine
+        // Make the Serval API return the corpus
         env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
             .Returns(
                 args =>
@@ -1426,6 +1489,7 @@ public class MachineProjectServiceTests
         public bool LocalTargetTextHasData { get; init; }
         public bool AlternateTrainingSourceEnabled { get; init; }
         public string? ServalConfig { get; set; }
+        public bool UploadParatextZipForPreTranslation { get; init; }
     }
 
     private class TestEnvironment
@@ -1438,7 +1502,7 @@ public class MachineProjectServiceTests
             MockLogger = new MockLogger<MachineProjectService>();
             DataFilesClient = Substitute.For<IDataFilesClient>();
             DataFilesClient
-                .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
+                .CreateAsync(Arg.Any<FileParameter>(), Arg.Any<FileFormat>(), Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult(new DataFile { Id = File01 }));
             DataFilesClient
                 .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>())
@@ -1576,10 +1640,27 @@ public class MachineProjectServiceTests
             featureManager
                 .IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation)
                 .Returns(Task.FromResult(options.UseEchoForPreTranslation));
+            featureManager
+                .IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+                .Returns(Task.FromResult(options.UploadParatextZipForPreTranslation));
             featureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(options.ServalSupport));
             featureManager
                 .IsEnabledAsync(FeatureFlags.MachineInProcess)
                 .Returns(Task.FromResult(options.MachineSupport));
+
+            FileSystemService = Substitute.For<IFileSystemService>();
+            FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
+            FileSystemService
+                .EnumerateFiles(Arg.Any<string>())
+                .Returns(callInfo => new[] { Path.Combine(callInfo.ArgAt<string>(0), "file") });
+            FileSystemService
+                .OpenFile(Arg.Any<string>(), FileMode.Open)
+                .Returns(
+                    callInfo =>
+                        new MemoryStream(
+                            Encoding.UTF8.GetBytes(Path.Combine(callInfo.ArgAt<string>(0) + "_file_contents"))
+                        )
+                );
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
@@ -1650,6 +1731,8 @@ public class MachineProjectServiceTests
                 }
             );
 
+            var siteOptions = Substitute.For<IOptions<SiteOptions>>();
+            siteOptions.Value.Returns(new SiteOptions { SiteDir = "xForge" });
             var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 } });
 
             Projects = new MemoryRepository<SFProject>(
@@ -1660,6 +1743,7 @@ public class MachineProjectServiceTests
                         Id = Project01,
                         Name = "project01",
                         ShortName = "P01",
+                        ParatextId = Paratext01,
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
                         UserRoles = new Dictionary<string, string>(),
                         TranslateConfig = new TranslateConfig
@@ -1668,6 +1752,7 @@ public class MachineProjectServiceTests
                             Source = new TranslateSource
                             {
                                 ProjectRef = Project02,
+                                ParatextId = Paratext02,
                                 WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
                             DraftConfig = new DraftConfig { ServalConfig = options.ServalConfig, },
@@ -1679,6 +1764,7 @@ public class MachineProjectServiceTests
                         Id = Project02,
                         Name = "project02",
                         ShortName = "P02",
+                        ParatextId = Paratext02,
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
                         UserRoles = new Dictionary<string, string>(),
                         TranslateConfig = new TranslateConfig
@@ -1687,6 +1773,7 @@ public class MachineProjectServiceTests
                             Source = new TranslateSource
                             {
                                 ProjectRef = Project03,
+                                ParatextId = Paratext03,
                                 WritingSystem = new WritingSystem { Tag = "en" },
                             },
                             DraftConfig = new DraftConfig
@@ -1721,10 +1808,12 @@ public class MachineProjectServiceTests
                 EngineService,
                 ExceptionHandler,
                 featureManager,
+                FileSystemService,
                 MockLogger,
                 paratextService,
                 ProjectSecrets,
                 realtimeService,
+                siteOptions,
                 TextCorpusFactory,
                 TranslationEnginesClient,
                 userSecrets
@@ -1760,6 +1849,7 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public IEngineService EngineService { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public IFileSystemService FileSystemService { get; }
         public ISFTextCorpusFactory TextCorpusFactory { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public MemoryRepository<SFProject> Projects { get; }
@@ -1767,7 +1857,12 @@ public class MachineProjectServiceTests
         public MockLogger<MachineProjectService> MockLogger { get; }
         public IExceptionHandler ExceptionHandler { get; }
 
-        public async Task SetDataInSync(string projectId, bool preTranslate = false, bool requiresUpdate = false) =>
+        public async Task SetDataInSync(
+            string projectId,
+            bool preTranslate = false,
+            bool requiresUpdate = false,
+            bool uploadParatextZipFile = false
+        ) =>
             await ProjectSecrets.UpdateAsync(
                 projectId,
                 u =>
@@ -1795,6 +1890,7 @@ public class MachineProjectServiceTests
                                 },
                             },
                             PreTranslate = preTranslate,
+                            UploadParatextZipFile = uploadParatextZipFile,
                         }
                     );
                     if (preTranslate)

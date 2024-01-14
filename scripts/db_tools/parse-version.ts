@@ -34,7 +34,8 @@ class ParseVersion {
     'Use In-Process Machine for Suggestions',
     'Use Serval for Suggestions',
     'Use Echo for Pre-Translation Drafting',
-    'Allow Fast Pre-Translation Training'
+    'Allow Fast Pre-Translation Training',
+    'Upload Paratext Zip Files for Pre-Translation Drafting'
   ];
 
   constructor() {
