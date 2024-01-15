@@ -42,54 +42,38 @@
       </div>
       <div *ngIf="answerFormVisible">
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
-          <div class="answer-tab answer-text">
+          <div class="answer-container">
             <mat-form-field appearance="outline">
               <mat-label>{{ t("your_answer") }}</mat-label>
-              <textarea appAutofocus matInput formControlName="answerText"></textarea>
+              <textarea appAutofocus matInput formControlName="answerText" id="answer-textarea"></textarea>
             </mat-form-field>
+            <div class="answer-audio">
+              <app-checking-audio-recorder
+                [audioUrl]="activeAnswer?.audioUrl || ''"
+                (status)="processAudio($event)"
+                [compact]="true"
+                [ngClass]="{
+                  invalid: answerText.invalid,
+                  unfocused: !isAnswerFocused() && !answerText.invalid
+                }"
+              ></app-checking-audio-recorder>
+            </div>
           </div>
-
-          <!-- <mat-tab>
-            <ng-template matTabContent>
-              <div class="answer-tab answer-select-text" [class.text-selected]="selectedText">
-                <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text" dir="auto">
-                  {{ (selectionStartClipped ? "…" : "") + (selectedText || "") + (selectionEndClipped ? "…" : "") }}
-                  <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
-                </p>
-                <p [fxHide]="!!selectedText" class="scripture-text-blank">{{ t("no_scripture_selected") }}</p>
-                <div class="buttons-wrapper">
-                  <button
-                    mat-icon-button
-                    *ngIf="selectedText"
-                    type="button"
-                    (click)="clearSelection()"
-                    class="clear-selection"
-                  >
-                    <mat-icon>clear</mat-icon>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="selectScripture()"
-                    mat-flat-button
-                    color="primary"
-                    id="select-scripture"
-                  >
-                    {{ t("select_verses") }}
-                  </button>
-                </div>
-              </div>
-            </ng-template>
-          </mat-tab> -->
 
           <div class="form-helper-text" [ngClass]="{ visible: answerFormSubmitAttempted && answerText.invalid }">
             {{ t("answer_required_before_saving") }}
           </div>
           <div class="bottom-row">
-            <app-checking-audio-recorder
-              [audioUrl]="activeAnswer?.audioUrl || ''"
-              (status)="processAudio($event)"
-              [compact]="true"
-            ></app-checking-audio-recorder>
+            <button mat-button *ngIf="!selectedText" (click)="selectScripture()">
+              <mat-icon class="attach-icon">attach_file</mat-icon>
+              {{ t("attach") }}
+            </button>
+            <div *ngIf="selectedText" class="answer-scripture">
+              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+              <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
+                <mat-icon>clear</mat-icon>
+              </button>
+            </div>
             <div class="form-actions">
               <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
               <button

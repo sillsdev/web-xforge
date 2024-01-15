@@ -1,33 +1,55 @@
-.stop-recording-content {
-  font-style: italic;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  column-gap: 6px;
-  padding-inline-end: 4px;
+.no-attachment {
+  height: 100%;
+  button {
+    height: 100%;
+  }
+}
+
+.stop {
+  mat-icon {
+    color: #b00020;
+  }
+  span {
+    font-style: italic;
+  }
 }
 
 button {
-  line-height: unset;
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0px 6px;
-
   span {
     margin-inline-start: 4px;
   }
 }
 
+.remove-audio-file {
+  height: 36px;
+  width: 36px;
+  line-height: 36px;
+}
+
 .has-attachment {
   display: flex;
   align-items: center;
-  column-gap: 4px;
+  column-gap: 6px;
   padding-inline-start: 4px;
-
-  font-style: italic;
-  font-size: 14px;
 
   app-checking-audio-player {
     flex: 1;
+  }
+}
+
+.has-attachment-compact {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  row-gap: 2px;
+
+  app-single-button-audio-player {
+    max-height: 30px;
+  }
+
+  button {
+    max-height: 30px;
+    max-width: 30px;
+    line-height: 30px;
   }
 }
