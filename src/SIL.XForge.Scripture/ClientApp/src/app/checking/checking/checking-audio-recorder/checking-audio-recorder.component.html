@@ -1,8 +1,8 @@
 <ng-container *transloco="let t; read: 'checking_audio_recorder'">
   <div *ngIf="!hasAudioAttachment" class="no-attachment">
-    <button *ngIf="!isRecording" mat-button (click)="startRecording()" class="record" [matTooltip]="t('record_audio')">
+    <button *ngIf="!isRecording" mat-button (click)="startRecording()" class="record">
       <mat-icon>mic</mat-icon>
-      <span *ngIf="!compact">{{ t("record") }}</span>
+      <span *ngIf="!compact">{{ t("record_audio") }}</span>
     </button>
     <button *ngIf="isRecording" mat-button (click)="stopRecording()" class="stop" [matTooltip]="t('stop_recording')">
       <mat-icon>stop</mat-icon>
