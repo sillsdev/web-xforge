@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'editor'">
-  <div class="content" [class.reverse-columns]="isTargetTextRight">
+  <div class="content" [class.reverse-columns]="!isTargetTextRight">
     <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
       <div fxFlex fxLayout="row wrap">
         <app-book-chapter-chooser
