@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -299,7 +299,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.applyTextAudioValidators();
     this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionDocAudioUrls());
   }
 
@@ -486,7 +485,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   processAudio(audio: AudioAttachment): void {
     this.audio = audio;
-    this.applyTextAudioValidators();
+    this.updateFormValidity();
   }
 
   scriptureTextVerseRef(verse: VerseRef | VerseRefData | undefined): string {
@@ -513,9 +512,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       await this.audioComponent.stopRecording();
       this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
     }
-    this.applyTextAudioValidators();
     this.answerFormSubmitAttempted = true;
-    if (this.answerForm.invalid) {
+    if (!this.hasTextOrAudio()) {
+      this.answerText.setErrors({ invalid: true });
       return;
     }
     this.submittingAnswer = true;
@@ -624,13 +623,18 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private applyTextAudioValidators(): void {
-    if (this.audio.url) {
-      this.answerText.clearValidators();
-    } else {
-      this.answerText.setValidators(Validators.required);
+  isAnswerFocused(): boolean {
+    return document.activeElement?.id === 'answer-textarea';
+  }
+
+  updateFormValidity(): void {
+    if (this.hasTextOrAudio() || this.audio.status === 'recording') {
+      this.answerText.setErrors(null);
     }
-    this.answerText.updateValueAndValidity();
+  }
+
+  private hasTextOrAudio(): boolean {
+    return this.answerText.value || this.audio.url;
   }
 
   private setProjectAdmin(): void {

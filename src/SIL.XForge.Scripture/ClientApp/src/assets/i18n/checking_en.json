@@ -185,8 +185,9 @@
   },
   "checking_answers": {
     "add_answer": "Add answer",
-    "answer_required_before_saving": "You need to enter your answer or record your answer before saving",
+    "answer_required_before_saving": "Write or record your answer before saving",
     "answers": "{{ count }} Answers",
+    "attach": "Attach",
     "cancel": "Cancel",
     "cannot_like_own_answer": "You cannot like your own answer.",
     "confirm_delete": "Are you sure you want to delete this answer?",
@@ -243,7 +244,6 @@
   },
   "checking_audio_recorder": {
     "delete": "Delete Recording",
-    "has_attachment": "Audio attached",
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
     "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",

@@ -14,7 +14,6 @@ const NOT_A_FILE = {} as File;
 })
 export class CheckingAudioCombinedComponent {
   @ViewChild(CheckingAudioRecorderComponent) audioRecorderComponent?: CheckingAudioRecorderComponent;
-  @Input() enableRecorder: boolean = true;
   @Input() source?: string = '';
   @Output() update = new EventEmitter<AudioAttachment>();
 
@@ -29,10 +28,6 @@ export class CheckingAudioCombinedComponent {
       this.audio.status !== 'reset' &&
       !this.isUploaderActive
     );
-  }
-
-  get isRecorderEnabled(): boolean {
-    return this.enableRecorder;
   }
 
   get isUploaderActive(): boolean {
