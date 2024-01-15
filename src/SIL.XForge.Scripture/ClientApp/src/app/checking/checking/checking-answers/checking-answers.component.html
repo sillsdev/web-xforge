@@ -53,7 +53,7 @@
                 [compact]="true"
                 [ngClass]="{
                   invalid: answerText.invalid,
-                  unfocused: !isAnswerFocused() && !answerText.invalid
+                  borderless: hasAudio(),
                 }"
               ></app-checking-audio-recorder>
             </div>

@@ -59,14 +59,6 @@
       align-items: center;
       padding-block: 4px;
     }
-    .invalid {
-      border-color: #b00020;
-      transition: border-width 0s, border-color 0s;
-    }
-    .unfocused {
-      border-width: 1px;
-      border-color: rgba(0, 0, 0, 0.15);
-    }
     app-checking-audio-recorder {
       display: flex;
       max-height: 90px;
@@ -77,8 +69,17 @@
 
       border-style: solid;
       border-radius: 5px;
-      border-width: 2px;
+      border-width: 1px;
+      border-color: rgba(0, 0, 0, 0.15);
       transition: border-width 0.1s, border-color 0.1s;
+    }
+    .invalid {
+      border-color: #b00020;
+      border-width: 2px;
+      transition: border-width 0s, border-color 0s;
+    }
+    .borderless {
+      border-width: 0px;
     }
   }
   mat-form-field {
