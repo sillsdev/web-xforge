@@ -623,18 +623,18 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  isAnswerFocused(): boolean {
-    return document.activeElement?.id === 'answer-textarea';
-  }
-
   updateFormValidity(): void {
     if (this.hasTextOrAudio() || this.audio.status === 'recording') {
       this.answerText.setErrors(null);
     }
   }
 
-  private hasTextOrAudio(): boolean {
-    return this.answerText.value || this.audio.url;
+  hasAudio(): boolean {
+    return this.audio.url != null;
+  }
+
+  hasTextOrAudio(): boolean {
+    return this.answerText.value || this.hasAudio();
   }
 
   private setProjectAdmin(): void {
