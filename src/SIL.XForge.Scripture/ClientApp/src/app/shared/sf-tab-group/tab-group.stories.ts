@@ -2,9 +2,10 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
 import {
-  NewTabMenuItem,
+  TabMenuItem,
   SFTabsModule,
   TabFactoryService,
+  TabGroup,
   TabInfo,
   TabMenuService,
   TabStateService
@@ -12,28 +13,46 @@ import {
 
 @Component({
   selector: 'app-tab-group-stories',
+  styles: [
+    `
+      :host {
+        display: grid;
+        column-gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      }
+
+      span {
+        font-weight: 500;
+      }
+    `
+  ],
   template: `
     <app-tab-group
-      *ngIf="tabState.tabGroups$ | async as tabGroups"
-      [groupId]="groupId"
-      [selectedIndex]="tabGroups.get(groupId).selectedIndex"
-      (newTabRequest)="addTab(groupId, $event)"
+      *ngFor="let tabGroup of tabState.tabGroups$ | async | keyvalue"
+      [groupId]="tabGroup.key"
+      [selectedIndex]="tabGroup.value.selectedIndex"
+      [connectedTo]="tabState.groupIds$ | async"
     >
-      <app-tab *ngFor="let tab of tabGroups.get(groupId).tabs; let i = index" [closeable]="tab.closeable">
+      <app-tab
+        *ngFor="let tab of tabGroup.value.tabs; let i = index"
+        [closeable]="tab.closeable"
+        [movable]="tab.movable"
+      >
         <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
-        <p>Tab {{ i + 1 }} content for a '{{ tab.type }}' tab</p>
+        <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
       </app-tab>
     </app-tab-group>
   `
 })
 class SFTabGroupStoriesComponent implements OnChanges {
-  @Input() tabs: TabInfo<string>[] = [];
-  groupId = 'test';
+  @Input() tabGroups: TabGroup<string, TabInfo<string>>[] = [];
 
   constructor(private readonly tabState: TabStateService<string, TabInfo<string>>) {}
 
   ngOnChanges(): void {
-    this.tabState.addTabGroup(this.groupId, this.tabs);
+    this.tabGroups.forEach(tabGroup => {
+      this.tabState.addTabGroup(tabGroup);
+    });
   }
 }
 
@@ -49,7 +68,7 @@ export default {
         {
           provide: TabMenuService,
           useValue: {
-            getMenuItems(): Observable<NewTabMenuItem[]> {
+            getMenuItems(): Observable<TabMenuItem[]> {
               return of([
                 {
                   type: 'type-a',
@@ -76,14 +95,16 @@ export default {
                   tab = {
                     type: 'blank',
                     headerText: 'New tab',
-                    closeable: true
+                    closeable: true,
+                    movable: true
                   };
                   break;
                 case 'type-a':
                   tab = {
                     type: 'type-a',
                     headerText: 'Tab A',
-                    closeable: true
+                    closeable: true,
+                    movable: true
                   };
                   break;
                 case 'type-b':
@@ -91,7 +112,8 @@ export default {
                   tab = {
                     type: 'type-b',
                     headerText: 'Tab B',
-                    closeable: true
+                    closeable: true,
+                    movable: true
                   };
                   break;
               }
@@ -107,16 +129,22 @@ export default {
 
 type Story = StoryObj<SFTabGroupStoriesComponent>;
 
-const tabs: Partial<TabInfo<string>>[] = [
-  { type: 'type-a', headerText: 'Tab 1 is great!' },
-  { type: 'type-b', headerText: 'Tab 2 <em>wow!</em>' },
-  { type: 'type-c', headerText: 'Tab 3' },
-  { type: 'type-c', headerText: 'Tab 4' }
+const tabGroups: TabGroup<string, TabInfo<string>>[] = [
+  new TabGroup('group-1', [
+    {
+      type: 'type-a',
+      headerText: 'Uncloseable, unmovable Tab 1 is great!',
+      closeable: false,
+      movable: false
+    },
+    { type: 'type-b', headerText: 'Tab 2 <em>wow!</em>', closeable: true, movable: true },
+    { type: 'type-c', headerText: 'Tab 3', icon: 'book', closeable: true, movable: true }
+  ])
 ];
 
 export const Default: Story = {
   args: {
-    tabs: tabs.map((tab, i) => ({ ...tab, closeable: i !== 0 } as TabInfo<string>))
+    tabGroups
   }
 };
 
@@ -133,5 +161,19 @@ export const Narrow: Story = {
   ...Default,
   parameters: {
     viewport: { defaultViewport: 'mobile1' }
+  }
+};
+
+export const TabReorderAndMove: Story = {
+  args: {
+    tabGroups: [
+      ...tabGroups,
+      new TabGroup('group-2', [
+        { type: 'type-a', headerText: 'Uncloseable, unmovable Tab 1', closeable: false, movable: false },
+        { type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
+        { type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },
+        { type: 'type-c', headerText: 'Tab 4', closeable: true, movable: true }
+      ])
+    ]
   }
 };

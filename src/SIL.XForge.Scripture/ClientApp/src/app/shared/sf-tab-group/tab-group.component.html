@@ -2,9 +2,12 @@
   [tabs]="tabs"
   [selectedIndex]="selectedIndex"
   [groupId]="groupId"
+  [allowDragDrop]="allowDragDrop"
+  [connectedTo]="connectedTo"
   (tabClick)="onTabHeaderClick($event)"
   (closeClick)="removeTab($event)"
   (tabAddRequest)="addTab($event)"
+  (tabMove)="moveTab($event)"
 ></app-tab-group-header>
 
 <app-tab-body *ngFor="let tab of tabs; let i = index" [active]="selectedIndex === i">

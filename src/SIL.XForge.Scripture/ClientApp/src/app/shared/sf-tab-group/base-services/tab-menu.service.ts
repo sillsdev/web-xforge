@@ -1,12 +1,12 @@
 import { Observable } from 'rxjs';
 
-export interface NewTabMenuItem {
+export interface TabMenuItem {
   type: string;
   text: string;
   icon?: string;
   disabled?: boolean;
 }
 
-export abstract class TabMenuService {
-  abstract getMenuItems(tabGroup: string): Observable<NewTabMenuItem[]>;
+export abstract class TabMenuService<TGroupId extends string> {
+  abstract getMenuItems(groupId?: TGroupId): Observable<TabMenuItem[]>;
 }
