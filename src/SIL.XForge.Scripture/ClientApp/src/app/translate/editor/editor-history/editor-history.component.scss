@@ -1,0 +1,12 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+mat-progress-bar {
+  position: absolute;
+}
+
+app-history-chooser {
+  margin: 0.5em;
+}

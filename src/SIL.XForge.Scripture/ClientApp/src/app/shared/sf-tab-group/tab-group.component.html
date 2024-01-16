@@ -1,0 +1,17 @@
+<app-tab-group-header
+  [tabs]="tabs"
+  [selectedIndex]="selectedIndex"
+  [groupId]="groupId"
+  [showAddTab]="showAddTab"
+  [showAddTabMenu]="showAddTabMenu"
+  (tabClick)="onTabHeaderClick($event)"
+  (closeClick)="onTabCloseRequest($event)"
+  (tabAddRequest)="onTabAddRequest($event)"
+></app-tab-group-header>
+
+<!-- TODO: Determine if there is any benefit to using mat-tab-group  -->
+<mat-tab-group [selectedIndex]="selectedIndex" animationDuration="0">
+  <mat-tab *ngFor="let tab of tabs">
+    <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
+  </mat-tab>
+</mat-tab-group>

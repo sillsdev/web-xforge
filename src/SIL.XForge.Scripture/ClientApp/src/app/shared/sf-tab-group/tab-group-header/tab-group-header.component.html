@@ -1,0 +1,54 @@
+<app-tab-scroll-button
+  side="start"
+  [disabled]="isScrollBoundsStart"
+  (scrollStart)="startButtonScroll('start')"
+  (scrollStop)="stopButtonScroll()"
+></app-tab-scroll-button>
+
+<div class="tabs">
+  <app-tab-header
+    *ngFor="let tab of tabs; let i = index"
+    [closeable]="tab.closeable"
+    [active]="i === selectedIndex"
+    (tabClick)="tabClick.next({ index: i, type: TabEventType.Click, mouseEvent: $event })"
+    (closeClick)="closeClick.next({ index: i, type: TabEventType.Close })"
+  >
+    <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
+  </app-tab-header>
+
+  <ng-container *ngIf="showAddTab">
+    <app-tab-header
+      #menuTrigger="matMenuTrigger"
+      [matMenuTriggerFor]="newTabMenu"
+      [closeable]="false"
+      class="add-tab"
+      (click)="onAddTabClicked()"
+    >
+      <mat-icon>add</mat-icon>
+    </app-tab-header>
+
+    <mat-menu #newTabMenu>
+      <ng-container *ngIf="(menuItems$ | async)?.length; else emptyMenu">
+        <button
+          *ngFor="let item of menuItems$ | async"
+          mat-menu-item
+          [disabled]="item.disabled"
+          (click)="tabAddRequest.next(item.type)"
+        >
+          <mat-icon *ngIf="item.icon">{{ item.icon }}</mat-icon>
+          <span>{{ item.text }}</span>
+        </button>
+      </ng-container>
+      <ng-template #emptyMenu>
+        <button mat-menu-item disabled>{{ "tab_group_header.no_tabs_available" | transloco }}</button>
+      </ng-template>
+    </mat-menu>
+  </ng-container>
+</div>
+
+<app-tab-scroll-button
+  side="end"
+  [disabled]="isScrollBoundsEnd"
+  (scrollStart)="startButtonScroll('end')"
+  (scrollStop)="stopButtonScroll()"
+></app-tab-scroll-button>

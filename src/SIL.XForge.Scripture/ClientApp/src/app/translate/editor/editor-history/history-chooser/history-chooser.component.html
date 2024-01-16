@@ -1,0 +1,26 @@
+<ng-container *transloco="let t; read: 'history_chooser'">
+  <ng-container *ngIf="onlineStatusService.onlineStatus$ | async">
+    <mat-form-field id="history-select" appearance="outline">
+      <mat-icon matPrefix>history</mat-icon>
+      <mat-select
+        [value]="selectedRevision"
+        (selectionChange)="onSelectionChanged($event)"
+        panelWidth="''"
+        [disabled]="isLoading$ | async"
+      >
+        <mat-option *ngFor="let r of historyRevisions" [value]="r">{{ r | revisionFormat }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button
+      id="show-diff"
+      mat-icon-button
+      appBlurOnClick
+      type="button"
+      (click)="this.toggleDiff()"
+      matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
+    >
+      <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
+    </button>
+  </ng-container>
+</ng-container>

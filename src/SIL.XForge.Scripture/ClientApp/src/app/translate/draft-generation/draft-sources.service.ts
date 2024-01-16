@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { from, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
 interface DraftSources {
-  target: Readonly<SFProjectProfile>;
-  draftingSource: Readonly<SFProjectProfile>;
-  trainingSource?: Readonly<SFProjectProfile>;
+  target: SFProjectProfileDoc;
+  draftingSource: SFProjectProfileDoc;
+  trainingSource?: SFProjectProfileDoc;
 }
 
 @Injectable({
@@ -27,6 +27,10 @@ export class DraftSourcesService {
   getDraftProjectSources(): Observable<DraftSources> {
     return this.activatedProject.projectDoc$.pipe(
       switchMap(targetDoc => {
+        if (targetDoc == null) {
+          throw new Error('Target project not found');
+        }
+
         const translateConfig: TranslateConfig | undefined = targetDoc?.data?.translateConfig;
 
         // See if there is an alternate source project set, otherwise use the drafting source project
@@ -51,14 +55,10 @@ export class DraftSourcesService {
           ])
         ).pipe(
           map(([draftingSourceDoc, trainingSourceDoc]) => {
-            if (targetDoc?.data == null || draftingSourceDoc?.data == null) {
-              throw new Error('Target project or drafting source project data not found');
-            }
-
             return {
-              target: targetDoc.data,
-              draftingSource: draftingSourceDoc.data,
-              trainingSource: trainingSourceDoc?.data
+              target: targetDoc,
+              draftingSource: draftingSourceDoc,
+              trainingSource: trainingSourceDoc
             };
           })
         );
