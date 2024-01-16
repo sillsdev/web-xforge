@@ -31,7 +31,6 @@ using MachineWordGraph = SIL.Machine.Translation.WordGraph;
 using MachineWordGraphArc = SIL.Machine.Translation.WordGraphArc;
 // Until the In-Process Machine distinguishes its objects from Serval
 using Phrase = Serval.Client.Phrase;
-using Project = SIL.XForge.Models.Project;
 using TranslationResult = Serval.Client.TranslationResult;
 using WordGraph = Serval.Client.WordGraph;
 using WordGraphArc = Serval.Client.WordGraphArc;
@@ -806,7 +805,7 @@ public class MachineApiService : IMachineApiService
         }
 
         // Ensure that the user has permission on the project
-        EnsureProjectPermission(curUserId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
 
         // Execute on Serval, if it is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -835,7 +834,9 @@ public class MachineApiService : IMachineApiService
         {
             // Sync the project if this is a pre-translation project using Paratext Zip format
             // If a build has not been run, we will still need to sync, as the upload will be a zip by default
-            if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+            if (
+                !(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret)
+            )
             {
                 throw new DataNotFoundException("The project secret cannot be found.");
             }
@@ -1325,20 +1326,6 @@ public class MachineApiService : IMachineApiService
         return engineDto;
     }
 
-    private static void EnsureProjectPermission(string curUserId, Project project)
-    {
-        // Check for permission
-        if (
-            !(
-                project.UserRoles.TryGetValue(curUserId, out string role)
-                && role is SFProjectRole.Administrator or SFProjectRole.Translator
-            )
-        )
-        {
-            throw new ForbiddenException();
-        }
-    }
-
     private async Task EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
     {
         // Load the project from the realtime service
@@ -1349,7 +1336,7 @@ public class MachineApiService : IMachineApiService
         }
 
         // Check for permission
-        EnsureProjectPermission(curUserId, project);
+        MachineApi.EnsureProjectPermission(curUserId, project);
     }
 
     /// <summary>
