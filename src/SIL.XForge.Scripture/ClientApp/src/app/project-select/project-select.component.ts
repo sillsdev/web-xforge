@@ -1,9 +1,6 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
-import {
-  MatLegacyAutocomplete as MatAutocomplete,
-  MatLegacyAutocompleteTrigger as MatAutocompleteTrigger
-} from '@angular/material/legacy-autocomplete';
+import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { filter, map, startWith, takeUntil, tap } from 'rxjs/operators';

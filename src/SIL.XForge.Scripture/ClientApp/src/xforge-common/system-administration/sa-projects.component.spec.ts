@@ -292,7 +292,7 @@ class TestEnvironment {
   }
 
   selectValue(select: DebugElement): string {
-    const trigger = select.query(By.css('.mat-select-trigger'));
+    const trigger = select.query(By.css('.mat-mdc-select-trigger'));
     this.fixture.detectChanges();
     return trigger.nativeElement.textContent;
   }

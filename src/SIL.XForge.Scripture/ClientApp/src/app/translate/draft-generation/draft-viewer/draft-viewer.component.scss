@@ -166,7 +166,7 @@ app-text {
 }
 
 // Keep the options on the screen
-::ng-deep .mat-select-panel {
+::ng-deep .mat-mdc-select-panel {
   &.book-select-menu,
   &.chapter-select-menu {
     max-height: 65vh !important;
