@@ -1,3 +1,4 @@
+import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import {
   Component,
   DestroyRef,
@@ -24,8 +25,8 @@ import {
   Observable,
   Subscription
 } from 'rxjs';
-import { NewTabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
-import { TabHeaderMouseEvent } from '../sf-tabs.types';
+import { TabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
+import { TabHeaderMouseEvent, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 
@@ -40,8 +41,11 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @Input() groupId: string = '';
   @Input() tabs: Iterable<TabComponent> = [];
   @Input() selectedIndex = 0;
+  @Input() allowDragDrop = true;
+  @Input() connectedTo: string[] = [];
   @Output() tabClick = new EventEmitter<TabHeaderMouseEvent>();
   @Output() closeClick = new EventEmitter<number>();
+  @Output() tabMove = new EventEmitter<TabMoveEvent<string>>();
 
   /** Emits `type` from menu selection. */
   @Output() tabAddRequest = new EventEmitter<string>();
@@ -49,7 +53,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @ViewChildren(TabHeaderComponent, { read: ElementRef }) private tabHeaders?: QueryList<ElementRef>;
   @ViewChild('menuTrigger') private menuTrigger?: MatMenuTrigger;
 
-  menuItems$?: Observable<NewTabMenuItem[]>;
+  menuItems$?: Observable<TabMenuItem[]>;
 
   isScrollBoundsStart = false;
   isScrollBoundsEnd = false;
@@ -67,16 +71,16 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly elementRef: ElementRef<HTMLElement>,
-    private readonly newTabMenuManager: TabMenuService
+    private readonly tabMenuService: TabMenuService<string>
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.groupId) {
-      this.menuItems$ = this.newTabMenuManager.getMenuItems(changes.groupId.currentValue);
+      this.menuItems$ = this.tabMenuService.getMenuItems(this.groupId);
     }
 
     if (changes.selectedIndex) {
-      this.scrollTabIntoView(changes.selectedIndex.currentValue);
+      this.scrollTabIntoView(this.selectedIndex);
     }
   }
 
@@ -111,8 +115,20 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     this.dirMutObserver?.disconnect();
   }
 
+  movablePredicate(index: number, _draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
+    const tabToMove = dropList.getSortedItems()[index];
+    return tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable;
+  }
+
   onAddTabClicked(): void {
     this.scrollToEnd();
+  }
+
+  onTabDrop(event: CdkDragDrop<Iterable<TabComponent>>): void {
+    // Convert CdkDragDrop event to TabMoveEvent
+    const from = { groupId: event.previousContainer.id, index: event.previousIndex };
+    const to = { groupId: event.container.id, index: event.currentIndex };
+    this.tabMove.emit({ from, to });
   }
 
   scrollToEnd(): void {

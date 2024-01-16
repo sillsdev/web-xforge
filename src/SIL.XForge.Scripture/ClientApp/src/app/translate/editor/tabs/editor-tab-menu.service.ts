@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
-import { NewTabMenuItem, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
+import { TabMenuItem, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
@@ -14,7 +14,7 @@ import { EditorTabGroupType, EditorTabInfo, EditorTabType, editorTabTypes } from
 @Injectable({
   providedIn: 'root'
 })
-export class EditorTabMenuService implements TabMenuService {
+export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> {
   constructor(
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
@@ -23,7 +23,7 @@ export class EditorTabMenuService implements TabMenuService {
     private readonly i18n: I18nService
   ) {}
 
-  getMenuItems(_groupId: EditorTabGroupType): Observable<NewTabMenuItem[]> {
+  getMenuItems(): Observable<TabMenuItem[]> {
     return this.activatedProject.projectDoc$.pipe(
       filterNullish(),
       switchMap(projectDoc => {
@@ -35,7 +35,7 @@ export class EditorTabMenuService implements TabMenuService {
       }),
       switchMap(([projectDoc, buildDto, existingTabs]) => {
         const showDraft = buildDto != null;
-        const items: Observable<NewTabMenuItem>[] = [];
+        const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
           switch (tabType) {
@@ -67,7 +67,7 @@ export class EditorTabMenuService implements TabMenuService {
     );
   }
 
-  private createMenuItem(tabType: EditorTabType): Observable<NewTabMenuItem> {
+  private createMenuItem(tabType: EditorTabType): Observable<TabMenuItem> {
     switch (tabType) {
       case 'history':
         return this.i18n.translate('editor_tabs_menu.history_tab_header').pipe(
