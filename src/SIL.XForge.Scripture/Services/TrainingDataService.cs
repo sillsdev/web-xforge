@@ -1,0 +1,207 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
+using CsvHelper;
+using CsvHelper.Configuration;
+using Microsoft.Extensions.Options;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using SIL.XForge.Configuration;
+using SIL.XForge.Realtime;
+using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
+using SIL.XForge.Utils;
+
+namespace SIL.XForge.Scripture.Services;
+
+public class TrainingDataService : ITrainingDataService
+{
+    /// <summary>
+    /// The training directory name. This si not the full path to the directory.
+    /// </summary>
+    ///
+    public const string DirectoryName = "training-data";
+    private static readonly CsvConfiguration _csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
+    {
+        DetectColumnCountChanges = true,
+        DetectDelimiter = true,
+        HasHeaderRecord = false,
+    };
+    private readonly IFileSystemService _fileSystemService;
+    private readonly IRealtimeService _realtimeService;
+    private readonly IOptions<SiteOptions> _siteOptions;
+
+    public TrainingDataService(
+        IFileSystemService fileSystemService,
+        IRealtimeService realtimeService,
+        IOptions<SiteOptions> siteOptions
+    )
+    {
+        _fileSystemService = fileSystemService;
+        _realtimeService = realtimeService;
+        _siteOptions = siteOptions;
+    }
+
+    /// <summary>
+    /// Saves the training data to the file system, performing conversion if necessary
+    /// </summary>
+    /// <param name="userId">The user identifier</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="dataId">The data identifier.</param>
+    /// <param name="path">The path to the temporary file.</param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user does not have access to upload.</exception>
+    /// <exception cref="FormatException">The data id or CSV file were not in the correct format.</exception>
+    public async Task<Uri> SaveTrainingDataAsync(string userId, string projectId, string dataId, string path)
+    {
+        await using IConnection conn = await _realtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+
+        if (!StringUtils.ValidateId(dataId))
+        {
+            throw new FormatException($"{nameof(dataId)} is not a valid id.");
+        }
+
+        string trainingDataDir = Path.Combine(_siteOptions.Value.SiteDir, DirectoryName, projectId);
+        if (!_fileSystemService.DirectoryExists(trainingDataDir))
+        {
+            _fileSystemService.CreateDirectory(trainingDataDir);
+        }
+
+        string outputPath = Path.Combine(trainingDataDir, $"{userId}_{dataId}.csv");
+
+        // Delete the existing file, if it exists
+        if (_fileSystemService.FileExists(outputPath))
+        {
+            _fileSystemService.DeleteFile(outputPath);
+        }
+
+        // Validate the file, and convert to CSV if required
+        await ConvertToCsvAsync(path, outputPath);
+
+        // Return the URL to the file
+        string outputFileName = Path.GetFileName(outputPath);
+        var uri = new Uri(
+            _siteOptions.Value.Origin,
+            $"assets/{DirectoryName}/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}"
+        );
+        return uri;
+    }
+
+    /// <summary>
+    /// Converts a file to a CSV file
+    /// </summary>
+    /// <param name="path">The file to convert</param>
+    /// <param name="outputPath">The path to the output file</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <exception cref="FormatException">
+    /// The file does not have a valid extension, or it does not have two columns.
+    /// </exception>
+    /// <remarks>If the file is tab delimited or a CSV file, it will just be relocated to the new path.</remarks>
+    private async Task ConvertToCsvAsync(string path, string outputPath)
+    {
+        string extension = Path.GetExtension(path).ToUpperInvariant();
+        switch (extension)
+        {
+            case ".CSV":
+            case ".TSV":
+            case ".TXT":
+            {
+                // Ensure that there are only two columns
+                await using (Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open))
+                {
+                    using StreamReader streamReader = new StreamReader(fileStream);
+                    using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
+                    await csvReader.ReadAsync();
+                    if (csvReader.ColumnCount != 2)
+                    {
+                        throw new FormatException("The CSV file does not contain two columns");
+                    }
+                }
+
+                // Relocate the temporary file to the new directory
+                _fileSystemService.MoveFile(path, outputPath);
+                break;
+            }
+            case ".XLS":
+            {
+                // Load the Excel 97-2003 spreadsheet
+                await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
+                using IWorkbook workbook = new HSSFWorkbook(fileStream);
+                await ConvertExcelToCsvAsync(workbook, outputPath);
+                break;
+            }
+            case ".XLSX":
+            {
+                // Load the Excel 2007+ spreadsheet
+                await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
+                using IWorkbook workbook = new XSSFWorkbook(fileStream);
+                await ConvertExcelToCsvAsync(workbook, outputPath);
+                break;
+            }
+            default:
+                throw new FormatException();
+        }
+    }
+
+    /// <summary>
+    /// Converts an Excel file to spreadsheet.
+    /// </summary>
+    /// <param name="workbook">The Excel workbook from NPOI.</param>
+    /// <param name="outputPath">The path to write the CSV file to</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <exception cref="FormatException">The Excel file does not contain two columns of data</exception>
+    private async Task ConvertExcelToCsvAsync(IWorkbook workbook, string outputPath)
+    {
+        // Verify there is a worksheet
+        if (workbook.NumberOfSheets == 0)
+        {
+            throw new FormatException("The Excel file does not contain a worksheet");
+        }
+
+        // Load the Excel file
+        var data = new List<(string, string)>();
+        ISheet sheet = workbook.GetSheetAt(0);
+        for (int rowNum = sheet.FirstRowNum; rowNum <= sheet.LastRowNum; rowNum++)
+        {
+            IRow row = sheet.GetRow(rowNum);
+            if (row is null || row.FirstCellNum == -1 || row.LastCellNum - row.FirstCellNum < 2)
+            {
+                // Skip if there are now two columns of data in this row
+                continue;
+            }
+
+            string firstColumn =
+                row.GetCell(row.FirstCellNum, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            string secondColumn =
+                row.GetCell(row.FirstCellNum + 1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            data.Add((firstColumn, secondColumn));
+        }
+
+        if (data.Count == 0)
+        {
+            throw new FormatException("The Excel file does not contain two columns of data");
+        }
+
+        // Write the CSV file
+        await using Stream fileStream = _fileSystemService.CreateFile(outputPath);
+        await using StreamWriter streamWriter = new StreamWriter(fileStream);
+        await using CsvWriter csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
+        foreach ((string first, string second) in data)
+        {
+            csvWriter.WriteField(first);
+            csvWriter.WriteField(second);
+            await csvWriter.NextRecordAsync();
+        }
+    }
+}
