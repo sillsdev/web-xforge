@@ -61,13 +61,14 @@
     </div>
 
     <app-tab-group
-      *ngFor="let tabGroup of this.tabState.tabGroups$ | async | keyvalue"
+      *ngFor="let tabGroup of tabState.tabGroups$ | async | keyvalue"
       id="{{ tabGroup.key }}-text-area"
       class="text-area"
       [groupId]="tabGroup.key"
       [selectedIndex]="tabGroup.value.selectedIndex"
+      [connectedTo]="(tabState.groupIds$ | async) ?? []"
     >
-      <app-tab *ngFor="let tab of tabGroup.value.tabs" [closeable]="tab.closeable">
+      <app-tab *ngFor="let tab of tabGroup.value.tabs" [closeable]="tab.closeable" [movable]="tab.movable">
         <!-- TODO: Localize tab header text -->
         <ng-template sf-tab-header>
           <mat-icon *ngIf="tab.icon">{{ tab.icon }}</mat-icon>

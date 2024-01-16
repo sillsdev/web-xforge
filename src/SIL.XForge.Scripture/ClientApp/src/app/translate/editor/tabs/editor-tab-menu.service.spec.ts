@@ -41,11 +41,11 @@ describe('EditorTabsMenuService', () => {
 
   it('should get "history" and "draft" menu items', done => {
     const env = new TestEnvironment();
-    env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true }]);
+    env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
 
-    service.getMenuItems('source').subscribe(items => {
+    service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
       expect(items[0].disabled).toBeFalsy();
@@ -58,13 +58,13 @@ describe('EditorTabsMenuService', () => {
   it('should get "history" and not "draft" (tab already exists) menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([
-      { type: 'history', headerText: 'History', closeable: true },
-      { type: 'draft', headerText: 'Draft', closeable: true, unique: true }
+      { type: 'history', headerText: 'History', closeable: true, movable: true },
+      { type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true }
     ]);
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
 
-    service.getMenuItems('source').subscribe(items => {
+    service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('history');
       expect(items[0].disabled).toBeFalsy();
@@ -74,11 +74,11 @@ describe('EditorTabsMenuService', () => {
 
   it('should get "history" (enabled) and not "draft" (no draft build) menu items', done => {
     const env = new TestEnvironment();
-    env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true }]);
+    env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
     env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => true;
 
-    service.getMenuItems('source').subscribe(items => {
+    service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('history');
       expect(items[0].disabled).toBeFalsy();
@@ -92,7 +92,7 @@ describe('EditorTabsMenuService', () => {
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => false;
 
-    service.getMenuItems('source').subscribe(items => {
+    service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('draft');
       expect(items[0].disabled).toBeFalsy();
@@ -106,7 +106,7 @@ describe('EditorTabsMenuService', () => {
     env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => false;
 
-    service.getMenuItems('source').subscribe(items => {
+    service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(0);
       done();
     });
