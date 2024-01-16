@@ -118,11 +118,11 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AudioOnlyQuestion" xml:space="preserve">
-    <value>- {0} audio-only question -</value>
+    <value>- {0} pertanyaan khusus audio -</value>
     <comment>Text to show in Paratext Notes when question is audio-only</comment>
   </data>
   <data name="AudioOnlyResponse" xml:space="preserve">
-    <value>- {0} audio-only response -</value>
+    <value>- {0} tanggapan khusus audio -</value>
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
   <data name="CommunitySupport" xml:space="preserve">
@@ -150,7 +150,7 @@
     <value>Jika Anda belum menjadi pengguna {0}, lalu setelah mengklik tautan, klik {1} Daftar {2} dan lakukan salah satu berikut ini:</value>
   </data>
   <data name="InviteLinkExpires" xml:space="preserve">
-    <value>The project invitation link expires in 14 days.</value>
+    <value>Tautan undangan proyek akan kedaluwarsa dalam 14 hari.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Klik {0} Daftar dengan Paratext {1} dan ikuti instruksi untuk mengakses {2} menggunakan akun Paratext yang ada, atau</value>
@@ -169,11 +169,11 @@
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LearnMore" xml:space="preserve">
-    <value>Learn More</value>
+    <value>Pelajari Lebih Lanjut</value>
     <comment>Link to the learn more page seen in the page footer and as button at the bottom of the home page</comment>
   </data>
   <data name="LogIn" xml:space="preserve">
-    <value>Masuk log</value>
+    <value>Masuk</value>
     <comment>Log In button label</comment>
   </data>
   <data name="MessageMissing" xml:space="preserve">
