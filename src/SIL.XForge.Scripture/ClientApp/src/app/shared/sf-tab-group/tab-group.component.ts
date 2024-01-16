@@ -9,19 +9,21 @@ import {
   ViewChild
 } from '@angular/core';
 import { TabFactoryService } from './base-services/tab-factory.service';
-import { TabHeaderMouseEvent } from './sf-tabs.types';
+import { TabHeaderMouseEvent, TabMoveEvent } from './sf-tabs.types';
 import { TabStateService } from './tab-state/tab-state.service';
 import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
 
 @Component({
-  selector: 'app-tab-group',
+  selector: 'app-tab-group [groupId]',
   templateUrl: './tab-group.component.html',
   styleUrls: ['./tab-group.component.scss']
 })
 export class TabGroupComponent implements OnChanges {
   @Input() groupId: string = '';
   @Input() selectedIndex = 0;
+  @Input() allowDragDrop = true;
+  @Input() connectedTo: string[] = [];
 
   @ViewChild(TabBodyComponent, { read: ElementRef }) scrollContainer?: ElementRef<HTMLElement>;
   @ContentChildren(TabComponent) tabs!: QueryList<TabComponent>;
@@ -67,7 +69,11 @@ export class TabGroupComponent implements OnChanges {
     }
   }
 
+  moveTab(e: TabMoveEvent<string>): void {
+    this.tabState.moveTab(e.from, e.to);
+  }
+
   isTabRemovable(tabIndex: number): boolean {
-    return tabIndex > 0 && tabIndex < this.tabs.length;
+    return this.tabs.get(tabIndex)?.closeable ?? false;
   }
 }
