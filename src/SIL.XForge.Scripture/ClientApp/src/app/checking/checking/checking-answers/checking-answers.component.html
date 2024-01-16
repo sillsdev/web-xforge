@@ -64,7 +64,7 @@
             {{ t("answer_required_before_saving") }}
           </div>
           <div class="bottom-row">
-            <button mat-button *ngIf="!selectedText" (click)="selectScripture()">
+            <button mat-button *ngIf="!selectedText" id="select-scripture" (click)="selectScripture()">
               <mat-icon class="attach-icon">attach_file</mat-icon>
               {{ t("attach") }}
             </button>
