@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
-import { MatLegacySelectHarness as MatSelectHarness } from '@angular/material/legacy-select/testing';
+import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';
@@ -2651,7 +2651,7 @@ class TestEnvironment {
   }
 
   get yourAnswerContainer(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form .mat-form-field'));
+    return this.fixture.debugElement.query(By.css('#answer-form .mat-mdc-form-field'));
   }
 
   get yourAnswerField(): DebugElement {

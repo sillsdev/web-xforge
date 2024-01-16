@@ -72,6 +72,11 @@
     margin-bottom: 1rem;
   }
 }
+mat-select.book-select-menu ::ng-deep {
+  .mat-mdc-select-arrow-wrapper {
+    margin-right: 5px;
+  }
+}
 
 .mat-dialog-actions {
   justify-content: end;
