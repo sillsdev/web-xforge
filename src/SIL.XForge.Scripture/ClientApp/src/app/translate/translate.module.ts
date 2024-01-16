@@ -11,6 +11,7 @@ import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dial
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { EditorComponent } from './editor/editor.component';
+import { HistoryChooserComponent } from './editor/history-chooser/history-chooser.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
@@ -30,7 +31,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
     TranslateOverviewComponent,
-    DraftViewerComponent
+    DraftViewerComponent,
+    HistoryChooserComponent
   ],
   imports: [
     AngularSplitModule,

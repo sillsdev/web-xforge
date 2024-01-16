@@ -77,6 +77,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IHgWrapper _hgHelper;
     private readonly IWebHostEnvironment _env;
     private readonly DotNetCoreAlert _alertSystem;
+    private readonly IDeltaUsxMapper _deltaUsxMapper;
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -92,7 +93,8 @@ public class ParatextService : DisposableBase, IParatextService
         IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
         IGuidService guidService,
         ISFRestClientFactory restClientFactory,
-        IHgWrapper hgWrapper
+        IHgWrapper hgWrapper,
+        IDeltaUsxMapper deltaUsxMapper
     )
     {
         _paratextOptions = paratextOptions;
@@ -110,6 +112,7 @@ public class ParatextService : DisposableBase, IParatextService
         _hgHelper = hgWrapper;
         _env = env;
         _alertSystem = new DotNetCoreAlert(_logger);
+        _deltaUsxMapper = deltaUsxMapper;
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -1888,7 +1891,7 @@ public class ParatextService : DisposableBase, IParatextService
         return scrText.Language.Id;
     }
 
-    public void FreeCommentManager(UserSecret userSecret, string paratextId)
+    public void ClearParatextDataCaches(UserSecret userSecret, string paratextId)
     {
         ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
         if (scrText is not null)
@@ -1896,6 +1899,9 @@ public class ParatextService : DisposableBase, IParatextService
             // The comment manager is kept in a MRU cache
             CommentManager.RemoveCommentManager(scrText);
         }
+
+        // Clear the versioning manager cache
+        VersioningManager.Reset();
     }
 
     public void InitializeCommentManager(UserSecret userSecret, string paratextId)
@@ -1907,6 +1913,181 @@ public class ParatextService : DisposableBase, IParatextService
             CommentManager commentManager = CommentManager.Get(scrText);
             Memento.AddParallelDeserializer<CommentList>(null);
             commentManager.Load();
+        }
+    }
+
+    public async Task<Snapshot<TextData>> GetSnapshotAsync(
+        UserSecret userSecret,
+        string sfProjectId,
+        string book,
+        int chapter,
+        DateTime timestamp
+    )
+    {
+        await using IConnection connection = await _realtimeService.ConnectAsync(userSecret.Id);
+
+        // Load the project so we can check security and get the Paratext Id
+        IDocument<SFProject> projectDoc = connection.Get<SFProject>(sfProjectId);
+        await projectDoc.FetchAsync();
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("Project does not exist.");
+        }
+
+        if (
+            !projectDoc.Data.UserRoles.TryGetValue(userSecret.Id, out string role)
+            || role is not (SFProjectRole.Translator or SFProjectRole.Administrator)
+        )
+        {
+            throw new ForbiddenException();
+        }
+
+        // Ensure that the timestamp is UTC
+        timestamp = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+
+        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
+
+        // We do not have a snapshot, so retrieve the data from Paratext
+        // Note: The following code is not testable due to ParatextData limitations
+        if (snapshot.Data is null)
+        {
+            // Load the Paratext project
+            string ptProjectId = projectDoc.Data.ParatextId;
+            using ScrText scrText = GetScrText(userSecret, ptProjectId);
+
+            // Retrieve the first revision before or at the timestamp
+            VersionedText versionedText = VersioningManager.Get(scrText);
+            HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
+            DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp, TimeSpan.Zero);
+            HgRevision? revision = revisionCollection
+                .MutableCollection.Where(r => r.CommitTimeStamp <= timeStampOffset)
+                .MaxBy(r => r.CommitTimeStamp);
+
+            // No revision was before than the timestamp, so get the first revision
+            revision ??= revisionCollection.MinBy(r => r.LocalRevisionNumber);
+            if (revision is null)
+            {
+                throw new DataNotFoundException("A snapshot cannot be retrieved at that timestamp");
+            }
+
+            // Retrieve the USFM for the chapter, and convert to USX, then to deltas
+            IGetText version = versionedText.GetVersion(revision.Id);
+            VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
+            string usfm = version.GetText(verseRef, true, false);
+            string usx = UsfmToUsx.ConvertToXmlString(scrText, verseRef.BookNum, usfm, false);
+            XDocument usxDoc = XDocument.Parse(usx);
+            snapshot = new Snapshot<TextData>
+            {
+                Id = id,
+                Version = 0,
+                Data = new TextData(_deltaUsxMapper.ToChapterDeltas(usxDoc).First().Delta),
+            };
+        }
+
+        return snapshot;
+    }
+
+    public async IAsyncEnumerable<KeyValuePair<DateTime, string>> GetRevisionHistoryAsync(
+        UserSecret userSecret,
+        string sfProjectId,
+        string book,
+        int chapter
+    )
+    {
+        await using IConnection connection = await _realtimeService.ConnectAsync(userSecret.Id);
+
+        // Load the project so we can check security
+        IDocument<SFProject> projectDoc = connection.Get<SFProject>(sfProjectId);
+        await projectDoc.FetchAsync();
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("Project does not exist.");
+        }
+
+        if (
+            !projectDoc.Data.UserRoles.TryGetValue(userSecret.Id, out string role)
+            || role is not (SFProjectRole.Translator or SFProjectRole.Administrator)
+        )
+        {
+            throw new ForbiddenException();
+        }
+
+        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        Op[] ops = await connection.GetOpsAsync<TextData>(id);
+
+        // Iterate over the ops in reverse order, returning a milestone at least every 15 minutes
+        const int interval = 15;
+        const string status = "Updated in Scripture Forge";
+        DateTime milestonePeriod = DateTime.MaxValue;
+        DateTime milestoneTimestamp = DateTime.UtcNow;
+        int milestoneOps = 0;
+        for (int i = ops.Length - 1; i >= 0; i--)
+        {
+            Op op = ops[i];
+            if (op.Metadata.Timestamp < milestonePeriod.AddMinutes(0 - interval))
+            {
+                // If this is not the first op, emit the revision
+                if (milestoneOps > 0)
+                {
+                    yield return new KeyValuePair<DateTime, string>(milestoneTimestamp, status);
+                    milestoneOps = 1;
+                }
+
+                // Get the next interval by rounding up to the nearest interval
+                milestonePeriod = op.Metadata.Timestamp.AddMinutes(
+                    interval - (op.Metadata.Timestamp.Minute % interval)
+                );
+                milestonePeriod = milestonePeriod.AddSeconds(-milestonePeriod.Second);
+                milestonePeriod = milestonePeriod.AddMilliseconds(-milestonePeriod.Millisecond);
+
+                // As this is the latest op in the new period, its timestamp will be the milestone timestamp
+                milestoneTimestamp = op.Metadata.Timestamp;
+            }
+
+            milestoneOps++;
+        }
+
+        // Emit the last op(s), if not emitted already
+        if (milestoneOps > 0)
+        {
+            yield return new KeyValuePair<DateTime, string>(milestoneTimestamp, status);
+        }
+
+        // Get the earlier op's timestamp (UTC)
+        milestonePeriod = ops.FirstOrDefault()?.Metadata.Timestamp ?? DateTime.UtcNow;
+
+        // Load the Paratext project
+        string ptProjectId = projectDoc.Data.ParatextId;
+        using ScrText scrText = GetScrText(userSecret, ptProjectId);
+
+        // Note: The following code is not testable due to ParatextData limitations
+        // Iterate over the Paratext commits earlier than the earliest MongoOp
+        DateTimeOffset timeStampOffset = new DateTimeOffset(milestonePeriod, TimeSpan.Zero);
+        HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
+        int bookNum = Canon.BookIdToNumber(book);
+        foreach (
+            HgRevision revision in revisionCollection.MutableCollection.Where(r => r.CommitTimeStamp <= timeStampOffset)
+        )
+        {
+            // Get the revision summary to see if the book and chapter has changed
+            RevisionChangeInfo revisionSummary = revisionCollection.GetSummaryFor(revision);
+
+            // Skip the revision if this book is not modified
+            if (!revisionSummary.HasChangesInBook(bookNum))
+            {
+                continue;
+            }
+
+            // If this revision modifies this chapter, emit it
+            var changesForBook = revisionSummary.GetChangesForBook(bookNum);
+            if (changesForBook.ChapterHasChange(chapter))
+            {
+                yield return new KeyValuePair<DateTime, string>(
+                    revision.CommitTimeStamp.UtcDateTime,
+                    "Updated in Paratext"
+                );
+            }
         }
     }
 
