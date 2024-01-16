@@ -9,9 +9,15 @@ export class TabHeaderComponent {
   @HostBinding('class.closeable')
   @Input()
   closeable = true;
+
+  @HostBinding('class.movable')
+  @Input()
+  movable = true;
+
   @HostBinding('class.active')
   @Input()
   active = false;
+
   @Output() tabClick = new EventEmitter<MouseEvent>();
   @Output() closeClick = new EventEmitter<void>();
 
