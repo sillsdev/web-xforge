@@ -22,7 +22,8 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
+      // Include an 'extra material' book (100) that should be excluded
+      texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 100 }],
       writingSystem: { tag: 'eng' },
       translateConfig: {
         source: { projectRef: 'test' }
@@ -32,7 +33,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockSourceNonNllbProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }],
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 100 }],
       writingSystem: { tag: 'xyz' }
     })
   } as SFProjectProfileDoc;
@@ -46,7 +47,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockAlternateTrainingSourceProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }]
+      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }]
     })
   } as SFProjectProfileDoc;
 

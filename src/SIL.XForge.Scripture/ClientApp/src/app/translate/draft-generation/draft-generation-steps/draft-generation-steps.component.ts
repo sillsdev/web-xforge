@@ -2,19 +2,18 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { from } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
 import { NllbLanguageService } from '../../nllb-language.service';
+import { DraftSourcesService } from '../draft-sources.service';
 
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
@@ -65,8 +64,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
+    private readonly draftSourcesService: DraftSourcesService,
     readonly featureFlags: FeatureFlagService,
-    private readonly projectService: SFProjectService,
     private readonly nllbLanguageService: NllbLanguageService
   ) {
     super();
@@ -74,45 +73,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   ngOnInit(): void {
     this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
-        // Build available book list from source project(s)
-        switchMap(targetDoc => {
-          const translateConfig: TranslateConfig | undefined = targetDoc?.data?.translateConfig;
-
-          // See if there is an alternate source project set, otherwise use the drafting source project
-          const draftingSourceProjectId: string | undefined =
-            translateConfig?.draftConfig.alternateSource?.projectRef ?? translateConfig?.source?.projectRef;
-
-          if (draftingSourceProjectId == null) {
-            throw new Error('Source project is not set');
-          }
-
-          const trainingSourceProjectId = translateConfig?.draftConfig.alternateTrainingSourceEnabled
-            ? translateConfig.draftConfig.alternateTrainingSource?.projectRef
-            : undefined;
-
-          // Include alternate training source project if it exists
-          return from(
-            Promise.all([
-              this.projectService.getProfile(draftingSourceProjectId),
-              trainingSourceProjectId
-                ? this.projectService.getProfile(trainingSourceProjectId)
-                : Promise.resolve(undefined)
-            ])
-          ).pipe(
-            map(([draftingSourceDoc, trainingSourceDoc]) => {
-              if (targetDoc?.data == null || draftingSourceDoc?.data == null) {
-                throw new Error('Target project or drafting source project data not found');
-              }
-
-              return {
-                target: targetDoc.data,
-                draftingSource: draftingSourceDoc.data,
-                trainingSource: trainingSourceDoc?.data
-              };
-            })
-          );
-        }),
+      this.draftSourcesService.getDraftProjectSources().pipe(
         tap(({ draftingSource, trainingSource }) => {
           this.setSourceProjectDisplayNames(draftingSource, trainingSource);
         })
@@ -146,6 +107,11 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         // Ensure books are displayed in ascending canonical order.
         for (const text of target.texts.sort((a, b) => a.bookNum - b.bookNum)) {
           const bookNum = text.bookNum;
+
+          // Exclude non-canonical books
+          if (Canon.isExtraMaterial(bookNum)) {
+            continue;
+          }
 
           // Translate books
           if (draftingSourceBooks.has(bookNum)) {
