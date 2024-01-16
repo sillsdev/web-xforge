@@ -1,3 +1,7 @@
+:host {
+  position: relative;
+}
+
 .no-attachment {
   height: 100%;
   button {
@@ -21,9 +25,20 @@ button {
 }
 
 .remove-audio-file {
-  height: 36px;
-  width: 36px;
-  line-height: 36px;
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  min-width: unset;
+  line-height: 21px;
+  font-size: 0px;
+  padding: 0;
+
+  mat-icon {
+    height: 21px;
+    width: 21px;
+    font-size: 21px;
+  }
 }
 
 .has-attachment {
@@ -45,11 +60,5 @@ button {
 
   app-single-button-audio-player {
     max-height: 30px;
-  }
-
-  button {
-    max-height: 30px;
-    max-width: 30px;
-    line-height: 30px;
   }
 }
