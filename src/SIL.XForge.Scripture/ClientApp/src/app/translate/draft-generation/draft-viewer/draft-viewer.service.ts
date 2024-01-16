@@ -5,6 +5,10 @@ import { isString } from '../../../../type-utils';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
 
+export interface DraftMappingOptions {
+  overwrite?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -42,11 +46,13 @@ export class DraftViewerService {
    * @param draft dictionary of segment refs to pretranslations
    * @param targetOps current delta ops for target editor
    */
-  toDraftOps(draft: DraftSegmentMap, targetOps: DeltaOperation[]): DeltaOperation[] {
+  toDraftOps(draft: DraftSegmentMap, targetOps: DeltaOperation[], options?: DraftMappingOptions): DeltaOperation[] {
     // Check for empty draft
     if (Object.keys(draft).length === 0) {
       return targetOps;
     }
+
+    const overwrite = options?.overwrite ?? false;
 
     return targetOps.map(op => {
       const segmentRef: string | undefined = op.attributes?.segment;
@@ -92,7 +98,7 @@ export class DraftViewerService {
       }
 
       if (isString(op.insert)) {
-        if (op.insert.trim().length > 0) {
+        if (!overwrite && op.insert.trim().length > 0) {
           // 'insert' is non-blank string; use existing translation
           return op;
         }

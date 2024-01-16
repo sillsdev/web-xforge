@@ -1,0 +1,18 @@
+@use 'src/material-styles';
+
+:host {
+  display: block;
+}
+
+#history-select {
+  @include material-styles.dense_mat_select();
+}
+
+mat-form-field {
+  height: auto;
+
+  mat-icon {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}

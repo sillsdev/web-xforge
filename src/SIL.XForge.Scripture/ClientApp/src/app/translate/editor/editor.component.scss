@@ -1,11 +1,45 @@
+@use 'src/variables' as vars;
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+
+@mixin targetOnly {
+  #source-text-area {
+    display: none;
+  }
+
+  #target-text-area {
+    grid-column: 1 / span 2;
+  }
+}
 
 :host {
   display: flex;
   flex-direction: column;
+
+  // Hide editor border, as tab container will have a border
+  &::ng-deep {
+    .ql-container.ql-snow {
+      border: 0;
+    }
+  }
+}
+
+.content {
   height: 100%;
+  display: grid;
+  column-gap: 10px;
+
+  grid-template-rows: 72px minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr)); // Prevent cols from expanding past 50%
+
+  &.target-only {
+    @include targetOnly;
+  }
+
+  @include media-breakpoint('<', sm) {
+    @include targetOnly;
+    height: calc(100% + 20px);
+    margin: -10px;
+  }
 }
 
 .avatar-padding {
@@ -21,10 +55,11 @@
   margin-bottom: 10px;
   border-width: 1px;
   border-style: solid;
-  border-color: $border-color;
+  border-color: vars.$border-color;
   padding: 5px 10px;
+  grid-column: 1 / span 2;
 
-  @include media-breakpoint-only(xs) {
+  @include media-breakpoint('<', sm) {
     margin-top: 0;
     margin-bottom: 0;
     border-bottom-width: 0;
@@ -32,7 +67,7 @@
 }
 
 .toolbar-separator {
-  border-left: 1px solid $border-color;
+  border-left: 1px solid vars.$border-color;
   margin: 0 4px;
   height: 36px;
   width: 0;
@@ -40,7 +75,7 @@
 
 .preview-draft-button {
   // Border helps associate button with target editor that shows similar border when it has a draft
-  border: 3px dashed $draft-color;
+  border: 3px dashed vars.$draft-color;
 }
 
 .ql-suggestions {
@@ -49,6 +84,7 @@
 
 app-text {
   height: 100%;
+  width: 100%;
 }
 
 .suggestions-menu {
@@ -107,35 +143,8 @@ app-text {
   }
 }
 
-.content {
-  height: 100%;
-  display: grid;
-  column-gap: 10px;
-
-  grid-template-rows: 72px minmax(0, 1fr);
-  grid-template-columns: 1fr 1fr;
-
-  @include media-breakpoint-only(xs) {
-    margin: -10px;
-    height: calc(100% + 20px);
-  }
-}
-
-.toolbar {
-  grid-column: 1 / span 2;
-}
-
-.text-area.text-area-full-width {
-  grid-column: 1 / span 2;
-}
-
-.text-area {
-  grid-row-start: 2;
-}
-
 .reverse-columns {
-  #source-text-area,
-  #snapshot-text-area {
+  #source-text-area {
     grid-column-start: 2;
   }
   #target-text-area {
@@ -144,13 +153,17 @@ app-text {
 }
 
 .text-container {
+  display: flex;
   height: 100%;
   position: relative;
+
+  &.has-draft {
+    border: 4px dashed vars.$draft-color;
+  }
 }
 
 .text-area {
-  display: flex;
-  flex-direction: column;
+  grid-row-start: 2;
 }
 
 .container-for-split {

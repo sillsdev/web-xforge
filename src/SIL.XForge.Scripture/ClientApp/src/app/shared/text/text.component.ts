@@ -97,6 +97,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() loaded = new EventEmitter(true);
   @Output() focused = new EventEmitter<boolean>(true);
   @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
+  @Output() editorCreated = new EventEmitter<void>();
+
   lang: string = '';
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
@@ -482,6 +484,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
+    this.editorCreated.emit();
   }
 
   focus(): void {

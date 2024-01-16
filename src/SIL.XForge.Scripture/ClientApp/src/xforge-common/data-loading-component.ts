@@ -1,4 +1,5 @@
 import { Directive, OnDestroy } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { NoticeService } from './notice.service';
 import { SubscriptionDisposable } from './subscription-disposable';
 
@@ -12,14 +13,18 @@ import { SubscriptionDisposable } from './subscription-disposable';
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
 export abstract class DataLoadingComponent extends SubscriptionDisposable implements OnDestroy {
-  private _isLoading: boolean = false;
+  private isLoadingSource$ = new BehaviorSubject<boolean>(false);
 
   constructor(protected readonly noticeService: NoticeService) {
     super();
   }
 
+  get isLoading$(): Observable<boolean> {
+    return this.isLoadingSource$.asObservable();
+  }
+
   get isLoading(): boolean {
-    return this._isLoading;
+    return this.isLoadingSource$.value;
   }
 
   ngOnDestroy(): void {
@@ -28,16 +33,16 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
   }
 
   protected loadingStarted(): void {
-    if (!this._isLoading) {
+    if (!this.isLoading) {
       this.noticeService.loadingStarted();
-      this._isLoading = true;
+      this.isLoadingSource$.next(true);
     }
   }
 
   protected loadingFinished(): void {
-    if (this._isLoading) {
+    if (this.isLoading) {
       this.noticeService.loadingFinished();
-      this._isLoading = false;
+      this.isLoadingSource$.next(false);
     }
   }
 }

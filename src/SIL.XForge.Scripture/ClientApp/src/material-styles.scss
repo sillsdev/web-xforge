@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 @use 'sass:color';
 @use 'variables' as *;
+@use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 
 // TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
 //  The following line adds:
@@ -150,6 +151,9 @@ $material-theme-accent-error: mat.define-light-theme(
 // @include mat.slide-toggle-theme($material-app-theme);
 // @include mat.sort-theme($material-app-theme);
 // @include mat.tree-theme($material-app-theme);
+
+// Use theme with custom components
+@include sf-tab-group.theme($material-app-theme);
 
 // Remove letter spacing (added by Material v15+) that may not work with some language scripts (e.g. Arabic).
 // TODO: Add to this list as needed as we migrate to Material v15+

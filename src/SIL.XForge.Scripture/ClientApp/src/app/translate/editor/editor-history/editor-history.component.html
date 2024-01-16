@@ -1,0 +1,23 @@
+<ng-container *ngIf="onlineStatusService.onlineStatus$ | async; else offline">
+  <mat-progress-bar *ngIf="historyChooser?.isLoading$ | async" mode="indeterminate" color="accent"></mat-progress-bar>
+
+  <app-history-chooser
+    [projectId]="projectId"
+    [bookNum]="bookNum"
+    [chapter]="chapter"
+    [showDiff]="true"
+  ></app-history-chooser>
+</ng-container>
+
+<app-text
+  [isReadOnly]="true"
+  [subscribeToUpdates]="false"
+  [isRightToLeft]="isRightToLeft"
+  [fontSize]="fontSize"
+  [placeholder]="''"
+  [class.online]="onlineStatusService.onlineStatus$ | async"
+></app-text>
+
+<ng-template #offline>
+  <app-notice icon="warning" type="warning">{{ "editor_history_tab.offline_notice" | transloco }}</app-notice>
+</ng-template>
