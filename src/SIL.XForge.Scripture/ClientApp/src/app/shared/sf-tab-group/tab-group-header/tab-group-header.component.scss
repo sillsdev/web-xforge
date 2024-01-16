@@ -1,0 +1,94 @@
+:host {
+  display: flex;
+  position: relative;
+  top: var(--sf-tab-header-top-offset); // Allows hiding of the tab content top border for the active tab
+  z-index: 2;
+  font-size: 16px;
+
+  &:not(.overflowing) {
+    app-tab-scroll-button {
+      opacity: 0;
+      max-width: 0; // Hide with 0 width instead of 'display: none' to allow animation
+    }
+  }
+
+  &.overflowing {
+    app-tab-scroll-button {
+      &.start {
+        animation: tab-gh-slide-in-from-left 1s;
+      }
+
+      &.end {
+        animation: tab-gh-slide-in-from-right 1s;
+      }
+    }
+  }
+}
+
+:host-context([dir='rtl']) {
+  :host {
+    &.overflowing {
+      app-tab-scroll-button {
+        &.start {
+          animation: tab-gh-slide-in-from-right 1s;
+        }
+
+        &.end {
+          animation: tab-gh-slide-in-from-left 1s;
+        }
+      }
+    }
+  }
+}
+
+app-tab-scroll-button {
+  max-width: 30px; // Something wider than scroll buttons (for width animation)
+  transition: opacity 0.5s, max-width 0.5s;
+}
+
+.tabs {
+  overflow-x: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.2em;
+  border-radius: var(--sf-tab-header-border-radius) var(--sf-tab-header-border-radius) 0 0;
+
+  // Hide scroll bar
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+.add-tab {
+  font-size: 1.3em;
+  padding-inline: 0.2em;
+
+  &:hover {
+    color: inherit !important;
+    background-color: var(--sf-tab-header-button-hover-background-color);
+  }
+}
+
+@keyframes tab-gh-slide-in-from-left {
+  from {
+    opacity: 0.5;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+}
+
+@keyframes tab-gh-slide-in-from-right {
+  from {
+    opacity: 0.5;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0%);
+  }
+}

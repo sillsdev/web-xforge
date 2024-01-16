@@ -1,0 +1,7 @@
+<div class="tab-header-content">
+  <ng-content></ng-content>
+</div>
+
+<button *ngIf="closeable" mat-icon-button class="close-button" (click)="close($event)">
+  <mat-icon>close</mat-icon>
+</button>

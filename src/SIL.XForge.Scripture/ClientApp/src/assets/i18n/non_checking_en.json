@@ -222,12 +222,18 @@
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
     "your_comment": "Your comment"
   },
+  "editor_draft_tab": {
+    "no_draft_notice": "{{ bookChapterName }} has no draft."
+  },
+  "editor_history_tab": {
+    "offline_notice": "Editor history is not available offline."
+  },
+  "editor_tabs_menu": {
+    "history_tab_header": "History",
+    "draft_tab_header": "Auto Draft"
+  },
   "history_chooser": {
-    "hide": "Hide history",
     "hide_diff": "Hide differences with previous version",
-    "loading": "History loading...",
-    "not_available_offline": "History is not available offline",
-    "show": "Show history",
     "show_diff": "Show differences with previous version"
   },
   "import_questions_confirmation_dialog": {
@@ -439,6 +445,9 @@
     "your_project_is_being_synchronized": "Your project is being synchronized...",
     "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again.",
     "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please report the problem by writing to {{email}}."
+  },
+  "tab_group_header": {
+    "no_tabs_available": "No tabs available."
   },
   "text_note_dialog": {
     "cross_reference": "Cross-reference",

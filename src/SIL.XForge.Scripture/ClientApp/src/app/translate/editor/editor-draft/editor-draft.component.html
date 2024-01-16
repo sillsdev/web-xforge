@@ -1,0 +1,13 @@
+<mat-progress-bar *ngIf="draftCheckState === 'draft-unknown'" mode="indeterminate" color="accent"></mat-progress-bar>
+
+<app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary">
+  {{ "editor_draft_tab.no_draft_notice" | transloco : { bookChapterName } }}
+</app-notice>
+
+<app-text
+  [isReadOnly]="true"
+  [subscribeToUpdates]="false"
+  [isRightToLeft]="isRightToLeft"
+  [fontSize]="fontSize"
+  [ngClass]="draftCheckState"
+></app-text>

@@ -61,7 +61,8 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, resetCalls, spy, verify, when } from 'ts-mockito';
+import { SFTabsModule } from 'src/app/shared/sf-tab-group';
+import { anything, capture, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -96,8 +97,8 @@ import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
+import { HistoryChooserComponent } from './editor-history/history-chooser/history-chooser.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { HistoryChooserComponent } from './history-chooser/history-chooser.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
@@ -154,7 +155,8 @@ describe('EditorComponent', () => {
       UICommonModule,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      SFTabsModule
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -198,6 +200,7 @@ describe('EditorComponent', () => {
 
     const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.callThrough();
     const textDocId = new TextDocId('project02', 40, 1, 'target');
+    reset(env.spyActivatedProjectService);
     env.deleteText(textDocId.toString());
     expect(dialogMessage).toHaveBeenCalledTimes(1);
     tick();
@@ -811,6 +814,7 @@ describe('EditorComponent', () => {
         verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
         resetCalls(env.mockedRemoteTranslationEngine);
+        reset(env.spyActivatedProjectService);
         env.component.chapter = 2;
         env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
@@ -3018,6 +3022,7 @@ describe('EditorComponent', () => {
         env.wait();
 
         const segmentRef = 'verse_1_1';
+        reset(env.spyActivatedProjectService);
         env.setSelectionAndInsertNote(segmentRef);
         expect(env.mobileNoteTextArea).toBeTruthy();
         env.component.chapter = 2;
@@ -3506,79 +3511,6 @@ describe('EditorComponent', () => {
 
       env.dispose();
     }));
-
-    it('shows the history diff when selected', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      when(mockedParatextService.getRevisions(anything(), anything(), anything())).thenResolve([
-        { key: 'date_here', value: 'description_here' }
-      ]);
-      when(mockedParatextService.getSnapshot(anything(), anything(), anything(), anything())).thenResolve({
-        data: {},
-        id: 'id',
-        type: '',
-        v: 1
-      });
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.updateParams(navigationParams);
-      env.wait();
-      env.component.historyChooser!.historyRevision = { key: 'date_here', value: 'description_here' };
-      env.component.historyChooser!.showDiff = true;
-      env.wait();
-
-      expect(env.component.historyChooser!.snapshot).not.toBeNull();
-
-      // "date_here" is not a valid date
-      expect(env.fixture.nativeElement.querySelectorAll('#snapshot-text-area .language-label')[0].innerHTML).toEqual(
-        'Invalid Date'
-      );
-      env.dispose();
-    }));
-
-    it('shows the history selector only if the user is an administrator or translator', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.updateParams(navigationParams);
-      env.wait();
-
-      // Paratext Consultant
-      env.setCurrentUser('user02');
-      expect(env.component.showHistoryChooser).toBeFalsy();
-
-      // Paratext Translator
-      env.setCurrentUser('user03');
-      expect(env.component.showHistoryChooser).toBeTruthy();
-
-      // Paratext Administrator
-      env.setCurrentUser('user04');
-      expect(env.component.showHistoryChooser).toBeTruthy();
-
-      // Commenter
-      env.setCurrentUser('user05');
-      expect(env.component.showHistoryChooser).toBeFalsy();
-
-      // Paratext Observer
-      env.setCurrentUser('user06');
-      expect(env.component.showHistoryChooser).toBeFalsy();
-
-      // Paratext Viewer
-      env.setCurrentUser('user07');
-      expect(env.component.showHistoryChooser).toBeFalsy();
-
-      env.dispose();
-    }));
   });
 
   describe('Back translation draft', () => {
@@ -3680,9 +3612,8 @@ describe('EditorComponent', () => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
       const env = new TestEnvironment();
       const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
-      const spyActivatedProjectService = spy(env.activatedProjectService);
 
-      when(spyActivatedProjectService.projectId).thenReturn('testProjectId');
+      when(env.spyActivatedProjectService.projectId).thenReturn('testProjectId');
 
       env.updateParams(navigationParams);
       env.wait();
@@ -3706,6 +3637,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<EditorComponent>;
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
   readonly activatedProjectService: ActivatedProjectService;
+  readonly spyActivatedProjectService: ActivatedProjectService;
   readonly router: Router;
   readonly location: Location;
   readonly mockNoteDialogRef;
@@ -3987,8 +3919,12 @@ class TestEnvironment {
       return this.getNoteThreadDoc(projectId, threadId);
     });
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
+    when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
+    this.spyActivatedProjectService = spy(this.activatedProjectService);
+    when(this.spyActivatedProjectService.projectDoc$).thenCall(() => of(this.getProjectDoc('project01')));
+
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
     this.ngZone = TestBed.inject(NgZone);
@@ -4105,7 +4041,7 @@ class TestEnvironment {
   }
 
   get isSourceAreaHidden(): boolean {
-    return this.sourceTextArea.nativeElement.style.display === 'none';
+    return window.getComputedStyle(this.sourceTextArea.nativeElement).display === 'none';
   }
 
   get targetEditor(): Quill {

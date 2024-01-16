@@ -21,7 +21,7 @@ describe('NoticeComponent', () => {
   });
 
   for (const type of noticeTypes) {
-    it(`should set "${type}" class`, () => {
+    it(`should set type "${type}" class`, () => {
       const template = `<app-notice type="${type}">This is a ${type}</app-notice>`;
       const env = new TestEnvironment(template);
       expect(env.container.classes[type]).toBeTrue();
@@ -29,7 +29,7 @@ describe('NoticeComponent', () => {
   }
 
   for (const mode of noticeModes) {
-    it(`should set "mode-${mode}" class`, () => {
+    it(`should set mode "mode-${mode}" class`, () => {
       const template = `<app-notice mode="${mode}">This is a ${mode}</app-notice>`;
       const env = new TestEnvironment(template);
       expect(env.container.classes[`mode-${mode}`]).toBeTrue();
