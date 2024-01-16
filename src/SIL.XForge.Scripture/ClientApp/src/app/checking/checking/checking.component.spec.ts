@@ -1321,13 +1321,12 @@ describe('CheckingComponent', () => {
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-      // env.clickButton(env.selectTextTab);
       expect(env.scriptureText).toBeFalsy();
       // Add scripture
       env.clickButton(env.selectVersesButton);
-      expect(env.scriptureText).toBe('…The selected text (John 2:2-5)');
+      expect(env.scriptureText).toBe('John 2:2-5');
       env.clickButton(env.saveAnswerButton);
-      expect(env.getAnswerScriptureText(0)).toBe('…The selected text(John 2:2-5)');
+      expect(env.getAnswerScriptureText(0)).toBe('…The selected textJohn 2:2-5');
       flush();
       discardPeriodicTasks();
     }));
@@ -1335,7 +1334,7 @@ describe('CheckingComponent', () => {
     it('can remove scripture from an answer', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(6);
-      expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(John 1:1)');
+      expect(env.getAnswerScriptureText(0)).toBe('Quoted scriptureJohn 1:1');
       env.clickButton(env.getAnswerEditButton(0));
       // env.clickButton(env.selectTextTab);
       env.waitForSliderUpdate();
@@ -2530,12 +2529,12 @@ class TestEnvironment {
   }
 
   get scriptureText(): string | null {
-    const scriptureText = document.querySelector('.scripture-text');
+    const scriptureText = document.querySelector('.answer-scripture-verse');
     return scriptureText == null ? null : scriptureText.textContent!.trim();
   }
 
   get clearScriptureButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.clear-selection'));
+    return this.fixture.debugElement.query(By.css('.answer-scripture-clear'));
   }
 
   get selectVersesButton(): DebugElement {
