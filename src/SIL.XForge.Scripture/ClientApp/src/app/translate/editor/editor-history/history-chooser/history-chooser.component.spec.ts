@@ -8,8 +8,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { ParatextService } from '../../../core/paratext.service';
-
+import { ParatextService } from '../../../../core/paratext.service';
 import { HistoryChooserComponent } from './history-chooser.component';
 
 const mockedI18nService = mock(I18nService);
@@ -32,68 +31,32 @@ describe('HistoryChooserComponent', () => {
     ]
   }));
 
-  it('should create', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-    expect(env.component).toBeTruthy();
-  }));
-
-  it('should close when the close button is clicked', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-    expect(env.closeButton).toBeUndefined();
-    env.clickShowHideButton();
-    expect(env.closeButton.hidden).toBeFalsy();
-    env.clickCloseButton();
-    expect(env.closeButton).toBeUndefined();
-  }));
-
-  it('should show and hide when the show/hide button is clicked', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-    expect(env.historySelect).toBeUndefined();
-    env.clickShowHideButton();
-    expect(env.historySelect.hidden).toBeFalsy();
-    env.clickShowHideButton();
-    expect(env.historySelect).toBeUndefined();
-  }));
-
   it('should show and hide diff when the diff button is clicked', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
-    expect(env.showDiffButton).toBeUndefined();
-    env.clickShowHideButton();
-    expect(env.component.showDiff).toBeFalsy();
+    expect(env.component.showDiff).toBeTruthy();
     expect(env.showDiffButton.hidden).toBeFalsy();
     env.clickShowDiffButton();
-    expect(env.component.showDiff).toBeTruthy();
-    env.clickShowDiffButton();
     expect(env.component.showDiff).toBeFalsy();
+    env.clickShowDiffButton();
+    expect(env.component.showDiff).toBeTruthy();
   }));
 
   it('should get the first revision on show', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
-    expect(env.component.historyRevision).toBeUndefined();
-    expect(env.component.snapshot).toBeUndefined();
-    expect(env.historySelect).toBeUndefined();
-    env.clickShowHideButton();
+    expect(env.component.selectedRevision).toBeUndefined();
+    expect(env.historySelect).toBeDefined();
     expect(env.historySelect.hidden).toBeFalsy();
-    expect(env.component.historyRevision).not.toBeNull();
-    expect(env.component.snapshot).not.toBeNull();
+    expect(env.component.selectedRevision).not.toBeNull();
   }));
 
   it('should allow no revisions', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve(undefined);
     env.wait();
-    expect(env.component.historyRevision).toBeUndefined();
-    expect(env.component.snapshot).toBeUndefined();
-    expect(env.historySelect).toBeUndefined();
-    env.clickShowHideButton();
     expect(env.historySelect.hidden).toBeFalsy();
-    expect(env.component.historyRevision).toBeUndefined();
-    expect(env.component.snapshot).toBeUndefined();
+    expect(env.component.selectedRevision).toBeUndefined();
   }));
 
   class TestEnvironment {
@@ -126,10 +89,6 @@ describe('HistoryChooserComponent', () => {
       });
     }
 
-    get closeButton(): HTMLElement {
-      return this.fixture.nativeElement.querySelectorAll('#close')[0] as HTMLElement;
-    }
-
     get historySelect(): HTMLElement {
       return this.fixture.nativeElement.querySelectorAll('#history-select')[0] as HTMLElement;
     }
@@ -138,20 +97,8 @@ describe('HistoryChooserComponent', () => {
       return this.fixture.nativeElement.querySelectorAll('#show-diff')[0] as HTMLElement;
     }
 
-    clickCloseButton(): void {
-      this.closeButton.click();
-      flush();
-      this.fixture.detectChanges();
-    }
-
     clickShowDiffButton(): void {
       this.showDiffButton.click();
-      flush();
-      this.fixture.detectChanges();
-    }
-
-    clickShowHideButton(): void {
-      this.fixture.nativeElement.querySelectorAll('#show-hide')[0].click();
       flush();
       this.fixture.detectChanges();
     }

@@ -124,7 +124,7 @@ describe('DraftViewerService', () => {
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
     });
 
-    it('should allow partially combined verses in the target that are combined in the source', () => {
+    it('should allow partially combined verses in the target that are combined in the source with an incorrect entry', () => {
       const draft: DraftSegmentMap = {
         'verse_150_1-2': 'Praise ye the Lord. Praise him for his mighty acts: ',
         // Known issue: This verse will not be merged into 1-3 in the target
