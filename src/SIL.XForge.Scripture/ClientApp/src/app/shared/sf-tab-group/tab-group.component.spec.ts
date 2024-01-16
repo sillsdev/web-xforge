@@ -30,8 +30,12 @@ describe('TabGroupComponent', () => {
     fixture.detectChanges();
 
     // Override with 2 tabs
+    const tab1 = new TabComponent();
+    const tab2 = new TabComponent();
+    tab1.closeable = true;
+    tab2.closeable = false;
     component.tabs = new QueryList<TabComponent>();
-    component.tabs.reset([new TabComponent(), new TabComponent()]);
+    component.tabs.reset([tab1, tab2]);
   });
 
   it('should add tab using TabFactory and TabStateService when addTab is called', () => {
@@ -39,7 +43,8 @@ describe('TabGroupComponent', () => {
     const tab = {
       type: 'test',
       headerText: 'Tab Header',
-      closeable: false
+      closeable: false,
+      movable: true
     };
 
     const tabFactory = TestBed.inject(TabFactoryService);
@@ -63,7 +68,7 @@ describe('TabGroupComponent', () => {
   });
 
   it('should remove tab using TabStateService when removeTab is called on a removable tab', () => {
-    const tabIndex = 1;
+    const tabIndex = 0;
     const tabStateService = TestBed.inject(TabStateService);
     spyOn(tabStateService, 'removeTab');
     component.tabs.reset([new TabComponent(), new TabComponent(), new TabComponent()]);
@@ -72,7 +77,7 @@ describe('TabGroupComponent', () => {
   });
 
   it('should not remove tab using TabStateService when removeTab is called on a non-removable tab', () => {
-    const tabIndex = 0;
+    const tabIndex = 1;
     const tabStateService = TestBed.inject(TabStateService);
     spyOn(tabStateService, 'removeTab');
     component.removeTab(tabIndex);

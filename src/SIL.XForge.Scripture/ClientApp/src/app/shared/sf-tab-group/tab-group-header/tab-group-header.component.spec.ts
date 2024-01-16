@@ -1,3 +1,4 @@
+import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { TabMenuService } from '../base-services/tab-menu.service';
@@ -249,5 +250,34 @@ describe('TabGroupHeaderComponent', () => {
       expect(scrollIntoViewSpy).toHaveBeenCalled();
       expect(scrollToEndSpy).not.toHaveBeenCalled();
     }));
+  });
+
+  describe('movablePredicate', () => {
+    let tab: any;
+    let cdkDrag = {} as CdkDrag;
+    let cdkDropList: CdkDropList;
+
+    beforeEach(() => {
+      tab = {};
+      cdkDropList = { getSortedItems: () => [{ data: tab } as CdkDrag] } as CdkDropList;
+    });
+
+    it('should return true if the tab at index is an "add" tab', () => {
+      const index = 0;
+      tab.isAddTab = true;
+      expect(component.movablePredicate(index, cdkDrag, cdkDropList)).toBe(true);
+    });
+
+    it('should return true if the tab at index is movable', () => {
+      const index = 0;
+      tab.movable = true;
+      expect(component.movablePredicate(index, cdkDrag, cdkDropList)).toBe(true);
+    });
+
+    it('should return false if the tab at index is not an "add" and not movable', () => {
+      const index = 0;
+      tab.movable = false;
+      expect(component.movablePredicate(index, cdkDrag, cdkDropList)).toBe(false);
+    });
   });
 });
