@@ -19,8 +19,8 @@
     <app-single-button-audio-player *ngIf="!!audioUrl" [source]="audioUrl" (click)="toggleAudio()">
       <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
     </app-single-button-audio-player>
-    <button mat-icon-button (click)="resetRecording()" [matTooltip]="t('delete')" class="remove-audio-file">
-      <mat-icon>delete</mat-icon>
+    <button mat-button (click)="resetRecording()" [matTooltip]="t('delete')" class="remove-audio-file">
+      <mat-icon>close</mat-icon>
     </button>
   </div>
 </ng-container>
