@@ -17,7 +17,7 @@
           </mat-form-field>
           <mat-form-field id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
-            <mat-select formControlName="role" panelClass="invitation-role-panel">
+            <mat-select formControlName="role" panelClass="invitation-role-panel" [hideSingleSelectionIndicator]="true">
               <mat-select-trigger>
                 {{ roleControl.value ? i18n.localizeRole(roleControl.value) : "" }}
               </mat-select-trigger>
@@ -30,7 +30,7 @@
           </mat-form-field>
           <mat-form-field id="invitation-language">
             <mat-label>{{ t("invitation_language") }}</mat-label>
-            <mat-select formControlName="locale" panelClass="locale-fonts">
+            <mat-select formControlName="locale" panelClass="locale-fonts" [hideSingleSelectionIndicator]="true">
               <mat-option *ngFor="let locale of i18n.locales" [value]="locale.canonicalTag">
                 {{ locale.localName }}
               </mat-option>

@@ -4,12 +4,6 @@
 
 mat-form-field {
   margin-bottom: 1em;
-  .scripture-helper-text .scripture-reference {
-    max-width: 248px;
-    .mat-form-field-suffix {
-      top: 0.5em;
-    }
-  }
   &.question-container {
     width: 100%;
   }

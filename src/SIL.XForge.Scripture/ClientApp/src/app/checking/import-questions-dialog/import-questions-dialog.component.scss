@@ -103,25 +103,18 @@
   div {
     display: flex;
     align-items: center;
-    mat-form-field {
+    mat-form-field:not(.mdc-text-field--textarea) {
+      height: 36px;
       flex: 1;
       @include media-breakpoint-up(sm) {
         max-width: unset;
       }
       max-width: 70%;
       // below is to make denser
-      .mat-form-field-wrapper {
-        padding-bottom: 0;
-        .mat-form-field-infix {
-          border: 0;
-          padding: 0 0 0.75em 0;
+      .mat-mdc-text-field-wrapper {
+        div.mat-mdc-form-field-infix {
+          padding: 10px 0;
         }
-      }
-      .mat-form-field-underline {
-        bottom: 0;
-      }
-      .mat-form-field-subscript-wrapper {
-        display: none;
       }
     }
   }
@@ -129,19 +122,15 @@
 
 // below is to make denser
 :host ::ng-deep {
-  mat-form-field.mat-form-field.mat-form-field-appearance-outline
-    > div.mat-form-field-wrapper
-    > div.mat-form-field-flex
-    > div.mat-form-field-infix {
-    padding: 0.4em 0px;
-    top: -0.2em;
-    > span.mat-form-field-label-wrapper {
-      top: -1.2em;
+  mat-form-field.mat-mdc-form-field.mat-form-field-appearance-outline {
+    .mat-mdc-form-field-infix {
+      min-height: initial;
+      padding: 10px 0 5px;
     }
-  }
-  .mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
-    transform: translateY(-1.1em) scale(0.75);
-    width: 133.33333%;
+
+    label.mat-mdc-floating-label:not(.mdc-floating-label--float-above) {
+      transform: translateY(-100%);
+    }
   }
 }
 
@@ -150,10 +139,8 @@
   @include media-breakpoint-up(sm) {
     display: flex;
     ::ng-deep {
-      mat-form-field:first-child .mat-form-field-outline-end {
-        border-radius: 0;
-      }
-      mat-form-field:last-child .mat-form-field-outline-start {
+      mat-form-field:first-child .mdc-notched-outline__trailing,
+      mat-form-field:last-child .mdc-notched-outline__leading {
         border-radius: 0;
       }
     }
@@ -164,7 +151,7 @@
   white-space: initial;
 }
 
-:not(mat-form-field) > .mat-error {
+:not(mat-form-field) > .mat-mdc-form-field-error {
   margin-top: 10px;
   font-size: 14px;
 }

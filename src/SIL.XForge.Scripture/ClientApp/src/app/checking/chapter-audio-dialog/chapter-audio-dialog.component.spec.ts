@@ -556,8 +556,8 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.book).toEqual(expectedBook);
     expect(env.component.chapter).toEqual(expectedChapter);
     expect(env.component.audioFilename).toEqual('Genesis 3');
-    expect(env.bookSelect.classList.contains('mat-select-disabled')).toBe(true);
-    expect(env.chapterSelect.classList.contains('mat-select-disabled')).toBe(true);
+    expect(env.bookSelect.classList.contains('mat-mdc-select-disabled')).toBe(true);
+    expect(env.chapterSelect.classList.contains('mat-mdc-select-disabled')).toBe(true);
     expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
     expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
 
