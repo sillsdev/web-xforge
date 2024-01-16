@@ -16,6 +16,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.icon).toEqual('history');
     expect(tab.headerText).toEqual('History');
     expect(tab.closeable).toEqual(true);
+    expect(tab.movable).toEqual(true);
   });
 
   it('should create a "draft" tab', () => {
@@ -24,6 +25,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.icon).toEqual('model_training');
     expect(tab.headerText).toEqual('Auto Draft');
     expect(tab.closeable).toEqual(true);
+    expect(tab.movable).toEqual(true);
     expect(tab.unique).toEqual(true);
   });
 
@@ -33,6 +35,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.icon).toEqual('book');
     expect(tab.headerText).toEqual('Project 1');
     expect(tab.closeable).toEqual(false);
+    expect(tab.movable).toEqual(false);
     expect(tab.unique).toEqual(true);
   });
 
@@ -42,6 +45,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.icon).toEqual('book');
     expect(tab.headerText).toEqual('Project 1');
     expect(tab.closeable).toEqual(false);
+    expect(tab.movable).toEqual(false);
     expect(tab.unique).toEqual(true);
   });
 
