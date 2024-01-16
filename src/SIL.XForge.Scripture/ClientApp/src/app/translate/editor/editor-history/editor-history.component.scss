@@ -1,0 +1,26 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+mat-progress-bar {
+  position: absolute;
+  z-index: 2;
+}
+
+app-history-chooser {
+  padding: 0.5em;
+  border-bottom: 1px solid var(--sf-tab-group-border-color);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+app-notice {
+  margin: 1em;
+}
+
+app-text:not(.online) {
+  display: none;
+}
