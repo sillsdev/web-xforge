@@ -1,8 +1,8 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { MatLegacyAutocomplete as MatAutocomplete } from '@angular/material/legacy-autocomplete';
-import { MatLegacyFormField as MatFormField } from '@angular/material/legacy-form-field';
+import { MatAutocomplete } from '@angular/material/autocomplete';
+import { MatFormField } from '@angular/material/form-field';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -223,7 +223,7 @@ class TestEnvironment {
   }
 
   get groupLabels(): string[] {
-    return Array.from(this.panel.querySelectorAll('.mat-optgroup-label')).map(e => e.textContent?.trim() || '');
+    return Array.from(this.panel.querySelectorAll('.mat-mdc-optgroup-label')).map(e => e.textContent?.trim() || '');
   }
 
   get autoCompleteShowing(): boolean {

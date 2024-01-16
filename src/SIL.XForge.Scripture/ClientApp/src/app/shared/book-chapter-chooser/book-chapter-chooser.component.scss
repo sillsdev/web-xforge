@@ -7,34 +7,23 @@
 // These styles were written by inspecting the elements using developer and then adding rules until it looked right
 #chapter-select ::ng-deep,
 #book-select ::ng-deep {
-  .mat-form-field-wrapper {
-    margin: 0;
-    padding-bottom: 0;
-    .mat-form-field-flex {
-      padding-top: 0;
-    }
-    .mat-form-field-flex:not(:hover) {
-      background-color: transparent;
-    }
+  height: 36px;
+  .mat-mdc-text-field-wrapper {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
   }
-  .mat-form-field-underline {
-    display: none;
+  .mat-mdc-select-arrow-wrapper {
+    margin-left: 5px;
   }
-  .mat-select-arrow-wrapper {
-    transform: unset;
-  }
-  .mat-form-field-infix {
-    // It appeared there was a transparent border being used as padding
-    border-top-width: 0;
-    padding-top: 12px;
-    padding-bottom: 10px;
-  }
-  .mat-form-field-infix {
+  .mat-mdc-form-field-infix {
+    min-height: initial;
+    padding-top: 7px;
+    padding-bottom: 5px;
     width: initial;
   }
 }
 
-::ng-deep .mat-select-panel {
+::ng-deep .mat-mdc-select-panel {
   &.book-select-menu,
   &.chapter-select-menu {
     max-height: 85vh;
@@ -42,8 +31,8 @@
 }
 
 ::ng-deep {
-  #book-select .mat-form-field-outline-end,
-  #chapter-select .mat-form-field-outline-start {
+  #book-select .mdc-notched-outline__trailing,
+  #chapter-select .mdc-notched-outline__leading {
     border-radius: 0;
   }
 }

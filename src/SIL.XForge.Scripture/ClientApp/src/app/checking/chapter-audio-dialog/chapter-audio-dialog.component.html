@@ -15,11 +15,22 @@
           icon="warning"
           type="warning"
         ></app-info>
-        <mat-select [(value)]="book" [disabled]="inEditState" class="book-select-menu">
+        <mat-select
+          [(value)]="book"
+          [disabled]="inEditState"
+          class="book-select-menu"
+          [hideSingleSelectionIndicator]="true"
+        >
           <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
         </mat-select>
         <div class="divider"></div>
-        <mat-select [(value)]="chapter" [disabled]="inEditState" class="chapter-select-menu">
+        <mat-select
+          [(value)]="chapter"
+          [disabled]="inEditState"
+          class="chapter-select-menu"
+          [hideSingleSelectionIndicator]="true"
+          [panelWidth]="80"
+        >
           <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
         </mat-select>
       </div>

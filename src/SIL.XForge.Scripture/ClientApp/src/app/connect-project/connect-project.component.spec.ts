@@ -2,7 +2,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AbstractControl } from '@angular/forms';
-import { MatLegacySelect as MatSelect } from '@angular/material/legacy-select';
+import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -535,7 +535,7 @@ class TestEnvironment {
   }
 
   isMenuItemDisabled(menu: DebugElement, index: number): boolean {
-    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mat-option-disabled');
+    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mdc-list-item--disabled');
   }
 
   getMenuItemText(menu: DebugElement, index: number): string {
