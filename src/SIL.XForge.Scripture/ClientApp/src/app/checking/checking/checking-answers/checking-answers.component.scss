@@ -230,8 +230,13 @@
   align-items: center;
   color: checking-vars.$greenDark;
   background: rgba(0, 0, 0, 0.05);
-  padding-inline-start: 12px;
+  padding-inline-start: 6px;
   border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.answer-scripture-text {
+  padding-block: 6px;
 }
 
 .answer-scripture-clear {
@@ -243,6 +248,7 @@
 .answer-scripture-verse {
   font-size: 0.75em;
   font-style: italic;
+  padding-inline: 6px;
 }
 
 .answers-component-footer {
