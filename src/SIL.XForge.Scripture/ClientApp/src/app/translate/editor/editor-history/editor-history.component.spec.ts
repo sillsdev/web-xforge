@@ -47,6 +47,28 @@ describe('EditorHistoryComponent', () => {
     mockHistoryChooserComponent.showDiffChange = showDiffChange$ as EventEmitter<boolean>;
   });
 
+  it('should clear loadedRevision and emit revisionSelect on ngOnChanges', () => {
+    component.loadedRevision = {} as Revision;
+    component.isViewInitialized = true;
+    spyOn(component.revisionSelect, 'emit');
+
+    component.ngOnChanges();
+
+    expect(component.loadedRevision).toBeUndefined();
+    expect(component.revisionSelect.emit).toHaveBeenCalledWith(undefined);
+  });
+
+  it('should not emit revisionSelect on ngOnChanges when isViewInitialized is false', () => {
+    component.loadedRevision = {} as Revision;
+    component.isViewInitialized = false;
+    spyOn(component.revisionSelect, 'emit');
+
+    component.ngOnChanges();
+
+    expect(component.loadedRevision).toBeUndefined();
+    expect(component.revisionSelect.emit).not.toHaveBeenCalled();
+  });
+
   it('should load history after view init', fakeAsync(() => {
     const diff = new Delta();
     const revision: Revision = { key: 'date_here', value: 'description_here' };
