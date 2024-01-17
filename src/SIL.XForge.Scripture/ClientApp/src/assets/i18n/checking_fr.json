@@ -167,7 +167,7 @@
     "questions": "Questions",
     "question_does_not_have_audio": "Aucun enregistrement audio n'a été télétransmis pour ce chapitre. Contactez l'administrateur du projet pour télétransmettre des enregistrements audio.",
     "question_filter_none": "Tout afficher",
-    "question_filter_exportable": "Réponses marquées pour exportation",
+    "question_filter_exportable": "Answers flagged for review",
     "question_filter_has_answers": "A des réponses",
     "question_filter_answered": "Répondu",
     "question_filter_no_answers": "Aucune réponse",
@@ -193,8 +193,8 @@
     "confirm_delete": "Êtes-vous sûr de vouloir supprimer cette réponse ?",
     "delete": "Supprimer",
     "edit": "Modifier",
-    "marked_for_export": "Marquée pour exportation",
-    "mark_for_export": "Marquer pour exportation",
+    "marked_for_export": "Flagged for review",
+    "mark_for_export": "Flag for review",
     "no_scripture_selected": "Aucun texte sélectionné pour l'instant.",
     "record": "Enregistrer",
     "recording_automatically_stopped": "L'enregistrement de votre réponse a été arrêté automatiquement.",
@@ -205,7 +205,7 @@
     "select_verses": "Sélectionner des versets",
     "select": "Sélectionner",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
-    "tooltip_status_export": "Marquer pour exportation vers Paratext",
+    "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Marquer la réponse comme résolue",
     "your_answer": "Votre réponse"
   },
@@ -230,6 +230,7 @@
     "upload": "Télétransmettre",
     "upload_failed": "Le fichier audio n'a pas pu être télétransmis. Veuillez réessayer ou utiliser un autre fichier.",
     "upload_timing_file": "Télétransmettre un fichier de synchronisation",
+    "uploading": "Uploading...",
     "zero_segments": "Zéro segment trouvé."
   },
   "checking_audio_combined": {

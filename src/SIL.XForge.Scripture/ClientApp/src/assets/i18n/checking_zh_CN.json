@@ -167,7 +167,7 @@
     "questions": "问题",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
-    "question_filter_exportable": "Answers marked for export",
+    "question_filter_exportable": "Answers flagged for review",
     "question_filter_has_answers": "Has answers",
     "question_filter_answered": "Answered",
     "question_filter_no_answers": "No answers",
@@ -193,8 +193,8 @@
     "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "删除",
     "edit": "编辑",
-    "marked_for_export": "Marked for export",
-    "mark_for_export": "Mark for export",
+    "marked_for_export": "Flagged for review",
+    "mark_for_export": "Flag for review",
     "no_scripture_selected": "尚未选择经文。",
     "record": "录制音频",
     "recording_automatically_stopped": "您答案的录音已自动停止。",
@@ -205,7 +205,7 @@
     "select_verses": "选择文本",
     "select": "选择",
     "show_more_unread": "显示{{ count }} 个未读答案",
-    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "你的答案"
   },
@@ -230,6 +230,7 @@
     "upload": "上载",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
+    "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
   "checking_audio_combined": {

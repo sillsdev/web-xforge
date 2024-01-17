@@ -167,7 +167,7 @@
     "questions": "Preguntas",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Mostrar todo",
-    "question_filter_exportable": "Respuestas marcadas para exportar",
+    "question_filter_exportable": "Answers flagged for review",
     "question_filter_has_answers": "Tiene respuestas",
     "question_filter_answered": "Contestadas",
     "question_filter_no_answers": "Sin respuestas",
@@ -193,8 +193,8 @@
     "confirm_delete": "¿Está seguro que desea eliminar esta respuesta?",
     "delete": "Eliminar",
     "edit": "Editar",
-    "marked_for_export": "Marcado para exportar",
-    "mark_for_export": "Marcar para exportar",
+    "marked_for_export": "Flagged for review",
+    "mark_for_export": "Flag for review",
     "no_scripture_selected": "Todavía no se ha seleccionado ninguna escritura.",
     "record": "Grabar",
     "recording_automatically_stopped": "La grabación de su respuesta se detuvo automáticamente.",
@@ -205,7 +205,7 @@
     "select_verses": "Seleccionar versículos",
     "select": "Seleccionar",
     "show_more_unread": "Mostrar {{ count }} más respuestas no leídas",
-    "tooltip_status_export": "Marcar para exportar a Paratext",
+    "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Marcar la respuesta como resuelta",
     "your_answer": "Su respuesta"
   },
@@ -230,6 +230,7 @@
     "upload": "Cargar",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
+    "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
   "checking_audio_combined": {

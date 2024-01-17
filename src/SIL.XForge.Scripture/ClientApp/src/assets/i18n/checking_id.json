@@ -159,15 +159,15 @@
   },
   "checking": {
     "filter_questions": "Saring pertanyaan",
-    "manage_audio": "Manage audio",
+    "manage_audio": "Mengelola audio",
     "me": "Saya",
     "next": "Berikutnya",
-    "play_chapter": "Play chapter",
+    "play_chapter": "Mainkan pasal",
     "previous": "Sebelumnya",
     "questions": "Pertanyaan",
     "question_does_not_have_audio": "Tidak ada rekaman audio yang diunggah untuk pasal ini. Hubungi administrator proyek untuk mengunggah audio.",
     "question_filter_none": "Tampilkan semua",
-    "question_filter_exportable": "Jawaban yang ditandai untuk diekspor",
+    "question_filter_exportable": "Answers flagged for review",
     "question_filter_has_answers": "Memiliki jawaban",
     "question_filter_answered": "Sudah dijawab",
     "question_filter_no_answers": "Tidak ada Jawaban",
@@ -193,8 +193,8 @@
     "confirm_delete": "Apakah Anda yakin ingin menghapus jawaban ini?",
     "delete": "Hapus",
     "edit": "Sunting",
-    "marked_for_export": "Ditandai untuk ekspor",
-    "mark_for_export": "Ditandai untuk ekspor",
+    "marked_for_export": "Flagged for review",
+    "mark_for_export": "Flag for review",
     "no_scripture_selected": "Belum ada Alkitab yang dipilih.",
     "record": "Rekam",
     "recording_automatically_stopped": "Perekaman jawaban Anda dihentikan otomatis.",
@@ -205,7 +205,7 @@
     "select_verses": "Pilih ayat-ayat",
     "select": "Pilih",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
-    "tooltip_status_export": "Tandai untuk ekspor ke Paratext",
+    "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
     "your_answer": "Jawaban Anda"
   },
@@ -214,23 +214,24 @@
     "audio_already_exists": "Berkas suara sudah tersedia untuk pilihan ini.",
     "browse_files": "Telusuri Berkas",
     "cancel": "Batal",
-    "chapter_audio": "Chapter Audio",
+    "chapter_audio": "Pasal Audio",
     "drag_and_drop_files": "Seret dan letakkan berkas suara dan pengaturan waktu di sini",
     "drag_and_drop_or_browse": "ATAU",
-    "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "from_timing_past_to_timing": "Satu atau lebih nilai akhir berakhir sebelum nilai awalnya.",
     "no_audio_file_uploaded": "Tidak ada berkas suara yang diunggah",
-    "no_timing_data_uploaded": "No timing data uploaded",
-    "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
+    "no_timing_data_uploaded": "Tidak ada data waktu yang diunggah",
+    "not_upload_audio_offline": "File audio tidak dapat diunggah tanpa terhubung ke internet.",
     "save": "Simpan",
-    "segments_found": "{{ segments }} segments found",
+    "segments_found": "{{ segments }} segmen yang ditemukan",
     "timing": "Waktu",
-    "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
-    "unrecognized_time_format": "Unrecognized time format",
-    "unrecognized_timing_file_format": "Unrecognized timing file format",
+    "timing_past_audio_length": "Satu atau beberapa nilai waktu melampaui akhir file audio.",
+    "unrecognized_time_format": "Format waktu yang tidak dikenali",
+    "unrecognized_timing_file_format": "Format file waktu yang tidak dikenali",
     "upload": "Unggah",
-    "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
-    "upload_timing_file": "Upload Timing File",
-    "zero_segments": "Zero segments found."
+    "upload_failed": "File audio tidak dapat diunggah. Silakan coba lagi atau gunakan file lain.",
+    "upload_timing_file": "Unggah File Pengaturan Waktu",
+    "uploading": "Uploading...",
+    "zero_segments": "Nol segmen ditemukan."
   },
   "checking_audio_combined": {
     "remove_audio_file": "Hapus File Suara",
@@ -238,13 +239,13 @@
     "upload": "Unggah"
   },
   "checking_audio_player": {
-    "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the internet to play.",
-    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
+    "audio_unavailable": "Audio tidak tersedia.",
+    "audio_cannot_be_accessed": "Terjadi kesalahan saat mencoba mengakses file audio. Jika hal ini terus berlanjut, silakan unggah file baru.",
+    "audio_cannot_be_played": "Audio ini tidak dapat diputar saat Anda luring karena belum diunduh. Sambungkan ke internet untuk memutar.",
+    "audio_cannot_be_previewed": "Audio dalam format yang tidak dapat dipratinjau. Simpan perubahan apa pun dan sambungkan ke internet untuk memainkannya."
   },
   "checking_audio_recorder": {
-    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
+    "not_available": "Browser/Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan browser/peramban lain yang mendukung.",
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "record": "Rekam",
     "stop_recording": "Hentikan Perekaman",
@@ -259,7 +260,7 @@
   "checking_comments": {
     "add_a_comment": "Tambahkan komentar",
     "delete": "Hapus",
-    "confirm_delete": "Are you sure you want to delete this comment?",
+    "confirm_delete": "Apakah Anda yakin ingin menghapus komentar ini?",
     "edit": "Sunting",
     "show_more_comments_and_unread": "Tampilkan {{ count }} lebih banyak komentar - {{ unread }} belum dibaca",
     "show_more_comments": "Tampilkan {{ count }} lebih banyak komentar"
@@ -298,7 +299,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "Tutup",
-    "error_id": "Error ID: {{ errorId }}",
+    "error_id": "ID Kesalahan: {{ errorId }}",
     "error_occurred": "Kesalahan terjadi",
     "firefox": "Firefox",
     "hide_details": "Sembunyikan detail",
@@ -311,8 +312,8 @@
     "error_occurred_login": "Terjadi kesalahan saat masuk.",
     "failed_to_update_avatar": "Gambar avatar Anda tidak dapat diperbarui.",
     "failed_to_retrieve_suggestions": "Tidak bisa mendapatkan saran terjemahan.",
-    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
-    "go_to_retrain": "Go to Overview",
+    "suggestion_engine_requires_retrain": "Tidak bisa mendapatkan saran terjemahan. Harap latih kembali saran di halaman Ikhtisar.",
+    "go_to_retrain": "Buka Ringkasan",
     "try_again": "Coba Lagi"
   },
   "exception_handling_service": {
@@ -327,7 +328,7 @@
     "storage_space_is_limited": "Ruang penyimpanan pada perangkat ini terbatas. Disarankan untuk memiliki ruang kosong minimal 500 MB untuk memastikan semua fitur tersedia. Harap kosongkan ruang penyimpanan."
   },
   "font_size": {
-    "text_size": "Text size"
+    "text_size": "Ukuran teks"
   },
   "issue_email": {
     "body": "Terima kasih telah melaporkan masalah ini!\nIni akan membantu kami jika Anda mengisi beberapa informasi di bawah ini, tetapi harap kirim meskipun Anda tidak dapat mengisi banyak informasi.\nJika Anda meminta fitur, banyak bidang yang mungkin tidak berlaku.\nKetahuilah bahwa laporan bug Anda akan ditampilkan untuk umum. Jangan pernah mengirimkan kata sandi atau rahasia lainnya.\n\nLaporan bug\nDeskripsi yang jelas dan ringkas tentang bug itu.\n\nLangkah-langkah mereproduksi\nSebagai contoh:\n1. Pergi ke ...\n2. Klik pada ...\n3. Gulir ke bawah untuk ...\n4. Lihat kesalahan\n\nPerilaku yang sebenarnya\nTolong jelaskan perilaku aktual dari masalah yang Anda amati.\n\nPerilaku yang diharapkan\nDeskripsi yang jelas dan ringkas tentang apa yang Anda harapkan terjadi.\n\nTangkapan layar\nJika bisa, tambahkan tangkapan layar untuk membantu menjelaskan masalah Anda.\n\nKonteks tambahan\nTambahkan konteks lain tentang masalah di sini.\n\nSolusi yang mungkin\nTambahkan kemungkinan solusi untuk masalah di sini.\n\nPerangkat Anda:\nVersi perangkat lunak\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
@@ -336,17 +337,17 @@
     "unknown": "tidak diketahui"
   },
   "join": {
-    "error_occurred_login": "An error occurred trying to join the project",
-    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
-    "join": "Join",
-    "join_a_project": "Join a project",
-    "key_already_used": "The project link has already been used by another user. Please contact the person who sent you the link and ask for a new one.",
-    "key_expired": "The project link expired. Please contact the person who sent you the link and ask for a new one.",
-    "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
-    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
-    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
-    "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
-    "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "error_occurred_login": "Terjadi kesalahan saat mencoba bergabung dengan proyek",
+    "invited_to_join": "Anda telah diundang untuk bergabung dengan proyek {{ boldStart }}{{ projectName }}{{ boldEnd }}",
+    "join": "Gabung",
+    "join_a_project": "Bergabung dengan Proyek",
+    "key_already_used": "Tautan proyek telah digunakan oleh pengguna lain. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
+    "key_expired": "Tautan proyek telah kedaluwarsa. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
+    "login_existing_account": "atau {{ underlineStart }}Masuk{{ underlineEnd }} ke akun yang sudah ada",
+    "max_users_reached": "Jumlah maksimum pengguna yang diizinkan untuk bergabung menggunakan kunci berbagi ini telah tercapai. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
+    "please_connect_to_use_link": "Silakan terhubung ke internet untuk bergabung dengan proyek menggunakan tautan.",
+    "project_link_is_invalid": "Tautan proyek telah kedaluwarsa. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
+    "role_not_found": "Peran yang Anda tugaskan pada proyek ini sudah tidak tersedia lagi. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
     "your_name": "Masukkan nama Anda"
   },
   "dialog": {
@@ -370,41 +371,41 @@
     "email_invalid": "Alamat surel tidak valid",
     "email_sharing": "Kirim undangan email di bawah ini atau bagikan tautan menggunakan platform komunikasi pilihan Anda.",
     "email": "Surel",
-    "invitation_language": "Invitation language",
+    "invitation_language": "Bahasa undangan",
     "invitation_role": "Peran",
     "invitation_sent": "Surel Undangan sudah dikirim ke {{ email }}",
     "invite_people": "Undang orang",
-    "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
+    "invite_people_intro": "Anda dapat mengundang orang-orang di luar Paratext untuk membantu berkontribusi pada proyek Anda.",
     "link_copied": "Tautan telah disalin ke Papan-klip",
-    "link_sharing": "Links can also be shared to users without an email address via social media platforms or SMS messages.",
+    "link_sharing": "Tautan juga dapat dibagikan kepada pengguna tanpa alamat email melalui platform media sosial atau pesan SMS.",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
     "resend": "Kirim ulang",
     "send_a_link": "Kirim tautan",
-    "select_invitation_language": "Select a language for the invitation email",
-    "select_invitation_role": "Select a role for the invited user",
-    "share_text_anyone": "You've been invited to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
-    "share_text_single": "Hello, I want to invite you to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
-    "share_a_link": "Share a link",
-    "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
+    "select_invitation_language": "Pilih bahasa untuk surel undangan",
+    "select_invitation_role": "Memilih peran untuk pengguna yang diundang",
+    "share_text_anyone": "Anda telah diundang untuk bergabung dengan proyek {{ projectName }} di {{ siteName }}.\nCukup klik tautan di bawah ini, pilih cara masuk, dan Anda akan siap untuk memulai.",
+    "share_text_single": "Halo, saya ingin mengundang Anda untuk bergabung dengan proyek {{ projectName }} di {{ siteName }}.\nCukup klik tautan di bawah ini, pilih cara masuk, dan Anda akan siap untuk memulai.",
+    "share_a_link": "Bagikan tautan",
+    "share_title": "Anda telah diundang ke proyek {{ projectName }} di {{ siteName }}",
     "send": "Kirim",
-    "share_not_available_offline": "Inviting is unavailable while offline."
+    "share_not_available_offline": "Mengundang tidak tersedia saat luring."
   },
   "share_dialog": {
     "anyone": "Siapa pun yang memiliki tautan",
     "anyone_can": "Siapa pun yang memiliki tautan tersebut dapat",
     "change": "change",
     "copy_link": "Salin tautan",
-    "invitation_language": "Change invitation language",
-    "invitation_link_type": "Change how the link can be used",
+    "invitation_language": "Mengubah bahasa undangan",
+    "invitation_link_type": "Mengubah cara penggunaan tautan",
     "invitation_role": "Mengubah peran undangan",
-    "invitation_shared_in_language": "Invitation will be shared in",
-    "link_can_be_used_by": "Link can be used by",
-    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
-    "recipient": "Only the recipient",
-    "recipient_can": "Only the recipient can",
-    "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
+    "invitation_shared_in_language": "Undangan akan dibagikan di",
+    "link_can_be_used_by": "Tautan dapat digunakan oleh",
+    "link_sharing_not_available_offline": "Mengundang pengguna dengan berbagi tautan tidak tersedia saat luring.",
+    "recipient": "Hanya penerima",
+    "recipient_can": "Hanya penerima yang dapat",
+    "recipient_only_notice": "Setiap tautan hanya dapat digunakan satu kali dan akan kedaluwarsa setelah 14 hari. Klik tombol sekali lagi untuk membuat dan membagikan tautan baru.",
     "share": "Bagikan",
-    "share_project": "Share {{ project }}",
+    "share_project": "Bagikan {{ project }}",
     "share_with_others": "Bagikan dengan orang lain"
   },
   "start": {
@@ -412,19 +413,19 @@
     "not_connected_to_any_projects": "Sepertinya Anda belum terhubung di proyek apapun."
   },
   "supported_browsers_dialog": {
-    "audio_recording_not_supported": "Audio recording is not supported in this browser.",
+    "audio_recording_not_supported": "Perekaman audio tidak didukung di browser/peramban ini.",
     "dismiss": "Hentikan",
     "browser_unsupported": "Peramban ini tidak didukung",
-    "safari_for_audio_on_ios": "Audio recording on iPhone and iPad only works in Safari.",
-    "some_features_may_not_work": "Some of the features of this website may not work correctly with your browser.",
-    "upgrade_chrome_firefox": "{{ newLine }}We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}.",
-    "upgrade_safari": "{{ newLine }}We recommend upgrading to the latest {{ safariLink }}."
+    "safari_for_audio_on_ios": "Perekaman audio pada iPhone dan iPad hanya berfungsi di Safari.",
+    "some_features_may_not_work": "Beberapa fitur situs web ini mungkin tidak berfungsi dengan baik pada browser/peramban Anda.",
+    "upgrade_chrome_firefox": "{{ newLine }}Kami menyarankan untuk meningkatkan ke versi terbaru {{ chromeLink }} atau {{ firefoxLink }}.",
+    "upgrade_safari": "{{ newLine }}Kami merekomendasikan untuk meningkatkan ke versi terbaru {{ safariLink }}."
   },
   "text": {
     "book_does_not_exist": "Kitab tidak ada.",
     "book_is_empty": "Kitab masih kosong. Tambahkan pasal di Paratext.",
     "loading": "Memuat...",
-    "not_available_offline": "This text is not available offline. Connect to the Internet to see the text."
+    "not_available_offline": "Teks ini tidak tersedia secara luring. Sambungkan ke Internet untuk melihat teks."
   },
   "text_chooser_dialog": {
     "cancel": "Batal",
