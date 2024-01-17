@@ -1834,7 +1834,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             // The source can be null if there was an error getting a resource from the DBL
-            if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
+            if (_projectDoc.Data.TranslateConfig.Source != null)
             {
                 ParatextSettings? sourceSettings = _paratextService.GetParatextSettings(
                     _userSecret,
