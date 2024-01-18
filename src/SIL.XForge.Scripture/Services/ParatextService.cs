@@ -2335,7 +2335,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (target is ParatextResource resource)
         {
             // If the target is a resource, install it
-            InstallResource(resource, target.ParatextId, targetNeedsCloned);
+            InstallResource(username, resource, target.ParatextId, targetNeedsCloned);
         }
         else if (targetNeedsCloned)
         {
@@ -2351,13 +2351,14 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Installs the resource.
     /// </summary>
+    /// <param name="username">The username.</param>
     /// <param name="resource">The resource.</param>
     /// <param name="targetParatextId">The target paratext identifier.</param>
     /// <param name="needsToBeCloned">If set to <c>true</c>, the resource needs to be cloned.</param>
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    private void InstallResource(ParatextResource resource, string targetParatextId, bool needsToBeCloned)
+    private void InstallResource(string username, ParatextResource resource, string targetParatextId, bool needsToBeCloned)
     {
         if (resource.InstallableResource != null)
         {
@@ -2378,11 +2379,40 @@ public class ParatextService : DisposableBase, IParatextService
                 string path = LocalProjectDir(targetParatextId);
                 _fileSystemService.CreateDirectory(path);
                 resource.InstallableResource.ExtractToDirectory(path);
+                MigrateResourceIfRequired(username, targetParatextId);
             }
         }
         else
         {
             _logger.LogWarning($"The installable resource is not available for {resource.ParatextId}");
+        }
+    }
+
+    /// <summary>
+    /// Migrates a Paratext Resource, if required.
+    /// </summary>
+    /// <param name="username">The username.</param>
+    /// <param name="paratextId">The paratext project identifier.</param>
+    /// <remarks>This only performs one basic migration. Full migration can only be performed by Paratext.</remarks>
+    private void MigrateResourceIfRequired(string username, string paratextId)
+    {
+        // Ensure that we have the ScrText to migrate
+        using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
+        if (scrText is null)
+        {
+            return;
+        }
+
+        // Perform a simple migration of the Paratext 7 LDML file to the new Paratext 8+ location.
+        // Paratext performs a much more complex migration, but we do not need that level of detail.
+        // If the publisher updates this resource, this file will be overwritten with the fully migrated language file,
+        // stopping this migration from running in the future and negating its need.
+        string path = LocalProjectDir(paratextId);
+        string oldLdmlFile = Path.Combine(path, "ldml.xml");
+        string newLdmlFile = Path.Combine(path, scrText.Settings.LdmlFileName);
+        if (_fileSystemService.FileExists(oldLdmlFile) && !_fileSystemService.FileExists(newLdmlFile))
+        {
+            _fileSystemService.MoveFile(oldLdmlFile, newLdmlFile);
         }
     }
 
