@@ -3010,6 +3010,182 @@ public class ParatextSyncRunnerTests
         );
     }
 
+    [Test]
+    public async Task CoreRoundtrip_NoUnexpectedDataChanges()
+    {
+        // ParatextSyncRunner RunAsync() fetches Paratext data from disk and makes chapter deltas from it. It also
+        // writes chapter deltas back to Paratext data on disk. Test that core methods involved in this process
+        // roundtrip data successfully. Using a real DeltaUsxMapper, this is an integration test.
+
+        IGuidService mapperGuidService;
+        ILogger<DeltaUsxMapper> logger;
+        IExceptionHandler exceptionHandler;
+        mapperGuidService = new TestGuidService();
+        logger = Substitute.For<ILogger<DeltaUsxMapper>>();
+        exceptionHandler = Substitute.For<IExceptionHandler>();
+
+        DeltaUsxMapper mapper = new(mapperGuidService, logger, exceptionHandler);
+        TestEnvironment env = new(false, mapper);
+
+        // Not using something like SetupSFData() because DeltaUsxMapper is not a substitute.
+        Book[] books = { new Book("RUT", 8) };
+        TextInfo textInfo = new() { BookNum = 8, Chapters = null };
+
+        SFProject[] sfProjects = new[]
+        {
+            new SFProject
+            {
+                Id = "project01",
+                Name = "project01",
+                ShortName = "P01",
+                UserRoles = new Dictionary<string, string> { { "user01", SFProjectRole.Administrator }, },
+                ParatextId = "pt01",
+                IsRightToLeft = false,
+                DefaultFontSize = 10,
+                DefaultFont = ProjectSettings.defaultFontName,
+                TranslateConfig = new TranslateConfig
+                {
+                    TranslationSuggestionsEnabled = false,
+                    Source = new TranslateSource
+                    {
+                        ParatextId = "source",
+                        ProjectRef = "project02",
+                        Name = "Source",
+                        ShortName = "SRC",
+                        WritingSystem = new WritingSystem { Tag = "en" },
+                        IsRightToLeft = false
+                    },
+                    DefaultNoteTagId = 1234
+                },
+                CheckingConfig = new CheckingConfig
+                {
+                    CheckingEnabled = true,
+                    AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
+                    NoteTagId = 1234
+                },
+                Texts = books.Select(b => textInfo).ToList(),
+                Sync = new Sync
+                {
+                    // QueuedCount is incremented before RunAsync() by SyncService.SyncAsync(). So set
+                    // it to 1 to simulate it being incremented.
+                    QueuedCount = 1,
+                    SyncedToRepositoryVersion = "beforeSR",
+                    DataInSync = true
+                },
+                ParatextUsers = new List<ParatextUserProfile>
+                {
+                    new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
+                    new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
+                },
+                NoteTags = new List<NoteTag>()
+            },
+        };
+        env.RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
+
+        // ParatextData will give us Paratext data in USX. Suppose it is the following.
+        StringBuilder sb = new();
+        sb.AppendLine("<usx version=\"3.0\">");
+        sb.AppendLine("  <book code=\"RUT\" style=\"id\">- American Standard Version</book>");
+        sb.AppendLine("  <chapter number=\"1\" style=\"c\" />");
+        sb.AppendLine("  <para style=\"p\">");
+        sb.AppendLine("    <verse number=\"1\" style=\"v\" />");
+        sb.AppendLine("And it came to <char style=\"w\">pass</char> <char style=\"w\">in</char> the days</para>");
+        sb.AppendLine("</usx>");
+        string bookUsxFromParatextData = sb.ToString();
+
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT 1. Use GetParatextChaptersAsDeltas to get chapter deltas derived from paratext text.
+        Dictionary<int, ChapterDelta> chapterDeltas = env.Runner.GetParatextChaptersAsDeltas(textInfo, "pt01");
+        List<JToken> ops = chapterDeltas.First().Value.Delta.Ops;
+        Assert.That(ops[0].First().Path, Is.EqualTo("insert"), "first op unexpectedly not an insert");
+
+        Assert.That(
+            ops[0]["insert"].Type,
+            Is.EqualTo(JTokenType.Object),
+            "first op in list should be inserting an object, not a string like newline"
+        );
+
+        // We have chapter deltas from the Paratext project USFM. We store the information in SF DB. In a future sync,
+        // we would write the SF DB information back to the Paratext project (if the text was changed).
+
+        // Modify the text a bit so it will need written back to Paratext.
+        string newText = "In the beginning";
+        ops[3]["insert"] = newText;
+
+        // Make text docs out of the chapter deltas.
+        var chapterDeltasAsSortedList = new SortedList<int, IDocument<TextData>>(
+            chapterDeltas.ToDictionary(
+                kvp => kvp.Key,
+                kvp =>
+                {
+                    IDocument<TextData> doc = Substitute.For<IDocument<TextData>>();
+                    doc.Data.Returns(new TextData(kvp.Value.Delta));
+                    return doc;
+                }
+            )
+        );
+        textInfo.Chapters = chapterDeltas
+            .Values.Select(
+                (ChapterDelta chapterDelta) =>
+                    new Chapter()
+                    {
+                        Number = chapterDelta.Number,
+                        IsValid = chapterDelta.IsValid,
+                        LastVerse = chapterDelta.LastVerse,
+                        Permissions = new Dictionary<string, string>()
+                    }
+            )
+            .ToList();
+
+        env.RealtimeService.AddRepository(
+            "users",
+            OTType.Json0,
+            new MemoryRepository<User>(
+                new[]
+                {
+                    new User { Id = "user01", ParatextId = "pt01" },
+                    new User { Id = "user02", ParatextId = "pt02" }
+                }
+            )
+        );
+
+        Assert.That(
+            await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None),
+            Is.True,
+            "setup"
+        );
+
+        // SUT 2. Write the chapter deltas / text docs back to Paratext. We should write to Paratext the expected
+        // content.
+        await env.Runner.UpdateParatextBookAsync(textInfo, "pt01", chapterDeltasAsSortedList);
+
+        StringBuilder sb2 = new();
+        sb2.AppendLine("<usx version=\"3.0\">");
+        sb2.AppendLine("  <book code=\"RUT\" style=\"id\">- American Standard Version</book>");
+        sb2.AppendLine("  <chapter number=\"1\" style=\"c\" />");
+        sb2.AppendLine("  <para style=\"p\">");
+        sb2.AppendLine("    <verse number=\"1\" style=\"v\" />");
+        sb2.AppendLine($"{newText}<char style=\"w\">pass</char> <char style=\"w\">in</char> the days</para>");
+        sb2.AppendLine("</usx>");
+        string expectedUsx = sb2.ToString();
+
+        // The USX sent back to PT should have roundtripped correctly.
+        await env.ParatextService.Received()
+            .PutBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Is(
+                    (XDocument arg) =>
+                        TestEnvironment.XDocumentToStringUnformatted(ParatextSyncRunner.UsxToXDocument(expectedUsx))
+                        == TestEnvironment.XDocumentToStringUnformatted(arg)
+                ),
+                Arg.Any<Dictionary<int, string>>()
+            );
+    }
+
     private class Book
     {
         public Book(string bookId, int highestChapter, bool hasSource = true)

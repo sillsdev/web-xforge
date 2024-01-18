@@ -59,7 +59,6 @@ public class DeltaUsxMapperTests
                 .InsertVerse("1")
                 .InsertText("Verse text.", "verse_1_1")
                 .InsertPara("p")
-                .Insert("\n")
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -67,6 +66,10 @@ public class DeltaUsxMapperTests
 
         XDocument expected = Usx("PHM", Chapter("1"), Para("p", Verse("1"), "Verse text."));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+
+        // And we should be able to roundtrip it back.
+        List<ChapterDelta> roundtrippedChapterDeltas = mapper.ToChapterDeltas(newUsxDoc).ToList();
+        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
     }
 
     [Test]
@@ -895,6 +898,51 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_CollapsesAdjacentNewlines()
+    {
+        // Suppose there are multiple newlines in a row.
+        var chapterDeltaA = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n")
+                .Insert("\n")
+                .Insert("\n")
+                .Insert("\n")
+        );
+
+        // Or suppose there are no newlines at the end.
+        var chapterDeltaB = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        XDocument newUsxDocA = mapper.ToUsx(Usx("PHM"), new[] { chapterDeltaA });
+        XDocument newUsxDocB = mapper.ToUsx(Usx("PHM"), new[] { chapterDeltaB });
+
+        XDocument expected = Usx("PHM", Chapter("1"), Para("p", Verse("1"), "Verse text."));
+        // The implied paragraphs are combined.
+        Assert.IsTrue(XNode.DeepEquals(newUsxDocA, expected));
+        Assert.IsTrue(XNode.DeepEquals(newUsxDocB, expected));
+    }
+
+    [Test]
     public void ToUsx_ConsecutiveSameStyleEmptyParas()
     {
         var chapterDelta = new ChapterDelta(
@@ -962,6 +1010,11 @@ public class DeltaUsxMapperTests
             Verse("2")
         );
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+
+        // And we should be able to roundtrip it back.
+        List<ChapterDelta> roundtrippedChapterDeltas = mapper.ToChapterDeltas(newUsxDoc).ToList();
+        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDeltas[0].Delta));
+        Assert.IsTrue(roundtrippedChapterDeltas[1].Delta.DeepEquals(chapterDeltas[1].Delta));
     }
 
     [Test]
@@ -2613,6 +2666,10 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
         Assert.That(chapterDeltas[0].IsValid, Is.True);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+
+        // And we should be able to roundtrip it back.
+        XDocument roundtrippedUsx = mapper.ToUsx(Usx("PHM", Chapter("1")), chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(roundtrippedUsx, usxDoc));
     }
 
     [Test]
