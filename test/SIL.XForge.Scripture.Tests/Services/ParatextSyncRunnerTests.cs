@@ -2966,17 +2966,20 @@ public class ParatextSyncRunnerTests
         Assert.That(actualUsx, Is.EqualTo(expectedUsx), "the initial whitespace is removed");
     }
 
+    /// <summary>
+    /// This is an integration test, using a real DeltaUsxMapper, and testing the behaviour of ParatextSyncRunner.
+    /// </summary>
     [Test]
     public void GetParatextChaptersAsDeltas_BeginsWithExpectedContent()
     {
-        IGuidService _mapperGuidService;
-        ILogger<DeltaUsxMapper> _logger;
-        IExceptionHandler _exceptionHandler;
-        _mapperGuidService = new TestGuidService();
-        _logger = Substitute.For<ILogger<DeltaUsxMapper>>();
-        _exceptionHandler = Substitute.For<IExceptionHandler>();
+        IGuidService mapperGuidService;
+        ILogger<DeltaUsxMapper> logger;
+        IExceptionHandler exceptionHandler;
+        mapperGuidService = new TestGuidService();
+        logger = Substitute.For<ILogger<DeltaUsxMapper>>();
+        exceptionHandler = Substitute.For<IExceptionHandler>();
 
-        DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
+        DeltaUsxMapper mapper = new(mapperGuidService, logger, exceptionHandler);
         TestEnvironment env = new(false, mapper);
 
         TextInfo textInfo = new() { BookNum = 8, Chapters = null };
