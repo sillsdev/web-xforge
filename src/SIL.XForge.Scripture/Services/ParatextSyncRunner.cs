@@ -1034,7 +1034,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
     internal XDocument GetBookUsx(string ptProjectId, int bookNum)
     {
         string bookUsx = _paratextService.GetBookText(_userSecret, ptProjectId, bookNum);
+        return UsxToXDocument(bookUsx);
+    }
 
+    internal static XDocument UsxToXDocument(string bookUsx)
+    {
         // XDocument.Parse() is sensitive to whether it perceives the input as indented. It also seems to lack
         // flexibility in what whitespace is preserved. We need to preserve some whitespace so USX like
         // "<char>In</char> <char>the</char>" does not lose the space between "char" elements. But we don't want to
