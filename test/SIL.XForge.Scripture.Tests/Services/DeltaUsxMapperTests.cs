@@ -171,6 +171,40 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_AdjacentChar_SpaceBetweenRetained()
+    {
+        // Suppose there are two styled runs of text, with a space between them. That space should be retained.
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is some ", "verse_1_1")
+                .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
+                .InsertText(" ")
+                .InsertChar("hello", "w", _testGuidService.Generate(), "verse_1_1")
+                .InsertText(" text.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        // SUT
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+        XDocument expected = Usx(
+            "PHM",
+            Chapter("1"),
+            Para("p", Verse("1"), "This is some ", Char("bd", "bold"), " ", Char("w", "hello"), " text.")
+        );
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
     public void ToUsx_Note()
     {
         var chapterDelta = new ChapterDelta(
