@@ -236,8 +236,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
           doc.data != null &&
-          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef)) &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text)
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+          toVerseRef(doc.data.verseRef).equals(question.verseRef)
       );
 
       this.questionList.push({
@@ -488,7 +488,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   private questionsDiffer(listItem: DialogListItem): boolean {
     const doc = listItem.sfVersionOfQuestion?.data;
     const q = listItem.question;
-    return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, fromVerseRef(q.verseRef)));
+    return doc != null && (doc.text !== q.text || !toVerseRef(doc.verseRef).equals(q.verseRef));
   }
 
   private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
