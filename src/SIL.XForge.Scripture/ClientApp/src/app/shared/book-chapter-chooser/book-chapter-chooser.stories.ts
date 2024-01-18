@@ -112,6 +112,18 @@ SelectChapter.play = async ({ canvasElement }) => {
   await userEvent.click(chapter2);
 };
 
+export const BookWithIcon = Template.bind({});
+BookWithIcon.args = { ...defaultArgs, appendIcon: 'check', booksToAppendIcon: [2] };
+BookWithIcon.play = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const [bookSelect, _chapterSelect] = await canvas.findAllByRole('combobox');
+  await userEvent.click(bookSelect);
+  const overlay = within(getOverlay(canvasElement));
+  const menu = await overlay.findByRole('listbox');
+  const book2 = await within(menu).findByText('check');
+  await userEvent.click(book2);
+};
+
 export const Arabic = Template.bind({});
 Arabic.args = { ...defaultArgs };
 Arabic.parameters = { locale: 'ar' };

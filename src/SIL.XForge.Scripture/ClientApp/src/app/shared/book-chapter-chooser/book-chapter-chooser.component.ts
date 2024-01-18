@@ -17,6 +17,8 @@ export class BookChapterChooserComponent {
   @Input() prevNextHidden?: boolean = false;
   @Input() bookSelectDisabled?: boolean = false;
   @Input() chapterSelectDisabled?: boolean = false;
+  @Input() appendIcon: string = 'model_training';
+  @Input() booksToAppendIcon: number[] = [1, 6, 46];
 
   @Output() chapterChange = new EventEmitter<number>();
   @Output() bookChange = new EventEmitter<number>();
@@ -33,7 +35,8 @@ export class BookChapterChooserComponent {
     return this._books;
   }
 
-  bookName(book: number): string {
+  bookName(book: number | undefined): string {
+    if (book == null) return '';
     return this.i18n.localizeBook(book);
   }
 
@@ -67,5 +70,10 @@ export class BookChapterChooserComponent {
   isNextChapterDisabled(): boolean {
     const index = this.chapters.findIndex(c => c === this.chapter);
     return index === this.chapters.length - 1;
+  }
+
+  shouldAppendIcon(book: number): boolean {
+    if (this.appendIcon === '') return false;
+    return this.booksToAppendIcon.includes(book);
   }
 }

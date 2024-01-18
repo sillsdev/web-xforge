@@ -8,7 +8,11 @@
       panelWidth="200"
       panelClass="book-select-menu"
     >
-      <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
+      <mat-select-trigger>{{ bookName(book) }}</mat-select-trigger>
+      <mat-option *ngFor="let b of books" [value]="b"
+        >{{ bookName(b) }}
+        <mat-icon *ngIf="shouldAppendIcon(b)" class="option-icon">{{ appendIcon }}</mat-icon></mat-option
+      >
     </mat-select>
   </mat-form-field>
   <mat-form-field appearance="outline" id="chapter-select">
