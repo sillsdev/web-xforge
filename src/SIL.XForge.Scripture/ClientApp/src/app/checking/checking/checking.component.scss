@@ -10,6 +10,7 @@ $questionsHeaderInlineStartPadding: 8px;
 :host {
   display: flex;
   flex: 1;
+  height: 100%;
 }
 
 header {
@@ -132,15 +133,16 @@ header {
   #split-container {
     display: flex;
     flex: 1;
-    max-height: calc(100vh - 194px);
-
-    @include media-breakpoint('<', md) {
-      max-height: calc(100vh - 180px);
-    }
-
-    @include media-breakpoint('<', sm) {
-      max-height: calc(100vh - 236px);
-    }
+    overflow: hidden;
+    //max-height: calc(100vh - 194px);
+    //
+    //@include media-breakpoint('<', md) {
+    //  max-height: calc(100vh - 180px);
+    //}
+    //
+    //@include media-breakpoint('<', sm) {
+    //  max-height: calc(100vh - 236px);
+    //}
 
     > as-split {
       height: auto; /* fix for SF-754 */
@@ -151,6 +153,7 @@ header {
     display: flex;
     flex-direction: column;
     flex: 1;
+    overflow: hidden;
 
     header {
       align-items: center;

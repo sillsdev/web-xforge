@@ -42,6 +42,7 @@ $toolbar-height: 56px;
     > div {
       flex: 1;
       padding: 14px 20px;
+      height: 100%;
       @include media-breakpoint-only(xs, variables.$grid-breakpoints) {
         padding: 10px;
       }
