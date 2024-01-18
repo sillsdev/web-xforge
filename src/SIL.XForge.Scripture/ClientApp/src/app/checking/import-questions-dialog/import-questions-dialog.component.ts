@@ -236,8 +236,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
           doc.data != null &&
-          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef)) &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text)
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef))
       );
 
       this.questionList.push({
