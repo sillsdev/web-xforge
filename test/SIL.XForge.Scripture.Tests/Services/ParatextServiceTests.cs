@@ -3751,6 +3751,72 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task SendReceiveAsync_SourceResource_DoesNotRemigrateLdml()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        env.SetupSuccessfulSendReceive();
+        env.SetRestClientFactory(user01Secret);
+
+        // Set up the Resource ScrText
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
+        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+        // Set up the mock file system calls used by the migration
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(true);
+
+        // SUT
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(sourceProject);
+        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        env.MockFileSystemService.DidNotReceive().MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+    }
+
+    [Test]
+    public async Task SendReceiveAsync_SourceResource_MigratesLdml()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        env.SetupSuccessfulSendReceive();
+        env.SetRestClientFactory(user01Secret);
+
+        // Set up the Resource ScrText
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
+        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+        // Set up the mock file system calls used by the migration
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
+
+        // SUT
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(sourceProject);
+        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        env.MockFileSystemService.Received(1).MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+    }
+
+    [Test]
     public async Task SendReceiveAsync_SourceResource_Valid()
     {
         var env = new TestEnvironment();
