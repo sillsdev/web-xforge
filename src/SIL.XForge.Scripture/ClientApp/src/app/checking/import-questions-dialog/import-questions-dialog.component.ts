@@ -8,6 +8,7 @@ import {
 } from '@angular/material/legacy-dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { isEqual } from 'lodash-es';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { CsvService } from 'xforge-common/csv-service.service';
@@ -236,8 +237,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
           doc.data != null &&
-          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef)) &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text)
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef))
       );
 
       this.questionList.push({
@@ -492,6 +493,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   }
 
   private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
-    return !toVerseRef(a).equals(toVerseRef(b));
+    return !isEqual(a, b);
   }
 }
