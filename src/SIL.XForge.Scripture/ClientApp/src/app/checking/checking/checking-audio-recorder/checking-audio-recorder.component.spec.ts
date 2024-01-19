@@ -126,7 +126,7 @@ class TestEnvironment {
     });
     when(mockedNavigator.mediaDevices).thenReturn({
       getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
-        this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints)
+        this.rejectUserMedia ? Promise.reject({}) : navigator.mediaDevices.getUserMedia(mediaConstraints)
     } as MediaDevices);
     this.fixture.detectChanges();
   }
