@@ -1995,6 +1995,40 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartBuildAsync_ServalRecreatesWhenLanguageChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineProjectService.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult(new TranslationEngine { SourceLanguage = "fr", TargetLanguage = "de" }));
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
+            .Returns(Task.FromResult(new TranslationBuild()));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+        Assert.IsNotNull(actual);
+        await env.MachineProjectService.Received(1)
+            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received(1)
+            .RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received(1)
+            .SyncProjectCorporaAsync(
+                User01,
+                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
+                preTranslate: false,
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task StartBuildAsync_ServalSuccess()
     {
         // Set up test environment
@@ -3083,6 +3117,7 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
                 .Returns(Task.FromResult(true));
+            var mockLogger = new MockLogger<MachineApiService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
@@ -3136,6 +3171,9 @@ public class MachineApiServiceTests
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
+            TranslationEnginesClient
+                .GetAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationEngine()));
 
             Service = new MachineApiService(
                 BackgroundJobClient,
@@ -3145,6 +3183,7 @@ public class MachineApiServiceTests
                 EngineService,
                 ExceptionHandler,
                 FeatureManager,
+                mockLogger,
                 MachineProjectService,
                 PreTranslationService,
                 ProjectSecrets,
