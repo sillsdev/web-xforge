@@ -703,6 +703,35 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectForBackgroundJobAsync_DoesNotRecordBuildInProgressErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+        ServalApiException ex = ServalApiExceptions.BuildInProgress;
+        env.TranslationEnginesClient.StartBuildAsync(
+            Arg.Any<string>(),
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
+            .Throws(ex);
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received(1)
+            .StartBuildAsync(Arg.Any<string>(), Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        env.MockLogger.AssertNoEvent(logEvent => logEvent.Exception == ex);
+        env.ExceptionHandler.DidNotReceiveWithAnyArgs().ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationErrorMessage);
+    }
+
+    [Test]
     public async Task BuildProjectForBackgroundJobAsync_DoesNotRecordTaskCancellation()
     {
         // Set up test environment

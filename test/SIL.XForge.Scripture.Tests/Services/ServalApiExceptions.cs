@@ -10,6 +10,15 @@ namespace SIL.XForge.Scripture.Services;
 /// <remarks>These have been constructed based on the information in Swagger.</remarks>
 public static class ServalApiExceptions
 {
+    public static ServalApiException BuildInProgress =>
+        new ServalApiException(
+            "There is already an active or pending build or a build in the process of being canceled",
+            StatusCodes.Status409Conflict,
+            null,
+            new Dictionary<string, IEnumerable<string>>(),
+            null
+        );
+
     public static ServalApiException EngineNotBuilt =>
         new ServalApiException(
             "The engine needs to be built first",

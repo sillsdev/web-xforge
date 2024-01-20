@@ -409,6 +409,18 @@ public class MachineProjectService : IMachineProjectService
                 u => u.Unset(p => p.ServalData.PreTranslationQueuedAt)
             );
         }
+        catch (ServalApiException e) when (e.StatusCode == 409)
+        {
+            // A build is already in progress - clear the job details and do not record the error
+            await _projectSecrets.UpdateAsync(
+                buildConfig.ProjectId,
+                u =>
+                {
+                    u.Unset(p => p.ServalData.PreTranslationJobId);
+                    u.Unset(p => p.ServalData.PreTranslationQueuedAt);
+                }
+            );
+        }
         catch (Exception e)
         {
             // Log the error and report to bugsnag
@@ -1092,12 +1104,7 @@ public class MachineProjectService : IMachineProjectService
                     new FileParameter(stream),
                     cancellationToken
                 )
-                : await _dataFilesClient.CreateAsync(
-                    new FileParameter(stream),
-                    fileFormat,
-                    textId,
-                    cancellationToken
-                );
+                : await _dataFilesClient.CreateAsync(new FileParameter(stream), fileFormat, textId, cancellationToken);
         }
 
         newCorpusFiles.Add(
