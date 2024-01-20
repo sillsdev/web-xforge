@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -151,6 +153,53 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task PushAuthUserProfile_Metadata_NotSet()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt);
+        userProfile.Remove("app_metadata");
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.Roles.Count, Is.Zero);
+    }
+
+    [Test]
+    public async Task PushAuthUserProfile_Metadata_RolesAreArray()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt, RoleType.Array);
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.Roles.Count, Is.EqualTo(1));
+        Assert.That(user3.Roles.First(), Is.EqualTo(SystemRole.User));
+    }
+
+    [Test]
+    public async Task PushAuthUserProfile_Metadata_RolesAreString()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt, RoleType.String);
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.Roles.Count, Is.EqualTo(1));
+        Assert.That(user3.Roles.First(), Is.EqualTo(SystemRole.User));
+    }
+
+    [Test]
+    public async Task PushAuthUserProfile_Metadata_RolesNotSet()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt);
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.Roles.Count, Is.Zero);
+    }
+
+    [Test]
     public async Task LinkParatextAccountAsync()
     {
         var env = new TestEnvironment();
@@ -269,9 +318,12 @@ public class UserServiceTests
     public void DeleteAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync(null, "systemRole", "userId"));
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", null, "userId"));
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", "systemRole", null));
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => env.Service.DeleteAsync(null, new string[] { "systemRole" }, "userId")
+        );
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => env.Service.DeleteAsync("curUserId", new string[] { "systemRole" }, null)
+        );
     }
 
     [Test]
@@ -280,12 +332,12 @@ public class UserServiceTests
         var env = new TestEnvironment();
         string curUserId = "user01";
         // Role is not a system admin
-        string curUserSystemRole = SystemRole.User;
+        string[] curUserSystemRoles = { SystemRole.User };
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete)
+            () => env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete)
         );
         Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(0));
     }
@@ -296,11 +348,11 @@ public class UserServiceTests
         var env = new TestEnvironment();
         string curUserId = "user01";
         // Role is not a system admin
-        string curUserSystemRole = SystemRole.User;
+        string[] curUserSystemRoles = { SystemRole.User };
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
-        await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+        await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
         Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(1));
     }
 
@@ -309,11 +361,11 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string curUserSystemRole = SystemRole.SystemAdmin;
+        string[] curUserSystemRoles = { SystemRole.SystemAdmin };
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
-        await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+        await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
         Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(1));
     }
 
@@ -322,11 +374,11 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string curUserSystemRole = SystemRole.SystemAdmin;
+        string[] curUserSystemRoles = { SystemRole.SystemAdmin };
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
-        await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+        await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
         Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(1));
     }
 
@@ -335,10 +387,10 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string curUserSystemRole = SystemRole.User;
+        string[] curUserSystemRoles = { SystemRole.User };
         string userIdToDelete = "user01";
         // SUT
-        await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+        await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
         await env.ProjectService.Received(1).RemoveUserFromAllProjectsAsync(curUserId, userIdToDelete);
     }
 
@@ -347,11 +399,11 @@ public class UserServiceTests
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string curUserSystemRole = SystemRole.User;
+        string[] curUserSystemRoles = { SystemRole.User };
         string userIdToDelete = "user01";
         Assert.That(env.UserSecrets.Contains(userIdToDelete), Is.True);
         // SUT
-        await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+        await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
         Assert.That(env.UserSecrets.Contains(userIdToDelete), Is.False);
     }
 
@@ -363,11 +415,11 @@ public class UserServiceTests
         // page.
         var env = new TestEnvironment();
         string curUserId = "user01";
-        string curUserSystemRole = SystemRole.User;
+        string[] curUserSystemRoles = { SystemRole.User };
         string userIdToDelete = "user01";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
-        await env.Service.DeleteAsync(curUserId, curUserSystemRole, userIdToDelete);
+        await env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete);
         Assert.That(env.ContainsUser(userIdToDelete), Is.False);
     }
 
@@ -445,18 +497,14 @@ public class UserServiceTests
 
         public bool ContainsUser(string id) => RealtimeService.GetRepository<User>().Contains(id);
 
-        public static JObject CreateSMSUserProfile(string userId, string authId)
-        {
-            return new JObject(
+        public static JObject CreateSMSUserProfile(string userId, string authId, RoleType roleType = RoleType.None) =>
+            new JObject(
                 new JProperty("user_id", authId),
                 new JProperty("name", "+123456789"),
                 new JProperty("nickname", "+123456789"),
                 new JProperty("phone_number", "+123456789"),
                 new JProperty("picture", "http://example.com/new-avatar.png"),
-                new JProperty(
-                    "app_metadata",
-                    new JObject(new JProperty("xf_user_id", userId), new JProperty("xf_role", "user"))
-                ),
+                new JProperty("app_metadata", GetAppMetaData(userId, roleType)),
                 new JProperty(
                     "identities",
                     new JArray(
@@ -470,19 +518,19 @@ public class UserServiceTests
                 ),
                 new JProperty("logins_count", 1)
             );
-        }
 
-        public static JObject CreateUserProfile(string userId, string authId, DateTime issuedAt)
-        {
-            return new JObject(
+        public static JObject CreateUserProfile(
+            string userId,
+            string authId,
+            DateTime issuedAt,
+            RoleType roleType = RoleType.None
+        ) =>
+            new JObject(
                 new JProperty("user_id", authId),
                 new JProperty("name", "New User Name"),
                 new JProperty("email", "usernew@example.com"),
                 new JProperty("picture", "http://example.com/new-avatar.png"),
-                new JProperty(
-                    "app_metadata",
-                    new JObject(new JProperty("xf_user_id", userId), new JProperty("xf_role", "user"))
-                ),
+                new JProperty("app_metadata", GetAppMetaData(userId, roleType)),
                 new JProperty(
                     "identities",
                     new JArray(
@@ -496,6 +544,26 @@ public class UserServiceTests
                 ),
                 new JProperty("logins_count", 1)
             );
-        }
+    }
+
+    private static JObject GetAppMetaData(string userId, RoleType roleType) =>
+        roleType switch
+        {
+            RoleType.None => new JObject(new JProperty("xf_user_id", userId)),
+            RoleType.String
+                => new JObject(new JProperty("xf_user_id", userId), new JProperty("xf_role", SystemRole.User)),
+            RoleType.Array
+                => new JObject(
+                    new JProperty("xf_user_id", userId),
+                    new JProperty("xf_role", new JArray(new List<string> { SystemRole.User }))
+                ),
+            _ => throw new ArgumentOutOfRangeException(nameof(roleType)),
+        };
+
+    private enum RoleType
+    {
+        None,
+        String,
+        Array,
     }
 }

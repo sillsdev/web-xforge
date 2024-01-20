@@ -3,6 +3,6 @@
  */
 export interface ConnectSession {
   userId: string;
-  role?: string;
+  roles: string[];
   isServer: boolean;
 }

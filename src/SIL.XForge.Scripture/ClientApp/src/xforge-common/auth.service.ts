@@ -40,9 +40,14 @@ export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
 export const ID_TOKEN_SETTING = 'id_token';
 export const USER_ID_SETTING = 'user_id';
-export const ROLE_SETTING = 'role';
+export const ROLES_SETTING = 'roles';
 export const EXPIRES_AT_SETTING = 'expires_at';
 export const AUTH0_SCOPE = `openid profile email ${environment.scope} offline_access`;
+
+/**
+ * @deprecated This value is deprecated, but maintained to ensure compatibility with older login sessions
+ */
+export const ROLE_SETTING = 'role';
 
 export interface AuthState {
   returnUrl: string;
@@ -138,8 +143,19 @@ export class AuthService {
     return this.localSettings.get(USER_ID_SETTING);
   }
 
-  get currentUserRole(): SystemRole | undefined {
-    return this.localSettings.get(ROLE_SETTING);
+  get currentUserRoles(): SystemRole[] {
+    // Provide compatibility with login session predating role array support
+    const role = this.localSettings.get<SystemRole | undefined>(ROLE_SETTING);
+    if (role != null) {
+      return [role];
+    } else {
+      const roles = this.localSettings.get<SystemRole[] | undefined>(ROLES_SETTING);
+      if (roles != null) {
+        return roles;
+      } else {
+        return [];
+      }
+    }
   }
 
   get idToken(): string | undefined {
@@ -625,8 +641,9 @@ export class AuthService {
 
   private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {
     const claims: any = jwtDecode(accessToken);
-    const prevUserId = this.currentUserId;
-    const userId = claims[XF_USER_ID_CLAIM];
+    const prevUserId: string | undefined = this.currentUserId;
+    const role: string | string[] | undefined = claims[XF_ROLE_CLAIM];
+    const userId: string | undefined = claims[XF_USER_ID_CLAIM];
     if (prevUserId != null && prevUserId !== userId) {
       await this.offlineStore.deleteDB();
       this.localSettings.clear();
@@ -637,7 +654,8 @@ export class AuthService {
     this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
-    this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
+    this.localSettings.remove(ROLE_SETTING);
+    this.localSettings.set(ROLES_SETTING, typeof role === 'string' ? [role] : role || []);
     this.scheduleRenewal();
     this.bugsnagService.leaveBreadcrumb(
       'Local Login',
@@ -656,5 +674,6 @@ export class AuthService {
     this.localSettings.remove(EXPIRES_AT_SETTING);
     this.localSettings.remove(USER_ID_SETTING);
     this.localSettings.remove(ROLE_SETTING);
+    this.localSettings.remove(ROLES_SETTING);
   }
 }
