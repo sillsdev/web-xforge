@@ -663,6 +663,93 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_UploadParatextZipSpecifiesBookIds()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { BuildIsPending = false, UploadParatextZipForPreTranslation = true }
+        );
+        await env.SetDataInSync(Project01, preTranslate: true, requiresUpdate: false, uploadParatextZipFile: true);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig
+            {
+                ProjectId = Project01,
+                TrainingBooks = { 1, 2 },
+                TranslationBooks = { 3, 4 },
+            },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine01,
+                Arg.Is<TranslationBuildConfig>(
+                    b =>
+                        b.TrainOn.Count == 1
+                        && b.TrainOn.First().TextIds.SequenceEqual(new[] { "GEN", "EXO" })
+                        && b.TrainOn.First().CorpusId == Corpus01
+                        && b.Pretranslate.Count == 1
+                        && b.Pretranslate.First().CorpusId == Corpus01
+                        && b.Pretranslate.First().TextIds.SequenceEqual(new[] { "LEV", "NUM" })
+                ),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_UploadParatextZipSpecifiesAlternateTrainingSourceBookIds()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                BuildIsPending = false,
+                UploadParatextZipForPreTranslation = true,
+                AlternateTrainingSourceEnabled = true,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: true,
+            alternateTrainingSource: true
+        );
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig
+            {
+                ProjectId = Project02,
+                TrainingBooks = { 1, 2 },
+                TranslationBooks = { 3, 4 },
+            },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine02,
+                Arg.Is<TranslationBuildConfig>(
+                    b =>
+                        b.TrainOn.Count == 1
+                        && b.TrainOn.First().TextIds.SequenceEqual(new[] { "GEN", "EXO" })
+                        && b.TrainOn.First().CorpusId == Corpus02
+                        && b.Pretranslate.Count == 1
+                        && b.Pretranslate.First().CorpusId == Corpus01
+                        && b.Pretranslate.First().TextIds.SequenceEqual(new[] { "LEV", "NUM" })
+                ),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task BuildProjectForBackgroundJobAsync_BuildsPreTranslationProjects()
     {
         // Set up test environment
@@ -1808,7 +1895,11 @@ public class MachineProjectServiceTests
                             DraftConfig = new DraftConfig
                             {
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
-                                AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
+                                AlternateTrainingSource = new TranslateSource
+                                {
+                                    ProjectRef = Project01,
+                                    ParatextId = Paratext01
+                                },
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
@@ -1890,7 +1981,8 @@ public class MachineProjectServiceTests
             string projectId,
             bool preTranslate = false,
             bool requiresUpdate = false,
-            bool uploadParatextZipFile = false
+            bool uploadParatextZipFile = false,
+            bool alternateTrainingSource = false
         ) =>
             await ProjectSecrets.UpdateAsync(
                 projectId,
@@ -1918,10 +2010,42 @@ public class MachineProjectServiceTests
                                     TextId = "textId",
                                 },
                             },
+                            AlternateTrainingSource = false,
                             PreTranslate = preTranslate,
                             UploadParatextZipFile = uploadParatextZipFile,
                         }
                     );
+                    if (alternateTrainingSource)
+                    {
+                        u.Unset(p => p.ServalData.Corpora[Corpus03]);
+                        u.Set(
+                            p => p.ServalData.Corpora[Corpus02],
+                            new ServalCorpus
+                            {
+                                SourceFiles = new List<ServalCorpusFile>
+                                {
+                                    new ServalCorpusFile
+                                    {
+                                        FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
+                                        FileId = File01,
+                                        TextId = "textId",
+                                    },
+                                },
+                                TargetFiles = new List<ServalCorpusFile>
+                                {
+                                    new ServalCorpusFile
+                                    {
+                                        FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
+                                        FileId = File02,
+                                        TextId = "textId",
+                                    },
+                                },
+                                AlternateTrainingSource = true,
+                                PreTranslate = preTranslate,
+                                UploadParatextZipFile = uploadParatextZipFile,
+                            }
+                        );
+                    }
                     if (preTranslate)
                     {
                         u.Set(p => p.ServalData.PreTranslationEngineId, TranslationEngine02);

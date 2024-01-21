@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using Serval.Client;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -348,7 +349,7 @@ public class MachineProjectService : IMachineProjectService
                 translationEngineId = projectSecret.ServalData!.PreTranslationEngineId!;
 
                 // Execute a complete pre-translation
-                translationBuildConfig = GetTranslationBuildConfig(
+                translationBuildConfig = await GetTranslationBuildConfigAsync(
                     projectSecret.ServalData,
                     projectDoc.Data.TranslateConfig.DraftConfig,
                     buildConfig
@@ -898,7 +899,7 @@ public class MachineProjectService : IMachineProjectService
     /// <param name="buildConfig">The build configuration from the user, specified on the front end.</param>
     /// <returns>The TranslationBuildConfig for a Pre-Translate build.</returns>
     /// <remarks>Do not use with SMT builds.</remarks>
-    private static TranslationBuildConfig GetTranslationBuildConfig(
+    private async Task<TranslationBuildConfig> GetTranslationBuildConfigAsync(
         ServalData servalData,
         DraftConfig draftConfig,
         BuildConfig buildConfig
@@ -921,19 +922,73 @@ public class MachineProjectService : IMachineProjectService
             servalConfig["max_steps"] = 20;
         }
 
+        // See if uploading Paratext Zip files is enabled
+        bool uploadParatextZipFile = await _featureManager.IsEnabledAsync(
+            FeatureFlags.UploadParatextZipForPreTranslation
+        );
+
+        // Set up the pre-translation and training corpora
+        List<PretranslateCorpusConfig> preTranslate = new List<PretranslateCorpusConfig>();
+        List<TrainingCorpusConfig>? trainOn = null;
+
+        // Add the pre-translation books
+        foreach (
+            KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
+                s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource
+            )
+        )
+        {
+            var preTranslateCorpusConfig = new PretranslateCorpusConfig { CorpusId = corpus.Key };
+
+            // If this is a Paratext zip file corpus, and the feature flag is enabled
+            if (uploadParatextZipFile && corpus.Value.UploadParatextZipFile)
+            {
+                // Since all books are uploaded via the zip file, we need to specify the target books to translate
+                preTranslateCorpusConfig.TextIds = buildConfig.TranslationBooks.Select(Canon.BookNumberToId).ToList();
+
+                if (!draftConfig.AlternateTrainingSourceEnabled)
+                {
+                    // As we do not have an alternate train on source specified, use the source texts to train on
+                    trainOn ??= new List<TrainingCorpusConfig>();
+                    trainOn.Add(
+                        new TrainingCorpusConfig
+                        {
+                            CorpusId = corpus.Key,
+                            TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList(),
+                        }
+                    );
+                }
+            }
+
+            preTranslate.Add(preTranslateCorpusConfig);
+        }
+
+        // Add the alternate training source, if enabled
+        if (draftConfig.AlternateTrainingSourceEnabled)
+        {
+            trainOn = new List<TrainingCorpusConfig>();
+            foreach (
+                KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
+                    s => s.Value.PreTranslate && s.Value.AlternateTrainingSource
+                )
+            )
+            {
+                var trainingCorpusConfig = new TrainingCorpusConfig { CorpusId = corpus.Key };
+                if (uploadParatextZipFile && corpus.Value.UploadParatextZipFile)
+                {
+                    // As all books are uploaded via the zip file, specify the source books to train on
+                    trainingCorpusConfig.TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList();
+                }
+
+                trainOn.Add(trainingCorpusConfig);
+            }
+        }
+
         return new TranslationBuildConfig
         {
             Options = servalConfig,
-            Pretranslate = servalData
-                .Corpora.Where(s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource)
-                .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
-                .ToList(),
-            TrainOn = draftConfig.AlternateTrainingSourceEnabled
-                ? servalData
-                    .Corpora.Where(s => s.Value.PreTranslate && s.Value.AlternateTrainingSource)
-                    .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
-                    .ToList()
-                : null,
+            Pretranslate = preTranslate,
+            TrainOn = trainOn,
         };
     }
 
