@@ -670,6 +670,7 @@ public class MachineProjectService : IMachineProjectService
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
             project.TranslateConfig.Source!.ParatextId,
+            includeBlankSegments: true,
             uploadParatextZipFile,
             texts,
             oldSourceCorpusFiles,
@@ -700,6 +701,7 @@ public class MachineProjectService : IMachineProjectService
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
             project.ParatextId,
+            includeBlankSegments: preTranslate,
             uploadParatextZipFile,
             texts,
             oldTargetCorpusFiles,
@@ -736,6 +738,7 @@ public class MachineProjectService : IMachineProjectService
             corpusUpdated |= await UploadNewCorpusFilesAsync(
                 project.Id,
                 project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId,
+                includeBlankSegments: true,
                 uploadParatextZipFile,
                 texts,
                 oldAlternateTrainingSourceCorpusFiles,
@@ -1344,6 +1347,10 @@ public class MachineProjectService : IMachineProjectService
     /// </summary>
     /// <param name="projectId">The project identifier.</param>
     /// <param name="paratextId">The Paratext identifier.</param>
+    /// <param name="includeBlankSegments">
+    /// <c>true</c> if we are to include blank segments (usually for a pre-translation target); otherwise <c>false</c>.
+    /// This is not used if <paramref name="uploadParatextZipFile"/> is <c>true</c>.
+    /// </param>
     /// <param name="uploadParatextZipFile">
     /// <c>true</c> if we are uploading a Paratext zip file; otherwise <c>false</c>.
     /// </param>
@@ -1358,6 +1365,7 @@ public class MachineProjectService : IMachineProjectService
     private async Task<bool> UploadNewCorpusFilesAsync(
         string projectId,
         string paratextId,
+        bool includeBlankSegments,
         bool uploadParatextZipFile,
         IEnumerable<ISFText> texts,
         ICollection<ServalCorpusFile>? oldCorpusFiles,
@@ -1410,7 +1418,7 @@ public class MachineProjectService : IMachineProjectService
             // Sync each text
             foreach (ISFText text in texts)
             {
-                string textFileData = GetTextFileData(text, includeBlankSegments: false);
+                string textFileData = GetTextFileData(text, includeBlankSegments);
                 if (!string.IsNullOrWhiteSpace(textFileData))
                 {
                     // Remove the project id from the start of the text id (if present)

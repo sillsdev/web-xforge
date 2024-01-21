@@ -1940,7 +1940,11 @@ public class MachineProjectServiceTests
             );
         }
 
-        private static string MockTextCorpusChecksum => StringUtils.ComputeMd5Hash("segRef\tsegment01\n");
+        private static string MockTextCorpusWithoutEmptySegmentChecksum =>
+            StringUtils.ComputeMd5Hash("segRef\tsegment01\n");
+
+        private static string MockTextCorpusWithEmptySegmentChecksum =>
+            StringUtils.ComputeMd5Hash("segRef\tsegment01\nsegRef_2\t\n");
 
         private static Task<IEnumerable<ISFText>> MockTextCorpus =>
             Task.FromResult<IEnumerable<ISFText>>(
@@ -1960,6 +1964,16 @@ public class MachineProjectServiceTests
                                 false,
                                 false,
                                 false
+                            ),
+                            new SFTextSegment(
+                                "textId_2",
+                                "segRef_2",
+                                string.Empty,
+                                Array.Empty<string>(),
+                                false,
+                                false,
+                                false,
+                                true
                             ),
                         },
                     },
@@ -1996,7 +2010,9 @@ public class MachineProjectServiceTests
                             {
                                 new ServalCorpusFile
                                 {
-                                    FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
+                                    FileChecksum = requiresUpdate
+                                        ? "old_checksum"
+                                        : MockTextCorpusWithEmptySegmentChecksum,
                                     FileId = File01,
                                     TextId = "textId",
                                 },
@@ -2005,7 +2021,12 @@ public class MachineProjectServiceTests
                             {
                                 new ServalCorpusFile
                                 {
-                                    FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
+                                    FileChecksum = requiresUpdate switch
+                                    {
+                                        true => "old_checksum",
+                                        false when preTranslate => MockTextCorpusWithEmptySegmentChecksum,
+                                        false => MockTextCorpusWithoutEmptySegmentChecksum,
+                                    },
                                     FileId = File02,
                                     TextId = "textId",
                                 },
@@ -2026,7 +2047,9 @@ public class MachineProjectServiceTests
                                 {
                                     new ServalCorpusFile
                                     {
-                                        FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
+                                        FileChecksum = requiresUpdate
+                                            ? "old_checksum"
+                                            : MockTextCorpusWithEmptySegmentChecksum,
                                         FileId = File01,
                                         TextId = "textId",
                                     },
@@ -2035,7 +2058,12 @@ public class MachineProjectServiceTests
                                 {
                                     new ServalCorpusFile
                                     {
-                                        FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
+                                        FileChecksum = requiresUpdate switch
+                                        {
+                                            true => "old_checksum",
+                                            false when preTranslate => MockTextCorpusWithEmptySegmentChecksum,
+                                            false => MockTextCorpusWithoutEmptySegmentChecksum,
+                                        },
                                         FileId = File02,
                                         TextId = "textId",
                                     },
