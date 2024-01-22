@@ -23,6 +23,7 @@
       "DockerfileRunArguments": "-p 5003:5003 -v C:/var/lib/scriptureforge:/var/lib/scriptureforge -v C:/var/lib/xforge:/var/lib/xforge -v \"{ProjectDir}/../RealtimeServer/\":/app/ClientApp/node_modules/realtime-server --name web-xforge --add-host host.docker.internal:host-gateway",
       "environmentVariables": {
         "ASPNETCORE_URLS": "http://+:5000",
+        "ASPNETCORE_HTTP_PORTS": "5000",
         "DataAccess__ConnectionString": "mongodb://host.docker.internal:27017"
       },
       "httpPort": 5000,

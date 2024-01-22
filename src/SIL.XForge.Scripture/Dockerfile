@@ -1,8 +1,8 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 ARG ARCHITECTURE=amd64
-ARG DOTNET_VERSION=6.0
-ARG UBUNTU_NAME=focal # 20.04
+ARG DOTNET_VERSION=8.0
+ARG UBUNTU_NAME=jammy # 22.04
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS base
 WORKDIR /app
@@ -28,14 +28,14 @@ RUN ln -s /usr/bin/hg /usr/local/bin/hg \
     && mkdir -p /var/lib/scriptureforge/sync \
     && mkdir -p /var/lib/scriptureforge/audio \
     && mkdir -p /var/lib/xforge/avatars \
-    && mkdir -p ~/.local/share/Paratext93 \
+    && mkdir -p ~/.local/share/Paratext95 \
     && mkdir -p ~/.local/share/SIL/WritingSystemRepository/3 \
     && echo '<?xml version="1.0" encoding="utf-8"?>\
     <InternetSettingsMemento>\
     <SelectedServer>Development</SelectedServer>\
     <PermittedInternetUse>Enabled</PermittedInternetUse>\
     <ProxyPort>0</ProxyPort>\
-    </InternetSettingsMemento>' > ~/.local/share/Paratext93/InternetSettings.xml
+    </InternetSettingsMemento>' > ~/.local/share/Paratext95/InternetSettings.xml
 EXPOSE 5000
 EXPOSE 5003
 
