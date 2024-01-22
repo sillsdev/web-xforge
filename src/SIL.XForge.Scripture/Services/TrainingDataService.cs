@@ -115,15 +115,24 @@ public class TrainingDataService : ITrainingDataService
             var sourceSegments = new List<SFTextSegment>();
             var targetSegments = new List<SFTextSegment>();
             long i = 0;
+            int skipRows = trainingDataDoc.Data.SkipRows;
             while (await csvReader.ReadAsync())
             {
-                i++;
-
                 // Do not send data if there are too few columns
                 if (csvReader.ColumnCount < 2)
                 {
                     break;
                 }
+
+                // Skip rows, if we are supposed to
+                if (skipRows > 0)
+                {
+                    skipRows--;
+                    continue;
+                }
+
+                // Increment the segment reference counter
+                i++;
 
                 // Add the first column of this line to the source segments
                 string sourceSegmentText = csvReader.GetField<string>(0);
