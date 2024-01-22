@@ -43,7 +43,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -67,7 +67,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -91,7 +91,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -114,7 +114,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -155,7 +155,7 @@ public class SFProjectsUploadControllerTests
         var env = new TestEnvironment();
 
         // Set up the file upload
-        await env.CreateFileUploadRequest(Data01, Project01, fileName: null, fileStream: null);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName: null, fileStream: null);
 
         // SUT
         IActionResult actual = await env.Controller.UploadTrainingDataAsync();
@@ -170,7 +170,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        await env.CreateFileUploadRequest("undefined", Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest("undefined", Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -189,7 +189,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -213,7 +213,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -237,7 +237,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -260,7 +260,7 @@ public class SFProjectsUploadControllerTests
         // Set up the file upload
         await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
+        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
 
         // Set up the moving of the file
         await using MemoryStream outputStream = new MemoryStream();
@@ -321,7 +321,12 @@ public class SFProjectsUploadControllerTests
             Controller.ControllerContext.HttpContext = httpContext;
         }
 
-        public async Task CreateFileUploadRequest(string dataId, string projectId, string? fileName, Stream? fileStream)
+        public async Task<HttpRequestMessage> CreateFileUploadRequest(
+            string dataId,
+            string projectId,
+            string? fileName,
+            Stream? fileStream
+        )
         {
             // Create the form content
             var content = new MultipartFormDataContent
@@ -348,7 +353,7 @@ public class SFProjectsUploadControllerTests
             }
 
             // Add form fields to a new request message
-            var request = new HttpRequestMessage { Content = content, };
+            var request = new HttpRequestMessage { Content = content };
 
             // Set up the HTTP context with this data
             Controller.ControllerContext.HttpContext = new DefaultHttpContext
@@ -361,6 +366,8 @@ public class SFProjectsUploadControllerTests
                     Method = request.Method.Method,
                 },
             };
+
+            return request;
         }
     }
 }
