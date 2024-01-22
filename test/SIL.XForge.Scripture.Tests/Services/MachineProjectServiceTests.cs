@@ -40,6 +40,8 @@ public class MachineProjectServiceTests
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
     private const string Corpus03 = "corpus03";
+    private const string Corpus04 = "corpus04";
+    private const string Data01 = "data01";
     private const string File01 = "file01";
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
@@ -189,6 +191,112 @@ public class MachineProjectServiceTests
 
         await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_SendsAdditionalTrainingData()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupTrainingDataAsync(Project01);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        // Ensure that the additional texts were retrieved
+        await env.TrainingDataService.Received()
+            .GetTextsAsync(
+                User01,
+                Project01,
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<IList<ISFText>>(),
+                Arg.Any<IList<ISFText>>()
+            );
+
+        // Ensure that the build passed the additional files corpus in the pretranslate parameter
+        string corpusId = env.ProjectSecrets.Get(Project01)
+            .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+            .Key;
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                Arg.Any<string>(),
+                Arg.Is<TranslationBuildConfig>(b => b.Pretranslate.Any(c => c.CorpusId == corpusId)),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_SendsAdditionalTrainingDataWhenFilesPreviouslyUploaded()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupTrainingDataAsync(Project02, existingData: true);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        // Ensure that the additional texts were retrieved
+        await env.TrainingDataService.Received()
+            .GetTextsAsync(
+                User01,
+                Project02,
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<IList<ISFText>>(),
+                Arg.Any<IList<ISFText>>()
+            );
+
+        // Ensure that the previous files with different IDs were deleted, and new ones added
+        await env.DataFilesClient.Received().DeleteAsync(File01);
+        await env.DataFilesClient.Received().DeleteAsync(File02);
+        await env.DataFilesClient.Received()
+            .CreateAsync(Arg.Any<FileParameter>(), Arg.Any<FileFormat>(), Data01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_SendsAdditionalTrainingDataWithAlternateSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { AlternateTrainingSourceEnabled = true });
+        await env.SetupTrainingDataAsync(Project02);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        // Ensure that the additional texts were retrieved
+        await env.TrainingDataService.Received()
+            .GetTextsAsync(
+                User01,
+                Project02,
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<IList<ISFText>>(),
+                Arg.Any<IList<ISFText>>()
+            );
+
+        // Ensure that the build passed the additional files corpus in the train_on parameter
+        string corpusId = env.ProjectSecrets.Get(Project02)
+            .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+            .Key;
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                Arg.Any<string>(),
+                Arg.Is<TranslationBuildConfig>(b => b.TrainOn.Any(c => c.CorpusId == corpusId)),
+                CancellationToken.None
+            );
     }
 
     [Test]
@@ -2041,8 +2149,12 @@ public class MachineProjectServiceTests
                 }
             );
 
+            TrainingDataService = Substitute.For<ITrainingDataService>();
+            TrainingData = new MemoryRepository<TrainingData>();
+
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+            realtimeService.AddRepository("training_data", OTType.Json0, TrainingData);
 
             Service = new MachineProjectService(
                 DataFilesClient,
@@ -2056,6 +2168,7 @@ public class MachineProjectServiceTests
                 realtimeService,
                 siteOptions,
                 TextCorpusFactory,
+                TrainingDataService,
                 TranslationEnginesClient,
                 userSecrets
             );
@@ -2107,6 +2220,8 @@ public class MachineProjectServiceTests
         public IFileSystemService FileSystemService { get; }
         public ISFTextCorpusFactory TextCorpusFactory { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
+        public ITrainingDataService TrainingDataService { get; }
+        public MemoryRepository<TrainingData> TrainingData { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
@@ -2232,5 +2347,99 @@ public class MachineProjectServiceTests
                 projectId,
                 u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = TranslationEngine01 })
             );
+
+        /// <summary>
+        /// Sets up the additional training data
+        /// </summary>
+        /// <param name="projectId">The project identifier.</param>
+        /// <param name="existingData">If the project is to have existing data, <c>true</c>. Default: <c>false</c>.</param>
+        public async Task SetupTrainingDataAsync(string projectId, bool existingData = false)
+        {
+            TrainingData.Add(
+                new TrainingData
+                {
+                    Id = $"{projectId}:{Data01}",
+                    ProjectRef = projectId,
+                    DataId = Data01,
+                    OwnerRef = User01,
+                    FileUrl = $"/{projectId}/{User01}_{Data01}.csv?t={DateTime.UtcNow.ToFileTime()}",
+                    MimeType = "text/csv",
+                    SkipRows = 0,
+                }
+            );
+            TrainingDataService
+                .GetTextsAsync(
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IEnumerable<string>>(),
+                    Arg.Any<IList<ISFText>>(),
+                    Arg.Any<IList<ISFText>>()
+                )
+                .Returns(args =>
+                {
+                    ((List<ISFText>)args[3]).Add(GetMockTrainingData(TextCorpusType.Source));
+                    ((List<ISFText>)args[4]).Add(GetMockTrainingData(TextCorpusType.Target));
+                    return Task.CompletedTask;
+                });
+            if (existingData)
+            {
+                if (projectId != Project02)
+                {
+                    throw new ArgumentException(@"You can only set existing data for Project02", nameof(projectId));
+                }
+
+                TranslationEnginesClient
+                    .GetAsync(TranslationEngine02, CancellationToken.None)
+                    .Returns(
+                        Task.FromResult(
+                            new TranslationEngine
+                            {
+                                Id = TranslationEngine02,
+                                Name = Project02,
+                                SourceLanguage = "en",
+                                TargetLanguage = "en_US",
+                                Type = MachineProjectService.Nmt,
+                            }
+                        )
+                    );
+                await ProjectSecrets.UpdateAsync(
+                    Project02,
+                    u =>
+                    {
+                        u.Set(p => p.ServalData.PreTranslationEngineId, TranslationEngine02);
+                        u.Set(
+                            p => p.ServalData.Corpora[Corpus04],
+                            new ServalCorpus
+                            {
+                                PreTranslate = true,
+                                AdditionalTrainingData = true,
+                                SourceFiles = new List<ServalCorpusFile> { new ServalCorpusFile { FileId = File01 }, },
+                                TargetFiles = new List<ServalCorpusFile> { new ServalCorpusFile { FileId = File02 }, },
+                            }
+                        );
+                    }
+                );
+            }
+        }
+
+        private static ISFText GetMockTrainingData(TextCorpusType textCorpusType) =>
+            new MockText
+            {
+                Id = Data01,
+                Segments = new List<SFTextSegment>
+                {
+                    new SFTextSegment(
+                        Data01,
+                        "1",
+                        $"alternate {textCorpusType.ToString().ToLowerInvariant()}",
+                        Array.Empty<string>(),
+                        false,
+                        false,
+                        false,
+                        false
+                    ),
+                    new SFTextSegment(Data01, "2", string.Empty, Array.Empty<string>(), false, false, false, true),
+                },
+            };
     }
 }
