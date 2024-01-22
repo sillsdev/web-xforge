@@ -22,7 +22,7 @@ public class SFProjectsUploadControllerTests
     private const string Data01 = "data01";
     private const string Project01 = "project01";
     private const string User01 = "user01";
-    private const string Role = SystemRole.User;
+    private static readonly string[] Roles = { SystemRole.User };
 
     [Test]
     public async Task UploadAudioAsync_EmptyRequestFails()
@@ -299,7 +299,7 @@ public class SFProjectsUploadControllerTests
             TrainingDataService = Substitute.For<ITrainingDataService>();
             var userAccessor = Substitute.For<IUserAccessor>();
             userAccessor.UserId.Returns(User01);
-            userAccessor.SystemRole.Returns(Role);
+            userAccessor.SystemRoles.Returns(Roles);
             Controller = new SFProjectsUploadController(
                 ExceptionHandler,
                 FileSystemService,
