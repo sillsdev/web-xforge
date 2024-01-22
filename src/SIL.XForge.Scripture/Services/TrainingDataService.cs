@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -43,6 +44,125 @@ public class TrainingDataService : ITrainingDataService
         _fileSystemService = fileSystemService;
         _realtimeService = realtimeService;
         _siteOptions = siteOptions;
+    }
+
+    /// <summary>
+    /// Gets the source and target texts for the training data files.
+    /// </summary>
+    /// <param name="userId">The user identifier</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="dataIds">The data identifiers to retrieve.</param>
+    /// <param name="sourceTexts">The source texts (output).</param>
+    /// <param name="targetTexts">The target texts (output).</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The asynchronous task.</returns>
+    public async Task GetTextsAsync(
+        string userId,
+        string projectId,
+        string[] dataIds,
+        IList<ISFText> sourceTexts,
+        IList<ISFText> targetTexts,
+        CancellationToken cancellationToken
+    )
+    {
+        await using IConnection conn = await _realtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+
+        // Ensure that the training data directory exists
+        string trainingDataDir = Path.Combine(_siteOptions.Value.SiteDir, DirectoryName, projectId);
+        if (!_fileSystemService.DirectoryExists(trainingDataDir))
+        {
+            throw new DataNotFoundException("The training data directory does not exist");
+        }
+
+        // Load each training data file
+        foreach (string dataId in dataIds)
+        {
+            IDocument<TrainingData> trainingDataDoc = await conn.FetchAsync<TrainingData>(
+                TrainingData.GetDocId(projectId, dataId)
+            );
+            if (!trainingDataDoc.IsLoaded)
+            {
+                // Skip if the document does not exist
+                continue;
+            }
+
+            // Get the file URL as an absolute URL
+            if (!Uri.TryCreate(trainingDataDoc.Data.FileUrl, UriKind.Absolute, out Uri uri))
+            {
+                // The file URL is relative, so make it absolute with the site URL
+                uri = new Uri(_siteOptions.Value.Origin, trainingDataDoc.Data.FileUrl);
+            }
+
+            // Get the filename
+            string fileName = Path.GetFileName(uri.LocalPath);
+            string path = Path.Combine(trainingDataDir, fileName);
+            if (!_fileSystemService.FileExists(path))
+            {
+                // Skip if the file does not exist
+                continue;
+            }
+
+            // Load the CSV file
+            await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
+            using StreamReader streamReader = new StreamReader(fileStream);
+            using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
+
+            // Generate the text segments
+            var sourceSegments = new List<SFTextSegment>();
+            var targetSegments = new List<SFTextSegment>();
+            long i = 0;
+            while (await csvReader.ReadAsync())
+            {
+                i++;
+
+                // Do not send data if there are too few columns
+                if (csvReader.ColumnCount < 2)
+                {
+                    break;
+                }
+
+                // Add the first column of this line to the source segments
+                string sourceSegmentText = csvReader.GetField<string>(0);
+                sourceSegments.Add(
+                    new SFTextSegment(
+                        dataId,
+                        i,
+                        sourceSegmentText,
+                        Array.Empty<string>(),
+                        false,
+                        false,
+                        false,
+                        string.IsNullOrWhiteSpace(sourceSegmentText)
+                    )
+                );
+
+                // Add the second column of this line to the target segments
+                string targetSegmentText = csvReader.GetField<string>(1);
+                targetSegments.Add(
+                    new SFTextSegment(
+                        dataId,
+                        i,
+                        targetSegmentText,
+                        Array.Empty<string>(),
+                        false,
+                        false,
+                        false,
+                        string.IsNullOrWhiteSpace(targetSegmentText)
+                    )
+                );
+            }
+
+            // Generate the ISFText objects, and add to the appropriate collections
+            sourceTexts.Add(new SFTrainingText { Id = dataId, Segments = sourceSegments });
+            targetTexts.Add(new SFTrainingText { Id = dataId, Segments = targetSegments });
+        }
     }
 
     /// <summary>
@@ -177,7 +297,7 @@ public class TrainingDataService : ITrainingDataService
             IRow row = sheet.GetRow(rowNum);
             if (row is null || row.FirstCellNum == -1 || row.LastCellNum - row.FirstCellNum < 2)
             {
-                // Skip if there are now two columns of data in this row
+                // Skip if there are not two columns of data in this row
                 continue;
             }
 
