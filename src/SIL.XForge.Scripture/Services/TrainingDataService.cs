@@ -233,39 +233,42 @@ public class TrainingDataService : ITrainingDataService
             case ".CSV":
             case ".TSV":
             case ".TXT":
-            {
-                // Ensure that there are only two columns
-                await using (Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open))
-                {
-                    using StreamReader streamReader = new StreamReader(fileStream);
-                    using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
-                    await csvReader.ReadAsync();
-                    if (csvReader.ColumnCount != 2)
-                    {
-                        throw new FormatException("The CSV file does not contain two columns");
-                    }
-                }
 
-                // Relocate the temporary file to the new directory
-                _fileSystemService.MoveFile(path, outputPath);
+                {
+                    // Ensure that there are only two columns
+                    await using (Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open))
+                    {
+                        using StreamReader streamReader = new StreamReader(fileStream);
+                        using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
+                        await csvReader.ReadAsync();
+                        if (csvReader.ColumnCount != 2)
+                        {
+                            throw new FormatException("The CSV file does not contain two columns");
+                        }
+                    }
+
+                    // Relocate the temporary file to the new directory
+                    _fileSystemService.MoveFile(path, outputPath);
+                }
                 break;
-            }
             case ".XLS":
-            {
-                // Load the Excel 97-2003 spreadsheet
-                await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
-                using IWorkbook workbook = new HSSFWorkbook(fileStream);
-                await ConvertExcelToCsvAsync(workbook, outputPath);
+
+                {
+                    // Load the Excel 97-2003 spreadsheet
+                    await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
+                    using IWorkbook workbook = new HSSFWorkbook(fileStream);
+                    await ConvertExcelToCsvAsync(workbook, outputPath);
+                }
                 break;
-            }
             case ".XLSX":
-            {
-                // Load the Excel 2007+ spreadsheet
-                await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
-                using IWorkbook workbook = new XSSFWorkbook(fileStream);
-                await ConvertExcelToCsvAsync(workbook, outputPath);
+
+                {
+                    // Load the Excel 2007+ spreadsheet
+                    await using Stream fileStream = _fileSystemService.OpenFile(path, FileMode.Open);
+                    using IWorkbook workbook = new XSSFWorkbook(fileStream);
+                    await ConvertExcelToCsvAsync(workbook, outputPath);
+                }
                 break;
-            }
             default:
                 throw new FormatException();
         }

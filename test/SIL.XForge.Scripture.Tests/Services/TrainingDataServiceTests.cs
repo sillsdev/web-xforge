@@ -373,7 +373,7 @@ public class TrainingDataServiceTests
             Is.True
         );
 
-        StreamReader reader = new StreamReader(outputStream);
+        using StreamReader reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
         Assert.AreEqual("Test,Data", text);
@@ -417,7 +417,7 @@ public class TrainingDataServiceTests
             Is.True
         );
 
-        StreamReader reader = new StreamReader(outputStream);
+        using StreamReader reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
         Assert.AreEqual("Test,Data", text);
