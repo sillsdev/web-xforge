@@ -442,7 +442,7 @@
     "synchronize_project": "Sincronizarea proiectului {{ projectName }} cu Paratext",
     "your_project_is_being_synchronized": "Proiectul dvs. este în curs de sincronizare...",
     "sync_is_disabled": "Sincronizarea pentru acest proiect a trebuit să fie dezactivată, așa că nu este disponibilă în acest moment. Vă rugăm să contactați {{ email }}, pentru a discuta ce trebuie făcut pentru a putea activa din nou sincronizarea proiectului.",
-    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please report the problem by writing to {{email}}."
   },
   "text_note_dialog": {
     "cross_reference": "Cross-reference",
