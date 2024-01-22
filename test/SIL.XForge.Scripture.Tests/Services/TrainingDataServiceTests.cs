@@ -66,7 +66,7 @@ public class TrainingDataServiceTests
         );
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream1);
         await using MemoryStream fileStream2 = new MemoryStream(
-            Encoding.UTF8.GetBytes("\"D2 Source 1\"\t\"D2 Target 1\"")
+            Encoding.UTF8.GetBytes("Source_Heading\tTarget_Heading\n\"D2 Source 1\"\t\"D2 Target 1\"")
         );
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data02)), FileMode.Open).Returns(fileStream2);
 
