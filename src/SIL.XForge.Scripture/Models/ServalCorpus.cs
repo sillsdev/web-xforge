@@ -8,7 +8,7 @@ namespace SIL.XForge.Scripture.Models;
 public class ServalCorpus
 {
     /// <summary>
-    /// Gets or sets a value indicating whether or not this corpus is for pre-translation.
+    /// Gets or sets a value indicating whether this corpus is for pre-translation.
     /// </summary>
     /// <value>
     /// <c>true</c> if this corpus is for pre-translation; otherwise, <c>false</c>.
@@ -16,7 +16,16 @@ public class ServalCorpus
     public bool PreTranslate { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether or not this corpus is to be used for Serval to train on.
+    /// Gets or sets a value indicating whether this corpus is to be used for Serval as additional training data.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if this corpus is additional training data; otherwise, <c>false</c>.
+    /// </value>
+    /// <remarks>If this is set to <c>true</c>, there should be another corpus with this set to <c>false</c>.</remarks>
+    public bool AdditionalTrainingData { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this corpus is to be used for Serval to train on.
     /// </summary>
     /// <value>
     /// <c>true</c> if this corpus is for training; otherwise, <c>false</c> if this corpus is for translation.

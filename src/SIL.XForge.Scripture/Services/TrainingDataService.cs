@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -54,15 +53,13 @@ public class TrainingDataService : ITrainingDataService
     /// <param name="dataIds">The data identifiers to retrieve.</param>
     /// <param name="sourceTexts">The source texts (output).</param>
     /// <param name="targetTexts">The target texts (output).</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The asynchronous task.</returns>
     public async Task GetTextsAsync(
         string userId,
         string projectId,
-        string[] dataIds,
+        IEnumerable<string> dataIds,
         IList<ISFText> sourceTexts,
-        IList<ISFText> targetTexts,
-        CancellationToken cancellationToken
+        IList<ISFText> targetTexts
     )
     {
         await using IConnection conn = await _realtimeService.ConnectAsync(userId);
@@ -133,7 +130,7 @@ public class TrainingDataService : ITrainingDataService
                 sourceSegments.Add(
                     new SFTextSegment(
                         dataId,
-                        i,
+                        i.ToString(),
                         sourceSegmentText,
                         Array.Empty<string>(),
                         false,
@@ -148,7 +145,7 @@ public class TrainingDataService : ITrainingDataService
                 targetSegments.Add(
                     new SFTextSegment(
                         dataId,
-                        i,
+                        i.ToString(),
                         targetSegmentText,
                         Array.Empty<string>(),
                         false,
