@@ -3780,7 +3780,8 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.DidNotReceive().MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        env.MockFileSystemService.DidNotReceive()
+            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
     }
 
     [Test]
@@ -3813,7 +3814,8 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.Received(1).MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        env.MockFileSystemService.Received(1)
+            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
     }
 
     [Test]

@@ -39,7 +39,7 @@ public class Program
         string? sfAdminRequestValues = Environment.GetEnvironmentVariable("SF_PROJECT_ADMINS");
         if (string.IsNullOrWhiteSpace(sfAppDir))
         {
-            // This calculated from "web-xforge\src\Migrations\ServalMigration\bin\Debug\net6.0"
+            // This calculated from "web-xforge\src\Migrations\ServalMigration\bin\Debug\net8.0"
             sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../../../../SIL.XForge.Scripture";
         }
 

@@ -2358,7 +2358,12 @@ public class ParatextService : DisposableBase, IParatextService
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    private void InstallResource(string username, ParatextResource resource, string targetParatextId, bool needsToBeCloned)
+    private void InstallResource(
+        string username,
+        ParatextResource resource,
+        string targetParatextId,
+        bool needsToBeCloned
+    )
     {
         if (resource.InstallableResource != null)
         {

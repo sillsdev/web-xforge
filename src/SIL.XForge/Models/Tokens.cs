@@ -1,6 +1,5 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
 
 namespace SIL.XForge.Models;
 
@@ -13,14 +12,12 @@ public class Tokens
     {
         get
         {
-            if (AccessToken == null)
+            if (string.IsNullOrWhiteSpace(AccessToken))
             {
                 return DateTime.MinValue;
             }
             var accessToken = new JwtSecurityToken(AccessToken);
-            if (accessToken.Payload.Iat != null)
-                return EpochTime.DateTime((long)accessToken.Payload.Iat);
-            return DateTime.MinValue;
+            return accessToken.Payload.IssuedAt;
         }
     }
 
@@ -29,7 +26,7 @@ public class Tokens
     /// </summary>
     public bool ValidateLifetime()
     {
-        if (AccessToken == null)
+        if (string.IsNullOrWhiteSpace(AccessToken))
         {
             return false;
         }

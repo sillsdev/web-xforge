@@ -835,7 +835,9 @@ public class MachineApiService : IMachineApiService
         {
             // Sync the project if this is a pre-translation project using Paratext Zip format
             // If a build has not been run, we will still need to sync, as the upload will be a zip by default
-            if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+            if (
+                !(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret)
+            )
             {
                 throw new DataNotFoundException("The project secret cannot be found.");
             }
