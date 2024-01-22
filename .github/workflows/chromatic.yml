@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0 # Chromatic requires git history
           ref: ${{ github.event.pull_request.head.sha }} # Chromatic needs the PR branch, not the merge to master
       - name: "Deps: Node"
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{matrix.node_version}}
       - name: "Deps: npm"

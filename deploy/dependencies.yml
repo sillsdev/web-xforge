@@ -39,7 +39,7 @@
     - name: install packages
       apt:
         name:
-          - "dotnet-sdk-6.0"
+          - "dotnet-sdk-8.0"
           - ffmpeg
           - "mongodb-org"
           - nodejs
@@ -167,7 +167,7 @@
       become: no
       copy:
         src: InternetSettings.xml
-        dest: ~/.local/share/Paratext93/
+        dest: ~/.local/share/Paratext95/
 
   handlers:
     - name: restart mongod
