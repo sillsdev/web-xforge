@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using NPOI.HSSF.UserModel;
@@ -48,7 +47,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream);
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts, CancellationToken.None);
+        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
         Assert.AreEqual(1, sourceTexts.Count);
         Assert.AreEqual(0, sourceTexts.First().Segments.Count());
     }
@@ -72,24 +71,24 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data02)), FileMode.Open).Returns(fileStream2);
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts, CancellationToken.None);
+        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
         Assert.AreEqual(2, sourceTexts.Count);
         Assert.AreEqual(2, sourceTexts.First().Segments.Count());
-        Assert.AreEqual(1, sourceTexts.First().Segments.First().SegmentRef);
+        Assert.AreEqual("1", sourceTexts.First().Segments.First().SegmentRef);
         Assert.AreEqual("D1Source1", sourceTexts.First().Segments.First().SegmentText);
-        Assert.AreEqual(2, sourceTexts.First().Segments.Last().SegmentRef);
+        Assert.AreEqual("2", sourceTexts.First().Segments.Last().SegmentRef);
         Assert.AreEqual("D1Source2", sourceTexts.First().Segments.Last().SegmentText);
         Assert.AreEqual(1, sourceTexts.Last().Segments.Count());
-        Assert.AreEqual(1, sourceTexts.Last().Segments.First().SegmentRef);
+        Assert.AreEqual("1", sourceTexts.Last().Segments.First().SegmentRef);
         Assert.AreEqual("D2 Source 1", sourceTexts.Last().Segments.First().SegmentText);
         Assert.AreEqual(2, targetTexts.Count);
         Assert.AreEqual(2, targetTexts.First().Segments.Count());
-        Assert.AreEqual(1, targetTexts.First().Segments.First().SegmentRef);
+        Assert.AreEqual("1", targetTexts.First().Segments.First().SegmentRef);
         Assert.AreEqual("D1Target1", targetTexts.First().Segments.First().SegmentText);
-        Assert.AreEqual(2, targetTexts.First().Segments.Last().SegmentRef);
+        Assert.AreEqual("2", targetTexts.First().Segments.Last().SegmentRef);
         Assert.AreEqual("D1Target2", targetTexts.First().Segments.Last().SegmentText);
         Assert.AreEqual(1, targetTexts.Last().Segments.Count());
-        Assert.AreEqual(1, targetTexts.Last().Segments.First().SegmentRef);
+        Assert.AreEqual("1", targetTexts.Last().Segments.First().SegmentRef);
         Assert.AreEqual("D2 Target 1", targetTexts.Last().Segments.First().SegmentText);
     }
 
@@ -103,15 +102,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetTextsAsync(
-                    User01,
-                    "invalid_project_id",
-                    dataIds,
-                    sourceTexts,
-                    targetTexts,
-                    CancellationToken.None
-                )
+            () => env.Service.GetTextsAsync(User01, "invalid_project_id", dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -126,8 +117,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts, CancellationToken.None)
+            () => env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -141,8 +131,7 @@ public class TrainingDataServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetTextsAsync(User03, Project01, dataIds, sourceTexts, targetTexts, CancellationToken.None)
+            () => env.Service.GetTextsAsync(User03, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
@@ -155,7 +144,7 @@ public class TrainingDataServiceTests
         var targetTexts = new List<ISFText>();
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts, CancellationToken.None);
+        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
         env.FileSystemService.DidNotReceive().FileExists(Arg.Any<string>());
         env.FileSystemService.DidNotReceive().OpenFile(Arg.Any<string>(), FileMode.Open);
     }
@@ -170,7 +159,7 @@ public class TrainingDataServiceTests
         var targetTexts = new List<ISFText>();
 
         // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts, CancellationToken.None);
+        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
         env.FileSystemService.Received().FileExists(Arg.Any<string>());
         env.FileSystemService.DidNotReceive().OpenFile(Arg.Any<string>(), FileMode.Open);
     }

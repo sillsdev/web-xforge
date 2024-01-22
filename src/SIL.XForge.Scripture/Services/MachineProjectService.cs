@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
+using SIL.Extensions;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
@@ -52,6 +53,7 @@ public class MachineProjectService : IMachineProjectService
     private readonly IRealtimeService _realtimeService;
     private readonly IOptions<SiteOptions> _siteOptions;
     private readonly ISFTextCorpusFactory _textCorpusFactory;
+    private readonly ITrainingDataService _trainingDataService;
     private readonly ITranslationEnginesClient _translationEnginesClient;
     private readonly IRepository<UserSecret> _userSecrets;
 
@@ -67,6 +69,7 @@ public class MachineProjectService : IMachineProjectService
         IRealtimeService realtimeService,
         IOptions<SiteOptions> siteOptions,
         ISFTextCorpusFactory textCorpusFactory,
+        ITrainingDataService trainingDataService,
         ITranslationEnginesClient translationEnginesClient,
         IRepository<UserSecret> userSecrets
     )
@@ -82,6 +85,7 @@ public class MachineProjectService : IMachineProjectService
         _realtimeService = realtimeService;
         _siteOptions = siteOptions;
         _textCorpusFactory = textCorpusFactory;
+        _trainingDataService = trainingDataService;
         _translationEnginesClient = translationEnginesClient;
         _userSecrets = userSecrets;
     }
@@ -753,6 +757,7 @@ public class MachineProjectService : IMachineProjectService
             translationEngineId,
             corpusId,
             preTranslate,
+            additionalTrainingData: false,
             useAlternateTrainingSource: false,
             uploadParatextZipFile,
             corpusUpdated,
@@ -769,6 +774,7 @@ public class MachineProjectService : IMachineProjectService
                 translationEngineId,
                 corpusId: alternateTrainingSourceCorpusId,
                 preTranslate: true,
+                additionalTrainingData: false,
                 useAlternateTrainingSource: true,
                 uploadParatextZipFile,
                 corpusUpdated,
@@ -776,6 +782,90 @@ public class MachineProjectService : IMachineProjectService
                 newTargetCorpusFiles,
                 cancellationToken
             );
+        }
+
+        // See if we have an additional training data
+        if (preTranslate)
+        {
+            List<string> trainingDataIds = await _realtimeService
+                .QuerySnapshots<TrainingData>()
+                .Where(td => td.ProjectRef == buildConfig.ProjectId)
+                .Select(td => td.Id)
+                .ToListAsync();
+            if (trainingDataIds.Any())
+            {
+                // Set up the collections required to upload the corpus data files
+                var newTrainingDataSourceTexts = new List<ISFText>();
+                var newTrainingDataTargetTexts = new List<ISFText>();
+                var newTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
+                var newTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
+                var oldTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
+                var oldTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
+
+                // Get the training data texts
+                await _trainingDataService.GetTextsAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    trainingDataIds,
+                    newTrainingDataSourceTexts,
+                    newTrainingDataTargetTexts
+                );
+
+                // Get the training data corpus id
+                string trainingDataCorpusId = projectSecret
+                    .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+                    .Key;
+
+                // Get the training data files we have already synced
+                if (!string.IsNullOrWhiteSpace(trainingDataCorpusId))
+                {
+                    oldTrainingDataSourceCorpusFiles = projectSecret
+                        .ServalData
+                        .Corpora[trainingDataCorpusId]
+                        .SourceFiles;
+                    oldTrainingDataTargetCorpusFiles = projectSecret
+                        .ServalData
+                        .Corpora[trainingDataCorpusId]
+                        .TargetFiles;
+                }
+
+                // Upload the source files
+                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                    project.Id,
+                    project.ParatextId,
+                    uploadParatextZipFile: false,
+                    newTrainingDataSourceTexts,
+                    oldTrainingDataSourceCorpusFiles,
+                    newTrainingDataSourceCorpusFiles,
+                    cancellationToken
+                );
+
+                // Upload the target files
+                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                    project.Id,
+                    project.ParatextId,
+                    uploadParatextZipFile: false,
+                    newTrainingDataTargetTexts,
+                    oldTrainingDataTargetCorpusFiles,
+                    newTrainingDataTargetCorpusFiles,
+                    cancellationToken
+                );
+
+                // Update the training data corpus
+                corpusUpdated |= await UpdateCorpusConfigAsync(
+                    project,
+                    translationEngineId,
+                    corpusId: trainingDataCorpusId,
+                    preTranslate: true,
+                    additionalTrainingData: true,
+                    useAlternateTrainingSource: false,
+                    uploadParatextZipFile: false,
+                    corpusUpdated,
+                    sourceCorpusFiles: newTrainingDataSourceCorpusFiles,
+                    targetCorpusFiles: newTrainingDataTargetCorpusFiles,
+                    cancellationToken
+                );
+            }
         }
 
         return corpusUpdated;
@@ -987,12 +1077,36 @@ public class MachineProjectService : IMachineProjectService
             }
         }
 
-        return new TranslationBuildConfig
+        var translationBuildConfig = new TranslationBuildConfig
         {
             Options = servalConfig,
             Pretranslate = preTranslate,
             TrainOn = trainOn,
         };
+
+        // Add the additional training data, if applicable
+        if (draftConfig.AlternateTrainingSourceEnabled)
+        {
+            // Include the additional training data with the alternate training corpora
+            translationBuildConfig.TrainOn.AddRange(
+                servalData
+                    .Corpora.Where(s => s.Value.PreTranslate && s.Value.AdditionalTrainingData)
+                    .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
+                    .ToList()
+            );
+        }
+        else
+        {
+            // Include the additional training data with the pre-translate/training corpora
+            translationBuildConfig.Pretranslate.AddRange(
+                servalData
+                    .Corpora.Where(s => s.Value.PreTranslate && s.Value.AdditionalTrainingData)
+                    .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
+                    .ToList()
+            );
+        }
+
+        return translationBuildConfig;
     }
 
     /// <summary>
@@ -1213,6 +1327,7 @@ public class MachineProjectService : IMachineProjectService
     /// <param name="translationEngineId">The translation engine identifier.</param>
     /// <param name="corpusId">The corpus identifier. If <c>null</c>, a new corpus is created.</param>
     /// <param name="preTranslate">The project is for pre-translation.</param>
+    /// <param name="additionalTrainingData">If <c>true</c>, this is the additional training data corpus.</param>
     /// <param name="useAlternateTrainingSource">If <c>true</c>, use the alternate training source.</param>
     /// <param name="uploadParatextZipFile">A Paratext zip file was used for the upload.</param>
     /// <param name="corpusUpdated">The files in the corpus have been updated.</param>
@@ -1225,6 +1340,7 @@ public class MachineProjectService : IMachineProjectService
         string translationEngineId,
         string? corpusId,
         bool preTranslate,
+        bool additionalTrainingData,
         bool useAlternateTrainingSource,
         bool uploadParatextZipFile,
         bool corpusUpdated,
@@ -1333,6 +1449,7 @@ public class MachineProjectService : IMachineProjectService
                         SourceFiles = sourceCorpusFiles,
                         TargetFiles = targetCorpusFiles,
                         PreTranslate = preTranslate,
+                        AdditionalTrainingData = additionalTrainingData,
                         AlternateTrainingSource = useAlternateTrainingSource,
                         UploadParatextZipFile = uploadParatextZipFile,
                     }
