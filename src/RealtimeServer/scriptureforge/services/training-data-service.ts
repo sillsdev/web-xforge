@@ -25,13 +25,16 @@ export class TrainingDataService extends SFProjectDataService<TrainingData> {
         bsonType: 'string',
         pattern: '^[0-9a-f]+$'
       },
-      skipRows: {
-        bsonType: 'int'
-      },
       fileUrl: {
         bsonType: 'string'
       },
       mimeType: {
+        bsonType: 'string'
+      },
+      skipRows: {
+        bsonType: 'int'
+      },
+      title: {
         bsonType: 'string'
       }
     },
