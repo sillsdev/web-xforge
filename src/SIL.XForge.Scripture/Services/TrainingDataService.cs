@@ -114,7 +114,7 @@ public class TrainingDataService : ITrainingDataService
             // Generate the text segments
             var sourceSegments = new List<SFTextSegment>();
             var targetSegments = new List<SFTextSegment>();
-            long i = 0;
+            int i = 0;
             int skipRows = trainingDataDoc.Data.SkipRows;
             while (await csvReader.ReadAsync())
             {
