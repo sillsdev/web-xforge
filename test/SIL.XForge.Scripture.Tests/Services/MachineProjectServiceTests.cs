@@ -204,7 +204,7 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.BuildProjectAsync(
             User01,
-            new BuildConfig { ProjectId = Project01 },
+            new BuildConfig { ProjectId = Project01, TrainingDataFiles = { Data01 } },
             preTranslate: true,
             CancellationToken.None
         );
@@ -214,7 +214,7 @@ public class MachineProjectServiceTests
             .GetTextsAsync(
                 User01,
                 Project01,
-                Arg.Any<IEnumerable<string>>(),
+                Arg.Is<IEnumerable<string>>(d => d.Contains(Data01)),
                 Arg.Any<IList<ISFText>>(),
                 Arg.Any<IList<ISFText>>()
             );
@@ -241,7 +241,7 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.BuildProjectAsync(
             User01,
-            new BuildConfig { ProjectId = Project02 },
+            new BuildConfig { ProjectId = Project02, TrainingDataFiles = { Data01 } },
             preTranslate: true,
             CancellationToken.None
         );
@@ -251,7 +251,7 @@ public class MachineProjectServiceTests
             .GetTextsAsync(
                 User01,
                 Project02,
-                Arg.Any<IEnumerable<string>>(),
+                Arg.Is<IEnumerable<string>>(d => d.Contains(Data01)),
                 Arg.Any<IList<ISFText>>(),
                 Arg.Any<IList<ISFText>>()
             );
@@ -273,7 +273,7 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.BuildProjectAsync(
             User01,
-            new BuildConfig { ProjectId = Project02 },
+            new BuildConfig { ProjectId = Project02, TrainingDataFiles = { Data01 } },
             preTranslate: true,
             CancellationToken.None
         );
@@ -283,7 +283,7 @@ public class MachineProjectServiceTests
             .GetTextsAsync(
                 User01,
                 Project02,
-                Arg.Any<IEnumerable<string>>(),
+                Arg.Is<IEnumerable<string>>(d => d.Contains(Data01)),
                 Arg.Any<IList<ISFText>>(),
                 Arg.Any<IList<ISFText>>()
             );

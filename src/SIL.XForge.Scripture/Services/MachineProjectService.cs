@@ -790,12 +790,7 @@ public class MachineProjectService : IMachineProjectService
         // See if we have an additional training data
         if (preTranslate)
         {
-            List<string> trainingDataIds = await _realtimeService
-                .QuerySnapshots<TrainingData>()
-                .Where(td => td.ProjectRef == buildConfig.ProjectId)
-                .Select(td => td.Id)
-                .ToListAsync();
-            if (trainingDataIds.Any())
+            if (buildConfig.TrainingDataFiles.Any())
             {
                 // Set up the collections required to upload the corpus data files
                 var newTrainingDataSourceTexts = new List<ISFText>();
@@ -809,7 +804,7 @@ public class MachineProjectService : IMachineProjectService
                 await _trainingDataService.GetTextsAsync(
                     curUserId,
                     buildConfig.ProjectId,
-                    trainingDataIds,
+                    buildConfig.TrainingDataFiles,
                     newTrainingDataSourceTexts,
                     newTrainingDataTargetTexts
                 );
