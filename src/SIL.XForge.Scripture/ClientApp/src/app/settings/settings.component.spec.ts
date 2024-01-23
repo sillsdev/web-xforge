@@ -222,6 +222,7 @@ describe('SettingsComponent', () => {
               }
             },
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: false,
             sendAllSegments: false
@@ -266,6 +267,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           },
@@ -292,6 +294,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           },
@@ -318,6 +321,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           }
@@ -335,6 +339,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           },
@@ -366,6 +371,7 @@ describe('SettingsComponent', () => {
               }
             },
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: true,
             sendAllSegments: false
@@ -401,6 +407,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           },
@@ -429,6 +436,7 @@ describe('SettingsComponent', () => {
               }
             },
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: true,
             sendAllSegments: false
@@ -476,6 +484,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: true
           },
@@ -508,6 +517,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           },
@@ -545,6 +555,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             sendAllSegments: false
           }
@@ -583,6 +594,7 @@ describe('SettingsComponent', () => {
           draftConfig: {
             servalConfig: '{}',
             lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: false,
             sendAllSegments: false
@@ -1288,6 +1300,7 @@ class TestEnvironment {
       },
       draftConfig: {
         lastSelectedTrainingBooks: [],
+        lastSelectedTrainingDataFiles: [],
         lastSelectedTranslationBooks: [],
         alternateTrainingSourceEnabled: false,
         sendAllSegments: false
