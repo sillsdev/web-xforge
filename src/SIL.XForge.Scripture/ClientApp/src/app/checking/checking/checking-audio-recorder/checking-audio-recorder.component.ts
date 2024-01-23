@@ -33,7 +33,7 @@ export interface AudioAttachment {
     }
   ]
 })
-// eslint-disable-next-line brace-style
+/* eslint-disable brace-style */
 export class CheckingAudioRecorderComponent
   extends SubscriptionDisposable
   implements ControlValueAccessor, OnInit, OnDestroy
