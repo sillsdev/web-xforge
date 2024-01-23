@@ -112,7 +112,7 @@ public class SFProjectsUploadController : ControllerBase
     /// <remarks>
     /// To increase or decrease the file size limit, modify the RequestSizeLimit attribute for this method.
     /// </remarks>
-    [HttpPost("trainingData")]
+    [HttpPost("training-data")]
     [RequestSizeLimit(300_000_000)]
     public async Task<IActionResult> UploadTrainingDataAsync()
     {
