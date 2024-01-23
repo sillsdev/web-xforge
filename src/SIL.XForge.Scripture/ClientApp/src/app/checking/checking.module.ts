@@ -26,6 +26,7 @@ import { FontSizeComponent } from './checking/font-size/font-size.component';
 import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
 import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
+import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component';
 
 @NgModule({
   declarations: [
@@ -34,6 +35,7 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingQuestionsComponent,
     CheckingTextComponent,
     CheckingAnswersComponent,
+    TextAndAudioComponent,
     QuestionDialogComponent,
     ImportQuestionsDialogComponent,
     ImportQuestionsConfirmationDialogComponent,
