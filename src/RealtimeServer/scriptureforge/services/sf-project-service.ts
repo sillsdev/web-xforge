@@ -189,6 +189,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   bsonType: 'int'
                 }
               },
+              lastSelectedTrainingDataFiles: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
+                }
+              },
               lastSelectedTranslationBooks: {
                 bsonType: 'array',
                 items: {

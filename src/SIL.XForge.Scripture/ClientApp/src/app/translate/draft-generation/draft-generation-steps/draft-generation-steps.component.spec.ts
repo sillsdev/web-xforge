@@ -245,6 +245,7 @@ describe('DraftGenerationStepsComponent', () => {
           source: { projectRef: 'test' },
           draftConfig: {
             lastSelectedTrainingBooks: [2, 3, 4],
+            lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [2, 3, 4]
           }
         }
