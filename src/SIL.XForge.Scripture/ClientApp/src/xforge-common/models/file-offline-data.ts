@@ -1,7 +1,8 @@
 import { OfflineData } from '../offline-store';
 
 export enum FileType {
-  Audio = 'audio'
+  Audio = 'audio',
+  TrainingData = 'training-data'
 }
 
 export function createUploadFileData(
