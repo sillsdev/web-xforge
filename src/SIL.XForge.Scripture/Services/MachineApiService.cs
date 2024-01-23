@@ -60,6 +60,9 @@ public class MachineApiService : IMachineApiService
     private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
         EqualityComparer<int>.Default
     );
+    private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
+        EqualityComparer<string>.Default
+    );
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IBuildRepository _builds;
     private readonly IEngineRepository _engines;
@@ -820,6 +823,11 @@ public class MachineApiService : IMachineApiService
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingBooks,
                 buildConfig.TrainingBooks.ToList(),
                 _listIntComparer
+            );
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles,
+                buildConfig.TrainingDataFiles.ToList(),
+                _listStringComparer
             );
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,

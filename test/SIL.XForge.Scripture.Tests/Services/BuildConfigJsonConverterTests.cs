@@ -11,6 +11,8 @@ namespace SIL.XForge.Scripture.Services;
 public class BuildConfigJsonConverterTests
 {
     private const string Project01 = "project01";
+    private const string Data01 = "data01";
+    private const string Data02 = "data02";
 
     [Test]
     public void WriteJson_Serializes_BuildConfig()
@@ -135,6 +137,26 @@ public class BuildConfigJsonConverterTests
     }
 
     [Test]
+    public void WriteJson_Serializes_BuildConfig_TrainingDataFiles()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig
+        {
+            TrainingDataFiles = new HashSet<string> { Data01, Data02 },
+        };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.Received().WriteStartObject();
+        writer.Received().WritePropertyName(nameof(buildConfig.TrainingDataFiles));
+        serializer.Received().Serialize(writer, buildConfig.TrainingDataFiles);
+        writer.Received().WriteEndObject();
+    }
+
+    [Test]
     public void WriteJson_Serializes_Null_BuildConfig()
     {
         var converter = new BuildConfigJsonConverter();
@@ -203,6 +225,26 @@ public class BuildConfigJsonConverterTests
         Assert.IsFalse(buildConfig.FastTraining);
         CollectionAssert.AreEqual(new List<int> { 1, 2, 3 }, buildConfig.TrainingBooks);
         CollectionAssert.AreEqual(new List<int> { 4, 5, 6 }, buildConfig.TranslationBooks);
+        Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    public void ReadJson_Deserializes_JSON_Object_TrainingDataFiles()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string jsonString =
+            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TrainingDataFiles)}\":[\"{Data01}\",\"{Data02}\"]}}";
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsInstanceOf<BuildConfig>(buildConfig);
+        Assert.IsFalse(buildConfig.FastTraining);
+        CollectionAssert.AreEqual(new List<string> { Data01, Data02 }, buildConfig.TrainingDataFiles);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
     }
 }
