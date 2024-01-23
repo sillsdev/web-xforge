@@ -114,6 +114,7 @@
         - "/var/lib/scriptureforge"
         - "/var/lib/scriptureforge/sync"
         - "/var/lib/scriptureforge/audio"
+        - "/var/lib/scriptureforge/training-data"
         - "/var/lib/xforge"
         - "/var/lib/xforge/avatars"
         - "{{lookup('env','HOME')}}/.local/share/SIL/WritingSystemRepository/3"
