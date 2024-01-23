@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -21,9 +23,19 @@ export interface AudioAttachment {
 @Component({
   selector: 'app-checking-audio-recorder',
   templateUrl: './checking-audio-recorder.component.html',
-  styleUrls: ['./checking-audio-recorder.component.scss']
+  styleUrls: ['./checking-audio-recorder.component.scss'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      multi: true,
+      useExisting: CheckingAudioRecorderComponent
+    }
+  ]
 })
-export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
+export class CheckingAudioRecorderComponent
+  extends SubscriptionDisposable
+  implements ControlValueAccessor, OnInit, OnDestroy
+{
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
   @Input() audioUrl: string = '';
@@ -31,15 +43,30 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
+  private _onTouched = new EventEmitter();
 
   constructor(
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService
-  ) {}
+  ) {
+    super();
+  }
+
+  writeValue(obj: any): void {
+    this.audioUrl = obj;
+  }
+
+  registerOnChange(fn: any): void {
+    this.subscribe(this.status, fn);
+  }
+
+  registerOnTouched(fn: any): void {
+    this.subscribe(this._onTouched, fn);
+  }
 
   get hasAudioAttachment(): boolean {
-    return this.audioUrl !== '';
+    return this.audioUrl?.length > 0;
   }
 
   get isRecording(): boolean {
@@ -69,11 +96,13 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
       blob: this.recordRTC.getBlob(),
       fileName: objectId() + '.webm'
     });
+    this._onTouched.emit();
   }
 
   resetRecording(): void {
     this.audioUrl = '';
     this.status.emit({ status: 'reset' });
+    this._onTouched.emit();
   }
 
   startRecording(): void {
@@ -109,6 +138,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
 
   toggleAudio(): void {
     this.audioPlayer?.playing ? this.audioPlayer?.stop() : this.audioPlayer?.play();
+    this._onTouched.emit();
   }
 
   private errorCallback(error: any): void {
