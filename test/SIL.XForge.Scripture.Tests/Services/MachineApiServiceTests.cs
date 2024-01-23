@@ -49,6 +49,7 @@ public class MachineApiServiceTests
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
     private const string JobId = "jobId";
+    private const string Data01 = "data01";
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoFeatureFlagEnabled()
@@ -2298,6 +2299,8 @@ public class MachineApiServiceTests
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingBooks);
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles);
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks);
     }
 
     [Test]
@@ -2327,7 +2330,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingAndTranslationBooks()
+    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingAndTranslationBooksAndDataFiles()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2339,7 +2342,8 @@ public class MachineApiServiceTests
             {
                 ProjectId = Project01,
                 TrainingBooks = { 1, 2 },
-                TranslationBooks = { 3, 4 }
+                TranslationBooks = { 3, 4 },
+                TrainingDataFiles = { Data01 },
             },
             CancellationToken.None
         );
@@ -2357,6 +2361,11 @@ public class MachineApiServiceTests
             env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.First()
         );
         Assert.AreEqual(4, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationBooks.Last());
+        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.Count);
+        Assert.AreEqual(
+            Data01,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
+        );
     }
 
     [Test]
