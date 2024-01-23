@@ -27,6 +27,7 @@ RUN apt-get install -y \
 RUN ln -s /usr/bin/hg /usr/local/bin/hg \
     && mkdir -p /var/lib/scriptureforge/sync \
     && mkdir -p /var/lib/scriptureforge/audio \
+    && mkdir -p /var/lib/scriptureforge/training-data \
     && mkdir -p /var/lib/xforge/avatars \
     && mkdir -p ~/.local/share/Paratext93 \
     && mkdir -p ~/.local/share/SIL/WritingSystemRepository/3 \
