@@ -836,6 +836,7 @@ public class MachineProjectService : IMachineProjectService
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
                     project.Id,
                     project.ParatextId,
+                    includeBlankSegments: false,
                     uploadParatextZipFile: false,
                     newTrainingDataSourceTexts,
                     oldTrainingDataSourceCorpusFiles,
@@ -847,6 +848,7 @@ public class MachineProjectService : IMachineProjectService
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
                     project.Id,
                     project.ParatextId,
+                    includeBlankSegments: false,
                     uploadParatextZipFile: false,
                     newTrainingDataTargetTexts,
                     oldTrainingDataTargetCorpusFiles,
