@@ -1,0 +1,26 @@
+<div *transloco="let t; read: 'checking'">
+  <form [formGroup]="form" autocomplete="off">
+    <div class="form-container">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ textLabel }}</mat-label>
+        <textarea appAutofocus matInput formControlName="text" id="textarea"></textarea>
+      </mat-form-field>
+      <div class="audio-container">
+        <app-checking-audio-recorder
+          [audioUrl]="audioAttachment.url || ''"
+          (status)="processAudio($event)"
+          [compact]="true"
+          formControlName="audio"
+          [ngClass]="{
+            invalid: text.invalid,
+            borderless: hasAudio(),
+          }"
+        ></app-checking-audio-recorder>
+      </div>
+    </div>
+  </form>
+
+  <div class="form-helper-text" [ngClass]="{ visible: !suppressErrors && text.invalid }">
+    {{ t("input_required_before_saving") }}
+  </div>
+</div>

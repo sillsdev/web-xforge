@@ -1,0 +1,58 @@
+@use 'src/variables';
+
+.form-container {
+  display: flex;
+  column-gap: 4px;
+  align-items: stretch;
+  textarea {
+    min-height: 30px;
+    max-height: 250px;
+  }
+  .audio-container {
+    display: flex;
+    align-items: center;
+    padding-block: 4px;
+  }
+  app-checking-audio-recorder {
+    display: flex;
+    max-height: 90px;
+    min-width: 68px;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+
+    border-style: solid;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.15);
+    transition: border-width 0.1s, border-color 0.1s;
+  }
+  .invalid {
+    border-color: #b00020;
+    border-width: 2px;
+    transition: border-width 0s, border-color 0s;
+  }
+  .borderless {
+    border-width: 0px;
+  }
+  mat-form-field {
+    width: 100%;
+    mat-text-field {
+      width: 100%;
+    }
+  }
+  ::ng-deep .mat-form-field-wrapper {
+    padding-bottom: 0px;
+  }
+}
+
+.form-helper-text {
+  color: variables.$errorColor;
+  font-size: 0.75em;
+  padding-inline: 10px;
+  font-weight: 400;
+  text-align: center;
+  &:not(.visible) {
+    display: none;
+  }
+}
