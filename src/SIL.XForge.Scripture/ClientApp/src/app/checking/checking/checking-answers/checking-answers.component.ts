@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -31,10 +30,8 @@ import {
 } from '../../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
-import {
-  AudioAttachment,
-  CheckingAudioRecorderComponent
-} from '../checking-audio-recorder/checking-audio-recorder.component';
+import { TextAndAudioComponent } from '../../text-and-audio/text-and-audio.component';
+import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
@@ -84,7 +81,7 @@ enum LikeAnswerResponse {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
+  @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
@@ -95,12 +92,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   questionChangeSubscription?: Subscription = undefined;
   /** Answer being edited. */
   activeAnswer?: Answer;
-  answerForm = new UntypedFormGroup({
-    answerText: new UntypedFormControl(),
-    scriptureText: new UntypedFormControl()
-  });
   answerFormVisible: boolean = false;
-  answerFormSubmitAttempted: boolean = false;
   selectedText?: string;
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
@@ -113,7 +105,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   private _projectProfileDoc?: SFProjectProfileDoc;
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
-  private audio: AudioAttachment = {};
   private fileSources: Map<string, string | undefined> = new Map<string, string | undefined>();
   /** If the user has recently added or edited their answer since opening up the question. */
   private justEditedAnswer: boolean = false;
@@ -196,10 +187,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
   get questionDoc(): QuestionDoc | undefined {
     return this._questionDoc;
-  }
-
-  get answerText(): AbstractControl {
-    return this.answerForm.controls.answerText;
   }
 
   /** Answers to display, given contexts of permissions, whether the user has added their own answer yet, etc. */
@@ -336,7 +323,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     // update read answers list so when the answers are rendered again after editing they won't be shown as unread
     this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
     this.activeAnswer = cloneDeep(answer);
-    this.audio.url = this.activeAnswer.audioUrl;
     if (this.activeAnswer.verseRef != null) {
       this.verseRef = toVerseRef(this.activeAnswer.verseRef);
     }
@@ -344,7 +330,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.justEditedAnswer = false;
     this.selectionStartClipped = this.activeAnswer.selectionStartClipped;
     this.selectionEndClipped = this.activeAnswer.selectionEndClipped;
-    this.answerText.setValue(this.activeAnswer?.text || '');
     this.showAnswerForm();
   }
 
@@ -438,11 +423,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   hideAnswerForm(): void {
-    this.answerFormSubmitAttempted = false;
     this.activeAnswer = undefined;
     this.clearSelection();
-    this.audio = {};
-    this.answerForm.reset();
     if (this.answerFormVisible) {
       this.answerFormVisible = false;
       this.action.emit({ action: 'hide-form' });
@@ -484,11 +466,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return answer.likes.some(like => like.ownerRef === this.userService.currentUserId);
   }
 
-  processAudio(audio: AudioAttachment): void {
-    this.audio = audio;
-    this.updateFormValidity();
-  }
-
   scriptureTextVerseRef(verse: VerseRef | VerseRefData | undefined): string {
     if (verse == null) {
       return '';
@@ -509,13 +486,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   async submit(): Promise<void> {
-    if (this.audio.status === 'recording' && this.audioComponent != null) {
-      await this.audioComponent.stopRecording();
-      this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
+    if (this.textAndAudio != null) {
+      this.textAndAudio.suppressErrors = false;
+      if (this.textAndAudio.audioComponent?.isRecording) {
+        await this.textAndAudio.audioComponent.stopRecording();
+        this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
+      }
     }
-    this.answerFormSubmitAttempted = true;
-    if (!this.hasTextOrAudio()) {
-      this.answerText.setErrors({ invalid: true });
+    if (!this.textAndAudio?.hasTextOrAudio()) {
+      this.textAndAudio?.text.setErrors({ invalid: true });
       return;
     }
     this.submittingAnswer = true;
@@ -607,9 +586,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   private emitAnswerToSave(): void {
     this.action.emit({
       action: 'save',
-      text: this.answerText.value,
+      text: this.textAndAudio?.text.value,
       answer: this.activeAnswer,
-      audio: this.audio,
+      audio: this.textAndAudio?.audioAttachment,
       scriptureText: this.selectedText || undefined,
       selectionStartClipped: this.selectionStartClipped,
       selectionEndClipped: this.selectionEndClipped,
@@ -622,20 +601,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
         this.updateQuestionDocAudioUrls();
       }
     });
-  }
-
-  updateFormValidity(): void {
-    if (this.hasTextOrAudio() || this.audio.status === 'recording') {
-      this.answerText.setErrors(null);
-    }
-  }
-
-  hasAudio(): boolean {
-    return this.audio.url != null;
-  }
-
-  hasTextOrAudio(): boolean {
-    return this.answerText.value || this.hasAudio();
   }
 
   private setProjectAdmin(): void {

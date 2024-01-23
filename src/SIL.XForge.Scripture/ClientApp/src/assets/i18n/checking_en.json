@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Filter questions",
+    "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "Me",
     "next": "Next",
@@ -186,7 +187,6 @@
   },
   "checking_answers": {
     "add_answer": "Add answer",
-    "answer_required_before_saving": "Write or record your answer before saving",
     "answers": "{{ count }} Answers",
     "attach": "Attach",
     "cancel": "Cancel",
