@@ -1,19 +1,18 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import {
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
   MatLegacyDialogConfig as MatDialogConfig,
-  MatLegacyDialogRef as MatDialogRef,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
+  MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { XFValidators } from 'xforge-common/xfvalidators';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -24,8 +23,8 @@ import {
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../shared/utils';
-import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 
 export interface QuestionDialogData {
   questionDoc?: QuestionDoc;
@@ -47,23 +46,22 @@ export interface QuestionDialogResult {
   styleUrls: ['./question-dialog.component.scss']
 })
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
+  @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   modeLabel =
     this.data && this.data.questionDoc != null
       ? translate('question_dialog.edit_question')
       : translate('question_dialog.new_question');
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
-  questionForm: UntypedFormGroup = new UntypedFormGroup(
+  versesForm: UntypedFormGroup = new UntypedFormGroup(
     {
       scriptureStart: new UntypedFormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBookId)]),
-      scriptureEnd: new UntypedFormControl('', [SFValidators.verseStr(this.data.textsByBookId)]),
-      questionText: new UntypedFormControl('', [Validators.required, XFValidators.someNonWhitespace])
+      scriptureEnd: new UntypedFormControl('', [SFValidators.verseStr(this.data.textsByBookId)])
     },
     SFValidators.verseStartBeforeEnd
   );
-  audio: AudioAttachment = {};
   _selection?: VerseRef;
-  audioSource?: string;
+
+  private _question: Readonly<Question | undefined>;
 
   constructor(
     private readonly dialogRef: MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>,
@@ -76,15 +74,15 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   get scriptureStart(): AbstractControl {
-    return this.questionForm.controls.scriptureStart;
+    return this.versesForm.controls.scriptureStart;
   }
 
   get scriptureEnd(): AbstractControl {
-    return this.questionForm.controls.scriptureEnd;
+    return this.versesForm.controls.scriptureEnd;
   }
 
-  get questionText(): AbstractControl {
-    return this.questionForm.controls.questionText;
+  get question(): Readonly<Question | undefined> {
+    return this._question;
   }
 
   get textDocId(): TextDocId | undefined {
@@ -111,7 +109,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       end = translate('question_dialog.example_verse');
     } else if (this.scriptureEnd.hasError('verseRange')) {
       end = translate('question_dialog.must_be_inside_verse_range');
-    } else if (this.questionForm.hasError('verseDifferentBookOrChapter')) {
+    } else if (this.versesForm.hasError('verseDifferentBookOrChapter')) {
       end = translate('question_dialog.must_be_same_book_and_chapter');
     }
     return { startError: start, endError: end };
@@ -126,21 +124,12 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   ngOnInit(): void {
-    const question = this.data.questionDoc != null ? this.data.questionDoc.data : undefined;
-    if (question != null) {
-      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(question.verseRef);
+    this._question = this.data.questionDoc?.data;
+    if (this._question != null) {
+      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(this._question.verseRef);
       this.scriptureStart.setValue(startVerseRef.toString());
       if (endVerseRef != null) {
         this.scriptureEnd.setValue(endVerseRef.toString());
-      }
-      if (question.text != null) {
-        this.questionText.setValue(question.text);
-      }
-      if (question.audioUrl != null) {
-        this.audio.url = question.audioUrl;
-        this.setAudioSource();
-        this.questionText.clearValidators();
-        this.questionText.updateValueAndValidity();
       }
       this.updateSelection();
     } else if (this.data.defaultVerse != null) {
@@ -181,18 +170,26 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   async submit(): Promise<void> {
-    if (this.audioCombinedComponent!.audioRecorderComponent != null && this.audio.status === 'recording') {
-      await this.audioCombinedComponent!.audioRecorderComponent.stopRecording();
-      this.noticeService.show(translate('question_dialog.recording_stopped'));
+    if (this.versesForm.invalid || this._selection == null) {
+      return;
     }
-    if (this.questionForm.invalid || this._selection == null) {
+
+    if (this.textAndAudio != null) {
+      this.textAndAudio.suppressErrors = false;
+      if (this.textAndAudio.audioComponent?.isRecording) {
+        await this.textAndAudio.audioComponent.stopRecording();
+        this.noticeService.show(translate('question_dialog.recording_stopped'));
+      }
+    }
+    if (!this.textAndAudio?.hasTextOrAudio()) {
+      this.textAndAudio?.text.setErrors({ invalid: true });
       return;
     }
 
     this.dialogRef.close({
       verseRef: this._selection,
-      text: this.questionText.value,
-      audio: this.audio
+      text: this.textAndAudio?.text.value,
+      audio: this.textAndAudio?.audioAttachment ?? {}
     });
   }
 
@@ -234,24 +231,5 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         control.setValue(result.toString());
       }
     });
-  }
-
-  processAudio(audio: AudioAttachment): void {
-    this.audio = audio;
-    if (audio.status === 'uploaded' || audio.status === 'processed' || audio.status === 'recording') {
-      this.questionText.clearValidators();
-      this.audioSource = audio.blob == null ? undefined : URL.createObjectURL(audio.blob);
-    } else if (audio.status === 'reset' || audio.status === 'denied') {
-      this.questionText.setValidators([Validators.required, XFValidators.someNonWhitespace]);
-    }
-    this.questionText.updateValueAndValidity();
-  }
-
-  private async setAudioSource(): Promise<void> {
-    const questionDoc = this.data.questionDoc;
-    if (questionDoc != null && questionDoc.data != null) {
-      const blob = await questionDoc.getFileContents(FileType.Audio, questionDoc.data.dataId);
-      this.audioSource = blob != null ? URL.createObjectURL(blob) : questionDoc.data.audioUrl;
-    }
   }
 }
