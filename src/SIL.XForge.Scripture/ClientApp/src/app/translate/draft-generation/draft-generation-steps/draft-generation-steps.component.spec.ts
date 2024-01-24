@@ -2,13 +2,15 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { BehaviorSubject, of } from 'rxjs';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
@@ -51,6 +53,11 @@ describe('DraftGenerationStepsComponent', () => {
     })
   } as SFProjectProfileDoc;
 
+  const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
+  when(mockTrainingDataQuery.ready$).thenReturn(of(true));
+  when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
+  when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
+
   const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
 
   configureTestingModule(() => ({
@@ -84,6 +91,8 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
         mockAlternateTrainingSourceProjectDoc
       );
+      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -111,6 +120,8 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -140,9 +151,11 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should emit the correct selected books when done', () => {
       const trainingBooks = [2, 3];
+      const trainingDataFiles = ['a', 'b'];
       const translationBooks = [1, 2];
 
       component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTrainingDataFiles = trainingDataFiles;
       component.userSelectedTranslateBooks = translationBooks;
 
       spyOn(component.done, 'emit');
@@ -155,6 +168,7 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         translationBooks,
+        trainingDataFiles,
         trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
         fastTraining: false
       } as DraftGenerationStepsResult);
@@ -199,6 +213,8 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
@@ -208,9 +224,11 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should emit the fast training value if checked', () => {
       const trainingBooks = [1, 2];
+      const trainingDataFiles = ['a', 'b'];
       const translationBooks = [3, 4];
 
       component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTrainingDataFiles = trainingDataFiles;
       component.userSelectedTranslateBooks = translationBooks;
 
       spyOn(component.done, 'emit');
@@ -231,6 +249,7 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingBooks,
+        trainingDataFiles,
         translationBooks,
         fastTraining: true
       } as DraftGenerationStepsResult);
@@ -256,6 +275,8 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
