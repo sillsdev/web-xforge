@@ -9,7 +9,7 @@ import {
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -236,8 +236,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
         doc =>
           doc.data != null &&
-          !this.verseRefDataDiffers(doc.data.verseRef, fromVerseRef(question.verseRef)) &&
-          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text)
+          (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
+          toVerseRef(doc.data.verseRef).equals(question.verseRef)
       );
 
       this.questionList.push({
@@ -488,10 +488,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   private questionsDiffer(listItem: DialogListItem): boolean {
     const doc = listItem.sfVersionOfQuestion?.data;
     const q = listItem.question;
-    return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, fromVerseRef(q.verseRef)));
-  }
-
-  private verseRefDataDiffers(a: VerseRefData, b: VerseRefData): boolean {
-    return !toVerseRef(a).equals(toVerseRef(b));
+    return doc != null && (doc.text !== q.text || !toVerseRef(doc.verseRef).equals(q.verseRef));
   }
 }
