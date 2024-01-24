@@ -327,6 +327,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.startBuild({
       projectId: this.activatedProject.projectId!,
       trainingBooks: result.trainingBooks,
+      trainingDataFiles: result.trainingDataFiles,
       translationBooks: result.translationBooks,
       fastTraining: result.fastTraining
     });

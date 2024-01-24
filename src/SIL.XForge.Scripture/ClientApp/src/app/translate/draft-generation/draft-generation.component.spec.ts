@@ -1058,6 +1058,7 @@ describe('DraftGenerationComponent', () => {
 
       env.component.startBuild({
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false,
         projectId: 'testProjectId'
@@ -1065,6 +1066,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false
       });
@@ -1082,6 +1084,7 @@ describe('DraftGenerationComponent', () => {
 
       env.component.startBuild({
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false,
         projectId: 'testProjectId'
@@ -1089,6 +1092,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false
       });
@@ -1108,6 +1112,7 @@ describe('DraftGenerationComponent', () => {
 
       env.component.startBuild({
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false,
         projectId: 'testProjectId'
@@ -1115,6 +1120,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false
       });
@@ -1134,6 +1140,7 @@ describe('DraftGenerationComponent', () => {
 
       env.component.startBuild({
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false,
         projectId: 'testProjectId'
@@ -1141,6 +1148,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false
       });
@@ -1161,6 +1169,7 @@ describe('DraftGenerationComponent', () => {
 
       env.component.startBuild({
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false,
         projectId: 'testProjectId'
@@ -1168,6 +1177,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
         trainingBooks: [],
+        trainingDataFiles: [],
         translationBooks: [],
         fastTraining: false
       });
