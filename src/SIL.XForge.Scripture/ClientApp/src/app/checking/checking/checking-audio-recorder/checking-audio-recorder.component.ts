@@ -40,7 +40,6 @@ export class CheckingAudioRecorderComponent
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
   @Input() audioUrl: string = '';
-  @Input() compact: boolean = false;
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
