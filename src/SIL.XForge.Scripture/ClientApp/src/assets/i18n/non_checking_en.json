@@ -173,6 +173,8 @@
   },
   "draft_generation_steps": {
     "back": "Back",
+    "choose_additional_training_data_files_subheader": "Select additional training files.",
+    "choose_additional_training_data_files": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_subheader": "Select books that have been proofed.",
     "choose_books_for_training": "Choose books for training the language model",

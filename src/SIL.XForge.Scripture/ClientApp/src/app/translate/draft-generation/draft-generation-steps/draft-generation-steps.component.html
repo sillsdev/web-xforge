@@ -91,10 +91,27 @@
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            {{ featureFlags.allowFastTraining.enabled || trainingDataFilesAvailable ? t("next") : t("generate_draft") }}
+          </button>
+        </div>
+      </mat-step>
+
+      <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
+        <ng-template matStepLabel>
+          <div class="stepper-multi-header">
+            <h2>{{ t("choose_additional_training_data_files") }}</h2>
+            <h3>{{ t("choose_additional_training_data_files_subheader") }}</h3>
+          </div>
+        </ng-template>
+
+        <div class="button-strip">
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
           </button>
         </div>
       </mat-step>
+
       <mat-step *ngIf="featureFlags.allowFastTraining.enabled" [completed]="true">
         <ng-template matStepLabel>
           <div class="stepper-multi-header">
