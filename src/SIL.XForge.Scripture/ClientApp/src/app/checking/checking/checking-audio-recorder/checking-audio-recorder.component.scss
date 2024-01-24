@@ -40,17 +40,6 @@ button {
 .has-attachment {
   display: flex;
   align-items: center;
-  column-gap: 6px;
-  padding-inline-start: 4px;
-
-  app-checking-audio-player {
-    flex: 1;
-  }
-}
-
-.has-attachment-compact {
-  display: flex;
-  align-items: center;
   flex-direction: column;
   row-gap: 2px;
   position: relative;
