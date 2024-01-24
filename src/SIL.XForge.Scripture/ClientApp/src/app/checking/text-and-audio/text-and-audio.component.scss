@@ -5,26 +5,34 @@
   column-gap: 4px;
   align-items: stretch;
   textarea {
-    min-height: 30px;
-    max-height: 250px;
+    min-height: 50px;
+    max-height: 150px;
   }
   .audio-container {
     display: flex;
-    align-items: center;
-    padding-block: 4px;
-  }
-  app-checking-audio-recorder {
-    display: flex;
-    max-height: 90px;
-    min-width: 68px;
-    height: 100%;
+    flex-direction: column;
     justify-content: center;
-    align-items: center;
-
+    row-gap: 4px;
+    padding-block: 4px;
+    min-width: 68px;
+  }
+  .border-button {
+    width: 100%;
+    height: 100%;
     border-style: solid;
     border-radius: 5px;
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.15);
+  }
+  .halfHeight {
+    height: 50%;
+  }
+  app-checking-audio-recorder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 100px;
+
     transition: border-width 0.1s, border-color 0.1s;
   }
   .invalid {

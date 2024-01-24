@@ -10,11 +10,28 @@
           [audioUrl]="audioAttachment.url || ''"
           (status)="processAudio($event)"
           formControlName="audio"
+          class="border-button"
           [ngClass]="{
             invalid: text.invalid,
             borderless: hasAudio(),
+            halfHeight: uploadEnabled
           }"
         ></app-checking-audio-recorder>
+        <button
+          *ngIf="uploadEnabled && !hasAudio()"
+          mat-button
+          ngfSelect
+          type="button"
+          [(file)]="uploadAudioFile"
+          (fileChange)="prepareAudioFileUpload()"
+          accept="audio/*"
+          class="border-button"
+          [ngClass]="{ halfHeight: uploadEnabled }"
+          [(lastInvalids)]="lastInvalids"
+          [matTooltip]="t('upload_audio_file')"
+        >
+          <mat-icon>cloud_upload</mat-icon>
+        </button>
       </div>
     </div>
   </form>
