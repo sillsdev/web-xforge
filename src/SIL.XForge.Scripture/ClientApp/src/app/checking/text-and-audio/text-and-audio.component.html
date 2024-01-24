@@ -9,7 +9,6 @@
         <app-checking-audio-recorder
           [audioUrl]="audioAttachment.url || ''"
           (status)="processAudio($event)"
-          [compact]="true"
           formControlName="audio"
           [ngClass]="{
             invalid: text.invalid,
