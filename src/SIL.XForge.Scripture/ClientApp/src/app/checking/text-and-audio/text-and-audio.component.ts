@@ -1,10 +1,13 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import { DynamicValue } from 'realtime-server/lib/esm/scriptureforge/models/dynamic-value';
 import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+
+const NOT_A_FILE = {} as File;
 
 @Component({
   selector: 'app-text-and-audio',
@@ -15,11 +18,13 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
   @Input() input?: DynamicValue;
   @Input() textLabel: string = '';
+  @Input() uploadEnabled: boolean = false;
   suppressErrors: boolean = true;
   form = new UntypedFormGroup({
     text: new UntypedFormControl(),
     audio: new UntypedFormControl()
   });
+  uploadAudioFile: File = NOT_A_FILE;
   private _audioAttachment: AudioAttachment = {};
 
   constructor(private cdr: ChangeDetectorRef) {}
@@ -64,5 +69,27 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
 
   hasTextOrAudio(): boolean {
     return this.text.value || this.hasAudio();
+  }
+
+  prepareAudioFileUpload(): void {
+    if (this.uploadAudioFile.name != null) {
+      this._audioAttachment = {
+        url: URL.createObjectURL(this.uploadAudioFile),
+        blob: this.uploadAudioFile,
+        fileName: this.uploadAudioFile.name,
+        status: 'uploaded'
+      };
+    }
+  }
+
+  set lastInvalids(value: InvalidFileItem[]) {
+    if (value == null) {
+      return;
+    }
+    // Firefox does not recognize the valid .ogg file type because it reads it as a video, so handle it here
+    if (value.length > 0 && value[0].file.type === 'video/ogg') {
+      this.uploadAudioFile = value[0].file;
+      this.prepareAudioFileUpload();
+    }
   }
 }

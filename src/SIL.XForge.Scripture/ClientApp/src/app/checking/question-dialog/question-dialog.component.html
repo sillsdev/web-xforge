@@ -44,7 +44,7 @@
           [projectDoc]="projectDoc"
         ></app-checking-text>
       </div>
-      <app-text-and-audio [input]="question" [textLabel]="t('question')"></app-text-and-audio>
+      <app-text-and-audio [input]="question" [textLabel]="t('question')" [uploadEnabled]="true"></app-text-and-audio>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">
       <button mat-button [mat-dialog-close]="'close'" type="button" id="question-cancel-btn">
