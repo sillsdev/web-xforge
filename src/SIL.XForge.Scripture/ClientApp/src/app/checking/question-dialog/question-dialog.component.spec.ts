@@ -130,7 +130,7 @@ describe('QuestionDialogComponent', () => {
   it('should validate verse fields', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
-    expect(env.component.questionForm.valid).toBe(false);
+    expect(env.component.versesForm.valid).toBe(false);
     expect(env.component.scriptureStart.valid).toBe(false);
     // scriptureEnd starts disabled, and therefore invalid
     expect(env.component.scriptureEnd.valid).toBe(false);
@@ -211,15 +211,15 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('LUK 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.component.scriptureEnd.setValue('MAT 2:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:2');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors).toBeNull();
+    expect(env.component.versesForm.errors).toBeNull();
   }));
 
   it('should validate start verse is before or same as end verse', fakeAsync(() => {
@@ -231,15 +231,15 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('MAT 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors!.verseBeforeStart).toBe(true);
+    expect(env.component.versesForm.errors!.verseBeforeStart).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:2');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors).toBeNull();
+    expect(env.component.versesForm.errors).toBeNull();
     env.component.scriptureEnd.setValue('MAT 1:3');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors).toBeNull();
+    expect(env.component.versesForm.errors).toBeNull();
   }));
 
   it('opens reference chooser, uses result', fakeAsync(() => {
@@ -428,7 +428,7 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.markAsTouched();
     expect(env.component.scriptureEnd.errors).toBeNull();
     expect(env.component.scriptureEnd.valid).toBe(true);
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mat-form-field-invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
@@ -448,7 +448,7 @@ describe('QuestionDialogComponent', () => {
     flush();
     env.component.scriptureStart.setValue('MAT 1:2');
     env.component.scriptureStart.markAsTouched();
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mat-form-field-invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');

@@ -1,4 +1,5 @@
 import { Comment } from './comment';
+import { DynamicValue } from './dynamic-value';
 import { Like } from './like';
 import { VerseRefData } from './verse-ref-data';
 
@@ -8,12 +9,11 @@ export enum AnswerStatus {
   Exportable = 'export'
 }
 
-export interface Answer extends Comment {
+export interface Answer extends Comment, DynamicValue {
   verseRef?: VerseRefData;
   scriptureText?: string;
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
-  audioUrl?: string;
   likes: Like[];
   comments: Comment[];
   status?: AnswerStatus;
