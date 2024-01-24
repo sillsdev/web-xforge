@@ -6,6 +6,7 @@ import { first } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpClient } from 'src/app/machine-api/http-client';
+import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationService', () => {
@@ -106,7 +107,13 @@ describe('DraftGenerationService', () => {
     it('should start a pretranslation build job and return an observable of BuildDto', done => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
-      const buildConfig = { projectId, trainingBooks: [], translationBooks: [], fastTraining: false };
+      const buildConfig: BuildConfig = {
+        projectId,
+        trainingBooks: [],
+        trainingDataFiles: [],
+        translationBooks: [],
+        fastTraining: false
+      };
       httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
       service
         .startBuildOrGetActiveBuild(buildConfig)
@@ -123,16 +130,21 @@ describe('DraftGenerationService', () => {
     it('should return already active build job', done => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
+      const buildConfig: BuildConfig = {
+        projectId,
+        trainingBooks: [],
+        trainingDataFiles: [],
+        translationBooks: [],
+        fastTraining: false
+      };
       httpClient.post = jasmine.createSpy();
-      service
-        .startBuildOrGetActiveBuild({ projectId, trainingBooks: [], translationBooks: [], fastTraining: false })
-        .subscribe(result => {
-          expect(result).toEqual(buildDto);
-          expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
-          expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
-          expect(httpClient.post).not.toHaveBeenCalled();
-          done();
-        });
+      service.startBuildOrGetActiveBuild(buildConfig).subscribe(result => {
+        expect(result).toEqual(buildDto);
+        expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+        expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
+        expect(httpClient.post).not.toHaveBeenCalled();
+        done();
+      });
     });
   });
 
