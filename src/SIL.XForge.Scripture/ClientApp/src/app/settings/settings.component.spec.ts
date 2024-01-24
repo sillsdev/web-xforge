@@ -225,7 +225,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: false,
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -269,7 +270,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           projectType: ProjectType.BackTranslation
         });
@@ -296,7 +298,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           projectType: ProjectType.BackTranslation
         });
@@ -323,7 +326,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           }
         });
         env.wait();
@@ -341,7 +345,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -374,7 +379,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: true,
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -409,7 +415,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -439,7 +446,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: true,
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -486,7 +494,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: true
+            sendAllSegments: true,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -498,6 +507,44 @@ describe('SettingsComponent', () => {
         env.wait();
 
         expect(env.statusDone(env.sendAllSegmentsStatus)).not.toBeNull();
+      }));
+    });
+
+    describe('Additional Training Data', () => {
+      it('should update when the additional training data checkbox is ticked', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        expect(env.statusDone(env.additionalTrainingDataStatus)).toBeNull();
+        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(false);
+        env.clickElement(env.inputElement(env.additionalTrainingDataCheckbox));
+        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(true);
+        env.wait();
+
+        expect(env.statusDone(env.additionalTrainingDataStatus)).not.toBeNull();
+      }));
+
+      it('should update when the additional training data checkbox is unticked', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false,
+            additionalTrainingData: true
+          },
+          preTranslate: true
+        });
+        env.wait();
+        expect(env.statusDone(env.additionalTrainingDataStatus)).toBeNull();
+        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(true);
+        env.clickElement(env.inputElement(env.additionalTrainingDataCheckbox));
+        expect(env.inputElement(env.additionalTrainingDataCheckbox).checked).toBe(false);
+        env.wait();
+
+        expect(env.statusDone(env.additionalTrainingDataStatus)).not.toBeNull();
       }));
     });
 
@@ -519,7 +566,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           projectType: ProjectType.BackTranslation
         });
@@ -557,7 +605,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           }
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
@@ -597,7 +646,8 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
             alternateTrainingSourceEnabled: false,
-            sendAllSegments: false
+            sendAllSegments: false,
+            additionalTrainingData: false
           },
           preTranslate: true
         });
@@ -1210,6 +1260,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#pre-translation-send-all-segments-status'));
   }
 
+  get additionalTrainingDataCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-pre-translation-additional-training-data'));
+  }
+
+  get additionalTrainingDataStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#pre-translation-additional-training-data-status'));
+  }
+
   makeProjectHaveTextAudio(): void {
     this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
       id: 'sAudio1',
@@ -1303,7 +1361,8 @@ class TestEnvironment {
         lastSelectedTrainingDataFiles: [],
         lastSelectedTranslationBooks: [],
         alternateTrainingSourceEnabled: false,
-        sendAllSegments: false
+        sendAllSegments: false,
+        additionalTrainingData: false
       }
     },
     checkingConfig: Partial<CheckingConfig> = {
