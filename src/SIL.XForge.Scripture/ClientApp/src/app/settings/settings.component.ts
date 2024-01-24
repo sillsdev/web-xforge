@@ -38,6 +38,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   alternateTrainingSourceEnabled = new FormControl(false);
   alternateTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
   sendAllSegments = new FormControl(false);
+  additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
   translateShareEnabled = new FormControl(false);
   checkingEnabled = new FormControl(false);
@@ -56,6 +57,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     alternateTrainingSourceEnabled: this.alternateTrainingSourceEnabled,
     alternateTrainingSourceParatextId: this.alternateTrainingSourceParatextId,
     sendAllSegments: this.sendAllSegments,
+    additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
     translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
@@ -350,6 +352,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.updateSetting(newValue, 'sendAllSegments');
     }
 
+    if (this.settingChanged(newValue, 'additionalTrainingData')) {
+      this.updateSetting(newValue, 'additionalTrainingData');
+    }
+
     // Check if the pre-translation alternate training source project needs to be updated
     if (this.settingChanged(newValue, 'alternateTrainingSourceParatextId')) {
       const settings: SFProjectSettings = {
@@ -425,6 +431,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       alternateTrainingSourceParatextId:
         this.projectDoc.data.translateConfig.draftConfig?.alternateTrainingSource?.paratextId,
       sendAllSegments: this.projectDoc.data.translateConfig.draftConfig.sendAllSegments,
+      additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
@@ -458,6 +465,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('alternateTrainingSourceEnabled', ElementState.InSync);
     this.controlStates.set('alternateTrainingSourceParatextId', ElementState.InSync);
     this.controlStates.set('sendAllSegments', ElementState.InSync);
+    this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);

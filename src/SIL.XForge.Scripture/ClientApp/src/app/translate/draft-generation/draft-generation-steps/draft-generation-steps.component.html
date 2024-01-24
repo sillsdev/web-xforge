@@ -71,7 +71,7 @@
         </div>
       </mat-step>
 
-      <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
+      <mat-step *ngIf="trainingDataFilesAvailable" [completed]="true">
         <ng-template matStepLabel>
           <div class="stepper-multi-header">
             <h2>{{ t("choose_additional_training_data_files") }}</h2>

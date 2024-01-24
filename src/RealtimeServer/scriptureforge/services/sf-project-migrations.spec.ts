@@ -374,6 +374,20 @@ describe('version 12', () => {
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingDataFiles).toBeDefined();
     });
+    it('adds additionalTrainingData to draftConfig', async () => {
+      const env = new TestEnvironment(16);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBe(false);
+    });
   });
 });
 

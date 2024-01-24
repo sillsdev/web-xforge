@@ -262,7 +262,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     // Set the selected data files to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTrainingDataFiles = intersection.length > 0 ? intersection : [];
     this.userSelectedTrainingDataFiles = this.initialSelectedTrainingDataFiles;
-    this.trainingDataFilesAvailable = true; // availableDataFiles.length > 0;
+    this.trainingDataFilesAvailable =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData ?? false;
   }
 
   private setSourceProjectDisplayNames(

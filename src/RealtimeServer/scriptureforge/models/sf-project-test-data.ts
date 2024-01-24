@@ -19,6 +19,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       preTranslate: false,
       defaultNoteTagId: 1,
       draftConfig: {
+        additionalTrainingData: false,
         alternateTrainingSourceEnabled: false,
         lastSelectedTrainingBooks: [],
         lastSelectedTrainingDataFiles: [],
