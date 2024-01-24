@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subject } from 'rxjs';
+import { lastValueFrom, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -15,6 +15,8 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { takeWhile } from 'rxjs/operators';
+import { AudioPlayer, AudioStatus } from 'src/app/shared/audio/audio-player';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -146,7 +148,7 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     env.component.question.playScripture();
 
-    await env.wait(1000); //wait for the audio to finish playing
+    await env.wait(3000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
     verify(
       mockedSFProjectUserConfigDoc.updateAudioRefsPlayed(
@@ -185,7 +187,7 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     await env.wait();
     env.component.question.playScripture();
-    await env.wait(1200); //wait for the audio to finish playing
+    await env.wait(3000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
 
     env.component.question.selectScripture();
@@ -320,6 +322,12 @@ class TestEnvironment {
   }
 
   async wait(ms: number = 200): Promise<void> {
+    // Wait until this.scriptureAudio.audio is initialized if it exists
+    const audio: AudioPlayer | undefined = this.scriptureAudio?.componentInstance?.audio;
+    if (audio) {
+      await lastValueFrom(audio.status$.pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing, true)));
+    }
+
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }

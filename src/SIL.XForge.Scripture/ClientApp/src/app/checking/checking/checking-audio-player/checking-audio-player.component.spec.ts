@@ -8,6 +8,8 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { lastValueFrom } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -18,6 +20,7 @@ import { CheckingAudioPlayerComponent } from './checking-audio-player.component'
 describe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
+  const audioFileShortMP3 = 'test-audio-short.mp3';
   const audioBlobFile: AudioAttachment = {
     status: 'uploaded',
     blob: getAudioBlob(),
@@ -60,6 +63,16 @@ describe('CheckingAudioPlayerComponent', () => {
     env.fixture.detectChanges();
     env.clickButton(env.pauseButton(1));
     expect(env.currentTime).toBe('0:01');
+  });
+
+  it('can play short mp3 files', async () => {
+    const template =
+      '<app-checking-audio-player #player1 id="player1" source="' +
+      audioFileShortMP3 +
+      '"></app-checking-audio-player>';
+    const env = new TestEnvironment(template);
+    await env.waitForPlayer(playerLoadTimeMs);
+    expect(env.component.player1.audioPlayer?.audio?.status$.value).toBe(AudioStatus.Available);
   });
 
   it('plays and pauses the other playing audio', async () => {
@@ -214,6 +227,23 @@ class TestEnvironment {
 
   async waitForPlayer(ms: number): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
+
+    // Wait until the AudioPlayers have initialized if they exist
+    const player1Audio = this.component.player1.audioPlayer?.audio;
+    const player2Audio = this.component.player2.audioPlayer?.audio;
+    await Promise.all([
+      player1Audio === undefined
+        ? undefined
+        : lastValueFrom(
+            player1Audio.status$.pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing, true))
+          ),
+      player2Audio === undefined
+        ? undefined
+        : lastValueFrom(
+            player2Audio.status$.pipe(takeWhile<AudioStatus>(val => val === AudioStatus.Initializing, true))
+          )
+    ]);
+
     this.fixture.detectChanges();
   }
 }

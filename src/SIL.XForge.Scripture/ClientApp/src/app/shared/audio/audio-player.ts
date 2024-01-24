@@ -30,14 +30,14 @@ export class AudioPlayer extends SubscriptionDisposable {
     // Loaded metadata works best for blobs
     this.audio.addEventListener('loadedmetadata', () => {
       if (isLocalBlobUrl(this.audio.src)) {
-        this.audioIsReady();
+        this.audioIsLoaded();
       }
     });
 
     // Loaded data works best for real files
     this.audio.addEventListener('loadeddata', () => {
       if (!isLocalBlobUrl(this.audio.src)) {
-        this.audioIsReady();
+        this.audioIsLoaded();
       }
     });
 
@@ -82,12 +82,6 @@ export class AudioPlayer extends SubscriptionDisposable {
     };
 
     this.status$.next(AudioStatus.Initializing);
-    // In Chromium the duration of blobs isn't known even after metadata is loaded
-    // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
-    // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
-    // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
-    // know the duration once metadata has loaded.
-    this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
     this.audio.src = formatFileSource(FileType.Audio, source);
   }
 
@@ -147,7 +141,7 @@ export class AudioPlayer extends SubscriptionDisposable {
       AudioPlayer.lastPlayedAudio.pause();
     }
 
-    if (!this.audioDataLoaded) {
+    if (!this.audioDataLoaded || this.audio.readyState < 2) {
       this.audio.load();
     }
 
@@ -166,6 +160,26 @@ export class AudioPlayer extends SubscriptionDisposable {
   stop(): void {
     this.pause();
     this.currentTime = 0;
+  }
+
+  private audioIsLoaded(): void {
+    // In Chromium the duration of some audio sources aren't known after loading.
+    // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
+    // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
+    // audio playback to skip to the end of the audio when the user presses play in Chromium.
+    if (this.audio.duration === Infinity) {
+      const audioDurationCalculationFinishedCallback = (): void => {
+        this.audio.removeEventListener('seeked', audioDurationCalculationFinishedCallback);
+
+        this.audioIsReady();
+      };
+
+      this.audio.addEventListener('seeked', audioDurationCalculationFinishedCallback);
+
+      this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
+    } else {
+      this.audioIsReady();
+    }
   }
 
   private audioIsReady(): void {
