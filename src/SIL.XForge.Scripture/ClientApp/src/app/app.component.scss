@@ -65,7 +65,7 @@ $toolbar-height: 56px;
 
 header {
   width: 100%;
-  z-index: 7;
+  z-index: 1001; // Needs to be larger than overlay containers
 
   .title {
     cursor: pointer;

@@ -1,3 +1,5 @@
+@use 'src/material-styles';
+
 :host {
   display: flex;
   align-items: center;
@@ -5,18 +7,9 @@
 
 // Unfortunately there doesn't appear to be a good way to style a mat-select
 // These styles were written by inspecting the elements using developer and then adding rules until it looked right
-#chapter-select ::ng-deep,
-#book-select ::ng-deep {
-  height: 36px;
-  .mat-mdc-select-arrow-wrapper {
-    margin-left: 5px;
-  }
-  .mat-mdc-form-field-infix {
-    min-height: initial;
-    padding-top: 7px;
-    padding-bottom: 5px;
-    width: initial;
-  }
+#chapter-select,
+#book-select {
+  @include material-styles.dense_mat_select();
 }
 
 ::ng-deep .mat-mdc-select-panel {
