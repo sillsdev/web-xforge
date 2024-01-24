@@ -290,6 +290,9 @@ class SFProjectMigration17 extends DocMigration {
     if (doc.data.translateConfig.draftConfig.lastSelectedTrainingDataFiles == null) {
       ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedTrainingDataFiles'], oi: [] });
     }
+    if (doc.data.translateConfig.draftConfig.additionalTrainingData == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'additionalTrainingData'], oi: false });
+    }
     await submitMigrationOp(SFProjectMigration17.VERSION, doc, ops);
   }
 }
