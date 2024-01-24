@@ -2,20 +2,12 @@
   <div *ngIf="!hasAudioAttachment" class="no-attachment">
     <button *ngIf="!isRecording" mat-button (click)="startRecording()" class="record" [matTooltip]="t('record_audio')">
       <mat-icon>mic</mat-icon>
-      <span *ngIf="!compact">{{ t("record_audio") }}</span>
     </button>
     <button *ngIf="isRecording" mat-button (click)="stopRecording()" class="stop" [matTooltip]="t('stop_recording')">
       <mat-icon>stop</mat-icon>
-      <span *ngIf="!compact">{{ t("recording") }}</span>
     </button>
   </div>
-  <div *ngIf="hasAudioAttachment && !compact" class="has-attachment">
-    <button mat-icon-button (click)="resetRecording()" [matTooltip]="t('delete')" class="remove-audio-file">
-      <mat-icon>delete</mat-icon>
-    </button>
-    <app-checking-audio-player *ngIf="!!audioUrl" [source]="audioUrl"></app-checking-audio-player>
-  </div>
-  <div *ngIf="hasAudioAttachment && compact" class="has-attachment-compact">
+  <div *ngIf="hasAudioAttachment" class="has-attachment">
     <app-single-button-audio-player *ngIf="!!audioUrl" [source]="audioUrl" (click)="toggleAudio()">
       <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
     </app-single-button-audio-player>
