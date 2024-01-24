@@ -146,7 +146,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   playScripture(): void {
     if (this._scriptureAudio?.audio?.isPlaying) {
-      this._scriptureAudio?.stop();
+      this._scriptureAudio.stop();
     } else {
       this._scriptureAudio?.play();
       this.audioPlayed.emit();
@@ -154,7 +154,16 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   playQuestion(): void {
-    this.questionAudio?.audio?.isPlaying ? this.questionAudio?.stop() : this.questionAudio?.play();
+    this.questionAudio?.audio?.isPlaying ? this.questionAudio.stop() : this.questionAudio?.play();
+  }
+
+  stopAudio(): void {
+    if (this.questionAudio?.audio?.isPlaying) {
+      this.questionAudio.stop();
+    }
+    if (this._scriptureAudio?.audio?.isPlaying) {
+      this._scriptureAudio.stop();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

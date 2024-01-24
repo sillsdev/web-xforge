@@ -35,6 +35,7 @@ import { CheckingAudioCombinedComponent } from '../checking-audio-combined/check
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
+import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
 export interface AnswerAction {
   action:
@@ -82,6 +83,7 @@ enum LikeAnswerResponse {
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
   @Input() checkingTextComponent?: CheckingTextComponent;
@@ -359,6 +361,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
         return;
       }
     }
+
+    this.questionComponent?.stopAudio();
 
     const data: QuestionDialogData = {
       questionDoc: this._questionDoc,

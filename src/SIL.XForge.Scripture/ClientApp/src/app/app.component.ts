@@ -168,7 +168,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isSystemAdmin(): boolean {
-    return this.authService.currentUserRole === SystemRole.SystemAdmin;
+    return this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
   }
 
   get currentUser(): User | undefined {

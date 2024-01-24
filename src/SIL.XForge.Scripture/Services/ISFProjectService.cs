@@ -40,6 +40,6 @@ public interface ISFProjectService : IProjectService
         string audioUrl
     );
     Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter);
-    Task SetPreTranslateAsync(string curUserId, string systemRole, string projectId, bool preTranslate);
-    Task SetServalConfigAsync(string curUserId, string systemRole, string projectId, string? servalConfig);
+    Task SetPreTranslateAsync(string curUserId, string[] systemRoles, string projectId, bool preTranslate);
+    Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
 }

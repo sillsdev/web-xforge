@@ -19,6 +19,7 @@ import {
   AuthState,
   EXPIRES_AT_SETTING,
   ID_TOKEN_SETTING,
+  ROLES_SETTING,
   ROLE_SETTING,
   USER_ID_SETTING,
   XF_ROLE_CLAIM,
@@ -143,7 +144,8 @@ describe('AuthService', () => {
     expect(env.isAuthenticated).withContext('logged in isAuthenticated').toBe(true);
     expect(env.service.currentUserId).withContext('logged in currentUserId').toBe(TestEnvironment.userId);
     expect(env.service.idToken).withContext('logged in idToken').toBe(env.auth0Response!.token.id_token);
-    expect(env.service.currentUserRole).withContext('logged in currentUserRole').toBe(SystemRole.SystemAdmin);
+    expect(env.service.currentUserRoles.length).withContext('logged in currentUserRoles').toBe(1);
+    expect(env.service.currentUserRoles[0]).withContext('logged in currentUserRole').toBe(SystemRole.SystemAdmin);
     expect(env.accessToken).withContext('logged in accessToken').toBe(env.auth0Response!.token.access_token);
     expect(env.service.expiresAt)
       .withContext('logged in expiresAt')
@@ -152,7 +154,7 @@ describe('AuthService', () => {
     env.logOut();
     tick();
     expect(env.service.idToken).withContext('logged out idToken').toBeUndefined();
-    expect(env.service.currentUserRole).withContext('logged out currentUserRole').toBeUndefined();
+    expect(env.service.currentUserRoles.length).withContext('logged out currentUserRoles').toBe(0);
     expect(env.accessToken).withContext('logged out accessToken').toBeUndefined();
     expect(env.service.expiresAt).withContext('logged out expiresAt').toBeUndefined();
     verify(mockedWebAuth.logout(anything())).once();
@@ -182,6 +184,93 @@ describe('AuthService', () => {
 
     env.clearTokenExpiryTimer();
     verify(mockedWebAuth.getTokenSilently(anything())).once();
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should allow the old role value', fakeAsync(() => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isLoggedIn: true
+    });
+    env.localSettings.clear();
+    expect(env.service.currentUserRoles.length).toBe(0);
+    env.localSettings.set(ROLE_SETTING, SystemRole.SystemAdmin);
+    expect(env.service.currentUserRoles.length).toBe(1);
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should handle a null role value', fakeAsync(() => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isNewlyLoggedIn: true,
+      auth0Response: {
+        token: {
+          id_token: '12345',
+          access_token: TestEnvironment.encodeAccessToken({
+            [XF_ROLE_CLAIM]: undefined,
+            [XF_USER_ID_CLAIM]: TestEnvironment.userId
+          }),
+          expires_in: 720
+        },
+        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
+        loginResult: {
+          appState: JSON.stringify({ returnUrl: '' })
+        }
+      }
+    });
+
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
+    expect(env.localSettings.get(ROLES_SETTING)).toEqual([]);
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should handle a single role value', fakeAsync(() => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isNewlyLoggedIn: true,
+      auth0Response: {
+        token: {
+          id_token: '12345',
+          access_token: TestEnvironment.encodeAccessToken({
+            [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
+            [XF_USER_ID_CLAIM]: TestEnvironment.userId
+          }),
+          expires_in: 720
+        },
+        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
+        loginResult: {
+          appState: JSON.stringify({ returnUrl: '' })
+        }
+      }
+    });
+
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
+    expect(env.localSettings.get(ROLES_SETTING)).toEqual([SystemRole.SystemAdmin]);
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should handle a role array', fakeAsync(() => {
+    const env = new TestEnvironment({
+      isOnline: true,
+      isNewlyLoggedIn: true,
+      auth0Response: {
+        token: {
+          id_token: '12345',
+          access_token: TestEnvironment.encodeAccessToken({
+            [XF_ROLE_CLAIM]: [SystemRole.SystemAdmin, SystemRole.User],
+            [XF_USER_ID_CLAIM]: TestEnvironment.userId
+          }),
+          expires_in: 720
+        },
+        idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
+        loginResult: {
+          appState: JSON.stringify({ returnUrl: '' })
+        }
+      }
+    });
+
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
+    expect(env.localSettings.get(ROLES_SETTING)).toEqual([SystemRole.SystemAdmin, SystemRole.User]);
     env.discardTokenExpiryTimer();
   }));
 
@@ -614,11 +703,12 @@ interface TestEnvironmentConstructorArgs {
   loginState?: AuthState;
   setTransparentAuthenticationCookie?: boolean;
   accountLinkingResponse?: CommandError;
+  auth0Response?: AuthDetails | undefined;
   callback?: (env: TestEnvironment) => void;
 }
 
 interface Auth0AccessToken {
-  [XF_ROLE_CLAIM]?: SystemRole;
+  [XF_ROLE_CLAIM]?: SystemRole | SystemRole[];
   [XF_USER_ID_CLAIM]?: string;
 }
 
@@ -626,7 +716,7 @@ interface LocalSettings {
   accessToken?: string;
   idToken?: string;
   userId?: string;
-  role?: SystemRole;
+  roles?: SystemRole[];
   expiresAt?: number;
 }
 
@@ -644,7 +734,7 @@ class TestEnvironment {
   ) as TestOnlineStatusService;
   readonly testOnlineStatusServiceSpy: TestOnlineStatusService = spy(this.testOnlineStatusService);
   private tokenExpiryTimer = 720; // 2 hours
-  private localSettings = new Map<string, string | number>();
+  readonly localSettings = new Map<string, string[] | string | number>();
   private _localeSettingsRemoveChanges = new Subject<StorageEvent>();
   private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState: string;
@@ -662,6 +752,7 @@ class TestEnvironment {
     loginState = { returnUrl: '' },
     setTransparentAuthenticationCookie,
     accountLinkingResponse,
+    auth0Response,
     callback
   }: TestEnvironmentConstructorArgs = {}) {
     resetCalls(mockedWebAuth);
@@ -669,7 +760,7 @@ class TestEnvironment {
     this.setOnline(isOnline);
 
     if (isLoggedIn || isNewlyLoggedIn) {
-      this.setLoginResponse();
+      this.setLoginResponse(auth0Response);
       // If logged in but not currently logging in then set local data
       if (isLoggedIn && !isNewlyLoggedIn) {
         this.setLocalLoginData();
@@ -801,10 +892,10 @@ class TestEnvironment {
     this.localSettings.set(EXPIRES_AT_SETTING, 0);
   }
 
-  setLocalLoginData({ idToken, userId, role, expiresAt }: LocalSettings = {}): void {
+  setLocalLoginData({ idToken, userId, roles, expiresAt }: LocalSettings = {}): void {
     this.localSettings.set(ID_TOKEN_SETTING, idToken ?? this.auth0Response!.token.id_token);
     this.localSettings.set(USER_ID_SETTING, userId ?? TestEnvironment.userId);
-    this.localSettings.set(ROLE_SETTING, role ?? SystemRole.SystemAdmin);
+    this.localSettings.set(ROLES_SETTING, roles == null ? [SystemRole.SystemAdmin] : roles);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt ?? (this.tokenExpiryTimer - 30) * 1000 + Date.now());
   }
 

@@ -167,7 +167,7 @@
     "questions": "ຄຳຖາມ",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
     "question_filter_none": "Show all",
-    "question_filter_exportable": "Answers marked for export",
+    "question_filter_exportable": "Answers flagged for review",
     "question_filter_has_answers": "Has answers",
     "question_filter_answered": "Answered",
     "question_filter_no_answers": "No answers",
@@ -193,8 +193,8 @@
     "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "ລຶບ",
     "edit": "ດັດແກ້",
-    "marked_for_export": "Marked for export",
-    "mark_for_export": "Mark for export",
+    "marked_for_export": "Flagged for review",
+    "mark_for_export": "Flag for review",
     "no_scripture_selected": "No scripture selected yet.",
     "record": "ບັນທຶກ",
     "recording_automatically_stopped": "The recording for your answer was automatically stopped.",
@@ -205,7 +205,7 @@
     "select_verses": "ເລືອກຂໍ້",
     "select": "ເລືອກ",
     "show_more_unread": "Show {{ count }} more unread answers",
-    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "ຄໍາ​ຕອບ​ຂອງ​ເຈົ້າ"
   },
@@ -230,6 +230,7 @@
     "upload": "Upload",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
+    "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
   "checking_audio_combined": {
@@ -330,7 +331,7 @@
     "text_size": "Text size"
   },
   "issue_email": {
-    "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\nBe aware your bug report will be publicly available. Never submit passwords or other secrets.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
+    "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
     "not_applicable": "not applicable",
     "subject": "{{ siteName }} issue",
     "unknown": "unknown"

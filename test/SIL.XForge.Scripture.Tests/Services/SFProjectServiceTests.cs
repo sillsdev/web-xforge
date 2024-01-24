@@ -1394,7 +1394,7 @@ public class SFProjectServiceTests
 
         // User04 is a system admin, but not a project-admin or even a user on Project03
         Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
-        Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
+        Assert.That(env.GetUser(User04).Roles.First(), Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
             () => (env.Service.InvitedUsersAsync(User04, Project03)),
@@ -1412,7 +1412,7 @@ public class SFProjectServiceTests
             Is.Not.EqualTo(SFProjectRole.Administrator),
             "test setup"
         );
-        Assert.That(env.GetUser(User02).Role, Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
+        Assert.That(env.GetUser(User02).Roles.First(), Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.InvitedUsersAsync(User02, Project01),
             "should have been forbidden"
@@ -1561,7 +1561,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         // User04 is a system admin, but not a project-admin or even a user on Project03
         Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
-        Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
+        Assert.That(env.GetUser(User04).Roles.First(), Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"),
@@ -3039,15 +3039,23 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         // SUT 1
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.User, Project01, false)
+            async () =>
+                await env.Service.SetPreTranslateAsync(User03, new string[] { SystemRole.User }, Project01, false)
         );
         // SUT 2
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.None, Project01, false)
+            async () =>
+                await env.Service.SetPreTranslateAsync(User03, new string[] { SystemRole.None }, Project01, false)
         );
         // SUT 3
         Assert.DoesNotThrowAsync(
-            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.SystemAdmin, Project01, false)
+            async () =>
+                await env.Service.SetPreTranslateAsync(
+                    User03,
+                    new string[] { SystemRole.SystemAdmin },
+                    Project01,
+                    false
+                )
         );
     }
 
@@ -3058,12 +3066,12 @@ public class SFProjectServiceTests
 
         Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(false));
         // SUT 1
-        await env.Service.SetPreTranslateAsync(User01, SystemRole.SystemAdmin, Project02, true);
+        await env.Service.SetPreTranslateAsync(User01, new string[] { SystemRole.SystemAdmin }, Project02, true);
         Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(true));
 
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(true));
         // SUT 2
-        await env.Service.SetPreTranslateAsync(User01, SystemRole.SystemAdmin, Project01, false);
+        await env.Service.SetPreTranslateAsync(User01, new string[] { SystemRole.SystemAdmin }, Project01, false);
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(false));
     }
 
@@ -3088,7 +3096,12 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig: null);
+        await env.Service.SetServalConfigAsync(
+            User01,
+            new string[] { SystemRole.SystemAdmin },
+            Project01,
+            servalConfig: null
+        );
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3103,7 +3116,13 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<JsonReaderException>(
-            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig)
+            () =>
+                env.Service.SetServalConfigAsync(
+                    User01,
+                    new string[] { SystemRole.SystemAdmin },
+                    Project01,
+                    servalConfig
+                )
         );
     }
 
@@ -3114,7 +3133,12 @@ public class SFProjectServiceTests
         const string servalConfig = "  ";
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+        await env.Service.SetServalConfigAsync(
+            User01,
+            new string[] { SystemRole.SystemAdmin },
+            Project01,
+            servalConfig
+        );
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3129,7 +3153,13 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, "invalid_project", servalConfig)
+            () =>
+                env.Service.SetServalConfigAsync(
+                    User01,
+                    new string[] { SystemRole.SystemAdmin },
+                    "invalid_project",
+                    servalConfig
+                )
         );
     }
 
@@ -3144,7 +3174,12 @@ public class SFProjectServiceTests
         Assert.IsNotNull(project.TranslateConfig.DraftConfig);
 
         // SUT
-        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+        await env.Service.SetServalConfigAsync(
+            User01,
+            new string[] { SystemRole.SystemAdmin },
+            Project01,
+            servalConfig
+        );
 
         // Verify project document
         project = env.GetProject(Project01);
@@ -3159,7 +3194,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetServalConfigAsync(User01, SystemRole.User, Project01, servalConfig)
+            () => env.Service.SetServalConfigAsync(User01, new string[] { SystemRole.User }, Project01, servalConfig)
         );
     }
 
@@ -3179,91 +3214,91 @@ public class SFProjectServiceTests
                             Id = User01,
                             Email = "user01@example.com",
                             ParatextId = "pt-user01",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01, Project03, SourceOnly } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User02,
                             Email = "user02@example.com",
                             ParatextId = "pt-user02",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01, Project02, Project03, Project04, Project06 } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User03,
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
-                            Role = SystemRole.User,
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Roles = new List<string> { SystemRole.User },
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
                         {
                             Id = User04,
                             Email = "user04@example.com",
+                            Roles = new List<string> { SystemRole.SystemAdmin },
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
-                            Role = SystemRole.SystemAdmin
                         },
                         new User
                         {
                             Id = LinkExpiredUser,
                             Email = "expired@example.com",
-                            Role = SystemRole.User,
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                            Roles = new List<string> { SystemRole.User },
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
                         {
                             Id = User05,
                             Email = "user05@example.com",
                             ParatextId = "pt-user05",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01 } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User06,
                             Email = "user06@example.com",
-                            Role = SystemRole.User,
+                            Roles = new List<string> { SystemRole.User },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project01 } }
-                                }
-                            }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User07,
                             Email = "user07@example.com",
-                            Role = SystemRole.SystemAdmin,
+                            Roles = new List<string> { SystemRole.SystemAdmin },
                             Sites = new Dictionary<string, Site>
                             {
                                 {
                                     SiteId,
                                     new Site { Projects = { Project06 } }
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     }
                 )
             );

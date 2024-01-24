@@ -5,6 +5,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -16,11 +17,13 @@ describe('DraftGenerationStepsComponent', () => {
   let fixture: ComponentFixture<DraftGenerationStepsComponent>;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
+  const mockFeatureFlagService = mock(FeatureFlagService);
   const mockProjectService = mock(SFProjectService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }],
+      // Include an 'extra material' book (100) that should be excluded
+      texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 100 }],
       writingSystem: { tag: 'eng' },
       translateConfig: {
         source: { projectRef: 'test' }
@@ -30,7 +33,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockSourceNonNllbProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }],
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 100 }],
       writingSystem: { tag: 'xyz' }
     })
   } as SFProjectProfileDoc;
@@ -44,7 +47,7 @@ describe('DraftGenerationStepsComponent', () => {
 
   const mockAlternateTrainingSourceProjectDoc = {
     data: createTestProjectProfile({
-      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }]
+      texts: [{ bookNum: 2 }, { bookNum: 3 }, { bookNum: 4 }, { bookNum: 5 }, { bookNum: 8 }, { bookNum: 100 }]
     })
   } as SFProjectProfileDoc;
 
@@ -54,6 +57,7 @@ describe('DraftGenerationStepsComponent', () => {
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService },
       { provide: SFProjectService, useMock: mockProjectService }
     ]
   }));
@@ -105,6 +109,7 @@ describe('DraftGenerationStepsComponent', () => {
     beforeEach(fakeAsync(() => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -150,7 +155,8 @@ describe('DraftGenerationStepsComponent', () => {
 
       expect(component.done.emit).toHaveBeenCalledWith({
         translationBooks,
-        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book))
+        trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
+        fastTraining: false
       } as DraftGenerationStepsResult);
     });
 
@@ -185,6 +191,50 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
       expect(component.isTrainingOptional).toBe(true);
     }));
+  });
+
+  describe('allow fast training feature flag is enabled', () => {
+    beforeEach(fakeAsync(() => {
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
+      when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
+
+    it('should emit the fast training value if checked', () => {
+      const trainingBooks = [1, 2];
+      const translationBooks = [3, 4];
+
+      component.userSelectedTrainingBooks = trainingBooks;
+      component.userSelectedTranslateBooks = translationBooks;
+
+      spyOn(component.done, 'emit');
+
+      // Advance to the next step, until the last step which will allow selection of the checkbox
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+
+      // Tick the checkbox
+      const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox input');
+      fastTrainingCheckbox.click();
+
+      // Click next on the final step to generate the draft
+      fixture.detectChanges();
+      component.tryAdvanceStep();
+
+      expect(component.done.emit).toHaveBeenCalledWith({
+        trainingBooks,
+        translationBooks,
+        fastTraining: true
+      } as DraftGenerationStepsResult);
+    });
   });
 
   describe('target contains previously selected books', () => {

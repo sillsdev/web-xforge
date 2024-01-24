@@ -11,18 +11,21 @@
         selected: activeQuestionDoc?.id === questionDoc.id
       }"
     >
-      <div class="question-title">
-        <span class="question-text">{{ questionText(questionDoc) }}</span>
+      <div class="question-item">
+        <div class="question-text">{{ questionText(questionDoc) }}</div>
+        <div class="question-meta">
+          <span class="question-verse">{{ questionVerseRef(questionDoc) }}</span>
+          <a *ngIf="getUnreadAnswers(questionDoc) > 0" class="view-answers" title="{{ t('view_answers') }}">
+            <mat-icon
+              class="mirror-rtl"
+              [matBadge]="getUnreadAnswers(questionDoc)"
+              matBadgePosition="before"
+              matBadgeSize="small"
+              >forum</mat-icon
+            >
+          </a>
+        </div>
       </div>
-      <a *ngIf="getUnreadAnswers(questionDoc) > 0" class="view-answers" title="{{ t('view_answers') }}">
-        <mat-icon
-          class="mirror-rtl"
-          [matBadge]="getUnreadAnswers(questionDoc)"
-          matBadgePosition="before"
-          matBadgeSize="small"
-          >forum</mat-icon
-        >
-      </a>
     </mat-list-item>
   </mat-list>
   <div *ngIf="!hasQuestions && haveQuestionsLoaded" class="no-questions-found">

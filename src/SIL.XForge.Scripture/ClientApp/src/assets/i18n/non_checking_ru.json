@@ -166,15 +166,30 @@
     "preview_last_draft_header": "Preview last draft",
     "preview_last_draft_while_active_build_button": "Preview last draft",
     "preview_last_draft_while_active_build": "While the new draft generation is in progress, you can continue working with the previously generated draft.",
+    "report_problem": "Report problem",
     "sign_up_for_drafting": "Sign up for drafting",
     "suggested_workflow": "A suggested workflow is to draft and edit one book before generating a draft for the next book.",
-    "warning_generation_faulted_detail": "Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
-    "warning_generation_faulted_header": "Last generation attempt failed"
+    "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again."
   },
   "draft_generation_steps": {
-    "choose_books_for_training": "Choose books for training",
+    "back": "Back",
+    "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_subheader": "Select books that have been proofed.",
-    "generate_draft": "Generate draft"
+    "choose_books_for_training": "Choose books for training the language model",
+    "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
+    "choose_books_to_translate": "Choose books to translate",
+    "configure_advanced_settings": "Configure advanced settings",
+    "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
+    "fast_training": "Enable Fast Training",
+    "generate_draft": "Generate draft",
+    "next": "Далее",
+    "no_available_books": "You have no books available for drafting.",
+    "these_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
+    "these_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
+    "training_book_selection_discouraged_info_part1": "Both your source and target languages are in the set of pre-trained language models.",
+    "training_book_selection_discouraged_info_part2_skip_step": "[em]We recommend that you skip this step and continue to \"{{ draft_generation_steps.generate_draft }}\".[/em]",
+    "training_book_selection_discouraged_info_part2_clear_selection": "[em]We recommend that you clear the selected training books and continue to \"{{ draft_generation_steps.generate_draft }}\".[/em]",
+    "training_book_selection_discouraged_warning": "Selecting training data for these languages will slow your build time and may reduce draft quality!"
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
@@ -210,6 +225,14 @@
     "to_report_issue_email": "Чтобы сообщить о проблеме, отправьте сообщение по электронной почте {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "Этот стих слишком длинный для того, чтобы вносить предложения.",
     "your_comment": "Ваш комментарий"
+  },
+  "history_chooser": {
+    "hide": "Hide history",
+    "hide_diff": "Hide differences with previous version",
+    "loading": "History loading...",
+    "not_available_offline": "History is not available offline",
+    "show": "Show history",
+    "show_diff": "Show differences with previous version"
   },
   "import_questions_confirmation_dialog": {
     "done": "Выполнено",
@@ -270,6 +293,7 @@
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
+    "resolve": "Save and resolve",
     "save": "Сохранить",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
@@ -360,7 +384,7 @@
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "export_all": "All answers",
     "export_checking_answers": "Set which answers will be exported as comments when syncing with Paratext.",
-    "export_marked_for_export": "Answers marked for export",
+    "export_marked_for_export": "Answers flagged for review",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
     "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
@@ -369,6 +393,8 @@
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",
     "pre_translation_drafting_description": "Configure options for generating translation drafts.",
+    "pre_translation_send_all_segments": "Pre-translate headings and non-verse material",
+    "pre_translation_send_all_segments_info": "For these to be pre-translated, your translation structure must match your source exactly.",
     "pre_translation_source_text_placeholder": "Alternate drafting source text (optional)",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
@@ -416,7 +442,7 @@
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
     "your_project_is_being_synchronized": "Your project is being synchronized...",
     "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again.",
-    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please report the problem by writing to {{email}}."
   },
   "text_note_dialog": {
     "cross_reference": "Cross-reference",

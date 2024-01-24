@@ -1995,6 +1995,40 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartBuildAsync_ServalRecreatesWhenLanguageChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineProjectService.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult(new TranslationEngine { SourceLanguage = "fr", TargetLanguage = "de" }));
+        env.TranslationEnginesClient.StartBuildAsync(
+            TranslationEngine01,
+            Arg.Any<TranslationBuildConfig>(),
+            CancellationToken.None
+        )
+            .Returns(Task.FromResult(new TranslationBuild()));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+        Assert.IsNotNull(actual);
+        await env.MachineProjectService.Received(1)
+            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received(1)
+            .RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received(1)
+            .SyncProjectCorporaAsync(
+                User01,
+                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
+                preTranslate: false,
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task StartBuildAsync_ServalSuccess()
     {
         // Set up test environment
@@ -2146,6 +2180,70 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
         );
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_ParatextZip()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+            .Returns(Task.FromResult(true));
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Set(
+                    p => p.ServalData,
+                    new ServalData
+                    {
+                        PreTranslationEngineId = TranslationEngine01,
+                        Corpora =
+                        {
+                            {
+                                "corpusId1",
+                                new ServalCorpus { PreTranslate = true, UploadParatextZipFile = true }
+                            },
+                        },
+                    }
+                )
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project02 && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_ParatextZipFirstRun()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+            .Returns(Task.FromResult(true));
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project02 && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
     }
 
     [Test]
@@ -3019,6 +3117,7 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
                 .Returns(Task.FromResult(true));
+            var mockLogger = new MockLogger<MachineApiService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
@@ -3072,6 +3171,9 @@ public class MachineApiServiceTests
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
+            TranslationEnginesClient
+                .GetAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationEngine()));
 
             Service = new MachineApiService(
                 BackgroundJobClient,
@@ -3081,6 +3183,7 @@ public class MachineApiServiceTests
                 EngineService,
                 ExceptionHandler,
                 FeatureManager,
+                mockLogger,
                 MachineProjectService,
                 PreTranslationService,
                 ProjectSecrets,

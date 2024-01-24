@@ -1,0 +1,75 @@
+use('xforge')
+
+// This query attempts to find the number of comment threads created on each project by users with the sf_commenter role
+
+db.sf_projects.aggregate([
+  {
+    $project: {
+      _id: 0,
+      projectId: '$_id',
+      shortName: 1,
+      userRoles: { $objectToArray: '$userRoles' },
+    }
+  },
+  {
+    $unwind: '$userRoles'
+  },
+  {
+    $match: {
+      'userRoles.v': 'sf_commenter'
+    }
+  },
+  {
+    $project: {
+      projectId: 1,
+      shortName: 1,
+      userId: '$userRoles.k',
+    }
+  },
+  // look up note_threads matching the project and user
+  {
+    $lookup: {
+      from: 'note_threads',
+      let: {
+        projectId: '$projectId',
+        userId: '$userId',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ['$projectRef', '$$projectId'] },
+                { $eq: ['$ownerRef', '$$userId'] },
+              ]
+            }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            projectId: '$projectRef',
+            userId: '$ownerRef',
+          }
+        }
+      ],
+      as: 'noteThreads'
+    }
+  },
+  {
+    $unwind: {
+      path: '$noteThreads',
+    }
+  },
+  {
+    $group: {
+      _id: '$shortName',
+      commenterThreads: { $sum: 1 },
+    }
+  },
+  {
+    $sort: {
+      commenterThreads: -1
+    }
+  }
+])

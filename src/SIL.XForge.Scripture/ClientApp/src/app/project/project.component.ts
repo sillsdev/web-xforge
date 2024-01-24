@@ -113,7 +113,10 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     task: TaskType = 'translate'
   ): void {
     const routePath = ['projects', projectId, task];
-    const bookNum: number | undefined = projectUserConfig.selectedBookNum ?? project.texts[0]?.bookNum;
+    let bookNum: number | undefined = projectUserConfig.selectedBookNum;
+    if (bookNum == null || !project.texts.some(t => t.bookNum === bookNum)) {
+      bookNum = project.texts[0]?.bookNum;
+    }
 
     if (bookNum != null) {
       routePath.push(Canon.bookNumberToId(bookNum));

@@ -283,6 +283,20 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly allowFastTraining: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'ALLOW_FAST_TRAINING',
+    'Allow Fast Pre-Translation Training',
+    11,
+    this.featureFlagStore
+  );
+
+  private readonly uploadParatextZipForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+    'UploadParatextZipForPreTranslation',
+    'Upload Paratext Zip Files for Pre-Translation Drafting',
+    12,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

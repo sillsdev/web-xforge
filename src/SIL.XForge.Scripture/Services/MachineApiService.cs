@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Polly.CircuitBreaker;
@@ -67,6 +68,7 @@ public class MachineApiService : IMachineApiService
     private readonly IEngineService _engineService;
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFeatureManager _featureManager;
+    private readonly ILogger<MachineApiService> _logger;
     private readonly IMachineProjectService _machineProjectService;
     private readonly IPreTranslationService _preTranslationService;
     private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
@@ -83,6 +85,7 @@ public class MachineApiService : IMachineApiService
         IEngineService engineService,
         IExceptionHandler exceptionHandler,
         IFeatureManager featureManager,
+        ILogger<MachineApiService> logger,
         IMachineProjectService machineProjectService,
         IPreTranslationService preTranslationService,
         DataAccess.IRepository<SFProjectSecret> projectSecrets,
@@ -100,6 +103,7 @@ public class MachineApiService : IMachineApiService
         // Shared Dependencies
         _exceptionHandler = exceptionHandler;
         _featureManager = featureManager;
+        _logger = logger;
 
         // Serval Dependencies
         _backgroundJobClient = backgroundJobClient;
@@ -649,6 +653,65 @@ public class MachineApiService : IMachineApiService
                         cancellationToken
                     );
                 }
+                else
+                {
+                    // Ensure that the source and target language have not changed
+                    bool recreateTranslationEngine = false;
+
+                    // Load the project from the realtime service
+                    await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+                    IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+                    if (!projectDoc.IsLoaded)
+                    {
+                        throw new DataNotFoundException("The project does not exist.");
+                    }
+
+                    // Get the translation engine
+                    TranslationEngine translationEngine = await _translationEnginesClient.GetAsync(
+                        translationEngineId,
+                        cancellationToken
+                    );
+
+                    // See if the target language has changed
+                    string projectTargetLanguage = projectDoc.Data.WritingSystem.Tag;
+                    if (translationEngine.TargetLanguage != projectTargetLanguage)
+                    {
+                        string message =
+                            $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
+                        _logger.LogInformation(message);
+                        recreateTranslationEngine = true;
+                    }
+
+                    // See if the source language has changed
+                    string projectSourceLanguage = projectDoc.Data.TranslateConfig.Source?.WritingSystem.Tag;
+                    if (translationEngine.SourceLanguage != projectSourceLanguage)
+                    {
+                        string message =
+                            $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
+                        _logger.LogInformation(message);
+                        recreateTranslationEngine = true;
+                    }
+
+                    // Delete then recreate the translation engine if they have changed
+                    if (recreateTranslationEngine)
+                    {
+                        // Removal can be a slow process
+                        await _machineProjectService.RemoveProjectAsync(
+                            curUserId,
+                            sfProjectId,
+                            preTranslate: false,
+                            cancellationToken
+                        );
+
+                        // We use AddProjectAsync, as the In-Process Machine may be enabled
+                        translationEngineId = await _machineProjectService.AddProjectAsync(
+                            curUserId,
+                            sfProjectId,
+                            preTranslate: false,
+                            cancellationToken
+                        );
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -766,14 +829,36 @@ public class MachineApiService : IMachineApiService
             );
         });
 
-        // If we have an alternate source, sync that first
+        // If support for uploading Paratext zip files is enabled
         string? jobId = null;
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation))
+        {
+            // Sync the project if this is a pre-translation project using Paratext Zip format
+            // If a build has not been run, we will still need to sync, as the upload will be a zip by default
+            if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+            {
+                throw new DataNotFoundException("The project secret cannot be found.");
+            }
+            string? corpusId = projectSecret
+                .ServalData?.Corpora
+                .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+                .Key;
+            if (corpusId is null || projectSecret.ServalData?.Corpora[corpusId].UploadParatextZipFile == true)
+            {
+                jobId = await _syncService.SyncAsync(
+                    new SyncConfig { ProjectId = buildConfig.ProjectId, UserId = curUserId }
+                );
+            }
+        }
+
+        // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
         if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
         {
             jobId = await _syncService.SyncAsync(
                 new SyncConfig
                 {
+                    ParentJobId = jobId,
                     ProjectId = alternateSourceProjectId,
                     TargetOnly = true,
                     UserId = curUserId,

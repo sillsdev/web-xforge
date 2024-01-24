@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
+using SIL.Scripture;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -40,10 +45,12 @@ public class MachineProjectService : IMachineProjectService
     private readonly IEngineService _engineService;
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFeatureManager _featureManager;
+    private readonly IFileSystemService _fileSystemService;
     private readonly ILogger<MachineProjectService> _logger;
     private readonly IParatextService _paratextService;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRealtimeService _realtimeService;
+    private readonly IOptions<SiteOptions> _siteOptions;
     private readonly ISFTextCorpusFactory _textCorpusFactory;
     private readonly ITranslationEnginesClient _translationEnginesClient;
     private readonly IRepository<UserSecret> _userSecrets;
@@ -53,10 +60,12 @@ public class MachineProjectService : IMachineProjectService
         IEngineService engineService,
         IExceptionHandler exceptionHandler,
         IFeatureManager featureManager,
+        IFileSystemService fileSystemService,
         ILogger<MachineProjectService> logger,
         IParatextService paratextService,
         IRepository<SFProjectSecret> projectSecrets,
         IRealtimeService realtimeService,
+        IOptions<SiteOptions> siteOptions,
         ISFTextCorpusFactory textCorpusFactory,
         ITranslationEnginesClient translationEnginesClient,
         IRepository<UserSecret> userSecrets
@@ -66,10 +75,12 @@ public class MachineProjectService : IMachineProjectService
         _engineService = engineService;
         _exceptionHandler = exceptionHandler;
         _featureManager = featureManager;
+        _fileSystemService = fileSystemService;
         _logger = logger;
         _paratextService = paratextService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
+        _siteOptions = siteOptions;
         _textCorpusFactory = textCorpusFactory;
         _translationEnginesClient = translationEnginesClient;
         _userSecrets = userSecrets;
@@ -338,9 +349,10 @@ public class MachineProjectService : IMachineProjectService
                 translationEngineId = projectSecret.ServalData!.PreTranslationEngineId!;
 
                 // Execute a complete pre-translation
-                translationBuildConfig = GetTranslationBuildConfig(
+                translationBuildConfig = await GetTranslationBuildConfigAsync(
                     projectSecret.ServalData,
-                    projectDoc.Data.TranslateConfig.DraftConfig
+                    projectDoc.Data.TranslateConfig.DraftConfig,
+                    buildConfig
                 );
             }
             else
@@ -396,6 +408,18 @@ public class MachineProjectService : IMachineProjectService
             await _projectSecrets.UpdateAsync(
                 buildConfig.ProjectId,
                 u => u.Unset(p => p.ServalData.PreTranslationQueuedAt)
+            );
+        }
+        catch (ServalApiException e) when (e.StatusCode == 409)
+        {
+            // A build is already in progress - clear the job details and do not record the error
+            await _projectSecrets.UpdateAsync(
+                buildConfig.ProjectId,
+                u =>
+                {
+                    u.Unset(p => p.ServalData.PreTranslationJobId);
+                    u.Unset(p => p.ServalData.PreTranslationQueuedAt);
+                }
             );
         }
         catch (Exception e)
@@ -602,6 +626,12 @@ public class MachineProjectService : IMachineProjectService
             )
             .Key;
 
+        // See if we are uploading a Paratext zip file
+        bool uploadParatextZipFile =
+            preTranslate
+            && await _featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+            && (corpusId == null || projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile);
+
         // See if there is a training corpus
         string? alternateTrainingSourceCorpusId = null;
         bool useAlternateTrainingSource =
@@ -623,17 +653,25 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Reuse the SFTextCorpusFactory implementation
-        IEnumerable<ISFText> texts = await _textCorpusFactory.CreateAsync(
-            new[] { project.Id },
-            TextCorpusType.Source,
-            preTranslate,
-            useAlternateTrainingSource: false,
-            buildConfig
-        );
+        // This is only necessary for SMT suggestions or pre-Paratext zip support NMT projects
+        IEnumerable<ISFText> texts = new List<ISFText>();
+        if (!uploadParatextZipFile)
+        {
+            texts = await _textCorpusFactory.CreateAsync(
+                new[] { project.Id },
+                TextCorpusType.Source,
+                preTranslate,
+                useAlternateTrainingSource: false,
+                buildConfig
+            );
+        }
+
         var newSourceCorpusFiles = new List<ServalCorpusFile>();
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
+            project.TranslateConfig.Source!.ParatextId,
             includeBlankSegments: true,
+            uploadParatextZipFile,
             texts,
             oldSourceCorpusFiles,
             newSourceCorpusFiles,
@@ -647,17 +685,24 @@ public class MachineProjectService : IMachineProjectService
             oldTargetCorpusFiles = projectSecret.ServalData.Corpora[corpusId].TargetFiles;
         }
 
-        texts = await _textCorpusFactory.CreateAsync(
-            new[] { project.Id },
-            TextCorpusType.Target,
-            preTranslate,
-            useAlternateTrainingSource: false,
-            buildConfig
-        );
+        // Only specify the text corpus if we are not uploading to Paratext
+        if (!uploadParatextZipFile)
+        {
+            texts = await _textCorpusFactory.CreateAsync(
+                new[] { project.Id },
+                TextCorpusType.Target,
+                preTranslate,
+                useAlternateTrainingSource: false,
+                buildConfig
+            );
+        }
+
         List<ServalCorpusFile> newTargetCorpusFiles = new List<ServalCorpusFile>();
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
-            preTranslate,
+            project.ParatextId,
+            includeBlankSegments: preTranslate,
+            uploadParatextZipFile,
             texts,
             oldTargetCorpusFiles,
             newTargetCorpusFiles,
@@ -678,16 +723,23 @@ public class MachineProjectService : IMachineProjectService
                     .SourceFiles;
             }
 
-            texts = await _textCorpusFactory.CreateAsync(
-                new[] { project.Id },
-                TextCorpusType.Source,
-                preTranslate: true,
-                useAlternateTrainingSource: true,
-                buildConfig
-            );
+            // Only specify the text corpus if we are not uploading to Paratext
+            if (!uploadParatextZipFile)
+            {
+                texts = await _textCorpusFactory.CreateAsync(
+                    new[] { project.Id },
+                    TextCorpusType.Source,
+                    preTranslate,
+                    useAlternateTrainingSource: true,
+                    buildConfig
+                );
+            }
+
             corpusUpdated |= await UploadNewCorpusFilesAsync(
                 project.Id,
+                project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId,
                 includeBlankSegments: true,
+                uploadParatextZipFile,
                 texts,
                 oldAlternateTrainingSourceCorpusFiles,
                 newAlternateTrainingSourceCorpusFiles,
@@ -702,6 +754,7 @@ public class MachineProjectService : IMachineProjectService
             corpusId,
             preTranslate,
             useAlternateTrainingSource: false,
+            uploadParatextZipFile,
             corpusUpdated,
             newSourceCorpusFiles,
             newTargetCorpusFiles,
@@ -717,6 +770,7 @@ public class MachineProjectService : IMachineProjectService
                 corpusId: alternateTrainingSourceCorpusId,
                 preTranslate: true,
                 useAlternateTrainingSource: true,
+                uploadParatextZipFile,
                 corpusUpdated,
                 sourceCorpusFiles: newAlternateTrainingSourceCorpusFiles,
                 newTargetCorpusFiles,
@@ -845,23 +899,101 @@ public class MachineProjectService : IMachineProjectService
     /// <param name="draftConfig">
     /// The Draft configuration from <see cref="SFProject"/>.<see cref="TranslateConfig"/>.
     /// </param>
+    /// <param name="buildConfig">The build configuration from the user, specified on the front end.</param>
     /// <returns>The TranslationBuildConfig for a Pre-Translate build.</returns>
     /// <remarks>Do not use with SMT builds.</remarks>
-    private static TranslationBuildConfig GetTranslationBuildConfig(ServalData servalData, DraftConfig draftConfig) =>
-        new TranslationBuildConfig
+    private async Task<TranslationBuildConfig> GetTranslationBuildConfigAsync(
+        ServalData servalData,
+        DraftConfig draftConfig,
+        BuildConfig buildConfig
+    )
+    {
+        // Load the Serval Config from the Draft Config
+        JObject? servalConfig = null;
+        if (draftConfig.ServalConfig is not null)
         {
-            Options = draftConfig.ServalConfig is null ? null : JObject.Parse(draftConfig.ServalConfig),
-            Pretranslate = servalData
-                .Corpora.Where(s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource)
-                .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
-                .ToList(),
-            TrainOn = draftConfig.AlternateTrainingSourceEnabled
-                ? servalData
-                    .Corpora.Where(s => s.Value.PreTranslate && s.Value.AlternateTrainingSource)
-                    .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
-                    .ToList()
-                : null,
+            servalConfig = JObject.Parse(draftConfig.ServalConfig);
+        }
+
+        // If Fast Training is enabled, override the max_steps
+        if (buildConfig.FastTraining)
+        {
+            // Ensure that there is a servalConfig JSON object
+            servalConfig ??= new JObject();
+
+            // 20 is the number of steps used on Serval QA by default
+            servalConfig["max_steps"] = 20;
+        }
+
+        // See if uploading Paratext Zip files is enabled
+        bool uploadParatextZipFile = await _featureManager.IsEnabledAsync(
+            FeatureFlags.UploadParatextZipForPreTranslation
+        );
+
+        // Set up the pre-translation and training corpora
+        List<PretranslateCorpusConfig> preTranslate = new List<PretranslateCorpusConfig>();
+        List<TrainingCorpusConfig>? trainOn = null;
+
+        // Add the pre-translation books
+        foreach (
+            KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
+                s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource
+            )
+        )
+        {
+            var preTranslateCorpusConfig = new PretranslateCorpusConfig { CorpusId = corpus.Key };
+
+            // If this is a Paratext zip file corpus, and the feature flag is enabled
+            if (uploadParatextZipFile && corpus.Value.UploadParatextZipFile)
+            {
+                // Since all books are uploaded via the zip file, we need to specify the target books to translate
+                preTranslateCorpusConfig.TextIds = buildConfig.TranslationBooks.Select(Canon.BookNumberToId).ToList();
+
+                if (!draftConfig.AlternateTrainingSourceEnabled)
+                {
+                    // As we do not have an alternate train on source specified, use the source texts to train on
+                    trainOn ??= new List<TrainingCorpusConfig>();
+                    trainOn.Add(
+                        new TrainingCorpusConfig
+                        {
+                            CorpusId = corpus.Key,
+                            TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList(),
+                        }
+                    );
+                }
+            }
+
+            preTranslate.Add(preTranslateCorpusConfig);
+        }
+
+        // Add the alternate training source, if enabled
+        if (draftConfig.AlternateTrainingSourceEnabled)
+        {
+            trainOn = new List<TrainingCorpusConfig>();
+            foreach (
+                KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
+                    s => s.Value.PreTranslate && s.Value.AlternateTrainingSource
+                )
+            )
+            {
+                var trainingCorpusConfig = new TrainingCorpusConfig { CorpusId = corpus.Key };
+                if (uploadParatextZipFile && corpus.Value.UploadParatextZipFile)
+                {
+                    // As all books are uploaded via the zip file, specify the source books to train on
+                    trainingCorpusConfig.TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList();
+                }
+
+                trainOn.Add(trainingCorpusConfig);
+            }
+        }
+
+        return new TranslationBuildConfig
+        {
+            Options = servalConfig,
+            Pretranslate = preTranslate,
+            TrainOn = trainOn,
         };
+    }
 
     /// <summary>
     /// Creates a project in Serval.
@@ -942,6 +1074,109 @@ public class MachineProjectService : IMachineProjectService
         return translationEngineId;
     }
 
+    private async Task<bool> UploadFileAsync(
+        string textId,
+        string textFileData,
+        FileFormat fileFormat,
+        ICollection<ServalCorpusFile>? oldCorpusFiles,
+        ICollection<ServalCorpusFile> newCorpusFiles,
+        CancellationToken cancellationToken
+    )
+    {
+        byte[] buffer = Encoding.UTF8.GetBytes(textFileData);
+        await using Stream stream = new MemoryStream(buffer, false);
+        return await UploadFileAsync(textId, stream, fileFormat, oldCorpusFiles, newCorpusFiles, cancellationToken);
+    }
+
+    private async Task<bool> UploadFileAsync(
+        string textId,
+        Stream stream,
+        FileFormat fileFormat,
+        ICollection<ServalCorpusFile>? oldCorpusFiles,
+        ICollection<ServalCorpusFile> newCorpusFiles,
+        CancellationToken cancellationToken
+    )
+    {
+        // See if the corpus exists and update it if it is missing, or if the checksum has changed
+        bool uploadText = false;
+
+        // Reset the stream to the start
+        stream.Seek(0, SeekOrigin.Begin);
+
+        // Calculate the checksum from the stream
+        using MD5 md5 = MD5.Create();
+        StringBuilder sb = new StringBuilder();
+        foreach (var hashByte in await md5.ComputeHashAsync(stream, cancellationToken))
+        {
+            sb.Append(hashByte.ToString("X2").ToLower());
+        }
+
+        // Upload the file if it is not there or has changed
+        string checksum = sb.ToString();
+        ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(c => c.TextId == textId);
+        if (previousCorpusFile is null || previousCorpusFile.FileChecksum != checksum)
+        {
+            uploadText = true;
+        }
+
+        // No update, so do not upload
+        if (!uploadText)
+        {
+            newCorpusFiles.Add(previousCorpusFile);
+            return false;
+        }
+
+        // Reset the stream to the start
+        stream.Seek(0, SeekOrigin.Begin);
+
+        // Upload the file
+        DataFile dataFile;
+        if (previousCorpusFile is null)
+        {
+            dataFile = await _dataFilesClient.CreateAsync(
+                new FileParameter(stream),
+                fileFormat,
+                textId,
+                cancellationToken
+            );
+        }
+        else
+        {
+            // See if the file exists, and it is the same format
+            bool dataFileExists;
+            try
+            {
+                dataFile = await _dataFilesClient.GetAsync(previousCorpusFile.FileId, cancellationToken);
+                dataFileExists = dataFile.Format == fileFormat;
+            }
+            catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+            {
+                _logger.LogInformation($"File {previousCorpusFile.FileId} does not exist - creating.");
+                dataFileExists = false;
+            }
+
+            // Update the file if it exists, otherwise create it
+            dataFile = dataFileExists
+                ? await _dataFilesClient.UpdateAsync(
+                    previousCorpusFile.FileId,
+                    new FileParameter(stream),
+                    cancellationToken
+                )
+                : await _dataFilesClient.CreateAsync(new FileParameter(stream), fileFormat, textId, cancellationToken);
+        }
+
+        newCorpusFiles.Add(
+            new ServalCorpusFile
+            {
+                FileChecksum = checksum,
+                FileId = dataFile.Id,
+                TextId = textId,
+            }
+        );
+
+        return true;
+    }
+
     /// <summary>
     /// Gets the target language for the project
     /// </summary>
@@ -979,6 +1214,7 @@ public class MachineProjectService : IMachineProjectService
     /// <param name="corpusId">The corpus identifier. If <c>null</c>, a new corpus is created.</param>
     /// <param name="preTranslate">The project is for pre-translation.</param>
     /// <param name="useAlternateTrainingSource">If <c>true</c>, use the alternate training source.</param>
+    /// <param name="uploadParatextZipFile">A Paratext zip file was used for the upload.</param>
     /// <param name="corpusUpdated">The files in the corpus have been updated.</param>
     /// <param name="sourceCorpusFiles">The source corpus files.</param>
     /// <param name="targetCorpusFiles">The target corpus files.</param>
@@ -990,6 +1226,7 @@ public class MachineProjectService : IMachineProjectService
         string? corpusId,
         bool preTranslate,
         bool useAlternateTrainingSource,
+        bool uploadParatextZipFile,
         bool corpusUpdated,
         List<ServalCorpusFile> sourceCorpusFiles,
         List<ServalCorpusFile> targetCorpusFiles,
@@ -1097,6 +1334,7 @@ public class MachineProjectService : IMachineProjectService
                         TargetFiles = targetCorpusFiles,
                         PreTranslate = preTranslate,
                         AlternateTrainingSource = useAlternateTrainingSource,
+                        UploadParatextZipFile = uploadParatextZipFile,
                     }
                 )
         );
@@ -1108,8 +1346,13 @@ public class MachineProjectService : IMachineProjectService
     /// Syncs a collection of <see cref="ISFText"/> to Serval, creating files on Serval as necessary.
     /// </summary>
     /// <param name="projectId">The project identifier.</param>
+    /// <param name="paratextId">The Paratext identifier.</param>
     /// <param name="includeBlankSegments">
     /// <c>true</c> if we are to include blank segments (usually for a pre-translation target); otherwise <c>false</c>.
+    /// This is not used if <paramref name="uploadParatextZipFile"/> is <c>true</c>.
+    /// </param>
+    /// <param name="uploadParatextZipFile">
+    /// <c>true</c> if we are uploading a Paratext zip file; otherwise <c>false</c>.
     /// </param>
     /// <param name="texts">The texts created by <see cref="SFTextCorpusFactory"/>.</param>
     /// <param name="oldCorpusFiles">The existing corpus files (optional).</param>
@@ -1121,7 +1364,9 @@ public class MachineProjectService : IMachineProjectService
     /// </remarks>
     private async Task<bool> UploadNewCorpusFilesAsync(
         string projectId,
+        string paratextId,
         bool includeBlankSegments,
+        bool uploadParatextZipFile,
         IEnumerable<ISFText> texts,
         ICollection<ServalCorpusFile>? oldCorpusFiles,
         ICollection<ServalCorpusFile> newCorpusFiles,
@@ -1131,74 +1376,63 @@ public class MachineProjectService : IMachineProjectService
         // Used to return whether the corpus files were created or updated
         bool corpusUpdated = false;
 
-        // Sync each text
-        foreach (ISFText text in texts)
+        // Upload the Paratext zip file, if we are supposed to
+        if (uploadParatextZipFile)
         {
-            string textFileData = GetTextFileData(text, includeBlankSegments);
-            if (!string.IsNullOrWhiteSpace(textFileData))
+            // Get the path to the Paratext directory
+            string path = Path.Combine(_siteOptions.Value.SiteDir, "sync", paratextId, "target");
+
+            // Ensure that the path exists
+            if (!_fileSystemService.DirectoryExists(path))
             {
-                // Remove the project id from the start of the text id (if present)
-                string textId = text.Id.StartsWith($"{projectId}_") ? text.Id[(projectId.Length + 1)..] : text.Id;
+                throw new DirectoryNotFoundException($"The following directory could not be found: {path}");
+            }
 
-                // See if the corpus exists and update it if it is missing, or if the checksum has changed
-                bool uploadText = false;
-                string checksum = StringUtils.ComputeMd5Hash(textFileData);
-                ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(c => c.TextId == textId);
-                if (previousCorpusFile is null || previousCorpusFile.FileChecksum != checksum)
+            // Create the zip file from the directory in memory
+            await using var memoryStream = new MemoryStream();
+            using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+            {
+                // Do not convert the ZipArchive using statement above into a using declaration,
+                // otherwise the ZipArchive disposal will crash after the MemoryStream disposal.
+                foreach (string filePath in _fileSystemService.EnumerateFiles(path))
                 {
-                    uploadText = true;
+                    await using Stream fileStream = _fileSystemService.OpenFile(filePath, FileMode.Open);
+                    ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
+                    await using Stream entryStream = entry.Open();
+                    await fileStream.CopyToAsync(entryStream, cancellationToken);
                 }
+            }
 
-                // Upload the file if it is not there or has changed
-                if (uploadText)
+            // Upload the zip file
+            corpusUpdated = await UploadFileAsync(
+                projectId,
+                memoryStream,
+                FileFormat.Paratext,
+                oldCorpusFiles,
+                newCorpusFiles,
+                cancellationToken
+            );
+        }
+        else
+        {
+            // Sync each text
+            foreach (ISFText text in texts)
+            {
+                string textFileData = GetTextFileData(text, includeBlankSegments);
+                if (!string.IsNullOrWhiteSpace(textFileData))
                 {
-                    await using MemoryStream data = new MemoryStream(Encoding.UTF8.GetBytes(textFileData));
-                    DataFile dataFile;
-                    if (previousCorpusFile is null)
-                    {
-                        dataFile = await _dataFilesClient.CreateAsync(
-                            new FileParameter(data),
-                            FileFormat.Text,
-                            textId,
-                            cancellationToken
-                        );
-                    }
-                    else
-                    {
-                        try
-                        {
-                            dataFile = await _dataFilesClient.UpdateAsync(
-                                previousCorpusFile.FileId,
-                                new FileParameter(data),
-                                cancellationToken
-                            );
-                        }
-                        catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
-                        {
-                            _logger.LogInformation($"File {previousCorpusFile.FileId} does not exist - creating.");
-                            dataFile = await _dataFilesClient.CreateAsync(
-                                new FileParameter(data),
-                                FileFormat.Text,
-                                textId,
-                                cancellationToken
-                            );
-                        }
-                    }
+                    // Remove the project id from the start of the text id (if present)
+                    string textId = text.Id.StartsWith($"{projectId}_") ? text.Id[(projectId.Length + 1)..] : text.Id;
 
-                    newCorpusFiles.Add(
-                        new ServalCorpusFile
-                        {
-                            FileChecksum = checksum,
-                            FileId = dataFile.Id,
-                            TextId = textId,
-                        }
+                    // Upload the text file
+                    corpusUpdated |= await UploadFileAsync(
+                        textId,
+                        textFileData,
+                        FileFormat.Text,
+                        oldCorpusFiles,
+                        newCorpusFiles,
+                        cancellationToken
                     );
-
-                    corpusUpdated = true;
-                }
-                else
-                {
-                    newCorpusFiles.Add(previousCorpusFile);
                 }
             }
         }

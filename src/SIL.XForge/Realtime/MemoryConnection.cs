@@ -84,6 +84,49 @@ public class MemoryConnection : IConnection
     /// </exception>
     public Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id) => throw new NotImplementedException();
 
+    /// <summary>
+    /// Fetches a document snapshot at a point in time asynchronously.
+    /// </summary>
+    public async Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
+        where T : IIdentifiable
+    {
+        var doc = Get<T>(id);
+        await doc.FetchAsync();
+        return new Snapshot<T>
+        {
+            Data = doc.Data,
+            Id = doc.Id,
+            Version = doc.Version,
+        };
+    }
+
+    /// <summary>
+    /// Gets the ops for a document.
+    /// </summary>
+    /// <returns>A default Op array for test purposes.</returns>
+    public Task<Op[]> GetOpsAsync<T>(string id)
+        where T : IIdentifiable =>
+        Task.FromResult(
+            new Op[]
+            {
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-30) },
+                    Version = 1,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-10) },
+                    Version = 2,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow },
+                    Version = 3,
+                },
+            }
+        );
+
     public IDocument<T> Get<T>(string id)
         where T : IIdentifiable
     {

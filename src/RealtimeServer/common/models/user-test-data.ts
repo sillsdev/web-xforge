@@ -15,7 +15,7 @@ function testUser(ordinal: number): User {
     ...testUserProfile(ordinal),
     name: `Name of test user ${ordinal}`,
     email: `user${ordinal}@example.com`,
-    role: SystemRole.User,
+    roles: [SystemRole.User],
     isDisplayNameConfirmed: false,
     interfaceLanguage: 'en',
     authId: `authId${ordinal}`,

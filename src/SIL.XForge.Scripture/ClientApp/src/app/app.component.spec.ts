@@ -374,6 +374,7 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
+    when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedInState$).thenReturn(this.loggedInState$);
     this.setCurrentUser('user01');

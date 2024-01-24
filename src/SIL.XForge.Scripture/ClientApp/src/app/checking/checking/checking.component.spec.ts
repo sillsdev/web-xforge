@@ -2096,45 +2096,52 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('pauses audio when changing chapter', fakeAsync(() => {
+    it('stops audio when changing chapter', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const audio = mock(CheckingScriptureAudioPlayerComponent);
-      env.component.scriptureAudioPlayer = instance(audio);
+      const audio = env.mockScriptureAudioAndPlay();
 
       env.component.chapter = 2;
 
-      verify(audio.pause()).once();
+      verify(audio.stop()).once();
       expect(env.component).toBeDefined();
       flush();
       discardPeriodicTasks();
     }));
 
-    it('stops audio when changing question', fakeAsync(() => {
+    it('audio continues when changing question on the same chapter', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const audio = mock(CheckingScriptureAudioPlayerComponent);
-      when(audio.isPlaying).thenReturn(true);
-      env.component.scriptureAudioPlayer = instance(audio);
+      const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(4);
 
-      verify(audio.stop()).once();
+      verify(audio.stop()).never();
       expect(env.component).toBeDefined();
       flush();
     }));
 
+    it('audio continues when adding an answer on a question', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const audio = env.mockScriptureAudioAndPlay();
+
+      env.answerQuestion('Answer while audio is playing');
+      env.waitForQuestionTimersToComplete();
+      verify(audio.stop()).never();
+      expect(env.component).toBeDefined();
+    }));
+
+    it('pauses chapter audio when adding a question', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const audio = env.mockScriptureAudioAndPlay();
+
+      env.clickButton(env.addQuestionButton);
+      env.waitForQuestionTimersToComplete();
+      verify(audio.pause()).once();
+      expect(env.component).toBeDefined();
+    }));
+
     it('pauses audio when question is archived', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const audio = mock(CheckingScriptureAudioPlayerComponent);
-      env.component.scriptureAudioPlayer = instance(audio);
+      const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(1);
       const question = env.component.answersPanel!.questionDoc!.data!;
@@ -2898,7 +2905,7 @@ class TestEnvironment {
   }
 
   getQuestionText(question: DebugElement): string {
-    return question.query(By.css('.question-title span')).nativeElement.textContent;
+    return question.query(By.css('.question-text')).nativeElement.textContent;
   }
 
   getSaveCommentButton(answerIndex: number): DebugElement {
@@ -3055,6 +3062,16 @@ class TestEnvironment {
   setQuestionFilter(filter: QuestionFilter): void {
     this.component.setQuestionFilter(filter);
     this.waitForQuestionTimersToComplete();
+  }
+
+  mockScriptureAudioAndPlay(): CheckingScriptureAudioPlayerComponent {
+    this.component.toggleAudio();
+    this.fixture.detectChanges();
+
+    const audio = mock(CheckingScriptureAudioPlayerComponent);
+    when(audio.isPlaying).thenReturn(true);
+    this.component.scriptureAudioPlayer = instance(audio);
+    return audio;
   }
 
   simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user'): void {

@@ -20,7 +20,7 @@ export class SystemAdminAuthGuard {
     return this.authGuard.allowTransition().pipe(
       map(isLoggedIn => {
         if (isLoggedIn) {
-          return this.authService.currentUserRole === SystemRole.SystemAdmin;
+          return this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
         }
         return false;
       })

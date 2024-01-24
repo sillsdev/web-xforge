@@ -36,6 +36,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.TranslationBooks);
         }
 
+        if (value.FastTraining)
+        {
+            writer.WritePropertyName(nameof(value.FastTraining));
+            serializer.Serialize(writer, value.FastTraining);
+        }
+
         writer.WritePropertyName(nameof(value.ProjectId));
         serializer.Serialize(writer, value.ProjectId);
 

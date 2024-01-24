@@ -3751,6 +3751,72 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task SendReceiveAsync_SourceResource_DoesNotRemigrateLdml()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        env.SetupSuccessfulSendReceive();
+        env.SetRestClientFactory(user01Secret);
+
+        // Set up the Resource ScrText
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
+        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+        // Set up the mock file system calls used by the migration
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(true);
+
+        // SUT
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(sourceProject);
+        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        env.MockFileSystemService.DidNotReceive().MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+    }
+
+    [Test]
+    public async Task SendReceiveAsync_SourceResource_MigratesLdml()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        env.SetupSuccessfulSendReceive();
+        env.SetRestClientFactory(user01Secret);
+
+        // Set up the Resource ScrText
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
+        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+        // Set up the mock file system calls used by the migration
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
+
+        // SUT
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(sourceProject);
+        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        env.MockFileSystemService.Received(1).MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+    }
+
+    [Test]
     public async Task SendReceiveAsync_SourceResource_Valid()
     {
         var env = new TestEnvironment();
@@ -4606,6 +4672,162 @@ public class ParatextServiceTests
         Assert.AreEqual(LanguageId.English.Id, languageId);
     }
 
+    [Test]
+    public void ClearParatextDataCaches_InvalidProjectSuccess()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        env.Service.ClearParatextDataCaches(userSecret, "invalid_project_id");
+    }
+
+    [Test]
+    public void ClearParatextDataCaches_Success()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        env.Service.ClearParatextDataCaches(userSecret, ptProjectId);
+    }
+
+    [Test]
+    public void GetRevisionHistoryAsync_InsufficientPermissions()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        {
+            await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)) { }
+        });
+    }
+
+    [Test]
+    public void GetRevisionHistoryAsync_MissingProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+        {
+            await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, "invalid_project_id", "MAT", 1)) { }
+        });
+    }
+
+    [Test]
+    public void GetRevisionHistoryAsync_MissingUser()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string>();
+        env.AddProjectRepository(project);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        {
+            await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)) { }
+        });
+    }
+
+    [Test]
+    public async Task GetRevisionHistoryAsync_Success()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        SFProject project = env.NewSFProject();
+
+        // SUT
+        bool historyExists = false;
+        await foreach (
+            KeyValuePair<DateTime, string> revision in env.Service.GetRevisionHistoryAsync(
+                userSecret,
+                project.Id,
+                "MAT",
+                1
+            )
+        )
+        {
+            historyExists = true;
+            Assert.IsTrue(revision.Key > DateTime.MinValue);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(revision.Value));
+            break;
+        }
+
+        Assert.IsTrue(historyExists);
+    }
+
+    [Test]
+    public async Task GetSnapshotAsync_FetchesSnapshot()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        env.AddProjectRepository(project);
+        const string book = "MAT";
+        const int chapter = 1;
+        TextData textData = env.AddTextDoc(Canon.BookIdToNumber(book), chapter);
+
+        // SUT
+        var actual = await env.Service.GetSnapshotAsync(userSecret, project.Id, book, chapter, DateTime.UtcNow);
+        Assert.AreEqual(textData.Ops.First(), actual.Data.Ops.First());
+        Assert.AreEqual(textData.Id, actual.Id);
+        Assert.AreEqual(0, actual.Version);
+    }
+
+    [Test]
+    public void GetSnapshotAsync_InsufficientPermissions()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
+        );
+    }
+
+    [Test]
+    public void GetSnapshotAsync_MissingProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetSnapshotAsync(userSecret, "invalid_project_id", "MAT", 1, DateTime.UtcNow)
+        );
+    }
+
+    [Test]
+    public void GetSnapshotAsync_MissingUser()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string>();
+        env.AddProjectRepository(project);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
+        );
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
@@ -4692,6 +4914,7 @@ public class ParatextServiceTests
             MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
             MockGuidService = Substitute.For<IGuidService>();
             MockRegistryHttpClient = Substitute.For<HttpClient>();
+            var mockDeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
 
             DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
             string accessToken1 = TokenHelper.CreateAccessToken(
@@ -4760,7 +4983,8 @@ public class ParatextServiceTests
                 MockInternetSharedRepositorySourceProvider,
                 MockGuidService,
                 MockRestClientFactory,
-                MockHgWrapper
+                MockHgWrapper,
+                mockDeltaUsxMapper
             )
             {
                 ScrTextCollection = MockScrTextCollection,
@@ -5081,7 +5305,6 @@ public class ParatextServiceTests
             bool useThreadSuffix = true
         )
         {
-            TextData[] texts = new TextData[1];
             Delta chapterDelta = GetChapterDelta(
                 chapterNum,
                 verses,
@@ -5090,16 +5313,23 @@ public class ParatextServiceTests
                 useThreadSuffix,
                 false
             );
-            texts[0] = new TextData(chapterDelta) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
+            var texts = new TextData[]
+            {
+                new TextData(chapterDelta) { Id = TextData.GetTextDocId("sf_id_" + Project01, bookNum, chapterNum) },
+            };
             RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
         }
 
-        public void AddTextDoc(int bookNum, int chapterNum)
+        public TextData AddTextDoc(int bookNum, int chapterNum)
         {
-            TextData[] texts = new TextData[1];
             Delta chapterDelta = Delta.New().Insert("In the beginning");
-            texts[0] = new TextData(chapterDelta) { Id = TextData.GetTextDocId(Project01, bookNum, chapterNum) };
+            var textDoc = new TextData(chapterDelta)
+            {
+                Id = TextData.GetTextDocId("sf_id_" + Project01, bookNum, chapterNum)
+            };
+            var texts = new TextData[] { textDoc };
             RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>(texts));
+            return textDoc;
         }
 
         public void AddNoteThreadData(ThreadComponents[] threadComponents)

@@ -1834,7 +1834,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             // The source can be null if there was an error getting a resource from the DBL
-            if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
+            if (_projectDoc.Data.TranslateConfig.Source != null)
             {
                 ParatextSettings? sourceSettings = _paratextService.GetParatextSettings(
                     _userSecret,
@@ -1973,8 +1973,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         }
 
-        // Free the comment manager for this project from memory
-        _paratextService.FreeCommentManager(_userSecret, _projectDoc.Data.ParatextId);
+        // Free the comment manager and versioning manager for this project from memory
+        _paratextService.ClearParatextDataCaches(_userSecret, _projectDoc.Data.ParatextId);
 
         await NotifySyncProgress(SyncPhase.Phase9, 100.0);
         Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");

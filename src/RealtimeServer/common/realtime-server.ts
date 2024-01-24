@@ -128,7 +128,7 @@ export class RealtimeServer extends ShareDB {
     readonly dataValidationDisabled: boolean,
     docServices: DocService[],
     private readonly projectsCollection: string,
-    db: ShareDB.DB,
+    readonly db: ShareDB.DB,
     private readonly schemaVersions: SchemaVersionRepository,
     milestoneDb?: ShareDB.MilestoneDB
   ) {
@@ -475,11 +475,12 @@ export class RealtimeServer extends ShareDB {
   private async setConnectSession(context: ShareDB.middleware.ConnectContext): Promise<void> {
     let session: ConnectSession;
     if (context.req != null && context.req.user != null) {
-      const userId = context.req.user[XF_USER_ID_CLAIM];
-      const role = context.req.user[XF_ROLE_CLAIM];
+      const userId: string = context.req.user[XF_USER_ID_CLAIM];
+      const role: string | string[] | undefined = context.req.user[XF_ROLE_CLAIM];
+      const roles: string[] = typeof role === 'string' ? [role] : role || [];
       session = {
         userId,
-        role,
+        roles,
         isServer: false
       };
     } else {
@@ -487,7 +488,7 @@ export class RealtimeServer extends ShareDB {
       if (context.req != null && context.req.userId != null) {
         userId = context.req.userId;
       }
-      session = { isServer: true, userId };
+      session = { isServer: true, userId, roles: [] };
     }
     context.agent.connectSession = session;
   }

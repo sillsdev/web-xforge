@@ -22,7 +22,7 @@
     "product_version": "Version du produit : v{{ version }}",
     "project_has_been_deleted": "Le projet a été supprimé ou n'est plus accessible.",
     "project_home": "Accueil du projet",
-    "questions_answers": "Questions & answers",
+    "questions_answers": "Questions & Réponses",
     "redirecting_in_moments": "Redirection dans quelques instants...",
     "refresh": "Rafraîchir",
     "report_issue_email": "e-mail {{ email }}",
@@ -159,15 +159,15 @@
   },
   "checking": {
     "filter_questions": "Filtrer les questions",
-    "manage_audio": "Manage audio",
+    "manage_audio": "Gérer l'audio",
     "me": "Moi",
     "next": "Suivant",
-    "play_chapter": "Play chapter",
+    "play_chapter": "Lire le chapitre",
     "previous": "Précédent",
     "questions": "Questions",
     "question_does_not_have_audio": "Aucun enregistrement audio n'a été télétransmis pour ce chapitre. Contactez l'administrateur du projet pour télétransmettre des enregistrements audio.",
     "question_filter_none": "Tout afficher",
-    "question_filter_exportable": "Réponses marquées pour exportation",
+    "question_filter_exportable": "Réponses signalées pour vérification",
     "question_filter_has_answers": "A des réponses",
     "question_filter_answered": "Répondu",
     "question_filter_no_answers": "Aucune réponse",
@@ -193,8 +193,8 @@
     "confirm_delete": "Êtes-vous sûr de vouloir supprimer cette réponse ?",
     "delete": "Supprimer",
     "edit": "Modifier",
-    "marked_for_export": "Marquée pour exportation",
-    "mark_for_export": "Marquer pour exportation",
+    "marked_for_export": "Marqué pour vérification",
+    "mark_for_export": "Signaler pour vérification",
     "no_scripture_selected": "Aucun texte sélectionné pour l'instant.",
     "record": "Enregistrer",
     "recording_automatically_stopped": "L'enregistrement de votre réponse a été arrêté automatiquement.",
@@ -205,7 +205,7 @@
     "select_verses": "Sélectionner des versets",
     "select": "Sélectionner",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
-    "tooltip_status_export": "Marquer pour exportation vers Paratext",
+    "tooltip_status_export": "Exporter vers Paratext si configuré dans les paramètres",
     "tooltip_status_resolve": "Marquer la réponse comme résolue",
     "your_answer": "Votre réponse"
   },
@@ -225,11 +225,12 @@
     "segments_found": "{{ segments }} segments trouvés",
     "timing": "Minutage",
     "timing_past_audio_length": "Une ou plusieurs valeurs de minutage dépassent la fin du fichier audio.",
-    "unrecognized_time_format": "Unrecognized time format",
-    "unrecognized_timing_file_format": "Unrecognized timing file format",
+    "unrecognized_time_format": "Format de l'heure non reconnu",
+    "unrecognized_timing_file_format": "Format de fichier de synchronisation non reconnu",
     "upload": "Télétransmettre",
     "upload_failed": "Le fichier audio n'a pas pu être télétransmis. Veuillez réessayer ou utiliser un autre fichier.",
     "upload_timing_file": "Télétransmettre un fichier de synchronisation",
+    "uploading": "Téléversement...",
     "zero_segments": "Zéro segment trouvé."
   },
   "checking_audio_combined": {
@@ -311,8 +312,8 @@
     "error_occurred_login": "Une erreur s'est produite lors de la connexion.",
     "failed_to_update_avatar": "L'image de votre avatar n'a pas pu être mise à jour.",
     "failed_to_retrieve_suggestions": "Impossible d'obtenir des suggestions de traduction.",
-    "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
-    "go_to_retrain": "Go to Overview",
+    "suggestion_engine_requires_retrain": "Il n'a pas été possible d'obtenir des suggestions de traduction. Veuillez reformuler les suggestions sur la page d'aperçu.",
+    "go_to_retrain": "Aller à la vue d'ensemble",
     "try_again": "Essayez à nouveau"
   },
   "exception_handling_service": {
@@ -327,7 +328,7 @@
     "storage_space_is_limited": "L'espace de stockage sur cet appareil est limité. Il est recommandé de disposer d'un minimum de 500 Mo d'espace libre pour garantir la disponibilité de toutes les fonctionnalités. Veuillez libérer de l'espace de stockage."
   },
   "font_size": {
-    "text_size": "Text size"
+    "text_size": "Taille du texte"
   },
   "issue_email": {
     "body": "Merci d'avoir signalé le problème !\nCela nous aiderait si vous remplissiez certaines des informations ci-dessous, mais veuillez le soumettre même si vous ne pouvez pas en remplir beaucoup.\nSi vous demandez une fonctionnalité, plusieurs champs risques de ne pas être applicables.\nSachez que votre rapport de bogue sera disponible publiquement. Ne soumettez jamais de mots de passe ou d'autres informations confidentielles.\n\nRapport de bogue\nUne description claire et concise du bogue.\n\nÉtapes pour le reproduire\nPar exemple :\n1. Aller à ...\n2. Cliquez sur ...\n3. Faites défiler jusqu'à ...\n4. Voir erreur\n\nComportement réel\nVeuillez décrire le comportement réel du problème que vous observez.\n\nComportement attendu\nUne description claire et concise de ce qui aurait dû se produire selon vous.\n\nCaptures d'écran\nLe cas échéant, ajoutez des captures d'écran pour aider à expliquer le problème.\n\nAutre information contextuelle\nAjoutez ici toute autre information contextuelle liée au problème.\n\nSolution possible\nAjoutez ici toute solution possible au problème.\n\nVotre environnement :\nLogiciel                Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL : {{ url }}\nID d'erreur {{ errorId }}",

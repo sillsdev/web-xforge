@@ -1,0 +1,31 @@
+<ng-container *transloco="let t; read: 'history_chooser'">
+  <button
+    id="show-hide"
+    mat-icon-button
+    (click)="showHideHistory()"
+    [disabled]="!appOnline"
+    matTooltip="{{ t(appOnline ? (showHistory ? 'hide' : 'show') : 'not_available_offline') }}"
+  >
+    <mat-icon>history</mat-icon>
+  </button>
+  <ng-container *ngIf="showHistory && appOnline">
+    <mat-form-field id="history-select" appearance="outline">
+      <mat-select [(value)]="historyRevision" [disabled]="isLoading">
+        <mat-option *ngFor="let r of historyRevisions" [value]="r">{{ formatRevision(r) }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button
+      id="show-diff"
+      mat-icon-button
+      appBlurOnClick
+      type="button"
+      (click)="showDiff = !showDiff"
+      matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
+    >
+      <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
+    </button>
+    <button mat-icon-button id="close" (click)="showHideHistory()" matTooltip="{{ t('hide') }}">
+      <mat-icon>close</mat-icon>
+    </button>
+  </ng-container>
+</ng-container>

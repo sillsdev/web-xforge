@@ -48,7 +48,7 @@ export interface User extends UserProfile {
   name: string;
   email: string;
   paratextId?: string;
-  role: string;
+  roles: string[];
   isDisplayNameConfirmed: boolean;
   interfaceLanguage?: string;
   authId: string;
