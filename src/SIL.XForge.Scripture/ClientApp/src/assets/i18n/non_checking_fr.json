@@ -393,13 +393,13 @@
     "pre_translation_alternate_training_source_info": "Sélectionner une traduction séparée à des fins d'entraînement, telle qu'une retraduction, peut améliorer la qualité de la rédaction.",
     "pre_translation_alternate_training_source_text_placeholder": "Texte source de formation alternatif (facultatif)",
     "pre_translation_drafting_description": "Configurer les options pour générer des ébauches de traduction.",
-    "pre_translation_send_all_segments": "Pre-translate headings and non-verse material",
-    "pre_translation_send_all_segments_info": "For these to be pre-translated, your translation structure must match your source exactly.",
-    "pre_translation_source_text_placeholder": "Alternate drafting source text (optional)",
+    "pre_translation_send_all_segments": "Pré-traduire les en-têtes et le matériel non-verset",
+    "pre_translation_send_all_segments_info": "Pour que ceux-ci soient pré-traduits, votre structure de traduction doit correspondre exactement à votre source.",
+    "pre_translation_source_text_placeholder": "Texte source de rédaction alternatif (facultatif)",
     "see_others_answers_and_comments": "Permettre aux vérificateurs de voir leurs réponses respectives",
     "select_project_or_resource": "Sélectionnez le projet Paratext ou la ressource de la Bibliothèque Biblique Numérique sur lequel ou laquelle votre projet est basé. Si votre projet est basé sur un projet Paratext, il est préférable de le configurer comme un projet fille dans Paratext.",
-    "serval_config": "Serval configuration (JSON)",
-    "serval_config_description": "{{ boldStart }}Warning:{{ boldEnd }} The following configuration is for Serval technicians only:",
+    "serval_config": "Configuration de Serval (JSON)",
+    "serval_config_description": "{{ boldStart }}Attention :{{ boldEnd }} La configuration suivante est uniquement pour les techniciens Serval :",
     "settings": "Paramètres",
     "shareTranslate": "Permettre aux utilisateurs de Traduire d'inviter d'autres personnes",
     "shareChecking": "Permettre aux utilisateurs de Vérification par la communauté d'inviter d'autres personnes",
@@ -428,7 +428,7 @@
     "transliterate_biblical_terms": "Translittérer les termes bibliques"
   },
   "supported_back_translation_languages_dialog": {
-    "supported_back_translation_languages_dialog_header": "Supported Back Translation Languages"
+    "supported_back_translation_languages_dialog_header": "Langues de retraduction supportées"
   },
   "sync": {
     "cancel": "Annuler",
