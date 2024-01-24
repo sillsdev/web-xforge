@@ -13,6 +13,7 @@ public class SFProjectSettings
     public bool? TranslateShareEnabled { get; set; }
 
     // pre-translation settings
+    public bool? AdditionalTrainingData { get; set; }
     public string? AlternateSourceParatextId { get; set; }
     public bool? AlternateTrainingSourceEnabled { get; set; }
     public string? AlternateTrainingSourceParatextId { get; set; }
