@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ParatextData" Version="9.3.0.9" />
+    <PackageReference Include="ParatextData" Version="9.5.0.5" />
   </ItemGroup>
 
 </Project>
