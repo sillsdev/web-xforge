@@ -41,7 +41,7 @@
       </div>
       <div *ngIf="answerFormVisible">
         <form autocomplete="off" id="answer-form" appScrollIntoView>
-          <app-text-and-audio [activeAnswer]="activeAnswer" [textLabel]="t('your_answer')"></app-text-and-audio>
+          <app-text-and-audio [input]="activeAnswer" [textLabel]="t('your_answer')"></app-text-and-audio>
           <div class="bottom-row">
             <button mat-button *ngIf="!selectedText" id="select-scripture" (click)="selectScripture()">
               <mat-icon class="attach-icon">attach_file</mat-icon>
