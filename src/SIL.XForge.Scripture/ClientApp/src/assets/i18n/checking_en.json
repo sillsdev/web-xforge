@@ -182,6 +182,7 @@
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Filter questions",
     "unknown_author": "Unknown author",
+    "upload_audio_file": "Upload Audio",
     "view_questions": "View Questions"
   },
   "checking_answers": {
@@ -230,11 +231,6 @@
     "upload_timing_file": "Upload Timing File",
     "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
-  },
-  "checking_audio_combined": {
-    "remove_audio_file": "Remove Audio File",
-    "upload_audio_file": "Upload Audio",
-    "upload": "Upload"
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
