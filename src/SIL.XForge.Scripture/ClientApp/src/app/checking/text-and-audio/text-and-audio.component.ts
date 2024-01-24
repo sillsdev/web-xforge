@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { DynamicValue } from 'realtime-server/lib/esm/scriptureforge/models/dynamic-value';
 import {
   AudioAttachment,
   CheckingAudioRecorderComponent
@@ -13,7 +13,7 @@ import {
 })
 export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
-  @Input() activeAnswer?: Answer;
+  @Input() input?: DynamicValue;
   @Input() textLabel: string = '';
   suppressErrors: boolean = true;
   form = new UntypedFormGroup({
@@ -25,8 +25,8 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
-    this.text.setValue(this.activeAnswer?.text);
-    this.audio.setValue(this.activeAnswer?.audioUrl);
+    this.text.setValue(this.input?.text);
+    this.audio.setValue(this.input?.audioUrl);
     this.cdr.detectChanges();
   }
 
