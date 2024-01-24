@@ -167,7 +167,7 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should emit the correct selected books when done', () => {
       const trainingBooks = [2, 3];
-      const trainingDataFiles = ['a', 'b'];
+      const trainingDataFiles: string[] = [];
       const translationBooks = [1, 2];
 
       component.userSelectedTrainingBooks = trainingBooks;
@@ -240,7 +240,7 @@ describe('DraftGenerationStepsComponent', () => {
 
     it('should emit the fast training value if checked', () => {
       const trainingBooks = [1, 2];
-      const trainingDataFiles = ['a', 'b'];
+      const trainingDataFiles: string[] = [];
       const translationBooks = [3, 4];
 
       component.userSelectedTrainingBooks = trainingBooks;

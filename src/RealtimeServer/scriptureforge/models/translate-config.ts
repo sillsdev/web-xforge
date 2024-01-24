@@ -27,6 +27,7 @@ export interface BaseProject {
 }
 
 export interface DraftConfig {
+  additionalTrainingData: boolean;
   alternateSource?: TranslateSource;
   alternateTrainingSourceEnabled: boolean;
   alternateTrainingSource?: TranslateSource;
