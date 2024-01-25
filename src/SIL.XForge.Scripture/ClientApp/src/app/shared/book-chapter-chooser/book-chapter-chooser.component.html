@@ -3,7 +3,9 @@
     <mat-select
       [value]="book"
       (valueChange)="bookChanged($event)"
-      [disabled]="bookSelectDisabled"
+      [disabled]="!!bookSelectDisabled"
+      [hideSingleSelectionIndicator]="true"
+      panelWidth="200"
       panelClass="book-select-menu"
     >
       <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
@@ -13,7 +15,8 @@
     <mat-select
       [value]="chapter"
       (valueChange)="chapterChanged($event)"
-      [disabled]="chapterSelectDisabled"
+      [disabled]="!!chapterSelectDisabled"
+      [hideSingleSelectionIndicator]="true"
       panelClass="chapter-select-menu"
     >
       <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>

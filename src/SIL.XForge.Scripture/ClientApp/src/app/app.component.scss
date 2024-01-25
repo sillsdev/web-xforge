@@ -24,14 +24,6 @@ $toolbar-height: 56px;
     z-index: 8;
   }
 
-  > header {
-    position: absolute;
-
-    &.overlay-drawer {
-      z-index: 6;
-    }
-  }
-
   .top-app-bar-adjust {
     margin-top: $toolbar-height;
   }
@@ -64,8 +56,9 @@ $toolbar-height: 56px;
 }
 
 header {
+  position: absolute;
   width: 100%;
-  z-index: 7;
+  z-index: 1001; // Needs to be larger than overlay containers
 
   .title {
     cursor: pointer;

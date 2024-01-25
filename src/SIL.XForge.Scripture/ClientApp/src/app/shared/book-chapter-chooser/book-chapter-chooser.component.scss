@@ -1,3 +1,5 @@
+@use 'src/material-styles';
+
 :host {
   display: flex;
   align-items: center;
@@ -5,36 +7,12 @@
 
 // Unfortunately there doesn't appear to be a good way to style a mat-select
 // These styles were written by inspecting the elements using developer and then adding rules until it looked right
-#chapter-select ::ng-deep,
-#book-select ::ng-deep {
-  .mat-form-field-wrapper {
-    margin: 0;
-    padding-bottom: 0;
-    .mat-form-field-flex {
-      padding-top: 0;
-    }
-    .mat-form-field-flex:not(:hover) {
-      background-color: transparent;
-    }
-  }
-  .mat-form-field-underline {
-    display: none;
-  }
-  .mat-select-arrow-wrapper {
-    transform: unset;
-  }
-  .mat-form-field-infix {
-    // It appeared there was a transparent border being used as padding
-    border-top-width: 0;
-    padding-top: 12px;
-    padding-bottom: 10px;
-  }
-  .mat-form-field-infix {
-    width: initial;
-  }
+#chapter-select,
+#book-select {
+  @include material-styles.dense_mat_select();
 }
 
-::ng-deep .mat-select-panel {
+::ng-deep .mat-mdc-select-panel {
   &.book-select-menu,
   &.chapter-select-menu {
     max-height: 85vh;
@@ -42,8 +20,8 @@
 }
 
 ::ng-deep {
-  #book-select .mat-form-field-outline-end,
-  #chapter-select .mat-form-field-outline-start {
+  #book-select .mdc-notched-outline__trailing,
+  #chapter-select .mdc-notched-outline__leading {
     border-radius: 0;
   }
 }

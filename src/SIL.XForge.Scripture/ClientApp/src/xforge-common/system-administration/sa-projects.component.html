@@ -26,6 +26,7 @@
               [value]="row.projectRole"
               [disabled]="row.isUpdatingRole"
               (selectionChange)="updateRole(row, $event.value)"
+              [hideSingleSelectionIndicator]="true"
             >
               <mat-option *ngFor="let projectRole of projectRoles" [value]="projectRole">
                 {{ i18n.localizeRole(projectRole.role) }}
