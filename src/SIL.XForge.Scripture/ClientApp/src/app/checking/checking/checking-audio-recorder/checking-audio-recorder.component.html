@@ -1,9 +1,23 @@
 <ng-container *transloco="let t; read: 'checking_audio_recorder'">
   <div *ngIf="!hasAudioAttachment" class="no-attachment">
-    <button *ngIf="!isRecording" mat-button (click)="startRecording()" class="record" [matTooltip]="t('record_audio')">
+    <button
+      *ngIf="!isRecording"
+      mat-button
+      (click)="startRecording()"
+      class="record"
+      [matTooltip]="t('record_audio')"
+      matTooltipPosition="before"
+    >
       <mat-icon>mic</mat-icon>
     </button>
-    <button *ngIf="isRecording" mat-button (click)="stopRecording()" class="stop" [matTooltip]="t('stop_recording')">
+    <button
+      *ngIf="isRecording"
+      mat-button
+      (click)="stopRecording()"
+      class="stop"
+      [matTooltip]="t('stop_recording')"
+      matTooltipPosition="before"
+    >
       <mat-icon>stop</mat-icon>
     </button>
   </div>
@@ -11,7 +25,13 @@
     <app-single-button-audio-player *ngIf="!!audioUrl" [source]="audioUrl" (click)="toggleAudio()">
       <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
     </app-single-button-audio-player>
-    <button mat-button (click)="resetRecording()" [matTooltip]="t('delete')" class="remove-audio-file">
+    <button
+      mat-button
+      (click)="resetRecording()"
+      [matTooltip]="t('delete')"
+      class="remove-audio-file"
+      matTooltipPosition="before"
+    >
       <mat-icon>close</mat-icon>
     </button>
   </div>
