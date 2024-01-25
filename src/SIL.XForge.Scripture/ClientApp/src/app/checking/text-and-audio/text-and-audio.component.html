@@ -5,7 +5,7 @@
         <mat-label>{{ textLabel }}</mat-label>
         <textarea appAutofocus matInput formControlName="text" id="textarea"></textarea>
       </mat-form-field>
-      <div class="audio-container" [ngClass]="{ centered: hasAudio() }">
+      <div class="audio-container">
         <app-checking-audio-recorder
           [audioUrl]="audioAttachment.url || ''"
           (status)="processAudio($event)"
