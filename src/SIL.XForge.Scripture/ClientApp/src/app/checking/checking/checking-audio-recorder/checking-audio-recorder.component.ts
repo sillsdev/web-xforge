@@ -104,9 +104,15 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     });
   }
 
-  private errorCallback(): void {
+  private errorCallback(error: any): void {
+    console.error(error);
     this.status.emit({ status: 'denied' });
-    this.noticeService.show(translate('checking_audio_recorder.mic_access_denied'));
+
+    if (error.code === DOMException.NOT_FOUND_ERR) {
+      this.noticeService.show(translate('checking_audio_recorder.mic_not_found'));
+    } else {
+      this.noticeService.show(translate('checking_audio_recorder.mic_access_denied'));
+    }
   }
 
   private successCallback(stream: MediaStream): void {
