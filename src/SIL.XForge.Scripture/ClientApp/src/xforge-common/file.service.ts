@@ -194,8 +194,17 @@ export class FileService extends SubscriptionDisposable {
     }
   }
 
+  private convertToPascalCase(input: string): string {
+    return input
+      .split('-')
+      .map(word => {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join('');
+  }
+
   private onlineDeleteFile(fileType: FileType, projectId: string, dataId: string, ownerId: string): Promise<void> {
-    const method = `delete${fileType.charAt(0).toUpperCase()}${fileType.substring(1)}`;
+    const method = `delete${this.convertToPascalCase(fileType)}`;
     return this.commandService.onlineInvoke(PROJECTS_URL, method, { projectId, ownerId, dataId });
   }
 

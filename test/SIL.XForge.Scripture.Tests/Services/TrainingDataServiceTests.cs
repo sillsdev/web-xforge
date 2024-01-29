@@ -35,7 +35,50 @@ public class TrainingDataServiceTests
     private const string User03 = "user03";
 
     [Test]
-    public async Task GetTextsAsync_DoesNotGenerateTextsIfTooFEwColumns()
+    public void DeleteTrainingDataAsync_InvalidDataId()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(
+            () => env.Service.DeleteTrainingDataAsync(User01, Project01, User01, "invalid_data_id")
+        );
+    }
+
+    [Test]
+    public void DeleteTrainingDataAsync_MissingProject()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.DeleteTrainingDataAsync(User01, "invalid_project_id", User01, Data01)
+        );
+    }
+
+    [Test]
+    public void DeleteTrainingDataAsync_NoPermission()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.DeleteTrainingDataAsync(User02, Project01, User01, Data01)
+        );
+    }
+
+    [Test]
+    public async Task DeleteTrainingDataAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.DeleteTrainingDataAsync(User01, Project01, User01, Data01);
+        env.FileSystemService.Received().DeleteFile(Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task GetTextsAsync_DoesNotGenerateTextsIfTooFewColumns()
     {
         var env = new TestEnvironment();
         var dataIds = new string[] { Data01 };
