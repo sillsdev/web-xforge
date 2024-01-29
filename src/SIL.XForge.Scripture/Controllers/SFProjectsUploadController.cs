@@ -123,7 +123,7 @@ public class SFProjectsUploadController : ControllerBase
 
         try
         {
-            // Upload, convert and save the audio file
+            // Upload, convert and save the training data file
             (dataId, path, projectId) = await HandleFileUploadAsync();
             Uri uri = await _trainingDataService.SaveTrainingDataAsync(_userAccessor.UserId, projectId, dataId, path);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
@@ -145,7 +145,7 @@ public class SFProjectsUploadController : ControllerBase
             _exceptionHandler.RecordEndpointInfoForException(
                 new Dictionary<string, string>
                 {
-                    { "method", "UploadAudioAsync" },
+                    { "method", "UploadTrainingDataAsync" },
                     { "projectId", projectId },
                     { "dataId", dataId },
                 }

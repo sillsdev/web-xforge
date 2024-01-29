@@ -7,6 +7,7 @@ namespace SIL.XForge.Scripture.Services;
 
 public interface ITrainingDataService
 {
+    Task DeleteTrainingDataAsync(string userId, string projectId, string ownerId, string dataId);
     Task GetTextsAsync(
         string userId,
         string projectId,
