@@ -4,7 +4,7 @@ import {
   MatLegacySelectionList as MatSelectionList
 } from '@angular/material/legacy-list';
 import isEqual from 'lodash-es/isEqual';
-import Quill, { BoundsStatic } from 'quill';
+import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter, first } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -214,9 +214,10 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     }
     const selection = this.editor.getSelection();
     if (selection == null) {
-      // Reset to the top left, as the suggestions are hidden
-      this.root.style.left = '0px';
-      this.root.style.top = '0px';
+      // Reset to the top left/right, as the suggestions are hidden
+      this.root.style.left = '';
+      this.root.style.right = '';
+      this.root.style.top = '';
       return;
     }
     // If the segment is blank, then the selection is after the blank. We want to align the suggestion to the beginning
@@ -227,22 +228,21 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     const reference = this.editor.getBounds(selection.index, selection.length);
     // root.scrollTop should be 0 if scrollContainer !== root
     this.top = reference.bottom + this.editor.root.scrollTop + 5;
-    this.root.classList.remove('flip');
-    const rootBounds = this.root.getBoundingClientRect();
+    const suggestionBounds = this.root.getBoundingClientRect();
     const editorBounds = this.editor.scrollingContainer.getBoundingClientRect();
-    const clientTop = reference.bottom + editorBounds.top + 5;
 
-    let newLeft = this.calculateLeft(reference, rootBounds, editorBounds);
-    this.root.style.left = newLeft + 'px';
-
-    if (clientTop + rootBounds.height > editorBounds.bottom) {
-      const verticalShift = reference.bottom - reference.top + rootBounds.height;
-      this.top -= verticalShift;
-      this.root.style.top = this.top + 'px';
-      this.root.classList.add('flip');
+    let newLeft: number | undefined = reference.left + 1;
+    let newRight: number | undefined = editorBounds.width - reference.left - 1;
+    const leftExceedsBounds = newLeft + suggestionBounds.width > editorBounds.width;
+    const rightExceedsBounds = newRight + suggestionBounds.width > editorBounds.width;
+    if ((this.text?.isRtl && !rightExceedsBounds) || (leftExceedsBounds && newRight < newLeft)) {
+      newLeft = undefined;
     } else {
-      this.root.style.top = this.top + 'px';
+      newRight = undefined;
     }
+    this.root.style.left = newLeft ? newLeft + 'px' : '';
+    this.root.style.right = newRight ? newRight + 'px' : '';
+    this.root.style.top = this.top + 'px';
 
     const marginTop = -this.editor.root.scrollTop;
     const offsetTop = marginTop + this.top;
@@ -256,27 +256,6 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
       this.root.style.marginTop = marginTop + 'px';
       this.root.style.visibility = '';
     }
-  }
-
-  private calculateLeft(reference: BoundsStatic, suggestions: DOMRect, editor: DOMRect): number {
-    const body = document.body.getBoundingClientRect();
-    const referenceLeft = reference.left + 1;
-    const clientLeft = reference.left + editor.left;
-
-    let newLeft;
-    if (referenceLeft + suggestions.width > editor.width) {
-      // Most cases are fine with simply referenceLeft, but when the cursor
-      // is at the far right of the editor, the suggestions don't have enough
-      // room, even when auto-sized.
-      newLeft = referenceLeft - 20;
-    } else if (clientLeft < body.left) {
-      const shift = body.left - clientLeft;
-      newLeft = referenceLeft + shift;
-    } else {
-      newLeft = referenceLeft;
-    }
-
-    return newLeft;
   }
 
   private isSuggestionEvent(event: KeyboardEvent): boolean {

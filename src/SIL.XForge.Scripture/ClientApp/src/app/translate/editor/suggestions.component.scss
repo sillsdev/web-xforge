@@ -13,10 +13,6 @@
   visibility: hidden;
 }
 
-:host(.flip) {
-  transform: translateY(-10px);
-}
-
 .loading-indicator {
   display: table;
   padding: 8px 7px 9px 7px;
@@ -69,4 +65,5 @@ mat-selection-list[dense] {
   column-gap: 5px;
   align-items: baseline;
   justify-content: space-between;
+  word-break: break-all;
 }
