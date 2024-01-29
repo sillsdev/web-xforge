@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -43,6 +44,42 @@ public class TrainingDataService : ITrainingDataService
         _fileSystemService = fileSystemService;
         _realtimeService = realtimeService;
         _siteOptions = siteOptions;
+    }
+
+    public async Task DeleteTrainingDataAsync(string userId, string projectId, string ownerId, string dataId)
+    {
+        // Validate input
+        if (!StringUtils.ValidateId(dataId))
+        {
+            throw new FormatException($"{nameof(dataId)} is not a valid id.");
+        }
+
+        // Load the project so we can check permissions
+        await using IConnection conn = await _realtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Ensure permission to access the Machine API
+        MachineApi.EnsureProjectPermission(userId, projectDoc.Data);
+
+        // Ensure the user is the owner of the file, or an administrator
+        if (
+            userId != ownerId
+            && !(projectDoc.Data.UserRoles.TryGetValue(userId, out string role) && role is SFProjectRole.Administrator)
+        )
+        {
+            throw new ForbiddenException();
+        }
+
+        // Delete the file, if it exists
+        string filePath = GetTrainingDataFilePath(userId, projectDoc.Id, dataId);
+        if (_fileSystemService.FileExists(filePath))
+        {
+            _fileSystemService.DeleteFile(filePath);
+        }
     }
 
     /// <summary>
@@ -198,13 +235,7 @@ public class TrainingDataService : ITrainingDataService
             throw new FormatException($"{nameof(dataId)} is not a valid id.");
         }
 
-        string trainingDataDir = Path.Combine(_siteOptions.Value.SiteDir, DirectoryName, projectId);
-        if (!_fileSystemService.DirectoryExists(trainingDataDir))
-        {
-            _fileSystemService.CreateDirectory(trainingDataDir);
-        }
-
-        string outputPath = Path.Combine(trainingDataDir, $"{userId}_{dataId}.csv");
+        string outputPath = GetTrainingDataFilePath(userId, projectDoc.Id, dataId);
 
         // Delete the existing file, if it exists
         if (_fileSystemService.FileExists(outputPath))
@@ -332,5 +363,33 @@ public class TrainingDataService : ITrainingDataService
             csvWriter.WriteField(second);
             await csvWriter.NextRecordAsync();
         }
+    }
+
+    /// <summary>
+    /// Gets the path to the training data file
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="projectId"></param>
+    /// <param name="dataId"></param>
+    /// <returns></returns>
+    private string GetTrainingDataFilePath(string userId, string projectId, string dataId)
+    {
+        // Sanitise input
+        userId = Path.GetInvalidFileNameChars()
+            .Aggregate(userId, (current, c) => current.Replace(c.ToString(), string.Empty));
+        projectId = Path.GetInvalidFileNameChars()
+            .Aggregate(projectId, (current, c) => current.Replace(c.ToString(), string.Empty));
+        dataId = Path.GetInvalidFileNameChars()
+            .Aggregate(dataId, (current, c) => current.Replace(c.ToString(), string.Empty));
+
+        // Ensure that the training data directory exists
+        string trainingDataDir = Path.Combine(_siteOptions.Value.SiteDir, DirectoryName, projectId);
+        if (!_fileSystemService.DirectoryExists(trainingDataDir))
+        {
+            _fileSystemService.CreateDirectory(trainingDataDir);
+        }
+
+        // Return the full path
+        return Path.Combine(trainingDataDir, $"{userId}_{dataId}.csv");
     }
 }
