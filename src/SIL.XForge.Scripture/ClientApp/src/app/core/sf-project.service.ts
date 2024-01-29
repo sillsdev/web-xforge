@@ -8,7 +8,6 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
-import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
@@ -32,7 +31,6 @@ import { SFProjectSettings } from './models/sf-project-settings';
 import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
 import { TextAudioDoc } from './models/text-audio-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
-import { TrainingDataDoc } from './models/training-data-doc';
 import { TranslateMetrics } from './models/translate-metrics';
 
 @Injectable({
@@ -150,13 +148,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
     };
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
-  }
-
-  queryTrainingData(sfProjectId: string): Promise<RealtimeQuery<TrainingDataDoc>> {
-    const queryParams: QueryParameters = {
-      [obj<TrainingData>().pathStr(t => t.projectRef)]: sfProjectId
-    };
-    return this.realtimeService.subscribeQuery(TrainingDataDoc.COLLECTION, queryParams);
   }
 
   onlineSync(id: string): Promise<void> {
