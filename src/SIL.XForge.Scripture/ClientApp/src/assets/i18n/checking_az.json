@@ -245,8 +245,9 @@
     "audio_cannot_be_previewed": "Səs faylı önbaxış edilə bilməyən formatdadır. Hər hansı bir dəyişikliyi saxlayın və səsi çalmaq üçün internetə qoşulun."
   },
   "checking_audio_recorder": {
-    "not_available": "Hal-hazırda brauzeriniz səs yazıları dəstəkləmir. Zəhmət olmasa, digər dəstəklənən brauzerdən istifadə etməyə çalışın.",
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
+    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "not_available": "Hal-hazırda brauzeriniz səs yazıları dəstəkləmir. Zəhmət olmasa, digər dəstəklənən brauzerdən istifadə etməyə çalışın.",
     "record": "Səs yazmaq",
     "stop_recording": "Səs yazmanı dayandırmaq",
     "try_again": "Yenidən çalışın"

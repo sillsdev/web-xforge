@@ -245,8 +245,9 @@
     "audio_cannot_be_previewed": "Sunetul este într-un format care nu poate fi previzualizat. Salvați orice modificări și conectați-vă la internet pentru a-l reda."
   },
   "checking_audio_recorder": {
-    "not_available": "În prezent, browserul dvs. nu acceptă înregistrarea audio. Vă rugăm, încercați să utilizați un alt browser acceptat.",
     "mic_access_denied": "Accesul la microfonul dvs. a fost refuzat. Vă rugăm, activați microfonul din browser.",
+    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "not_available": "În prezent, browserul dvs. nu acceptă înregistrarea audio. Vă rugăm, încercați să utilizați un alt browser acceptat.",
     "record": "Înregistrare audio",
     "stop_recording": "Oprește înregistrarea",
     "try_again": "Încearcă din nou"

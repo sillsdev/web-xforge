@@ -245,8 +245,9 @@
     "audio_cannot_be_previewed": "الملف الصوتي في صيغة لا يمكن عرضها. احفظ أية تعديلات وكُنْ متّصلاة بالإنترنت لتشغيله."
   },
   "checking_audio_recorder": {
-    "not_available": "متصفحك لا يدعم حالياً تسجيل الصوت. الرجاء محاولة استخدام متصفح آخر يدعم هذا الإجراء.",
     "mic_access_denied": "تم رفض الاتصال بالميكروفون. الرجاء تمكين متصفّحك من الاتصال بالميكروفون.",
+    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "not_available": "متصفحك لا يدعم حالياً تسجيل الصوت. الرجاء محاولة استخدام متصفح آخر يدعم هذا الإجراء.",
     "record": "سجِّل",
     "stop_recording": "إيقاف التسجيل",
     "try_again": "حاول ثانيةً"

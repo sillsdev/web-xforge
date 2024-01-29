@@ -245,8 +245,9 @@
     "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
-    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "mic_access_denied": "Доступ к микрофону был ограничен. Пожалуйста, включите микрофон из браузера.",
+    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "record": "Запись",
     "stop_recording": "Остановить запись",
     "try_again": "Попробуйте ещё раз"

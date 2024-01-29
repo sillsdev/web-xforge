@@ -245,8 +245,9 @@
     "audio_cannot_be_previewed": "Audio dalam format yang tidak dapat dipratinjau. Simpan perubahan apa pun dan sambungkan ke internet untuk memainkannya."
   },
   "checking_audio_recorder": {
-    "not_available": "Browser/Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan browser/peramban lain yang mendukung.",
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
+    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "not_available": "Browser/Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan browser/peramban lain yang mendukung.",
     "record": "Rekam",
     "stop_recording": "Hentikan Perekaman",
     "try_again": "Coba Lagi"

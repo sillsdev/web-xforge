@@ -245,8 +245,9 @@
     "audio_cannot_be_previewed": "O áudio está num formato que não pode ser pré-visualizado. Salve qualquer alteração e conecte-se à internet para reproduzir."
   },
   "checking_audio_recorder": {
-    "not_available": "No momento, seu navegador não oferece suporte para gravação de áudio. Por favor, tente usar outro navegador com suporte.",
     "mic_access_denied": "O acesso ao seu microfone foi negado. Ative o microfone a partir do seu navegador.",
+    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "not_available": "No momento, seu navegador não oferece suporte para gravação de áudio. Por favor, tente usar outro navegador com suporte.",
     "record": "Registrar",
     "stop_recording": "Parar gravação",
     "try_again": "Tente Novamente"
