@@ -49,6 +49,7 @@
         </ng-container>
         <ng-container *ngIf="!hasAudioBeenUploaded">
           <mat-icon>play_disabled</mat-icon>
+          <span *ngIf="!hasAudioDataError">{{ t("no_audio_file_uploaded") }}</span>
           <span *ngIf="hasAudioDataError">{{ t(audioErrorMessageKey) }}</span>
         </ng-container>
       </div>
