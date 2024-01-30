@@ -60,7 +60,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
 
-fdescribe('QuestionDialogComponent', () => {
+describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       ReactiveFormsModule,
