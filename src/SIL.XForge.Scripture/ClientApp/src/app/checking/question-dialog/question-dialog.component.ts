@@ -170,10 +170,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   async submit(): Promise<void> {
-    if (this.versesForm.invalid || this._selection == null) {
-      return;
-    }
-
     if (this.textAndAudio != null) {
       this.textAndAudio.suppressErrors = false;
       if (this.textAndAudio.audioComponent?.isRecording) {
@@ -183,6 +179,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     }
     if (!this.textAndAudio?.hasTextOrAudio()) {
       this.textAndAudio?.text.setErrors({ invalid: true });
+      return;
+    }
+
+    if (this.versesForm.invalid || this._selection == null) {
       return;
     }
 
