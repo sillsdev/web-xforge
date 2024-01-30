@@ -21,23 +21,21 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   @Input() uploadEnabled: boolean = false;
   suppressErrors: boolean = true;
   form = new UntypedFormGroup({
-    text: new UntypedFormControl(),
-    audio: new UntypedFormControl()
+    text: new UntypedFormControl(''),
+    audio: new UntypedFormControl({})
   });
   uploadAudioFile: File = NOT_A_FILE;
-  private _audioAttachment: AudioAttachment = {};
 
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewInit(): void {
     this.text.setValue(this.input?.text);
-    this.audio.setValue(this.input?.audioUrl);
+    this.audio.setValue({ url: this.input?.audioUrl });
     this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
     this.form.reset();
-    this._audioAttachment = {};
   }
 
   get text(): AbstractControl {
@@ -49,22 +47,21 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   }
 
   get audioAttachment(): AudioAttachment {
-    return this._audioAttachment;
-  }
-
-  processAudio(audio: AudioAttachment): void {
-    this._audioAttachment = audio;
-    this.updateFormValidity();
+    return this.audioComponent?.audio ?? {};
   }
 
   updateFormValidity(): void {
-    if (this.hasTextOrAudio() || this._audioAttachment.status === 'recording') {
+    if (this.hasTextOrAudio() || this.audioAttachment.status === 'recording') {
       this.text.setErrors(null);
     }
   }
 
+  trim(event: any): void {
+    this.text.setValue(event.target.value.trim());
+  }
+
   hasAudio(): boolean {
-    return this.audioComponent?.audioUrl != null && this.audioComponent?.audioUrl !== '';
+    return this.audioComponent?.hasAudioAttachment ?? false;
   }
 
   hasTextOrAudio(): boolean {
@@ -72,13 +69,14 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   }
 
   prepareAudioFileUpload(): void {
-    if (this.uploadAudioFile.name != null) {
-      this._audioAttachment = {
+    if (this.uploadAudioFile.name != null && this.audioComponent) {
+      this.audioComponent.audio = {
         url: URL.createObjectURL(this.uploadAudioFile),
         blob: this.uploadAudioFile,
         fileName: this.uploadAudioFile.name,
         status: 'uploaded'
       };
+      this.text.setErrors(null);
     }
   }
 

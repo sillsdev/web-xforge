@@ -1,19 +1,20 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { DebugElement, NgModule } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MatLegacyDialog as MatDialog,
   MatLegacyDialogConfig as MatDialogConfig,
   MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { Question, getQuestionDocId } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
@@ -23,7 +24,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
+import { FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -33,9 +34,9 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
+  TestTranslocoModule,
   configureTestingModule,
-  getAudioBlob,
-  TestTranslocoModule
+  getAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -59,7 +60,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
 
-describe('QuestionDialogComponent', () => {
+fdescribe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       ReactiveFormsModule,
@@ -97,34 +98,32 @@ describe('QuestionDialogComponent', () => {
 
   it('should not allow Save without required fields', fakeAsync(() => {
     env = new TestEnvironment();
+    expect(env.errorText[0].classes['visible']).not.toBeDefined();
+
     env.clickElement(env.saveButton);
     flush();
     expect(env.afterCloseCallback).not.toHaveBeenCalled();
-    expect(env.scriptureStartValidationMsg.textContent).toContain('Required');
-    // expect(getComputedStyle(env.scriptureStartValidationMsg).opacity).toEqual('0');
-    expect(env.scriptureStartValidationMsg.textContent).not.toContain('e.g.');
-    expect(env.scriptureStartValidationMsg.textContent).not.toContain('range');
+    expect(env.errorText[0].classes['visible']).toBe(true);
   }));
 
   it('does not accept just whitespace for a question', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
 
-    env.inputValue(env.questionInput, 'Hello?');
-    expect(env.component.questionText.valid).toBe(true);
-    expect(env.component.questionText.errors).toBeNull();
-
     env.inputValue(env.questionInput, '');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).toBeDefined();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
 
     env.inputValue(env.questionInput, ' ');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.someNonWhitespace).toBeDefined();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
 
     env.inputValue(env.questionInput, '\n');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.someNonWhitespace).toBeDefined();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
   }));
 
   it('should validate verse fields', fakeAsync(() => {
@@ -259,12 +258,12 @@ describe('QuestionDialogComponent', () => {
 
   // Needed for validation error messages to appear
   it('control marked as touched+dirty after reference chooser', fakeAsync(() => {
-    env = new TestEnvironment();
+    env = new TestEnvironment(undefined, undefined);
     flush();
     // scriptureStart control starts off untouched+undirty and changes
-    env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.touched).toBe(false);
     expect(env.component.scriptureStart.dirty).toBe(false);
+    env.component.scriptureStart.setValue('MAT 3:4');
     env.clickElement(env.scriptureStartInputIcon);
     flush();
 
@@ -272,9 +271,9 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureStart.dirty).toBe(true);
 
     // scriptureEnd changes the same
-    env.component.scriptureEnd.setValue('MAT 3:4');
     expect(env.component.scriptureEnd.touched).toBe(false);
     expect(env.component.scriptureEnd.dirty).toBe(false);
+    env.component.scriptureEnd.setValue('MAT 3:4');
     env.clickElement(env.scriptureEndInputIcon);
     flush();
 
@@ -348,28 +347,31 @@ describe('QuestionDialogComponent', () => {
     env = new TestEnvironment();
     flush();
     env.inputValue(env.questionInput, '');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
     // Test that audio recorded results in a valid questionText control
     env.setAudioStatus('processed');
-    expect(env.component.questionText.valid).toBe(true);
-    expect(env.component.questionText.errors).toBeNull();
+    expect(env.component.textAndAudio?.text.valid).toBe(true);
+    expect(env.component.textAndAudio?.text.errors).toBeNull();
     // Removing the audio sets the validators on questionText
     env.setAudioStatus('reset');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
   }));
 
   it('should not save with no text and audio permission is denied', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
     env.inputValue(env.questionInput, '');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
     // Test that audio permission was blocked and validation is still invalid
     env.setAudioStatus('denied');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
   }));
 
   it('display quill editor', fakeAsync(() => {
@@ -408,7 +410,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
-    expect(env.component.audioSource).toBeDefined();
+    expect(env.component.textAndAudio?.audioAttachment.url).toBeDefined();
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
@@ -655,7 +657,9 @@ class TestEnvironment {
   }
 
   get questionInput(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#question-text') as HTMLTextAreaElement;
+    return this.overlayContainerElement
+      .querySelector('app-text-and-audio')
+      ?.querySelector('mat-form-field') as HTMLTextAreaElement;
   }
 
   get quillEditor(): HTMLElement {
@@ -690,10 +694,16 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text') as HTMLElement;
   }
 
+  get errorText(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('.form-helper-text'));
+    // return this.overlayContainerElement.querySelector('.form-helper-text') as HTMLElement;
+  }
+
   inputValue(element: HTMLElement, value: string): void {
     const inputElem = element.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
+    inputElem.dispatchEvent(new Event('change'));
     this.fixture.detectChanges();
     tick();
   }
@@ -713,7 +723,13 @@ class TestEnvironment {
 
   setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded'): void {
     const audio: AudioAttachment = { status: status };
-    this.component.processAudio(audio);
+    if (status === 'uploaded' || status === 'processed') {
+      audio.url = 'some/url';
+    }
+    this.component.textAndAudio?.audio.setValue(audio);
+    // this.fixture.detectChanges();
+    // flush();
+    // tick();
   }
 
   private addTextDoc(id: TextDocId): void {

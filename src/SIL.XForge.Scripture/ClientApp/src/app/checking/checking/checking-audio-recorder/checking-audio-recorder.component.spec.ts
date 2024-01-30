@@ -132,7 +132,7 @@ class TestEnvironment {
   }
 
   async getAudioDuration(): Promise<number> {
-    const audio = new AudioPlayer(this.component.audioUrl, this.testOnlineStatusService);
+    const audio = new AudioPlayer(this.component.audio.url!, this.testOnlineStatusService);
     await this.waitForRecorder(100);
     return audio.duration;
   }
