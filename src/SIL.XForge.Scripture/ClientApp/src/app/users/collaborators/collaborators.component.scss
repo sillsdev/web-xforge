@@ -59,7 +59,7 @@ h3 {
 }
 
 // Allow the questions permission label to wrap on whitespace to prevent layout issues
-.mat-column-questions_permission .mat-column-audio_permission .mat-checkbox ::ng-deep label {
+.mat-column-questions_permission .mat-column-audio_permission .mat-mdc-checkbox ::ng-deep label {
   white-space: initial;
 }
 

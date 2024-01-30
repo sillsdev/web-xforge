@@ -63,10 +63,33 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   font-family: variables.$languageFonts;
 }
 
-// Allows checkbox label word-wrap
-// https://github.com/angular/components/issues/8416
-.mat-checkbox-layout {
-  white-space: normal !important;
+// Make checkboxes only 16x16px instead of the default 40x40px
+.mat-mdc-checkbox {
+  --mdc-checkbox-state-layer-size: 16px;
+
+  .mat-mdc-checkbox-ripple,
+  .mdc-checkbox__ripple {
+    top: -12px;
+    left: -12px;
+    right: -12px;
+    bottom: -12px;
+  }
+
+  label {
+    padding-left: 6px !important;
+  }
+}
+
+// Make checkbox labels inherit parent element's font-weight e.g. if within a table heading
+.mat-mdc-checkbox .mdc-form-field {
+  font-weight: inherit !important;
+}
+
+// Remove the ripple background for checkbox focus state to emulate pre-MDC behavior
+.mat-mdc-checkbox {
+  .mdc-checkbox__native-control:focus ~ .mdc-checkbox__ripple {
+    opacity: 0 !important;
+  }
 }
 
 .mat-progress-bar--closed {
