@@ -77,10 +77,10 @@ import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio
 import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
   AudioAttachment,
@@ -142,7 +142,6 @@ describe('CheckingComponent', () => {
       AudioTimePipe,
       AudioPlayerComponent,
       CheckingAnswersComponent,
-      CheckingAudioCombinedComponent,
       CheckingAudioPlayerComponent,
       CheckingAudioRecorderComponent,
       CheckingCommentFormComponent,
@@ -152,6 +151,7 @@ describe('CheckingComponent', () => {
       OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
+      TextAndAudioComponent,
       FontSizeComponent
     ],
     imports: [
@@ -999,7 +999,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.yourAnswerContainer.classes['mat-form-field-invalid']).toBe(true);
+      expect(env.answerFormErrors[0].classes['visible']).toBe(true);
       flush();
     }));
 
@@ -1366,18 +1366,16 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       // Have not given any answer yet, so clicking Save should show a validation error.
-      expect(env.component.answersPanel!.answerForm.invalid).withContext('setup').toBe(true);
+      expect(env.component.answersPanel!.textAndAudio?.form.invalid).withContext('setup').toBe(true);
       expect(env.answerFormErrors.length).withContext('setup').toEqual(1);
-      expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('record');
-      // env.clickButton(env.audioTab);
-      env.waitForSliderUpdate(); //delete
+      expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('before saving');
+      env.waitForSliderUpdate();
 
       // SUT
-      env.clickButton(env.recordButton);
       env.simulateAudioRecordingFinishedProcessing();
 
       // We made a recording, so we should not be showing a validation error.
-      expect(env.component.answersPanel!.answerForm.valid).toBe(true);
+      expect(env.component.answersPanel!.textAndAudio?.form.valid).toBe(true);
     }));
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
@@ -2638,7 +2636,7 @@ class TestEnvironment {
   }
 
   get yourAnswerField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('textarea[formControlName="answerText"]'));
+    return this.fixture.debugElement.query(By.css('textarea[formControlName="text"]'));
   }
 
   get answerFormErrors(): DebugElement[] {
@@ -2781,7 +2779,7 @@ class TestEnvironment {
     this.setTextFieldValue(this.yourAnswerField, answer);
     if (audioFilename != null) {
       const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
-      this.component.answersPanel?.processAudio(audio);
+      this.component.answersPanel?.textAndAudio?.audio.setValue(audio);
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
@@ -2987,10 +2985,10 @@ class TestEnvironment {
 
   /** To use if the Stop Recording button isn't showing up in the test DOM. */
   simulateAudioRecordingFinishedProcessing(): void {
-    this.component.answersPanel!.audioComponent!.status.emit({
+    this.component.answersPanel!.textAndAudio!.audioComponent!.audio = {
       status: 'processed',
       url: 'example.com/foo.mp3'
-    });
+    };
     flush();
     this.fixture.detectChanges();
   }
