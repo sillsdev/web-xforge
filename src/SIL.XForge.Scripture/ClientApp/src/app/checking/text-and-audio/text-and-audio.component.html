@@ -3,12 +3,11 @@
     <div class="form-container">
       <mat-form-field appearance="outline">
         <mat-label>{{ textLabel }}</mat-label>
-        <textarea appAutofocus matInput formControlName="text" id="textarea"></textarea>
+        <textarea appAutofocus matInput formControlName="text" id="textarea" (change)="trim($event)"></textarea>
       </mat-form-field>
       <div class="audio-container">
         <app-checking-audio-recorder
-          [audioUrl]="audioAttachment.url || ''"
-          (status)="processAudio($event)"
+          (status)="updateFormValidity()"
           formControlName="audio"
           class="border-button"
           [ngClass]="{
@@ -26,7 +25,7 @@
           (fileChange)="prepareAudioFileUpload()"
           accept="audio/*"
           class="border-button"
-          [ngClass]="{ halfHeight: uploadEnabled }"
+          [ngClass]="{ invalid: text.invalid, halfHeight: uploadEnabled }"
           [(lastInvalids)]="lastInvalids"
           [matTooltip]="t('upload_audio_file')"
           matTooltipPosition="before"

@@ -15,7 +15,6 @@ import { CheckingRoutingModule } from './checking-routing.module';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
-import { CheckingAudioCombinedComponent } from './checking/checking-audio-combined/checking-audio-combined.component';
 import { CheckingAudioPlayerComponent } from './checking/checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking/checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
@@ -48,7 +47,6 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
     AudioPlayerComponent,
     CheckingScriptureAudioPlayerComponent,
     AudioTimePipe,
-    CheckingAudioCombinedComponent,
     TextChooserDialogComponent,
     ChapterAudioDialogComponent
   ],
