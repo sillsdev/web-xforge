@@ -12,6 +12,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
@@ -21,6 +22,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockProjectService = mock(SFProjectService);
+  const mockTrainingDataService = mock(TrainingDataService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
@@ -54,6 +56,7 @@ describe('DraftGenerationStepsComponent', () => {
   } as SFProjectProfileDoc;
 
   const mockTrainingDataQuery: RealtimeQuery<TrainingDataDoc> = mock(RealtimeQuery);
+  when(mockTrainingDataQuery.localChanges$).thenReturn(of());
   when(mockTrainingDataQuery.ready$).thenReturn(of(true));
   when(mockTrainingDataQuery.remoteChanges$).thenReturn(of());
   when(mockTrainingDataQuery.remoteDocChanges$).thenReturn(of());
@@ -65,7 +68,8 @@ describe('DraftGenerationStepsComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
-      { provide: SFProjectService, useMock: mockProjectService }
+      { provide: SFProjectService, useMock: mockProjectService },
+      { provide: TrainingDataService, useMock: mockTrainingDataService }
     ]
   }));
 
@@ -91,7 +95,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockProjectService.getProfile('alternateTrainingProject')).thenResolve(
         mockAlternateTrainingSourceProjectDoc
       );
-      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -120,7 +124,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
-      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -155,7 +159,7 @@ describe('DraftGenerationStepsComponent', () => {
       const translationBooks = [1, 2];
 
       component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTrainingDataFiles = trainingDataFiles;
+      component.userSelectedTrainingDataIds = trainingDataFiles;
       component.userSelectedTranslateBooks = translationBooks;
 
       spyOn(component.done, 'emit');
@@ -213,7 +217,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(true));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
-      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
@@ -228,7 +232,7 @@ describe('DraftGenerationStepsComponent', () => {
       const translationBooks = [3, 4];
 
       component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTrainingDataFiles = trainingDataFiles;
+      component.userSelectedTrainingDataIds = trainingDataFiles;
       component.userSelectedTranslateBooks = translationBooks;
 
       spyOn(component.done, 'emit');
@@ -275,7 +279,7 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
-      when(mockProjectService.queryTrainingData(anything())).thenResolve(instance(mockTrainingDataQuery));
+      when(mockTrainingDataService.queryTrainingDataAsync(anything())).thenResolve(instance(mockTrainingDataQuery));
       when(mockTrainingDataQuery.docs).thenReturn([]);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);

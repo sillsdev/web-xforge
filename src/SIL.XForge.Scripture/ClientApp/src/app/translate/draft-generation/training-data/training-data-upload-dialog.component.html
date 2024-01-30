@@ -1,0 +1,39 @@
+<ng-container *transloco="let t; read: 'training_data_upload_dialog'">
+  <h2 mat-dialog-title>{{ t("upload_training_data") }}</h2>
+  <mat-dialog-content class="mat-typography">
+    <div class="dropzone" #dropzone>
+      <input type="file" #fileDropzone accept=".csv,.tsv,.txt,.xls,.xlsx" (change)="uploadedFiles($event)" />
+      <label>{{ t("drag_and_drop_files") }}<br />- {{ t("drag_and_drop_or_browse") }} -</label>
+      <button mat-flat-button color="primary" type="submit">{{ t("browse_files") }}</button>
+    </div>
+    <div class="data-blocks">
+      <div class="wrapper valid">
+        <ng-container>
+          <mat-checkbox #skipFirstRow>{{ t("skip_first_row") }}</mat-checkbox>
+        </ng-container>
+      </div>
+      <div class="wrapper wrapper-training-data-file" [ngClass]="{ valid: hasBeenUploaded }">
+        <ng-container *ngIf="hasBeenUploaded">
+          <span *ngIf="hasBeenUploaded">{{ trainingDataFilename }}</span>
+          <mat-icon *ngIf="hasBeenUploaded" (click)="deleteTrainingData()" class="delete">delete</mat-icon>
+        </ng-container>
+        <ng-container *ngIf="!hasBeenUploaded">
+          <mat-icon>file_download_off</mat-icon>
+          <span>{{ t("no_training_data_file_uploaded") }}</span>
+        </ng-container>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <div class="uploading" *ngIf="isUploading">
+      <span>{{ t("uploading") }}</span>
+      <mat-spinner diameter="24"></mat-spinner>
+    </div>
+    <button mat-button [mat-dialog-close]="'close'" type="button" id="upload-cancel-btn">
+      {{ t("cancel") }}
+    </button>
+    <button mat-flat-button color="primary" type="submit" (click)="save()" id="upload-save-btn">
+      {{ t("save") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>
