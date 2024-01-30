@@ -26,7 +26,11 @@ class Row {
   }
 
   get name(): string {
-    return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
+    return this.projectDoc.data?.name ?? '';
+  }
+
+  get shortName(): string {
+    return this.projectDoc.data?.shortName ?? '';
   }
 
   get tasks(): string {

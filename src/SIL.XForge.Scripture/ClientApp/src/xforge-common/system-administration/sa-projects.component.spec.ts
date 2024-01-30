@@ -60,7 +60,7 @@ describe('SaProjectsComponent', () => {
     tick();
 
     expect(env.rows.length).toEqual(3);
-    expect(env.cell(0, 0).query(By.css('a')).nativeElement.text).toEqual('Project 01');
+    expect(env.cell(0, 0).query(By.css('a')).nativeElement.text.trim()).toEqual('P1 - Project 01');
     expect(env.cell(0, 1).nativeElement.textContent).toEqual('Task1, Task2');
     expect(env.selectValue(env.roleSelect(0))).toEqual('Administrator');
 
