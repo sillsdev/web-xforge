@@ -134,15 +134,6 @@ header {
     display: flex;
     flex: 1;
     overflow: hidden;
-    //max-height: calc(100vh - 194px);
-    //
-    //@include media-breakpoint('<', md) {
-    //  max-height: calc(100vh - 180px);
-    //}
-    //
-    //@include media-breakpoint('<', sm) {
-    //  max-height: calc(100vh - 236px);
-    //}
 
     > as-split {
       height: auto; /* fix for SF-754 */
