@@ -40,10 +40,19 @@ export class CheckingAudioRecorderComponent
 {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
-  @Input() audioUrl: string = '';
+
+  get audio(): AudioAttachment {
+    return this._audio;
+  }
+  @Input() set audio(audio: AudioAttachment) {
+    this._audio = audio;
+    this.status.emit(audio);
+  }
+
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
+  private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
 
   constructor(
@@ -55,7 +64,7 @@ export class CheckingAudioRecorderComponent
   }
 
   writeValue(obj: any): void {
-    this.audioUrl = obj;
+    this.audio = obj;
   }
 
   registerOnChange(fn: any): void {
@@ -67,7 +76,7 @@ export class CheckingAudioRecorderComponent
   }
 
   get hasAudioAttachment(): boolean {
-    return this.audioUrl?.length > 0;
+    return this.audio.url !== undefined;
   }
 
   get isRecording(): boolean {
@@ -89,27 +98,25 @@ export class CheckingAudioRecorderComponent
       return;
     }
 
-    this.audioUrl = audioVideoWebMURL;
     this.recordRTC.getDataURL(() => {});
-    this.status.emit({
+    this.audio = {
       url: audioVideoWebMURL,
       status: 'processed',
       blob: this.recordRTC.getBlob(),
       fileName: objectId() + '.webm'
-    });
+    };
     this._onTouched.emit();
   }
 
   resetRecording(): void {
-    this.audioUrl = '';
-    this.status.emit({ status: 'reset' });
+    this.audio = { status: 'reset' };
     this._onTouched.emit();
   }
 
   startRecording(): void {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
     if (this.mediaDevicesUnsupported) {
-      this.status.emit({ status: 'denied' });
+      this.audio = { status: 'denied' };
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
@@ -125,7 +132,7 @@ export class CheckingAudioRecorderComponent
 
     this.recordRTC.stopRecording(this.processAudio.bind(this));
     this.stream.getAudioTracks().forEach(track => track.stop());
-    this.status.emit({ status: 'stopped' });
+    this.audio = { status: 'stopped' };
     // Additional promise for when the audio has been processed and is available
     await new Promise<void>(resolve => {
       const statusPromise = this.status.subscribe((status: AudioAttachment) => {
@@ -144,7 +151,7 @@ export class CheckingAudioRecorderComponent
 
   private errorCallback(error: any): void {
     console.error(error);
-    this.status.emit({ status: 'denied' });
+    this.audio = { status: 'denied' };
 
     if (error.code === DOMException.NOT_FOUND_ERR) {
       this.noticeService.show(translate('checking_audio_recorder.mic_not_found'));
@@ -163,6 +170,6 @@ export class CheckingAudioRecorderComponent
     this.stream = stream;
     this.recordRTC = RecordRTC(stream, options);
     this.recordRTC.startRecording();
-    this.status.emit({ status: 'recording' });
+    this.audio = { status: 'recording' };
   }
 }
