@@ -541,10 +541,10 @@ public class ParatextService : DisposableBase, IParatextService
         bool canRead;
         try
         {
-            using ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token);
+            UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
             canRead = SFInstallableDblResource.CheckResourcePermission(
                 paratextId,
-                accessLock.UserSecret,
+                userSecret,
                 _paratextOptions.Value,
                 _restClientFactory,
                 _fileSystemService,
@@ -2593,11 +2593,11 @@ public class ParatextService : DisposableBase, IParatextService
         CancellationToken token = default
     )
     {
-        using ParatextAccessLock accessLock = await GetParatextAccessLock(userSecret.Id, token);
+        userSecret = await GetUserSecretWithCurrentParatextTokens(userSecret.Id, token);
         using var request = new HttpRequestMessage(method, $"api8/{url}");
         request.Headers.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            accessLock.UserSecret.ParatextTokens.AccessToken
+            userSecret.ParatextTokens.AccessToken
         );
         if (content != null)
         {
@@ -2626,9 +2626,9 @@ public class ParatextService : DisposableBase, IParatextService
         CancellationToken token
     )
     {
-        using ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token);
+        UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
         return _internetSharedRepositorySourceProvider.GetSource(
-            accessLock.UserSecret,
+            userSecret,
             _sendReceiveServerUri,
             _registryServerUri
         );
@@ -2649,19 +2649,16 @@ public class ParatextService : DisposableBase, IParatextService
         CancellationToken token
     )
     {
-        IEnumerable<SFInstallableDblResource> resources;
-        using (ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token))
-        {
-            resources = SFInstallableDblResource.GetInstallableDblResources(
-                accessLock.UserSecret,
-                _paratextOptions.Value,
-                _restClientFactory,
-                _fileSystemService,
-                _jwtTokenHelper,
-                _exceptionHandler,
-                _dblServerUri
-            );
-        }
+        UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
+        IEnumerable<SFInstallableDblResource>  resources = SFInstallableDblResource.GetInstallableDblResources(
+            userSecret,
+            _paratextOptions.Value,
+            _restClientFactory,
+            _fileSystemService,
+            _jwtTokenHelper,
+            _exceptionHandler,
+            _dblServerUri
+        );
         IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
         return resources
             .OrderBy(r => r.FullName)
@@ -3253,13 +3250,12 @@ public class ParatextService : DisposableBase, IParatextService
         PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
     }
 
-    private async Task<ParatextAccessLock> GetParatextAccessLock(string sfUserId, CancellationToken token)
+    private async Task<UserSecret> GetUserSecretWithCurrentParatextTokens(string sfUserId, CancellationToken token)
     {
-        SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(sfUserId, (string key) => new SemaphoreSlim(1, 1));
-        await semaphore.WaitAsync(token);
-
+        SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(sfUserId, _ => new SemaphoreSlim(1, 1));
         try
         {
+            await semaphore.WaitAsync(token);
             Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(sfUserId);
             if (!attempt.TryResult(out UserSecret userSecret))
             {
@@ -3281,24 +3277,24 @@ public class ParatextService : DisposableBase, IParatextService
                 catch
                 {
                     _logger.LogWarning(
-                        $"ParatextService.GetParatextAccessLock for sfUserId {sfUserId} is throwing from call RefreshAccessTokenAsync(). The current access token has issuedAt time of {userSecret.ParatextTokens.IssuedAt:o}."
+                        $"ParatextService.GetUserSecretWithCurrentParatextTokens for sfUserId {sfUserId} is throwing " +
+                        $"from call RefreshAccessTokenAsync(). The current access token has issuedAt time " +
+                        $"of {userSecret.ParatextTokens.IssuedAt:o}."
                     );
                     throw;
                 }
+
                 userSecret = await _userSecretRepository.UpdateAsync(
                     sfUserId,
                     b => b.Set(u => u.ParatextTokens, refreshedUserTokens)
                 );
             }
-            return new ParatextAccessLock(semaphore, userSecret);
+
+            return userSecret;
         }
-        catch
+        finally
         {
-            // If an exception is thrown between awaiting the semaphore and returning the ParatextAccessLock, the
-            // caller of the method will not get a reference to a ParatextAccessLock and can't release
-            // the semaphore.
             semaphore.Release();
-            throw;
         }
     }
 
@@ -3347,18 +3343,4 @@ public class ParatextService : DisposableBase, IParatextService
             );
         }
     }
-}
-
-class ParatextAccessLock : DisposableBase
-{
-    private SemaphoreSlim _userSemaphore;
-    public readonly UserSecret UserSecret;
-
-    public ParatextAccessLock(SemaphoreSlim userSemaphore, UserSecret userSecret)
-    {
-        _userSemaphore = userSemaphore;
-        UserSecret = userSecret;
-    }
-
-    protected override void DisposeManagedResources() => _userSemaphore.Release();
 }
