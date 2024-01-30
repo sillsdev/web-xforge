@@ -1,0 +1,137 @@
+@use 'src/variables';
+
+@mixin wrapperState($borderColor, $textColor) {
+  border-color: $borderColor;
+  color: $textColor;
+
+  .divider {
+    border-color: $borderColor;
+  }
+
+  mat-icon {
+    color: $borderColor;
+  }
+
+  .delete {
+    color: variables.$border-color;
+    cursor: pointer;
+
+    &:hover {
+      color: $textColor;
+    }
+  }
+}
+
+.mat-dialog-content {
+  .warning {
+    font-size: 21px;
+    margin-inline-end: unset;
+    color: variables.$orange;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+.dropzone {
+  position: relative;
+  padding: 15px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px dashed variables.$border-color;
+  border-radius: 4px;
+  margin-bottom: 24px;
+
+  &:hover {
+    button {
+      background-color: variables.$greenLight;
+      color: variables.$greyDark;
+    }
+  }
+
+  &.dragover {
+    background: variables.$border-color;
+  }
+
+  input {
+    opacity: 0;
+    position: absolute;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+  }
+
+  label {
+    text-align: center;
+    font-size: 1.25rem;
+    line-height: 1.25em;
+    margin-bottom: 1rem;
+  }
+}
+
+.mat-dialog-actions {
+  justify-content: end;
+
+  .uploading {
+    flex-grow: 1;
+    display: flex;
+    column-gap: 8px;
+    flex-direction: row;
+  }
+}
+.data-blocks {
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+
+  .wrapper {
+    display: flex;
+    align-items: center;
+    column-gap: 5px;
+    border: 1px solid variables.$border-color;
+    padding: 5px 10px;
+    border-radius: 4px;
+    color: variables.$greyLight;
+    flex-basis: 44px;
+
+    mat-icon {
+      color: variables.$border-color;
+    }
+
+    app-info,
+    mat-icon {
+      flex: 0 0 30px;
+      text-align: center;
+      justify-content: center;
+    }
+
+    span {
+      flex: 1;
+      line-height: 1em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .divider {
+      flex: 0 0 1px;
+      border-left: 1px solid variables.$border-color;
+      height: calc(100% + 10px);
+    }
+
+    &.valid {
+      @include wrapperState(variables.$purpleLight, variables.$greyDark);
+    }
+
+    &.invalid {
+      @include wrapperState(variables.$errorColor, variables.$errorColor);
+      span {
+        white-space: unset;
+      }
+    }
+  }
+}

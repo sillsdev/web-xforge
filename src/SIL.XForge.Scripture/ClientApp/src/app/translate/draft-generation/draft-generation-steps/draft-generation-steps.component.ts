@@ -15,11 +15,13 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSourcesService } from '../draft-sources.service';
+import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
+import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
+import { TrainingDataService } from '../training-data/training-data.service';
 
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
@@ -39,7 +41,9 @@ export interface DraftGenerationStepsResult {
     UICommonModule,
     TranslocoModule,
     TranslocoMarkupModule,
-    BookMultiSelectComponent
+    BookMultiSelectComponent,
+    TrainingDataMultiSelectComponent,
+    TrainingDataUploadDialogComponent
   ]
 })
 export class DraftGenerationStepsComponent extends SubscriptionDisposable implements OnInit {
@@ -48,17 +52,17 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   availableTranslateBooks: number[] = [];
   availableTrainingBooks: number[] = [];
-  availableTrainingDataFiles: Readonly<TrainingData>[] = [];
+  availableTrainingData: Readonly<TrainingData>[] = [];
 
   // Unusable books do not exist in the corresponding drafting/training source project
   unusableTranslateBooks: number[] = [];
   unusableTrainingBooks: number[] = [];
 
   initialSelectedTrainingBooks: number[] = [];
-  initialSelectedTrainingDataFiles: string[] = [];
+  initialSelectedTrainingDataIds: string[] = [];
   initialSelectedTranslateBooks: number[] = [];
   userSelectedTrainingBooks: number[] = [];
-  userSelectedTrainingDataFiles: string[] = [];
+  userSelectedTrainingDataIds: string[] = [];
   userSelectedTranslateBooks: number[] = [];
 
   // When translate books are selected, they will be filtered out from this list
@@ -81,7 +85,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     private readonly draftSourcesService: DraftSourcesService,
     readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
-    private readonly projectService: SFProjectService
+    private readonly trainingDataService: TrainingDataService
   ) {
     super();
   }
@@ -151,27 +155,34 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       }
     );
 
-    // Get the training data file for the project
+    // Get the training data files for the project
     this.subscribe(
       this.activatedProject.projectDoc$.pipe(
         filterNullish(),
         tap(async projectDoc => {
           // Query for all training data files in the project
           this.trainingDataQuery?.dispose();
-          this.trainingDataQuery = await this.projectService.queryTrainingData(projectDoc.id);
+          this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id);
+
+          let projectChanged: boolean = true;
 
           // Subscribe to this query, and show these
           this.trainingDataSub?.unsubscribe();
           this.trainingDataSub = this.subscribe(
             merge(
+              this.trainingDataQuery.localChanges$,
               this.trainingDataQuery.ready$,
               this.trainingDataQuery.remoteChanges$,
               this.trainingDataQuery.remoteDocChanges$
             ),
             () => {
-              this.availableTrainingDataFiles =
+              this.availableTrainingData =
                 this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-              this.setInitialTrainingDataFiles(this.availableTrainingDataFiles.map(d => d.dataId));
+              if (projectChanged) {
+                // Set the selection based on previous builds
+                projectChanged = false;
+                this.setInitialTrainingDataFiles(this.availableTrainingData.map(d => d.dataId));
+              }
             }
           );
         })
@@ -181,6 +192,15 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   onTrainingBookSelect(selectedBooks: number[]): void {
     this.userSelectedTrainingBooks = selectedBooks;
+    this.clearErrorMessage();
+  }
+
+  onTrainingDataSelect(selectedTrainingDataIds: string[]): void {
+    this.userSelectedTrainingDataIds = selectedTrainingDataIds;
+    // If any of the passed data ids are not in the initial selected list, update the initial selected list
+    if (!selectedTrainingDataIds.every(dataId => this.initialSelectedTrainingDataIds.includes(dataId))) {
+      this.initialSelectedTrainingDataIds = selectedTrainingDataIds;
+    }
     this.clearErrorMessage();
   }
 
@@ -204,7 +224,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     } else {
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,
-        trainingDataFiles: this.userSelectedTrainingDataFiles,
+        trainingDataFiles: this.userSelectedTrainingDataIds,
         translationBooks: this.userSelectedTranslateBooks,
         fastTraining: this.fastTraining
       });
@@ -251,17 +271,16 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   private setInitialTrainingDataFiles(availableDataFiles: string[]): void {
     // Get the previously selected training data files from the target project
-    const previousTrainingDataFiles: Set<string> = new Set<string>(
-      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? []
-    );
+    const previousTrainingDataFiles: string[] =
+      this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedTrainingDataFiles ?? [];
 
     // The intersection is all of the available training data files in the target project that match the target's
     // previous training data files
-    const intersection = availableDataFiles.filter(dataId => previousTrainingDataFiles.has(dataId));
+    const intersection: string[] = availableDataFiles.filter(dataId => previousTrainingDataFiles.includes(dataId));
 
     // Set the selected data files to the intersection, or if the intersection is empty, do not select any
-    this.initialSelectedTrainingDataFiles = intersection.length > 0 ? intersection : [];
-    this.userSelectedTrainingDataFiles = this.initialSelectedTrainingDataFiles;
+    this.initialSelectedTrainingDataIds = intersection.length > 0 ? intersection : [];
+    this.userSelectedTrainingDataIds = this.initialSelectedTrainingDataIds;
     this.trainingDataFilesAvailable =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData ?? false;
   }
