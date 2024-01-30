@@ -22,7 +22,7 @@
     </button>
   </div>
   <div *ngIf="hasAudioAttachment" class="has-attachment">
-    <app-single-button-audio-player *ngIf="!!audioUrl" [source]="audioUrl" (click)="toggleAudio()">
+    <app-single-button-audio-player *ngIf="!!audio.url" [source]="audio.url" (click)="toggleAudio()">
       <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
     </app-single-button-audio-player>
     <button
