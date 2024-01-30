@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
-import { MatLegacyCheckbox as MatCheckbox } from '@angular/material/legacy-checkbox';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -670,7 +670,7 @@ class TestEnvironment {
   }
 
   getRowReference(row: HTMLElement): string {
-    return row.querySelector('td .mat-checkbox-label')?.textContent?.trim() || '';
+    return row.querySelector('td mat-checkbox .mdc-label')?.textContent?.trim() || '';
   }
 
   getRowQuestion(row: HTMLElement): string {
