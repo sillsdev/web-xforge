@@ -449,6 +449,24 @@
     "end_note": "End note",
     "footnote": "Footnote"
   },
+  "training_data_multi_select": {
+    "confirm_delete": "Are you sure you want to permanently delete this training data?",
+    "delete": "Delete",
+    "upload_csv": "Upload CSV"
+  },
+  "training_data_upload_dialog": {
+    "browse_files": "Browse Files",
+    "cancel": "Cancel",
+    "drag_and_drop_files": "Drag and drop training data file here",
+    "drag_and_drop_or_browse": "OR",
+    "skip_first_row": "Skip first row of data file",
+    "no_training_data_file_uploaded": "No training data file uploaded",
+    "no_upload_offline": "Training data cannot be uploaded without connecting to the internet.",
+    "save": "Save",
+    "upload_failed": "The training data file could not be uploaded. Please try again or use a different file.",
+    "upload_training_data": "Upload Training Data",
+    "uploading": "Uploading..."
+  },
   "training_progress": {
     "completed_successfully": "Completed successfully",
     "training_completed_successfully": "Training completed successfully",

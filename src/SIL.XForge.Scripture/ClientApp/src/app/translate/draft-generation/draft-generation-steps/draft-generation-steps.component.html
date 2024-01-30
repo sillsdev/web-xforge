@@ -79,6 +79,13 @@
           </div>
         </ng-template>
 
+        <app-training-data-multi-select
+          [availableTrainingData]="availableTrainingData"
+          [selectedTrainingDataIds]="initialSelectedTrainingDataIds"
+          (trainingDataSelect)="onTrainingDataSelect($event)"
+          data-test-id="draft-stepper-training-data-files"
+        ></app-training-data-multi-select>
+
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
