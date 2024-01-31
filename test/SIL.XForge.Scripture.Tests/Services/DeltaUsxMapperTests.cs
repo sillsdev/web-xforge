@@ -3423,6 +3423,8 @@ public class DeltaUsxMapperTests
         await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
         using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
         Assert.That(archive.Entries.Any(), "setup. unexpected input size.");
+        bool allBooksRoundtrip = true;
+        List<string> errorMessages = new();
         foreach (ZipArchiveEntry entry in archive.Entries)
         {
             string bookCode = Regex
@@ -3436,36 +3438,66 @@ public class DeltaUsxMapperTests
 
                 // Read and stream the contents of the text file
                 string bookUsfm = await reader.ReadToEndAsync();
-                XmlDocument bookUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
-                    new Paratext.Data.MockScrStylesheet("usfm.sty"),
-                    bookUsfm
-                );
-                using XmlNodeReader nodeReader = new(bookUsxLoading);
-                nodeReader.MoveToContent();
-                XDocument bookUsx = XDocument.Load(nodeReader);
-                // Record the usx version string to make it match when later compared.
-                string usxVersion = bookUsx.Elements("usx").First().Attribute("version")!.Value;
-                // Record any text in the book node, which some books have, like <book code="GEN">- American Standard
-                // Version</book>
-                string? bookDesc = bookUsx.Elements("usx").Elements("book").First().FirstNode?.ToString();
-                DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
-
-                // SUT part 1
-                List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(bookUsx).ToList();
-
-                IEnumerable<XElement> chaptersToProcess = bookUsx
-                    .Elements("usx")
-                    .Elements("chapter")
-                    .Select(x => Chapter(x.Attribute("number")!.Value));
-
-                // SUT part 2
-                XDocument roundTrippedUsx = mapper.ToUsx(
-                    Usx(bookCode, bookDesc, usxVersion, chaptersToProcess),
-                    chapterDeltas
-                );
-                Assert.IsTrue(XNode.DeepEquals(roundTrippedUsx, bookUsx), $"Trouble in {entry.Name}");
+                if (!DoesRoundtrip(bookUsfm, out string errorMessage))
+                {
+                    allBooksRoundtrip = false;
+                    errorMessages.Add(errorMessage);
+                }
             }
         }
+        Assert.That(allBooksRoundtrip, Is.True, string.Join(Environment.NewLine, errorMessages));
+    }
+
+    private void AssertRoundtrips(string bookUsfm) =>
+        Assert.That(DoesRoundtrip(bookUsfm, out string errorMessage), Is.True, errorMessage);
+
+    private static string ExtractBookCode(string bookUsfm)
+    {
+        string firstLine = bookUsfm.Split('\n').FirstOrDefault()?.Trim();
+        string bookCode = Regex.Match(firstLine, @"\\id\s+(\w+)").Groups[1].Value;
+        return bookCode;
+    }
+
+    private bool DoesRoundtrip(string bookUsfm, out string errorMessage)
+    {
+        string bookCode = ExtractBookCode(bookUsfm);
+
+        XmlDocument bookUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
+            new Paratext.Data.MockScrStylesheet("usfm.sty"),
+            bookUsfm
+        );
+        XmlNodeReader nodeReader = new(bookUsxLoading);
+        nodeReader.MoveToContent();
+        XDocument bookUsx = XDocument.Load(nodeReader);
+        // Record the usx version string to make it match when later compared.
+        string usxVersion = bookUsx.Elements("usx").First().Attribute("version")!.Value;
+        // Record any text in the book node, which some books have, like <book code="GEN">- American Standard
+        // Version</book>
+        string? bookDesc = bookUsx.Elements("usx").Elements("book").First().FirstNode?.ToString();
+        DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
+
+        // SUT part 1
+        List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(bookUsx).ToList();
+
+        IEnumerable<XElement> chaptersToProcess = bookUsx
+            .Elements("usx")
+            .Elements("chapter")
+            .Select(x => Chapter(x.Attribute("number")!.Value));
+
+        // SUT part 2
+        XDocument roundTrippedUsx = mapper.ToUsx(Usx(bookCode, bookDesc, usxVersion, chaptersToProcess), chapterDeltas);
+        bool didRoundtrip = XNode.DeepEquals(bookUsx, roundTrippedUsx);
+        errorMessage = null;
+        if (!didRoundtrip)
+        {
+            errorMessage = $"Trouble roundtripping {bookCode}.";
+            IEnumerable<int> invalidChapters = chapterDeltas
+                .Where((ChapterDelta cd) => !cd.IsValid)
+                .Select((ChapterDelta cd) => cd.Number);
+            if (invalidChapters.Any())
+                errorMessage += $" Note that the following chapters were invalid: {string.Join(" ", invalidChapters)}";
+        }
+        return didRoundtrip;
     }
 
     private static string GetPathToTestProject() =>
