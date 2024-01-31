@@ -1,6 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -59,7 +65,6 @@ public class DeltaUsxMapperTests
                 .InsertVerse("1")
                 .InsertText("Verse text.", "verse_1_1")
                 .InsertPara("p")
-                .Insert("\n")
         );
 
         var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
@@ -67,6 +72,10 @@ public class DeltaUsxMapperTests
 
         XDocument expected = Usx("PHM", Chapter("1"), Para("p", Verse("1"), "Verse text."));
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+
+        // And we should be able to roundtrip it back.
+        List<ChapterDelta> roundtrippedChapterDeltas = mapper.ToChapterDeltas(newUsxDoc).ToList();
+        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
     }
 
     [Test]
@@ -166,6 +175,40 @@ public class DeltaUsxMapperTests
             "PHM",
             Chapter("1"),
             Para("p", Verse("1"), "This is some ", Char("bd", null), " text.")
+        );
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+    }
+
+    [Test]
+    public void ToUsx_AdjacentChar_SpaceBetweenRetained()
+    {
+        // Suppose there are two styled runs of text, with a space between them. That space should be retained.
+        var chapterDelta = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is some ", "verse_1_1")
+                .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
+                .InsertText(" ")
+                .InsertChar("hello", "w", _testGuidService.Generate(), "verse_1_1")
+                .InsertText(" text.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        // SUT
+        XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+        XDocument expected = Usx(
+            "PHM",
+            Chapter("1"),
+            Para("p", Verse("1"), "This is some ", Char("bd", "bold"), " ", Char("w", "hello"), " text.")
         );
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
     }
@@ -861,6 +904,51 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_CollapsesAdjacentNewlines()
+    {
+        // Suppose there are multiple newlines in a row.
+        var chapterDeltaA = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n")
+                .Insert("\n")
+                .Insert("\n")
+                .Insert("\n")
+        );
+
+        // Or suppose there are no newlines at the end.
+        var chapterDeltaB = new ChapterDelta(
+            1,
+            1,
+            true,
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        XDocument newUsxDocA = mapper.ToUsx(Usx("PHM"), new[] { chapterDeltaA });
+        XDocument newUsxDocB = mapper.ToUsx(Usx("PHM"), new[] { chapterDeltaB });
+
+        XDocument expected = Usx("PHM", Chapter("1"), Para("p", Verse("1"), "Verse text."));
+        // The implied paragraphs are combined.
+        Assert.IsTrue(XNode.DeepEquals(newUsxDocA, expected));
+        Assert.IsTrue(XNode.DeepEquals(newUsxDocB, expected));
+    }
+
+    [Test]
     public void ToUsx_ConsecutiveSameStyleEmptyParas()
     {
         var chapterDelta = new ChapterDelta(
@@ -928,6 +1016,11 @@ public class DeltaUsxMapperTests
             Verse("2")
         );
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+
+        // And we should be able to roundtrip it back.
+        List<ChapterDelta> roundtrippedChapterDeltas = mapper.ToChapterDeltas(newUsxDoc).ToList();
+        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDeltas[0].Delta));
+        Assert.IsTrue(roundtrippedChapterDeltas[1].Delta.DeepEquals(chapterDeltas[1].Delta));
     }
 
     [Test]
@@ -2579,6 +2672,10 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
         Assert.That(chapterDeltas[0].IsValid, Is.True);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+
+        // And we should be able to roundtrip it back.
+        XDocument roundtrippedUsx = mapper.ToUsx(Usx("PHM", Chapter("1")), chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(roundtrippedUsx, usxDoc));
     }
 
     [Test]
@@ -3314,11 +3411,70 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
+    [Test]
+    public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm");
+
+    private async Task RoundTripTestHelper(string project)
+    {
+        string zipFilePath = Path.Combine(GetPathToTestProject(), "SampleData", $"{project}.zip");
+        await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+        using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
+        Assert.That(archive.Entries.Any(), "setup. unexpected input size.");
+        foreach (ZipArchiveEntry entry in archive.Entries)
+        {
+            string bookCode = Regex.Match(entry.Name, @".*-([A-Z0-9]{3}).*\.usfm").Groups[1].Value;
+            if (entry.Name.EndsWith(".usfm", StringComparison.OrdinalIgnoreCase) && bookCode is not ("FRT" or "INT"))
+            {
+                await using Stream entryStream = entry.Open();
+                using StreamReader reader = new StreamReader(entryStream);
+
+                // Read and stream the contents of the text file
+                string bookUsfm = await reader.ReadToEndAsync();
+                XmlDocument bookUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
+                    new Paratext.Data.MockScrStylesheet("usfm.sty"),
+                    bookUsfm
+                );
+                using XmlNodeReader nodeReader = new(bookUsxLoading);
+                nodeReader.MoveToContent();
+                XDocument bookUsx = XDocument.Load(nodeReader);
+                // Record the usx version string to make it match when later compared.
+                string usxVersion = bookUsx.Elements("usx").First().Attribute("version")!.Value;
+                // Record any text in the book node, which some books have, like <book code="GEN">- American Standard
+                // Version</book>
+                string? bookDesc = bookUsx.Elements("usx").Elements("book").First().FirstNode?.ToString();
+                DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
+
+                // SUT part 1
+                List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(bookUsx).ToList();
+
+                IEnumerable<XElement> chaptersToProcess = bookUsx
+                    .Elements("usx")
+                    .Elements("chapter")
+                    .Select(x => Chapter(x.Attribute("number")!.Value));
+
+                // SUT part 2
+                XDocument roundTrippedUsx = mapper.ToUsx(
+                    Usx(bookCode, bookDesc, usxVersion, chaptersToProcess),
+                    chapterDeltas
+                );
+                Assert.IsTrue(XNode.DeepEquals(roundTrippedUsx, bookUsx), $"Trouble in {entry.Name}");
+            }
+        }
+    }
+
+    private static string GetPathToTestProject() =>
+        new FileInfo(Assembly.GetExecutingAssembly().Location).Directory.Parent.Parent.Parent.FullName;
+
+    private static XDocument Usx(string code, string? bookInnerText, string usxVersion, params object[] elems) =>
+        new XDocument(new XElement("usx", new XAttribute("version", usxVersion), Book(code, bookInnerText), elems));
+
     private static XDocument Usx(string code, params object[] elems) =>
         new XDocument(new XElement("usx", new XAttribute("version", "2.5"), Book(code), elems));
 
-    private static XElement Book(string code) =>
-        new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"));
+    private static XElement Book(string code, string? innerText = null) =>
+        innerText == null
+            ? new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"))
+            : new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"), innerText);
 
     private static XElement Para(string style, params object[] contents)
     {
