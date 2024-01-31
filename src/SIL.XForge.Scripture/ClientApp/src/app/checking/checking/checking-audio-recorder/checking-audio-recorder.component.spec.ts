@@ -21,6 +21,7 @@ import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { SingleButtonAudioPlayerComponent } from '../single-button-audio-player/single-button-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -31,7 +32,13 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
+    declarations: [
+      CheckingAudioRecorderComponent,
+      CheckingAudioPlayerComponent,
+      AudioPlayerComponent,
+      AudioTimePipe,
+      SingleButtonAudioPlayerComponent
+    ],
     imports: [
       UICommonModule,
       TestTranslocoModule,
