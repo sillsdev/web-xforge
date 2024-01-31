@@ -1,5 +1,11 @@
 @use 'src/variables';
 
+.root {
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+}
+
 .form-container {
   display: flex;
   column-gap: 4px;
@@ -22,7 +28,7 @@
     border-style: solid;
     border-radius: 5px;
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.15);
+    border-color: rgba(0, 0, 0, 0.4);
   }
   .halfHeight {
     height: 50%;
@@ -37,7 +43,6 @@
   }
   .invalid {
     border-color: #b00020;
-    border-width: 2px;
     transition: border-width 0s, border-color 0s;
   }
   .borderless {
