@@ -727,9 +727,6 @@ class TestEnvironment {
       audio.url = 'some/url';
     }
     this.component.textAndAudio?.audio.setValue(audio);
-    // this.fixture.detectChanges();
-    // flush();
-    // tick();
   }
 
   private addTextDoc(id: TextDocId): void {
