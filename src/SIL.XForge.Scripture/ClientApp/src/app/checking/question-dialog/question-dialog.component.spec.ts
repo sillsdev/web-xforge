@@ -259,12 +259,12 @@ describe('QuestionDialogComponent', () => {
 
   // Needed for validation error messages to appear
   it('control marked as touched+dirty after reference chooser', fakeAsync(() => {
-    env = new TestEnvironment(undefined, undefined);
+    env = new TestEnvironment();
     flush();
     // scriptureStart control starts off untouched+undirty and changes
+    env.component.scriptureStart.setValue('MAT 3:4');
     expect(env.component.scriptureStart.touched).toBe(false);
     expect(env.component.scriptureStart.dirty).toBe(false);
-    env.component.scriptureStart.setValue('MAT 3:4');
     env.clickElement(env.scriptureStartInputIcon);
     flush();
 
@@ -272,9 +272,9 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureStart.dirty).toBe(true);
 
     // scriptureEnd changes the same
+    env.component.scriptureEnd.setValue('MAT 3:4');
     expect(env.component.scriptureEnd.touched).toBe(false);
     expect(env.component.scriptureEnd.dirty).toBe(false);
-    env.component.scriptureEnd.setValue('MAT 3:4');
     env.clickElement(env.scriptureEndInputIcon);
     flush();
 
