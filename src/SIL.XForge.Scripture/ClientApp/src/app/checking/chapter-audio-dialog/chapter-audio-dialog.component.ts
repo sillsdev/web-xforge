@@ -7,7 +7,6 @@ import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { CsvService } from 'xforge-common/csv-service.service';
@@ -144,6 +143,10 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     return this.audio?.blob != null && this.audio?.fileName != null;
   }
 
+  get hasAudioDataError(): boolean {
+    return this.audioErrorMessageKey !== '';
+  }
+
   get numberOfTimingSegments(): number {
     return this.timing_processed.length;
   }
@@ -158,6 +161,10 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
 
   get timingErrorMessageKey(): string {
     return this._timingErrorKey ?? '';
+  }
+
+  get audioErrorMessageKey(): string {
+    return this._audioErrorKey ?? '';
   }
 
   protected get isOnline(): boolean {
@@ -275,16 +282,17 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     if (!this.onlineStatusService.isOnline) return;
 
     this._loadingAudio = true;
-    const audioUrl: string | undefined = await this.fileService.uploadFile(
+    const audioUrl: string | undefined = await this.fileService.onlineUploadFileOrFail(
       FileType.Audio,
       this.data.projectId,
       TextAudioDoc.COLLECTION,
       objectId(),
-      getTextDocId(this.data.projectId, this.book, this.chapter),
       this.audio!.blob!,
       this.audio!.fileName!,
       true
     );
+
+    // if the upload fails, we need to show an error and not close the dialog
     this._loadingAudio = false;
     if (audioUrl == null) {
       this.dialogService.message('chapter_audio_dialog.upload_failed');
@@ -516,12 +524,18 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       if (isTimingFile) {
         this.prepareTimingFileUpload(file);
       } else {
+        // if file is larger than 100MB, show an error
+        if (file.size > 100_000_000) {
+          this._audioErrorKey = 'audio_file_less_than_one_hundred_mb';
+          continue;
+        }
         const audioAttachment: AudioAttachment = {
           url: URL.createObjectURL(file),
           blob: file,
           fileName: file.name,
           status: 'uploaded'
         };
+
         this.audioUpdate(audioAttachment);
       }
     }
