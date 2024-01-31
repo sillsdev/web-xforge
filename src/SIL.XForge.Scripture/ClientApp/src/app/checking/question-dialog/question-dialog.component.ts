@@ -178,6 +178,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       }
     }
     if (!this.textAndAudio?.hasTextOrAudio()) {
+      this.textAndAudio?.text.markAsTouched();
       this.textAndAudio?.text.setErrors({ invalid: true });
       return;
     }
