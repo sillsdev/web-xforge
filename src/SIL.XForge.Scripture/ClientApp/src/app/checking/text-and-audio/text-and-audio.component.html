@@ -3,7 +3,7 @@
     <div class="form-container">
       <mat-form-field appearance="outline">
         <mat-label>{{ textLabel }}</mat-label>
-        <textarea appAutofocus matInput formControlName="text" id="textarea" (change)="trim($event)"></textarea>
+        <textarea matInput formControlName="text" id="textarea" (change)="trim($event)"></textarea>
       </mat-form-field>
       <div class="audio-container">
         <app-checking-audio-recorder
