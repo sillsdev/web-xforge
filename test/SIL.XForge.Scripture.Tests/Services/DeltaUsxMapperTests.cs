@@ -3414,6 +3414,9 @@ public class DeltaUsxMapperTests
     [Test]
     public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm");
 
+    [Test]
+    public async Task RoundTrip_Asv() => await RoundTripTestHelper("eng-asv_usfm-partial");
+
     private async Task RoundTripTestHelper(string project)
     {
         string zipFilePath = Path.Combine(GetPathToTestProject(), "SampleData", $"{project}.zip");
