@@ -3412,21 +3412,24 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
-    public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm");
+    public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm", "heb");
 
     [Test]
-    public async Task RoundTrip_Asv() => await RoundTripTestHelper("eng-asv_usfm-partial");
+    public async Task RoundTrip_Asv() => await RoundTripTestHelper("eng-asv_usfm-partial", "eng-asv");
 
-    private async Task RoundTripTestHelper(string project)
+    private async Task RoundTripTestHelper(string projectZipFilename, string projectShortName)
     {
-        string zipFilePath = Path.Combine(GetPathToTestProject(), "SampleData", $"{project}.zip");
+        string zipFilePath = Path.Combine(GetPathToTestProject(), "SampleData", $"{projectZipFilename}.zip");
         await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
         using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
         Assert.That(archive.Entries.Any(), "setup. unexpected input size.");
         foreach (ZipArchiveEntry entry in archive.Entries)
         {
-            string bookCode = Regex.Match(entry.Name, @".*-([A-Z0-9]{3}).*\.usfm").Groups[1].Value;
-            if (entry.Name.EndsWith(".usfm", StringComparison.OrdinalIgnoreCase) && bookCode is not ("FRT" or "INT"))
+            string bookCode = Regex
+                .Match(entry.Name, @$".*([A-Z0-9][A-Z0-9][A-Z0-9]){projectShortName}\..*")
+                .Groups[1]
+                .Value;
+            if (entry.Name.EndsWith("sfm", StringComparison.OrdinalIgnoreCase) && bookCode is not ("FRT" or "INT"))
             {
                 await using Stream entryStream = entry.Open();
                 using StreamReader reader = new StreamReader(entryStream);
