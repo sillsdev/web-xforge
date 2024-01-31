@@ -96,16 +96,17 @@ export class FileService extends SubscriptionDisposable {
     filename: string,
     alwaysKeepFileOffline: boolean
   ): Promise<string | undefined> {
-    if (this.onlineStatusService.isOnline) {
-      // Try and upload it online and, failing that, do so in offline mode
-      try {
-        const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
-        if (alwaysKeepFileOffline) {
-          await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
-        }
-        return onlineUrl;
-      } catch {}
-    }
+    const onlineUrl: string | undefined = await this.onlineUploadFileOrFail(
+      fileType,
+      projectId,
+      dataCollection,
+      dataId,
+      blob,
+      filename,
+      alwaysKeepFileOffline
+    );
+    if (onlineUrl != null) return onlineUrl;
+
     try {
       // Store the file in indexedDB until we go online again.
       // Use blob.slice() to get a copy of the original. It appears that blobs which references data from files
@@ -117,6 +118,32 @@ export class FileService extends SubscriptionDisposable {
       await this.onCachingError(error);
       return undefined;
     }
+  }
+
+  /**
+   * Specifically upload a file only when online and cache the file if specified.
+   * @returns The audio url if the upload was successful, or undefined if otherwise.
+   */
+  async onlineUploadFileOrFail(
+    fileType: FileType,
+    projectId: string,
+    dataCollection: string,
+    dataId: string,
+    blob: Blob,
+    filename: string,
+    alwaysKeepFileOffline: boolean
+  ): Promise<string | undefined> {
+    if (this.onlineStatusService.isOnline) {
+      // Try and upload it online
+      try {
+        const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
+        if (alwaysKeepFileOffline) {
+          await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
+        }
+        return onlineUrl;
+      } catch {}
+    }
+    return undefined;
   }
 
   /**

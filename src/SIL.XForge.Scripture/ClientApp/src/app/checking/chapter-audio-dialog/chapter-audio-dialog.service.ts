@@ -1,6 +1,7 @@
 import { DialogService } from 'xforge-common/dialog.service';
 import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   ChapterAudioDialogComponent,
@@ -20,7 +21,7 @@ export class ChapterAudioDialogService {
       width: '320px'
     };
     const dialogRef = this.dialogService.openMatDialog(ChapterAudioDialogComponent, dialogConfig);
-    const result: ChapterAudioDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
+    const result: ChapterAudioDialogResult | 'close' | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (result == null || result === 'close') {
       return;
     }
