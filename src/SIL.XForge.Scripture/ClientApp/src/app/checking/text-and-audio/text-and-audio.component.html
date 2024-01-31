@@ -1,7 +1,7 @@
 <div *transloco="let t; read: 'checking'">
   <form [formGroup]="form" autocomplete="off">
     <div class="form-container">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ textLabel }}</mat-label>
         <textarea matInput formControlName="text" id="textarea" (change)="trim($event)"></textarea>
       </mat-form-field>
