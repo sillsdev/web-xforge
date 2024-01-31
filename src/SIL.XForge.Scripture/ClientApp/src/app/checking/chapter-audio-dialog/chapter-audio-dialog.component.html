@@ -44,12 +44,12 @@
           >
             <mat-icon>{{ chapterAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
           </app-single-button-audio-player>
-          <span *ngIf="hasAudioBeenUploaded">{{ audioFilename }}</span>
+          <span *ngIf="hasAudioBeenUploaded && !hasAudioDataError">{{ audioFilename }}</span>
           <mat-icon *ngIf="hasAudioBeenUploaded" (click)="deleteAudioData()" class="delete">delete</mat-icon>
         </ng-container>
         <ng-container *ngIf="!hasAudioBeenUploaded">
           <mat-icon>play_disabled</mat-icon>
-          <span *ngIf="!hasAudioBeenUploaded">{{ t("no_audio_file_uploaded") }}</span>
+          <span *ngIf="hasAudioDataError">{{ t(audioErrorMessageKey) }}</span>
         </ng-container>
       </div>
       <div

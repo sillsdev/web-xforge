@@ -148,6 +148,15 @@ describe('FileService', () => {
     expect(env.getCachedValue(env.dataId)).toBeDefined();
   }));
 
+  it('should not store file in offline store when store for upload is false', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    env.simulateUploadAudio(env.doc!, false);
+    env.setupUploadErrorResponse();
+    tick();
+    expect(env.getCachedValue(env.dataId)).toBeUndefined();
+    expect(env.doc!.data!.audioUrl).toBeUndefined();
+  }));
+
   it('should upload when reconnected', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.simulateUploadAudio(env.doc!);
@@ -320,8 +329,8 @@ class TestEnvironment {
     return this.realtimeService.getFileData(FileType.Audio, dataId);
   }
 
-  async simulateUploadAudio(doc: TestDataDoc): Promise<string> {
-    const url = await doc.uploadFile(FileType.Audio, doc.id, this.audioBlob, this.filename);
+  async simulateUploadAudio(doc: TestDataDoc, retryWhenOnline: boolean = true): Promise<string> {
+    const url = await doc.uploadFile(FileType.Audio, doc.id, this.audioBlob, this.filename, retryWhenOnline);
     await doc.submitJson0Op(op => {
       op.set(td => td.audioUrl, url);
     });
@@ -360,5 +369,12 @@ class TestEnvironment {
     request.flush(getAudioBlob());
     tick();
     return requestedUrl;
+  }
+
+  setupUploadErrorResponse(): void {
+    const req: RequestMatch = { url: `${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, method: 'POST' };
+    const request = this.httpMock.expectOne(req);
+    request.error(new ProgressEvent('500 (Internal server error)'));
+    tick();
   }
 }

@@ -648,11 +648,10 @@ class TestEnvironment {
       ['1', '0', 'v2']
     ]);
     when(
-      mockedFileService.uploadFile(
+      mockedFileService.onlineUploadFileOrFail(
         FileType.Audio,
         anything(),
         TextAudioDoc.COLLECTION,
-        anything(),
         anything(),
         anything(),
         anything(),
