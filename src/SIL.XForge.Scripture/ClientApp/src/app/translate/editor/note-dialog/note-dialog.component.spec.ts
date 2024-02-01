@@ -5,9 +5,12 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
+import { UserProfile } from 'realtime-server/common/models/user';
+import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
@@ -37,6 +40,7 @@ import * as RichText from 'rich-text';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -614,6 +618,76 @@ describe('NoteDialogComponent', () => {
 
     expect(env.dialogResult).toEqual({ noteContent: content, noteDataId: undefined });
   }));
+
+  it('shows the current Scripture Forge user as Me', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), currentUserId: 'user01' });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain(translate('checking.me'));
+  }));
+
+  it('shows the SF note owner name if not synced', fakeAsync(() => {
+    const noteThread = TestEnvironment.getNoteThread(undefined, undefined, true);
+    noteThread.notes[0].syncUserRef = undefined;
+    env = new TestEnvironment({
+      noteThread,
+      currentUserId: 'user04',
+      userProfileId: 'user01',
+      userProfile: createTestUserProfile({ displayName: 'User 01' })
+    });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('User 01');
+  }));
+
+  it('shows the SF note owner name if the user is a checking user', fakeAsync(() => {
+    env = new TestEnvironment({
+      noteThread: TestEnvironment.getNoteThread(),
+      currentUserId: 'user03',
+      userProfileId: 'user01',
+      userProfile: createTestUserProfile({ displayName: 'User 01' })
+    });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('User 01');
+  }));
+
+  it('shows the SF note owner name if the note was created in SF', fakeAsync(() => {
+    env = new TestEnvironment({
+      noteThread: TestEnvironment.getNoteThread(undefined, undefined, true),
+      currentUserId: 'user04',
+      userProfileId: 'user01',
+      userProfile: createTestUserProfile({ displayName: 'User 01' })
+    });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('User 01');
+  }));
+
+  it('shows the PT note owner name if the note was created in SF and we do not have a user record', fakeAsync(() => {
+    env = new TestEnvironment({
+      noteThread: TestEnvironment.getNoteThread(undefined, undefined, true),
+      currentUserId: 'user04'
+    });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('ptuser01');
+  }));
+
+  it('shows Unknown author when the author is unknown', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), currentUserId: 'user02' });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain(
+      translate('checking.unknown_author')
+    );
+  }));
+
+  it('shows the SF note owner name if created in PT and we have a matching SF user', fakeAsync(() => {
+    env = new TestEnvironment({
+      noteThread: TestEnvironment.getNoteThread(),
+      currentUserId: 'user04',
+      userProfileId: 'user01',
+      userProfile: createTestUserProfile({ displayName: 'User 01' })
+    });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('User 01');
+  }));
+
+  it('shows the PT sync user if created in PT and we do not have a matching SF user', fakeAsync(() => {
+    env = new TestEnvironment({
+      noteThread: TestEnvironment.getNoteThread(),
+      currentUserId: 'user04'
+    });
+    expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('ptuser01');
+  }));
 });
 
 @NgModule({
@@ -630,6 +704,8 @@ interface TestEnvironmentConstructorArgs {
   noteTagId?: number;
   combinedVerseTextDoc?: boolean;
   biblicalTerm?: BiblicalTerm;
+  userProfile?: UserProfile;
+  userProfileId?: string;
 }
 
 class TestEnvironment {
@@ -781,7 +857,8 @@ class TestEnvironment {
           tagId,
           dateCreated: '',
           dateModified: '',
-          assignment: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
+          assignment: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId,
+          syncUserRef: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
         },
         {
           dataId: 'note02',
@@ -890,7 +967,9 @@ class TestEnvironment {
     verseRef,
     noteTagId,
     combinedVerseTextDoc,
-    biblicalTerm
+    biblicalTerm,
+    userProfile,
+    userProfileId
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
@@ -942,6 +1021,12 @@ class TestEnvironment {
         id: getSFProjectUserConfigDocId(configData.projectId, currentUserId),
         data: TestEnvironment.projectUserConfig
       });
+      if (userProfile != null && userProfileId != null) {
+        this.realtimeService.addSnapshot<UserProfile>(UserProfileDoc.COLLECTION, {
+          id: userProfileId,
+          data: userProfile
+        });
+      }
     }
 
     when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
@@ -973,6 +1058,10 @@ class TestEnvironment {
       .afterClosed()
       .toPromise()
       .then(result => (this.dialogResult = result));
+
+    when(mockedUserService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+    );
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
 
