@@ -27,11 +27,11 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, capture, mock, reset, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -48,11 +48,11 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingModule } from '../checking.module';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { ImportQuestionsDialogComponent } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -675,6 +675,16 @@ describe('CheckingOverviewComponent', () => {
       expect(config.currentChapter).toEqual(1);
     }));
   });
+
+  it('should set selectedTask on init', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    env.waitForQuestions();
+    const config = await instance(mockedProjectService).getUserConfig(
+      'project01',
+      instance(mockedUserService).currentUserId
+    );
+    expect(config.data?.selectedTask).toEqual('checking');
+  }));
 
   it('should handle question in a book that does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
