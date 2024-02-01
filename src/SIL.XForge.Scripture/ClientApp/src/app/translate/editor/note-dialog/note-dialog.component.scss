@@ -59,6 +59,17 @@ h1 {
       display: block;
       margin: 5px;
     }
+    .note-user {
+      display: flex;
+      line-height: 1.14em;
+      margin: 5px;
+      .user-name {
+        margin-inline-end: 5px;
+      }
+      .date-created {
+        opacity: 0.5;
+      }
+    }
     img {
       align-self: center;
       opacity: 0.5;
