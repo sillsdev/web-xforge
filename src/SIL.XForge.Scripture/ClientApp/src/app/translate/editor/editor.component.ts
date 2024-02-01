@@ -686,7 +686,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigChangesSub.unsubscribe();
           }
           this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() => {
-            if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+            if (this.projectUserConfigDoc?.data != null) {
               // Reload config if the checksum has been reset on the server
               if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null) {
                 this.loadProjectUserConfig();
@@ -1767,7 +1767,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     let chapter: number = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
     this.loadTranslateSuggesterConfidence();
 
-    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+    if (this.projectUserConfigDoc?.data != null) {
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
           // Use chapter from url if specified
@@ -1782,7 +1782,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private loadTranslateSuggesterConfidence(): void {
-    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+    if (this.projectUserConfigDoc?.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.translationSuggester.confidenceThreshold = pcnt / 100;
     }
