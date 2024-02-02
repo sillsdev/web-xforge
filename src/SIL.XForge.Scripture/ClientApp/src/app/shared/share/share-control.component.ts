@@ -33,7 +33,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: ElementRef<HTMLInputElement>;
 
-  email = new UntypedFormControl('', [XFValidators.email]);
+  email = new UntypedFormControl('', [XFValidators.email, Validators.required]);
   localeControl = new UntypedFormControl('', [Validators.required]);
   roleControl = new UntypedFormControl('', [Validators.required]);
   sendInviteForm: UntypedFormGroup = new UntypedFormGroup({
