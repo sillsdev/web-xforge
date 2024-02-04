@@ -43,4 +43,5 @@ public interface IMachineProjectService
         bool preTranslate,
         CancellationToken cancellationToken
     );
+    Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId);
 }
