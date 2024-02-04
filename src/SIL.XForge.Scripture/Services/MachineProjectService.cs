@@ -817,6 +817,71 @@ public class MachineProjectService : IMachineProjectService
         }
     }
 
+    public async Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId)
+    {
+        // Get the user secret
+        if (!(await _userSecrets.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user secret does not exist.");
+        }
+
+        // Load the project from the realtime service
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // If there is an alternate source, ensure that writing system and RTL is correct
+        if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource is not null)
+        {
+            ParatextSettings? alternateSourceSettings = _paratextService.GetParatextSettings(
+                userSecret,
+                projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource.ParatextId
+            );
+            if (alternateSourceSettings is not null)
+            {
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(
+                        pd => pd.TranslateConfig.DraftConfig.AlternateSource.IsRightToLeft,
+                        alternateSourceSettings.IsRightToLeft
+                    );
+                    if (alternateSourceSettings.LanguageTag is not null)
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag,
+                            alternateSourceSettings.LanguageTag
+                        );
+                });
+            }
+        }
+
+        // If there is an alternate training source, ensure that writing system and RTL is correct
+        if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource is not null)
+        {
+            ParatextSettings? alternateSourceSettings = _paratextService.GetParatextSettings(
+                userSecret,
+                projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
+            );
+            if (alternateSourceSettings is not null)
+            {
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(
+                        pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.IsRightToLeft,
+                        alternateSourceSettings.IsRightToLeft
+                    );
+                    if (alternateSourceSettings.LanguageTag is not null)
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag,
+                            alternateSourceSettings.LanguageTag
+                        );
+                });
+            }
+        }
+    }
+
     /// <summary>
     /// Gets the source language for the project.
     /// </summary>
