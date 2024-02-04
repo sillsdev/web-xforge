@@ -636,7 +636,7 @@ describe('NoteDialogComponent', () => {
     expect(env.notes[0].nativeElement.querySelector('.user-name').textContent).toContain('User 01');
   }));
 
-  it('shows the SF note owner name if the user is a checking user', fakeAsync(() => {
+  it('shows the SF note owner name if the user is a commenter', fakeAsync(() => {
     env = new TestEnvironment({
       noteThread: TestEnvironment.getNoteThread(),
       currentUserId: 'user03',
