@@ -12,8 +12,7 @@
   }
 }
 
-#add-question-button,
-#add-chapter-audio-button {
+#add-question-button {
   @include breakpoints.media-breakpoint-only(xs, variables.$grid-breakpoints) {
     min-width: 48px;
   }
