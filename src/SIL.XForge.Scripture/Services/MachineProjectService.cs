@@ -639,9 +639,7 @@ public class MachineProjectService : IMachineProjectService
         // See if there is a training corpus
         string? alternateTrainingSourceCorpusId = null;
         bool useAlternateTrainingSource =
-            project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled
-            && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
-            && preTranslate;
+            project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null && preTranslate;
         if (useAlternateTrainingSource)
         {
             alternateTrainingSourceCorpusId = projectSecret
@@ -728,7 +726,7 @@ public class MachineProjectService : IMachineProjectService
             }
 
             // Only specify the text corpus if we are not uploading to Paratext
-            if (!uploadParatextZipFile)
+            if (!uploadParatextZipFile && project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled)
             {
                 texts = await _textCorpusFactory.CreateAsync(
                     new[] { project.Id },
@@ -737,6 +735,14 @@ public class MachineProjectService : IMachineProjectService
                     useAlternateTrainingSource: true,
                     buildConfig
                 );
+            }
+            else
+            {
+                // We only want to upload a zip file if the alternate source is enabled
+                uploadParatextZipFile = project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled;
+
+                // Ensure that the texts collection is clear
+                texts = Array.Empty<ISFText>();
             }
 
             corpusUpdated |= await UploadNewCorpusFilesAsync(
@@ -779,81 +785,93 @@ public class MachineProjectService : IMachineProjectService
                 uploadParatextZipFile,
                 corpusUpdated,
                 sourceCorpusFiles: newAlternateTrainingSourceCorpusFiles,
-                newTargetCorpusFiles,
+                targetCorpusFiles: newAlternateTrainingSourceCorpusFiles.Any()
+                    ? newTargetCorpusFiles
+                    : new List<ServalCorpusFile>(),
                 cancellationToken
             );
         }
 
         // See if we have an additional training data
-        if (preTranslate && buildConfig.TrainingDataFiles.Any())
+        if (preTranslate)
         {
-            // Set up the collections required to upload the corpus data files
-            var newTrainingDataSourceTexts = new List<ISFText>();
-            var newTrainingDataTargetTexts = new List<ISFText>();
-            var newTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
-            var newTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
-            var oldTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
-            var oldTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
-
-            // Get the training data texts
-            await _trainingDataService.GetTextsAsync(
-                curUserId,
-                buildConfig.ProjectId,
-                buildConfig.TrainingDataFiles,
-                newTrainingDataSourceTexts,
-                newTrainingDataTargetTexts
-            );
-
             // Get the training data corpus id
             string trainingDataCorpusId = projectSecret
                 .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
                 .Key;
 
-            // Get the training data files we have already synced
-            if (!string.IsNullOrWhiteSpace(trainingDataCorpusId))
+            // If there are training data files, or they were removed (i.e. we have a corpus record for it)
+            if (buildConfig.TrainingDataFiles.Any() || !string.IsNullOrWhiteSpace(trainingDataCorpusId))
             {
-                oldTrainingDataSourceCorpusFiles = projectSecret.ServalData.Corpora[trainingDataCorpusId].SourceFiles;
-                oldTrainingDataTargetCorpusFiles = projectSecret.ServalData.Corpora[trainingDataCorpusId].TargetFiles;
+                // Set up the collections required to upload the corpus data files
+                var newTrainingDataSourceTexts = new List<ISFText>();
+                var newTrainingDataTargetTexts = new List<ISFText>();
+                var newTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
+                var newTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
+                var oldTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
+                var oldTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
+
+                // Get the training data texts
+                await _trainingDataService.GetTextsAsync(
+                    curUserId,
+                    buildConfig.ProjectId,
+                    buildConfig.TrainingDataFiles,
+                    newTrainingDataSourceTexts,
+                    newTrainingDataTargetTexts
+                );
+
+                // Get the training data files we have already synced
+                if (!string.IsNullOrWhiteSpace(trainingDataCorpusId))
+                {
+                    oldTrainingDataSourceCorpusFiles = projectSecret
+                        .ServalData
+                        .Corpora[trainingDataCorpusId]
+                        .SourceFiles;
+                    oldTrainingDataTargetCorpusFiles = projectSecret
+                        .ServalData
+                        .Corpora[trainingDataCorpusId]
+                        .TargetFiles;
+                }
+
+                // Upload the source files
+                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                    project.Id,
+                    project.ParatextId,
+                    includeBlankSegments: false,
+                    uploadParatextZipFile: false,
+                    newTrainingDataSourceTexts,
+                    oldTrainingDataSourceCorpusFiles,
+                    newTrainingDataSourceCorpusFiles,
+                    cancellationToken
+                );
+
+                // Upload the target files
+                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                    project.Id,
+                    project.ParatextId,
+                    includeBlankSegments: false,
+                    uploadParatextZipFile: false,
+                    newTrainingDataTargetTexts,
+                    oldTrainingDataTargetCorpusFiles,
+                    newTrainingDataTargetCorpusFiles,
+                    cancellationToken
+                );
+
+                // Update the training data corpus
+                corpusUpdated |= await UpdateCorpusConfigAsync(
+                    project,
+                    translationEngineId,
+                    corpusId: trainingDataCorpusId,
+                    preTranslate: true,
+                    additionalTrainingData: true,
+                    useAlternateTrainingSource: false,
+                    uploadParatextZipFile: false,
+                    corpusUpdated,
+                    sourceCorpusFiles: newTrainingDataSourceCorpusFiles,
+                    targetCorpusFiles: newTrainingDataTargetCorpusFiles,
+                    cancellationToken
+                );
             }
-
-            // Upload the source files
-            corpusUpdated |= await UploadNewCorpusFilesAsync(
-                project.Id,
-                project.ParatextId,
-                includeBlankSegments: false,
-                uploadParatextZipFile: false,
-                newTrainingDataSourceTexts,
-                oldTrainingDataSourceCorpusFiles,
-                newTrainingDataSourceCorpusFiles,
-                cancellationToken
-            );
-
-            // Upload the target files
-            corpusUpdated |= await UploadNewCorpusFilesAsync(
-                project.Id,
-                project.ParatextId,
-                includeBlankSegments: false,
-                uploadParatextZipFile: false,
-                newTrainingDataTargetTexts,
-                oldTrainingDataTargetCorpusFiles,
-                newTrainingDataTargetCorpusFiles,
-                cancellationToken
-            );
-
-            // Update the training data corpus
-            corpusUpdated |= await UpdateCorpusConfigAsync(
-                project,
-                translationEngineId,
-                corpusId: trainingDataCorpusId,
-                preTranslate: true,
-                additionalTrainingData: true,
-                useAlternateTrainingSource: false,
-                uploadParatextZipFile: false,
-                corpusUpdated,
-                sourceCorpusFiles: newTrainingDataSourceCorpusFiles,
-                targetCorpusFiles: newTrainingDataTargetCorpusFiles,
-                cancellationToken
-            );
         }
 
         return corpusUpdated;
@@ -1075,6 +1093,8 @@ public class MachineProjectService : IMachineProjectService
         // Add the additional training data, if applicable
         if (buildConfig.TrainingDataFiles.Any())
         {
+            // If we have an alternate training source, we need to add the additional files
+            // If not, Serval will use the additional files corpus automatically, so we do not need to do anything
             if (draftConfig.AlternateTrainingSourceEnabled)
             {
                 // Include the additional training data with the alternate training corpora
@@ -1082,16 +1102,6 @@ public class MachineProjectService : IMachineProjectService
                     servalData
                         .Corpora.Where(s => s.Value.PreTranslate && s.Value.AdditionalTrainingData)
                         .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
-                        .ToList()
-                );
-            }
-            else
-            {
-                // Include the additional training data with the pre-translate/training corpora
-                translationBuildConfig.Pretranslate.AddRange(
-                    servalData
-                        .Corpora.Where(s => s.Value.PreTranslate && s.Value.AdditionalTrainingData)
-                        .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
                         .ToList()
                 );
             }
