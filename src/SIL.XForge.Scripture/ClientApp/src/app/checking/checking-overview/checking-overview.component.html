@@ -16,17 +16,6 @@
       >
         <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
-      <button
-        *ngIf="!isLoading && canCreateScriptureAudio"
-        mat-flat-button
-        type="button"
-        color="primary"
-        (click)="chapterAudioDialog()"
-        id="add-chapter-audio-button"
-      >
-        <mat-icon class="material-icons-outlined">audio_file</mat-icon>
-        <span fxHide.xs>{{ t("add_chapter_audio") }}</span>
-      </button>
     </ng-container>
     <ng-template #overallProgressChart>
       <div id="overall-progress-chart">
@@ -127,11 +116,19 @@
                           <mat-icon>archive</mat-icon>
                           <span>{{ t("archive_multiple", { location: getBookName(text) }) }}</span>
                         </button>
+                        <button
+                          *ngIf="!chapter.hasAudio && canCreateScriptureAudio"
+                          mat-menu-item
+                          (click)="chapterAudioDialog(text, chapter)"
+                        >
+                          <mat-icon>audio_file</mat-icon>
+                          <span>{{ t("add_chapter_audio") }}</span>
+                        </button>
                         <ng-container *ngIf="chapter.hasAudio">
                           <button
                             *ngIf="canCreateScriptureAudio"
                             mat-menu-item
-                            (click)="editChapterAudio(text, chapter)"
+                            (click)="chapterAudioDialog(text, chapter)"
                             class="edit-audio-btn"
                           >
                             <mat-icon>edit</mat-icon>

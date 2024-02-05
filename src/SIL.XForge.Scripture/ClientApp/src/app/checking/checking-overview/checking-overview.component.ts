@@ -14,8 +14,8 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
-import { UserService } from 'xforge-common/user.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -280,21 +280,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
-  async editChapterAudio(text: TextInfo, chapter: Chapter): Promise<void> {
-    if (this.projectId == null || this.textsByBookId == null) {
-      return;
-    }
-
-    const dialogConfig: ChapterAudioDialogData = {
-      projectId: this.projectId,
-      textsByBookId: this.textsByBookId,
-      questionsSorted: this.allPublishedQuestions,
-      currentBook: text.bookNum,
-      currentChapter: chapter.number
-    };
-    await this.chapterAudioDialogService.openDialog(dialogConfig);
-  }
-
   getRouterLink(bookId: string): string[] {
     if (this.projectId == null) {
       return [];
@@ -371,7 +356,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  async chapterAudioDialog(): Promise<void> {
+  async chapterAudioDialog(text: TextInfo, chapter: Chapter): Promise<void> {
     if (this.projectId == null || this.textsByBookId == null) {
       return;
     }
@@ -379,7 +364,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const dialogConfig: ChapterAudioDialogData = {
       projectId: this.projectId,
       textsByBookId: this.textsByBookId,
-      questionsSorted: this.allPublishedQuestions
+      questionsSorted: this.allPublishedQuestions,
+      currentBook: text.bookNum,
+      currentChapter: chapter.number
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
