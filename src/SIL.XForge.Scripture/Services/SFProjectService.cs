@@ -258,6 +258,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string audioDir = GetAudioDir(projectId);
         if (FileSystemService.DirectoryExists(audioDir))
             FileSystemService.DeleteDirectory(audioDir);
+        string trainingDataDir = Path.Combine(
+            SiteOptions.Value.SiteDir,
+            TrainingDataService.DirectoryName,
+            ptProjectId
+        );
+        if (FileSystemService.DirectoryExists(trainingDataDir))
+            FileSystemService.DeleteDirectory(trainingDataDir);
     }
 
     public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
