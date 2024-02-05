@@ -281,21 +281,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
-  async editChapterAudio(text: TextInfo, chapter: Chapter): Promise<void> {
-    if (this.projectId == null || this.textsByBookId == null) {
-      return;
-    }
-
-    const dialogConfig: ChapterAudioDialogData = {
-      projectId: this.projectId,
-      textsByBookId: this.textsByBookId,
-      questionsSorted: this.allPublishedQuestions,
-      currentBook: text.bookNum,
-      currentChapter: chapter.number
-    };
-    await this.chapterAudioDialogService.openDialog(dialogConfig);
-  }
-
   getRouterLink(bookId: string): string[] {
     if (this.projectId == null) {
       return [];
@@ -372,7 +357,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  async chapterAudioDialog(): Promise<void> {
+  async chapterAudioDialog(text: TextInfo, chapter: Chapter): Promise<void> {
     if (this.projectId == null || this.textsByBookId == null) {
       return;
     }
@@ -380,7 +365,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const dialogConfig: ChapterAudioDialogData = {
       projectId: this.projectId,
       textsByBookId: this.textsByBookId,
-      questionsSorted: this.allPublishedQuestions
+      questionsSorted: this.allPublishedQuestions,
+      currentBook: text.bookNum,
+      currentChapter: chapter.number
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
