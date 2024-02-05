@@ -181,8 +181,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
               this.trainingDataQuery.remoteDocChanges$
             ),
             () => {
-              this.availableTrainingData =
-                this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+              if (projectDoc.data?.translateConfig.draftConfig.additionalTrainingData) {
+                this.availableTrainingData =
+                  this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
+              } else {
+                this.availableTrainingData = [];
+              }
               if (projectChanged) {
                 // Set the selection based on previous builds
                 projectChanged = false;
