@@ -218,14 +218,18 @@ public class MachineProjectServiceTests
                 Arg.Any<IList<ISFText>>()
             );
 
-        // Ensure that the build passed the additional files corpus in the pretranslate parameter
-        string corpusId = env.ProjectSecrets.Get(Project01)
-            .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
-            .Key;
+        // Ensure that the additional files corpus was synced, and the build started
+        await env.TranslationEnginesClient.Received()
+            .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
+        Assert.IsNotEmpty(
+            env.ProjectSecrets.Get(Project01)
+                .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+                .Key
+        );
         await env.TranslationEnginesClient.Received()
             .StartBuildAsync(
                 Arg.Any<string>(),
-                Arg.Is<TranslationBuildConfig>(b => b.Pretranslate.Any(c => c.CorpusId == corpusId)),
+                Arg.Is<TranslationBuildConfig>(b => b.TrainOn == null),
                 CancellationToken.None
             );
     }
@@ -2124,11 +2128,9 @@ public class MachineProjectServiceTests
                             DraftConfig = new DraftConfig
                             {
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
-                                AlternateTrainingSource = new TranslateSource
-                                {
-                                    ProjectRef = Project01,
-                                    ParatextId = Paratext01
-                                },
+                                AlternateTrainingSource = options.AlternateTrainingSourceEnabled
+                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01, }
+                                    : null,
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
