@@ -31,7 +31,7 @@ import { anything, capture, mock, reset, resetCalls, verify, when } from 'ts-moc
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -48,11 +48,11 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingModule } from '../checking.module';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { ImportQuestionsDialogComponent } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -513,6 +513,21 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Chapter Audio', () => {
+    it('has add audio menu options for chapters without audio', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const bookIndex = 1;
+      const chapterIndex = 2;
+
+      env.clickExpanderAtRow(bookIndex);
+      expect(env.textRows.length).toBe(4);
+      expect(env.checkChapterHasAudio(chapterIndex)).toBeFalse();
+
+      env.clickElement(env.questionButtonsMenu[chapterIndex]);
+      expect(env.audioAddButtons[chapterIndex]).not.toBeNull();
+      env.clickElement(env.questionButtonsMenu[chapterIndex]);
+    }));
+
     it('show audio icon on chapter heading', fakeAsync(() => {
       const env = new TestEnvironment(true, true);
       env.waitForQuestions();
@@ -1069,6 +1084,12 @@ class TestEnvironment {
 
   get archivedQuestions(): DebugElement {
     return this.fixture.debugElement.query(By.css('#text-with-archived-questions'));
+  }
+
+  get audioAddButtons(): DebugElement[] {
+    const ret: DebugElement[] = [];
+    this.textRows.forEach(e => ret.push(e.query(By.css('.add-audio-btn'))));
+    return ret;
   }
 
   get audioDeleteButtons(): DebugElement[] {
