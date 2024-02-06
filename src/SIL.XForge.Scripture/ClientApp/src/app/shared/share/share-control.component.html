@@ -7,7 +7,7 @@
     <div class="invite-by-email">
       <h3>{{ t("send_a_link") }}</h3>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
-        <form id="email-form" [formGroup]="sendInviteForm">
+        <form id="email-form" [formGroup]="sendInviteForm" #form="ngForm">
           <mat-form-field id="email">
             <mat-label>{{ t("email") }}</mat-label>
             <input matInput type="email" formControlName="email" (input)="onEmailInput()" />
@@ -43,7 +43,7 @@
             color="primary"
             form="email-form"
             type="submit"
-            (click)="sendEmail()"
+            (click)="sendEmail(form)"
             [disabled]="isSubmitted"
           >
             {{ isAlreadyInvited ? t("resend") : t("send") }}
