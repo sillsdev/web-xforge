@@ -451,7 +451,7 @@ export class NoteDialogComponent implements OnInit {
       syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
     return this.userService.currentUserId === syncUserProfile?.id
       ? translate('checking.me') // "Me", i.e. the current user
-      : ownerDoc.data?.displayName ?? // Another user
+      : syncUserProfile?.data?.displayName ?? // Another user
           syncUser.username; // Fallback to the sync user
   }
 
