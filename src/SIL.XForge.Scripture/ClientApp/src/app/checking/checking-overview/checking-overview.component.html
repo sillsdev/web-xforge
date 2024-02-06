@@ -120,6 +120,7 @@
                           *ngIf="!chapter.hasAudio && canCreateScriptureAudio"
                           mat-menu-item
                           (click)="chapterAudioDialog(text, chapter)"
+                          class="add-audio-btn"
                         >
                           <mat-icon>audio_file</mat-icon>
                           <span>{{ t("add_chapter_audio") }}</span>
