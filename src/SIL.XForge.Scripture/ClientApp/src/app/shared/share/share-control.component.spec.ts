@@ -294,6 +294,15 @@ describe('ShareControlComponent', () => {
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
     expect(env.fetchElement('#email mat-error').nativeElement.textContent).toContain('Email address is invalid');
   }));
+
+  it('should not show required errors immediately after submitting', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setTextFieldValue(env.emailTextField, 'already@example.com');
+    env.setInvitationLanguage('en');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
+    expect(env.fetchElement('#email mat-error')).toBeNull();
+  }));
 });
 
 @NgModule({
