@@ -433,8 +433,9 @@ export class NoteDialogComponent implements OnInit {
         ? this.paratextProjectUsers?.find(user => user.opaqueUserId === note.syncUserRef)
         : undefined;
 
+    // If the user is not a PT user, or the note was created in SF, or the user created the note
     if (
-      syncUser == null || // There is no sync user (not synced yet or the current user is a checking user)
+      syncUser == null || // There is no sync user, i.e. the note is not synced yet or the current user is not a PT user
       note.editable || // Only notes created in SF are editable, so display the SF owner, falling back to the sync user
       syncUser.sfUserId === ownerDoc.id // The note is not editable, but the sync user is the owner, so use the SF owner
     ) {
@@ -443,15 +444,15 @@ export class NoteDialogComponent implements OnInit {
         : ownerDoc.data?.displayName ?? // Another user
             syncUser?.username ?? // Fallback to the sync user
             translate('checking.unknown_author'); // An "unknown author" (there is no sync user)
-    } else {
-      // The note was created in Paratext, so see if we have a profile for the sync user
-      const syncUserProfile: UserProfileDoc | undefined =
-        syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
-      return this.userService.currentUserId === syncUserProfile?.id
-        ? translate('checking.me') // "Me", i.e. the current user
-        : ownerDoc.data?.displayName ?? // Another user
-            syncUser.username; // Fallback to the sync user
     }
+
+    // The note was created in Paratext, so see if we have a profile for the sync user
+    const syncUserProfile: UserProfileDoc | undefined =
+      syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
+    return this.userService.currentUserId === syncUserProfile?.id
+      ? translate('checking.me') // "Me", i.e. the current user
+      : ownerDoc.data?.displayName ?? // Another user
+          syncUser.username; // Fallback to the sync user
   }
 
   private isNoteEditable(note: Note): boolean {

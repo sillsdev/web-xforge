@@ -2047,8 +2047,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
             else
             {
-                // If we do not have the SF user id, replace the entity so that the saving in CompleteSync() will not
-                // read this modified object from projectDoc.Data, and think that there are no changes.
+                // If we do not have the SF user Id set, set the SF user Id to be stored when CompleteSync() is called.
+                // We create a new object to so that the logic in projectDoc.SubmitJson0OpAsync() will see the change.
                 if (profile.SFUserId is null)
                 {
                     paratextUsers[username] = new ParatextUserProfile
