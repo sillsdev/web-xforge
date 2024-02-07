@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Bugsnag, { Event, NotifiableError } from '@bugsnag/js';
+import { sanitizeUrl } from './analytics.service';
 
 export interface EventMetadata {
   [key: string]: object;
@@ -9,14 +10,14 @@ export interface EventMetadata {
   providedIn: 'root'
 })
 export class ErrorReportingService {
-  static beforeSend(metaData: EventMetadata, event: Event): any {
+  static beforeSend(metaData: EventMetadata, event: Event): void {
     if (typeof event.request.url === 'string') {
-      event.request.url = ErrorReportingService.redactAccessToken(event.request.url as string);
+      event.request.url = sanitizeUrl(event.request.url as string);
     }
     event.breadcrumbs = event.breadcrumbs.map(breadcrumb => {
       if (breadcrumb.type === 'navigation' && breadcrumb.metadata && typeof breadcrumb.metadata.from === 'string') {
-        breadcrumb.metadata.from = ErrorReportingService.redactAccessToken(breadcrumb.metadata.from);
-        breadcrumb.metadata.to = ErrorReportingService.redactAccessToken(breadcrumb.metadata.to);
+        breadcrumb.metadata.from = sanitizeUrl(breadcrumb.metadata.from);
+        breadcrumb.metadata.to = sanitizeUrl(breadcrumb.metadata.to);
       }
       return breadcrumb;
     });
@@ -38,10 +39,6 @@ export class ErrorReportingService {
       // using String(value) rather than plain string concatenation, because concatenating a symbol throws an error
       return new Error('Unknown error: ' + String(error));
     } else return error;
-  }
-
-  private static redactAccessToken(url: string): string {
-    return url.replace(/^(.*#access_token=).*$/, '$1redacted_for_error_report');
   }
 
   private metadata: EventMetadata = {};

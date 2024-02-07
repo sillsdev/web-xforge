@@ -10,6 +10,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { Subscription, combineLatest } from 'rxjs';
+import { AnalyticsService } from 'xforge-common/analytics.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -36,8 +37,6 @@ import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
-
-declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
@@ -74,12 +73,13 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly reportingService: ErrorReportingService,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly pwaService: PwaService,
+    private readonly analytics: AnalyticsService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
-    private readonly pwaService: PwaService,
     onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
@@ -121,8 +121,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
       this.subscribe(navEndEvent$, e => {
         if (this.isAppOnline) {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+          this.analytics.logNavigation(e.urlAfterRedirects);
         }
       });
     }
