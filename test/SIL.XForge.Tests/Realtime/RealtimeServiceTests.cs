@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -205,6 +206,7 @@ public class RealtimeServiceTests
         public TestEnvironment()
         {
             IRealtimeServer realtimeServer = Substitute.For<IRealtimeServer>();
+            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
             IOptions<SiteOptions> siteOptions = Substitute.For<IOptions<SiteOptions>>();
             IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
                 new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
@@ -230,6 +232,7 @@ public class RealtimeServiceTests
 
             Service = new RealtimeService(
                 realtimeServer,
+                recurringJobManager,
                 siteOptions,
                 dataAccessOptions,
                 realtimeOptions,

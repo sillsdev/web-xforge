@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -19,6 +20,7 @@ namespace SIL.XForge.Realtime;
 public class RealtimeService : DisposableBase, IRealtimeService
 {
     private readonly IOptions<SiteOptions> _siteOptions;
+    private readonly IRecurringJobManager _recurringJobManager;
     private readonly IOptions<DataAccessOptions> _dataAccessOptions;
     private readonly IOptions<RealtimeOptions> _realtimeOptions;
     private readonly IOptions<AuthOptions> _authOptions;
@@ -28,6 +30,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
 
     public RealtimeService(
         IRealtimeServer server,
+        IRecurringJobManager recurringJobManager,
         IOptions<SiteOptions> siteOptions,
         IOptions<DataAccessOptions> dataAccessOptions,
         IOptions<RealtimeOptions> realtimeOptions,
@@ -37,6 +40,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
     )
     {
         Server = server;
+        _recurringJobManager = recurringJobManager;
         _siteOptions = siteOptions;
         _dataAccessOptions = dataAccessOptions;
         _realtimeOptions = realtimeOptions;
@@ -66,6 +70,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
         {
             object options = CreateOptions();
             Server.Start(options);
+            _recurringJobManager.AddOrUpdate("ping_service", () => CheckIfRunning(), Cron.Minutely);
         }
     }
 
@@ -74,7 +79,14 @@ public class RealtimeService : DisposableBase, IRealtimeService
         if (!_realtimeOptions.Value.UseExistingRealtimeServer)
         {
             Server.Stop();
+            _recurringJobManager.RemoveIfExists("ping_service");
         }
+    }
+
+    public void CheckIfRunning()
+    {
+        if (!Server.IsServerRunning())
+            RestartServer();
     }
 
     public async Task<IConnection> ConnectAsync(string userId = null)
@@ -248,6 +260,15 @@ public class RealtimeService : DisposableBase, IRealtimeService
         await milestonesCollection.DeleteManyAsync(dFilter);
     }
 
+    private void RestartServer()
+    {
+        Console.WriteLine("Attempting to restart Realtime Server");
+        if (Server.Restart(CreateOptions()))
+            Console.WriteLine("Successfully restarted the Realtime Server");
+        else
+            Console.WriteLine("Failed to restart the Realtime Server");
+    }
+
     private object CreateOptions()
     {
         string mongo = $"{_dataAccessOptions.Value.ConnectionString}/{_dataAccessOptions.Value.MongoDatabaseName}";
@@ -259,12 +280,12 @@ public class RealtimeService : DisposableBase, IRealtimeService
             Authority = $"https://{_authOptions.Value.Domain}/",
             _authOptions.Value.Audience,
             _authOptions.Value.Scope,
-            Origin = this._configuration.GetValue<string>("Site:Origin"),
-            BugsnagApiKey = this._configuration.GetValue<string>("Bugsnag:ApiKey"),
-            ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
-            this._realtimeOptions.Value.MigrationsDisabled,
-            this._realtimeOptions.Value.DataValidationDisabled,
-            SiteId = this._siteOptions.Value.Id,
+            Origin = _configuration.GetValue<string>("Site:Origin"),
+            BugsnagApiKey = _configuration.GetValue<string>("Bugsnag:ApiKey"),
+            ReleaseStage = _configuration.GetValue<string>("Bugsnag:ReleaseStage"),
+            _realtimeOptions.Value.MigrationsDisabled,
+            _realtimeOptions.Value.DataValidationDisabled,
+            SiteId = _siteOptions.Value.Id,
             Product.Version,
         };
     }

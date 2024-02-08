@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using NSubstitute;
@@ -574,6 +575,7 @@ public class ConnectionTests
         public TestEnvironment(bool documentCacheDisabled = false)
         {
             var realtimeServer = Substitute.For<IRealtimeServer>();
+            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
             var siteOptions = Options.Create(Substitute.For<SiteOptions>());
             var dataAccessOptions = Options.Create(Substitute.For<DataAccessOptions>());
             var realtimeOptions = Options.Create(
@@ -589,6 +591,7 @@ public class ConnectionTests
             var configuration = Substitute.For<IConfiguration>();
             RealtimeService = new RealtimeService(
                 realtimeServer,
+                recurringJobManager,
                 siteOptions,
                 dataAccessOptions,
                 realtimeOptions,
