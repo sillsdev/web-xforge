@@ -4,8 +4,7 @@ import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { tap } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -13,7 +12,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
 import { NllbLanguageService } from '../../nllb-language.service';
-import { DraftSourcesService } from '../draft-sources.service';
+import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
@@ -74,12 +73,17 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   ngOnInit(): void {
     this.subscribe(
       this.draftSourcesService.getDraftProjectSources().pipe(
-        tap(({ draftingSource, trainingSource }) => {
-          this.setSourceProjectDisplayNames(draftingSource, trainingSource);
+        filter(({ target, source, alternateSource, alternateTrainingSource }) => {
+          this.setSourceProjectDisplayNames(alternateSource ?? source, alternateTrainingSource);
+          return target != null && source != null;
         })
       ),
       // Build book lists
-      ({ target, draftingSource, trainingSource }) => {
+      ({ target, source, alternateSource, alternateTrainingSource }) => {
+        // The null values will have been filtered above
+        target = target!;
+        // Use the alternate source if specified, otherwise use the source
+        const draftingSource = alternateSource ?? source!;
         // If both source and target project languages are in the NLLB,
         // training book selection is optional (and discouraged).
         this.isTrainingOptional =
@@ -93,8 +97,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           draftingSourceBooks.add(text.bookNum);
         }
 
-        if (trainingSource != null) {
-          for (const text of trainingSource.texts) {
+        if (alternateTrainingSource != null) {
+          for (const text of alternateTrainingSource.texts) {
             trainingSourceBooks.add(text.bookNum);
           }
         } else {
@@ -207,10 +211,11 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   private setSourceProjectDisplayNames(
-    draftingSource: SFProjectProfile,
-    trainingSource: SFProjectProfile | undefined
+    draftingSource: DraftSource | undefined,
+    trainingSource: DraftSource | undefined
   ): void {
-    this.draftingSourceProjectName = `${draftingSource.shortName} - ${draftingSource.name}`;
+    this.draftingSourceProjectName =
+      draftingSource != null ? `${draftingSource.shortName} - ${draftingSource.name}` : '';
     this.trainingSourceProjectName =
       trainingSource != null ? `${trainingSource.shortName} - ${trainingSource.name}` : this.draftingSourceProjectName;
   }

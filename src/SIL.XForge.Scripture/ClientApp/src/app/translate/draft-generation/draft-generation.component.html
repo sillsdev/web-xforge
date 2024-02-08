@@ -59,11 +59,74 @@
         *ngIf="isSourceProjectSet && isSourceAndTargetDifferent && !isSourceAndTrainingSourceLanguageIdentical"
         type="warning"
         icon="warning"
-        data-test-id="warning-source-target-same"
+        data-test-id="warning-source-training-different"
       >
         <transloco
           key="draft_generation.info_alert_different_training_and_source_language"
           [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          !canAccessSource
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_source_access"
+          [params]="{
+            connectProjectUrl: { route: '/connect-project' },
+            name: source?.name
+          }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          canAccessSource &&
+          !canAccessAlternateSource
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-alternate-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_alternate_source_access"
+          [params]="{
+            connectProjectUrl: { route: '/connect-project' },
+            name: alternateSource?.name,
+          }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          canAccessSource &&
+          canAccessAlternateSource &&
+          !canAccessAlternateTrainingSource
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-alternate-training-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_alternate_training_source_access"
+          [params]="{
+            connectProjectUrl: { route: '/connect-project' },
+            name: alternateTrainingSource?.name,
+          }"
         ></transloco>
       </app-notice>
     </ng-container>
@@ -139,7 +202,9 @@
                 {{ t("generate_draft_button") }}
               </button>
             </section>
+          </ng-container>
 
+          <ng-container *ngIf="isPreviewSupported">
             <ng-container *ngIf="draftJob != null">
               <section *ngIf="!isDraftInProgress(draftJob)" class="view-or-create-options">
                 <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
@@ -173,10 +238,15 @@
                     </ng-container>
                   </div>
 
-                  <mat-divider inset vertical data-text="or"></mat-divider>
+                  <mat-divider
+                    *ngIf="hasAnyCompletedBuild && isGenerationSupported"
+                    inset
+                    vertical
+                    data-text="or"
+                  ></mat-divider>
                 </ng-container>
 
-                <div *ngIf="hasAnyCompletedBuild">
+                <div *ngIf="hasAnyCompletedBuild && isGenerationSupported">
                   <h3>{{ t("generate_new_draft_header") }}</h3>
                   <p><transloco key="draft_generation.generate_new_draft_detail"></transloco></p>
 
