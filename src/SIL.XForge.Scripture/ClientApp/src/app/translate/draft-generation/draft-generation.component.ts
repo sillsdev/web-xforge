@@ -121,17 +121,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   get isGenerationSupported(): boolean {
-    return (
-      (!this.isBackTranslationMode || this.isBackTranslation) &&
-      this.isTargetLanguageSupported &&
-      this.isSourceProjectSet &&
-      this.isSourceAndTargetDifferent &&
-      this.isSourceAndTrainingSourceLanguageIdentical &&
-      this.canAccessSource &&
-      this.canAccessAlternateSource &&
-      this.canAccessAlternateTrainingSource &&
-      (this.isBackTranslationMode || this.isPreTranslationApproved)
-    );
+    return this.isPreviewSupported && this.canAccessAlternateSource && this.canAccessAlternateTrainingSource;
   }
 
   get isPreviewSupported(): boolean {
