@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
-import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TranslateConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, defer, from, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -19,7 +20,9 @@ export interface DraftSource {
   writingSystem: WritingSystem;
   noAccess?: boolean;
 }
-
+interface DraftSourceDoc {
+  data: DraftSource;
+}
 export interface DraftSources {
   target?: Readonly<DraftSource>;
   source?: Readonly<DraftSource>;
@@ -49,45 +52,20 @@ export class DraftSourcesService {
 
         // If the user cannot access the source project, populate using the target's source information
         const sourceProjectId: string | undefined = translateConfig?.source?.projectRef;
-        let sourceProject = undefined;
-        if (
-          sourceProjectId != null &&
-          !currentUser.data?.sites[environment.siteId].projects?.includes(sourceProjectId) &&
-          targetDoc?.data != null &&
-          targetDoc.data.translateConfig?.source != null
-        ) {
-          // Construct a source project doc based on the target's source configuration
-          sourceProject = {
-            data: {
-              name: targetDoc.data.translateConfig.source.name,
-              shortName: targetDoc.data.translateConfig.source.shortName,
-              texts: targetDoc.data.texts.filter(text => text.hasSource),
-              writingSystem: targetDoc.data.translateConfig.source.writingSystem,
-              noAccess: true
-            }
-          };
-        }
+        let sourceProject = this.getDraftSource(
+          sourceProjectId,
+          currentUser,
+          targetDoc?.data?.translateConfig?.source,
+          targetDoc?.data?.texts.filter(text => text.hasSource) ?? []
+        );
 
         // If the user cannot access the alternate source project, populate using the target's alternate source info
         const alternateSourceProjectId: string | undefined = translateConfig?.draftConfig.alternateSource?.projectRef;
-        let alternateSourceProject = undefined;
-        if (
-          alternateSourceProjectId != null &&
-          !currentUser.data?.sites[environment.siteId].projects?.includes(alternateSourceProjectId) &&
-          targetDoc?.data != null &&
-          targetDoc.data.translateConfig?.draftConfig?.alternateSource != null
-        ) {
-          // Construct an alternate source project doc based on the target's alternate source configuration
-          alternateSourceProject = {
-            data: {
-              name: targetDoc.data.translateConfig.draftConfig?.alternateSource.name,
-              shortName: targetDoc.data.translateConfig.draftConfig?.alternateSource.shortName,
-              texts: [],
-              writingSystem: targetDoc.data.translateConfig.draftConfig?.alternateSource.writingSystem,
-              noAccess: true
-            }
-          };
-        }
+        let alternateSourceProject = this.getDraftSource(
+          alternateSourceProjectId,
+          currentUser,
+          targetDoc?.data?.translateConfig?.draftConfig?.alternateSource
+        );
 
         // If the user cannot access the alternate training source project,
         // populate using the target's alternate training source information, if enabled
@@ -95,28 +73,11 @@ export class DraftSourcesService {
           .alternateTrainingSourceEnabled
           ? translateConfig.draftConfig.alternateTrainingSource?.projectRef
           : undefined;
-        let alternateTrainingSourceProject = undefined;
-        if (
-          alternateTrainingSourceProjectId != null &&
-          !currentUser.data?.sites[environment.siteId].projects?.includes(alternateTrainingSourceProjectId)
-        ) {
-          // Ensure that we have the alternate training source
-          if (targetDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource == null) {
-            // The alternate training source is not set, clear the id
-            alternateTrainingSourceProjectId = undefined;
-          } else {
-            // Construct an alternate training source project doc based on the target's alternate training source config
-            alternateTrainingSourceProject = {
-              data: {
-                name: targetDoc.data.translateConfig.draftConfig.alternateTrainingSource.name,
-                shortName: targetDoc.data.translateConfig.draftConfig.alternateTrainingSource.shortName,
-                texts: [],
-                writingSystem: targetDoc.data.translateConfig.draftConfig.alternateTrainingSource.writingSystem,
-                noAccess: true
-              }
-            };
-          }
-        }
+        let alternateTrainingSourceProject = this.getDraftSource(
+          alternateTrainingSourceProjectId,
+          currentUser,
+          targetDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource
+        );
 
         // Include alternate training source project if it exists
         return from(
@@ -143,5 +104,40 @@ export class DraftSourcesService {
         );
       })
     );
+  }
+
+  /**
+   * Get a draft source entity to substitute for a ProjectDoc when that document cannot be accessed.
+   * @param projectId The project id corresponding to the translate source.
+   * @param currentUser The current user.
+   * @param translateSource The source, alternate source, or alternate training source.
+   * @param texts (optional )The source's texts - only populated when the source is the translate source.
+   * @returns The draft source
+   */
+  private getDraftSource(
+    projectId: string | undefined,
+    currentUser: UserDoc,
+    translateSource: TranslateSource | undefined,
+    texts: TextInfo[] | undefined = undefined
+  ): DraftSourceDoc | undefined {
+    if (
+      projectId != null &&
+      !currentUser.data?.sites[environment.siteId].projects?.includes(projectId) &&
+      translateSource != null
+    ) {
+      // Construct a source project doc based on the translate source from the target project
+      return {
+        data: {
+          name: translateSource.name,
+          shortName: translateSource.shortName,
+          texts: texts ?? [],
+          writingSystem: translateSource.writingSystem,
+          noAccess: true
+        }
+      };
+    } else {
+      // The real document will be read from the realtime server, as the current user has permission
+      return undefined;
+    }
   }
 }
