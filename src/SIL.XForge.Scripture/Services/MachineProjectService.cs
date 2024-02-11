@@ -226,11 +226,13 @@ public class MachineProjectService : IMachineProjectService
                 }
             }
 
-            // Clear the existing translation engine id and corpora
-            string? corporaId = projectSecret
-                .ServalData?.Corpora
-                .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
-                .Key;
+            // Clear the existing translation engine id and corpora, based on whether this is pre-translation or not
+            string[] corporaIds =
+                projectSecret
+                    .ServalData?.Corpora
+                    .Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
+                    .Select(c => c.Key)
+                    .ToArray() ?? Array.Empty<string>();
             await _projectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
@@ -244,7 +246,7 @@ public class MachineProjectService : IMachineProjectService
                         u.Unset(p => p.ServalData.TranslationEngineId);
                     }
 
-                    if (!string.IsNullOrWhiteSpace(corporaId))
+                    foreach (string corporaId in corporaIds)
                     {
                         u.Unset(p => p.ServalData.Corpora[corporaId]);
                     }
