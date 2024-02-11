@@ -1548,6 +1548,60 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task TranslationEngineExistsAsync_Type_SupportsKebabCase()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project01,
+                        Type = "smt-transfer",
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_Type_SupportsPascalCase()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project01,
+                        Type = "SmtTransfer",
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+    }
+
+    [Test]
     public async Task TranslationEngineExistsAsync_Success()
     {
         // Set up test environment

@@ -36,7 +36,8 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineProjectService : IMachineProjectService
 {
-    // Supported translation engines
+    // Supported translation engines (Serval 1.1 format)
+    // Serval 1.2 accepts the translation engine type in 1.1 (PascalCase) and 1.2 (kebab-case) format
     internal const string Echo = "Echo";
     internal const string Nmt = "Nmt";
     internal const string SmtTransfer = "SmtTransfer";
@@ -808,7 +809,14 @@ public class MachineProjectService : IMachineProjectService
                 cancellationToken
             );
             string type = await GetTranslationEngineTypeAsync(preTranslate);
-            return translationEngine.Name == projectId && translationEngine.Type == type;
+
+            // We check for the type, taking account of Pascal Case (Serval 1.1) and Kebab Case (Serval 1.2)
+            return translationEngine.Name == projectId
+                && string.Equals(
+                    translationEngine.Type.Replace("-", string.Empty),
+                    type.Replace("-", string.Empty),
+                    StringComparison.InvariantCultureIgnoreCase
+                );
         }
         catch (ServalApiException e)
             when (e.StatusCode is StatusCodes.Status403Forbidden or StatusCodes.Status404NotFound)
