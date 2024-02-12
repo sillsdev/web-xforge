@@ -2046,7 +2046,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 paratextUsers.TryAdd(username, userProfile);
             }
             else
-                profile.SFUserId ??= sfUserId;
+            {
+                // If we do not have the SF user Id set, set the SF user Id to be stored when CompleteSync() is called.
+                // We create a new object to so that the logic in projectDoc.SubmitJson0OpAsync() will see the change.
+                if (profile.SFUserId is null)
+                {
+                    paratextUsers[username] = new ParatextUserProfile
+                    {
+                        Username = profile.Username,
+                        SFUserId = sfUserId,
+                        OpaqueUserId = profile.OpaqueUserId,
+                    };
+                }
+            }
         }
         return paratextUsers;
     }

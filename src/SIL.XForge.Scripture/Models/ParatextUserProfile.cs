@@ -12,5 +12,5 @@ public class ParatextUserProfile
     /// A unique id that can be used to associate a project component (e.g. a note) to this paratext user
     /// </summary>
     public string OpaqueUserId { get; set; }
-    public string SFUserId { get; set; }
+    public string? SFUserId { get; set; }
 }

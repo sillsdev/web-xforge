@@ -1,11 +1,12 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import {
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
-  MatLegacyDialogRef as MatDialogRef
+  MatLegacyDialogRef as MatDialogRef,
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
 } from '@angular/material/legacy-dialog';
 import { translate } from '@ngneat/transloco';
+import { VerseRef } from '@sillsdev/scripture';
 import { sortBy } from 'lodash-es';
-import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
   BIBLICAL_TERM_TAG_ICON,
@@ -14,20 +15,20 @@ import {
   SF_TAG_ICON
 } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { VerseRef } from '@sillsdev/scripture';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
-import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { canInsertNote, formatFontSizeToRems, XmlUtils } from '../../../shared/utils';
 
 export interface NoteDialogData {
@@ -51,6 +52,8 @@ interface NoteDisplayInfo {
   icon: string;
   title: string;
   editable: boolean;
+  dateCreated: string;
+  userName: string;
   assignment?: string;
   reattachedVerse?: string;
   reattachedText?: string;
@@ -116,7 +119,7 @@ export class NoteDialogComponent implements OnInit {
       }
     }
     // extract note info and content for display
-    this.updateNotesToDisplay();
+    await this.updateNotesToDisplayAsync();
   }
 
   get canViewAssignedUser(): boolean {
@@ -249,7 +252,7 @@ export class NoteDialogComponent implements OnInit {
       await this.threadDoc!.submitJson0Op(op => op.set(nt => nt.notes[index].deleted, true));
     }
 
-    this.updateNotesToDisplay();
+    await this.updateNotesToDisplayAsync();
     if (this.notesToDisplay.length === 0) {
       this.dialogRef.close({ deleted: true });
     }
@@ -341,7 +344,7 @@ export class NoteDialogComponent implements OnInit {
     this.dialogRef.close(content);
   }
 
-  private updateNotesToDisplay(): void {
+  private async updateNotesToDisplayAsync(): Promise<void> {
     if (this.threadDoc?.data == null) return;
     const sortedNotes: Note[] = sortBy(
       this.threadDoc.data.notes.filter(n => !n.deleted),
@@ -358,6 +361,8 @@ export class NoteDialogComponent implements OnInit {
         icon: this.noteIcon(note),
         title: this.noteTitle(note),
         editable: this.isNoteEditable(note) && note.dataId === lastNoteId,
+        dateCreated: this.getNoteDateCreated(note),
+        userName: await this.getNoteUserNameAsync(note),
         assignment: this.getAssignedUserString(note.assignment),
         reattachedVerse: this.reattachedVerse(note),
         reattachedText: this.reattachedText(note)
@@ -402,6 +407,52 @@ export class NoteDialogComponent implements OnInit {
         return translate('note_dialog.status_resolved');
     }
     return note.reattached != null ? translate('note_dialog.note_reattached') : '';
+  }
+
+  /**
+   * Returns the date created value of the note, formatted to the user's locale.
+   * @param note The note.
+   * @returns The formatted creation date as a string.
+   */
+  private getNoteDateCreated(note: Note): string {
+    return this.i18n.formatDate(new Date(note.dateCreated));
+  }
+
+  /**
+   * Gets the name of the user who created the note, in so far as we can calculate it.
+   * @param note The note.
+   * @returns A promise of the user's name as a string.
+   */
+  private async getNoteUserNameAsync(note: Note): Promise<string> {
+    // Get the owner. This is often the project admin if the sync user is not in SF
+    const ownerDoc: UserProfileDoc = await this.userService.getProfile(note.ownerRef);
+
+    // Get the sync user, if we have a syncUserRef for the note
+    const syncUser: ParatextUserProfile | undefined =
+      note.syncUserRef != null
+        ? this.paratextProjectUsers?.find(user => user.opaqueUserId === note.syncUserRef)
+        : undefined;
+
+    // If the user is not a PT user, or the note was created in SF, or the user created the note
+    if (
+      syncUser == null || // There is no sync user, i.e. the note is not synced yet or the current user is not a PT user
+      note.editable || // Only notes created in SF are editable, so display the SF owner, falling back to the sync user
+      syncUser.sfUserId === ownerDoc.id // The note is not editable, but the sync user is the owner, so use the SF owner
+    ) {
+      return this.userService.currentUserId === ownerDoc.id
+        ? translate('checking.me') // "Me", i.e. the current user
+        : ownerDoc.data?.displayName ?? // Another user
+            syncUser?.username ?? // Fallback to the sync user
+            translate('checking.unknown_author'); // An "unknown author" (there is no sync user)
+    }
+
+    // The note was created in Paratext, so see if we have a profile for the sync user
+    const syncUserProfile: UserProfileDoc | undefined =
+      syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
+    return this.userService.currentUserId === syncUserProfile?.id
+      ? translate('checking.me') // "Me", i.e. the current user
+      : syncUserProfile?.data?.displayName ?? // Another user
+          syncUser.username; // Fallback to the sync user
   }
 
   private isNoteEditable(note: Note): boolean {
