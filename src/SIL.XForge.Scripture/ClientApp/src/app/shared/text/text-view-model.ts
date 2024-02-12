@@ -8,9 +8,11 @@ import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
+/** See also DeltaUsxMapper.cs ParagraphPoetryListStyles. */
 const PARA_STYLES: Set<string> = new Set<string>([
   // Paragraphs
   'p',
+  'nb',
   'm',
   'po',
   'pr',
