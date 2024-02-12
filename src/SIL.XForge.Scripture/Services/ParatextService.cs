@@ -3148,14 +3148,13 @@ public class ParatextService : DisposableBase, IParatextService
         string selectedText = comment.SelectedText;
         string contextBefore = comment.ContextBefore;
         string contextAfter = comment.ContextAfter;
-        if (comment.Reattached != null)
+        if (comment.ReattachedLocation is not null)
         {
-            string[] reattachedParts = comment.Reattached.Split(PtxUtils.StringUtils.orcCharacter);
-            verseRef = new VerseRef(reattachedParts[0]);
-            selectedText = reattachedParts[1];
-            startPos = int.Parse(reattachedParts[2]);
-            contextBefore = reattachedParts[3];
-            contextAfter = reattachedParts[4];
+            verseRef = comment.ReattachedLocation.VerseRef;
+            selectedText = comment.ReattachedLocation.SelectedText;
+            startPos = comment.ReattachedLocation.StartPosition;
+            contextBefore = comment.ReattachedLocation.ContextBefore;
+            contextAfter = comment.ReattachedLocation.ContextAfter;
         }
 
         if (!chapterDeltas.TryGetValue(verseRef.ChapterNum, out ChapterDelta chapterDelta) || startPos == 0)

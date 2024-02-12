@@ -473,6 +473,7 @@ export class NoteDialogComponent implements OnInit {
   private reattachedText(note: Note): string | undefined {
     if (note.reattached == null) return;
     const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    if (reattachedParts.length < 5) return;
     const selectedText: string = reattachedParts[1];
     const contextBefore: string = reattachedParts[3];
     const contextAfter: string = reattachedParts[4];
@@ -481,11 +482,16 @@ export class NoteDialogComponent implements OnInit {
 
   private reattachedVerse(note: Note): string | undefined {
     if (note.reattached == null) return;
-    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
-    const verseStr: string = reattachedParts[0];
-    const vref: VerseRef = new VerseRef(verseStr);
-    const verseRef: string = this.i18n.localizeReference(vref);
-    const reattached: string = translate('note_dialog.reattached');
-    return `${verseRef} ${reattached}`;
+    try {
+      const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+      const verseStr: string = reattachedParts[0];
+      const vref: VerseRef = new VerseRef(verseStr);
+      const verseRef: string = this.i18n.localizeReference(vref);
+      const reattached: string = translate('note_dialog.reattached');
+      return `${verseRef} ${reattached}`;
+    } catch {
+      // Ignore any errors parsing the re-attached verse
+      return;
+    }
   }
 }
