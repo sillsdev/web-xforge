@@ -1411,33 +1411,6 @@ public class ParatextService : DisposableBase, IParatextService
             ptProjectUsers
         );
 
-        // TODO: Remove these logs once the feature public and stable
-        string sfCommentLog = "SF Comment:";
-        ScrText scrText =
-            ScrTextCollection.FindById(username, paratextId)
-            ?? throw new DataNotFoundException("Can't get access to cloned project.");
-        CommentManager manager = CommentManager.Get(scrText);
-        foreach (List<Paratext.Data.ProjectComments.Comment> thread in noteThreadChangeList)
-        {
-            CommentThread existingThread = manager.FindThread(thread[0].Thread);
-            foreach (Paratext.Data.ProjectComments.Comment comment in thread)
-            {
-                var existingComment = existingThread?.Comments.FirstOrDefault(c => c.Id == comment.Id);
-                if (existingComment == null)
-                    _logger.LogWarning($"{sfCommentLog} Adding sf comment on thread with ID {comment.Thread}");
-                else if (comment.Deleted)
-                    _logger.LogWarning($"{sfCommentLog} Deleting sf comment on thread with ID {comment.Thread}");
-                else
-                {
-                    if (existingComment.Contents?.OuterXml != comment.Contents?.OuterXml)
-                        _logger.LogWarning(
-                            $"{sfCommentLog} Comment contents differ\n{existingComment.Contents?.OuterXml}\n{comment.Contents?.OuterXml}"
-                        );
-                    _logger.LogWarning($"{sfCommentLog} Updating SF comment on thread with ID {comment.Thread}");
-                }
-            }
-        }
-
         return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
     }
 
@@ -2360,7 +2333,12 @@ public class ParatextService : DisposableBase, IParatextService
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    private void InstallResource(string username, ParatextResource resource, string targetParatextId, bool needsToBeCloned)
+    private void InstallResource(
+        string username,
+        ParatextResource resource,
+        string targetParatextId,
+        bool needsToBeCloned
+    )
     {
         if (resource.InstallableResource != null)
         {
@@ -2595,10 +2573,7 @@ public class ParatextService : DisposableBase, IParatextService
     {
         userSecret = await GetUserSecretWithCurrentParatextTokens(userSecret.Id, token);
         using var request = new HttpRequestMessage(method, $"api8/{url}");
-        request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            userSecret.ParatextTokens.AccessToken
-        );
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userSecret.ParatextTokens.AccessToken);
         if (content != null)
         {
             request.Content = new StringContent(content);
@@ -2627,11 +2602,7 @@ public class ParatextService : DisposableBase, IParatextService
     )
     {
         UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
-        return _internetSharedRepositorySourceProvider.GetSource(
-            userSecret,
-            _sendReceiveServerUri,
-            _registryServerUri
-        );
+        return _internetSharedRepositorySourceProvider.GetSource(userSecret, _sendReceiveServerUri, _registryServerUri);
     }
 
     /// <summary>
@@ -2650,7 +2621,7 @@ public class ParatextService : DisposableBase, IParatextService
     )
     {
         UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
-        IEnumerable<SFInstallableDblResource>  resources = SFInstallableDblResource.GetInstallableDblResources(
+        IEnumerable<SFInstallableDblResource> resources = SFInstallableDblResource.GetInstallableDblResources(
             userSecret,
             _paratextOptions.Value,
             _restClientFactory,
@@ -3277,9 +3248,9 @@ public class ParatextService : DisposableBase, IParatextService
                 catch
                 {
                     _logger.LogWarning(
-                        $"ParatextService.GetUserSecretWithCurrentParatextTokens for sfUserId {sfUserId} is throwing " +
-                        $"from call RefreshAccessTokenAsync(). The current access token has issuedAt time " +
-                        $"of {userSecret.ParatextTokens.IssuedAt:o}."
+                        $"ParatextService.GetUserSecretWithCurrentParatextTokens for sfUserId {sfUserId} is throwing "
+                            + $"from call RefreshAccessTokenAsync(). The current access token has issuedAt time "
+                            + $"of {userSecret.ParatextTokens.IssuedAt:o}."
                     );
                     throw;
                 }
