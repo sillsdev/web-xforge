@@ -1,0 +1,36 @@
+use("xforge");
+
+const shortName = "WOElai";
+
+const project = db.sf_projects.findOne({
+  shortName: shortName
+});
+
+const id = project._id;
+
+console.log(`Project short name: ${shortName}`);
+console.log(`Project Id: ${id}`);
+console.log(`Paratext project ID: ${project.paratextId}`);
+
+const metrics = db.sync_metrics.aggregate([
+  {
+    $match: {
+      projectRef: id,
+      errorDetails: { $exists: true }
+    }
+  },
+  {
+    $group: {
+      _id: "$errorDetails",
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { count: -1 }
+  }
+]);
+
+for (const metric of metrics) {
+  console.log(`\nThe following error occurred ${metric.count} time(s):`);
+  console.log(metric._id);
+}
