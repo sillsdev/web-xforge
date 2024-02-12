@@ -513,6 +513,21 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Chapter Audio', () => {
+    it('has add audio menu options for chapters without audio', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const bookIndex = 1;
+      const chapterIndex = 2;
+
+      env.clickExpanderAtRow(bookIndex);
+      expect(env.textRows.length).toBe(4);
+      expect(env.checkChapterHasAudio(chapterIndex)).toBeFalse();
+
+      env.clickElement(env.questionButtonsMenu[chapterIndex]);
+      expect(env.audioAddButtons[chapterIndex]).not.toBeNull();
+      env.clickElement(env.questionButtonsMenu[chapterIndex]);
+    }));
+
     it('show audio icon on chapter heading', fakeAsync(() => {
       const env = new TestEnvironment(true, true);
       env.waitForQuestions();
@@ -1079,6 +1094,12 @@ class TestEnvironment {
 
   get archivedQuestions(): DebugElement {
     return this.fixture.debugElement.query(By.css('#text-with-archived-questions'));
+  }
+
+  get audioAddButtons(): DebugElement[] {
+    const ret: DebugElement[] = [];
+    this.textRows.forEach(e => ret.push(e.query(By.css('.add-audio-btn'))));
+    return ret;
   }
 
   get audioDeleteButtons(): DebugElement[] {
