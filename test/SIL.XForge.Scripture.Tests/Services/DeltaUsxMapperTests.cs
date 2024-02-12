@@ -789,22 +789,30 @@ public class DeltaUsxMapperTests
             Delta
                 .New()
                 .InsertChapter("1")
+                // Table 1 begins
+                // Row 1 begins
+                // Cell 1 begins
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
                 .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
+                // Cell 2 begins
                 .InsertBlank("cell_1_1_2")
                 .InsertVerse("2")
                 .InsertText("This is verse 2.", "verse_1_2")
                 .InsertCell(1, 1, "tc2", "start")
+                // Row 2 begins
+                // Cell 1 begins
                 .InsertBlank("cell_1_2_1")
                 .InsertCell(1, 2, "tc1", "start")
+                // Cell 2 begins
                 .InsertBlank("cell_1_2_2")
                 .InsertVerse("3")
                 .InsertText("This is verse 3.", "verse_1_3")
                 .InsertCell(1, 2, "tc2", "start")
+                // Post-table content
                 .InsertBlank("p_1")
                 .InsertVerse("4")
                 .InsertText("This is verse 4.", "verse_1_4")

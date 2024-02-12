@@ -24,6 +24,10 @@ public class Delta
 
     public static Delta New() => new Delta();
 
+    /// <summary>
+    /// For a document, represents a sequence of content. Paragraph and table information describes the content that
+    /// came before, not after, in the sequence.
+    /// </summary>
     public Delta() => Ops = new List<JToken>();
 
     public Delta(IEnumerable<JToken> ops) => Ops = ops.ToList();
