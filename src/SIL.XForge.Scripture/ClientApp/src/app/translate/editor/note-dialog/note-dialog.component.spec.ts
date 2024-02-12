@@ -201,6 +201,31 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
 
+  it('invalid reattached note', fakeAsync(() => {
+    let reattachedContent: string = 'Reattached content text.';
+    env = new TestEnvironment({
+      noteThread: TestEnvironment.getNoteThread(reattachedContent, undefined, undefined, true)
+    });
+
+    // Check note with status set
+    let expectedSrc = '/assets/icons/TagIcons/flag01.png';
+    let reattachNote = env.notes[4].nativeElement as HTMLElement;
+    expect(reattachNote.querySelector('.content .text')?.textContent).toBeUndefined();
+    expect(reattachNote.querySelector('.content .verse-reattached')?.textContent).toBeUndefined();
+    expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
+    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
+    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('To do');
+
+    // Check note with no status set
+    reattachedContent = 'reattached02';
+    expectedSrc = '/assets/icons/TagIcons/flag01.png';
+    reattachNote = env.notes[5].nativeElement as HTMLElement;
+    expect(reattachNote.querySelector('.content .verse-reattached')?.textContent).toBeUndefined();
+    expect(reattachNote.querySelector('.content .note-content')?.textContent).toContain(reattachedContent);
+    expect(reattachNote.querySelector('img')?.getAttribute('src')).toEqual(expectedSrc);
+    expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
+  }));
+
   it('shows assigned user', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
@@ -685,6 +710,7 @@ class TestEnvironment {
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR
   );
+  static invalidReattached: string = 'MAT 1:4  invalid note  invalid selection';
   static get defaultBiblicalTerm(): BiblicalTerm {
     return {
       projectRef: 'project01',
@@ -750,7 +776,12 @@ class TestEnvironment {
       ]
     };
   }
-  static getNoteThread(reattachedContent?: string, isInitialSFNote?: boolean, editable?: boolean): NoteThread {
+  static getNoteThread(
+    reattachedContent?: string,
+    isInitialSFNote?: boolean,
+    editable?: boolean,
+    invalidReattachedNote?: boolean
+  ): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     const tagId: number | undefined = isInitialSFNote === true ? undefined : 1;
@@ -855,7 +886,7 @@ class TestEnvironment {
         tagId: reattachedContent === '' ? undefined : 1,
         dateCreated: '',
         dateModified: '',
-        reattached: TestEnvironment.reattached
+        reattached: invalidReattachedNote ? TestEnvironment.invalidReattached : TestEnvironment.reattached
       });
       noteThread.notes.push({
         dataId: 'reattached02',
@@ -870,7 +901,7 @@ class TestEnvironment {
         tagId: 1,
         dateCreated: '',
         dateModified: '',
-        reattached: TestEnvironment.reattached
+        reattached: invalidReattachedNote ? TestEnvironment.invalidReattached : TestEnvironment.reattached
       });
     }
     return noteThread;

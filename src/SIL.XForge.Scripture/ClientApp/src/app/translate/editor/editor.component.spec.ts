@@ -1609,6 +1609,23 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows an invalid reattached note in original location', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      // invalid reattachment string
+      env.reattachNote('project01', 'dataid04', 'MAT 1:4  invalid note  error', undefined, true);
+
+      // SUT
+      env.wait();
+      const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_3')!;
+      const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
+      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04')!;
+      expect(note4Position).toEqual(range.index + 1);
+      // The note thread is on verse 3
+      expect(note4Doc.data!.verseRef.verseNum).toEqual(3);
+      env.dispose();
+    }));
+
     it('does not display conflict notes', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -4563,13 +4580,30 @@ class TestEnvironment {
     });
   }
 
-  reattachNote(projectId: string, threadDataId: string, verseStr: string, position: TextAnchor): void {
+  reattachNote(
+    projectId: string,
+    threadDataId: string,
+    verseStr: string,
+    position?: TextAnchor,
+    doNotParseReattachedVerseStr: boolean = false
+  ): void {
     const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
     const template: Note = noteThreadDoc.data!.notes[0];
-    const verseRef: VerseRef = new VerseRef(verseStr);
-    const contextAfter: string = ` ${verseRef.verseNum}.`;
-    const reattachParts: string[] = [verseStr, 'verse', position.start.toString(), 'target: chapter 1, ', contextAfter];
-    const reattached: string = reattachParts.join(REATTACH_SEPARATOR);
+    let reattached: string;
+    if (doNotParseReattachedVerseStr || position == null) {
+      reattached = verseStr;
+    } else {
+      const verseRef: VerseRef = new VerseRef(verseStr);
+      const contextAfter: string = ` ${verseRef.verseNum}.`;
+      const reattachParts: string[] = [
+        verseStr,
+        'verse',
+        position.start.toString(),
+        'target: chapter 1, ',
+        contextAfter
+      ];
+      reattached = reattachParts.join(REATTACH_SEPARATOR);
+    }
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     const note: Note = {

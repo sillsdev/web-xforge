@@ -2360,7 +2360,12 @@ public class ParatextService : DisposableBase, IParatextService
     /// <remarks>
     ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
     /// </remarks>
-    private void InstallResource(string username, ParatextResource resource, string targetParatextId, bool needsToBeCloned)
+    private void InstallResource(
+        string username,
+        ParatextResource resource,
+        string targetParatextId,
+        bool needsToBeCloned
+    )
     {
         if (resource.InstallableResource != null)
         {
@@ -2595,10 +2600,7 @@ public class ParatextService : DisposableBase, IParatextService
     {
         userSecret = await GetUserSecretWithCurrentParatextTokens(userSecret.Id, token);
         using var request = new HttpRequestMessage(method, $"api8/{url}");
-        request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            userSecret.ParatextTokens.AccessToken
-        );
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userSecret.ParatextTokens.AccessToken);
         if (content != null)
         {
             request.Content = new StringContent(content);
@@ -2627,11 +2629,7 @@ public class ParatextService : DisposableBase, IParatextService
     )
     {
         UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
-        return _internetSharedRepositorySourceProvider.GetSource(
-            userSecret,
-            _sendReceiveServerUri,
-            _registryServerUri
-        );
+        return _internetSharedRepositorySourceProvider.GetSource(userSecret, _sendReceiveServerUri, _registryServerUri);
     }
 
     /// <summary>
@@ -2650,7 +2648,7 @@ public class ParatextService : DisposableBase, IParatextService
     )
     {
         UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
-        IEnumerable<SFInstallableDblResource>  resources = SFInstallableDblResource.GetInstallableDblResources(
+        IEnumerable<SFInstallableDblResource> resources = SFInstallableDblResource.GetInstallableDblResources(
             userSecret,
             _paratextOptions.Value,
             _restClientFactory,
@@ -3180,11 +3178,18 @@ public class ParatextService : DisposableBase, IParatextService
         if (comment.Reattached != null)
         {
             string[] reattachedParts = comment.Reattached.Split(PtxUtils.StringUtils.orcCharacter);
-            verseRef = new VerseRef(reattachedParts[0]);
-            selectedText = reattachedParts[1];
-            startPos = int.Parse(reattachedParts[2]);
-            contextBefore = reattachedParts[3];
-            contextAfter = reattachedParts[4];
+            try
+            {
+                verseRef = new VerseRef(reattachedParts[0]);
+                selectedText = reattachedParts[1];
+                startPos = int.Parse(reattachedParts[2]);
+                contextBefore = reattachedParts[3];
+                contextAfter = reattachedParts[4];
+            }
+            catch (Exception)
+            {
+                // Ignore any errors parsing the re-attached verse
+            }
         }
 
         if (!chapterDeltas.TryGetValue(verseRef.ChapterNum, out ChapterDelta chapterDelta) || startPos == 0)
@@ -3277,9 +3282,9 @@ public class ParatextService : DisposableBase, IParatextService
                 catch
                 {
                     _logger.LogWarning(
-                        $"ParatextService.GetUserSecretWithCurrentParatextTokens for sfUserId {sfUserId} is throwing " +
-                        $"from call RefreshAccessTokenAsync(). The current access token has issuedAt time " +
-                        $"of {userSecret.ParatextTokens.IssuedAt:o}."
+                        $"ParatextService.GetUserSecretWithCurrentParatextTokens for sfUserId {sfUserId} is throwing "
+                            + $"from call RefreshAccessTokenAsync(). The current access token has issuedAt time "
+                            + $"of {userSecret.ParatextTokens.IssuedAt:o}."
                     );
                     throw;
                 }

@@ -2145,6 +2145,129 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetNoteThreadChanges_ReattachedNote_HandleInvalidValues()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.AddTextDocs(40, 1, 6, "Context before ", "Text selected");
+        // The text doc is set up so that verse 7 has unique text that we reattach to
+        string verseStr = "MAT 1:7 This is not a valid verse   It was badly reattached";
+
+        env.AddNoteThreadData(
+            new[]
+            {
+                new ThreadComponents { threadNum = 1, noteCount = 1 },
+                new ThreadComponents
+                {
+                    threadNum = 3,
+                    noteCount = 1,
+                    reattachedVerseStr = verseStr,
+                    doNotParseReattachedVerseStr = true,
+                },
+                new ThreadComponents { threadNum = 4, noteCount = 1 },
+                new ThreadComponents
+                {
+                    threadNum = 5,
+                    noteCount = 1,
+                    reattachedVerseStr = verseStr,
+                    doNotParseReattachedVerseStr = true,
+                },
+            }
+        );
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    username = env.Username01,
+                    reattachedVerseStr = verseStr,
+                    doNotParseReattachedVerseStr = true,
+                },
+                new ThreadComponents
+                {
+                    threadNum = 2,
+                    noteCount = 1,
+                    username = env.Username01,
+                    reattachedVerseStr = verseStr,
+                    doNotParseReattachedVerseStr = true,
+                },
+                new ThreadComponents
+                {
+                    threadNum = 3,
+                    noteCount = 1,
+                    username = env.Username01,
+                    reattachedVerseStr = verseStr,
+                    doNotParseReattachedVerseStr = true,
+                },
+                new ThreadComponents
+                {
+                    threadNum = 4,
+                    noteCount = 2,
+                    username = env.Username01,
+                    reattachedVerseStr = verseStr,
+                    doNotParseReattachedVerseStr = true,
+                },
+                new ThreadComponents
+                {
+                    threadNum = 5,
+                    noteCount = 1,
+                    username = env.Username01,
+                },
+            }
+        );
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
+            conn,
+            new[] { "dataId1", "dataId3", "dataId4", "dataId5" }
+        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
+        Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            },
+        };
+        IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+            userSecret,
+            ptProjectId,
+            40,
+            noteThreadDocs,
+            chapterDeltas,
+            syncUsers
+        );
+        Assert.That(changes.Count, Is.EqualTo(4));
+
+        // The reattach note in thread3 is existing and is not changed
+        Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread3"), Is.Null);
+
+        // Existing thread reattached
+        NoteThreadChange change1 = changes.Single(c => c.ThreadId == "thread1");
+        Assert.That(change1.NotesAdded.Count, Is.EqualTo(1));
+        Assert.That(change1.NotesAdded.Single().Reattached, Is.Not.Null);
+
+        // New thread note reattached
+        NoteThreadChange change2 = changes.Single(c => c.ThreadId == "thread2");
+        Assert.That(change2.NotesAdded.Count, Is.EqualTo(2));
+        Assert.That(change2.NotesAdded[1].Reattached, Is.Not.Null);
+
+        // Existing thread new comment and reattached
+        NoteThreadChange change4 = changes.Single(c => c.ThreadId == "thread4");
+        Assert.That(change4.NotesAdded.Count, Is.EqualTo(2));
+        Assert.That(change4.NotesAdded[1].Reattached, Is.Not.Null);
+
+        // Existing thread and reattach comment removed
+        NoteThreadChange change5 = changes.Single(c => c.ThreadId == "thread5");
+        Assert.That(change5.NoteIdsRemoved.Count, Is.EqualTo(1));
+        Assert.That(change5.NoteIdsRemoved[0], Is.EqualTo("reattachedthread5"));
+    }
+
+    [Test]
     public void GetNoteThreadChanges_DeletedThreadIgnored()
     {
         var env = new TestEnvironment();
@@ -3780,7 +3903,8 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.DidNotReceive().MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        env.MockFileSystemService.DidNotReceive()
+            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
     }
 
     [Test]
@@ -3813,7 +3937,8 @@ public class ParatextServiceTests
         );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
-        env.MockFileSystemService.Received(1).MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        env.MockFileSystemService.Received(1)
+            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
     }
 
     [Test]
@@ -4073,11 +4198,12 @@ public class ParatextServiceTests
         public bool isConflict;
         public bool appliesToVerse;
         public string reattachedVerseStr;
+        public bool doNotParseReattachedVerseStr;
         public bool editable;
         public int versionNumber;
     }
 
-    struct ReattachedThreadInfo
+    record ReattachedThreadInfo
     {
         public string verseStr;
         public string selectedText;
@@ -5395,7 +5521,18 @@ public class ParatextServiceTests
                 }
                 if (comp.reattachedVerseStr != null)
                 {
-                    ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
+                    ReattachedThreadInfo rti = default;
+                    string reattached;
+                    if (comp.doNotParseReattachedVerseStr)
+                    {
+                        reattached = comp.reattachedVerseStr;
+                    }
+                    else
+                    {
+                        rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
+                        reattached = ReattachedThreadInfoStr(rti);
+                    }
+
                     notes.Add(
                         new Note
                         {
@@ -5407,14 +5544,17 @@ public class ParatextServiceTests
                             SyncUserRef = "syncuser01",
                             DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
                             Status = NoteStatus.Unspecified.InternalValue,
-                            Reattached = ReattachedThreadInfoStr(rti)
+                            Reattached = reattached,
                         }
                     );
-                    noteThread.Position = new TextAnchor
+                    if (rti is not null)
                     {
-                        Start = rti.contextBefore.Length,
-                        Length = rti.selectedText.Length
-                    };
+                        noteThread.Position = new TextAnchor
+                        {
+                            Start = rti.contextBefore.Length,
+                            Length = rti.selectedText.Length,
+                        };
+                    }
                 }
                 noteThread.Notes = notes;
                 if (notes.Count > 0)
@@ -5609,11 +5749,19 @@ public class ParatextServiceTests
 
                 if (comp.reattachedVerseStr != null)
                 {
-                    ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
                     Paratext.Data.ProjectComments.Comment reattachedComment = getThreadComment();
                     reattachedComment.Status = NoteStatus.Unspecified;
                     reattachedComment.Date = "2019-01-20T08:00:00.0000000+00:00";
-                    reattachedComment.Reattached = ReattachedThreadInfoStr(rti);
+                    if (comp.doNotParseReattachedVerseStr)
+                    {
+                        reattachedComment.Reattached = comp.reattachedVerseStr;
+                    }
+                    else
+                    {
+                        ReattachedThreadInfo rti = GetReattachedThreadInfo(comp.reattachedVerseStr);
+                        reattachedComment.Reattached = ReattachedThreadInfoStr(rti);
+                    }
+
                     ProjectCommentManager.AddComment(reattachedComment);
                 }
             }
