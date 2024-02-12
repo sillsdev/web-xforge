@@ -835,6 +835,10 @@ public class DeltaUsxMapperTests
             Para("p", Verse("4"), "This is verse 4.")
         );
         Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+
+        // And we should be able to roundtrip it back.
+        List<ChapterDelta> roundtrippedChapterDeltas = mapper.ToChapterDeltas(newUsxDoc).ToList();
+        Assert.IsTrue(roundtrippedChapterDeltas[0].Delta.DeepEquals(chapterDelta.Delta));
     }
 
     [Test]
@@ -2733,6 +2737,11 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(4));
         Assert.That(chapterDeltas[0].IsValid, Is.True);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+
+        // And we should be able to roundtrip it back.
+        XDocument roundtrippedUsx = mapper.ToUsx(Usx("PHM", Chapter("1")), chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(roundtrippedUsx, usxDoc));
+    }
     }
 
     [Test]
@@ -2806,6 +2815,10 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(8));
         Assert.That(chapterDeltas[0].IsValid, Is.True);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+
+        // And we should be able to roundtrip it back.
+        XDocument roundtrippedUsx = mapper.ToUsx(Usx("PHM", Chapter("1")), chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(roundtrippedUsx, usxDoc));
     }
 
     [Test]
@@ -3419,6 +3432,19 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
+
+    [Test]
+    public void Roundtrip_NestedChars()
+    {
+        AssertRoundtrips(
+            """
+\id PHM
+\c 1
+\p
+\v 1 \bd \+sup 1\+sup* This is\+sup 2\+sup* bold text.\+sup 3\+sup* \bd*  This is normal text.
+"""
+        );
+    }
     [Test]
     public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm", "heb");
 
