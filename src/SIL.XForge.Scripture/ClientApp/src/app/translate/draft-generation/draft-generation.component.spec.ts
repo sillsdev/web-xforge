@@ -30,7 +30,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
-import { DraftSourcesService } from './draft-sources.service';
+import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 
 describe('DraftGenerationComponent', () => {
@@ -162,26 +162,7 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
-      mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-        of({
-          target: {
-            name: 'target',
-            shortName: 'TAR',
-            texts: [],
-            writingSystem: {
-              tag: 'en'
-            }
-          },
-          source: {
-            name: 'source',
-            shortName: 'SRC',
-            texts: [],
-            writingSystem: {
-              tag: 'es'
-            }
-          }
-        })
-      );
+      mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -525,19 +506,38 @@ describe('DraftGenerationComponent', () => {
 
     describe('user must have access to source project', () => {
       it('should show warning when no access to source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                name: 'source',
+                shortName: 'SRC',
+                texts: [],
+                writingSystem: {
+                  tag: 'es'
+                },
+                noAccess: true
+              }
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).not.toBe(null);
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -547,8 +547,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = false;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -558,8 +565,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -569,8 +583,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -580,8 +601,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when access to source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: false
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -593,9 +621,15 @@ describe('DraftGenerationComponent', () => {
 
     describe('user must have access to alternate source project', () => {
       it('should show warning when no access to alternate source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -605,9 +639,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -617,9 +657,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = false;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -629,9 +675,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -641,9 +693,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -653,9 +711,18 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
-        env.component.canAccessAlternateSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource,
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -665,9 +732,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when access to alternate source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: false
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -679,10 +752,15 @@ describe('DraftGenerationComponent', () => {
 
     describe('user must have access to alternate training source project', () => {
       it('should show warning when no access to alternate source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -692,10 +770,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when target language is not supported', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -705,10 +788,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source project is not set', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = false;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -718,10 +806,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when the source and target language are the same', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -731,10 +824,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when source and alternate training source language are different', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
@@ -744,10 +842,18 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource,
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -757,10 +863,18 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when no access to alternate source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = false;
-        env.component.canAccessAlternateSource = false;
-        env.component.canAccessAlternateTrainingSource = false;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource,
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -770,10 +884,15 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should not show warning when access to alternate training source project', () => {
-        let env = new TestEnvironment();
-        env.component.canAccessSource = true;
-        env.component.canAccessAlternateSource = true;
-        env.component.canAccessAlternateTrainingSource = true;
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: false
+              } as DraftSource
+            })
+          );
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;

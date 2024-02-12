@@ -72,7 +72,7 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
-          !canAccessSource
+          !canAccessDraftSourceIfAvailable(source)
         "
         type="warning"
         icon="warning"
@@ -92,8 +92,8 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
-          canAccessSource &&
-          !canAccessAlternateSource
+          canAccessDraftSourceIfAvailable(source) &&
+          !canAccessDraftSourceIfAvailable(alternateSource)
         "
         type="warning"
         icon="warning"
@@ -113,9 +113,9 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
-          canAccessSource &&
-          canAccessAlternateSource &&
-          !canAccessAlternateTrainingSource
+          canAccessDraftSourceIfAvailable(source) &&
+          canAccessDraftSourceIfAvailable(alternateSource) &&
+          !canAccessDraftSourceIfAvailable(alternateTrainingSource)
         "
         type="warning"
         icon="warning"

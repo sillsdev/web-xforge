@@ -74,9 +74,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isSourceAndTargetDifferent = true;
   isSourceAndTrainingSourceLanguageIdentical = true;
 
-  canAccessSource = true;
-  canAccessAlternateSource = true;
-  canAccessAlternateTrainingSource = true;
   source?: DraftSource;
   alternateSource?: DraftSource;
   alternateTrainingSource?: DraftSource;
@@ -121,7 +118,11 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   get isGenerationSupported(): boolean {
-    return this.isPreviewSupported && this.canAccessAlternateSource && this.canAccessAlternateTrainingSource;
+    return (
+      this.isPreviewSupported &&
+      this.canAccessDraftSourceIfAvailable(this.alternateSource) &&
+      this.canAccessDraftSourceIfAvailable(this.alternateTrainingSource)
+    );
   }
 
   get isPreviewSupported(): boolean {
@@ -131,7 +132,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
       this.isSourceAndTrainingSourceLanguageIdentical &&
-      this.canAccessSource &&
+      this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
   }
@@ -214,9 +215,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
         this.draftSourcesService.getDraftProjectSources().pipe(
           tap(({ source, alternateSource, alternateTrainingSource }) => {
-            this.canAccessSource = !(source?.noAccess ?? false);
-            this.canAccessAlternateSource = !(alternateSource?.noAccess ?? false);
-            this.canAccessAlternateTrainingSource = !(alternateTrainingSource?.noAccess ?? false);
             this.source = source;
             this.alternateSource = alternateSource;
             this.alternateTrainingSource = alternateTrainingSource;
@@ -332,6 +330,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       translationBooks: result.translationBooks,
       fastTraining: result.fastTraining
     });
+  }
+
+  /**
+   * Determines if a user has access to a draft source.
+   * @param source The draft source from the draft generation service.
+   * @returns true if the user has access to the source, or if there is no source.
+   */
+  canAccessDraftSourceIfAvailable(source: DraftSource | undefined): boolean {
+    return !(source?.noAccess ?? false);
   }
 
   hasDraftQueueDepth(job?: BuildDto): boolean {
