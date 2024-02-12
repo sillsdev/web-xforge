@@ -205,6 +205,24 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
+  it('remote user config should not change segment', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectUserConfig({
+      selectedBookNum: 40,
+      selectedChapterNum: 2,
+      selectedSegment: 'verse_2_1',
+      selectedSegmentChecksum: 12345
+    });
+    env.wait();
+
+    expect(env.component.target!.segmentRef).toEqual('verse_2_1');
+    env.getProjectUserConfigDoc().submitJson0Op(op => op.set(puc => puc.selectedSegment, <string>'verse_2_2'), false);
+    env.wait();
+    expect(env.component.target!.segmentRef).toEqual('verse_2_1');
+
+    env.dispose();
+  }));
+
   describe('Translation Suggestions enabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();

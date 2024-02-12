@@ -3,7 +3,7 @@
     "action_not_available_offline": "Cette action n'est pas disponible lorsque vous êtes hors connexion.",
     "all_questions": "Toutes les questions",
     "announcements": "Annonces",
-    "cannot_change_password": "Impossible de changer le mot de passe pour l'instant. Essayez de nouveau plus tard ou signalez un problème dans le menu Aide.",
+    "cannot_change_password": "Impossible de modifier le mot de passe pour le moment. Réessayez plus tard ou signalez un problème dans le menu Aide.",
     "change_password": "Changer de mot de passe",
     "community_checking": "Vérification par la communauté",
     "community_support": "Support de la communauté",
@@ -16,7 +16,7 @@
     "offline": "Hors connexion",
     "online": "Connecté",
     "open_source_licenses": "Licences Open Source",
-    "overview": "Vue d'ensemble",
+    "overview": "Aperçu",
     "page_not_found": "Page introuvable",
     "password_reset_email_sent": "Nous venons de vous envoyer un e-mail pour réinitialiser votre mot de passe.",
     "product_version": "Version du produit : v{{ version }}",
@@ -165,7 +165,7 @@
     "play_chapter": "Lire le chapitre",
     "previous": "Précédent",
     "questions": "Questions",
-    "question_does_not_have_audio": "Aucun enregistrement audio n'a été télétransmis pour ce chapitre. Contactez l'administrateur du projet pour télétransmettre des enregistrements audio.",
+    "question_does_not_have_audio": "Aucun enregistrement audio n'a été téléversé pour ce chapitre. Contactez l'administrateur du projet pour téléverser des enregistrements audio.",
     "question_filter_none": "Tout afficher",
     "question_filter_exportable": "Réponses signalées pour vérification",
     "question_filter_has_answers": "A des réponses",
@@ -218,9 +218,9 @@
     "drag_and_drop_files": "Glissez-déposez les fichiers audio et de synchronisation ici",
     "drag_and_drop_or_browse": "OU",
     "from_timing_past_to_timing": "Une ou plusieurs valeurs de fin se terminent avant leurs valeurs de début.",
-    "no_audio_file_uploaded": "Pas de fichier audio télétransmis",
-    "no_timing_data_uploaded": "Pas de données de synchronisation télétransmises",
-    "not_upload_audio_offline": "Les fichiers audio ne peuvent pas être télétransmis sans connexion Internet.",
+    "no_audio_file_uploaded": "Pas de fichier audio téléversé",
+    "no_timing_data_uploaded": "Pas de données de synchronisation téléversées",
+    "not_upload_audio_offline": "Les fichiers audio ne peuvent pas être téléversés sans connexion Internet.",
     "save": "Enregistrer",
     "segments_found": "{{ segments }} segments trouvés",
     "timing": "Minutage",
@@ -246,7 +246,7 @@
   },
   "checking_audio_recorder": {
     "mic_access_denied": "L'accès à votre microphone a été refusé. Veuillez activer le microphone depuis votre navigateur.",
-    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "mic_not_found": "Aucun microphone n'a été trouvé. Veuillez connecter un microphone à votre appareil.",
     "not_available": "Pour l'instant, votre navigateur ne prend pas en charge l'enregistrement audio. Veuillez essayer en utilisant un autre navigateur pris en charge.",
     "record": "Enregistrer",
     "stop_recording": "Arrêter l'enregistrement",
@@ -314,11 +314,11 @@
     "failed_to_update_avatar": "L'image de votre avatar n'a pas pu être mise à jour.",
     "failed_to_retrieve_suggestions": "Impossible d'obtenir des suggestions de traduction.",
     "suggestion_engine_requires_retrain": "Il n'a pas été possible d'obtenir des suggestions de traduction. Veuillez reformuler les suggestions sur la page d'aperçu.",
-    "go_to_retrain": "Aller à la vue d'ensemble",
+    "go_to_retrain": "Aller à l'aperçu",
     "try_again": "Essayez à nouveau"
   },
   "exception_handling_service": {
-    "firefox_private_browsing_or_no_space": "Une erreur s'est produite. Veuillez vérifier que vous n'utilisez pas Firefox dans le mode non pris en charge navigation privée et que votre appareil dispose des 500 Mo d'espace libre recommandé.",
+    "firefox_private_browsing_or_no_space": "Quelque chose s'est mal passé. Veuillez vérifier que vous n'utilisez pas Firefox en mode de navigation privée non pris en charge et que votre appareil dispose de l'espace libre recommandé de 500 Mo.",
     "network_request_failed": "Une requête réseau a échoué. Certaines fonctionnalités peuvent être indisponibles.",
     "out_of_space": "Une erreur s'est produite parce que votre appareil n'a plus d’espace de stockage.",
     "unknown_error": "Erreur inconnue"
@@ -356,27 +356,27 @@
     "close": "Fermer"
   },
   "navigation-project_selector": {
-    "connect_project": "Connecter un projet"
+    "connect_project": "Connecter le projet"
   },
   "scripture_chooser_dialog": {
-    "choose_book": "Choisir un livre",
-    "choose_chapter": "Choisir un chapitre",
-    "choose_end_verse": "Choisir le verset de fin",
-    "choose_verse": "Choisir un verset"
+    "choose_book": "Choisissez le livre",
+    "choose_chapter": "Choisissez le chapitre",
+    "choose_end_verse": "Choisissez le verset de fin",
+    "choose_verse": "Choisissez le verset"
   },
   "share": {
     "share": "Partager"
   },
   "share_control": {
     "copy_link": "Copier le lien",
-    "email_invalid": "L'adresse e-mail n'est pas valide",
+    "email_invalid": "L'adresse e-mail est invalide",
     "email_sharing": "Envoyez l'invitation ci-dessous par e-mail ou partagez un lien en utilisant votre plateforme de communication préférée.",
     "email": "E-mail",
     "invitation_language": "Langue d'invitation",
     "invitation_role": "Rôle",
     "invitation_sent": "Un e-mail d'invitation a été envoyé à {{ email }}",
     "invite_people": "Inviter des personnes",
-    "invite_people_intro": "Vous pouvez inviter des personnes non inscrites dans Paratext à contribuer à votre projet.",
+    "invite_people_intro": "Vous pouvez inviter des personnes extérieures à Paratext à contribuer à votre projet.",
     "link_copied": "Lien copié dans le presse-papiers",
     "link_sharing": "Les liens peuvent également être partagés avec des utilisateurs n'ayant pas d'e-mail en utilisant des réseaux sociaux ou des SMS.",
     "not_inviting_already_member": "Pas d'invitation : L'utilisateur est déjà membre de ce projet",
@@ -389,7 +389,7 @@
     "share_a_link": "Partager un lien",
     "share_title": "Vous avez été invité dans le projet {{ projectName }} sur {{ siteName }}",
     "send": "Envoyer",
-    "share_not_available_offline": "L'invitation d'utilisateurs n'est pas disponible hors-connexion."
+    "share_not_available_offline": "L'invitation n'est pas disponible hors ligne."
   },
   "share_dialog": {
     "anyone": "Tous ceux qui ont le lien",
@@ -401,7 +401,7 @@
     "invitation_role": "Changer le rôle d'invitation",
     "invitation_shared_in_language": "L'invitation sera partagée dans",
     "link_can_be_used_by": "Le lien peut être utilisé par",
-    "link_sharing_not_available_offline": "L'invitation d'utilisateurs par le partage de liens n'est pas disponible hors-connexion.",
+    "link_sharing_not_available_offline": "L'invitation des utilisateurs par partage de lien n'est pas disponible hors ligne.",
     "recipient": "Seul le destinataire",
     "recipient_can": "Seul le destinataire peut",
     "recipient_only_notice": "Chaque lien ne peut être utilisé qu'une seule fois et expirera après 14 jours. Cliquez à nouveau sur le bouton pour générer et partager un nouveau lien.",

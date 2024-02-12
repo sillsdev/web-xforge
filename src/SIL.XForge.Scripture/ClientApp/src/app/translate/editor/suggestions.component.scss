@@ -13,10 +13,6 @@
   visibility: hidden;
 }
 
-:host(.flip) {
-  transform: translateY(-10px);
-}
-
 .loading-indicator {
   display: table;
   padding: 8px 7px 9px 7px;

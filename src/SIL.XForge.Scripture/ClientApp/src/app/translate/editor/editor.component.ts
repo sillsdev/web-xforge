@@ -685,9 +685,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
           }
-          this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() =>
-            this.loadProjectUserConfig()
-          );
+          this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() => {
+            if (this.projectUserConfigDoc?.data != null) {
+              // Reload config if the checksum has been reset on the server
+              if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null) {
+                this.loadProjectUserConfig();
+              } else {
+                this.loadTranslateSuggesterConfidence();
+              }
+            }
+          });
         }
 
         if (this.projectDoc?.data == null) {
@@ -1758,11 +1765,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private loadProjectUserConfig(chapterFromUrl?: number): void {
     let chapter: number = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
+    this.loadTranslateSuggesterConfidence();
 
-    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
-      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-      this.translationSuggester.confidenceThreshold = pcnt / 100;
-
+    if (this.projectUserConfigDoc?.data != null) {
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
           // Use chapter from url if specified
@@ -1774,6 +1779,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
+  }
+
+  private loadTranslateSuggesterConfidence(): void {
+    if (this.projectUserConfigDoc?.data != null) {
+      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+      this.translationSuggester.confidenceThreshold = pcnt / 100;
+    }
   }
 
   private resetInsertNoteFab(resetVerseSelection: boolean): void {

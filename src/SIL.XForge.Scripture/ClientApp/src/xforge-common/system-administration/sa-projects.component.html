@@ -12,7 +12,7 @@
           <a *ngIf="row.isMember; else nonmember" [appRouterLink]="['/projects', row.id]">
             {{ row.shortName }} - {{ row.name }}
           </a>
-          <ng-template #nonmember>{{ row.name }}</ng-template>
+          <ng-template #nonmember>{{ row.shortName }} - {{ row.name }}</ng-template>
         </td>
       </ng-container>
       <ng-container matColumnDef="tasks">

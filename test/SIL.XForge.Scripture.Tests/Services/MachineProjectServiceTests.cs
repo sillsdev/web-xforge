@@ -663,6 +663,73 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_ClearsAssociatedCorporaReferencesIfTheTranslationEngineTypeIsIncorrect()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: false,
+            alternateTrainingSource: true
+        );
+
+        // Make the Serval API return the old translation engine with an incorrect type
+        env.TranslationEnginesClient.GetAsync(TranslationEngine02, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine02,
+                        Name = Project02,
+                        SourceLanguage = "en",
+                        TargetLanguage = "en_US",
+                        Type = MachineProjectService.SmtTransfer,
+                    }
+                )
+            );
+
+        // And the new translation engine correctly
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project02,
+                        SourceLanguage = "en",
+                        TargetLanguage = "en_US",
+                        Type = MachineProjectService.Nmt,
+                    }
+                )
+            );
+
+        // Check that we have more than one pre-translate corpora
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        // The old engine should not be deleted, as it is an incorrect association
+        await env.TranslationEnginesClient.DidNotReceive().DeleteAsync(TranslationEngine02, CancellationToken.None);
+        await env.TranslationEnginesClient.Received()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+
+        // Ensure we have just one pre-translate corpora
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+    }
+
+    [Test]
     public async Task BuildProjectAsync_UploadParatextZipSpecifiesBookIds()
     {
         // Set up test environment
@@ -1545,6 +1612,60 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsFalse(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_Type_SupportsKebabCase()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project01,
+                        Type = "smt-transfer",
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+    }
+
+    [Test]
+    public async Task TranslationEngineExistsAsync_Type_SupportsPascalCase()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine01,
+                        Name = Project01,
+                        Type = "SmtTransfer",
+                    }
+                )
+            );
+
+        // SUT
+        bool actual = await env.Service.TranslationEngineExistsAsync(
+            Project01,
+            TranslationEngine01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
     }
 
     [Test]

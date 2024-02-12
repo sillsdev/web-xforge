@@ -14,8 +14,8 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
-import { UserService } from 'xforge-common/user.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -214,6 +214,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       try {
         this.projectDoc = await projectDocPromise;
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        this.projectUserConfigDoc.submitJson0Op(op => op.set<string>(puc => puc.selectedTask!, 'checking'));
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }

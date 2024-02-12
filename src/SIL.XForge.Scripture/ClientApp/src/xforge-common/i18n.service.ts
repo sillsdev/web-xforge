@@ -344,6 +344,11 @@ export class I18nService {
     }
 
     const languageNames: Intl.DisplayNames = new Intl.DisplayNames([this.localeCode], { type: 'language' });
-    return languageNames.of(languageCode);
+    try {
+      return languageNames.of(languageCode);
+    } catch (e) {
+      // Some language codes are unsupported in some browsers. For example, Firefox 122 errors on nsk-Cans-CA-x-nasksyl
+      return languageCode;
+    }
   }
 }

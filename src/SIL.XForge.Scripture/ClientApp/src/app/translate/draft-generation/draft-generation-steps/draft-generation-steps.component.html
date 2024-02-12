@@ -42,37 +42,12 @@
           </div>
         </ng-template>
 
-        <app-notice *ngIf="isTrainingOptional" type="warning" icon="info" mode="fill-light">
-          {{ t("training_book_selection_discouraged_info_part1") }}
-          <p>
-            <transloco
-              *ngIf="userSelectedTrainingBooks.length === 0"
-              key="draft_generation_steps.training_book_selection_discouraged_info_part2_skip_step"
-            ></transloco>
-          </p>
-          <p>
-            <transloco
-              *ngIf="userSelectedTrainingBooks.length > 0"
-              key="draft_generation_steps.training_book_selection_discouraged_info_part2_clear_selection"
-            ></transloco>
-          </p>
-        </app-notice>
-
         <app-book-multi-select
           [availableBooks]="availableTrainingBooks"
           [selectedBooks]="initialSelectedTrainingBooks"
           (bookSelect)="onTrainingBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
-
-        <app-notice
-          *ngIf="isTrainingOptional && userSelectedTrainingBooks.length > 0"
-          type="warning"
-          icon="warning"
-          mode="fill-extra-dark"
-        >
-          {{ t("training_book_selection_discouraged_warning") }}
-        </app-notice>
 
         <app-notice *ngIf="unusableTrainingBooks.length" type="light">
           <h4>

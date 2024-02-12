@@ -160,7 +160,7 @@ describe('I18nService', () => {
     it('should return language code for an unknown language code', () => {
       const service = getI18nService();
       service.setLocale('en', instance(mockedAuthService));
-      expect(service.getLanguageDisplayName('xyz')).toBe('xyz');
+      expect(service.getLanguageDisplayName('123')).toBe('123');
     });
   });
 });
