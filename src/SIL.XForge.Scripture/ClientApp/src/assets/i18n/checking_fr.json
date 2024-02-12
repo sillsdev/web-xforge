@@ -246,7 +246,7 @@
   },
   "checking_audio_recorder": {
     "mic_access_denied": "L'accès à votre microphone a été refusé. Veuillez activer le microphone depuis votre navigateur.",
-    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "mic_not_found": "Aucun microphone n'a été trouvé. Veuillez connecter un microphone à votre appareil.",
     "not_available": "Pour l'instant, votre navigateur ne prend pas en charge l'enregistrement audio. Veuillez essayer en utilisant un autre navigateur pris en charge.",
     "record": "Enregistrer",
     "stop_recording": "Arrêter l'enregistrement",

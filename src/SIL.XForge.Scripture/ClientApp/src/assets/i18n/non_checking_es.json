@@ -1,13 +1,13 @@
 {
   "app": {
     "beta": "beta",
-    "generate_draft": "Generate draft",
+    "generate_draft": "Generar borrador",
     "manage_questions": "Administrar preguntas",
     "settings": "Configuración",
     "synchronize": "Sincronizar",
     "system_administration": "Administración del sistema",
     "translate": "Traducir",
-    "edit_review": "Edit & review",
+    "edit_review": "Editar y revisar",
     "users": "Usuarios"
   },
   "biblical_term_dialog": {
@@ -140,9 +140,9 @@
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
-    "generate_draft_button": "Generate draft",
+    "generate_draft_button": "Generar borrador",
     "generate_draft_detail": "Click [em]\"{{ draft_generation.generate_draft_button }}\"[/em] to start the process of generating a translation draft. This will take at least a few hours.",
-    "generate_draft_header": "Generate draft",
+    "generate_draft_header": "Generar borrador",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft_button": "Generate new draft",
     "generate_new_draft_detail": "Click [em]\"{{ draft_generation.generate_new_draft_button }}\"[/em] to start the process of generating a new translation draft. This will take at least a few hours and could take as long as 16 hours.",
@@ -181,15 +181,11 @@
     "configure_advanced_settings": "Configure advanced settings",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
-    "generate_draft": "Generate draft",
+    "generate_draft": "Generar borrador",
     "next": "Siguiente",
     "no_available_books": "You have no books available for drafting.",
     "these_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
-    "these_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
-    "training_book_selection_discouraged_info_part1": "Both your source and target languages are in the set of pre-trained language models.",
-    "training_book_selection_discouraged_info_part2_skip_step": "[em]We recommend that you skip this step and continue to \"{{ draft_generation_steps.generate_draft }}\".[/em]",
-    "training_book_selection_discouraged_info_part2_clear_selection": "[em]We recommend that you clear the selected training books and continue to \"{{ draft_generation_steps.generate_draft }}\".[/em]",
-    "training_book_selection_discouraged_warning": "Selecting training data for these languages will slow your build time and may reduce draft quality!"
+    "these_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }})."
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
@@ -384,7 +380,7 @@
     "error_fetching_resources": "Se ha producido un error al recuperar los recursos de la Biblioteca Bíblica Digital. Sólo podrá seleccionar proyectos.",
     "export_all": "Todas las respuestas",
     "export_checking_answers": "Establece qué respuestas se exportarán como comentarios al sincronizar con Paratext.",
-    "export_marked_for_export": "Answers flagged for review",
+    "export_marked_for_export": "Respuestas marcadas para revisión",
     "export_none": "Sin respuestas",
     "exporting_answers": "Exportando respuestas",
     "invite_others": "Los administradores siempre pueden invitar a personas desde la página {{ templateTagBoundary }}Usuarios{{ templateTagBoundary }} .",
