@@ -617,9 +617,11 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 // current op's character attributes.
                 while (curCharAttrs.Count > 0 && !CharAttributesMatch(curCharAttrs, charAttrs))
                     CharEnded(childNodes, curCharAttrs);
-                curCharAttrs = charAttrs;
-                while (childNodes.Count < curCharAttrs.Count + 1)
+                // If the current op is inserting text with formatting that is not already being tracked for the
+                // existing text, prepare places to isolate the new text that the new formatting will apply to.
+                for (int i = curCharAttrs.Count; i < charAttrs.Count; i++)
                     childNodes.Push(new List<XNode>());
+                curCharAttrs = charAttrs;
             }
 
             // If we are inserting a basic string, rather than a more complex object, like a chapter number.
