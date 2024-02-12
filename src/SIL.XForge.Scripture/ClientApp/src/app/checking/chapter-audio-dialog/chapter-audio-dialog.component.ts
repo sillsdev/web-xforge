@@ -527,6 +527,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
         // if file is larger than 100MB, show an error
         if (file.size > 100_000_000) {
           this._audioErrorKey = 'audio_file_less_than_one_hundred_mb';
+          this.deleteAudioData();
           continue;
         }
         const audioAttachment: AudioAttachment = {
