@@ -83,6 +83,7 @@
 
 app-text {
   height: 100%;
+  width: 100%;
 }
 
 .suggestions-menu {
@@ -161,8 +162,6 @@ app-text {
 }
 
 .text-area {
-  display: flex;
-  flex-direction: column;
   grid-row-start: 2;
 }
 
