@@ -2742,6 +2742,72 @@ public class DeltaUsxMapperTests
         XDocument roundtrippedUsx = mapper.ToUsx(Usx("PHM", Chapter("1")), chapterDeltas);
         Assert.IsTrue(XNode.DeepEquals(roundtrippedUsx, usxDoc));
     }
+
+    [Test]
+    public void ToDelta_TableInMiddleFollowedByCharStyle()
+    {
+        string ndCharID = _testGuidService.Generate();
+
+        string bookUsfm = """
+\id PHM
+\c 1
+\p
+\v 1 B
+\tr \th1 C
+\tr \tc1 D
+\p E
+\v 2 F \nd ND\nd*
+""";
+        XmlDocument usfmToUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
+            new Paratext.Data.MockScrStylesheet("usfm.sty"),
+            bookUsfm
+        );
+        using XmlNodeReader nodeReader = new(usfmToUsxLoading);
+        nodeReader.MoveToContent();
+        XDocument usfmToUsx = XDocument.Load(nodeReader);
+
+        XDocument usxDoc = Usx(
+            "PHM",
+            null,
+            "3.0",
+            Chapter("1"),
+            Para("p", Verse("1"), "B"),
+            Table(Row(Cell("th1", "start", "C")), Row(Cell("tc1", "start", "D"))),
+            Para("p", "E ", Verse("2"), "F ", Char("nd", "ND"))
+        );
+
+        Assert.That(XNode.DeepEquals(usxDoc, usfmToUsx));
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+        // Note that these expected deltas are somewhat reverse engineered, rather than known to be what should really
+        // be expected.
+        var expected = Delta
+            .New()
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1")
+            .InsertText("B", "verse_1_1")
+            .InsertPara("p")
+            .InsertText("C", "cell_1_1_1")
+            .InsertCell(1, 1, "th1", "start")
+            .InsertText("D", "cell_1_2_1")
+            .InsertCell(1, 2, "tc1", "start")
+            .InsertText("E ", "p_2")
+            .InsertVerse("2")
+            .InsertText("F ", "verse_1_2")
+            .InsertChar("ND", "nd", ndCharID, "verse_1_2")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(2));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+
+        // And we should be able to roundtrip it back.
+        XDocument roundtrippedUsx = mapper.ToUsx(Usx("PHM", null, "3.0", Chapter("1")), chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(roundtrippedUsx, usxDoc));
     }
 
     [Test]
@@ -3432,6 +3498,49 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
+    [Test]
+    public void Roundtrip_TableFollowedByCharStyle()
+    {
+        AssertRoundtrips(
+            """
+\id PHM
+\c 1
+\p
+\v 1 B
+\tr \th1 C
+\tr \tc1 D
+\p
+\p E
+\v 2 F \nd ND\nd*
+"""
+        );
+
+        AssertRoundtrips(
+            """
+\id PHM
+\c 1
+\p
+\v 1 B
+\tr \th1 C
+\tr \tc1 D
+\p
+\v 2 F \nd ND\nd*
+"""
+        );
+
+        AssertRoundtrips(
+            """
+\id NUM - A
+\c 1
+\p
+\v 1 B
+\tr \th1 C
+\tr \tc1 D
+\p E
+\v 2 F \nd ND\nd*
+"""
+        );
+    }
 
     [Test]
     public void Roundtrip_NestedChars()
@@ -3445,6 +3554,37 @@ public class DeltaUsxMapperTests
 """
         );
     }
+
+    [Test]
+    public void Roundtrip_NestedCharsInTable()
+    {
+        AssertRoundtrips(
+            """
+\id NUM - A
+\c 1
+\p
+\v 1 B
+\tr \th1 H1 \th1 H2
+\tr \tc1 D \tc1 \bd \+sup 1\+sup* This is\+sup 2\+sup* bold text.\+sup 3\+sup* \bd*  This is normal text.
+\p E
+\v 2 F \nd ND\nd*
+"""
+        );
+
+        AssertRoundtrips(
+            """
+\id NUM - A
+\c 1
+\p
+\v 1 B
+\tr \th1 H1 \th1 H2
+\tr \tc1 D \tc1 \bd \+sup 1\+sup* This is\+sup 2\+sup* bold text.\+sup 3\+sup* \bd*
+\p E
+\v 2 F \nd ND\nd*
+"""
+        );
+    }
+
     [Test]
     public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm", "heb");
 
