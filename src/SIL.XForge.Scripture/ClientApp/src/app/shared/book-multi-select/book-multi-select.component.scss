@@ -1,8 +1,35 @@
+@use 'src/variables';
+
 .book-multi-select {
   .mat-mdc-standard-chip {
     &.mat-mdc-chip-selected,
     &.mat-mdc-chip-highlighted {
       --mdc-chip-elevated-container-color: #4a79c9;
+    }
+  }
+}
+
+.bulk-select {
+  width: fit-content;
+  margin-left: auto;
+  padding-block: 8px;
+  margin-top: 2px;
+  margin-block-end: 12px;
+  font-weight: 300;
+  div {
+    display: flex;
+    align-items: center;
+    column-gap: 10px;
+    button {
+      padding-inline: 12px;
+      font-weight: 300;
+      font-size: 16px;
+    }
+    mat-button-toggle {
+      width: 50px;
+    }
+    .mat-button-toggle-checked {
+      background-color: variables.$greenLight;
     }
   }
 }

@@ -7,14 +7,16 @@ describe('BookMultiSelectComponent', () => {
   let component: BookMultiSelectComponent;
   let fixture: ComponentFixture<BookMultiSelectComponent>;
 
-  const mockBooks: number[] = [1, 2, 3];
-  const mockSelectedBooks: number[] = [1, 3];
+  let mockBooks: number[];
+  let mockSelectedBooks: number[];
 
   configureTestingModule(() => ({
     imports: [MatChipsModule, TestTranslocoModule]
   }));
 
   beforeEach(() => {
+    mockBooks = [1, 2, 3, 42];
+    mockSelectedBooks = [1, 3];
     fixture = TestBed.createComponent(BookMultiSelectComponent);
     component = fixture.componentInstance;
     component.availableBooks = mockBooks;
@@ -26,11 +28,44 @@ describe('BookMultiSelectComponent', () => {
     const mockBookOptions: BookOption[] = [
       { bookNum: 1, bookId: 'GEN', selected: true },
       { bookNum: 2, bookId: 'EXO', selected: false },
-      { bookNum: 3, bookId: 'LEV', selected: true }
+      { bookNum: 3, bookId: 'LEV', selected: true },
+      { bookNum: 42, bookId: 'LUK', selected: false }
     ];
 
     component.ngOnChanges();
 
     expect(component.bookOptions).toEqual(mockBookOptions);
+  });
+
+  it('can select all books', () => {
+    expect(component.selectedBooks.length).toEqual(2);
+
+    component.select('All');
+
+    expect(component.selectedBooks.length).toEqual(component.bookOptions.length);
+  });
+
+  it('can select all OT books', () => {
+    expect(component.selectedBooks.length).toEqual(2);
+
+    component.select('OT');
+
+    expect(component.selectedBooks.length).toEqual(3);
+  });
+
+  it('can select all NT books', () => {
+    expect(component.selectedBooks.length).toEqual(2);
+
+    component.select('NT');
+
+    expect(component.selectedBooks.length).toEqual(1);
+  });
+
+  it('can reset book selection', () => {
+    expect(component.selectedBooks.length).toEqual(2);
+
+    component.clear();
+
+    expect(component.selectedBooks.length).toEqual(0);
   });
 });

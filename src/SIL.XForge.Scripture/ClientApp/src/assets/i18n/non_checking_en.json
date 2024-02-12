@@ -29,6 +29,13 @@
     "term": "Term",
     "biblical_terms_renderings": "Biblical Terms Renderings"
   },
+  "book_select": {
+    "all": "All",
+    "clear": "Clear",
+    "nt": "NT",
+    "ot": "OT",
+    "select": "Select"
+  },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",
     "next_chapter": "Next chapter"
