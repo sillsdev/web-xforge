@@ -25,6 +25,7 @@ public interface IMachineProjectService
         bool preTranslate,
         CancellationToken cancellationToken
     );
+    Task<string> GetTranslationEngineTypeAsync(bool preTranslate);
     Task RemoveProjectAsync(
         string curUserId,
         string sfProjectId,

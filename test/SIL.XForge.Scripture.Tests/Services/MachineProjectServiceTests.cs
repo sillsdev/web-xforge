@@ -908,6 +908,36 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task GetTranslationEngineTypeAsync_Echo()
+    {
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseEchoForPreTranslation = true });
+
+        // SUT
+        var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: true);
+        Assert.AreEqual(MachineProjectService.Echo, actual);
+    }
+
+    [Test]
+    public async Task GetTranslationEngineTypeAsync_Nmt()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: true);
+        Assert.AreEqual(MachineProjectService.Nmt, actual);
+    }
+
+    [Test]
+    public async Task GetTranslationEngineTypeAsync_Smt()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: false);
+        Assert.AreEqual(MachineProjectService.SmtTransfer, actual);
+    }
+
+    [Test]
     public void RemoveProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment

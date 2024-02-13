@@ -11,6 +11,7 @@ public static class MachineApi
     public const string GetBuild = "translation/builds/id:{sfProjectId}.{buildId?}";
     public const string GetEngine = "translation/engines/project:{sfProjectId}";
     public const string GetWordGraph = "translation/engines/project:{sfProjectId}/actions/getWordGraph";
+    public const string IsLanguageSupported = "translation/languages/{languageCode}";
     public const string TrainSegment = "translation/engines/project:{sfProjectId}/actions/trainSegment";
     public const string Translate = "translation/engines/project:{sfProjectId}/actions/translate";
     public const string TranslateN = "translation/engines/project:{sfProjectId}/actions/translate/{n}";
