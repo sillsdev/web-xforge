@@ -48,6 +48,7 @@ public interface IMachineApiService
         string segment,
         CancellationToken cancellationToken
     );
+    Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
     Task<ServalBuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(

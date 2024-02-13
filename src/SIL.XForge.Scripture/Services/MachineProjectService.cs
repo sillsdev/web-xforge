@@ -36,11 +36,11 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineProjectService : IMachineProjectService
 {
-    // Supported translation engines (Serval 1.1 format)
+    // Supported translation engines (Serval 1.2 format)
     // Serval 1.2 accepts the translation engine type in 1.1 (PascalCase) and 1.2 (kebab-case) format
-    internal const string Echo = "Echo";
-    internal const string Nmt = "Nmt";
-    internal const string SmtTransfer = "SmtTransfer";
+    internal const string Echo = "echo";
+    internal const string Nmt = "nmt";
+    internal const string SmtTransfer = "smt-transfer";
 
     private readonly IDataFilesClient _dataFilesClient;
     private readonly IEngineService _engineService;
@@ -445,6 +445,22 @@ public class MachineProjectService : IMachineProjectService
                 }
             );
         }
+    }
+
+    /// <summary>
+    /// Gets the translation engine type string for Serval.
+    /// </summary>
+    /// <param name="preTranslate">If <c>true</c>, then the translation engine is for pre-translation.</param>
+    /// <returns>The translation engine type string for Serval.</returns>
+    public async Task<string> GetTranslationEngineTypeAsync(bool preTranslate)
+    {
+        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+        return preTranslate switch
+        {
+            true when useEcho => Echo,
+            true => Nmt,
+            false => SmtTransfer,
+        };
     }
 
     public async Task RemoveProjectAsync(
@@ -1289,22 +1305,6 @@ public class MachineProjectService : IMachineProjectService
         // Echo requires the target and source language to be the same, as it outputs your source texts
         bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
         return useEcho ? GetSourceLanguage(project, useAlternateTrainingSource: false) : project.WritingSystem.Tag;
-    }
-
-    /// <summary>
-    /// Gets the translation engine type string for Serval.
-    /// </summary>
-    /// <param name="preTranslate">If <c>true</c>, then the translation engine is for pre-translation.</param>
-    /// <returns>The translation engine type string for Serval.</returns>
-    private async Task<string> GetTranslationEngineTypeAsync(bool preTranslate)
-    {
-        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-        return preTranslate switch
-        {
-            true when useEcho => Echo,
-            true => Nmt,
-            false => SmtTransfer,
-        };
     }
 
     /// <summary>

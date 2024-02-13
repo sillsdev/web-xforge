@@ -75,6 +75,7 @@ public class MachineApiService : IMachineApiService
     private readonly IRealtimeService _realtimeService;
     private readonly ISyncService _syncService;
     private readonly ITranslationEnginesClient _translationEnginesClient;
+    private readonly ITranslationEngineTypesClient _translationEngineTypesClient;
     private readonly StringTokenizer _wordTokenizer = new LatinWordTokenizer();
 
     public MachineApiService(
@@ -91,7 +92,8 @@ public class MachineApiService : IMachineApiService
         DataAccess.IRepository<SFProjectSecret> projectSecrets,
         IRealtimeService realtimeService,
         ISyncService syncService,
-        ITranslationEnginesClient translationEnginesClient
+        ITranslationEnginesClient translationEnginesClient,
+        ITranslationEngineTypesClient translationEngineTypesClient
     )
     {
         // In Process Machine Dependencies
@@ -113,6 +115,7 @@ public class MachineApiService : IMachineApiService
         _realtimeService = realtimeService;
         _syncService = syncService;
         _translationEnginesClient = translationEnginesClient;
+        _translationEngineTypesClient = translationEngineTypesClient;
     }
 
     public async Task CancelPreTranslationBuildAsync(
@@ -592,6 +595,21 @@ public class MachineApiService : IMachineApiService
         }
 
         return wordGraph;
+    }
+
+    public async Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken)
+    {
+        string engineType = await _machineProjectService.GetTranslationEngineTypeAsync(preTranslate: true);
+        LanguageInfo languageInfo = await _translationEngineTypesClient.GetLanguageInfoAsync(
+            engineType,
+            languageCode,
+            cancellationToken
+        );
+        return new LanguageDto
+        {
+            LanguageCode = languageInfo.InternalCode ?? languageCode,
+            IsSupported = languageInfo.IsNative,
+        };
     }
 
     public async Task<ServalBuildDto> StartBuildAsync(
