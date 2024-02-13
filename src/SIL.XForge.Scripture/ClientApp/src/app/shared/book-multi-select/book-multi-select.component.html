@@ -2,7 +2,7 @@
   <div *ngIf="availableBooks.length > 0 && !readonly">
     <mat-card class="bulk-select">
       <div>
-        <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("book_select.reset") }}</button>
+        <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("book_select.clear") }}</button>
         <span>Select:</span>
         <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
           <mat-button-toggle value="All">{{ t("book_select.ot") }}</mat-button-toggle>
