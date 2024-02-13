@@ -47,7 +47,7 @@ public class SFProjectsUploadController : ControllerBase
     /// <response code="403">Insufficient permission to upload a file to this project.</response>
     /// <response code="404">The project does not exist.</response>
     [HttpPost("audio")]
-    [RequestSizeLimit(300_000_000)]
+    [RequestSizeLimit(100_000_000)]
     public async Task<IActionResult> UploadAudioAsync()
     {
         // Declare the form values

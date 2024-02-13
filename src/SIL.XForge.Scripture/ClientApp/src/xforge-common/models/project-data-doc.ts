@@ -21,16 +21,34 @@ export abstract class ProjectDataDoc<T extends ProjectData = ProjectData> extend
     return fileData != null ? fileData.blob : undefined;
   }
 
-  async uploadFile(fileType: FileType, dataId: string, blob: Blob, filename: string): Promise<string | undefined> {
+  async uploadFile(
+    fileType: FileType,
+    dataId: string,
+    blob: Blob,
+    filename: string,
+    retryWhenOnline: boolean = true
+  ): Promise<string | undefined> {
     if (this.realtimeService.fileService == null || this.data == null) {
       return undefined;
     }
-    return await this.realtimeService.fileService.uploadFile(
+    if (retryWhenOnline) {
+      return await this.realtimeService.fileService.uploadFile(
+        fileType,
+        this.data.projectRef,
+        this.collection,
+        dataId,
+        this.id,
+        blob,
+        filename,
+        this.alwaysKeepFileOffline(fileType, dataId)
+      );
+    }
+
+    return await this.realtimeService.fileService.onlineUploadFileOrFail(
       fileType,
       this.data.projectRef,
       this.collection,
       dataId,
-      this.id,
       blob,
       filename,
       this.alwaysKeepFileOffline(fileType, dataId)
