@@ -23,7 +23,7 @@ namespace WhitespaceRestoreMigration;
 /// "read" mode only doesn't write a migration. It does touch the local hg repo, and even temporarily disable sync on
 /// projects.
 ///
-/// Usage: cd bin/Debug/net6.0; ASPNETCORE_ENVIRONMENT=Development ./WhitespaceRestoreMigration read
+/// Usage: cd bin/Debug/net8.0; ASPNETCORE_ENVIRONMENT=Development ./WhitespaceRestoreMigration read
 /// ../../../../../SIL.XForge.Scripture
 ///
 /// Usage on server: export SF_APP_DIR=/path/to/sf/app; sudo --user $(stat --format='%G' "${SF_APP_DIR}")
