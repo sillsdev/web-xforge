@@ -343,6 +343,31 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Retrieves information on whether a language is supported by Serval.
+    /// </summary>
+    /// <param name="languageCode">The language code.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The language information was successfully retrieved.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.IsLanguageSupported)]
+    public async Task<ActionResult<LanguageDto>> IsLanguageSupportedAsync(
+        string languageCode,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            LanguageDto language = await _machineApiService.IsLanguageSupportedAsync(languageCode, cancellationToken);
+            return Ok(language);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+    }
+
+    /// <summary>
     /// Starts a build job for a translation engine.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
