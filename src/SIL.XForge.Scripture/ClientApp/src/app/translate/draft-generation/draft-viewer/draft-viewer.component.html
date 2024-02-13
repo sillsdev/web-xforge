@@ -6,7 +6,7 @@
   </section>
 
   <div [class.offline]="!isOnline">
-    <p><transloco key="draft_viewer.select_apply_to_project"></transloco></p>
+    <p *ngIf="canEdit"><transloco key="draft_viewer.select_apply_to_project"></transloco></p>
     <p><transloco key="draft_viewer.select_edit"></transloco></p>
 
     <div class="draft-viewer-body" [ngClass]="{ 'no-source': !bookHasSource }">
@@ -56,7 +56,7 @@
             {{ isDraftApplied ? t("draft_indicator_applied") : t("draft_indicator_not_applied") }}
             <mat-icon *ngIf="isDraftApplied" class="check-icon">check</mat-icon>
           </span>
-          <div *ngIf="!isDraftApplied && hasDraft" class="apply-draft-button-container">
+          <div *ngIf="!isDraftApplied && hasDraft && canEdit" class="apply-draft-button-container">
             <button mat-flat-button color="primary" (click)="applyDraft()">
               <mat-icon>auto_awesome</mat-icon>
               {{ t("apply_to_project") }}

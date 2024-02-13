@@ -7,6 +7,10 @@ import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { User } from 'realtime-server/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -68,7 +72,7 @@ describe('DraftViewerComponent', () => {
       });
 
       when(mockActivatedProjectService.projectId).thenReturn(this.targetProjectId);
-      when(mockActivatedProjectService.projectDoc).thenReturn(projectProfileDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(cloneDeep(projectProfileDoc));
       when(mockProjectService.getText(anything())).thenCall(id =>
         this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
       );
@@ -77,6 +81,7 @@ describe('DraftViewerComponent', () => {
       when(mockUserService.getCurrentUser()).thenCall(() =>
         this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
       );
+      when(mockUserService.currentUserId).thenReturn('user01');
       when(mockRouter.events).thenReturn(
         of(new ActivationEnd({ params: { projectId: this.targetProjectId } } as unknown as ActivatedRouteSnapshot))
       );
@@ -164,7 +169,7 @@ describe('DraftViewerComponent', () => {
     env.waitForEditor();
 
     verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).once();
-    expect(env.component.hasDraft).toBeTrue();
+    expect(env.component.hasDraft).toBeTruthy();
     expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_verse_2_suggested);
   }));
 
@@ -187,7 +192,7 @@ describe('DraftViewerComponent', () => {
     expect(spyEditorEnable).toHaveBeenCalledWith(true);
     expect(spyEditorUpdateContents).toHaveBeenCalledWith(draftDiff, 'user');
     expect(spyEditorDisable).toHaveBeenCalledTimes(1);
-    expect(isBadDelta(env.component.targetEditor.editor?.getContents().ops!)).toBeFalse();
+    expect(isBadDelta(env.component.targetEditor.editor?.getContents().ops!)).toBeFalsy();
     tick();
   }));
 
@@ -283,8 +288,54 @@ describe('DraftViewerComponent', () => {
     expect(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).toBeTruthy();
   }));
 
+  it('should show the apply to project button if the user can edit', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.currentBook = 1;
+    env.component.currentChapter = 1;
+    expect(env.component.canEdit).toBeTruthy();
+  }));
+
+  it('should not show the apply to project button if the usfm is invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.currentBook = 1;
+    env.component.currentChapter = 2;
+    expect(env.component.canEdit).toBeFalsy();
+  }));
+
+  it('should not show the apply to project button if the user does not have project edit rights', fakeAsync(() => {
+    const env = new TestEnvironment(() => {
+      when(mockUserService.currentUserId).thenReturn('user02');
+    });
+    env.component.currentBook = 1;
+    env.component.currentChapter = 1;
+    expect(env.component.canEdit).toBeFalsy();
+  }));
+
+  it('should not show the apply to project button if the user cannot edit the chapter', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.currentBook = 2;
+    env.component.currentChapter = 1;
+    expect(env.component.canEdit).toBeFalsy();
+  }));
+
+  it('should not show the apply to project button if the project is not editable', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.targetProject!.sync.dataInSync = false;
+    env.component.currentBook = 1;
+    env.component.currentChapter = 1;
+    expect(env.component.canEdit).toBeFalsy();
+  }));
+
+  it('should not show the apply to project button if the project is not in sync', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.targetProject!.editable = false;
+    env.component.currentBook = 1;
+    env.component.currentChapter = 1;
+    expect(env.component.canEdit).toBeFalsy();
+  }));
+
   const projectProfileDoc = {
-    data: {
+    data: createTestProject({
       writingSystem: {
         tag: 'en'
       },
@@ -293,17 +344,22 @@ describe('DraftViewerComponent', () => {
           projectRef: 'sourceProjectId'
         }
       },
+      userRoles: { user01: SFProjectRole.ParatextTranslator },
       texts: [
         {
           bookNum: 1,
           chapters: [
             {
               number: 1,
-              lastVerse: 10
+              lastVerse: 10,
+              isValid: true,
+              permissions: { user01: TextInfoPermission.Write }
             },
             {
               number: 2,
-              lastVerse: 10
+              lastVerse: 10,
+              isValid: false,
+              permissions: { user01: TextInfoPermission.Write }
             }
           ]
         },
@@ -312,20 +368,23 @@ describe('DraftViewerComponent', () => {
           chapters: [
             {
               number: 1,
-              lastVerse: 10
+              lastVerse: 10,
+              permissions: {}
             },
             {
               number: 2,
-              lastVerse: 10
+              lastVerse: 10,
+              permissions: {}
             },
             {
               number: 3,
-              lastVerse: 10
+              lastVerse: 10,
+              permissions: {}
             }
           ]
         }
       ]
-    }
+    }) as SFProjectProfile
   } as SFProjectProfileDoc;
 
   const draftSegmentMap: DraftSegmentMap = {
