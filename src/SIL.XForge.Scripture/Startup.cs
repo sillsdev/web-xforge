@@ -220,7 +220,7 @@ public class Startup
             {
                 // this will allow files without extensions to be served, which is necessary for LetsEncrypt
                 ServeUnknownFileTypes = true,
-                OnPrepareResponse = ctx => ctx.Context.Response.Headers.Add("Cache-Control", "must-revalidate")
+                OnPrepareResponse = ctx => ctx.Context.Response.Headers.Append("Cache-Control", "must-revalidate"),
             }
         );
         IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetService<IOptions<SiteOptions>>();
