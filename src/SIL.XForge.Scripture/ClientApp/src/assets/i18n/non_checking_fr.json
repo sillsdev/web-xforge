@@ -182,6 +182,7 @@
     "fast_training_warning": "Activer ceci permettra de gagner du temps mais réduira considérablement la précision.",
     "fast_training": "Permettre une formation rapide",
     "generate_draft": "Générer un brouillon",
+    "loading": "Chargement...",
     "next": "Suivant",
     "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage.",
     "these_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",

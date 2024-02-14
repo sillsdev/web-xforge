@@ -201,7 +201,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       ]),
       async () => {
         this.isTargetLanguageSupported =
-          !this.isBackTranslationMode || this.nllbService.isNllbLanguage(this.targetLanguage);
+          !this.isBackTranslationMode || (await this.nllbService.isNllbLanguageAsync(this.targetLanguage));
 
         if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
           this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();

@@ -39,7 +39,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   @Output() done = new EventEmitter<DraftGenerationStepsResult>();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
-  availableTranslateBooks: number[] = [];
+  availableTranslateBooks?: number[] = undefined;
   availableTrainingBooks: number[] = [];
 
   // Unusable books do not exist in the corresponding drafting/training source project
@@ -79,12 +79,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         })
       ),
       // Build book lists
-      ({ target, draftingSource, trainingSource }) => {
+      async ({ target, draftingSource, trainingSource }) => {
         // If both source and target project languages are in the NLLB,
         // training book selection is optional (and discouraged).
         this.isTrainingOptional =
-          this.nllbLanguageService.isNllbLanguage(target.writingSystem.tag) &&
-          this.nllbLanguageService.isNllbLanguage(draftingSource.writingSystem.tag);
+          (await this.nllbLanguageService.isNllbLanguageAsync(target.writingSystem.tag)) &&
+          (await this.nllbLanguageService.isNllbLanguageAsync(draftingSource.writingSystem.tag));
 
         const draftingSourceBooks = new Set<number>();
         let trainingSourceBooks = new Set<number>();
@@ -101,6 +101,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           // If no training source project, use drafting source project books
           trainingSourceBooks = draftingSourceBooks;
         }
+
+        this.availableTranslateBooks = [];
 
         // If book exists in both target and source, add to available books.
         // Otherwise, add to unusable books.
