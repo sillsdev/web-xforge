@@ -49,12 +49,18 @@ export class BookMultiSelectComponent implements OnChanges {
   }
 
   select(eventValue: string): void {
-    if (eventValue === 'All') {
-      this.selectedBooks = [...this.availableBooks];
-    } else if (eventValue === 'OT') {
-      this.selectedBooks = this.availableBooks.filter(n => Canon.isBookOT(n));
+    if (eventValue === 'OT') {
+      this.selectedBooks.push(
+        ...this.availableBooks.filter(n => Canon.isBookOT(n) && this.selectedBooks.indexOf(n) === -1)
+      );
     } else if (eventValue === 'NT') {
-      this.selectedBooks = this.availableBooks.filter(n => Canon.isBookNT(n));
+      this.selectedBooks.push(
+        ...this.availableBooks.filter(n => Canon.isBookNT(n) && this.selectedBooks.indexOf(n) === -1)
+      );
+    } else if (eventValue === 'DC') {
+      this.selectedBooks.push(
+        ...this.availableBooks.filter(n => Canon.isBookDC(n) && this.selectedBooks.indexOf(n) === -1)
+      );
     }
     this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
@@ -73,5 +79,9 @@ export class BookMultiSelectComponent implements OnChanges {
 
   isNewTestamentAvailable(): boolean {
     return this.availableBooks.findIndex(n => Canon.isBookNT(n)) > -1;
+  }
+
+  isDeuterocanonAvailable(): boolean {
+    return this.availableBooks.findIndex(n => Canon.isBookDC(n)) > -1;
   }
 }

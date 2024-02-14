@@ -30,8 +30,8 @@
     "biblical_terms_renderings": "Biblical Terms Renderings"
   },
   "book_select": {
-    "all": "All",
     "clear": "Clear",
+    "dc": "DC",
     "nt": "NT",
     "ot": "OT",
     "select": "Select"
