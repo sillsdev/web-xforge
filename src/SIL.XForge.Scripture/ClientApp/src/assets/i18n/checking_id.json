@@ -212,6 +212,7 @@
   "chapter_audio_dialog": {
     "audio": "Suara",
     "audio_already_exists": "Berkas suara sudah tersedia untuk pilihan ini.",
+    "audio_file_less_than_one_hundred_mb": "Audio files under 95MB only",
     "browse_files": "Telusuri Berkas",
     "cancel": "Batal",
     "chapter_audio": "Pasal Audio",
