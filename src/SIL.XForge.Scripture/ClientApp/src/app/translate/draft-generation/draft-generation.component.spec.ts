@@ -28,6 +28,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
+import { NllbLanguageService } from '../nllb-language.service';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
@@ -44,6 +45,7 @@ describe('DraftGenerationComponent', () => {
   let mockUserService: jasmine.SpyObj<UserService>;
   let mockI18nService: jasmine.SpyObj<I18nService>;
   let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
+  let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -99,6 +101,7 @@ describe('DraftGenerationComponent', () => {
           { provide: DialogService, useValue: mockDialogService },
           { provide: I18nService, useValue: mockI18nService },
           { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
+          { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService }
         ]
       });
@@ -163,6 +166,8 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
+      mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
+      mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -194,7 +199,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.targetLanguage).toBe('en');
     });
 
-    it('should detect project requirements', () => {
+    it('should detect project requirements', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: 'testProjectId',
@@ -211,13 +216,15 @@ describe('DraftGenerationComponent', () => {
           })
         });
       });
+      env.fixture.detectChanges();
+      tick();
 
       expect(env.component.isBackTranslation).toBe(false);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(false);
-    });
+    }));
 
-    it('should detect source language same as target language', () => {
+    it('should detect source language same as target language', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: 'testProjectId',
@@ -243,15 +250,17 @@ describe('DraftGenerationComponent', () => {
           })
         });
       });
+      env.fixture.detectChanges();
+      tick();
 
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(false);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
-    });
+    }));
 
-    it('should detect alternate training source language when different to alternate source language', () => {
+    it('should detect alternate training source language when different to alternate source language', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: 'testProjectId',
@@ -289,15 +298,17 @@ describe('DraftGenerationComponent', () => {
           })
         });
       });
+      env.fixture.detectChanges();
+      tick();
 
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(false);
-    });
+    }));
 
-    it('should detect alternate training source language when different to source language', () => {
+    it('should detect alternate training source language when different to source language', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: 'testProjectId',
@@ -329,15 +340,17 @@ describe('DraftGenerationComponent', () => {
           })
         });
       });
+      env.fixture.detectChanges();
+      tick();
 
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(false);
-    });
+    }));
 
-    it('should not detect alternate training source language as different when enabled but null', () => {
+    it('should not detect alternate training source language as different when enabled but null', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: 'testProjectId',
@@ -363,13 +376,15 @@ describe('DraftGenerationComponent', () => {
           })
         });
       });
+      env.fixture.detectChanges();
+      tick();
 
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
-    });
+    }));
   });
 
   describe('Online status', () => {
@@ -993,7 +1008,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isTargetLanguageSupported).toBe(true);
     });
 
-    it('should enforce supported language for back translations even when forward translation feature flag is set', () => {
+    it('should enforce supported language for back translations even when forward translation feature flag is set', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
@@ -1022,10 +1037,12 @@ describe('DraftGenerationComponent', () => {
           })
         });
       });
+      env.fixture.detectChanges();
+      tick();
       expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.isBackTranslationMode).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
-    });
+    }));
   });
 
   describe('navigateToTab', () => {

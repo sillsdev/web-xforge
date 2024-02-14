@@ -41,3 +41,11 @@ app-notice {
     display: flex;
   }
 }
+
+.loading {
+  display: flex;
+  margin: 1em;
+  mat-spinner {
+    margin-right: 1em;
+  }
+}

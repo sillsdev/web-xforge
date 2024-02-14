@@ -182,6 +182,7 @@
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generate draft",
+    "loading": "Carregando...",
     "next": "Próximo",
     "no_available_books": "You have no books available for drafting.",
     "these_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
