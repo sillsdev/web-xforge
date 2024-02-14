@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  <ng-container *ngIf="availableTranslateBooks.length; else noAvailableBooks">
+  <ng-container *ngIf="availableTranslateBooks && availableTranslateBooks.length > 0">
     <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
       <mat-step [completed]="userSelectedTranslateBooks.length > 0">
         <ng-template matStepLabel>
@@ -92,7 +92,14 @@
     </mat-stepper>
   </ng-container>
 
-  <ng-template #noAvailableBooks>
+  <ng-container *ngIf="availableTranslateBooks && availableTranslateBooks.length <= 0">
     <p>{{ t("no_available_books") }}</p>
-  </ng-template>
+  </ng-container>
+
+  <ng-container *ngIf="availableTranslateBooks == null">
+    <div class="loading">
+      <mat-spinner [diameter]="20" color="primary"></mat-spinner>
+      <div>{{ t("loading") }}</div>
+    </div>
+  </ng-container>
 </ng-container>

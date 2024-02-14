@@ -14,6 +14,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
@@ -23,6 +24,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockProjectService = mock(SFProjectService);
+  const mockNllbLanguageService = mock(NllbLanguageService);
   const mockUserService = mock(UserService);
 
   const mockTargetProjectDoc = {
@@ -69,6 +71,7 @@ describe('DraftGenerationStepsComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
+      { provide: NllbLanguageService, useMock: mockNllbLanguageService },
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: UserService, useMock: mockUserService }
     ]
@@ -127,6 +130,8 @@ describe('DraftGenerationStepsComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(targetProjectDoc$);
       when(mockFeatureFlagService.allowFastTraining).thenReturn(createTestFeatureFlag(false));
       when(mockProjectService.getProfile(anything())).thenResolve(mockSourceNonNllbProjectDoc);
+      when(mockNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(true);
+      when(mockNllbLanguageService.isNllbLanguageAsync('xyz')).thenResolve(false);
 
       fixture = TestBed.createComponent(DraftGenerationStepsComponent);
       component = fixture.componentInstance;
