@@ -212,6 +212,7 @@
   "chapter_audio_dialog": {
     "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
+    "audio_file_less_than_one_hundred_mb": "Audio files under 95MB only",
     "browse_files": "Browse Files",
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
     "chapter_audio": "Chapter Audio",
