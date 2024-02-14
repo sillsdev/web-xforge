@@ -274,6 +274,35 @@ describe('ShareControlComponent', () => {
     env.wait();
     expect(env.shareLink).not.toBeNull();
   }));
+
+  it('should require setting the email before sending an invite', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setInvitationLanguage('en');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
+    expect(env.fetchElement('#email mat-error').nativeElement.textContent).toContain('Email address is invalid');
+    env.setTextFieldValue(env.emailTextField, 'already@example.com');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
+  }));
+
+  it('should require that the entered email is valid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setInvitationLanguage('en');
+    env.setTextFieldValue(env.emailTextField, 'abc');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).never();
+    expect(env.fetchElement('#email mat-error').nativeElement.textContent).toContain('Email address is invalid');
+  }));
+
+  it('should not show required errors immediately after submitting', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setTextFieldValue(env.emailTextField, 'already@example.com');
+    env.setInvitationLanguage('en');
+    env.click(env.sendButton);
+    verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
+    expect(env.fetchElement('#email mat-error')).toBeNull();
+  }));
 });
 
 @NgModule({

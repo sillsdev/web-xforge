@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormGroupDirective, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -33,7 +33,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: ElementRef<HTMLInputElement>;
 
-  email = new UntypedFormControl('', [XFValidators.email]);
+  email = new UntypedFormControl('', [XFValidators.email, Validators.required]);
   localeControl = new UntypedFormControl('', [Validators.required]);
   roleControl = new UntypedFormControl('', [Validators.required]);
   sendInviteForm: UntypedFormGroup = new UntypedFormGroup({
@@ -171,7 +171,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this._projectId, this.email.value);
   }
 
-  async sendEmail(): Promise<void> {
+  async sendEmail(form: FormGroupDirective): Promise<void> {
     if (this._projectId == null || this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
       return;
     }
@@ -194,7 +194,13 @@ export class ShareControlComponent extends SubscriptionDisposable {
     }
 
     this.noticeService.show(message);
-    this.email.reset();
+
+    const roleValue = this.shareRole;
+    const localeValue = this.localeControl.value;
+
+    form.resetForm();
+    this.roleControl.setValue(roleValue);
+    this.localeControl.setValue(localeValue);
   }
 
   private async updateFormEnabledStateAndLinkSharingKey(): Promise<void> {
