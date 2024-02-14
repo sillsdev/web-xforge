@@ -75,6 +75,15 @@ describe('TrainingDataService', () => {
   }));
 
   it('should delete a training data doc', fakeAsync(async () => {
+    // Verify the document exists
+    const existingTrainingDataDoc = realtimeService.get<TrainingDataDoc>(
+      TrainingDataDoc.COLLECTION,
+      getTrainingDataId('project01', 'data01')
+    );
+    expect(existingTrainingDataDoc.data?.dataId).toBe('data01');
+    expect(existingTrainingDataDoc.data?.projectRef).toBe('project01');
+
+    // SUT
     const trainingDataToDelete: TrainingData = {
       projectRef: 'project01',
       dataId: 'data01',

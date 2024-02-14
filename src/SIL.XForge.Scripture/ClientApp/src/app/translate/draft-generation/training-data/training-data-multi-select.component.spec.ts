@@ -8,6 +8,8 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -17,6 +19,7 @@ import { TrainingDataService } from './training-data.service';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDialogService = mock(DialogService);
+const mockI18nService = mock(I18nService);
 const mockTrainingDataService = mock(TrainingDataService);
 const mockTrainingDataUploadDialogComponent = mock<MatDialogRef<TrainingDataUploadDialogComponent>>(MatDialogRef);
 const mockUserService = mock(UserService);
@@ -25,6 +28,14 @@ describe('TrainingDataMultiSelectComponent', () => {
   let component: TrainingDataMultiSelectComponent;
   let fixture: ComponentFixture<TrainingDataMultiSelectComponent>;
 
+  const locale: Locale = {
+    localName: 'English',
+    englishName: 'English',
+    canonicalTag: 'en',
+    direction: 'ltr',
+    tags: [],
+    production: false
+  };
   const mockProjectId: string = 'project01';
   const mockProjectId$ = new BehaviorSubject<string>(mockProjectId);
   const mockProjectDoc: SFProjectProfileDoc = {
@@ -46,6 +57,7 @@ describe('TrainingDataMultiSelectComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DialogService, useMock: mockDialogService },
+      { provide: I18nService, useMock: mockI18nService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: TrainingDataUploadDialogComponent, useMock: mockTrainingDataUploadDialogComponent },
       { provide: UserService, useMock: mockUserService }
@@ -63,6 +75,7 @@ describe('TrainingDataMultiSelectComponent', () => {
     when(
       mockDialogService.confirm('training_data_multi_select.confirm_delete', 'training_data_multi_select.delete')
     ).thenResolve(true);
+    when(mockI18nService.locale$).thenReturn(of(locale));
     when(mockTrainingDataUploadDialogComponent.afterClosed()).thenReturn(of({ dataId: 'data04' }));
     fixture = TestBed.createComponent(TrainingDataMultiSelectComponent);
     component = fixture.componentInstance;
