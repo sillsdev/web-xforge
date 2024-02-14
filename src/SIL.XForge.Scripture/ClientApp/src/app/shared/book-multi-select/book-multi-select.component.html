@@ -5,12 +5,14 @@
         <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("book_select.clear") }}</button>
         <span>Select:</span>
         <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
-          <mat-button-toggle value="All">{{ t("book_select.all") }}</mat-button-toggle>
           <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
             {{ t("book_select.ot") }}
           </mat-button-toggle>
           <mat-button-toggle value="NT" [disabled]="!isNewTestamentAvailable()">
             {{ t("book_select.nt") }}
+          </mat-button-toggle>
+          <mat-button-toggle value="DC" *ngIf="isDeuterocanonAvailable()">
+            {{ t("book_select.dc") }}
           </mat-button-toggle>
         </mat-button-toggle-group>
       </div>
