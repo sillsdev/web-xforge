@@ -5,12 +5,7 @@
 :host {
   display: flex;
   flex-direction: column;
-}
-
-.content {
-  @include media-breakpoint-only(xs) {
-    margin: -10px;
-  }
+  height: 100%;
 }
 
 .avatar-padding {
@@ -113,16 +108,17 @@ app-text {
 }
 
 .content {
-  height: calc(100vh - 84px);
-  @include media-breakpoint('<', sm) {
-    height: calc(100vh - 124px);
-  }
-
+  height: 100%;
   display: grid;
   column-gap: 10px;
 
   grid-template-rows: 72px minmax(0, 1fr);
   grid-template-columns: 1fr 1fr;
+
+  @include media-breakpoint-only(xs) {
+    margin: -10px;
+    height: calc(100% + 20px);
+  }
 }
 
 .toolbar {
