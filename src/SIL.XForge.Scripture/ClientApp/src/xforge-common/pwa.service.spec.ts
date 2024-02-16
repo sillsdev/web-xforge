@@ -61,6 +61,7 @@ describe('PwaService', () => {
     TestEnvironment.isRunningInstalledApp$.next(true);
     expect(canInstall).toEqual(true);
     env.pwaService.install();
+    mockedWindow.dispatchEvent(new Event('appinstalled'));
     tick();
     expect(canInstall).toEqual(false);
     env.dispose();

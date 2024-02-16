@@ -52,11 +52,14 @@ export class PwaService extends SubscriptionDisposable {
     }
 
     if (this.updates.isEnabled && !this.isRunningInstalledApp) {
-      // Currently beforeinstallprompt is only supported by Chromium browsers
+      // Currently beforeinstallprompt and appinstalled is only supported by Chromium browsers
       this.window.addEventListener('beforeinstallprompt', (event: any) => {
         event.preventDefault();
         this.promptEvent = event;
         this._canInstall$.next(true);
+      });
+      this.window.addEventListener('appinstalled', () => {
+        this._canInstall$.next(false);
       });
     }
   }
@@ -89,10 +92,7 @@ export class PwaService extends SubscriptionDisposable {
   }
 
   async install(): Promise<void> {
-    const result: InstallPromptOutcome | undefined = await this.promptEvent?.prompt();
-    if (result?.outcome === 'accepted') {
-      this._canInstall$.next(!this.isRunningInstalledApp);
-    }
+    await this.promptEvent?.prompt();
   }
 
   setInstallPromptLastShownTime(): void {
