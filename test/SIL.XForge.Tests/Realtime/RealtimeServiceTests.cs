@@ -206,7 +206,7 @@ public class RealtimeServiceTests
         public TestEnvironment()
         {
             IRealtimeServer realtimeServer = Substitute.For<IRealtimeServer>();
-            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
+            IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
             IOptions<SiteOptions> siteOptions = Substitute.For<IOptions<SiteOptions>>();
             IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
                 new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
@@ -227,17 +227,19 @@ public class RealtimeServiceTests
             IOptions<AuthOptions> authOptions = Substitute.For<IOptions<AuthOptions>>();
 
             IMongoClient mongoClient = Substitute.For<IMongoClient>();
+            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
             mongoClient.GetDatabase(Arg.Any<string>()).Returns(MongoDatabase);
             IConfiguration configuration = Substitute.For<IConfiguration>();
 
             Service = new RealtimeService(
                 realtimeServer,
-                recurringJobManager,
+                exceptionHandler,
                 siteOptions,
                 dataAccessOptions,
                 realtimeOptions,
                 authOptions,
                 mongoClient,
+                recurringJobManager,
                 configuration
             );
         }

@@ -19,27 +19,31 @@ namespace SIL.XForge.Realtime;
 /// </summary>
 public class RealtimeService : DisposableBase, IRealtimeService
 {
+    private readonly IExceptionHandler _exceptionHandler;
     private readonly IOptions<SiteOptions> _siteOptions;
-    private readonly IRecurringJobManager _recurringJobManager;
     private readonly IOptions<DataAccessOptions> _dataAccessOptions;
     private readonly IOptions<RealtimeOptions> _realtimeOptions;
     private readonly IOptions<AuthOptions> _authOptions;
     private readonly IMongoDatabase _database;
+    private readonly IRecurringJobManager _recurringJobManager;
     private readonly Dictionary<Type, DocConfig> _docConfigs;
     private readonly IConfiguration _configuration;
+    private int restartDelay = 0;
 
     public RealtimeService(
         IRealtimeServer server,
-        IRecurringJobManager recurringJobManager,
+        IExceptionHandler exceptionHandler,
         IOptions<SiteOptions> siteOptions,
         IOptions<DataAccessOptions> dataAccessOptions,
         IOptions<RealtimeOptions> realtimeOptions,
         IOptions<AuthOptions> authOptions,
         IMongoClient mongoClient,
+        IRecurringJobManager recurringJobManager,
         IConfiguration configuration
     )
     {
         Server = server;
+        _exceptionHandler = exceptionHandler;
         _recurringJobManager = recurringJobManager;
         _siteOptions = siteOptions;
         _dataAccessOptions = dataAccessOptions;
@@ -70,7 +74,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
         {
             object options = CreateOptions();
             Server.Start(options);
-            _recurringJobManager.AddOrUpdate("ping_service", () => CheckIfRunning(), Cron.Minutely);
+            SetPingServiceSchedule();
         }
     }
 
@@ -263,11 +267,26 @@ public class RealtimeService : DisposableBase, IRealtimeService
     private void RestartServer()
     {
         Console.WriteLine("Attempting to restart Realtime Server");
+        string restartResponse;
         if (Server.Restart(CreateOptions()))
-            Console.WriteLine("Successfully restarted the Realtime Server");
+        {
+            restartDelay = 0;
+            SetPingServiceSchedule();
+            restartResponse = "Successfully restarted the Realtime Server";
+        }
         else
-            Console.WriteLine("Failed to restart the Realtime Server");
+        {
+            if (restartDelay < 30)
+                restartDelay += 5;
+            SetPingServiceSchedule($"*/{restartDelay} * * * *");
+            restartResponse = $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes";
+        }
+        Console.WriteLine(restartResponse);
+        _exceptionHandler.ReportException(new Exception(restartResponse));
     }
+
+    private void SetPingServiceSchedule(string schedule = "* * * * *") =>
+        _recurringJobManager.AddOrUpdate("ping_service", () => CheckIfRunning(), schedule);
 
     private object CreateOptions()
     {

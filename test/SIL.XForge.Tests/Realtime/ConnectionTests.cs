@@ -575,7 +575,7 @@ public class ConnectionTests
         public TestEnvironment(bool documentCacheDisabled = false)
         {
             var realtimeServer = Substitute.For<IRealtimeServer>();
-            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
+            IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
             var siteOptions = Options.Create(Substitute.For<SiteOptions>());
             var dataAccessOptions = Options.Create(Substitute.For<DataAccessOptions>());
             var realtimeOptions = Options.Create(
@@ -588,15 +588,17 @@ public class ConnectionTests
             );
             var authOptions = Options.Create(Substitute.For<AuthOptions>());
             var mongoClient = Substitute.For<IMongoClient>();
+            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
             var configuration = Substitute.For<IConfiguration>();
             RealtimeService = new RealtimeService(
                 realtimeServer,
-                recurringJobManager,
+                exceptionHandler,
                 siteOptions,
                 dataAccessOptions,
                 realtimeOptions,
                 authOptions,
                 mongoClient,
+                recurringJobManager,
                 configuration
             );
             Service = new Connection(RealtimeService, documentCacheDisabled);
