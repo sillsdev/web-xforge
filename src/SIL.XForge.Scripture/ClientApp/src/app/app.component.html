@@ -130,10 +130,6 @@
         [projectDocs]="projectDocs"
         [selected]="selectedProjectDoc"
         (changed)="projectChanged($event)"
-          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()" class="install-button">
-            Install on device
-            <mat-icon>install_mobile</mat-icon>
-          </button>
       ></app-navigation-project-selector>
       <app-navigation (menuItemClicked)="itemSelected()"></app-navigation>
     </mat-drawer>
