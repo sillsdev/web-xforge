@@ -4,10 +4,10 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TranslateConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, defer, from, Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { environment } from 'src/environments/environment';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../../environments/environment';
 import { SFProjectService } from '../../core/sf-project.service';
 
 interface DraftTextInfo {

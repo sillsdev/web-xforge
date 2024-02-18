@@ -3,9 +3,9 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { BuildDto } from 'src/app/machine-api/build-dto';
-import { BuildStates } from 'src/app/machine-api/build-states';
-import { HttpClient } from 'src/app/machine-api/http-client';
+import { BuildDto } from '../../machine-api/build-dto';
+import { BuildStates } from '../../machine-api/build-states';
+import { HttpClient } from '../../machine-api/http-client';
 import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
