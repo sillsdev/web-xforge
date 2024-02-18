@@ -1,13 +1,17 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from 'src/environments/environment';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
@@ -19,6 +23,7 @@ describe('DraftGenerationStepsComponent', () => {
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockProjectService = mock(SFProjectService);
+  const mockUserService = mock(UserService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
@@ -51,6 +56,12 @@ describe('DraftGenerationStepsComponent', () => {
     })
   } as SFProjectProfileDoc;
 
+  const mockUserDoc = {
+    data: createTestUser({
+      sites: { [environment.siteId]: { projects: ['alternateTrainingProject', 'sourceProject', 'test'] } }
+    })
+  } as UserDoc;
+
   const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
 
   configureTestingModule(() => ({
@@ -58,8 +69,13 @@ describe('DraftGenerationStepsComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService },
-      { provide: SFProjectService, useMock: mockProjectService }
+      { provide: SFProjectService, useMock: mockProjectService },
+      { provide: UserService, useMock: mockUserService }
     ]
+  }));
+
+  beforeEach(fakeAsync(() => {
+    when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
   }));
 
   describe('alternate training source project', () => {

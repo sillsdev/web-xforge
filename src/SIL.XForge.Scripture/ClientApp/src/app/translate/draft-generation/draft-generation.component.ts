@@ -35,6 +35,7 @@ import {
   DraftGenerationStepsResult
 } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
@@ -73,6 +74,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isSourceAndTargetDifferent = true;
   isSourceAndTrainingSourceLanguageIdentical = true;
 
+  source?: DraftSource;
+  alternateSource?: DraftSource;
+  alternateTrainingSource?: DraftSource;
+
   jobSubscription?: Subscription;
   isOnline = true;
 
@@ -99,9 +104,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly dialogService: DialogService,
-    public readonly activatedProject: ActivatedProjectService,
+    private readonly activatedProject: ActivatedProjectService,
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftSourcesService: DraftSourcesService,
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     private readonly i18n: I18nService,
@@ -113,11 +119,20 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   get isGenerationSupported(): boolean {
     return (
+      this.isPreviewSupported &&
+      this.canAccessDraftSourceIfAvailable(this.alternateSource) &&
+      this.canAccessDraftSourceIfAvailable(this.alternateTrainingSource)
+    );
+  }
+
+  get isPreviewSupported(): boolean {
+    return (
       (!this.isBackTranslationMode || this.isBackTranslation) &&
       this.isTargetLanguageSupported &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
       this.isSourceAndTrainingSourceLanguageIdentical &&
+      this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
   }
@@ -197,7 +212,14 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
           })
         ),
-        this.featureFlags.allowForwardTranslationNmtDrafting.enabled$
+        this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
+        this.draftSourcesService.getDraftProjectSources().pipe(
+          tap(({ source, alternateSource, alternateTrainingSource }) => {
+            this.source = source;
+            this.alternateSource = alternateSource;
+            this.alternateTrainingSource = alternateTrainingSource;
+          })
+        )
       ]),
       async () => {
         this.isTargetLanguageSupported =
@@ -308,6 +330,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       translationBooks: result.translationBooks,
       fastTraining: result.fastTraining
     });
+  }
+
+  /**
+   * Determines if a user has access to a draft source.
+   * @param source The draft source from the draft generation service.
+   * @returns true if the user has access to the source, or if there is no source.
+   */
+  canAccessDraftSourceIfAvailable(source: DraftSource | undefined): boolean {
+    return !(source?.noAccess ?? false);
   }
 
   hasDraftQueueDepth(job?: BuildDto): boolean {
