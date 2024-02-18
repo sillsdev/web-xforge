@@ -4,10 +4,6 @@
   border-color: $borderColor;
   color: $textColor;
 
-  .divider {
-    border-color: $borderColor;
-  }
-
   mat-icon {
     color: $borderColor;
   }
@@ -125,13 +121,6 @@
 
     &.valid {
       @include wrapperState(variables.$purpleLight, variables.$greyDark);
-    }
-
-    &.invalid {
-      @include wrapperState(variables.$errorColor, variables.$errorColor);
-      span {
-        white-space: unset;
-      }
     }
   }
 }

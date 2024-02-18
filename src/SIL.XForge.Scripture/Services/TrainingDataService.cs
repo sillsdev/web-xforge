@@ -21,7 +21,7 @@ namespace SIL.XForge.Scripture.Services;
 public class TrainingDataService : ITrainingDataService
 {
     /// <summary>
-    /// The training directory name. This si not the full path to the directory.
+    /// The training directory name. This is not the full path to the directory.
     /// </summary>
     ///
     public const string DirectoryName = "training-data";
@@ -151,7 +151,7 @@ public class TrainingDataService : ITrainingDataService
             // Generate the text segments
             var sourceSegments = new List<SFTextSegment>();
             var targetSegments = new List<SFTextSegment>();
-            int i = 0;
+            int segRef = 0;
             int skipRows = trainingDataDoc.Data.SkipRows;
             while (await csvReader.ReadAsync())
             {
@@ -169,14 +169,14 @@ public class TrainingDataService : ITrainingDataService
                 }
 
                 // Increment the segment reference counter
-                i++;
+                segRef++;
 
                 // Add the first column of this line to the source segments
                 string sourceSegmentText = csvReader.GetField<string>(0);
                 sourceSegments.Add(
                     new SFTextSegment(
                         dataId,
-                        i.ToString(),
+                        segRef.ToString(),
                         sourceSegmentText,
                         Array.Empty<string>(),
                         false,
@@ -191,7 +191,7 @@ public class TrainingDataService : ITrainingDataService
                 targetSegments.Add(
                     new SFTextSegment(
                         dataId,
-                        i.ToString(),
+                        segRef.ToString(),
                         targetSegmentText,
                         Array.Empty<string>(),
                         false,
@@ -215,7 +215,7 @@ public class TrainingDataService : ITrainingDataService
     /// <param name="projectId">The project identifier.</param>
     /// <param name="dataId">The data identifier.</param>
     /// <param name="path">The path to the temporary file.</param>
-    /// <returns>The asynchronous task.</returns>
+    /// <returns>The URL to the file.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">The user does not have access to upload.</exception>
     /// <exception cref="FormatException">The data id or CSV file were not in the correct format.</exception>
@@ -337,7 +337,7 @@ public class TrainingDataService : ITrainingDataService
             IRow row = sheet.GetRow(rowNum);
             if (row is null || row.FirstCellNum == -1 || row.LastCellNum - row.FirstCellNum < 2)
             {
-                // Skip if there are not two columns of data in this row
+                // Skip if there are not two columns of data in this row that are side-by-side
                 continue;
             }
 
@@ -368,10 +368,10 @@ public class TrainingDataService : ITrainingDataService
     /// <summary>
     /// Gets the path to the training data file
     /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="projectId"></param>
-    /// <param name="dataId"></param>
-    /// <returns></returns>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="projectId">The SF project identifier.</param>
+    /// <param name="dataId">The Data identifier from the TrainingData document.</param>
+    /// <returns>The absolute path to the training data file.</returns>
     private string GetTrainingDataFilePath(string userId, string projectId, string dataId)
     {
         // Sanitise input

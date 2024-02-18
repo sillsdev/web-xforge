@@ -158,6 +158,12 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
     this.dialogRef.close({ dataId });
   }
 
+  /**
+   * Handles the change event of the #fileDropzone.
+   * We only support uploading one file at a time.
+   * @param e The event
+   * @returns void
+   */
   uploadedFiles(e: Event): void {
     const el = e.target as HTMLInputElement;
     if (el.files == null) {

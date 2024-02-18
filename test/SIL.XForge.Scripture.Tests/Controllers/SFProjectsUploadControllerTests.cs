@@ -22,12 +22,12 @@ public class SFProjectsUploadControllerTests
     private const string Data01 = "data01";
     private const string Project01 = "project01";
     private const string User01 = "user01";
-    private static readonly string[] Roles = { SystemRole.User };
+    private static readonly string[] Roles = [SystemRole.User];
 
     [Test]
     public async Task UploadAudioAsync_EmptyRequestFails()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
         env.CreateEmptyRequest();
 
         // SUT
@@ -38,16 +38,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadAudioAsync_Forbidden()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "ID3";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the audio
         env.SFProjectService.SaveAudioAsync(User01, Project01, Data01, Arg.Any<string>())
@@ -62,16 +58,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadAudioAsync_NotFound()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "ID3";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the audio
         env.SFProjectService.SaveAudioAsync(User01, Project01, Data01, Arg.Any<string>())
@@ -86,16 +78,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadAudioAsync_UnexpectedException()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "ID3";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the audio
         env.SFProjectService.SaveAudioAsync(User01, Project01, Data01, Arg.Any<string>())
@@ -109,17 +97,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadAudioAsync_UploadFile()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("ID3"));
         const string fileName = "test.mp3";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
-        env.FileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+        const string data = "ID3";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Set up the URI to the uploaded file
         Uri baseUri = new Uri("https://scriptureforge.org/", UriKind.Absolute);
@@ -135,13 +118,13 @@ public class SFProjectsUploadControllerTests
         Assert.IsNotNull(actual);
         Assert.IsInstanceOf<CreatedResult>(actual);
         Assert.AreEqual(relativeUri.ToString(), (actual as CreatedResult)?.Location);
-        Assert.AreEqual(fileName, (actual as CreatedResult).Value);
+        Assert.AreEqual(fileName, (actual as CreatedResult)?.Value);
     }
 
     [Test]
     public async Task UploadTrainingDataAsync_EmptyRequestFails()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
         env.CreateEmptyRequest();
 
         // SUT
@@ -152,10 +135,10 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadTrainingDataAsync_FileNotUploaded()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName: null, fileStream: null);
+        using var request = await env.CreateFileUploadRequestAsync(Data01, Project01, fileName: null, fileStream: null);
 
         // SUT
         IActionResult actual = await env.Controller.UploadTrainingDataAsync();
@@ -165,16 +148,17 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadTrainingDataAsync_DataIdUndefined()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        using var request = await env.CreateFileUploadRequest("undefined", Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "Test,Data";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(
+            "undefined",
+            Project01,
+            fileName,
+            data
+        );
 
         // SUT
         IActionResult actual = await env.Controller.UploadTrainingDataAsync();
@@ -184,16 +168,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadTrainingDataAsync_Forbidden()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "Test,Data";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the training data
         env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
@@ -208,16 +188,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadTrainingDataAsync_NotFound()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "Test,Data";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the training data
         env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
@@ -232,16 +208,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadTrainingDataAsync_UnexpectedException()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+        const string data = "Test,Data";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Throw the exception when saving the training data
         env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
@@ -255,19 +227,12 @@ public class SFProjectsUploadControllerTests
     [Test]
     public async Task UploadTrainingDataAsync_UploadFile()
     {
-        var env = new TestEnvironment();
+        await using var env = new TestEnvironment();
 
         // Set up the file upload
-        await using MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         const string fileName = "test.csv";
-        using var request = await env.CreateFileUploadRequest(Data01, Project01, fileName, fileStream);
-
-        // Set up the moving of the file
-        await using MemoryStream outputStream = new MemoryStream();
-        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
-
-        // Trigger clean up of the temporary file
-        env.FileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+        const string data = "Test,Data";
+        using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Set up the URI to the uploaded file
         Uri baseUri = new Uri("https://scriptureforge.org/", UriKind.Absolute);
@@ -283,14 +248,16 @@ public class SFProjectsUploadControllerTests
         Assert.IsNotNull(actual);
         Assert.IsInstanceOf<CreatedResult>(actual);
         Assert.AreEqual(relativeUri.ToString(), (actual as CreatedResult)?.Location);
-        Assert.AreEqual(fileName, (actual as CreatedResult).Value);
+        Assert.AreEqual(fileName, (actual as CreatedResult)?.Value);
 
         // Verify clean up
         env.FileSystemService.Received(1).DeleteFile(Arg.Any<string>());
     }
 
-    private class TestEnvironment
+    private class TestEnvironment : IAsyncDisposable
     {
+        private readonly List<MemoryStream> _memoryStreams = [];
+
         public TestEnvironment()
         {
             ExceptionHandler = Substitute.For<IExceptionHandler>();
@@ -321,7 +288,15 @@ public class SFProjectsUploadControllerTests
             Controller.ControllerContext.HttpContext = httpContext;
         }
 
-        public async Task<HttpRequestMessage> CreateFileUploadRequest(
+        /// <summary>
+        /// Creates a file upload request, but not the temporary file on disk.
+        /// </summary>
+        /// <param name="dataId">The data identifier.</param>
+        /// <param name="projectId">The SF project identifier.</param>
+        /// <param name="fileName">The file name.</param>
+        /// <param name="fileStream">The file stream.</param>
+        /// <returns>The Http Request Message. This must be disposed.</returns>
+        public async Task<HttpRequestMessage> CreateFileUploadRequestAsync(
             string dataId,
             string projectId,
             string? fileName,
@@ -368,6 +343,48 @@ public class SFProjectsUploadControllerTests
             };
 
             return request;
+        }
+
+        /// <summary>
+        /// Creates a file upload request, and the temporary file on disk.
+        /// </summary>
+        /// <param name="dataId">The data identifier.</param>
+        /// <param name="projectId">The SF project identifier.</param>
+        /// <param name="fileName">The file name.</param>
+        /// <param name="data">The file data.</param>
+        /// <returns>The Http Request Message. This must be disposed.</returns>
+        public async Task<HttpRequestMessage> CreateSuccessfulFileUploadResultAsync(
+            string dataId,
+            string projectId,
+            string? fileName,
+            string data
+        )
+        {
+            // Set up the file upload
+            MemoryStream fileStream = new MemoryStream(Encoding.UTF8.GetBytes(data));
+            HttpRequestMessage request = await CreateFileUploadRequestAsync(dataId, projectId, fileName, fileStream);
+
+            // Set up the moving of the file
+            MemoryStream outputStream = new MemoryStream();
+            FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+
+            // Trigger clean up of the temporary file
+            FileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // Record the memory streams to retain scope and facilitate later disposal
+            _memoryStreams.Add(fileStream);
+            _memoryStreams.Add(outputStream);
+
+            // Return the request so the outer scope can dispose it
+            return request;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            foreach (MemoryStream memoryStream in _memoryStreams)
+            {
+                await memoryStream.DisposeAsync();
+            }
         }
     }
 }

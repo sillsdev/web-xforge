@@ -207,7 +207,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   onTrainingDataSelect(selectedTrainingDataIds: string[]): void {
     this.userSelectedTrainingDataIds = selectedTrainingDataIds;
     // If any of the passed data ids are not in the initial selected list, update the initial selected list
-    if (!selectedTrainingDataIds.every(dataId => this.initialSelectedTrainingDataIds.includes(dataId))) {
+    if (
+      !selectedTrainingDataIds.every(dataId => this.initialSelectedTrainingDataIds.includes(dataId)) ||
+      !this.initialSelectedTrainingDataIds.every(dataId => selectedTrainingDataIds.includes(dataId))
+    ) {
       this.initialSelectedTrainingDataIds = selectedTrainingDataIds;
     }
     this.clearErrorMessage();
