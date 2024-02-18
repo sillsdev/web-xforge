@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -2169,6 +2172,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
         // Check that the project was created
         Assert.That(
@@ -2236,6 +2240,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService.DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
 
         // Check that the project was created
         Assert.That(
@@ -3854,6 +3859,7 @@ public class SFProjectServiceTests
             SecurityService = Substitute.For<ISecurityService>();
             SecurityService.GenerateKey().Returns("1234abc");
             var transceleratorService = Substitute.For<ITransceleratorService>();
+            BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
 
             ParatextService
                 .IsResource(Arg.Any<string>())
@@ -3875,7 +3881,8 @@ public class SFProjectServiceTests
                 UserSecrets,
                 translateMetrics,
                 Localizer,
-                transceleratorService
+                transceleratorService,
+                BackgroundJobClient
             );
         }
 
@@ -3890,6 +3897,7 @@ public class SFProjectServiceTests
         public IParatextService ParatextService { get; }
         public IStringLocalizer<SharedResource> Localizer { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
+        public IBackgroundJobClient BackgroundJobClient { get; }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 
