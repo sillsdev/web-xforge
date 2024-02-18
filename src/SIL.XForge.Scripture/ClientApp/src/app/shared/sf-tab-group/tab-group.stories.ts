@@ -4,7 +4,6 @@ import { Observable, of } from 'rxjs';
 import { NewTabMenuItem, NewTabMenuManager } from 'src/app/shared/sf-tab-group';
 import { TabInfo, TabStateService } from '../tab-state/tab-state.service';
 import { SFTabsModule } from './sf-tabs.module';
-import { TabEvent } from './sf-tabs.types';
 
 @Component({
   selector: 'app-tab-group-stories',
@@ -40,12 +39,12 @@ class SFTabGroupStoriesComponent implements OnChanges {
     this.tabState.addTab('test', tabType ?? 'blank');
   }
 
-  closeTab(e: TabEvent): void {
-    this.tabState.getTabGroup('test')?.removeTab(e.index);
+  closeTab(tabIndex: number): void {
+    this.tabState.getTabGroup('test')?.removeTab(tabIndex);
   }
 
-  selectTab(e: TabEvent): void {
-    this.tabState.getTabGroup('test')?.selectTab(e.index);
+  selectTab(tabIndex: number): void {
+    this.tabState.getTabGroup('test')?.selectTab(tabIndex);
   }
 }
 

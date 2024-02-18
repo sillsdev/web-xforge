@@ -25,7 +25,7 @@ import {
   Subscription
 } from 'rxjs';
 import { NewTabMenuItem, NewTabMenuManager } from 'src/app/shared/sf-tab-group';
-import { TabEvent, TabEventType, TabHeaderMouseEvent } from '../sf-tabs.types';
+import { TabHeaderMouseEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 
@@ -43,7 +43,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @Input() showAddTab = true;
   @Input() showAddTabMenu = true;
   @Output() tabClick = new EventEmitter<TabHeaderMouseEvent>();
-  @Output() closeClick = new EventEmitter<TabEvent>();
+  @Output() closeClick = new EventEmitter<number>();
 
   /** Emits `type` from menu selection, or null if `showAddTabMenu` is false */
   @Output() tabAddRequest = new EventEmitter<string | null>();
@@ -51,7 +51,6 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @ViewChildren(TabHeaderComponent, { read: ElementRef }) private tabHeaders?: QueryList<ElementRef>;
   @ViewChild('menuTrigger') private menuTrigger?: MatMenuTrigger;
 
-  TabEventType = TabEventType;
   menuItems$?: Observable<NewTabMenuItem[]>;
 
   isScrollBoundsStart = false;

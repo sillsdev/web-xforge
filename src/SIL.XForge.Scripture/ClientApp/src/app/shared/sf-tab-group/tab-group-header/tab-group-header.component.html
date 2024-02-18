@@ -10,8 +10,8 @@
     *ngFor="let tab of tabs; let i = index"
     [closeable]="tab.closeable"
     [active]="i === selectedIndex"
-    (tabClick)="tabClick.next({ index: i, type: TabEventType.Click, mouseEvent: $event })"
-    (closeClick)="closeClick.next({ index: i, type: TabEventType.Close })"
+    (tabClick)="tabClick.next({ index: i, mouseEvent: $event })"
+    (closeClick)="closeClick.next(i)"
   >
     <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
   </app-tab-header>

@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { NewTabMenuManager } from 'src/app/shared/sf-tab-group';
 import { SFTabsModule } from './sf-tabs.module';
-import { TabEventType } from './sf-tabs.types';
 import { TabGroupComponent } from './tab-group.component';
 import { TabComponent } from './tab/tab.component';
 
@@ -34,14 +33,14 @@ describe('TabGroupComponent', () => {
     spyOn(component.tabSelect, 'emit');
     const tabIndex = 1;
     component.selectTab(tabIndex);
-    expect(component.tabSelect.emit).toHaveBeenCalledWith({ index: tabIndex, type: TabEventType.Select });
+    expect(component.tabSelect.emit).toHaveBeenCalledWith(tabIndex);
   });
 
   it('should emit "closeTabRequest" event when a removable tab is closed', () => {
     spyOn(component.closeTabRequest, 'emit');
     const tabIndex = 1;
     component.removeTab(tabIndex);
-    expect(component.closeTabRequest.emit).toHaveBeenCalledWith({ index: tabIndex, type: TabEventType.Close });
+    expect(component.closeTabRequest.emit).toHaveBeenCalledWith(tabIndex);
   });
 
   it('should not emit "closeTabRequest" event when a non-removable tab is closed', () => {

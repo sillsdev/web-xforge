@@ -1,5 +1,5 @@
 import { Component, ContentChildren, EventEmitter, Input, Output, QueryList } from '@angular/core';
-import { TabEvent, TabEventType, TabHeaderMouseEvent } from './sf-tabs.types';
+import { TabHeaderMouseEvent } from './sf-tabs.types';
 import { TabComponent } from './tab/tab.component';
 
 @Component({
@@ -12,9 +12,9 @@ export class TabGroupComponent {
   @Input() selectedIndex = 0;
   @Input() showAddTab = true;
   @Input() showAddTabMenu = true;
-  @Output() tabSelect = new EventEmitter<TabEvent>();
+  @Output() tabSelect = new EventEmitter<number>();
   @Output() newTabRequest = new EventEmitter<string | null>();
-  @Output() closeTabRequest = new EventEmitter<TabEvent>();
+  @Output() closeTabRequest = new EventEmitter<number>();
 
   @ContentChildren(TabComponent) tabs!: QueryList<TabComponent>;
 
@@ -30,8 +30,8 @@ export class TabGroupComponent {
     }
   }
 
-  onTabCloseRequest(e: TabEvent): void {
-    this.removeTab(e.index);
+  onTabCloseRequest(tabIndex: number): void {
+    this.removeTab(tabIndex);
   }
 
   onTabAddRequest(newTabType: string | null): void {
@@ -40,12 +40,12 @@ export class TabGroupComponent {
 
   selectTab(tabIndex: number): void {
     this.selectedIndex = tabIndex;
-    this.tabSelect.emit({ index: tabIndex, type: TabEventType.Select });
+    this.tabSelect.emit(tabIndex);
   }
 
   removeTab(tabIndex: number): void {
     if (this.isTabRemovable(tabIndex)) {
-      this.closeTabRequest.emit({ index: tabIndex, type: TabEventType.Close });
+      this.closeTabRequest.emit(tabIndex);
     }
   }
 
