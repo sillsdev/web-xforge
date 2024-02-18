@@ -52,12 +52,6 @@ $tabHeaderBorderRadius: var(--sf-tab-header-border-radius);
       }
     }
   }
-
-  &:hover {
-    .close-button {
-      visibility: visible;
-    }
-  }
 }
 
 .tab-header-content {
@@ -77,7 +71,6 @@ $tabHeaderBorderRadius: var(--sf-tab-header-border-radius);
 
 // 'button' is needed to increase specificity for overriding hover text color
 button.close-button {
-  visibility: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
