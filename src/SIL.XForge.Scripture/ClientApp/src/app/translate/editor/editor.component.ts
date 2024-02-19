@@ -176,8 +176,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
-  // @ViewChild('historyChooser') historyChooser?: HistoryChooserComponent;
-  // @ViewChildren('app-history-chooser') historyChoosers?: QueryList<HistoryChooserComponent>;
 
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
