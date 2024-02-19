@@ -1,7 +1,6 @@
 <ng-container *transloco="let t; read: 'history_chooser'">
   <ng-container *ngIf="onlineStatusService.onlineStatus$ | async">
     <mat-form-field id="history-select" appearance="outline">
-      <mat-icon matPrefix>history</mat-icon>
       <mat-select
         [value]="selectedRevision"
         (selectionChange)="onSelectionChanged($event)"
