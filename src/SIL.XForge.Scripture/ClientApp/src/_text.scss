@@ -6,7 +6,7 @@ quill-editor {
   height: 100%;
   > .ql-container {
     > .ql-editor {
-      font-family: Roboto, 'Noto Sans Kayah Li', sans-serif;
+      font-family: Roboto, sans-serif;
       line-height: 1.6;
       width: 100%;
       word-break: break-word;
@@ -33,7 +33,7 @@ quill-editor {
 .read-only-editor > .ql-container {
   > .ql-editor {
     usx-segment {
-      padding: 0.2em 0;
+      line-height: 1.8;
     }
 
     .highlight-segment {
@@ -278,4 +278,12 @@ quill-editor.rtl .highlight-para usx-segment:first-child:before {
 usx-segment.draft {
   color: $draft-color;
   font-style: italic;
+}
+
+usx-segment {
+  font-family: var(--project-font);
+  &::before,
+  &::after {
+    font-family: Roboto, sans-serif;
+  }
 }
