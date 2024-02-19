@@ -233,8 +233,8 @@
     "draft_tab_header": "Auto Draft"
   },
   "history_chooser": {
-    "hide_diff": "Hide differences with previous version",
-    "show_diff": "Show differences with previous version"
+    "hide_diff": "Hide differences from the latest version",
+    "show_diff": "Show differences from the latest version"
   },
   "import_questions_confirmation_dialog": {
     "done": "Done",
