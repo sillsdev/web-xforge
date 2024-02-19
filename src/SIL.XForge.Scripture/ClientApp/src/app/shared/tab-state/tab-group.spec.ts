@@ -26,18 +26,13 @@ describe('TabGroup', () => {
     expect(tabGroup.tabs).toEqual(['tab1', 'tab2', 'tab3']);
   });
 
-  it('should select a tab', () => {
-    tabGroup.selectTab(1);
-    expect(tabGroup.selectedIndex).toEqual(1);
-  });
-
   it('should remove a tab', () => {
     tabGroup.removeTab(0);
     expect(tabGroup.tabs).toEqual(['tab2']);
   });
 
   it('should adjust selected index when removing a tab', () => {
-    tabGroup.selectTab(1);
+    tabGroup.selectedIndex = 1;
     tabGroup.removeTab(0);
     expect(tabGroup.selectedIndex).toEqual(0);
   });

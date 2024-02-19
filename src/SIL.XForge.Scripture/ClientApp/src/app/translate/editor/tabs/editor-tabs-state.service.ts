@@ -37,7 +37,7 @@ export class EditorTabsStateService extends TabStateService<EditorTabGroupType, 
   }
 
   selectTab(groupId: EditorTabGroupType, index: number): void {
-    this.groups.get(groupId)!.selectTab(index);
+    this.groups.get(groupId)!.selectedIndex = index;
     this.tabGroupsSource$.next(this.groups);
   }
 }

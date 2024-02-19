@@ -22,10 +22,6 @@ export class TabGroup<TKey, T> {
     }
   }
 
-  selectTab(index: number): void {
-    this.selectedIndex = index;
-  }
-
   removeTab(index: number): void {
     this.tabs.splice(index, 1);
 
