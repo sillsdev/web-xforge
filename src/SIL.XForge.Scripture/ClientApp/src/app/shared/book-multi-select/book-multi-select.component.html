@@ -2,7 +2,6 @@
   <div *ngIf="availableBooks.length > 0 && !readonly">
     <mat-card class="bulk-select">
       <div>
-        <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("book_select.clear") }}</button>
         <span>Select:</span>
         <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
           <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
@@ -15,6 +14,7 @@
             {{ t("book_select.deuterocanon") }}
           </mat-button-toggle>
         </mat-button-toggle-group>
+        <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("book_select.clear") }}</button>
       </div>
     </mat-card>
   </div>
