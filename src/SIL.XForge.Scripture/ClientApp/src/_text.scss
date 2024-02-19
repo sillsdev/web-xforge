@@ -279,3 +279,11 @@ usx-segment.draft {
   color: $draft-color;
   font-style: italic;
 }
+
+usx-segment {
+  font-family: var(--project-font);
+  &::before,
+  &::after {
+    font-family: Roboto, 'Noto Sans Kayah Li', sans-serif;
+  }
+}
