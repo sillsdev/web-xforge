@@ -31,9 +31,9 @@
   },
   "book_select": {
     "clear": "Clear",
-    "dc": "DC",
-    "nt": "NT",
-    "ot": "OT",
+    "deuterocanon": "DC",
+    "new_testament": "NT",
+    "old_testament": "OT",
     "select": "Select"
   },
   "chapter_nav": {

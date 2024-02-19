@@ -6,13 +6,13 @@
         <span>Select:</span>
         <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
           <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
-            {{ t("book_select.ot") }}
+            {{ t("book_select.old_testament") }}
           </mat-button-toggle>
           <mat-button-toggle value="NT" [disabled]="!isNewTestamentAvailable()">
-            {{ t("book_select.nt") }}
+            {{ t("book_select.new_testament") }}
           </mat-button-toggle>
           <mat-button-toggle value="DC" *ngIf="isDeuterocanonAvailable()">
-            {{ t("book_select.dc") }}
+            {{ t("book_select.deuterocanon") }}
           </mat-button-toggle>
         </mat-button-toggle-group>
       </div>
