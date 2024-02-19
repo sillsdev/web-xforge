@@ -391,6 +391,7 @@ public class MachineProjectService : IMachineProjectService
         return null;
     }
 
+    [Mutex]
     public async Task BuildProjectForBackgroundJobAsync(
         string curUserId,
         BuildConfig buildConfig,
@@ -827,6 +828,7 @@ public class MachineProjectService : IMachineProjectService
         }
     }
 
+    [Mutex]
     public async Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId)
     {
         // Get the user secret

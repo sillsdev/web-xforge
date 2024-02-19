@@ -147,7 +147,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
     /// <paramref name="projectSFId"/> parameter, i.e. "{0}".
     /// </remarks>
-    [Mutex("{0}")]
+    [Mutex]
     public async Task RunAsync(
         string projectSFId,
         string userId,
