@@ -279,3 +279,7 @@ usx-segment.draft {
   color: $draft-color;
   font-style: italic;
 }
+
+usx-segment {
+  font-family: var(--project-font);
+}
