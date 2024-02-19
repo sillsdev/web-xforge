@@ -1025,6 +1025,10 @@ public class MachineProjectService : IMachineProjectService
             FeatureFlags.UploadParatextZipForPreTranslation
         );
 
+        // See if there is an alternate training source corpus
+        bool useAlternateTrainingSource =
+            draftConfig.AlternateTrainingSourceEnabled && draftConfig.AlternateTrainingSource is not null;
+
         // Set up the pre-translation and training corpora
         List<PretranslateCorpusConfig> preTranslate = new List<PretranslateCorpusConfig>();
         List<TrainingCorpusConfig>? trainOn = null;
@@ -1044,7 +1048,7 @@ public class MachineProjectService : IMachineProjectService
                 // Since all books are uploaded via the zip file, we need to specify the target books to translate
                 preTranslateCorpusConfig.TextIds = buildConfig.TranslationBooks.Select(Canon.BookNumberToId).ToList();
 
-                if (!draftConfig.AlternateTrainingSourceEnabled)
+                if (!useAlternateTrainingSource)
                 {
                     // As we do not have an alternate train on source specified, use the source texts to train on
                     trainOn ??= new List<TrainingCorpusConfig>();
@@ -1062,9 +1066,9 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Add the alternate training source, if enabled
-        if (draftConfig.AlternateTrainingSourceEnabled)
+        if (useAlternateTrainingSource)
         {
-            trainOn = new List<TrainingCorpusConfig>();
+            trainOn = [];
             foreach (
                 KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
                     s => s.Value.PreTranslate && s.Value.AlternateTrainingSource

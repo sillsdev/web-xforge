@@ -192,6 +192,30 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_DoesNotPassTrainOnIfAlternateTrainingSourceEnabledWithoutAlternateSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { BuildIsPending = false, AlternateTrainingSourceEnabled = true }
+        );
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine01,
+                Arg.Is<TranslationBuildConfig>(b => b.TrainOn == null),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task BuildProjectAsync_PassesFastTrainingConfiguration()
     {
         // Set up test environment
@@ -816,6 +840,7 @@ public class MachineProjectServiceTests
             {
                 BuildIsPending = false,
                 UploadParatextZipForPreTranslation = true,
+                AlternateTrainingSourceConfigured = true,
                 AlternateTrainingSourceEnabled = true,
             }
         );
@@ -1425,6 +1450,7 @@ public class MachineProjectServiceTests
             {
                 LocalSourceTextHasData = true,
                 LocalTargetTextHasData = true,
+                AlternateTrainingSourceConfigured = true,
                 AlternateTrainingSourceEnabled = true,
             }
         );
@@ -1851,6 +1877,7 @@ public class MachineProjectServiceTests
         public bool ServalSupport { get; init; } = true;
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
+        public bool AlternateTrainingSourceConfigured { get; init; }
         public bool AlternateTrainingSourceEnabled { get; init; }
         public string? ServalConfig { get; set; }
         public bool UploadParatextZipForPreTranslation { get; init; }
@@ -2130,11 +2157,9 @@ public class MachineProjectServiceTests
                             DraftConfig = new DraftConfig
                             {
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
-                                AlternateTrainingSource = new TranslateSource
-                                {
-                                    ProjectRef = Project01,
-                                    ParatextId = Paratext01
-                                },
+                                AlternateTrainingSource = options.AlternateTrainingSourceConfigured
+                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
+                                    : null,
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
