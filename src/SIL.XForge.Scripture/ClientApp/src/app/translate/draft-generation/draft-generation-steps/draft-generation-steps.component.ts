@@ -5,7 +5,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { map, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -74,17 +74,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   ngOnInit(): void {
     this.subscribe(
       this.draftSourcesService.getDraftProjectSources().pipe(
-        map(({ target, draftingSource, trainingSource }) => {
-          if (target.data == null || draftingSource.data == null) {
-            throw new Error('Target project or drafting source project data not found');
-          }
-
-          return {
-            target: target.data,
-            draftingSource: draftingSource.data,
-            trainingSource: trainingSource?.data
-          };
-        }),
         tap(({ draftingSource, trainingSource }) => {
           this.setSourceProjectDisplayNames(draftingSource, trainingSource);
         })
