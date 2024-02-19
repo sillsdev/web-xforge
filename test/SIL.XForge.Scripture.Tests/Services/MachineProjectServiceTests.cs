@@ -39,7 +39,6 @@ public class MachineProjectServiceTests
     private const string User01 = "user01";
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
-    private const string Corpus03 = "corpus03";
     private const string File01 = "file01";
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
@@ -725,6 +724,46 @@ public class MachineProjectServiceTests
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
         await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+
+        // Ensure we have just one pre-translate corpora
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_ClearsAlternateSourceCorporaIfDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateTrainingSourceEnabled = false,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: false,
+            alternateTrainingSource: true
+        );
+
+        // Check that we have more than one pre-translate corpora
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        // The old corpus and its files should be deleted
+        await env.TranslationEnginesClient.Received()
+            .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
+        await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
@@ -2036,22 +2075,6 @@ public class MachineProjectServiceTests
                                         },
                                     }
                                 },
-                                {
-                                    Corpus03,
-                                    new ServalCorpus
-                                    {
-                                        PreTranslate = true,
-                                        AlternateTrainingSource = true,
-                                        SourceFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File01 },
-                                        },
-                                        TargetFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File02 },
-                                        },
-                                    }
-                                },
                             },
                         },
                     },
@@ -2251,7 +2274,6 @@ public class MachineProjectServiceTests
                     );
                     if (alternateTrainingSource)
                     {
-                        u.Unset(p => p.ServalData.Corpora[Corpus03]);
                         u.Set(
                             p => p.ServalData.Corpora[Corpus02],
                             new ServalCorpus
