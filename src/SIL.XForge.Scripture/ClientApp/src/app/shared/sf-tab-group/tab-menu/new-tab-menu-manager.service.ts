@@ -12,6 +12,10 @@ export abstract class NewTabMenuManager {
   abstract getMenuItems(tabGroup: string): Observable<NewTabMenuItem[]>;
 }
 
+/**
+ * Default implementation of NewTabMenuManager that returns an empty array of menu items.
+ * Prevents 'no providers' error in the case that the new tab menu is not used.
+ */
 @Injectable({
   providedIn: 'root'
 })
