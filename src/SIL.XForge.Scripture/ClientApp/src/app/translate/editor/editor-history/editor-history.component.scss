@@ -8,5 +8,10 @@ mat-progress-bar {
 }
 
 app-history-chooser {
-  margin: 0.5em;
+  padding: 0.5em;
+  border-bottom: 1px solid var(--sf-tab-group-border-color);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
 }
