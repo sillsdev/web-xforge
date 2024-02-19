@@ -59,8 +59,10 @@ export class EditorTabsMenuService implements NewTabMenuManager {
               continue;
           }
 
-          const disable = existingTabs.some(tab => tab.unique && tab.type === tabType);
-          items.push(this.createMenuItem(tabType, disable));
+          const uniqueTabAlreadyExists = existingTabs.some(tab => tab.unique && tab.type === tabType);
+          if (!uniqueTabAlreadyExists) {
+            items.push(this.createMenuItem(tabType));
+          }
         }
 
         return items.length > 0 ? forkJoin(items) : of([]);
@@ -68,7 +70,7 @@ export class EditorTabsMenuService implements NewTabMenuManager {
     );
   }
 
-  private createMenuItem(tabType: EditorTabType, isDisabled: boolean): Observable<NewTabMenuItem> {
+  private createMenuItem(tabType: EditorTabType): Observable<NewTabMenuItem> {
     switch (tabType) {
       case 'history':
         return this.i18n.translate('editor_tabs_menu.history_tab_header').pipe(
@@ -76,8 +78,7 @@ export class EditorTabsMenuService implements NewTabMenuManager {
           map(localizedHeaderText => ({
             type: 'history',
             icon: 'history',
-            text: localizedHeaderText,
-            disabled: isDisabled
+            text: localizedHeaderText
           }))
         );
       case 'draft':
@@ -86,8 +87,7 @@ export class EditorTabsMenuService implements NewTabMenuManager {
           map(localizedHeaderText => ({
             type: 'draft',
             icon: 'model_training',
-            text: localizedHeaderText,
-            disabled: isDisabled
+            text: localizedHeaderText
           }))
         );
       // TODO: Add support for project-source tabs

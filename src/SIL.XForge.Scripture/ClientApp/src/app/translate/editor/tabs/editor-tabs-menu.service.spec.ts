@@ -39,7 +39,7 @@ describe('EditorTabsMenuService', () => {
     ]
   }));
 
-  it('should get "history" (enabled) and "draft" (enabled) menu items', done => {
+  it('should get "history" and "draft" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true }]);
     env.setLastCompletedBuildExists(true);
@@ -48,14 +48,14 @@ describe('EditorTabsMenuService', () => {
     service.getMenuItems('source').subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBe(false);
+      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('draft');
-      expect(items[1].disabled).toBe(false);
+      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
 
-  it('should get "history" (enabled) and "draft" (disabled) menu items', done => {
+  it('should get "history" and not "draft" (tab already exists) menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([
       { type: 'history', headerText: 'History', closeable: true },
@@ -65,16 +65,14 @@ describe('EditorTabsMenuService', () => {
     service['userHasGeneralEditRight'] = () => true;
 
     service.getMenuItems('source').subscribe(items => {
-      expect(items.length).toBe(2);
+      expect(items.length).toBe(1);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBe(false);
-      expect(items[1].type).toBe('draft');
-      expect(items[1].disabled).toBe(true);
+      expect(items[0].disabled).toBeFalsy();
       done();
     });
   });
 
-  it('should get "history" (enabled) and not "draft" menu items', done => {
+  it('should get "history" (enabled) and not "draft" (no draft build) menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true }]);
     env.setLastCompletedBuildExists(false);
@@ -83,12 +81,12 @@ describe('EditorTabsMenuService', () => {
     service.getMenuItems('source').subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBe(false);
+      expect(items[0].disabled).toBeFalsy();
       done();
     });
   });
 
-  it('should get "draft" (enabled) and not "history" menu items', done => {
+  it('should get "draft" and not "history" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
     env.setLastCompletedBuildExists(true);
@@ -97,7 +95,7 @@ describe('EditorTabsMenuService', () => {
     service.getMenuItems('source').subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('draft');
-      expect(items[0].disabled).toBe(false);
+      expect(items[0].disabled).toBeFalsy();
       done();
     });
   });
