@@ -33,16 +33,16 @@ describe('EditorHistoryService', () => {
       expect(service.formatTimestamp('')).toBe('Invalid Date');
     });
 
-    it('should return date and time if timestamp is within the last 2 weeks', () => {
+    it('should return abbrev month and day (like "Jan 5") if timestamp is within the last 26 weeks', () => {
       const now = new Date();
       const timestamp = new Date(now.getTime() - 7 * MILLISECONDS_IN_A_DAY).toISOString(); // 1 week ago
       const result = service.formatTimestamp(timestamp);
-      expect(result).toMatch(/\d{1,2}\/\d{1,2} \d{1,2}:\d{2} (AM|PM)/);
+      expect(result).toMatch(/[a-z]{3} \d{1,2}/i);
     });
 
-    it('should return date with year and without time if timestamp is more than 2 weeks ago', () => {
+    it('should return mm/dd/yy if timestamp is more than 26 weeks ago', () => {
       const now = new Date();
-      const timestamp = new Date(now.getTime() - 15 * MILLISECONDS_IN_A_DAY).toISOString(); // 15 days ago
+      const timestamp = new Date(now.getTime() - 7 * MILLISECONDS_IN_A_DAY * 40).toISOString(); // 40 weeks ago
       const result = service.formatTimestamp(timestamp);
       expect(result).toMatch(/\d{1,2}\/\d{1,2}\/\d{2}/);
     });

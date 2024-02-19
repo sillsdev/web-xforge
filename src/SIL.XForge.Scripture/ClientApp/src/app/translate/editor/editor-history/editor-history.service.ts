@@ -14,21 +14,18 @@ export class EditorHistoryService {
     if (timestamp != null) {
       const date = new Date(timestamp);
       const now = new Date();
-      const twoWeeksAgo = new Date(now.getTime() - 14 * MILLISECONDS_IN_A_DAY);
+      const weeksAgo26 = new Date(now.getTime() - MILLISECONDS_IN_A_DAY * 7 * 26);
 
       let options: Intl.DateTimeFormatOptions;
 
-      // If the date is within the last 2 weeks, include the time
-      if (date > twoWeeksAgo) {
+      // If the date is within the last 26 weeks (6 months) show month and day like 'Jan 5'
+      if (date > weeksAgo26) {
         options = {
-          month: 'numeric',
-          day: 'numeric',
-          hour12: true,
-          hour: 'numeric',
-          minute: 'numeric'
+          month: 'short',
+          day: 'numeric'
         };
       } else {
-        // If the date is more than 2 weeks ago show the year but not the time
+        // If the date is more than 26 weeks ago show month, day, and year (mm/dd/yy)
         options = {
           dateStyle: 'short'
         };
