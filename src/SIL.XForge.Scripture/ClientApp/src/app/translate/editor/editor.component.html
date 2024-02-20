@@ -71,6 +71,7 @@
       (newTabRequest)="addTab(tabGroup.key, $event)"
     >
       <app-tab *ngFor="let tab of tabGroup.value.tabs" [closeable]="tab.closeable">
+        <!-- TODO: Localize tab header text -->
         <ng-template sf-tab-header>
           <mat-icon *ngIf="tab.icon">{{ tab.icon }}</mat-icon>
           {{ tab.headerText }}
