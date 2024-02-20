@@ -266,7 +266,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
 
     private void RestartServer()
     {
-        Console.WriteLine("Attempting to restart Realtime Server");
+        Console.WriteLine("Attempting to restart the Realtime Server");
         string restartResponse;
         if (Server.Restart(CreateOptions()))
         {
