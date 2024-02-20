@@ -1147,6 +1147,89 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task RetrievePreTranslationStatusAsync_DoesNotRecordTaskCancellation()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None)
+            .Throws(new TaskCanceledException());
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_DoesNotUpdateIfAlreadyRunning()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false));
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.DidNotReceive()
+            .UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        ServalApiException ex = ServalApiExceptions.Forbidden;
+        env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None).Throws(ex);
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
+        env.ExceptionHandler.Received().ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_ReportsErrorWhenProjectDoesNotExist()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync("invalid_project_id", CancellationToken.None);
+
+        env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusIfPreviouslyRun()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true));
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+    }
+
+    [Test]
     public async Task IsLanguageSupportedAsync_LanguageNotSupported()
     {
         // Set up test environment
@@ -1886,6 +1969,7 @@ public class MachineApiServiceTests
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
             MachineProjectService
@@ -1899,7 +1983,7 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
                 .Returns(Task.FromResult(true));
-            var mockLogger = new MockLogger<MachineApiService>();
+            MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
@@ -1961,7 +2045,8 @@ public class MachineApiServiceTests
 
             Service = new MachineApiService(
                 BackgroundJobClient,
-                mockLogger,
+                ExceptionHandler,
+                MockLogger,
                 MachineProjectService,
                 ParatextService,
                 PreTranslationService,
@@ -1974,7 +2059,9 @@ public class MachineApiServiceTests
         }
 
         public IBackgroundJobClient BackgroundJobClient { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IMachineProjectService MachineProjectService { get; }
+        public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
         public MemoryRepository<SFProject> Projects { get; }

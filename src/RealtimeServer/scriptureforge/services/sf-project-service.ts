@@ -314,6 +314,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                   hasAudio: {
                     bsonType: 'bool'
                   },
+                  hasDraft: {
+                    bsonType: 'bool'
+                  },
                   isValid: {
                     bsonType: 'bool'
                   },
