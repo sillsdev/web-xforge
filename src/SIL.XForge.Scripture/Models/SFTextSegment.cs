@@ -1,19 +1,23 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace SIL.XForge.Scripture.Models;
 
 public class SFTextSegment(
-    string textId,
-    object segRef,
+    IEnumerable<string> segRef,
     string segmentText,
     bool isSentenceStart,
     bool isInRange,
     bool isRangeStart
 )
 {
+    public string SegmentRef { get; } =
+        string.Join('_', segRef.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k))
+            .Replace('\n', '_')
+            .Replace('\t', '_');
     public string SegmentText { get; } = segmentText;
-    public string TextId { get; } = textId;
-    public object SegmentRef { get; } = segRef;
     public bool IsEmpty { get; } = string.IsNullOrWhiteSpace(segmentText);
-    public bool IsSentenceStart { get; } = isSentenceStart;
     public bool IsInRange { get; } = isInRange;
     public bool IsRangeStart { get; } = isRangeStart;
+    public bool IsSentenceStart { get; } = isSentenceStart;
 }

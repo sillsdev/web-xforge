@@ -64,14 +64,7 @@ public class SFBiblicalTermsText : ISFText
                 }
 
                 // Sentence placement is not essential for biblical terms. Set all to false
-                yield return new SFTextSegment(
-                    Id,
-                    new SFTextSegmentRef([biblicalTerm.TermId]),
-                    rendering,
-                    false,
-                    false,
-                    false
-                );
+                yield return new SFTextSegment([biblicalTerm.TermId], rendering, false, false, false);
             }
         }
     }
@@ -108,7 +101,7 @@ public class SFBiblicalTermsText : ISFText
                 }
 
                 // Sentence placement is not essential for biblical terms. Set all to false
-                yield return new SFTextSegment(Id, new SFTextSegmentRef([id]), rendering, false, false, false);
+                yield return new SFTextSegment([id], rendering, false, false, false);
             }
         }
     }

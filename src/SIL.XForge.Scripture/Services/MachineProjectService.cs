@@ -867,16 +867,12 @@ public class MachineProjectService : IMachineProjectService
         // For pre-translation, we must upload empty lines with segment refs for the correct references to be returned
         foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty || includeBlankSegments))
         {
-            // We pad the verse number so the string based key comparisons in Machine will be accurate.
+            // We pad the verse number in the SegmentKey so the string based key comparison in Machine will be accurate.
             // If the int does not parse successfully, it will be because it is a Biblical Term - which has a Greek or
             // Hebrew word as the key, or because the verse number is unusual (i.e. 12a or 12-13). Usually the key is
             // a standard verse number, so will be at most in the hundreds.
-            string key = segment.SegmentRef is SFTextSegmentRef textSegmentRef
-                ? string.Join('_', textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k))
-                : (string)segment.SegmentRef;
-
-            // Strip characters from the key that will corrupt the line
-            sb.Append(key.Replace('\n', '_').Replace('\t', '_'));
+            // We also strip characters from the key that will corrupt the line
+            sb.Append(segment.SegmentRef);
             sb.Append('\t');
             sb.Append(segment.SegmentText);
             sb.Append('\t');

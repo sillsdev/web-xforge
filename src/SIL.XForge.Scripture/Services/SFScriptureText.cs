@@ -57,7 +57,7 @@ public class SFScriptureText : ISFText
 
     public IEnumerable<SFTextSegment> Segments { get; }
 
-    private IEnumerable<SFTextSegment> GetSegments(
+    private static IEnumerable<SFTextSegment> GetSegments(
         BsonDocument doc,
         bool includeBlankSegments,
         bool doNotSendSegmentText,
@@ -126,7 +126,7 @@ public class SFScriptureText : ISFText
         }
     }
 
-    private SFTextSegment CreateSegment(
+    private static SFTextSegment CreateSegment(
         string segRef,
         string segmentStr,
         bool isSentenceStart,
@@ -141,6 +141,6 @@ public class SFScriptureText : ISFText
             keys.AddRange(keys.Count > 0 ? partKeys.Skip(1) : partKeys);
         }
         string segmentText = doNotSendSegmentText ? string.Empty : segmentStr;
-        return new SFTextSegment(Id, new SFTextSegmentRef(keys), segmentText, isSentenceStart, false, false);
+        return new SFTextSegment(keys, segmentText, isSentenceStart, false, false);
     }
 }

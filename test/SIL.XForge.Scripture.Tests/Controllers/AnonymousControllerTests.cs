@@ -36,8 +36,8 @@ public class AnonymousControllerTests
         Assert.IsInstanceOf<JsonResult>(actual.Result);
         Dictionary<string, bool> featureFlags = (actual.Result as JsonResult)?.Value as Dictionary<string, bool>;
         Assert.IsNotNull(featureFlags);
-        Assert.IsTrue(featureFlags[FeatureFlags.UploadParatextZipForPreTranslation]);
-        Assert.IsFalse(featureFlags[FeatureFlags.UseEchoForPreTranslation]);
+        Assert.IsTrue(featureFlags![FeatureFlags.UploadParatextZipForPreTranslation]);
+        Assert.IsFalse(featureFlags![FeatureFlags.UseEchoForPreTranslation]);
     }
 
     [Test]

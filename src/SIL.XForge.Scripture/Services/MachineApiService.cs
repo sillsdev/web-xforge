@@ -100,7 +100,7 @@ public class MachineApiService(
         {
             // We do not mind if a 404 exception comes from Serval - we can assume the job is now cancelled
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
         }
@@ -133,7 +133,7 @@ public class MachineApiService(
             );
             buildDto = CreateDto(translationBuild);
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
         }
@@ -174,7 +174,7 @@ public class MachineApiService(
                 buildDto = CreateDto(translationBuild);
             }
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
         }
@@ -228,7 +228,7 @@ public class MachineApiService(
             buildDto = CreateDto(translationBuild);
             UpdateDto(buildDto, sfProjectId);
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
         }
@@ -258,7 +258,7 @@ public class MachineApiService(
             // Make sure the DTO conforms to the machine-api V2 URLs
             return UpdateDto(engineDto, sfProjectId);
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
             throw;
@@ -289,7 +289,7 @@ public class MachineApiService(
                 cancellationToken
             );
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
         }
@@ -373,7 +373,7 @@ public class MachineApiService(
         {
             return await translationEnginesClient.GetWordGraphAsync(translationEngineId, segment, cancellationToken);
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
             throw;
@@ -498,7 +498,7 @@ public class MachineApiService(
                 }
             }
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
 
@@ -524,7 +524,7 @@ public class MachineApiService(
                 );
                 buildDto = CreateDto(translationBuild);
             }
-            catch (Exception e)
+            catch (ServalApiException e)
             {
                 ProcessServalApiException(e);
             }
@@ -670,13 +670,11 @@ public class MachineApiService(
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
-        if (string.IsNullOrWhiteSpace(translationEngineId)) { }
-
         try
         {
             await translationEnginesClient.TrainSegmentAsync(translationEngineId, segmentPair, cancellationToken);
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
         }
@@ -697,7 +695,7 @@ public class MachineApiService(
         {
             return await translationEnginesClient.TranslateAsync(translationEngineId, segment, cancellationToken);
         }
-        catch (Exception e)
+        catch (ServalApiException e)
         {
             ProcessServalApiException(e);
             throw;
@@ -729,7 +727,7 @@ public class MachineApiService(
                     cancellationToken
                 );
             }
-            catch (Exception e)
+            catch (ServalApiException e)
             {
                 ProcessServalApiException(e);
             }
@@ -780,21 +778,21 @@ public class MachineApiService(
     /// <exception cref="ForbiddenException">Access Denied.</exception>
     /// <exception cref="NotSupportedException">Method not allowed.</exception>
     /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
-    private static void ProcessServalApiException(Exception e)
+    private static void ProcessServalApiException(ServalApiException e)
     {
         switch (e)
         {
-            case ServalApiException { StatusCode: StatusCodes.Status204NoContent }:
+            case { StatusCode: StatusCodes.Status204NoContent }:
                 throw new DataNotFoundException("Entity Deleted");
-            case ServalApiException { StatusCode: StatusCodes.Status403Forbidden }:
+            case { StatusCode: StatusCodes.Status403Forbidden }:
                 throw new ForbiddenException();
-            case ServalApiException { StatusCode: StatusCodes.Status404NotFound }:
+            case { StatusCode: StatusCodes.Status404NotFound }:
                 throw new DataNotFoundException("Entity Deleted");
-            case ServalApiException { StatusCode: StatusCodes.Status405MethodNotAllowed }:
+            case { StatusCode: StatusCodes.Status405MethodNotAllowed }:
                 throw new NotSupportedException();
-            case ServalApiException { StatusCode: StatusCodes.Status408RequestTimeout }:
+            case { StatusCode: StatusCodes.Status408RequestTimeout }:
                 return;
-            case ServalApiException { StatusCode: StatusCodes.Status409Conflict }:
+            case { StatusCode: StatusCodes.Status409Conflict }:
                 throw new InvalidOperationException();
             default:
                 throw e;

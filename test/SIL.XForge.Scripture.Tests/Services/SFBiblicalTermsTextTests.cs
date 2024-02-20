@@ -76,10 +76,10 @@ public class SFBiblicalTermsTextTests
         SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(2));
 
-        Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
+        Assert.That(segments[0].SegmentRef, Is.EqualTo("term1"));
         Assert.That(segments[0].SegmentText, Is.EqualTo("Term1"));
 
-        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(segments[1].SegmentRef, Is.EqualTo("term2"));
         Assert.That(segments[1].SegmentText, Is.EqualTo("Term2"));
     }
 
@@ -97,13 +97,13 @@ public class SFBiblicalTermsTextTests
         SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(3));
 
-        Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
+        Assert.That(segments[0].SegmentRef, Is.EqualTo("term1"));
         Assert.That(segments[0].SegmentText, Is.EqualTo("Term1"));
 
-        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(segments[1].SegmentRef, Is.EqualTo("term2"));
         Assert.That(segments[1].SegmentText, Is.EqualTo("Term2-1"));
 
-        Assert.That(segments[2].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(segments[2].SegmentRef, Is.EqualTo("term2"));
         Assert.That(segments[2].SegmentText, Is.EqualTo("Term2-2"));
     }
 
@@ -149,7 +149,7 @@ public class SFBiblicalTermsTextTests
         Assert.That(segments.Length, Is.EqualTo(renderings.Count));
         for (int i = 0; i < renderings.Count; i++)
         {
-            Assert.That(segments[i].SegmentRef.ToString(), Is.EqualTo("Term" + (i + 1).ToString("D2")));
+            Assert.That(segments[i].SegmentRef, Is.EqualTo("Term" + (i + 1).ToString("D2")));
             Assert.That(segments[i].SegmentText, Is.EqualTo(renderings[i].expected));
         }
     }
@@ -166,13 +166,13 @@ public class SFBiblicalTermsTextTests
         SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(3));
 
-        Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
+        Assert.That(segments[0].SegmentRef, Is.EqualTo("term1"));
         Assert.That(segments[0].SegmentText, Is.EqualTo("Term1"));
 
-        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(segments[1].SegmentRef, Is.EqualTo("term2"));
         Assert.That(segments[1].SegmentText, Is.EqualTo("Term2-1"));
 
-        Assert.That(segments[2].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(segments[2].SegmentRef, Is.EqualTo("term2"));
         Assert.That(segments[2].SegmentText, Is.EqualTo("Term2-2"));
     }
 

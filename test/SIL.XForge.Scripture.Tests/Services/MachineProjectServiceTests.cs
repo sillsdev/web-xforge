@@ -1993,8 +1993,8 @@ public class MachineProjectServiceTests
                         Id = "textId",
                         Segments = new List<SFTextSegment>
                         {
-                            new SFTextSegment("textId", "segRef", "segment01", false, false, false),
-                            new SFTextSegment("textId_2", "segRef_2", string.Empty, false, false, false),
+                            new SFTextSegment(["segRef"], "segment01", false, false, false),
+                            new SFTextSegment(["segRef_2"], string.Empty, false, false, false),
                         },
                     },
                 }
