@@ -12,16 +12,16 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../../machine-api/build-dto';
+import { TabStateService } from '../../../shared/tab-state/tab-state.service';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabsMenuService } from './editor-tabs-menu.service';
-import { EditorTabsStateService } from './editor-tabs-state.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
 let service: EditorTabsMenuService;
 const userServiceMock = mock(UserService);
 const activatedProjectMock = mock(ActivatedProjectService);
 const draftGenerationServiceMock = mock(DraftGenerationService);
-const editorTabsStateMock = mock(EditorTabsStateService);
+const tabStateMock = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockI18nService = mock(I18nService);
 
@@ -33,7 +33,7 @@ describe('EditorTabsMenuService', () => {
       { provide: UserService, useMock: userServiceMock },
       { provide: ActivatedProjectService, useMock: activatedProjectMock },
       { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
-      { provide: EditorTabsStateService, useMock: editorTabsStateMock },
+      { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
       { provide: I18nService, useMock: mockI18nService }
     ]
@@ -170,7 +170,7 @@ class TestEnvironment {
   }
 
   setExistingTabs(tabs: EditorTabInfo[]): void {
-    when(editorTabsStateMock.tabs$).thenReturn(of(tabs));
+    when(tabStateMock.tabs$).thenReturn(of(tabs));
   }
 
   setLastCompletedBuildExists(exists: boolean): void {

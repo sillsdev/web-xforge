@@ -61,4 +61,23 @@ export class TabStateService<TKey extends string, T extends TabInfo<string>> imp
     this.groups.clear();
     this.tabGroupsSource$.next(this.groups);
   }
+
+  addTab(groupId: TKey, tab: T): void {
+    if (!this.groups.has(groupId)) {
+      this.groups.set(groupId, new TabGroup<TKey, T>(groupId, []));
+    }
+
+    this.groups.get(groupId)!.addTab(tab, true);
+    this.tabGroupsSource$.next(this.groups);
+  }
+
+  removeTab(groupId: TKey, index: number): void {
+    this.groups.get(groupId)!.removeTab(index);
+    this.tabGroupsSource$.next(this.groups);
+  }
+
+  selectTab(groupId: TKey, index: number): void {
+    this.groups.get(groupId)!.selectedIndex = index;
+    this.tabGroupsSource$.next(this.groups);
+  }
 }

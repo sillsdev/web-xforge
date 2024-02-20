@@ -9,9 +9,9 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { TabStateService } from '../../../shared/tab-state/tab-state.service';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { EditorTabsStateService } from './editor-tabs-state.service';
-import { EditorTabGroupType, EditorTabType, editorTabTypes } from './editor-tabs.types';
+import { EditorTabGroupType, EditorTabInfo, EditorTabType, editorTabTypes } from './editor-tabs.types';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +21,7 @@ export class EditorTabsMenuService implements NewTabMenuManager {
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly editorTabsState: EditorTabsStateService,
+    private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly i18n: I18nService
   ) {}
 
@@ -32,7 +32,7 @@ export class EditorTabsMenuService implements NewTabMenuManager {
         return combineLatest([
           of(projectDoc),
           this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
-          this.editorTabsState.tabs$
+          this.tabState.tabs$
         ]);
       }),
       switchMap(([projectDoc, buildDto, existingTabs]) => {

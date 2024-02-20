@@ -82,7 +82,7 @@ import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-import { TabInfo } from '../../shared/tab-state/tab-state.service';
+import { TabInfo, TabStateService } from '../../shared/tab-state/tab-state.service';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -112,7 +112,6 @@ import {
 import { Suggestion } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabsMenuService } from './tabs/editor-tabs-menu.service';
-import { EditorTabsStateService } from './tabs/editor-tabs-state.service';
 import { EditorTabGroupType, EditorTabInfo, EditorTabType } from './tabs/editor-tabs.types';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
@@ -146,7 +145,10 @@ const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
   selector: 'app-editor',
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss'],
-  providers: [{ provide: NewTabMenuManager, useClass: EditorTabsMenuService }]
+  providers: [
+    TabStateService<EditorTabGroupType, EditorTabInfo>,
+    { provide: NewTabMenuManager, useClass: EditorTabsMenuService }
+  ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
   addingMobileNote: boolean = false;
@@ -162,6 +164,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
   hasDraft = false;
+  // tabHistoryRevisionSelect$: Subject<void>;
 
   @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
   @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
@@ -234,7 +237,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
     private bottomSheet: MatBottomSheet,
-    readonly editorTabsState: EditorTabsStateService,
+    readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly editorHistoryService: EditorHistoryService,
     private readonly editorTabFactory: EditorTabFactoryService,
     private readonly destroyRef: DestroyRef
@@ -1139,15 +1142,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   selectTab(tabGroupType: EditorTabGroupType, tabIndex: number): void {
-    this.editorTabsState.selectTab(tabGroupType, tabIndex);
+    this.tabState.selectTab(tabGroupType, tabIndex);
   }
 
   closeTab(tabGroupType: EditorTabGroupType, tabIndex: number): void {
-    this.editorTabsState.removeTab(tabGroupType, tabIndex);
+    this.tabState.removeTab(tabGroupType, tabIndex);
   }
 
   addTab(tabGroupType: EditorTabGroupType, newTabType: string | null): void {
-    this.editorTabsState.addTab(tabGroupType, newTabType as EditorTabType);
+    const tab = this.editorTabFactory.createEditorTab(newTabType as EditorTabType);
+    this.tabState.addTab(tabGroupType, tab);
   }
 
   setHistoryTabRevisionLabel(tab: TabInfo<EditorTabType>, revision: Revision): void {
@@ -2296,7 +2300,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private populateEditorTabs(): void {
     // TODO: Load persisted tabs
-    this.editorTabsState.clearAllTabGroups();
+    this.tabState.clearAllTabGroups();
 
     if (this.sourceLabel) {
       const sourceTabs: EditorTabInfo[] = [
@@ -2305,7 +2309,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         })
       ];
 
-      this.editorTabsState.addTabGroup('source', sourceTabs);
+      this.tabState.addTabGroup('source', sourceTabs);
     }
 
     const targetTabs: EditorTabInfo[] = [
@@ -2314,6 +2318,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       })
     ];
 
-    this.editorTabsState.addTabGroup('target', targetTabs);
+    this.tabState.addTabGroup('target', targetTabs);
   }
 }

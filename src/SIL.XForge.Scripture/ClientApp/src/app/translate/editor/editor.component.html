@@ -61,7 +61,7 @@
     </div>
 
     <app-tab-group
-      *ngFor="let tabGroup of this.editorTabsState.tabGroups$ | async | keyvalue"
+      *ngFor="let tabGroup of this.tabState.tabGroups$ | async | keyvalue"
       id="{{ tabGroup.key }}-text-area"
       class="text-area"
       groupId="{{ tabGroup.key }}"

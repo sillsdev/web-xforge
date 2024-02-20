@@ -1,4 +1,4 @@
-import { Component, Injectable, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
 import { NewTabMenuItem, NewTabMenuManager } from 'src/app/shared/sf-tab-group';
@@ -14,8 +14,8 @@ import { SFTabsModule } from './sf-tabs.module';
       [showAddTab]="showAddTab"
       [showAddTabMenu]="showAddTabMenu"
       (newTabRequest)="addTab($event)"
-      (closeTabRequest)="closeTab($event)"
-      (tabSelect)="selectTab($event)"
+      (closeTabRequest)="tabState.removeTab(tabGroup.key, $event.index)"
+      (tabSelect)="tabState.selectTab(tabGroup.key, $event.index)"
     >
       <app-tab *ngFor="let tab of tabGroups.get('test').tabs; let i = index" [closeable]="tab.closeable">
         <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
@@ -29,44 +29,25 @@ class SFTabGroupStoriesComponent implements OnChanges {
   @Input() showAddTab: boolean = true;
   @Input() showAddTabMenu: boolean = true;
 
-  constructor(private readonly tabState: StorybookTabStateService) {}
+  constructor(private readonly tabState: TabStateService<string, TabInfo<string>>) {}
 
   ngOnChanges(): void {
     this.tabState.addTabGroup('test', this.tabs);
   }
 
-  addTab(tabType: string | null): void {
-    this.tabState.addTab('test', tabType ?? 'blank');
-  }
-
-  closeTab(tabIndex: number): void {
-    this.tabState.getTabGroup('test')?.removeTab(tabIndex);
-  }
-
-  selectTab(tabIndex: number): void {
-    this.tabState.getTabGroup('test')?.selectTab(tabIndex);
-  }
-}
-
-@Injectable()
-class StorybookTabStateService extends TabStateService<string, TabInfo<string>> {
-  constructor() {
-    super();
-  }
-
-  addTab(groupId: string, tabType: string): void {
-    let tabInfo: TabInfo<any> | undefined;
+  addTab(groupId: string, tabType: string | null): void {
+    let tab: TabInfo<string>;
 
     switch (tabType) {
       case 'blank':
-        tabInfo = {
+        tab = {
           type: 'blank',
           headerText: 'New tab',
           closeable: true
         };
         break;
       case 'type-a':
-        tabInfo = {
+        tab = {
           type: 'type-a',
           headerText: 'Tab A',
           closeable: true
@@ -74,7 +55,7 @@ class StorybookTabStateService extends TabStateService<string, TabInfo<string>> 
         break;
       case 'type-b':
       default:
-        tabInfo = {
+        tab = {
           type: 'type-b',
           headerText: 'Tab B',
           closeable: true
@@ -82,7 +63,7 @@ class StorybookTabStateService extends TabStateService<string, TabInfo<string>> 
         break;
     }
 
-    this.getTabGroup(groupId)?.addTab(tabInfo);
+    this.tabState.addTab(groupId, tab);
   }
 }
 
@@ -94,7 +75,7 @@ export default {
       imports: [SFTabsModule],
       declarations: [SFTabGroupStoriesComponent],
       providers: [
-        StorybookTabStateService,
+        TabStateService<string, TabInfo<string>>,
         {
           provide: NewTabMenuManager,
           useValue: {

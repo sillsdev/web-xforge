@@ -38,4 +38,50 @@ describe('TabStateService', () => {
     service.removeTabGroup(groupId);
     expect(service['groups'].get(groupId)).toBeUndefined();
   });
+
+  describe('tab actions', () => {
+    it('should add a tab', () => {
+      const groupId: string = 'source';
+      const tab: TabInfo<string> = {
+        type: 'type-a',
+        headerText: 'Header',
+        closeable: true
+      };
+      service.addTab(groupId, tab);
+      expect(service['groups'].get(groupId)!.tabs.length).toBe(1);
+      expect(service['groups'].get(groupId)!.tabs[0]).toEqual(tab);
+    });
+
+    it('should remove a tab', () => {
+      const groupId: string = 'source';
+      const tab: TabInfo<string> = {
+        type: 'type-a',
+        headerText: 'Header',
+        closeable: true
+      };
+      service['groups'].set(groupId, new TabGroup<string, any>(groupId, [tab]));
+      expect(service['groups'].get(groupId)!.tabs.length).toBe(1);
+      service.removeTab(groupId, 0);
+      expect(service['groups'].get(groupId)!.tabs.length).toBe(0);
+    });
+
+    it('should select a tab', () => {
+      const groupId: string = 'source';
+      const tabs: TabInfo<string>[] = [
+        {
+          type: 'type-a',
+          headerText: 'Header 1',
+          closeable: true
+        },
+        {
+          type: 'type-a',
+          headerText: 'Header 2',
+          closeable: true
+        }
+      ];
+      service['groups'].set(groupId, new TabGroup<string, any>(groupId, tabs));
+      service.selectTab(groupId, 1);
+      expect(service['groups'].get(groupId)!.selectedIndex).toBe(1);
+    });
+  });
 });
