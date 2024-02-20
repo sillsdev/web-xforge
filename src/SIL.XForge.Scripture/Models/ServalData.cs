@@ -58,6 +58,20 @@ public class ServalData
     public DateTime? PreTranslationQueuedAt { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the pre-translations have been retrieved.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if the pre-translations have been retrieved;
+    /// <c>false</c> if they are being retrieved;
+    /// <c>null</c> if they have not been retrieved yet.
+    /// </value>
+    /// <remarks>
+    /// This is used by <see cref="Services.MachineApiService.RetrievePreTranslationStatusAsync"/>
+    /// to determine the local state of the pre-translations.
+    /// </remarks>
+    public bool? PreTranslationsRetrieved { get; set; }
+
+    /// <summary>
     /// Gets or sets the corpora uploaded to Serval.
     /// </summary>
     /// <value>
