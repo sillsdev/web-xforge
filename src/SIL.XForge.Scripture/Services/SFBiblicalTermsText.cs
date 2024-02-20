@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using SIL.Machine.Corpora;
-using SIL.Machine.Tokenization;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
@@ -14,34 +12,21 @@ public class SFBiblicalTermsText : ISFText
     private static readonly Regex BracketedTextRegex = new Regex(@"\([^)]*\)", RegexOptions.Compiled);
     private static readonly Regex WhitespaceRegex = new Regex(@"\s+", RegexOptions.Compiled);
 
-    public SFBiblicalTermsText(
-        ITokenizer<string, int, string> wordTokenizer,
-        string projectId,
-        IList<BiblicalTerm> biblicalTerms
-    )
+    public SFBiblicalTermsText(string projectId, IList<BiblicalTerm> biblicalTerms)
     {
         Id = $"{projectId}_biblical_terms";
-
-        Segments = GetSegments(wordTokenizer, biblicalTerms).OrderBy(s => s.SegmentRef).ToArray();
+        Segments = GetSegments(biblicalTerms).OrderBy(s => s.SegmentRef).ToArray();
     }
 
-    public SFBiblicalTermsText(
-        ITokenizer<string, int, string> wordTokenizer,
-        string projectId,
-        XDocument termRenderingsDoc
-    )
+    public SFBiblicalTermsText(string projectId, XDocument termRenderingsDoc)
     {
         Id = $"{projectId}_biblical_terms";
-        Segments = GetSegments(wordTokenizer, termRenderingsDoc).OrderBy(s => s.SegmentRef).ToArray();
+        Segments = GetSegments(termRenderingsDoc).OrderBy(s => s.SegmentRef).ToArray();
     }
 
     public string Id { get; }
 
     public IEnumerable<SFTextSegment> Segments { get; }
-
-    public string SortKey => Id;
-
-    public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => Segments;
 
     /// <summary>
     /// Removes Paratext specific codes from the Biblical Term Rendering.
@@ -61,10 +46,7 @@ public class SFBiblicalTermsText : ISFText
         return rendering.Trim();
     }
 
-    private IEnumerable<SFTextSegment> GetSegments(
-        ITokenizer<string, int, string> wordTokenizer,
-        IList<BiblicalTerm> biblicalTerms
-    )
+    private IEnumerable<SFTextSegment> GetSegments(IList<BiblicalTerm> biblicalTerms)
     {
         if (!biblicalTerms.Any())
         {
@@ -81,28 +63,20 @@ public class SFBiblicalTermsText : ISFText
                     continue;
                 }
 
-                // Get the words in the rendering
-                string[] segment = wordTokenizer.Tokenize(rendering).ToArray();
-
                 // Sentence placement is not essential for biblical terms. Set all to false
                 yield return new SFTextSegment(
                     Id,
-                    new TextSegmentRef(biblicalTerm.TermId),
+                    new SFTextSegmentRef([biblicalTerm.TermId]),
                     rendering,
-                    segment,
                     false,
                     false,
-                    false,
-                    segment.Length == 0
+                    false
                 );
             }
         }
     }
 
-    private IEnumerable<SFTextSegment> GetSegments(
-        ITokenizer<string, int, string> wordTokenizer,
-        XDocument termRenderingsDoc
-    )
+    private IEnumerable<SFTextSegment> GetSegments(XDocument termRenderingsDoc)
     {
         if (termRenderingsDoc.Root is null)
         {
@@ -123,8 +97,7 @@ public class SFBiblicalTermsText : ISFText
             }
 
             var renderingsStr = (string?)termRenderingElem.Element("Renderings");
-            string[] renderings =
-                renderingsStr?.Trim().Split("||", StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+            string[] renderings = renderingsStr?.Trim().Split("||", StringSplitOptions.RemoveEmptyEntries) ?? [];
 
             foreach (string rendering in renderings.Select(RemoveParatextSyntaxFromRendering))
             {
@@ -134,20 +107,8 @@ public class SFBiblicalTermsText : ISFText
                     continue;
                 }
 
-                // Get the words in the rendering
-                string[] segment = wordTokenizer.Tokenize(rendering).ToArray();
-
                 // Sentence placement is not essential for biblical terms. Set all to false
-                yield return new SFTextSegment(
-                    Id,
-                    new TextSegmentRef(id),
-                    rendering,
-                    segment,
-                    false,
-                    false,
-                    false,
-                    segment.Length == 0
-                );
+                yield return new SFTextSegment(Id, new SFTextSegmentRef([id]), rendering, false, false, false);
             }
         }
     }

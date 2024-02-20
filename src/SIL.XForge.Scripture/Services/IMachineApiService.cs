@@ -1,7 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Serval.Client;
-using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
@@ -24,7 +23,7 @@ public interface IMachineApiService
         bool preTranslate,
         CancellationToken cancellationToken
     );
-    Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
