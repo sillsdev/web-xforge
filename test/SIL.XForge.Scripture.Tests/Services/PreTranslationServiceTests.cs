@@ -18,6 +18,7 @@ public class PreTranslationServiceTests
 {
     private const string Project01 = "project01";
     private const string Project02 = "project02";
+    private const string Project03 = "project03";
     private const string User01 = "user01";
     private const string Corpus01 = "corpus01";
     private const string TranslationEngine01 = "translationEngine01";
@@ -384,6 +385,173 @@ public class PreTranslationServiceTests
         );
     }
 
+    [Test]
+    public void UpdatePreTranslationStatusAsync_ThrowsExceptionWhenNoPreTranslationConfigured()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationStatusAsync(Project02, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void UpdatePreTranslationStatusAsync_ThrowsExceptionWhenProjectMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationStatusAsync(Project03, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void UpdatePreTranslationStatusAsync_ThrowsExceptionWhenProjectSecretMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.UpdatePreTranslationStatusAsync("invalid_project_id", CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task UpdatePreTranslationStatusAsync_NoDrafts()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId: null,
+            CancellationToken.None
+        )
+            .Returns(Task.FromResult<IList<Pretranslation>>([]));
+
+        // SUT
+        await env.Service.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        var project = env.RealtimeService.GetRepository<SFProject>().Get(Project01);
+
+        // Validate HasDraft status for Matthew
+        Assert.AreEqual(40, project.Texts[0].BookNum);
+        Assert.AreEqual(1, project.Texts[0].Chapters[0].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[0].HasDraft);
+        Assert.AreEqual(2, project.Texts[0].Chapters[1].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[1].HasDraft);
+        Assert.AreEqual(3, project.Texts[0].Chapters[2].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[2].HasDraft);
+
+        // Validate HasDraft status for Mark
+        Assert.AreEqual(41, project.Texts[1].BookNum);
+        Assert.AreEqual(1, project.Texts[1].Chapters[0].Number);
+        Assert.IsFalse(project.Texts[1].Chapters[0].HasDraft);
+        Assert.AreEqual(2, project.Texts[1].Chapters[1].Number);
+        Assert.IsFalse(project.Texts[1].Chapters[1].HasDraft);
+        Assert.AreEqual(3, project.Texts[1].Chapters[2].Number);
+        Assert.IsFalse(project.Texts[1].Chapters[2].HasDraft);
+    }
+
+    [Test]
+    public async Task UpdatePreTranslationStatusAsync_Paratext()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId: null,
+            CancellationToken.None
+        )
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>(
+                    new List<Pretranslation>
+                    {
+                        new Pretranslation { TextId = "MAT", Refs = ["MAT 1:1"] },
+                        new Pretranslation { TextId = "MRK", Refs = ["MRK 1:1"] },
+                        new Pretranslation { TextId = "MRK", Refs = ["MRK 1:2"] },
+                        new Pretranslation { TextId = "MRK", Refs = ["MRK 2:1"] },
+                    }
+                )
+            );
+
+        // SUT
+        await env.Service.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        var project = env.RealtimeService.GetRepository<SFProject>().Get(Project01);
+
+        // Validate HasDraft status for Matthew
+        Assert.AreEqual(40, project.Texts[0].BookNum);
+        Assert.AreEqual(1, project.Texts[0].Chapters[0].Number);
+        Assert.IsTrue(project.Texts[0].Chapters[0].HasDraft);
+        Assert.AreEqual(2, project.Texts[0].Chapters[1].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[1].HasDraft);
+        Assert.AreEqual(3, project.Texts[0].Chapters[2].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[2].HasDraft);
+
+        // Validate HasDraft status for Mark
+        Assert.AreEqual(41, project.Texts[1].BookNum);
+        Assert.AreEqual(1, project.Texts[1].Chapters[0].Number);
+        Assert.IsTrue(project.Texts[1].Chapters[0].HasDraft);
+        Assert.AreEqual(2, project.Texts[1].Chapters[1].Number);
+        Assert.IsTrue(project.Texts[1].Chapters[1].HasDraft);
+        Assert.AreEqual(3, project.Texts[1].Chapters[2].Number);
+        Assert.IsFalse(project.Texts[1].Chapters[2].HasDraft);
+    }
+
+    [Test]
+    public async Task UpdatePreTranslationStatusAsync_Text()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        env.TranslationEnginesClient.GetAllPretranslationsAsync(
+            TranslationEngine01,
+            Corpus01,
+            textId: null,
+            CancellationToken.None
+        )
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>(
+                    new List<Pretranslation>
+                    {
+                        new Pretranslation { TextId = "40_1" },
+                        new Pretranslation { TextId = "41_1" },
+                        new Pretranslation { TextId = "41_1" },
+                        new Pretranslation { TextId = "41_2" },
+                    }
+                )
+            );
+
+        // SUT
+        await env.Service.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+        var project = env.RealtimeService.GetRepository<SFProject>().Get(Project01);
+
+        // Validate HasDraft status for Matthew
+        Assert.AreEqual(40, project.Texts[0].BookNum);
+        Assert.AreEqual(1, project.Texts[0].Chapters[0].Number);
+        Assert.IsTrue(project.Texts[0].Chapters[0].HasDraft);
+        Assert.AreEqual(2, project.Texts[0].Chapters[1].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[1].HasDraft);
+        Assert.AreEqual(3, project.Texts[0].Chapters[2].Number);
+        Assert.IsFalse(project.Texts[0].Chapters[2].HasDraft);
+
+        // Validate HasDraft status for Mark
+        Assert.AreEqual(41, project.Texts[1].BookNum);
+        Assert.AreEqual(1, project.Texts[1].Chapters[0].Number);
+        Assert.IsTrue(project.Texts[1].Chapters[0].HasDraft);
+        Assert.AreEqual(2, project.Texts[1].Chapters[1].Number);
+        Assert.IsTrue(project.Texts[1].Chapters[1].HasDraft);
+        Assert.AreEqual(3, project.Texts[1].Chapters[2].Number);
+        Assert.IsFalse(project.Texts[1].Chapters[2].HasDraft);
+    }
+
     private class TestEnvironmentOptions
     {
         public bool SendAllSegments { get; init; }
@@ -422,26 +590,59 @@ public class PreTranslationServiceTests
                         },
                     },
                     new SFProjectSecret { Id = Project02 },
+                    new SFProjectSecret { Id = Project03 },
                 }
             );
 
-            var realtimeService = new SFMemoryRealtimeService();
+            RealtimeService = new SFMemoryRealtimeService();
             SFProject[] sfProjects =
-            {
+            [
                 new SFProject
                 {
                     Id = Project01,
                     TranslateConfig = new TranslateConfig
                     {
-                        DraftConfig = { SendAllSegments = options.SendAllSegments }
+                        DraftConfig = { SendAllSegments = options.SendAllSegments },
+                    },
+                    Texts =
+                    [
+                        new TextInfo
+                        {
+                            BookNum = 40,
+                            Chapters =
+                            [
+                                new Chapter { Number = 1, HasDraft = true },
+                                new Chapter { Number = 2, HasDraft = false },
+                                new Chapter { Number = 3, HasDraft = true },
+                            ],
+                        },
+                        new TextInfo
+                        {
+                            BookNum = 41,
+                            Chapters =
+                            [
+                                new Chapter { Number = 1, HasDraft = false },
+                                new Chapter { Number = 2, HasDraft = null },
+                                new Chapter { Number = 3, HasDraft = null },
+                            ],
+                        },
+                    ],
+                },
+                new SFProject
+                {
+                    Id = Project02,
+                    TranslateConfig = new TranslateConfig
+                    {
+                        DraftConfig = { SendAllSegments = options.SendAllSegments },
                     },
                 },
-            };
-            realtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
+            ];
+            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
-            Service = new PreTranslationService(projectSecrets, realtimeService, TranslationEnginesClient);
+            Service = new PreTranslationService(projectSecrets, RealtimeService, TranslationEnginesClient);
         }
 
+        public SFMemoryRealtimeService RealtimeService { get; }
         public PreTranslationService Service { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
     }
