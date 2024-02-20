@@ -2295,6 +2295,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private populateEditorTabs(): void {
+    // TODO: Load persisted tabs
     this.editorTabsState.clearAllTabGroups();
 
     if (this.sourceLabel) {
