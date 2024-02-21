@@ -41,7 +41,7 @@ public static class RealtimeServiceCollectionExtensions
         // Disable invocation timeout so the debugger can be paused
         if (nodeOptions?.Contains("--inspect", StringComparison.OrdinalIgnoreCase) == true)
         {
-            services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.InvocationTimeoutMS = -1);
+            services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
         }
 
         services.AddSingleton<IJsonService, RealtimeJsonService>();
