@@ -3541,7 +3541,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows the history selector only if the user is an administrator or translator', fakeAsync(() => {
+    it('shows the history selector only if the user is a Paratext user', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
       };
@@ -3555,7 +3555,7 @@ describe('EditorComponent', () => {
 
       // Paratext Consultant
       env.setCurrentUser('user02');
-      expect(env.component.showHistoryChooser).toBeFalsy();
+      expect(env.component.showHistoryChooser).toBeTruthy();
 
       // Paratext Translator
       env.setCurrentUser('user03');
@@ -3571,9 +3571,9 @@ describe('EditorComponent', () => {
 
       // Paratext Observer
       env.setCurrentUser('user06');
-      expect(env.component.showHistoryChooser).toBeFalsy();
+      expect(env.component.showHistoryChooser).toBeTruthy();
 
-      // Paratext Viewer
+      // SF Viewer
       env.setCurrentUser('user07');
       expect(env.component.showHistoryChooser).toBeFalsy();
 
