@@ -196,10 +196,10 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     const scrollBox = this.tabsWrapper;
     const overflowAmount = scrollBox.scrollWidth - scrollBox.clientWidth;
     const scrollMagnitude = Math.abs(scrollBox.scrollLeft); // 'scrollLeft' increases to the negative when 'rtl'
+    const threshold = 2; // Within 2px for rounding
 
-    // Within 2px for rounding
-    this.isScrollBoundsStart = scrollMagnitude < 2;
-    this.isScrollBoundsEnd = overflowAmount - scrollMagnitude < 2;
+    this.isScrollBoundsStart = scrollMagnitude < threshold;
+    this.isScrollBoundsEnd = overflowAmount - scrollMagnitude < threshold;
   }
 
   private scrollOnWheel(e: WheelEvent): void {

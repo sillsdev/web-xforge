@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { SFTabsModule } from '../sf-tabs.module';
 import { TabGroupHeaderComponent } from './tab-group-header.component';
 
@@ -63,5 +62,205 @@ describe('TabGroupHeaderComponent', () => {
       expect(spy).toHaveBeenCalledTimes(2);
       expect(spy).toHaveBeenCalledWith({ left: 5 });
     });
+  });
+
+  describe('initDirectionChangeDetection', () => {
+    let closestDirEl: HTMLElement | null;
+
+    beforeEach(() => {
+      closestDirEl = document.createElement('div');
+      closestDirEl.setAttribute('dir', 'ltr');
+      spyOn(component['elementRef'].nativeElement, 'closest').and.callFake(() => closestDirEl);
+    });
+
+    it('should not initialize direction or dirMutObserver when closest dir element is null', () => {
+      closestDirEl = null;
+      component['initDirectionChangeDetection']();
+      expect(component['direction']).toBe('ltr');
+      expect(component['dirMutObserver']).toBeUndefined();
+    });
+
+    it('should initialize direction and dirMutObserver when closest dir element is not null', () => {
+      let mutationObserverSpy = spyOn(window, 'MutationObserver').and.callThrough();
+      component['initDirectionChangeDetection']();
+      expect(component['direction']).toBe('ltr');
+      expect(component['dirMutObserver']).toBeDefined();
+      expect(mutationObserverSpy).toHaveBeenCalled();
+    });
+
+    it('should update direction and call detectScrollLimit when dir attribute changes', () => {
+      const detectScrollLimitSpy = spyOn<any>(component, 'detectScrollLimit');
+      component['initDirectionChangeDetection']();
+      closestDirEl?.setAttribute('dir', 'rtl');
+
+      setTimeout(() => {
+        expect(component['direction']).toBe('rtl');
+        expect(detectScrollLimitSpy).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('detectOverflow', () => {
+    it('should emit true when tabsWrapper is overflowing', () => {
+      component['tabsWrapper'] = {
+        scrollWidth: 200,
+        clientWidth: 100
+      } as any;
+
+      component['detectOverflow']();
+      component['overflowing$'].subscribe(isOverflowing => {
+        expect(isOverflowing).toBe(true);
+      });
+    });
+
+    it('should emit false when tabsWrapper is not overflowing', () => {
+      component['tabsWrapper'] = {
+        scrollWidth: 100,
+        clientWidth: 200
+      } as any;
+
+      component['detectOverflow']();
+      component['overflowing$'].subscribe(isOverflowing => {
+        expect(isOverflowing).toBe(false);
+      });
+    });
+
+    it('should detect overflow when window is resized', () => {
+      const spy = spyOn<any>(component, 'detectOverflow');
+      component['tabsWrapper'].style.width = '10px';
+      setTimeout(() => {
+        expect(spy).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('detectScrollLimit', () => {
+    it('should set up scroll event handler', () => {
+      const spy = spyOn<any>(component, 'detectScrollLimit');
+      component['tabsWrapper'].dispatchEvent(new Event('scroll'));
+      setTimeout(() => {
+        expect(spy).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    it('should set isScrollBoundsStart to true when scrollMagnitude is less than threshold', () => {
+      component['tabsWrapper'] = {
+        scrollLeft: 1,
+        scrollWidth: 200,
+        clientWidth: 100
+      } as any;
+
+      component['detectScrollLimit']();
+      expect(component.isScrollBoundsStart).toBe(true);
+    });
+
+    it('should set isScrollBoundsStart to false when scrollMagnitude is greater than or equal to threshold', () => {
+      component['tabsWrapper'] = {
+        scrollLeft: 2,
+        scrollWidth: 200,
+        clientWidth: 100
+      } as any;
+
+      component['detectScrollLimit']();
+      expect(component.isScrollBoundsStart).toBe(false);
+    });
+
+    it('should set isScrollBoundsEnd to true when (overflowAmount - scrollMagnitude) is less than threshold', () => {
+      component['tabsWrapper'] = {
+        scrollLeft: 98.5,
+        scrollWidth: 200,
+        clientWidth: 100
+      } as any;
+
+      component['detectScrollLimit']();
+      expect(component.isScrollBoundsEnd).toBe(true);
+    });
+
+    it('should set isScrollBoundsEnd to false when (overflowAmount - scrollMagnitude) is greater than or equal to threshold', () => {
+      component['tabsWrapper'] = {
+        scrollLeft: 97,
+        scrollWidth: 200,
+        clientWidth: 100
+      } as any;
+
+      component['detectScrollLimit']();
+      expect(component.isScrollBoundsEnd).toBe(false);
+    });
+  });
+
+  describe('scrollOnWheel', () => {
+    it('should set up wheel event handler', () => {
+      const spy = spyOn<any>(component, 'scrollOnWheel');
+      component['tabsWrapper'].dispatchEvent(new Event('wheel'));
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not scroll when "overflowing$" is false', () => {
+      const scrollBySpy = spyOn(component['tabsWrapper'], 'scrollBy') as ScrollBySpyFn;
+      component['overflowing$'].next(false);
+      component['scrollOnWheel'](new WheelEvent('wheel', { deltaY: 3 }));
+      expect(scrollBySpy).not.toHaveBeenCalled();
+    });
+
+    it('should scroll left when "overflowing$" is true and direction is ltr', () => {
+      const scrollBySpy = spyOn(component['tabsWrapper'], 'scrollBy') as ScrollBySpyFn;
+      component['overflowing$'].next(true);
+      component['direction'] = 'ltr';
+      component['scrollOnWheel'](new WheelEvent('wheel', { deltaY: 3 }));
+      expect(scrollBySpy).toHaveBeenCalledWith({ left: 1 });
+    });
+
+    it('should scroll right when "overflowing$" is true and direction is rtl', () => {
+      const scrollBySpy = spyOn(component['tabsWrapper'], 'scrollBy') as ScrollBySpyFn;
+      component['overflowing$'].next(true);
+      component['direction'] = 'rtl';
+      component['scrollOnWheel'](new WheelEvent('wheel', { deltaY: 3 }));
+      expect(scrollBySpy).toHaveBeenCalledWith({ left: -1 });
+    });
+  });
+
+  describe('scrollTabIntoView', () => {
+    let scrollIntoViewSpy: jasmine.Spy;
+    let scrollToEndSpy: jasmine.Spy;
+    const tabHeaderMock = { nativeElement: { scrollIntoView: () => {} } } as any;
+
+    beforeEach(() => {
+      scrollIntoViewSpy = spyOn<any>(tabHeaderMock.nativeElement, 'scrollIntoView');
+      scrollToEndSpy = spyOn(component, 'scrollToEnd');
+    });
+
+    it('should not scroll when tabHeaders is undefined', () => {
+      component['tabHeaders'] = undefined;
+      component['scrollTabIntoView'](0);
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+      expect(scrollToEndSpy).not.toHaveBeenCalled();
+    });
+
+    it('should scroll to end when showAddTab is true and tabIndex is the last non-add tab', fakeAsync(() => {
+      component['tabHeaders'] = [tabHeaderMock, tabHeaderMock] as any;
+      component.showAddTab = true;
+      component['scrollTabIntoView'](0);
+      tick();
+      expect(scrollToEndSpy).toHaveBeenCalled();
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should scroll tab into view when tabIndex is not the last non-add tab', fakeAsync(() => {
+      component['tabHeaders'] = [tabHeaderMock, tabHeaderMock] as any;
+      component.showAddTab = true;
+      component['scrollTabIntoView'](1);
+      tick();
+      expect(scrollIntoViewSpy).toHaveBeenCalled();
+      expect(scrollToEndSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should scroll tab into view when showAddTab is false', fakeAsync(() => {
+      component['tabHeaders'] = [tabHeaderMock] as any;
+      component.showAddTab = false;
+      component['scrollTabIntoView'](0);
+      tick();
+      expect(scrollIntoViewSpy).toHaveBeenCalled();
+      expect(scrollToEndSpy).not.toHaveBeenCalled();
+    }));
   });
 });
