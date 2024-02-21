@@ -306,7 +306,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc?.data?.ownerRef]
         : undefined;
     return (
-      (this.hasSource && this.hasSourceViewRight && this.translationSuggestionsProjectEnabled) ||
+      (this.hasSource &&
+        this.hasSourceViewRight &&
+        this.translationSuggestionsProjectEnabled &&
+        this.userHasGeneralEditRight) ||
       (this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
         userRole != null &&
         SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
