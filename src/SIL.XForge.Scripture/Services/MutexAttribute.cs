@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
@@ -13,19 +11,14 @@ namespace SIL.XForge.Scripture.Services;
 ///
 /// Source: https://gist.github.com/odinserj/4a3bf40606c4da9183588a5a325dfb99
 /// </summary>
-public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyStateFilter
+/// <remarks>
+/// When <paramref name="resource"/> is not configured, the method name is used as the mutex key.
+/// </remarks>
+public class MutexAttribute(string? resource = null) : JobFilterAttribute, IElectStateFilter, IApplyStateFilter
 {
     private static readonly TimeSpan DistributedLockTimeout = TimeSpan.FromMinutes(1);
 
-    private readonly string _resource;
-
-    public MutexAttribute(string resource)
-    {
-        _resource = resource;
-        RetryInSeconds = 15;
-    }
-
-    public int RetryInSeconds { get; set; }
+    public int RetryInSeconds { get; set; } = 15;
     public int MaxAttempts { get; set; }
 
     public void OnStateElection(ElectStateContext context)
@@ -33,7 +26,7 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
         // We are intercepting transitions to the Processed state, that is performed by
         // a worker just before processing a job. During the state election phase we can
         // change the target state to another one, causing a worker not to process the
-        // backgorund job.
+        // background job.
         if (context.CandidateState.Name != ProcessingState.StateName || context.BackgroundJob.Job == null)
         {
             return;
@@ -58,11 +51,11 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
             // There will be no race condition, when two or more workers pick up background job
             // with the same id, because state transitions are protected with distributed lock
             // themselves.
-            using (AcquireDistributedSetLock(context.Connection, context.BackgroundJob.Job.Args))
+            using (AcquireDistributedSetLock(context.Connection, context.BackgroundJob.Job))
             {
                 // Resource set contains a background job id that acquired a mutex for the resource.
                 // We are getting only one element to see what background job blocked the invocation.
-                var range = storageConnection.GetRangeFromSet(GetResourceKey(context.BackgroundJob.Job.Args), 0, 0);
+                var range = storageConnection.GetRangeFromSet(GetResourceKey(context.BackgroundJob.Job), 0, 0);
 
                 blockedBy = range.Count > 0 ? range[0] : null;
 
@@ -80,7 +73,7 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
                     // that resource is owned by the current background job. Identifier will be
                     // removed only on failed state, or in one of final states (succeeded or
                     // deleted).
-                    localTransaction.AddToSet(GetResourceKey(context.BackgroundJob.Job.Args), context.BackgroundJob.Id);
+                    localTransaction.AddToSet(GetResourceKey(context.BackgroundJob.Job), context.BackgroundJob.Id);
                     localTransaction.Commit();
 
                     // Invocation is permitted, and we did all the required things.
@@ -96,7 +89,7 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
             // postpone the invocation.
             context.CandidateState = new ScheduledState(TimeSpan.FromSeconds(RetryInSeconds))
             {
-                Reason = "Couldn't acquire a distributed lock for mutex: timeout exceeded"
+                Reason = "Couldn't acquire a distributed lock for mutex: timeout exceeded",
             };
 
             return;
@@ -115,35 +108,24 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
 
     public void OnStateApplied(ApplyStateContext context, IWriteOnlyTransaction transaction)
     {
-        if (context.BackgroundJob.Job == null)
+        if (context.BackgroundJob.Job == null || context.OldStateName != ProcessingState.StateName)
             return;
 
-        if (context.OldStateName == ProcessingState.StateName)
+        using (AcquireDistributedSetLock(context.Connection, context.BackgroundJob.Job))
         {
-            using (AcquireDistributedSetLock(context.Connection, context.BackgroundJob.Job.Args))
-            {
-                var localTransaction = context.Connection.CreateWriteTransaction();
-                localTransaction.RemoveFromSet(
-                    GetResourceKey(context.BackgroundJob.Job.Args),
-                    context.BackgroundJob.Id
-                );
+            var localTransaction = context.Connection.CreateWriteTransaction();
+            localTransaction.RemoveFromSet(GetResourceKey(context.BackgroundJob.Job), context.BackgroundJob.Id);
 
-                localTransaction.Commit();
-            }
+            localTransaction.Commit();
         }
     }
 
     public void OnStateUnapplied(ApplyStateContext context, IWriteOnlyTransaction transaction) { }
 
-    private static DeletedState CreateDeletedState(string blockedBy)
-    {
-        return new DeletedState
-        {
-            Reason = $"Execution was blocked by background job {blockedBy}, all attempts exhausted"
-        };
-    }
+    private static DeletedState CreateDeletedState(string blockedBy) =>
+        new DeletedState { Reason = $"Execution was blocked by background job {blockedBy}, all attempts exhausted", };
 
-    private IState CreateScheduledState(string blockedBy, int currentAttempt)
+    private ScheduledState CreateScheduledState(string blockedBy, int currentAttempt)
     {
         var reason = $"Execution is blocked by background job {blockedBy}, retry attempt: {currentAttempt}";
 
@@ -155,15 +137,13 @@ public class MutexAttribute : JobFilterAttribute, IElectStateFilter, IApplyState
         return new ScheduledState(TimeSpan.FromSeconds(RetryInSeconds)) { Reason = reason };
     }
 
-    private IDisposable AcquireDistributedSetLock(IStorageConnection connection, IEnumerable<object> args) =>
-        connection.AcquireDistributedLock(GetDistributedLockKey(args), DistributedLockTimeout);
+    private IDisposable AcquireDistributedSetLock(IStorageConnection connection, Job job) =>
+        connection.AcquireDistributedLock(GetDistributedLockKey(job), DistributedLockTimeout);
 
-    private string GetDistributedLockKey(IEnumerable<object> args) =>
-        $"extension:job-mutex:lock:{GetKeyFormat(args, _resource)}";
+    private string GetDistributedLockKey(Job job) => $"extension:job-mutex:lock:{GetKeyFormat(job, resource)}";
 
-    private string GetResourceKey(IEnumerable<object> args) =>
-        $"extension:job-mutex:set:{GetKeyFormat(args, _resource)}";
+    private string GetResourceKey(Job job) => $"extension:job-mutex:set:{GetKeyFormat(job, resource)}";
 
-    private static string GetKeyFormat(IEnumerable<object> args, string keyFormat) =>
-        String.Format(keyFormat, args.ToArray());
+    private static string GetKeyFormat(Job job, string? keyFormat) =>
+        string.IsNullOrWhiteSpace(keyFormat) ? job.Method.Name : string.Format(keyFormat, job.Args);
 }

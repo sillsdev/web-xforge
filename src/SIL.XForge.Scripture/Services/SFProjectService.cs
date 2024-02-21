@@ -1448,7 +1448,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
             // After syncing the source project (which will take some time), ensure that the writing system matches
             // what is in the project document
-            _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
+            _backgroundJobClient.ContinueJobWith<MachineProjectService>(
                 jobId,
                 r => r.UpdateTranslationSourcesAsync(curUserId, sfProjectId)
             );
