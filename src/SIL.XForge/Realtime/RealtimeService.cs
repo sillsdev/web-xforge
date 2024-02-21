@@ -87,6 +87,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
         }
     }
 
+    [DeleteOnSuccess]
     public void CheckIfRunning()
     {
         if (!Server.IsServerRunning())

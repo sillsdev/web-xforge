@@ -286,7 +286,7 @@ public class RealtimeServiceTests
 
     private class TestEnvironment
     {
-        public IExceptionHandler ExceptionHandler;
+        public readonly IExceptionHandler ExceptionHandler;
         public readonly RealtimeService Service;
         public readonly IMongoDatabase MongoDatabase = Substitute.For<IMongoDatabase>();
 
