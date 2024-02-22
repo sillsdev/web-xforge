@@ -80,8 +80,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
               }
 
               this.draftCheckState = 'draft-present';
-              // TODO: Should draft tab overwrite existing text with draft text (using { overwrite: true })?
-              return this.draftViewerService.toDraftOps(draft, targetOps);
+
+              // Overwrite existing text with draft text
+              return this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true });
             })
           );
         })
