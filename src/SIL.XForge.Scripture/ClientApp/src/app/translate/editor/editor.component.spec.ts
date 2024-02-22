@@ -101,6 +101,7 @@ import { HistoryChooserComponent } from './editor-history/history-chooser/histor
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
+import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
 const mockedAuthService = mock(AuthService);
@@ -3621,6 +3622,36 @@ describe('EditorComponent', () => {
       expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
     }));
   });
+
+  describe('populateEditorTabs', () => {
+    it('should add source tab group when sourceLabel is defined', () => {
+      const env = new TestEnvironment();
+      const spyCreateEditorTab = spyOn(env.tabFactory, 'createEditorTab');
+      const sourceLabel = 'source label';
+      env.component['sourceLabel'] = sourceLabel;
+      env.component['populateEditorTabs']();
+
+      expect(spyCreateEditorTab).toHaveBeenCalledWith('project-source', { headerText: sourceLabel });
+    });
+
+    it('should not add source tab group when sourceLabel is undefined', () => {
+      const env = new TestEnvironment();
+      const spyCreateEditorTab = spyOn(env.tabFactory, 'createEditorTab');
+      env.component['populateEditorTabs']();
+
+      expect(spyCreateEditorTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
+    });
+
+    it('should add target tab group', () => {
+      const env = new TestEnvironment();
+      const spyCreateEditorTab = spyOn(env.tabFactory, 'createEditorTab');
+      const targetLabel = 'target label';
+      env.component['targetLabel'] = targetLabel;
+      env.component['populateEditorTabs']();
+
+      expect(spyCreateEditorTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
+    });
+  });
 });
 
 const defaultBiblicalTermsConfig = {
@@ -3643,6 +3674,7 @@ class TestEnvironment {
   readonly mockNoteDialogRef;
   readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly ngZone: NgZone;
+  readonly tabFactory = TestBed.inject(EditorTabFactoryService);
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
