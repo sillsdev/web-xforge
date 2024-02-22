@@ -131,13 +131,12 @@ describe('TabGroupHeaderComponent', () => {
   });
 
   describe('detectScrollLimit', () => {
-    it('should set up scroll event handler', () => {
+    it('should set up scroll event handler', fakeAsync(() => {
       const spy = spyOn<any>(component, 'detectScrollLimit');
       component['tabsWrapper'].dispatchEvent(new Event('scroll'));
-      setTimeout(() => {
-        expect(spy).toHaveBeenCalledTimes(1);
-      });
-    });
+      tick(100);
+      expect(spy).toHaveBeenCalledTimes(1);
+    }));
 
     it('should set isScrollBoundsStart to true when scrollMagnitude is less than threshold', () => {
       component['tabsWrapper'] = {
