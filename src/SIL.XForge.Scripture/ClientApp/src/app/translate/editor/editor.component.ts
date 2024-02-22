@@ -164,7 +164,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
   hasDraft = false;
-  // tabHistoryRevisionSelect$: Subject<void>;
 
   @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
   @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
