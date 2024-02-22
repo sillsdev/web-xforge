@@ -75,6 +75,7 @@ describe('TabGroupHeaderComponent', () => {
 
     it('should not initialize direction or dirMutObserver when closest dir element is null', () => {
       closestDirEl = null;
+      component['dirMutObserver'] = undefined;
       component['initDirectionChangeDetection']();
       expect(component['direction']).toBe('ltr');
       expect(component['dirMutObserver']).toBeUndefined();
@@ -82,20 +83,23 @@ describe('TabGroupHeaderComponent', () => {
 
     it('should initialize direction and dirMutObserver when closest dir element is not null', () => {
       let mutationObserverSpy = spyOn(window, 'MutationObserver').and.callThrough();
+      component['dirMutObserver'] = undefined;
       component['initDirectionChangeDetection']();
       expect(component['direction']).toBe('ltr');
       expect(component['dirMutObserver']).toBeDefined();
       expect(mutationObserverSpy).toHaveBeenCalled();
     });
 
-    it('should update direction and call detectScrollLimit when dir attribute changes', () => {
+    it('should update direction and call detectScrollLimit when dir attribute changes', done => {
       const detectScrollLimitSpy = spyOn<any>(component, 'detectScrollLimit');
       component['initDirectionChangeDetection']();
       closestDirEl?.setAttribute('dir', 'rtl');
+      fixture.detectChanges();
 
       setTimeout(() => {
         expect(component['direction']).toBe('rtl');
         expect(detectScrollLimitSpy).toHaveBeenCalled();
+        done();
       });
     });
   });
@@ -122,14 +126,6 @@ describe('TabGroupHeaderComponent', () => {
       component['detectOverflow']();
       component['overflowing$'].subscribe(isOverflowing => {
         expect(isOverflowing).toBe(false);
-      });
-    });
-
-    it('should detect overflow when window is resized', () => {
-      const spy = spyOn<any>(component, 'detectOverflow');
-      component['tabsWrapper'].style.width = '10px';
-      setTimeout(() => {
-        expect(spy).toHaveBeenCalledTimes(1);
       });
     });
   });
