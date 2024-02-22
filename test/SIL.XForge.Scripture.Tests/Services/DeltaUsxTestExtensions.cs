@@ -8,6 +8,9 @@ namespace SIL.XForge.Scripture.Services;
 
 public static class DeltaUsxTestExtensions
 {
+    /// <summary>
+    /// This method should be called when a paragraph _ends_, not begins.
+    /// </summary>
     public static Delta InsertPara(this Delta delta, string style, bool invalid = false)
     {
         var obj = new JObject(new JProperty("style", style));
@@ -168,6 +171,9 @@ public static class DeltaUsxTestExtensions
         return delta.InsertEmbed("ms", obj, segRef, attrs);
     }
 
+    /// <summary>
+    /// This is called _after_ a cell's contents, not before.
+    /// </summary>
     public static Delta InsertCell(
         this Delta delta,
         int table,
