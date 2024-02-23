@@ -11,8 +11,6 @@ import { SFTabsModule } from './sf-tabs.module';
     <app-tab-group
       *ngIf="tabState.tabGroups$ | async as tabGroups"
       [selectedIndex]="tabGroups.get('test').selectedIndex"
-      [showAddTab]="showAddTab"
-      [showAddTabMenu]="showAddTabMenu"
       (newTabRequest)="addTab($event)"
       (closeTabRequest)="tabState.removeTab(tabGroup.key, $event.index)"
       (tabSelect)="tabState.selectTab(tabGroup.key, $event.index)"
@@ -26,8 +24,6 @@ import { SFTabsModule } from './sf-tabs.module';
 })
 class SFTabGroupStoriesComponent implements OnChanges {
   @Input() tabs: TabInfo<string>[] = [];
-  @Input() showAddTab: boolean = true;
-  @Input() showAddTabMenu: boolean = true;
 
   constructor(private readonly tabState: TabStateService<string, TabInfo<string>>) {}
 
@@ -112,20 +108,6 @@ const tabs: Partial<TabInfo<string>>[] = [
 export const Default: Story = {
   args: {
     tabs: tabs.map((tab, i) => ({ ...tab, closeable: i !== 0 } as TabInfo<string>))
-  }
-};
-
-export const NoAddTab: Story = {
-  args: {
-    ...Default.args,
-    showAddTab: false
-  }
-};
-
-export const AddTabWithoutMenu: Story = {
-  args: {
-    ...Default.args,
-    showAddTabMenu: false
   }
 };
 

@@ -10,8 +10,6 @@ import { TabComponent } from './tab/tab.component';
 export class TabGroupComponent {
   @Input() groupId: string = '';
   @Input() selectedIndex = 0;
-  @Input() showAddTab = true;
-  @Input() showAddTabMenu = true;
   @Output() tabSelect = new EventEmitter<number>();
   @Output() newTabRequest = new EventEmitter<string | null>();
   @Output() closeTabRequest = new EventEmitter<number>();

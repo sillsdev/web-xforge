@@ -40,13 +40,11 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @Input() groupId: string = '';
   @Input() tabs: Iterable<TabComponent> = [];
   @Input() selectedIndex = 0;
-  @Input() showAddTab = true;
-  @Input() showAddTabMenu = true;
   @Output() tabClick = new EventEmitter<TabHeaderMouseEvent>();
   @Output() closeClick = new EventEmitter<number>();
 
-  /** Emits `type` from menu selection, or null if `showAddTabMenu` is false */
-  @Output() tabAddRequest = new EventEmitter<string | null>();
+  /** Emits `type` from menu selection. */
+  @Output() tabAddRequest = new EventEmitter<string>();
 
   @ViewChildren(TabHeaderComponent, { read: ElementRef }) private tabHeaders?: QueryList<ElementRef>;
   @ViewChild('menuTrigger') private menuTrigger?: MatMenuTrigger;
@@ -115,12 +113,6 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
   onAddTabClicked(): void {
     this.scrollToEnd();
-
-    if (!this.showAddTabMenu) {
-      // Ensure menu is closed
-      this.menuTrigger?.closeMenu();
-      this.tabAddRequest.next(null);
-    }
   }
 
   scrollToEnd(): void {
@@ -230,12 +222,10 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
       }
 
       // If tab is the last 'non-add-tab', scroll to end to ensure the 'add tab' button is visible
-      if (this.showAddTab) {
-        const lastNonAddTabIndex = this.tabHeaders.length - 2;
-        if (tabIndex === lastNonAddTabIndex) {
-          this.scrollToEnd();
-          return;
-        }
+      const lastNonAddTabIndex = this.tabHeaders.length - 2;
+      if (tabIndex === lastNonAddTabIndex) {
+        this.scrollToEnd();
+        return;
       }
 
       const tabHeaderEl: HTMLElement | undefined = Array.from(this.tabHeaders)[tabIndex]?.nativeElement;

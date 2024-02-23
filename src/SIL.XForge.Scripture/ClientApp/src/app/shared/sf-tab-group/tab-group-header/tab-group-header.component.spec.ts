@@ -231,9 +231,8 @@ describe('TabGroupHeaderComponent', () => {
       expect(scrollToEndSpy).not.toHaveBeenCalled();
     });
 
-    it('should scroll to end when showAddTab is true and tabIndex is the last non-add tab', fakeAsync(() => {
+    it('should scroll to end when tabIndex is the last non-add tab', fakeAsync(() => {
       component['tabHeaders'] = [tabHeaderMock, tabHeaderMock] as any;
-      component.showAddTab = true;
       component['scrollTabIntoView'](0);
       tick();
       expect(scrollToEndSpy).toHaveBeenCalled();
@@ -242,17 +241,7 @@ describe('TabGroupHeaderComponent', () => {
 
     it('should scroll tab into view when tabIndex is not the last non-add tab', fakeAsync(() => {
       component['tabHeaders'] = [tabHeaderMock, tabHeaderMock] as any;
-      component.showAddTab = true;
       component['scrollTabIntoView'](1);
-      tick();
-      expect(scrollIntoViewSpy).toHaveBeenCalled();
-      expect(scrollToEndSpy).not.toHaveBeenCalled();
-    }));
-
-    it('should scroll tab into view when showAddTab is false', fakeAsync(() => {
-      component['tabHeaders'] = [tabHeaderMock] as any;
-      component.showAddTab = false;
-      component['scrollTabIntoView'](0);
       tick();
       expect(scrollIntoViewSpy).toHaveBeenCalled();
       expect(scrollToEndSpy).not.toHaveBeenCalled();
