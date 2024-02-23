@@ -1,8 +1,10 @@
-<mat-progress-bar *ngIf="draftCheckState === 'draft-unknown'" mode="indeterminate" color="accent"></mat-progress-bar>
+<ng-container *ngIf="onlineStatusService.onlineStatus$ | async; else offline">
+  <mat-progress-bar *ngIf="draftCheckState === 'draft-unknown'" mode="indeterminate" color="accent"></mat-progress-bar>
 
-<app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary">
-  {{ "editor_draft_tab.no_draft_notice" | transloco : { bookChapterName } }}
-</app-notice>
+  <app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary">
+    {{ "editor_draft_tab.no_draft_notice" | transloco : { bookChapterName } }}
+  </app-notice>
+</ng-container>
 
 <app-text
   [isReadOnly]="true"
@@ -11,3 +13,7 @@
   [fontSize]="fontSize"
   [ngClass]="draftCheckState"
 ></app-text>
+
+<ng-template #offline>
+  <app-notice icon="warning" type="warning">{{ "editor_draft_tab.offline_notice" | transloco }}</app-notice>
+</ng-template>

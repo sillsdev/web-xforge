@@ -223,7 +223,8 @@
     "your_comment": "Your comment"
   },
   "editor_draft_tab": {
-    "no_draft_notice": "{{ bookChapterName }} has no draft."
+    "no_draft_notice": "{{ bookChapterName }} has no draft.",
+    "offline_notice": "Auto draft is not available offline."
   },
   "editor_history_tab": {
     "offline_notice": "Editor history is not available offline."

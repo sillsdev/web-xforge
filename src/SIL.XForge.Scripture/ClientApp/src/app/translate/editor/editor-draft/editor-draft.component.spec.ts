@@ -5,9 +5,11 @@ import { of } from 'rxjs';
 import { EDITOR_READY_TIMEOUT, TextComponent } from 'src/app/shared/text/text.component';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SharedModule } from '../../../shared/shared.module';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
@@ -23,6 +25,7 @@ const mockTargetTextComponent = mock(TextComponent);
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
   let component: EditorDraftComponent;
+  let testOnlineStatus: TestOnlineStatusService;
 
   configureTestingModule(() => ({
     declarations: [EditorDraftComponent],
@@ -30,18 +33,22 @@ describe('EditorDraftComponent', () => {
       MatProgressBarModule,
       SharedModule,
       TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestTranslocoModule
     ],
     providers: [
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftViewerService, useMock: mockDraftViewerService },
-      { provide: I18nService, useMock: mockI18nService }
+      { provide: I18nService, useMock: mockI18nService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
+
+    testOnlineStatus = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
     component.projectId = 'targetProjectId';
     component.bookNum = 1;
@@ -50,14 +57,30 @@ describe('EditorDraftComponent', () => {
     component.targetText = instance(mockTargetTextComponent);
   });
 
-  it('should populate draft text correctly', fakeAsync(() => {
+  it('should handle offline when component created', fakeAsync(() => {
+    testOnlineStatus.setIsOnline(false);
+    fixture.detectChanges();
+    expect(component.draftCheckState).toEqual('draft-unknown');
+    expect(component.draftText).not.toBeUndefined();
+  }));
+
+  it('should populate draft text correctly and then handle going offline/online', fakeAsync(() => {
     when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
     when(mockTargetTextComponent.editor).thenReturn({ getContents: () => targetDelta } as any);
     when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
 
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
+    expect(component.draftCheckState).toEqual('draft-present');
+    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
 
+    testOnlineStatus.setIsOnline(false);
+    fixture.detectChanges();
+    expect(component.draftCheckState).toEqual('draft-unknown');
+
+    testOnlineStatus.setIsOnline(true);
+    tick(EDITOR_READY_TIMEOUT);
+    fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));

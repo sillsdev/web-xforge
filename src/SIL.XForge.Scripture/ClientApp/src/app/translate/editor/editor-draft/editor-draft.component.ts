@@ -1,7 +1,9 @@
-import { AfterViewInit, Component, Input, OnChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaOperation } from 'quill';
-import { combineLatest, EMPTY, map, of, startWith, Subject, switchMap, tap, throwError } from 'rxjs';
+import { combineLatest, EMPTY, filter, map, of, startWith, Subject, switchMap, tap, throwError } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { Delta } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
@@ -28,9 +30,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   bookChapterName = '';
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftViewerService: DraftViewerService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    readonly onlineStatusService: OnlineStatusService
   ) {}
 
   ngOnChanges(): void {
@@ -44,9 +48,20 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   populateDraftTextInit(): void {
     combineLatest([this.draftText.editorCreated, this.inputChanged$.pipe(startWith(undefined))])
       .pipe(
+        takeUntilDestroyed(this.destroyRef),
         tap(() => {
           this.draftCheckState = 'draft-unknown';
           this.bookChapterName = this.getLocalizedBookChapter();
+        }),
+        switchMap(() => {
+          return this.onlineStatusService.onlineStatus$.pipe(
+            tap(isOnline => {
+              if (!isOnline) {
+                this.draftCheckState = 'draft-unknown';
+              }
+            }),
+            filter(isOnline => isOnline)
+          );
         }),
         switchMap(() => {
           // Check for target text editor
