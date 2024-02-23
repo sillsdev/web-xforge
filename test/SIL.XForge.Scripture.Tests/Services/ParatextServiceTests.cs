@@ -4702,7 +4702,7 @@ public class ParatextServiceTests
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         SFProject project = env.NewSFProject();
-        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.Commenter } };
         env.AddProjectRepository(project);
 
         // SUT
@@ -4749,6 +4749,8 @@ public class ParatextServiceTests
         var associatedPtUser = new SFParatextUser(env.Username01);
         env.SetupProject(env.Project01, associatedPtUser);
         SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
 
         // SUT
         bool historyExists = false;
@@ -4776,6 +4778,7 @@ public class ParatextServiceTests
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
         env.AddProjectRepository(project);
         const string book = "MAT";
         const int chapter = 1;
@@ -4794,7 +4797,7 @@ public class ParatextServiceTests
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         SFProject project = env.NewSFProject();
-        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.Commenter } };
         env.AddProjectRepository(project);
 
         // SUT

@@ -43,7 +43,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData, TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -536,8 +536,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get showHistoryChooser(): boolean {
-    // The user must be an administrator or translator. No specific edit permission for the chapter is required
-    return this.userHasGeneralEditRight;
+    // The user must be a Paratext user. No specific edit permission for the chapter is required
+    return isParatextRole(this.userRole);
   }
 
   get showSnapshot(): boolean {
