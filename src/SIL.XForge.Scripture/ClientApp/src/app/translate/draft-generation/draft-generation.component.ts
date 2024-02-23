@@ -94,6 +94,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    * from that build can still be retrieved.
    */
   hasAnyCompletedBuild = false;
+  completedDraftBooks: number[] = [];
 
   isPreTranslationApproved = false;
   signupFormUrl?: string;
@@ -110,7 +111,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly draftSourcesService: DraftSourcesService,
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
-    private readonly i18n: I18nService,
+    readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService
   ) {
@@ -191,6 +192,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+            this.completedDraftBooks = translateConfig?.draftConfig.lastSelectedTranslationBooks ?? [];
 
             // The alternate training source and source languages must match
             if (

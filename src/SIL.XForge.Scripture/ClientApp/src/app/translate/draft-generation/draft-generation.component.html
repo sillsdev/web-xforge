@@ -231,6 +231,17 @@
                         <mat-icon>edit_note</mat-icon>
                         {{ t("preview_draft_button") }}
                       </a>
+
+                      <ng-container *ngIf="completedDraftBooks.length > 0">
+                        <mat-expansion-panel>
+                          <mat-expansion-panel-header>
+                            <mat-panel-title>{{ t("preview_books") }}</mat-panel-title>
+                          </mat-expansion-panel-header>
+                          <button *ngFor="let i of completedDraftBooks" mat-raised-button>
+                            {{ i18n.localizeBook(i) }}
+                          </button>
+                        </mat-expansion-panel>
+                      </ng-container>
                     </ng-container>
 
                     <ng-container *ngIf="!isDraftComplete(draftJob)">
