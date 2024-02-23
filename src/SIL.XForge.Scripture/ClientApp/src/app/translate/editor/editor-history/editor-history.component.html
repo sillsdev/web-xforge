@@ -1,6 +1,6 @@
-<mat-progress-bar *ngIf="historyChooser?.isLoading$ | async" mode="indeterminate" color="accent"></mat-progress-bar>
-
 <ng-container *ngIf="onlineStatusService.onlineStatus$ | async; else offline">
+  <mat-progress-bar *ngIf="historyChooser?.isLoading$ | async" mode="indeterminate" color="accent"></mat-progress-bar>
+
   <app-history-chooser
     [projectId]="projectId"
     [bookNum]="bookNum"
