@@ -2,8 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Delta } from 'rich-text';
 import { of } from 'rxjs';
-import { EDITOR_READY_TIMEOUT, TextComponent } from 'src/app/shared/text/text.component';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -12,6 +11,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { SharedModule } from '../../../shared/shared.module';
+import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
@@ -20,7 +20,6 @@ import { EditorDraftComponent } from './editor-draft.component';
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockI18nService = mock(I18nService);
 const mockDraftViewerService = mock(DraftViewerService);
-const mockTargetTextComponent = mock(TextComponent);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -54,7 +53,6 @@ describe('EditorDraftComponent', () => {
     component.bookNum = 1;
     component.chapter = 1;
     component.isRightToLeft = false;
-    component.targetText = instance(mockTargetTextComponent);
   });
 
   it('should handle offline when component created', fakeAsync(() => {
@@ -66,8 +64,8 @@ describe('EditorDraftComponent', () => {
 
   it('should populate draft text correctly and then handle going offline/online', fakeAsync(() => {
     when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
-    when(mockTargetTextComponent.editor).thenReturn({ getContents: () => targetDelta } as any);
     when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);

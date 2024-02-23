@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import { DeltaOperation, StringMap } from 'quill';
+import { DeltaOperation } from 'quill';
 import { isString } from '../../../../type-utils';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
@@ -112,22 +112,10 @@ export class DraftViewerService {
         ...op,
         insert: draftSegmentText,
         attributes: {
-          ...this.cleanAttributes(op.attributes),
+          ...op.attributes,
           draft: true
         }
       };
     });
-  }
-
-  private cleanAttributes(attributes: StringMap | undefined): StringMap | undefined {
-    if (attributes != null) {
-      const toRemove = ['highlight-segment', 'highlight-para'];
-
-      for (const prop of toRemove) {
-        delete attributes[prop];
-      }
-    }
-
-    return attributes;
   }
 }

@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaOperation } from 'quill';
-import { combineLatest, EMPTY, filter, map, of, startWith, Subject, switchMap, tap, throwError } from 'rxjs';
+import { combineLatest, EMPTY, filter, map, startWith, Subject, switchMap, tap } from 'rxjs';
+import { SFProjectService } from 'src/app/core/sf-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { Delta } from '../../../core/models/text-doc';
+import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -21,7 +22,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @Input() chapter?: number;
   @Input() isRightToLeft!: boolean;
   @Input() fontSize?: string;
-  @Input() targetText?: TextComponent;
 
   @ViewChild(TextComponent) draftText!: TextComponent;
 
@@ -34,6 +34,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftViewerService: DraftViewerService,
     private readonly i18n: I18nService,
+    private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService
   ) {}
 
@@ -63,25 +64,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             filter(isOnline => isOnline)
           );
         }),
-        switchMap(() => {
-          // Check for target text editor
-          if (this.targetText?.editor == null) {
-            return throwError(() => new Error('target text editor is null'));
-          }
-
-          const targetOps = this.getTargetOps();
-
-          // If target text is not loaded, wait for it to load
-          if (targetOps == null || targetOps.length <= 1) {
-            return this.targetText?.loaded;
-          }
-
-          // Otherwise, return obs that emits and completes
-          return of(undefined);
-        }),
-        switchMap(() => {
-          const targetOps = this.getTargetOps();
-
+        switchMap(() => this.getTargetOps()),
+        switchMap((targetOps: DeltaOperation[] | undefined) => {
           if (this.projectId == null || this.bookNum == null || this.chapter == null || targetOps == null) {
             return EMPTY;
           }
@@ -108,15 +92,23 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       });
   }
 
-  private getTargetOps(): DeltaOperation[] | undefined {
-    return this.targetText?.editor?.getContents()?.ops;
-  }
-
   private getLocalizedBookChapter(): string {
     if (this.bookNum == null || this.chapter == null) {
       return '';
     }
 
     return this.i18n.localizeBook(this.bookNum) + ' ' + this.chapter;
+  }
+
+  private async getTargetOps(): Promise<DeltaOperation[] | undefined> {
+    return (await this.projectService.getText(this.getTextDocId())).data?.ops;
+  }
+
+  private getTextDocId(): TextDocId {
+    if (this.projectId == null || this.bookNum == null || this.chapter == null) {
+      throw new Error('projectId, bookNum, or chapter is null');
+    }
+
+    return new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
   }
 }

@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { StringMap } from 'quill';
 import { DeltaOperation } from 'rich-text';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftViewerService } from './draft-viewer.service';
@@ -154,20 +153,6 @@ describe('DraftViewerService', () => {
         }
       ];
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
-    });
-  });
-
-  describe('cleanAttributes', () => {
-    it('should remove specified properties from the attributes object', () => {
-      const attributes: StringMap = {
-        'highlight-segment': 'value1',
-        'highlight-para': 'value2',
-        'other-prop': 'value3'
-      };
-
-      const result = service['cleanAttributes'](attributes);
-
-      expect(result).toEqual({ 'other-prop': 'value3' });
     });
   });
 });
