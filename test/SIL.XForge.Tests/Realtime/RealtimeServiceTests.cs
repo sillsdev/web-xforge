@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -197,15 +198,105 @@ public class RealtimeServiceTests
         Assert.AreEqual("ghijkl", userId);
     }
 
+    [Test]
+    public void RestartServer_Success()
+    {
+        var env = new TestEnvironment();
+        env.Service.Server.IsServerRunning().Returns(false);
+        env.Service.Server.Restart(Arg.Any<object>()).Returns(true);
+
+        // SUT
+        env.Service.CheckIfRunning();
+        env.Service.Server.Received(1).Restart(Arg.Any<object>());
+        env.ExceptionHandler.Received(1)
+            .ReportException(Arg.Is<Exception>(e => e.Message == "Successfully restarted the Realtime Server"));
+    }
+
+    [Test]
+    public void RestartServer_Failed()
+    {
+        var env = new TestEnvironment();
+        env.Service.Server.IsServerRunning().Returns(false);
+        env.Service.Server.Restart(Arg.Any<object>()).Returns(false);
+        int[] expectedRestartDelayMinutes = [5, 10, 15, 20, 25, 30, 30];
+
+        foreach (int restartDelay in expectedRestartDelayMinutes)
+        {
+            // SUT
+            env.Service.CheckIfRunning();
+            env.Service.Server.Received().Restart(Arg.Any<object>());
+            env.ExceptionHandler.Received()
+                .ReportException(
+                    Arg.Is<Exception>(
+                        e => e.Message == $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes"
+                    )
+                );
+        }
+    }
+
+    [Test]
+    public void RestartServer_ResetDelayAfterFailed()
+    {
+        var env = new TestEnvironment();
+        env.Service.Server.IsServerRunning().Returns(false);
+        env.Service.Server.Restart(Arg.Any<object>()).Returns(false);
+        int[] expectedRestartDelayMinutes = [5, 10];
+
+        // Fail the restart a few times to increase the delay
+        foreach (int restartDelay in expectedRestartDelayMinutes)
+        {
+            env.Service.CheckIfRunning();
+            env.Service.Server.Received().Restart(Arg.Any<object>());
+            env.ExceptionHandler.Received()
+                .ReportException(
+                    Arg.Is<Exception>(
+                        e => e.Message == $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes"
+                    )
+                );
+        }
+
+        // Succeed a restart to restart the delay
+        env.Service.Server.Restart(Arg.Any<object>()).Returns(true);
+        env.Service.CheckIfRunning();
+        env.ExceptionHandler.Received(1)
+            .ReportException(Arg.Is<Exception>(e => e.Message == "Successfully restarted the Realtime Server"));
+
+        // Fail the restart again - restart delay should be back to 5 minutes
+        env.Service.Server.Restart(Arg.Any<object>()).Returns(false);
+
+        // SUT
+        env.Service.CheckIfRunning();
+        env.ExceptionHandler.Received(2)
+            .ReportException(
+                Arg.Is<Exception>(e => e.Message == "Failed to restart the Realtime Server - retrying in 5 minutes")
+            );
+    }
+
+    [Test]
+    public void RestartServer_ShouldNotAttempt()
+    {
+        // Setup environment
+        var env = new TestEnvironment();
+        env.Service.Server.IsServerRunning().Returns(true);
+
+        // SUT
+        env.Service.CheckIfRunning();
+        env.Service.Server.DidNotReceiveWithAnyArgs().Restart(Arg.Any<object>());
+    }
+
     private class TestEnvironment
     {
+        public readonly IExceptionHandler ExceptionHandler;
         public readonly RealtimeService Service;
         public readonly IMongoDatabase MongoDatabase = Substitute.For<IMongoDatabase>();
 
         public TestEnvironment()
         {
             IRealtimeServer realtimeServer = Substitute.For<IRealtimeServer>();
-            IOptions<SiteOptions> siteOptions = Substitute.For<IOptions<SiteOptions>>();
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
+            IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
+                new SiteOptions { Id = "sf" }
+            );
             IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
                 new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
             );
@@ -222,19 +313,29 @@ public class RealtimeServiceTests
                     UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)) },
                 }
             );
-            IOptions<AuthOptions> authOptions = Substitute.For<IOptions<AuthOptions>>();
+            IOptions<AuthOptions> authOptions = Microsoft.Extensions.Options.Options.Create(
+                new AuthOptions
+                {
+                    Audience = "https://scriptureforge.org/",
+                    Domain = "login.scriptureforge.org",
+                    Scope = "sf_data"
+                }
+            );
 
             IMongoClient mongoClient = Substitute.For<IMongoClient>();
+            IRecurringJobManager recurringJobManager = Substitute.For<IRecurringJobManager>();
             mongoClient.GetDatabase(Arg.Any<string>()).Returns(MongoDatabase);
             IConfiguration configuration = Substitute.For<IConfiguration>();
 
             Service = new RealtimeService(
                 realtimeServer,
+                ExceptionHandler,
                 siteOptions,
                 dataAccessOptions,
                 realtimeOptions,
                 authOptions,
                 mongoClient,
+                recurringJobManager,
                 configuration
             );
         }

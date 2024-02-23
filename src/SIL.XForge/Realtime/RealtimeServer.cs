@@ -34,6 +34,21 @@ public class RealtimeServer : IRealtimeServer
         _started = false;
     }
 
+    public bool IsServerRunning()
+    {
+        if (!_started)
+            return false;
+
+        return InvokeExportAsync<bool>("isServerRunning").GetAwaiter().GetResult();
+    }
+
+    public bool Restart(object options)
+    {
+        _started = false;
+        Start(options);
+        return IsServerRunning();
+    }
+
     public Task<int> ConnectAsync(string? userId = null)
     {
         if (userId != null)
