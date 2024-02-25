@@ -29,6 +29,13 @@
     "term": "Term",
     "biblical_terms_renderings": "Biblical Terms Renderings"
   },
+  "book_select": {
+    "clear": "Clear",
+    "deuterocanon": "DC",
+    "new_testament": "NT",
+    "old_testament": "OT",
+    "select": "Select"
+  },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",
     "next_chapter": "Next chapter"
