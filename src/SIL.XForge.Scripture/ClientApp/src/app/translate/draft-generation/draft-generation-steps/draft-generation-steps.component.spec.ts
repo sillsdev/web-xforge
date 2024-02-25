@@ -175,8 +175,8 @@ describe('DraftGenerationStepsComponent', () => {
       const translationBooks = [1, 2];
 
       component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTrainingDataIds = trainingDataFiles;
       component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
 
       spyOn(component.done, 'emit');
 
@@ -248,8 +248,8 @@ describe('DraftGenerationStepsComponent', () => {
       const translationBooks = [3, 4];
 
       component.userSelectedTrainingBooks = trainingBooks;
-      component.userSelectedTrainingDataIds = trainingDataFiles;
       component.userSelectedTranslateBooks = translationBooks;
+      component.selectedTrainingDataIds = trainingDataFiles;
 
       spyOn(component.done, 'emit');
 

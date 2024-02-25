@@ -113,11 +113,10 @@ class TestEnvironment {
 
   constructor() {
     when(
-      mockedFileService.uploadFile(
+      mockedFileService.onlineUploadFileOrFail(
         FileType.TrainingData,
         anything(),
         TrainingDataDoc.COLLECTION,
-        anything(),
         anything(),
         anything(),
         anything(),

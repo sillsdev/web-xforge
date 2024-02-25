@@ -58,11 +58,11 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   unusableTrainingBooks: number[] = [];
 
   initialSelectedTrainingBooks: number[] = [];
-  initialSelectedTrainingDataIds: string[] = [];
   initialSelectedTranslateBooks: number[] = [];
   userSelectedTrainingBooks: number[] = [];
-  userSelectedTrainingDataIds: string[] = [];
   userSelectedTranslateBooks: number[] = [];
+
+  selectedTrainingDataIds: string[] = [];
 
   // When translate books are selected, they will be filtered out from this list
   initialAvailableTrainingBooks: number[] = [];
@@ -180,11 +180,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
               this.trainingDataQuery.remoteDocChanges$
             ),
             () => {
+              this.availableTrainingData = [];
               if (projectDoc.data?.translateConfig.draftConfig.additionalTrainingData) {
                 this.availableTrainingData =
                   this.trainingDataQuery?.docs.filter(d => d.data != null).map(d => d.data!) ?? [];
-              } else {
-                this.availableTrainingData = [];
               }
               if (projectChanged) {
                 // Set the selection based on previous builds
@@ -204,14 +203,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onTrainingDataSelect(selectedTrainingDataIds: string[]): void {
-    this.userSelectedTrainingDataIds = selectedTrainingDataIds;
-    // If any of the passed data ids are not in the initial selected list, update the initial selected list
-    if (
-      !selectedTrainingDataIds.every(dataId => this.initialSelectedTrainingDataIds.includes(dataId)) ||
-      !this.initialSelectedTrainingDataIds.every(dataId => selectedTrainingDataIds.includes(dataId))
-    ) {
-      this.initialSelectedTrainingDataIds = selectedTrainingDataIds;
-    }
+    this.selectedTrainingDataIds = selectedTrainingDataIds;
     this.clearErrorMessage();
   }
 
@@ -235,7 +227,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     } else {
       this.done.emit({
         trainingBooks: this.userSelectedTrainingBooks,
-        trainingDataFiles: this.userSelectedTrainingDataIds,
+        trainingDataFiles: this.selectedTrainingDataIds,
         translationBooks: this.userSelectedTranslateBooks,
         fastTraining: this.fastTraining
       });
@@ -290,8 +282,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     const intersection: string[] = availableDataFiles.filter(dataId => previousTrainingDataFiles.includes(dataId));
 
     // Set the selected data files to the intersection, or if the intersection is empty, do not select any
-    this.initialSelectedTrainingDataIds = intersection.length > 0 ? intersection : [];
-    this.userSelectedTrainingDataIds = this.initialSelectedTrainingDataIds;
+    this.selectedTrainingDataIds = intersection.length > 0 ? intersection : [];
     this.trainingDataFilesAvailable =
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData ?? false;
   }

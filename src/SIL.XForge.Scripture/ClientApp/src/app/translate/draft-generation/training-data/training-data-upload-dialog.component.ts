@@ -13,7 +13,7 @@ import {
 } from '@angular/material/legacy-dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
-import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
+import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -127,12 +127,11 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
     this._showNotUploadedError = false;
     this._isUploading = true;
     const dataId: string = objectId();
-    const fileUrl: string | undefined = await this.fileService.uploadFile(
+    const fileUrl: string | undefined = await this.fileService.onlineUploadFileOrFail(
       FileType.TrainingData,
       this.data.projectId,
       TrainingDataDoc.COLLECTION,
       dataId,
-      getTrainingDataId(this.data.projectId, dataId),
       this.trainingDataFile!.blob!,
       this.trainingDataFile!.fileName!,
       true
