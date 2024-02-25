@@ -209,6 +209,45 @@ describe('NoteThreadDoc', () => {
     const expected: VerseRef = new VerseRef('MAT 1:2');
     expect(verseRef.equals(expected)).toBe(true);
   });
+
+  it('allows invalid reattached verses', async () => {
+    const reattached: string = 'MAT 1:2 reattached selected text  invalid';
+    const type: NoteType = NoteType.Normal;
+    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
+    const notes: Note[] = [
+      {
+        dataId: 'note01',
+        type,
+        conflictType,
+        threadId: 'thread01',
+        content: 'note content',
+        deleted: false,
+        tagId: 2,
+        status: NoteStatus.Todo,
+        ownerRef: 'user01',
+        dateCreated: '2021-11-10T12:00:00',
+        dateModified: '2021-11-10T12:00:00'
+      },
+      {
+        dataId: 'reattach01',
+        type,
+        conflictType,
+        threadId: 'thread01',
+        content: '',
+        deleted: false,
+        status: NoteStatus.Unspecified,
+        ownerRef: 'user01',
+        dateCreated: '2021-11-10T13:00:00',
+        dateModified: '2021-11-10T13:00:00',
+        reattached
+      }
+    ];
+
+    const noteThreadDoc: NoteThreadDoc = await env.setupDoc(notes);
+    const verseRef: VerseRef = noteThreadDoc.currentVerseRef()!;
+    const expected: VerseRef = new VerseRef('MAT 1:1');
+    expect(verseRef.equals(expected)).toBe(true);
+  });
 });
 
 class TestEnvironment {
