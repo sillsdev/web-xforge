@@ -9,7 +9,6 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
-using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -431,7 +430,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<ServalEngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -447,7 +446,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<ServalEngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -461,7 +460,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<ServalEngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -472,10 +471,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.GetEngineAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new EngineDto()));
+            .Returns(Task.FromResult(new ServalEngineDto()));
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<ServalEngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }

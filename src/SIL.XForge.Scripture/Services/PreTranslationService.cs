@@ -15,23 +15,12 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services;
 
-public class PreTranslationService : IPreTranslationService
+public class PreTranslationService(
+    IRepository<SFProjectSecret> projectSecrets,
+    IRealtimeService realtimeService,
+    ITranslationEnginesClient translationEnginesClient
+) : IPreTranslationService
 {
-    private readonly IRepository<SFProjectSecret> _projectSecrets;
-    private readonly IRealtimeService _realtimeService;
-    private readonly ITranslationEnginesClient _translationEnginesClient;
-
-    public PreTranslationService(
-        IRepository<SFProjectSecret> projectSecrets,
-        IRealtimeService realtimeService,
-        ITranslationEnginesClient translationEnginesClient
-    )
-    {
-        _projectSecrets = projectSecrets;
-        _realtimeService = realtimeService;
-        _translationEnginesClient = translationEnginesClient;
-    }
-
     public static string GetTextId(int bookNum, int chapterNum) => $"{bookNum}_{chapterNum}";
 
     public static string GetTextId(int bookNum) => Canon.BookNumberToId(bookNum);
@@ -47,13 +36,13 @@ public class PreTranslationService : IPreTranslationService
         List<PreTranslation> preTranslations = new List<PreTranslation>();
 
         // Load the target project secrets, so we can get the translation engine ID and corpus ID
-        if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
 
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
@@ -71,7 +60,7 @@ public class PreTranslationService : IPreTranslationService
         bool useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
         string textId = useParatextVerseRef ? GetTextId(bookNum) : GetTextId(bookNum, chapterNum);
         foreach (
-            Pretranslation preTranslation in await _translationEnginesClient.GetAllPretranslationsAsync(
+            Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
                 translationEngineId,
                 corpusId,
                 textId,

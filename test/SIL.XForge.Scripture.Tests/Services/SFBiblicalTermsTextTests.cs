@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using NUnit.Framework;
-using SIL.Machine.Corpora;
-using SIL.Machine.Tokenization;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
@@ -15,16 +13,14 @@ public class SFBiblicalTermsTextTests
     [Test]
     public void Segments_EmptyDoc()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(new XElement("TermRenderingsList"));
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        Assert.That(text.GetSegments(), Is.Empty);
+        var text = new SFBiblicalTermsText("project01", doc);
+        Assert.That(text.Segments, Is.Empty);
     }
 
     [Test]
     public void Segments_EmptyRenderings()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(
             new XElement(
                 "TermRenderingsList",
@@ -32,14 +28,13 @@ public class SFBiblicalTermsTextTests
                 TermRendering("term2", guess: false)
             )
         );
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        Assert.That(text.GetSegments(), Is.Empty);
+        var text = new SFBiblicalTermsText("project01", doc);
+        Assert.That(text.Segments, Is.Empty);
     }
 
     [Test]
     public void Segments_Guess()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(
             new XElement(
                 "TermRenderingsList",
@@ -47,32 +42,29 @@ public class SFBiblicalTermsTextTests
                 TermRendering("term2", guess: true, "Term2")
             )
         );
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        Assert.That(text.GetSegments(), Is.Empty);
+        var text = new SFBiblicalTermsText("project01", doc);
+        Assert.That(text.Segments, Is.Empty);
     }
 
     [Test]
     public void Segments_InvalidDocument()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument();
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        Assert.That(text.GetSegments(), Is.Empty);
+        var text = new SFBiblicalTermsText("project01", doc);
+        Assert.That(text.Segments, Is.Empty);
     }
 
     [Test]
     public void Segments_InvalidId()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(new XElement("TermRenderingsList", TermRendering(string.Empty, guess: false, "Term1")));
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        Assert.That(text.GetSegments(), Is.Empty);
+        var text = new SFBiblicalTermsText("project01", doc);
+        Assert.That(text.Segments, Is.Empty);
     }
 
     [Test]
     public void Segments_Renderings()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(
             new XElement(
                 "TermRenderingsList",
@@ -80,23 +72,20 @@ public class SFBiblicalTermsTextTests
                 TermRendering("term1", guess: false, "Term1")
             )
         );
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        TextSegment[] segments = text.GetSegments().ToArray();
+        var text = new SFBiblicalTermsText("project01", doc);
+        SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(2));
 
-        Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
-        Assert.That(segments[0].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[0].Segment[0], Is.EqualTo("Term1"));
+        Assert.That(segments[0].SegmentRef, Is.EqualTo("term1"));
+        Assert.That(segments[0].SegmentText, Is.EqualTo("Term1"));
 
-        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
-        Assert.That(segments[1].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[1].Segment[0], Is.EqualTo("Term2"));
+        Assert.That(segments[1].SegmentRef, Is.EqualTo("term2"));
+        Assert.That(segments[1].SegmentText, Is.EqualTo("Term2"));
     }
 
     [Test]
     public void Segments_MultipleRenderings()
     {
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(
             new XElement(
                 "TermRenderingsList",
@@ -104,44 +93,40 @@ public class SFBiblicalTermsTextTests
                 TermRendering("term1", guess: false, "Term1", "\n", " ")
             )
         );
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        TextSegment[] segments = text.GetSegments().ToArray();
+        var text = new SFBiblicalTermsText("project01", doc);
+        SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(3));
 
-        Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
-        Assert.That(segments[0].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[0].Segment[0], Is.EqualTo("Term1"));
+        Assert.That(segments[0].SegmentRef, Is.EqualTo("term1"));
+        Assert.That(segments[0].SegmentText, Is.EqualTo("Term1"));
 
-        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
-        Assert.That(segments[1].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[1].Segment[0], Is.EqualTo("Term2-1"));
+        Assert.That(segments[1].SegmentRef, Is.EqualTo("term2"));
+        Assert.That(segments[1].SegmentText, Is.EqualTo("Term2-1"));
 
-        Assert.That(segments[2].SegmentRef.ToString(), Is.EqualTo("term2"));
-        Assert.That(segments[2].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[2].Segment[0], Is.EqualTo("Term2-2"));
+        Assert.That(segments[2].SegmentRef, Is.EqualTo("term2"));
+        Assert.That(segments[2].SegmentText, Is.EqualTo("Term2-2"));
     }
 
     [Test]
     public void Segments_ComplexRenderings()
     {
         // These examples are drawn from the Paratext in-app documentation
-        var renderings = new List<(string rendering, string[] expected)>
+        var renderings = new List<(string rendering, string expected)>
         {
-            ("word1", new[] { "word1" }),
-            ("word1 word2", new[] { "word1", "word2" }),
-            ("word1/word2", new[] { "word1", "word2" }),
-            ("word1 / word2", new[] { "word1", "word2" }),
-            ("word1 * word2", new[] { "word1", "word2" }),
-            ("word1 ** word2", new[] { "word1", "word2" }),
-            ("word1 * * word2", new[] { "word1", "word2" }),
-            ("word1*", new[] { "word1" }),
-            ("*word1", new[] { "word1" }),
-            ("*word1*", new[] { "word1" }),
-            ("w*rd1", new[] { "wrd1" }),
-            ("word1 (information)", new[] { "word1" }),
+            ("word1", "word1"),
+            ("word1 word2", "word1 word2"),
+            ("word1/word2", "word1 word2"),
+            ("word1 / word2", "word1 word2"),
+            ("word1 * word2", "word1 word2"),
+            ("word1 ** word2", "word1 word2"),
+            ("word1 * * word2", "word1 word2"),
+            ("word1*", "word1"),
+            ("*word1", "word1"),
+            ("*word1*", "word1"),
+            ("w*rd1", "wrd1"),
+            ("word1 (information)", "word1"),
         };
 
-        var tokenizer = new LatinWordTokenizer();
         var doc = new XDocument(
             new XElement(
                 "TermRenderingsList",
@@ -159,53 +144,44 @@ public class SFBiblicalTermsTextTests
                 TermRendering("Term12", guess: false, renderings[11].rendering)
             )
         );
-        var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
-        TextSegment[] segments = text.GetSegments().ToArray();
+        var text = new SFBiblicalTermsText("project01", doc);
+        SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(renderings.Count));
         for (int i = 0; i < renderings.Count; i++)
         {
-            Assert.That(segments[i].SegmentRef.ToString(), Is.EqualTo("Term" + (i + 1).ToString("D2")));
-            Assert.That(segments[i].Segment.Count, Is.EqualTo(renderings[i].expected.Length));
-            for (int j = 0; j < renderings[i].expected.Length; j++)
-            {
-                Assert.That(segments[i].Segment[j], Is.EqualTo(renderings[i].expected[j]));
-            }
+            Assert.That(segments[i].SegmentRef, Is.EqualTo("Term" + (i + 1).ToString("D2")));
+            Assert.That(segments[i].SegmentText, Is.EqualTo(renderings[i].expected));
         }
     }
 
     [Test]
     public void Segments_BiblicalTermsFromMongo()
     {
-        var tokenizer = new LatinWordTokenizer();
         var biblicalTerms = new List<BiblicalTerm>
         {
             new BiblicalTerm { TermId = "term2", Renderings = { "Term2-1", "Term2-2" } },
             new BiblicalTerm { TermId = "term1", Renderings = { "Term1", "\n" } },
         };
-        var text = new SFBiblicalTermsText(tokenizer, "project01", biblicalTerms);
-        TextSegment[] segments = text.GetSegments().ToArray();
+        var text = new SFBiblicalTermsText("project01", biblicalTerms);
+        SFTextSegment[] segments = text.Segments.ToArray();
         Assert.That(segments.Length, Is.EqualTo(3));
 
-        Assert.That(segments[0].SegmentRef.ToString(), Is.EqualTo("term1"));
-        Assert.That(segments[0].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[0].Segment[0], Is.EqualTo("Term1"));
+        Assert.That(segments[0].SegmentRef, Is.EqualTo("term1"));
+        Assert.That(segments[0].SegmentText, Is.EqualTo("Term1"));
 
-        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
-        Assert.That(segments[1].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[1].Segment[0], Is.EqualTo("Term2-1"));
+        Assert.That(segments[1].SegmentRef, Is.EqualTo("term2"));
+        Assert.That(segments[1].SegmentText, Is.EqualTo("Term2-1"));
 
-        Assert.That(segments[2].SegmentRef.ToString(), Is.EqualTo("term2"));
-        Assert.That(segments[2].Segment.Count, Is.EqualTo(1));
-        Assert.That(segments[2].Segment[0], Is.EqualTo("Term2-2"));
+        Assert.That(segments[2].SegmentRef, Is.EqualTo("term2"));
+        Assert.That(segments[2].SegmentText, Is.EqualTo("Term2-2"));
     }
 
     [Test]
     public void Segments_NoBiblicalTerms()
     {
-        var tokenizer = new LatinWordTokenizer();
         var biblicalTerms = Array.Empty<BiblicalTerm>();
-        var text = new SFBiblicalTermsText(tokenizer, "project01", biblicalTerms);
-        Assert.That(text.GetSegments(), Is.Empty);
+        var text = new SFBiblicalTermsText("project01", biblicalTerms);
+        Assert.That(text.Segments, Is.Empty);
     }
 
     private static XElement TermRendering(string id, bool guess, params string[] renderings) =>

@@ -13,8 +13,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
-using SIL.Machine.Corpora;
-using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -31,8 +29,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
-/// Provides functionality to add, remove, and build Machine projects in both
-/// the In-Process Machine and Serval implementations.
+/// Provides functionality to add, remove, and build Machine projects.
 /// </summary>
 public class MachineProjectService : IMachineProjectService
 {
@@ -43,7 +40,6 @@ public class MachineProjectService : IMachineProjectService
     internal const string SmtTransfer = "SmtTransfer";
 
     private readonly IDataFilesClient _dataFilesClient;
-    private readonly IEngineService _engineService;
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFeatureManager _featureManager;
     private readonly IFileSystemService _fileSystemService;
@@ -58,7 +54,6 @@ public class MachineProjectService : IMachineProjectService
 
     public MachineProjectService(
         IDataFilesClient dataFilesClient,
-        IEngineService engineService,
         IExceptionHandler exceptionHandler,
         IFeatureManager featureManager,
         IFileSystemService fileSystemService,
@@ -73,7 +68,6 @@ public class MachineProjectService : IMachineProjectService
     )
     {
         _dataFilesClient = dataFilesClient;
-        _engineService = engineService;
         _exceptionHandler = exceptionHandler;
         _featureManager = featureManager;
         _fileSystemService = fileSystemService;
@@ -101,33 +95,12 @@ public class MachineProjectService : IMachineProjectService
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // Add the project to the in process Machine instance
-        var machineProject = new Machine.WebApi.Models.Project
-        {
-            Id = sfProjectId,
-            SourceLanguageTag = project.TranslateConfig.Source!.WritingSystem.Tag,
-            TargetLanguageTag = project.WritingSystem.Tag,
-        };
-
-        // Only add to the In Process instance if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
-        {
-            await _engineService.AddProjectAsync(machineProject);
-        }
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return string.Empty;
-        }
-
         // We may not have the source language tag or target language tag if either is a back translation
         // If that is the case, we will create the translation engine on first sync by running this method again
         // After ensuring that the source and target language tags are present
         if (
-            !string.IsNullOrWhiteSpace(machineProject.SourceLanguageTag)
-            && !string.IsNullOrWhiteSpace(machineProject.TargetLanguageTag)
+            !string.IsNullOrWhiteSpace(project.TranslateConfig.Source!.WritingSystem.Tag)
+            && !string.IsNullOrWhiteSpace(project.WritingSystem.Tag)
         )
         {
             return await CreateServalProjectAsync(project, preTranslate, cancellationToken);
@@ -144,19 +117,6 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Build the project with the In Process Machine instance
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
-        {
-            await _engineService.StartBuildByProjectIdAsync(buildConfig.ProjectId);
-        }
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return null;
-        }
-
         // Load the target project secrets, so we can get the translation engine ID
         if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
@@ -232,7 +192,7 @@ public class MachineProjectService : IMachineProjectService
                     .ServalData?.Corpora
                     .Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                     .Select(c => c.Key)
-                    .ToArray() ?? Array.Empty<string>();
+                    .ToArray() ?? [];
             await _projectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
@@ -297,8 +257,6 @@ public class MachineProjectService : IMachineProjectService
             {
                 // Removal can be a slow process
                 await RemoveProjectAsync(curUserId, buildConfig.ProjectId, preTranslate, cancellationToken);
-
-                // We use AddProjectAsync, as the In-Process Machine may be enabled
                 await AddProjectAsync(curUserId, buildConfig.ProjectId, preTranslate, cancellationToken);
             }
         }
@@ -454,19 +412,6 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Remove the project from the In Process Machine instance
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
-        {
-            await _engineService.RemoveProjectAsync(sfProjectId);
-        }
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return;
-        }
-
         // Load the target project secrets, so we can get the translation engine ID
         if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
@@ -587,13 +532,6 @@ public class MachineProjectService : IMachineProjectService
     {
         // Used to return whether the corpus was updated
         bool corpusUpdated = false;
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return false;
-        }
 
         // Load the project from the realtime service
         Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(buildConfig.ProjectId);
@@ -951,16 +889,12 @@ public class MachineProjectService : IMachineProjectService
         // For pre-translation, we must upload empty lines with segment refs for the correct references to be returned
         foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty || includeBlankSegments))
         {
-            // We pad the verse number so the string based key comparisons in Machine will be accurate.
+            // We pad the verse number in the SegmentKey so the string based key comparison in Machine will be accurate.
             // If the int does not parse successfully, it will be because it is a Biblical Term - which has a Greek or
             // Hebrew word as the key, or because the verse number is unusual (i.e. 12a or 12-13). Usually the key is
             // a standard verse number, so will be at most in the hundreds.
-            string key = segment.SegmentRef is TextSegmentRef textSegmentRef
-                ? string.Join('_', textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k))
-                : (string)segment.SegmentRef;
-
-            // Strip characters from the key that will corrupt the line
-            sb.Append(key.Replace('\n', '_').Replace('\t', '_'));
+            // We also strip characters from the key that will corrupt the line
+            sb.Append(segment.SegmentRef);
             sb.Append('\t');
             sb.Append(segment.SegmentText);
             sb.Append('\t');
