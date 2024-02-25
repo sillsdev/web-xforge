@@ -32,11 +32,7 @@ public class MachineAuthorizationHandler : IAuthorizationHandler
             if (attempt.TryResult(out SFProject project))
             {
                 string? userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
-                if (
-                    !string.IsNullOrWhiteSpace(userId)
-                    && project.UserRoles.TryGetValue(userId, out string role)
-                    && role is SFProjectRole.Administrator or SFProjectRole.Translator
-                )
+                if (MachineApi.HasPermission(userId, project))
                 {
                     List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
                     foreach (IAuthorizationRequirement requirement in pendingRequirements)

@@ -231,6 +231,15 @@ public class Startup
                 RequestPath = "/assets/audio"
             }
         );
+        app.UseStaticFiles(
+            new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(siteOptions.Value.SiteDir, TrainingDataService.DirectoryName)
+                ),
+                RequestPath = $"/assets/{TrainingDataService.DirectoryName}",
+            }
+        );
 
         if (SpaDevServerStartup == SpaDevServerStartup.None)
             app.UseSpaStaticFiles();

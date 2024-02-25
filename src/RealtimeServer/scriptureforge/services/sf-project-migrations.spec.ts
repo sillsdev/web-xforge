@@ -360,6 +360,35 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.sendAllSegments).toBe(false);
     });
   });
+
+  describe('version 17', () => {
+    it('adds lastSelectedTrainingDataFiles to draftConfig', async () => {
+      const env = new TestEnvironment(16);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: { draftConfig: {} } });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingDataFiles).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingDataFiles).toBeDefined();
+    });
+    it('adds additionalTrainingData to draftConfig', async () => {
+      const env = new TestEnvironment(16);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBe(false);
+    });
+  });
 });
 
 class TestEnvironment {

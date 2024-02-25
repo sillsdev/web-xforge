@@ -15,10 +15,73 @@ namespace SIL.XForge.Scripture.Controllers;
 [TestFixture]
 public class SFProjectsRpcControllerTests
 {
+    private const string Data01 = "data01";
     private const string Project01 = "project01";
     private const string User01 = "user01";
     private const string User02 = "user02";
     private static readonly string[] Roles = { SystemRole.User };
+
+    [Test]
+    public async Task DeleteTrainingData_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+    }
+
+    [Test]
+    public async Task DeleteTrainingData_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+    }
+
+    [Test]
+    public async Task DeleteTrainingData_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Invalid Format";
+        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+            .Throws(new FormatException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+    }
+
+    [Test]
+    public async Task DeleteTrainingData_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+    }
+
+    [Test]
+    public void DeleteTrainingData_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.TrainingDataService.DeleteTrainingDataAsync(User01, Project01, User02, Data01)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteTrainingData(Project01, User02, Data01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
 
     [Test]
     public async Task InvitedUsers_Available()
@@ -322,14 +385,21 @@ public class SFProjectsRpcControllerTests
         {
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             SFProjectService = Substitute.For<ISFProjectService>();
+            TrainingDataService = Substitute.For<ITrainingDataService>();
             var userAccessor = Substitute.For<IUserAccessor>();
             userAccessor.UserId.Returns(User01);
             userAccessor.SystemRoles.Returns(Roles);
-            Controller = new SFProjectsRpcController(userAccessor, SFProjectService, ExceptionHandler);
+            Controller = new SFProjectsRpcController(
+                userAccessor,
+                SFProjectService,
+                TrainingDataService,
+                ExceptionHandler
+            );
         }
 
         public IExceptionHandler ExceptionHandler { get; }
         public SFProjectsRpcController Controller { get; }
         public ISFProjectService SFProjectService { get; }
+        public ITrainingDataService TrainingDataService { get; }
     }
 }

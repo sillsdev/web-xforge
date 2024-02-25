@@ -9,6 +9,7 @@ export interface SFProjectSettings {
   biblicalTermsEnabled?: boolean | null;
   translateShareEnabled?: boolean | null;
 
+  additionalTrainingData?: boolean | null;
   alternateSourceParatextId?: string | null;
   alternateTrainingSourceEnabled?: boolean | null;
   alternateTrainingSourceParatextId?: string | null;
