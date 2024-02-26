@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34607.119
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServalDownloader", "ServalDownloader.csproj", "{A316AA71-4CCD-41D7-800A-1FDD94A0868E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A316AA71-4CCD-41D7-800A-1FDD94A0868E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A316AA71-4CCD-41D7-800A-1FDD94A0868E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A316AA71-4CCD-41D7-800A-1FDD94A0868E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A316AA71-4CCD-41D7-800A-1FDD94A0868E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {19971D78-9FD4-4B0B-80E9-025A57C92D39}
+	EndGlobalSection
+EndGlobal
