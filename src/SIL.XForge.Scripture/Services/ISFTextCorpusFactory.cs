@@ -1,9 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
+
+public enum TextCorpusType
+{
+    Source,
+    Target,
+}
 
 public interface ISFTextCorpusFactory
 {

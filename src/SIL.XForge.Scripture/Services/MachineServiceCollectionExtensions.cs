@@ -1,16 +1,12 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Polly;
 using Serval.Client;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -25,25 +21,6 @@ public static class MachineServiceCollectionExtensions
         IWebHostEnvironment env
     )
     {
-        var siteOptions = configuration.GetOptions<SiteOptions>();
-        var dataAccessOptions = configuration.GetOptions<DataAccessOptions>();
-        services
-            .AddMachine(config =>
-            {
-                config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
-                config.Namespace = "machine-api/v1";
-            })
-            .AddEngineOptions(o => o.EnginesDir = Path.Combine(siteOptions.SiteDir, "engines"))
-            .AddMongoDataAccess(o =>
-            {
-                o.ConnectionString = dataAccessOptions.ConnectionString;
-                o.MachineDatabaseName = "xforge_machine";
-            })
-            .AddTextCorpus<SFTextCorpusFactory>();
-        services.AddSingleton<ISFTextCorpusFactory, SFTextCorpusFactory>();
-        services.AddSingleton<IAuthorizationHandler, MachineAuthorizationHandler>();
-        services.AddSingleton<IBuildHandler, SFBuildHandler>();
-
         // Setup the Machine API
         var servalOptions = configuration.GetOptions<ServalOptions>();
         services.AddAccessTokenManagement(options =>
@@ -104,6 +81,7 @@ public static class MachineServiceCollectionExtensions
         services.AddSingleton<IMachineApiService, MachineApiService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
         services.AddSingleton<IPreTranslationService, PreTranslationService>();
+        services.AddSingleton<ISFTextCorpusFactory, SFTextCorpusFactory>();
         return services;
     }
 

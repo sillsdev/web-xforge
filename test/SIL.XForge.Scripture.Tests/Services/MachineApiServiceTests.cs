@@ -6,34 +6,17 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
-using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
-using SIL.Machine.Annotations;
-using SIL.Machine.Translation;
-using SIL.Machine.WebApi;
-using SIL.Machine.WebApi.Configuration;
-using SIL.Machine.WebApi.DataAccess;
-using SIL.Machine.WebApi.Models;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
-using MachinePhrase = SIL.Machine.Translation.Phrase;
-using MachineTranslationResult = SIL.Machine.Translation.TranslationResult;
-using MachineWordGraph = SIL.Machine.Translation.WordGraph;
-using MachineWordGraphArc = SIL.Machine.Translation.WordGraphArc;
-// Until the In-Process Machine distinguishes its objects from Serval
-using Phrase = Serval.Client.Phrase;
-using TranslationResult = Serval.Client.TranslationResult;
-using WordGraph = Serval.Client.WordGraph;
-using WordGraphArc = Serval.Client.WordGraphArc;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -49,19 +32,6 @@ public class MachineApiServiceTests
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
     private const string JobId = "jobId";
-
-    [Test]
-    public void CancelPreTranslationBuildAsync_NoFeatureFlagEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoPermission()
@@ -88,18 +58,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void CancelPreTranslationBuildAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.CancelPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void CancelPreTranslationBuildAsync_NotSupported()
     {
         // Set up test environment
@@ -114,7 +72,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void CancelPreTranslationBuildAsync_ServalNoTranslationEngine()
+    public void CancelPreTranslationBuildAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -141,59 +99,11 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_InProcessNoRevisionNoBuildRunning()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Builds.GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
-            .Returns(Task.FromResult<Build>(null));
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetBuildAsync(
-            User01,
-            Project01,
-            Build01,
-            minRevision: null,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        Assert.IsNull(actual);
-    }
-
-    [Test]
-    public void GetBuildAsync_InProcessSpecificRevisionBuildEnded()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
-        env.Builds.SubscribeAsync(Build01, CancellationToken.None)
-            .Returns(Task.FromResult(new Subscription<Build>(Build01, null, _ => { })));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildAsync(
-                    User01,
-                    Project01,
-                    Build01,
-                    minRevision: 1,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
-        );
-    }
-
-    [Test]
-    public void GetBuildAsync_ServalBuildEnded()
+    public void GetBuildAsync_BuildEnded()
     {
         // Set up test environment
         var env = new TestEnvironment();
         const int minRevision = 0;
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
         env.TranslationEnginesClient.GetBuildAsync(TranslationEngine01, Build01, minRevision, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
 
@@ -212,11 +122,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_ServalNoBuildRunning()
+    public async Task GetBuildAsync_NoBuildRunning()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
         env.TranslationEnginesClient.GetBuildAsync(TranslationEngine01, Build01, null, CancellationToken.None)
             .Throws(ServalApiExceptions.TimeOut);
 
@@ -231,28 +140,6 @@ public class MachineApiServiceTests
         );
 
         Assert.IsNull(actual);
-    }
-
-    [Test]
-    public void GetBuildAsync_NoFeatureFlagsEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetBuildAsync(
-                    User01,
-                    Project01,
-                    Build01,
-                    minRevision: null,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
-        );
     }
 
     [Test]
@@ -296,11 +183,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetBuildAsync_ServalNoTranslationEngine()
+    public void GetBuildAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -317,53 +203,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string buildDtoId = $"{Project01}.{Build01}";
-        const string message = "Finalizing";
-        const double percentCompleted = 0.95;
-        const int revision = 553;
-        const string state = "ACTIVE";
-        env.Builds.GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new Build
-                    {
-                        Id = Build01,
-                        Message = message,
-                        PercentCompleted = percentCompleted,
-                        Revision = revision,
-                        State = state,
-                    }
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetBuildAsync(
-            User01,
-            Project01,
-            Build01,
-            minRevision: null,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(message, actual.Message);
-        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
-        Assert.AreEqual(revision, actual.Revision);
-        Assert.AreEqual(state, actual.State);
-        Assert.AreEqual(buildDtoId, actual.Id);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
-        Assert.AreEqual(Project01, actual.Engine.Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
-    }
-
-    [Test]
-    public async Task GetBuildAsync_ServalSuccess()
+    public async Task GetBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -392,7 +232,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
@@ -417,7 +256,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_ServalIncludesAdditionalInfo()
+    public async Task GetBuildAsync_IncludesAdditionalInfo()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -466,7 +305,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetBuildAsync(
@@ -500,107 +338,11 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_DoesNotExecuteInProcessIfBothEnabledForPreTranslations()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetBuildAsync(
-            TranslationEngine01,
-            Build01,
-            minRevision: null,
-            CancellationToken.None
-        )
-            .Returns(Task.FromResult(new TranslationBuild()));
-
-        // SUT
-        _ = await env.Service.GetBuildAsync(
-            User01,
-            Project01,
-            Build01,
-            minRevision: null,
-            preTranslate: true,
-            CancellationToken.None
-        );
-
-        await env.Builds.DidNotReceiveWithAnyArgs()
-            .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
-        await env.TranslationEnginesClient.Received(1)
-            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None);
-    }
-
-    [Test]
-    public async Task GetBuildAsync_ExecutesOnlyInProcessIfBothEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        _ = await env.Service.GetBuildAsync(
-            User01,
-            Project01,
-            Build01,
-            minRevision: null,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        await env.Builds.Received(1).GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None);
-    }
-
-    [Test]
-    public async Task GetCurrentBuildAsync_InProcessNoRevisionNoBuildRunning()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Builds.GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
-            .Returns(Task.FromResult<Build>(null));
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
-            User01,
-            Project01,
-            minRevision: null,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        Assert.IsNull(actual);
-    }
-
-    [Test]
-    public void GetCurrentBuildAsync_InProcessSpecificRevisionBuildEnded()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
-        env.Builds.SubscribeByEngineIdAsync(TranslationEngine01, CancellationToken.None)
-            .Returns(Task.FromResult(new Subscription<Build>(TranslationEngine01, null, _ => { })));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    Project01,
-                    minRevision: 1,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
-        );
-    }
-
-    [Test]
-    public void GetCurrentBuildAsync_ServalBuildEnded()
+    public void GetCurrentBuildAsync_BuildEnded()
     {
         // Set up test environment
         var env = new TestEnvironment();
         const int minRevision = 0;
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
         env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, minRevision, CancellationToken.None)
             .Throws(ServalApiExceptions.NoContent);
 
@@ -618,11 +360,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetCurrentBuildAsync_ServalNoBuildRunning()
+    public async Task GetCurrentBuildAsync_NoBuildRunning()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
         env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
             .Throws(ServalApiExceptions.TimeOut);
 
@@ -636,27 +377,6 @@ public class MachineApiServiceTests
         );
 
         Assert.IsNull(actual);
-    }
-
-    [Test]
-    public void GetCurrentBuildAsync_NoFeatureFlagsEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    Project01,
-                    minRevision: null,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
-        );
     }
 
     [Test]
@@ -698,33 +418,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetCurrentBuildAsync_InProcessNoEngine()
+    public void GetCurrentBuildAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetCurrentBuildAsync(
-                    User01,
-                    Project01,
-                    minRevision: null,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
-        );
-    }
-
-    [Test]
-    public void GetCurrentBuildAsync_ServalNoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -740,52 +437,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetCurrentBuildAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string buildDtoId = $"{Project01}.{Build01}";
-        const string message = "Finalizing";
-        const double percentCompleted = 0.95;
-        const int revision = 553;
-        const string state = "ACTIVE";
-        env.Builds.GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new Build
-                    {
-                        Id = Build01,
-                        Message = message,
-                        PercentCompleted = percentCompleted,
-                        Revision = revision,
-                        State = state,
-                    }
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
-            User01,
-            Project01,
-            minRevision: null,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(message, actual.Message);
-        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
-        Assert.AreEqual(revision, actual.Revision);
-        Assert.AreEqual(state, actual.State);
-        Assert.AreEqual(buildDtoId, actual.Id);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
-        Assert.AreEqual(Project01, actual.Engine.Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
-    }
-
-    [Test]
-    public async Task GetCurrentBuildAsync_ServalSuccess()
+    public async Task GetCurrentBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -813,7 +465,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
@@ -836,7 +487,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetCurrentBuildAsync_ServalPreTranslationCompleted()
+    public async Task GetCurrentBuildAsync_PreTranslationCompleted()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -870,7 +521,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
@@ -893,7 +543,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetCurrentBuildAsync_ServalPreTranslationNoBuilds()
+    public void GetCurrentBuildAsync_PreTranslationNoBuilds()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -905,7 +555,6 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.NoContent);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>(new List<TranslationBuild>()));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -917,68 +566,6 @@ public class MachineApiServiceTests
                     preTranslate: true,
                     CancellationToken.None
                 )
-        );
-    }
-
-    [Test]
-    public async Task GetCurrentBuildAsync_DoesNotExecuteInProcessIfBothEnabledForPreTranslations()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetCurrentBuildAsync(
-            TranslationEngine01,
-            minRevision: null,
-            CancellationToken.None
-        )
-            .Returns(Task.FromResult(new TranslationBuild()));
-
-        // SUT
-        _ = await env.Service.GetCurrentBuildAsync(
-            User01,
-            Project01,
-            minRevision: null,
-            preTranslate: true,
-            CancellationToken.None
-        );
-
-        await env.Builds.DidNotReceiveWithAnyArgs()
-            .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
-        await env.TranslationEnginesClient.Received(1)
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
-    }
-
-    [Test]
-    public async Task GetCurrentBuildAsync_ExecutesOnlyInProcessIfBothEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        _ = await env.Service.GetCurrentBuildAsync(
-            User01,
-            Project01,
-            minRevision: null,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        await env.Builds.Received(1)
-            .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
-    }
-
-    [Test]
-    public void GetEngineAsync_NoFeatureFlagsEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
         );
     }
 
@@ -1007,42 +594,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetEngineAsync_InProcessNoEngine()
+    public void GetEngineAsync_DoesNotOwnTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetEngineAsync_ServalApiExceptionFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Throws(ServalApiExceptions.InternalServerError);
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new Engine()));
-
-        // SUT
-        _ = env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
-    }
-
-    [Test]
-    public void GetEngineAsync_ServalDoesNotOwnTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
         env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(ServalApiExceptions.Forbidden);
 
@@ -1053,11 +608,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetEngineAsync_ServalNoTranslationEngine()
+    public void GetEngineAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -1066,13 +620,12 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetEngineAsync_ServalOutageNoInProcess()
+    public void GetEngineAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
@@ -1081,63 +634,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetEngineAsync_ServalOutageFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new Engine()));
-
-        // SUT
-        _ = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-    }
-
-    [Test]
-    public async Task GetEngineAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string sourceLanguageTag = "en_US";
-        const string targetLanguageTag = "en_NZ";
-        const double confidence = 0.96;
-        const int corpusSize = 472;
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new Engine
-                    {
-                        Confidence = confidence,
-                        Id = Project01,
-                        IsShared = false,
-                        Revision = 1,
-                        SourceLanguageTag = sourceLanguageTag,
-                        TargetLanguageTag = targetLanguageTag,
-                        TrainedSegmentCount = corpusSize,
-                    }
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
-
-        Assert.AreEqual(confidence, actual.Confidence);
-        Assert.AreEqual(corpusSize, actual.TrainedSegmentCount);
-        Assert.AreEqual(sourceLanguageTag, actual.SourceLanguageTag);
-        Assert.AreEqual(targetLanguageTag, actual.TargetLanguageTag);
-        Assert.IsFalse(actual.IsShared);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Href);
-        Assert.AreEqual(1, actual.Projects.Length);
-        Assert.AreEqual(Project01, actual.Projects.First().Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Projects.First().Href);
-    }
-
-    [Test]
-    public async Task GetEngineAsync_ServalSuccess()
+    public async Task GetEngineAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1163,10 +660,9 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+        ServalEngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
 
         Assert.AreEqual(confidence / 100.0, actual.Confidence);
         Assert.AreEqual(corpusSize, actual.TrainedSegmentCount);
@@ -1177,23 +673,6 @@ public class MachineApiServiceTests
         Assert.AreEqual(1, actual.Projects.Length);
         Assert.AreEqual(Project01, actual.Projects.First().Id);
         Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Projects.First().Href);
-    }
-
-    [Test]
-    public async Task GetEngineAsync_ExecutesApiAndInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationEngine()));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new Engine()));
-
-        // SUT
-        _ = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
-
-        await env.Engines.Received(1).GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None);
-        await env.TranslationEnginesClient.Received(1).GetAsync(TranslationEngine01, CancellationToken.None);
     }
 
     [Test]
@@ -1265,19 +744,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetLastCompletedPreTranslationBuildAsync_NoFeatureFlagEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void GetLastCompletedPreTranslationBuildAsync_NoTranslationEngine()
     {
         // Set up test environment
@@ -1290,7 +756,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetLastCompletedPreTranslationBuildAsync_ServalDown()
+    public void GetLastCompletedPreTranslationBuildAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1365,19 +831,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetPreTranslationAsync_NoFeatureFlagEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void GetPreTranslationAsync_NoPermission()
     {
         // Set up test environment
@@ -1402,7 +855,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetPreTranslationAsync_ServalDown()
+    public void GetPreTranslationAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1446,20 +899,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetWordGraphAsync_NoFeatureFlagsEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void GetWordGraphAsync_NoPermission()
     {
         // Set up test environment
@@ -1484,26 +923,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetWordGraphAsync_InProcessNoEngine()
+    public void GetWordGraphAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetWordGraphAsync_ServalNoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -1512,13 +935,12 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetWordGraphAsync_ServalOutageNoInProcess()
+    public void GetWordGraphAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
@@ -1527,86 +949,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetWordGraphAsync_ServalApiExceptionFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Throws(ServalApiExceptions.EngineNotBuilt);
-        env.EngineService.GetWordGraphAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(Task.FromResult(new MachineWordGraph(Array.Empty<MachineWordGraphArc>(), Array.Empty<int>())));
-
-        // SUT
-        _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
-    }
-
-    [Test]
-    public async Task GetWordGraphAsync_ServalOutageFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-        env.EngineService.GetWordGraphAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(Task.FromResult(new MachineWordGraph(Array.Empty<MachineWordGraphArc>(), Array.Empty<int>())));
-
-        // SUT
-        _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-    }
-
-    [Test]
-    public async Task GetWordGraphAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const float initialStateScore = -91.43696f;
-        env.EngineService.GetWordGraphAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(
-                Task.FromResult(
-                    new MachineWordGraph(
-                        new[]
-                        {
-                            new MachineWordGraphArc(
-                                0,
-                                0,
-                                0.0,
-                                Array.Empty<string>(),
-                                new WordAlignmentMatrix(0, 0),
-                                Range<int>.Null,
-                                Array.Empty<TranslationSources>()
-                            ),
-                        },
-                        new[] { 1 },
-                        initialStateScore
-                    )
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        WordGraph actual = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(initialStateScore, actual.InitialStateScore);
-        Assert.AreEqual(1, actual.Arcs.Count);
-        Assert.AreEqual(1, actual.FinalStates.Count);
-    }
-
-    [Test]
-    public async Task GetWordGraphAsync_ServalSuccess()
+    public async Task GetWordGraphAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1623,7 +966,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         WordGraph actual = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
@@ -1635,35 +977,12 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetWordGraphAsync_ExecutesApiAndInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment)
-            .Returns(Task.FromResult(new WordGraph()));
-        env.EngineService.GetWordGraphAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(Task.FromResult(new MachineWordGraph()));
-
-        // SUT
-        _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
-
-        await env.EngineService.Received(1)
-            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
-        await env.TranslationEnginesClient.Received(1)
-            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None);
-    }
-
-    [Test]
     public void GetWordGraph_EngineNotBuilt()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment)
             .Throws(ServalApiExceptions.EngineNotBuilt);
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<InvalidOperationException>(
@@ -1777,20 +1096,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartBuildAsync_NoFeatureFlagsEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
     public void StartBuildAsync_NoPermission()
     {
         // Set up test environment
@@ -1811,21 +1116,6 @@ public class MachineApiServiceTests
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void StartBuildAsync_InProcessNoEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
         );
     }
 
@@ -1852,7 +1142,7 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
         // The following substitution is Serval stating that a translation engine SF expects to exist has been removed
         env.MachineProjectService.TranslationEngineExistsAsync(
             Project01,
@@ -1867,31 +1157,6 @@ public class MachineApiServiceTests
 
         await env.MachineProjectService.Received(1)
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-    }
-
-    [Test]
-    public async Task StartBuildAsync_ServalTranslationEngineRecreationErrorsDoNotCrashIfInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
-        env.MachineProjectService.TranslationEngineExistsAsync(
-            Project01,
-            TranslationEngine01,
-            preTranslate: false,
-            CancellationToken.None
-        )
-            .Throws(ServalApiExceptions.InternalServerError);
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
-
-        // SUT
-        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        await env.MachineProjectService.DidNotReceiveWithAnyArgs()
-            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
     }
 
     [Test]
@@ -1917,7 +1182,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         await env.Service.StartBuildAsync(User01, Project03, CancellationToken.None);
@@ -1927,11 +1191,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartBuildAsync_ServalNoTranslationEngine()
+    public void StartBuildAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -1940,7 +1203,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartBuildAsync_ServalOutageNoInProcess()
+    public void StartBuildAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1950,88 +1213,11 @@ public class MachineApiServiceTests
             CancellationToken.None
         )
             .Throws(new BrokenCircuitException());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
             () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
         );
-    }
-
-    [Test]
-    public async Task StartBuildAsync_ServalApiExceptionFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Throws(ServalApiExceptions.Forbidden);
-        env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
-
-        // SUT
-        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
-    }
-
-    [Test]
-    public async Task StartBuildAsync_ServalOutageFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Throws(new BrokenCircuitException());
-        env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
-
-        // SUT
-        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-    }
-
-    [Test]
-    public async Task StartBuildAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string buildDtoId = $"{Project01}.{Build01}";
-        const string message = "Training language model";
-        const double percentCompleted = 0.01;
-        const int revision = 2;
-        const string state = "ACTIVE";
-        env.EngineService.StartBuildAsync(TranslationEngine01)
-            .Returns(
-                Task.FromResult(
-                    new Build
-                    {
-                        Id = Build01,
-                        Message = message,
-                        PercentCompleted = percentCompleted,
-                        Revision = revision,
-                        State = state,
-                    }
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        Assert.AreEqual(message, actual.Message);
-        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
-        Assert.AreEqual(revision, actual.Revision);
-        Assert.AreEqual(state, actual.State);
-        Assert.AreEqual(buildDtoId, actual.Id);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
-        Assert.AreEqual(Project01, actual.Engine.Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
     }
 
     [Test]
@@ -2049,7 +1235,6 @@ public class MachineApiServiceTests
             CancellationToken.None
         )
             .Returns(Task.FromResult(new TranslationBuild()));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
@@ -2069,7 +1254,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartBuildAsync_ServalSuccess()
+    public async Task StartBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2097,7 +1282,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
@@ -2117,34 +1301,6 @@ public class MachineApiServiceTests
         Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
         Assert.AreEqual(Project01, actual.Engine.Id);
         Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
-    }
-
-    [Test]
-    public async Task StartBuildAsync_ExecutesApiAndInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Returns(Task.FromResult(new TranslationBuild()));
-        env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
-
-        // SUT
-        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
-        await env.MachineProjectService.Received(1)
-            .SyncProjectCorporaAsync(
-                User01,
-                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
-                preTranslate: false,
-                CancellationToken.None
-            );
-        await env.TranslationEnginesClient.Received(1)
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -2202,24 +1358,6 @@ public class MachineApiServiceTests
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_NoFeatureFlagEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.StartPreTranslationBuildAsync(
-                    User01,
-                    new BuildConfig { ProjectId = Project01 },
-                    CancellationToken.None
-                )
-        );
     }
 
     [Test]
@@ -2457,26 +1595,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TrainSegmentAsync_InProcessNoEngine()
+    public void TrainSegmentAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TrainSegmentAsync_ServalNoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -2485,7 +1607,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TrainSegmentAsync_ServalOutageNoInProcess()
+    public void TrainSegmentAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2495,7 +1617,6 @@ public class MachineApiServiceTests
             CancellationToken.None
         )
             .Throws(new BrokenCircuitException());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
@@ -2504,144 +1625,16 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TrainSegmentAsync_ServalApiExceptionFailsToInProcess()
+    public async Task TrainSegmentAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPair
-        {
-            SentenceStart = false,
-            SourceSegment = Segment,
-            TargetSegment = TargetSegment,
-        };
-        env.TranslationEnginesClient.TrainSegmentAsync(
-            TranslationEngine01,
-            Arg.Any<SegmentPair>(),
-            CancellationToken.None
-        )
-            .Throws(ServalApiExceptions.InternalServerError);
-        env.EngineService.TrainSegmentAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
-            segmentPair.SentenceStart
-        )
-            .Returns(Task.FromResult(true));
-
-        // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
-    }
-
-    [Test]
-    public async Task TrainSegmentAsync_ServalOutageFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        var segmentPair = new SegmentPair
-        {
-            SentenceStart = false,
-            SourceSegment = Segment,
-            TargetSegment = TargetSegment,
-        };
-        env.TranslationEnginesClient.TrainSegmentAsync(
-            TranslationEngine01,
-            Arg.Any<SegmentPair>(),
-            CancellationToken.None
-        )
-            .Throws(new BrokenCircuitException());
-        env.EngineService.TrainSegmentAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
-            segmentPair.SentenceStart
-        )
-            .Returns(Task.FromResult(true));
-
-        // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-    }
-
-    [Test]
-    public async Task TrainSegmentAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        var segmentPair = new SegmentPair
-        {
-            SentenceStart = false,
-            SourceSegment = Segment,
-            TargetSegment = TargetSegment,
-        };
-
-        // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
-
-        await env.EngineService.Received(1)
-            .TrainSegmentAsync(
-                TranslationEngine01,
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
-                segmentPair.SentenceStart
-            );
-    }
-
-    [Test]
-    public async Task TrainSegmentAsync_ServalSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None);
 
         await env.TranslationEnginesClient.Received(1)
             .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None);
-    }
-
-    [Test]
-    public async Task TrainSegmentAsync_ExecutesApiAndInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        var segmentPair = new SegmentPair
-        {
-            SentenceStart = false,
-            SourceSegment = Segment,
-            TargetSegment = TargetSegment,
-        };
-
-        // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
-
-        await env.EngineService.Received(1)
-            .TrainSegmentAsync(
-                TranslationEngine01,
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
-                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
-                segmentPair.SentenceStart
-            );
-        await env.TranslationEnginesClient.Received(1)
-            .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None);
-    }
-
-    [Test]
-    public void TranslateAsync_NoFeatureFlagsEnabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
-        );
     }
 
     [Test]
@@ -2669,26 +1662,10 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateAsync_InProcessNoEngine()
+    public void TranslateAsync_NoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateAsync_ServalNoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -2697,13 +1674,12 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateAsync_ServalOutageNoInProcess()
+    public void TranslateAsync_ServalOutage()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
@@ -2712,104 +1688,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TranslateAsync_ServalApiExceptionFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Throws(ServalApiExceptions.NoContent);
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(
-                Task.FromResult(
-                    new MachineTranslationResult(
-                        Array.Empty<string>(),
-                        Array.Empty<string>(),
-                        Array.Empty<double>(),
-                        Array.Empty<TranslationSources>(),
-                        new WordAlignmentMatrix(0, 0),
-                        Array.Empty<MachinePhrase>()
-                    )
-                )
-            );
-
-        // SUT
-        _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
-    }
-
-    [Test]
-    public async Task TranslateAsync_ServalOutageFailsToInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(
-                Task.FromResult(
-                    new MachineTranslationResult(
-                        Array.Empty<string>(),
-                        Array.Empty<string>(),
-                        Array.Empty<double>(),
-                        Array.Empty<TranslationSources>(),
-                        new WordAlignmentMatrix(0, 0),
-                        Array.Empty<MachinePhrase>()
-                    )
-                )
-            );
-
-        // SUT
-        _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-    }
-
-    [Test]
-    public async Task TranslateAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(
-                Task.FromResult(
-                    new MachineTranslationResult(
-                        new[] { Segment },
-                        new[] { TargetSegment },
-                        new[] { 0.0 },
-                        new[] { TranslationSources.Smt | TranslationSources.Transfer | TranslationSources.Prefix },
-                        new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
-                        new[] { new MachinePhrase(new Range<int>(), 0, 0.0) }
-                    )
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        TranslationResult actual = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(1, actual.SourceTokens.Count);
-        Assert.AreEqual(1, actual.TargetTokens.Count);
-        Assert.AreEqual(1, actual.Confidences.Count);
-        Assert.AreEqual(1, actual.Sources.Count);
-        Assert.AreEqual(3, actual.Sources.First().Count);
-        Assert.AreEqual(1, actual.Alignment.Count);
-        Assert.AreEqual(1, actual.Phrases.Count);
-        Assert.AreEqual(TargetSegment, actual.Translation);
-    }
-
-    [Test]
-    public async Task TranslateAsync_ServalSuccess()
+    public async Task TranslateAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2828,7 +1707,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         TranslationResult actual = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
@@ -2841,52 +1719,6 @@ public class MachineApiServiceTests
         Assert.AreEqual(1, actual.Alignment.Count);
         Assert.AreEqual(1, actual.Phrases.Count);
         Assert.AreEqual(TargetSegment, actual.Translation);
-    }
-
-    [Test]
-    public async Task TranslateAsync_ExecutesApiAndInProcess()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationResult
-                    {
-                        Alignment = new[] { new AlignedWordPair() },
-                        Confidences = new[] { 0.0 },
-                        Phrases = new[] { new Phrase() },
-                        Sources = new IList<TranslationSource>[] { new[] { TranslationSource.Primary } },
-                        TargetTokens = new[] { TargetSegment },
-                        SourceTokens = new[] { Segment },
-                        Translation = TargetSegment,
-                    }
-                )
-            );
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(
-                Task.FromResult(
-                    new MachineTranslationResult(
-                        Array.Empty<string>(),
-                        Array.Empty<string>(),
-                        Array.Empty<double>(),
-                        Array.Empty<TranslationSources>(),
-                        new WordAlignmentMatrix(0, 0),
-                        Array.Empty<MachinePhrase>()
-                    )
-                )
-            );
-
-        // SUT
-        _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
-
-        await env.EngineService.Received(1)
-            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
-        await env.TranslationEnginesClient.Received(1)
-            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None);
     }
 
     [Test]
@@ -2916,28 +1748,11 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateNAsync_InProcessNoEngine()
+    public void TranslateNAsync_NoTranslationEngine()
     {
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        env.Engines.GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<Engine>(null));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateNAsync_ServalNoTranslationEngine()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -2946,14 +1761,13 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateNAsync_ServalOutageNoInProcess()
+    public void TranslateNAsync_ServalOutage()
     {
         // Set up test environment
         const int n = 1;
         var env = new TestEnvironment();
         env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
@@ -2962,97 +1776,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TranslateNAsync_ServalApiExceptionFailsToInProcess()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
-            .Throws(ServalApiExceptions.NotSupported);
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            n,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
-
-        // SUT
-        _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
-    }
-
-    [Test]
-    public async Task TranslateNAsync_ServalOutageFailsToInProcess()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            n,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
-
-        // SUT
-        _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
-
-        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
-    }
-
-    [Test]
-    public async Task TranslateNAsync_InProcessSuccess()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            n,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(
-                Task.FromResult(
-                    new[]
-                    {
-                        new MachineTranslationResult(
-                            new[] { Segment },
-                            new[] { TargetSegment },
-                            new[] { 0.0 },
-                            new[] { TranslationSources.Smt },
-                            new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
-                            new[] { new MachinePhrase(new Range<int>(), 0, 0.0) }
-                        ),
-                    }.AsEnumerable()
-                )
-            );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-
-        // SUT
-        TranslationResult[] actual = await env.Service.TranslateNAsync(
-            User01,
-            Project01,
-            n,
-            Segment,
-            CancellationToken.None
-        );
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(1, actual.Length);
-        Assert.AreEqual(1, actual.First().SourceTokens.Count);
-        Assert.AreEqual(1, actual.First().TargetTokens.Count);
-        Assert.AreEqual(1, actual.First().Confidences.Count);
-        Assert.AreEqual(1, actual.First().Sources.Count);
-        Assert.AreEqual(1, actual.First().Alignment.Count);
-        Assert.AreEqual(1, actual.First().Phrases.Count);
-        Assert.AreEqual(TargetSegment, actual.First().Translation);
-    }
-
-    [Test]
-    public async Task TranslateNAsync_ServalSuccess()
+    public async Task TranslateNAsync_Success()
     {
         // Set up test environment
         const int n = 1;
@@ -3075,7 +1799,6 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         TranslationResult[] actual = await env.Service.TranslateNAsync(
@@ -3097,56 +1820,13 @@ public class MachineApiServiceTests
         Assert.AreEqual(TargetSegment, actual.First().Translation);
     }
 
-    [Test]
-    public async Task TranslateNAsync_ExecutesApiAndInProcess()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.EngineService.TranslateAsync(
-            TranslationEngine01,
-            n,
-            Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment)
-        )
-            .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
-
-        // SUT
-        _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
-
-        await env.EngineService.Received(1)
-            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
-        await env.TranslationEnginesClient.Received(1)
-            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None);
-    }
-
     private class TestEnvironment
     {
         public TestEnvironment()
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
-            Builds = Substitute.For<IBuildRepository>();
-            Engines = Substitute.For<IEngineRepository>();
-            Engines
-                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
-                .Returns(
-                    Task.FromResult(
-                        new Engine
-                        {
-                            Confidence = 100,
-                            Id = TranslationEngine01,
-                            SourceLanguageTag = "en_US",
-                            TrainedSegmentCount = 472,
-                            TargetLanguageTag = "en_NZ",
-                        }
-                    )
-                );
-            IOptions<EngineOptions> engineOptions = Options.Create(new EngineOptions());
-            EngineService = Substitute.For<IEngineService>();
-            ExceptionHandler = Substitute.For<IExceptionHandler>();
             FeatureManager = Substitute.For<IFeatureManager>();
-            FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(true));
-            FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
             MachineProjectService
@@ -3221,11 +1901,6 @@ public class MachineApiServiceTests
 
             Service = new MachineApiService(
                 BackgroundJobClient,
-                Builds,
-                Engines,
-                engineOptions,
-                EngineService,
-                ExceptionHandler,
                 FeatureManager,
                 mockLogger,
                 MachineProjectService,
@@ -3239,10 +1914,6 @@ public class MachineApiServiceTests
         }
 
         public IBackgroundJobClient BackgroundJobClient { get; }
-        public IBuildRepository Builds { get; }
-        public IEngineRepository Engines { get; }
-        public IEngineService EngineService { get; }
-        public IExceptionHandler ExceptionHandler { get; }
         public IFeatureManager FeatureManager { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IPreTranslationService PreTranslationService { get; }

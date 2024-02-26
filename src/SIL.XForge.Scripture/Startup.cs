@@ -242,8 +242,6 @@ public class Startup
 
         app.UseRealtimeServer();
 
-        app.UseMachine();
-
         app.UseSFServices();
 
         app.UseSFDataAccess();

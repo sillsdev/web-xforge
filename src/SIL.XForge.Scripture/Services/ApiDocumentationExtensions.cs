@@ -1,10 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Microsoft.OpenApi.Models;
 using SIL.IO;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -15,10 +13,7 @@ public static class ApiDocumentationExtensions
         // Generate the OpenAPI file at /swagger/v1/swagger.json
         services.AddSwaggerGen(options =>
         {
-            // Hide machine-api/v1
-            options.DocumentFilter<ExcludeSilMachineApiFromSwagger>();
-
-            // Hide machine-api/v2
+            // Hide any obsolete endpoints
             options.IgnoreObsoleteActions();
 
             // Add all other Web API endpoints
@@ -74,17 +69,5 @@ public static class ApiDocumentationExtensions
             );
         });
         return services;
-    }
-
-    private class ExcludeSilMachineApiFromSwagger : IDocumentFilter
-    {
-        public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
-        {
-            // Remove the In-Process Machine Controllers from the Swagger documentation paths
-            foreach (string path in swaggerDoc.Paths.Where(p => p.Key.StartsWith("/machine-api/v1")).Select(p => p.Key))
-            {
-                swaggerDoc.Paths.Remove(path);
-            }
-        }
     }
 }
