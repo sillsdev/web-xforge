@@ -1737,6 +1737,46 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task IsLanguageSupportedAsync_LanguageNotSupported()
+    {
+        // Set up test environment
+        const string languageCode = "123";
+        var env = new TestEnvironment();
+        env.TranslationEngineTypesClient.GetLanguageInfoAsync(MachineProjectService.Nmt, languageCode)
+            .Returns(Task.FromResult(new LanguageInfo { EngineType = MachineProjectService.Nmt, IsNative = false }));
+
+        // SUT
+        LanguageDto actual = await env.Service.IsLanguageSupportedAsync(languageCode, CancellationToken.None);
+        Assert.AreEqual(languageCode, actual.LanguageCode);
+        Assert.IsFalse(actual.IsSupported);
+    }
+
+    [Test]
+    public async Task IsLanguageSupportedAsync_LanguageSupported()
+    {
+        // Set up test environment
+        const string languageCode = "cmn";
+        const string internalCode = "zho_Hans";
+        var env = new TestEnvironment();
+        env.TranslationEngineTypesClient.GetLanguageInfoAsync(MachineProjectService.Nmt, languageCode)
+            .Returns(
+                Task.FromResult(
+                    new LanguageInfo
+                    {
+                        EngineType = MachineProjectService.Nmt,
+                        InternalCode = internalCode,
+                        IsNative = true
+                    }
+                )
+            );
+
+        // SUT
+        LanguageDto actual = await env.Service.IsLanguageSupportedAsync(languageCode, CancellationToken.None);
+        Assert.AreEqual(internalCode, actual.LanguageCode);
+        Assert.IsTrue(actual.IsSupported);
+    }
+
+    [Test]
     public void StartBuildAsync_NoFeatureFlagsEnabled()
     {
         // Set up test environment
@@ -3110,6 +3150,9 @@ public class MachineApiServiceTests
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
             MachineProjectService
+                .GetTranslationEngineTypeAsync(preTranslate: true)
+                .Returns(Task.FromResult(Services.MachineProjectService.Nmt));
+            MachineProjectService
                 .TranslationEngineExistsAsync(
                     Project01,
                     TranslationEngine01,
@@ -3174,6 +3217,7 @@ public class MachineApiServiceTests
             TranslationEnginesClient
                 .GetAsync(TranslationEngine01, CancellationToken.None)
                 .Returns(Task.FromResult(new TranslationEngine()));
+            TranslationEngineTypesClient = Substitute.For<ITranslationEngineTypesClient>();
 
             Service = new MachineApiService(
                 BackgroundJobClient,
@@ -3189,7 +3233,8 @@ public class MachineApiServiceTests
                 ProjectSecrets,
                 realtimeService,
                 SyncService,
-                TranslationEnginesClient
+                TranslationEnginesClient,
+                TranslationEngineTypesClient
             );
         }
 
@@ -3206,6 +3251,7 @@ public class MachineApiServiceTests
         public MachineApiService Service { get; }
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
+        public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
 
         public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null, string? errorMessage = null) =>
             await ProjectSecrets.UpdateAsync(

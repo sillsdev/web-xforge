@@ -20,6 +20,7 @@ namespace SIL.XForge.Scripture.Controllers;
 public class MachineApiControllerTests
 {
     private const string Build01 = "build01";
+    private const string LanguageCode = "cmn";
     private const string Project01 = "project01";
     private const string User01 = "user01";
 
@@ -757,6 +758,43 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task IsLanguageSupportedAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.IsLanguageSupportedAsync(LanguageCode, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<LanguageDto> actual = await env.Controller.IsLanguageSupportedAsync(
+            LanguageCode,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task IsLanguageSupportedAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.IsLanguageSupportedAsync(LanguageCode, CancellationToken.None)
+            .Returns(Task.FromResult(new LanguageDto()));
+
+        // SUT
+        ActionResult<LanguageDto> actual = await env.Controller.IsLanguageSupportedAsync(
+            LanguageCode,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        await env.MachineApiService.Received(1).IsLanguageSupportedAsync(LanguageCode, CancellationToken.None);
     }
 
     [Test]
