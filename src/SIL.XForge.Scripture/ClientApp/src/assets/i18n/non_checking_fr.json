@@ -29,6 +29,13 @@
     "term": "Terme",
     "biblical_terms_renderings": "Équivalents des termes bibliques"
   },
+  "book_select": {
+    "clear": "Effacer",
+    "deuterocanon": "DC",
+    "new_testament": "NT",
+    "old_testament": "AT",
+    "select": "Sélectionner"
+  },
   "chapter_nav": {
     "previous_chapter": "Chapitre précédent",
     "next_chapter": "Chapitre suivant"
@@ -152,6 +159,9 @@
     "info_alert_approval_needed_detail": "Générer un brouillon de traduction nécessite de contacter l'équipe de Scripture Forge avec des informations sur votre projet afin que nous puissions déterminer si votre projet peut fonctionner correctement avec notre système. L'équipe travaillera avec vous pour déterminer comment produire le brouillon de la meilleure qualité possible.",
     "info_alert_approval_needed_header": "Inscrivez-vous pour la rédaction de traduction",
     "info_alert_different_training_and_source_language": "La langue de votre texte d'entraînement alternatif doit être la même que la langue source. Sélectionnez un texte d'entraînement alternatif différent sur la [link:projectSettingsUrl]page des paramètres[/link].",
+    "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer un brouillon.",
+    "info_alert_no_alternate_source_access": "Vous n'avez pas accès au projet source {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
+    "info_alert_no_alternate_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_same_source_and_target_language": "La langue de votre texte source doit être différente de la langue cible. Sélectionnez un texte source différent sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est nécessaire pour produire une ébauche. Sélectionnez un texte source sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "instructions_draft_process": "Le brouillon sera généré en arrière-plan. Vous pouvez continuer à travailler sur d'autres tâches pendant qu'il est en cours de génération. Vous pouvez annuler le processus de génération à tout moment. Le processus prendra généralement au moins 8 heures dans des conditions idéales, mais peut prendre plus de temps si le serveur est occupé.",
@@ -182,7 +192,6 @@
     "fast_training_warning": "Activer ceci permettra de gagner du temps mais réduira considérablement la précision.",
     "fast_training": "Permettre une formation rapide",
     "generate_draft": "Générer un brouillon",
-    "loading": "Chargement...",
     "next": "Suivant",
     "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage.",
     "these_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
