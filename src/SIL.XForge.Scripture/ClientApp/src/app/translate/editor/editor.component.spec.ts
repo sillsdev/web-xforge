@@ -3354,7 +3354,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows translator settings when suggestions are enabled for the project', fakeAsync(() => {
+    it('shows translator settings when suggestions are enabled for the project and user can edit project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
       };
@@ -3366,6 +3366,22 @@ describe('EditorComponent', () => {
       env.updateParams(navigationParams);
       env.wait();
       expect(env.suggestionsSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('hides translator settings when suggestions are enabled for the project but user cant edit', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setCurrentUser('user06'); //has read but not edit
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.suggestionsSettingsButton).toBeFalsy();
       env.dispose();
     }));
 
@@ -3541,7 +3557,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows the history selector only if the user is an administrator or translator', fakeAsync(() => {
+    it('shows the history selector only if the user is a Paratext user', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
       };
@@ -3555,7 +3571,7 @@ describe('EditorComponent', () => {
 
       // Paratext Consultant
       env.setCurrentUser('user02');
-      expect(env.component.showHistoryChooser).toBeFalsy();
+      expect(env.component.showHistoryChooser).toBeTruthy();
 
       // Paratext Translator
       env.setCurrentUser('user03');
@@ -3571,9 +3587,9 @@ describe('EditorComponent', () => {
 
       // Paratext Observer
       env.setCurrentUser('user06');
-      expect(env.component.showHistoryChooser).toBeFalsy();
+      expect(env.component.showHistoryChooser).toBeTruthy();
 
-      // Paratext Viewer
+      // SF Viewer
       env.setCurrentUser('user07');
       expect(env.component.showHistoryChooser).toBeFalsy();
 

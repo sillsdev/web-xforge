@@ -2,7 +2,12 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationBehaviorOptions, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { Chapter } from 'realtime-server/scriptureforge/models/text-info';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
@@ -10,6 +15,7 @@ import { TextComponent } from 'src/app/shared/text/text.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftViewerService } from './draft-viewer.service';
@@ -55,11 +61,67 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
     private readonly draftViewerService: DraftViewerService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
+    private readonly userService: UserService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedRoute: ActivatedRoute,
     private readonly router: Router
   ) {
     super();
+  }
+
+  /**
+   * This code is reimplemented from editor.component.ts
+   */
+  get canEdit(): boolean {
+    return (
+      this.isUsfmValid &&
+      this.userHasGeneralEditRight &&
+      this.hasChapterEditPermission &&
+      this.targetProject?.sync?.dataInSync !== false &&
+      !this.targetEditor?.areOpsCorrupted &&
+      this.targetProject?.editable === true
+    );
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts
+   */
+  private get isUsfmValid(): boolean {
+    let text: TextInfo | undefined = this.targetProject?.texts.find(t => t.bookNum === this.currentBook);
+    if (text == null) {
+      return true;
+    }
+
+    const chapter: Chapter | undefined = text.chapters.find(c => c.number === this.currentChapter);
+    return chapter?.isValid ?? false;
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts.
+   */
+  private get userHasGeneralEditRight(): boolean {
+    if (this.targetProject == null) {
+      return false;
+    }
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.targetProject,
+      this.userService.currentUserId,
+      SFProjectDomain.Texts,
+      Operation.Edit
+    );
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts.
+   */
+  private get hasChapterEditPermission(): boolean {
+    const chapter: Chapter | undefined = this.targetProject?.texts
+      .find(t => t.bookNum === this.currentBook)
+      ?.chapters.find(c => c.number === this.currentChapter);
+    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+    // is accessed after migration
+    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
+    return permission == null ? false : permission === TextInfoPermission.Write;
   }
 
   async ngOnInit(): Promise<void> {

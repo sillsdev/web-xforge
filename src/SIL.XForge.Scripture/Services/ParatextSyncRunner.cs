@@ -144,10 +144,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <param name="trainEngine"><c>true</c> if we are to train the SMT translation engine; otherwise <c>false</c>.</param>
     /// <param name="token">The cancellation token.</param>
     /// <remarks>
-    /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
-    /// <paramref name="projectSFId"/> parameter, i.e. "{0}".
+    /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex that
+    /// restricts the execution of this method as a background job to one instance at a time.
     /// </remarks>
-    [Mutex("{0}")]
+    [Mutex]
     public async Task RunAsync(
         string projectSFId,
         string userId,

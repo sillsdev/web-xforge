@@ -140,6 +140,10 @@ export = {
     callback(undefined, {});
   },
 
+  isServerRunning: (callback: InteropCallback): void => {
+    callback(undefined, !(server == null));
+  },
+
   connect: (callback: InteropCallback, userId?: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));

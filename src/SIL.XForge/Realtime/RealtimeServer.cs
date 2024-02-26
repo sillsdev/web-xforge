@@ -15,7 +15,7 @@ public class RealtimeServer : IRealtimeServer
     public RealtimeServer(INodeJSService nodeJSService)
     {
         _nodeJSService = nodeJSService;
-        _modulePath = Path.Combine("RealtimeServer", "lib", "cjs", "common", "index.js");
+        _modulePath = Path.Combine("RealtimeServer", "lib", "cjs", "common", "index");
     }
 
     public void Start(object options)
@@ -32,6 +32,21 @@ public class RealtimeServer : IRealtimeServer
             return;
         InvokeExportAsync("stop").GetAwaiter().GetResult();
         _started = false;
+    }
+
+    public bool IsServerRunning()
+    {
+        if (!_started)
+            return false;
+
+        return InvokeExportAsync<bool>("isServerRunning").GetAwaiter().GetResult();
+    }
+
+    public bool Restart(object options)
+    {
+        _started = false;
+        Start(options);
+        return IsServerRunning();
     }
 
     public Task<int> ConnectAsync(string? userId = null)

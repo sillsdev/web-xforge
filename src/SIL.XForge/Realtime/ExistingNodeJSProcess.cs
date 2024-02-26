@@ -9,12 +9,6 @@ public class ExistingNodeJSProcess : INodeJSProcess
 {
     public void Dispose() => GC.SuppressFinalize(this);
 
-    public ValueTask DisposeAsync()
-    {
-        GC.SuppressFinalize(this);
-        return ValueTask.CompletedTask;
-    }
-
     public void AddOutputReceivedHandler(MessageReceivedEventHandler messageReceivedHandler) =>
         Task.Run(async () =>
         {
@@ -28,8 +22,6 @@ public class ExistingNodeJSProcess : INodeJSProcess
         });
 
     public void AddErrorReceivedHandler(MessageReceivedEventHandler messageReceivedHandler) { }
-
-    public void BeginOutputAndErrorReading() { }
 
     public void AddOutputDataReceivedHandler(DataReceivedEventHandler dataReceivedEventHandler) { }
 

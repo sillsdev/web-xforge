@@ -18,5 +18,7 @@ public interface IRealtimeServer
     Task<Op[]> GetOpsAsync(string collection, string id);
     void Start(object options);
     void Stop();
+    bool IsServerRunning();
+    bool Restart(object options);
     Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op);
 }

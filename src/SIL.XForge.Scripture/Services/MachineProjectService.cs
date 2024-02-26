@@ -391,6 +391,7 @@ public class MachineProjectService : IMachineProjectService
         return null;
     }
 
+    [Mutex]
     public async Task BuildProjectForBackgroundJobAsync(
         string curUserId,
         BuildConfig buildConfig,
@@ -635,18 +636,16 @@ public class MachineProjectService : IMachineProjectService
             && await _featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
             && (corpusId == null || projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile);
 
-        // See if there is a training corpus
-        string? alternateTrainingSourceCorpusId = null;
+        // See if there is an alternate training source corpus
         bool useAlternateTrainingSource =
             project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled
             && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
             && preTranslate;
-        if (useAlternateTrainingSource)
-        {
-            alternateTrainingSourceCorpusId = projectSecret
-                .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
-                .Key;
-        }
+
+        // Get the alternate training source corpus id, if present
+        string? alternateTrainingSourceCorpusId = projectSecret
+            .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
+            .Key;
 
         // Get the files we have already synced
         var oldSourceCorpusFiles = new List<ServalCorpusFile>();
@@ -711,21 +710,20 @@ public class MachineProjectService : IMachineProjectService
             newTargetCorpusFiles,
             cancellationToken
         );
+        // Get the files we have already synced for the alternate training source
+        var oldAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
+        if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
+        {
+            oldAlternateTrainingSourceCorpusFiles = projectSecret
+                .ServalData
+                .Corpora[alternateTrainingSourceCorpusId]
+                .SourceFiles;
+        }
 
         // Upload the alternate training corpus
         List<ServalCorpusFile> newAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
         if (useAlternateTrainingSource)
         {
-            // Get the files we have already synced
-            var oldAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
-            if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
-            {
-                oldAlternateTrainingSourceCorpusFiles = projectSecret
-                    .ServalData
-                    .Corpora[alternateTrainingSourceCorpusId]
-                    .SourceFiles;
-            }
-
             // Only specify the text corpus if we are not uploading to Paratext
             if (!uploadParatextZipFile)
             {
@@ -747,6 +745,29 @@ public class MachineProjectService : IMachineProjectService
                 oldAlternateTrainingSourceCorpusFiles,
                 newAlternateTrainingSourceCorpusFiles,
                 cancellationToken
+            );
+        }
+        else if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
+        {
+            // If there is an existing alternate training source
+
+            // Remove the corpus from Serval
+            await _translationEnginesClient.DeleteCorpusAsync(
+                translationEngineId,
+                alternateTrainingSourceCorpusId,
+                cancellationToken
+            );
+
+            // Remove the files from Serval
+            foreach (ServalCorpusFile file in oldAlternateTrainingSourceCorpusFiles)
+            {
+                await _dataFilesClient.DeleteAsync(file.FileId, cancellationToken);
+            }
+
+            // Remove the reference to the corpus from the project secret
+            await _projectSecrets.UpdateAsync(
+                project.Id,
+                u => u.Unset(p => p.ServalData.Corpora[alternateTrainingSourceCorpusId])
             );
         }
 
@@ -824,6 +845,72 @@ public class MachineProjectService : IMachineProjectService
             when (e.StatusCode is StatusCodes.Status403Forbidden or StatusCodes.Status404NotFound)
         {
             return false;
+        }
+    }
+
+    [Mutex]
+    public async Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId)
+    {
+        // Get the user secret
+        if (!(await _userSecrets.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user secret does not exist.");
+        }
+
+        // Load the project from the realtime service
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // If there is an alternate source, ensure that writing system and RTL is correct
+        if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource is not null)
+        {
+            ParatextSettings? alternateSourceSettings = _paratextService.GetParatextSettings(
+                userSecret,
+                projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource.ParatextId
+            );
+            if (alternateSourceSettings is not null)
+            {
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(
+                        pd => pd.TranslateConfig.DraftConfig.AlternateSource.IsRightToLeft,
+                        alternateSourceSettings.IsRightToLeft
+                    );
+                    if (alternateSourceSettings.LanguageTag is not null)
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag,
+                            alternateSourceSettings.LanguageTag
+                        );
+                });
+            }
+        }
+
+        // If there is an alternate training source, ensure that writing system and RTL is correct
+        if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource is not null)
+        {
+            ParatextSettings? alternateSourceSettings = _paratextService.GetParatextSettings(
+                userSecret,
+                projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
+            );
+            if (alternateSourceSettings is not null)
+            {
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(
+                        pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.IsRightToLeft,
+                        alternateSourceSettings.IsRightToLeft
+                    );
+                    if (alternateSourceSettings.LanguageTag is not null)
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag,
+                            alternateSourceSettings.LanguageTag
+                        );
+                });
+            }
         }
     }
 
@@ -940,6 +1027,10 @@ public class MachineProjectService : IMachineProjectService
             FeatureFlags.UploadParatextZipForPreTranslation
         );
 
+        // See if there is an alternate training source corpus
+        bool useAlternateTrainingSource =
+            draftConfig.AlternateTrainingSourceEnabled && draftConfig.AlternateTrainingSource is not null;
+
         // Set up the pre-translation and training corpora
         List<PretranslateCorpusConfig> preTranslate = new List<PretranslateCorpusConfig>();
         List<TrainingCorpusConfig>? trainOn = null;
@@ -959,7 +1050,7 @@ public class MachineProjectService : IMachineProjectService
                 // Since all books are uploaded via the zip file, we need to specify the target books to translate
                 preTranslateCorpusConfig.TextIds = buildConfig.TranslationBooks.Select(Canon.BookNumberToId).ToList();
 
-                if (!draftConfig.AlternateTrainingSourceEnabled)
+                if (!useAlternateTrainingSource)
                 {
                     // As we do not have an alternate train on source specified, use the source texts to train on
                     trainOn ??= new List<TrainingCorpusConfig>();
@@ -977,9 +1068,9 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Add the alternate training source, if enabled
-        if (draftConfig.AlternateTrainingSourceEnabled)
+        if (useAlternateTrainingSource)
         {
-            trainOn = new List<TrainingCorpusConfig>();
+            trainOn = [];
             foreach (
                 KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
                     s => s.Value.PreTranslate && s.Value.AlternateTrainingSource

@@ -578,10 +578,17 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         }
     }
 
+    /// <summary>
+    /// Make USX from a Delta's ops.
+    /// </summary>
     private static IEnumerable<XNode> ProcessDelta(Delta delta)
     {
+        // Output XML.
         var content = new List<XNode>();
+        // Outer-to-inner set of nested character formatting, which applies to top childNodes elements.
         var curCharAttrs = new List<JObject>();
+        // In-progress nested text and formatting, with the top of the stack representing the inner part of the nesting.
+        // Each element contains a first-to-last set of XML nodes.
         var childNodes = new Stack<List<XNode>>();
         childNodes.Push(new List<XNode>());
         JObject curTableAttrs = null;
@@ -592,6 +599,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                 throw new ArgumentException("The delta is not a document.", nameof(delta));
 
             var attrs = (JObject)op[Delta.Attributes];
+            // If we were tracking character attributes for childNodes, but the text being inserted by the current op
+            // does not have any character attributes, then record char XML elements for all tracked character
+            // attributes.
             if (curCharAttrs.Count > 0 && (attrs == null || attrs["char"] == null))
             {
                 while (curCharAttrs.Count > 0)
@@ -600,22 +610,36 @@ public class DeltaUsxMapper : IDeltaUsxMapper
             else if (attrs != null && attrs["char"] != null)
             {
                 List<JObject> charAttrs = GetCharAttributes(attrs["char"]);
+                // Record character formatting for existing text if it does not apply to the text being inserted in the
+                // current op. If the op's character attributes set doesn't start with the character attributes that
+                // were being tracked, start recording char XML elements for the tracked character attributes until
+                // either we run out of them, or the tracked character attributes set matches the beginning of the
+                // current op's character attributes.
                 while (curCharAttrs.Count > 0 && !CharAttributesMatch(curCharAttrs, charAttrs))
                     CharEnded(childNodes, curCharAttrs);
-                curCharAttrs = charAttrs;
-                while (childNodes.Count < curCharAttrs.Count + 1)
+                // If the current op is inserting text with formatting that is not already being tracked for the
+                // existing text, prepare places to isolate the new text that the new formatting will apply to.
+                for (int i = curCharAttrs.Count; i < charAttrs.Count; i++)
                     childNodes.Push(new List<XNode>());
+                curCharAttrs = charAttrs;
             }
 
+            // If we are inserting a basic string, rather than a more complex object, like a chapter number.
             if (op[Delta.InsertType].Type == JTokenType.String)
             {
                 var text = (string)op[Delta.InsertType];
+                // If we were recently working with table information, but the current op doesn't describe the end of a
+                // table cell, and we seem to be done with the table, then end the table.
                 if (curTableAttrs != null && (attrs == null || attrs["table"] == null) && text == "\n")
                 {
                     List<XNode> nextBlockNodes = RowEnded(childNodes, ref curRowAttrs);
                     TableEnded(content, childNodes, ref curTableAttrs);
                     childNodes.Peek().AddRange(nextBlockNodes);
                 }
+                // If we just finished a table cell. Account for being in a new row or new table than last time we
+                // observed. Take the top childNodes node-set and put it into a cell XML element. Leave childNodes with
+                // an empty node-set at the top for upcoming content, followed by a node-set with the cell XML element appended,
+                // followed by at least one more node-set (possibly being existing content).
                 else if (attrs != null && attrs["table"] != null)
                 {
                     var cellAttrs = (JObject)attrs["cell"];
@@ -628,6 +652,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
 
                     var tableAttrs = (JObject)attrs["table"];
                     var rowAttrs = (JObject)attrs["row"];
+                    // If we were already processing table cells for this table.
                     if (curTableAttrs != null)
                     {
                         if ((string)rowAttrs["id"] != (string)curRowAttrs["id"])
@@ -739,6 +764,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         return content;
     }
 
+    /// <summary>
+    /// If <param name="charAttrs"/> is a subset of <param name="curCharAttrs"/>.
+    /// </summary>
     private static bool CharAttributesMatch(List<JObject> curCharAttrs, List<JObject> charAttrs)
     {
         if (curCharAttrs.Count > charAttrs.Count)
@@ -752,6 +780,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         return true;
     }
 
+    /// <summary>
+    /// Return a List JObject from the incoming charAttrs, dealing with different possible types.
+    /// </summary>
     private static List<JObject> GetCharAttributes(JToken charAttrs)
     {
         return charAttrs switch
@@ -762,6 +793,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         };
     }
 
+    /// <summary>
+    /// Create XML element of a given name, with attributes and optional children content.
+    /// </summary>
     private static XElement CreateContainerElement(string name, JToken attributes, object content = null)
     {
         var elem = new XElement(name);
@@ -771,6 +805,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         return elem;
     }
 
+    /// <summary>
+    /// Add XML attributes to elem.
+    /// </summary>
     private static void AddAttributes(XElement elem, JToken attributes)
     {
         var attrsObj = (JObject)attributes;
@@ -782,6 +819,13 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         }
     }
 
+    /// <summary>
+    /// Apply last `curCharAttrs` character formatting to the top`childNodes` element.
+    ///
+    /// Take off the last description from `curCharAttrs"`. Use it to describe the attributes of a new char
+    /// XML element. Take off and put the first `childNodes` node-set as the char XML element's content,
+    /// and then append the char element to the next `childNodes` node-set.
+    /// </summary>
     private static void CharEnded(Stack<List<XNode>> childNodes, List<JObject> curCharAttrs)
     {
         JObject charAttrs = curCharAttrs[^1];
@@ -796,6 +840,11 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         childNodes.Peek().Add(charElem);
     }
 
+    /// <summary>
+    /// Create an XML row element using the second-from the bottom `childNodes` node-set as content, and
+    /// append it to the bottom `childNodes` node-set. Return the top node-set if there were 3. Leave
+    /// childNodes as only the bottom node-set.
+    /// </summary>
     private static List<XNode> RowEnded(Stack<List<XNode>> childNodes, ref JObject curRowAttrs)
     {
         if (childNodes.Count > 3)
@@ -811,6 +860,10 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         return nextBlockNodes;
     }
 
+    /// <summary>
+    /// Create an XML table element using the top `childNodes` node-set as content, and append it to
+    /// `content`.
+    /// </summary>
     private static void TableEnded(List<XNode> content, Stack<List<XNode>> childNodes, ref JObject curTableAttrs)
     {
         content.Add(CreateContainerElement("table", curTableAttrs, childNodes.Peek()));

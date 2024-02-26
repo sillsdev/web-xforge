@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -30,6 +31,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     internal const string ProjectSettingValueUnset = "unset";
     private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
         new DictionaryComparer<string, string>();
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IMachineProjectService _machineProjectService;
     private readonly ISyncService _syncService;
     private readonly IParatextService _paratextService;
@@ -54,7 +56,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<UserSecret> userSecrets,
         IRepository<TranslateMetrics> translateMetrics,
         IStringLocalizer<SharedResource> localizer,
-        ITransceleratorService transceleratorService
+        ITransceleratorService transceleratorService,
+        IBackgroundJobClient backgroundJobClient
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
     {
@@ -67,6 +70,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _securityService = securityService;
         _localizer = localizer;
         _transceleratorService = transceleratorService;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -128,6 +132,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 TranslateSource source = await GetTranslateSourceAsync(
                     curUserId,
+                    projectDoc.Id,
                     settings.SourceParatextId,
                     syncIfCreated: false,
                     ptProjects
@@ -290,6 +295,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             source = await GetTranslateSourceAsync(
                 curUserId,
+                projectId,
                 settings.SourceParatextId,
                 syncIfCreated: false,
                 ptProjects,
@@ -308,6 +314,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             alternateSource = await GetTranslateSourceAsync(
                 curUserId,
+                projectId,
                 settings.AlternateSourceParatextId,
                 syncIfCreated: true,
                 ptProjects,
@@ -326,6 +333,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             alternateTrainingSource = await GetTranslateSourceAsync(
                 curUserId,
+                projectId,
                 settings.AlternateTrainingSourceParatextId,
                 syncIfCreated: true,
                 ptProjects,
@@ -1365,6 +1373,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// Gets the translate source asynchronously.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="syncIfCreated">If <c>true</c> sync the project if it is created.</param>
     /// <param name="ptProjects">The paratext projects.</param>
@@ -1373,6 +1382,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
     private async Task<TranslateSource> GetTranslateSourceAsync(
         string curUserId,
+        string sfProjectId,
         string paratextId,
         bool syncIfCreated,
         IEnumerable<ParatextProject> ptProjects,
@@ -1432,7 +1442,16 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // This is usually because this is an alternate source for drafting
         if (projectCreated && syncIfCreated)
         {
-            await _syncService.SyncAsync(new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId });
+            string jobId = await _syncService.SyncAsync(
+                new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId }
+            );
+
+            // After syncing the source project (which will take some time), ensure that the writing system matches
+            // what is in the project document
+            _backgroundJobClient.ContinueJobWith<MachineProjectService>(
+                jobId,
+                r => r.UpdateTranslationSourcesAsync(curUserId, sfProjectId)
+            );
         }
 
         return new TranslateSource

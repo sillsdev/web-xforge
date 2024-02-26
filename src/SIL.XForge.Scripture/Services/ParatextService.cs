@@ -1911,7 +1911,7 @@ public class ParatextService : DisposableBase, IParatextService
 
         if (
             !projectDoc.Data.UserRoles.TryGetValue(userSecret.Id, out string role)
-            || role is not (SFProjectRole.Translator or SFProjectRole.Administrator)
+            || !SFProjectRole.IsParatextRole(role)
         )
         {
             throw new ForbiddenException();
@@ -1982,7 +1982,7 @@ public class ParatextService : DisposableBase, IParatextService
 
         if (
             !projectDoc.Data.UserRoles.TryGetValue(userSecret.Id, out string role)
-            || role is not (SFProjectRole.Translator or SFProjectRole.Administrator)
+            || !SFProjectRole.IsParatextRole(role)
         )
         {
             throw new ForbiddenException();

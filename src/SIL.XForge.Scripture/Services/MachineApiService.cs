@@ -894,7 +894,7 @@ public class MachineApiService : IMachineApiService
         if (!string.IsNullOrWhiteSpace(jobId))
         {
             // Run the training after the sync has completed
-            jobId = _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
+            jobId = _backgroundJobClient.ContinueJobWith<MachineProjectService>(
                 jobId,
                 r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
@@ -902,7 +902,7 @@ public class MachineApiService : IMachineApiService
         else
         {
             // No sync required, just run the training
-            jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
+            jobId = _backgroundJobClient.Enqueue<MachineProjectService>(
                 r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
         }
