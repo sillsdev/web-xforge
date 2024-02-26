@@ -10,12 +10,11 @@ import { SFTabsModule } from './sf-tabs.module';
   template: `
     <app-tab-group
       *ngIf="tabState.tabGroups$ | async as tabGroups"
-      [selectedIndex]="tabGroups.get('test').selectedIndex"
-      (newTabRequest)="addTab($event)"
-      (closeTabRequest)="tabState.removeTab(tabGroup.key, $event.index)"
-      (tabSelect)="tabState.selectTab(tabGroup.key, $event.index)"
+      [groupId]="groupId"
+      [selectedIndex]="tabGroups.get(groupId).selectedIndex"
+      (newTabRequest)="addTab(groupId, $event)"
     >
-      <app-tab *ngFor="let tab of tabGroups.get('test').tabs; let i = index" [closeable]="tab.closeable">
+      <app-tab *ngFor="let tab of tabGroups.get(groupId).tabs; let i = index" [closeable]="tab.closeable">
         <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
         <p>Tab {{ i + 1 }} content for a '{{ tab.type }}' tab</p>
       </app-tab>
@@ -24,11 +23,12 @@ import { SFTabsModule } from './sf-tabs.module';
 })
 class SFTabGroupStoriesComponent implements OnChanges {
   @Input() tabs: TabInfo<string>[] = [];
+  groupId = 'test';
 
   constructor(private readonly tabState: TabStateService<string, TabInfo<string>>) {}
 
   ngOnChanges(): void {
-    this.tabState.addTabGroup('test', this.tabs);
+    this.tabState.addTabGroup(this.groupId, this.tabs);
   }
 
   addTab(groupId: string, tabType: string | null): void {

@@ -3,7 +3,7 @@
   [selectedIndex]="selectedIndex"
   [groupId]="groupId"
   (tabClick)="onTabHeaderClick($event)"
-  (closeClick)="onTabCloseRequest($event)"
+  (closeClick)="removeTab($event)"
   (tabAddRequest)="onTabAddRequest($event)"
 ></app-tab-group-header>
 

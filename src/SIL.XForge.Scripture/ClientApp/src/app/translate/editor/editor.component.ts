@@ -1140,14 +1140,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  selectTab(tabGroupType: EditorTabGroupType, tabIndex: number): void {
-    this.tabState.selectTab(tabGroupType, tabIndex);
-  }
-
-  closeTab(tabGroupType: EditorTabGroupType, tabIndex: number): void {
-    this.tabState.removeTab(tabGroupType, tabIndex);
-  }
-
   addTab(tabGroupType: EditorTabGroupType, newTabType: string | null): void {
     const tab = this.editorTabFactory.createEditorTab(newTabType as EditorTabType);
     this.tabState.addTab(tabGroupType, tab);

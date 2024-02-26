@@ -2,6 +2,7 @@ import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { NewTabMenuManager } from 'src/app/shared/sf-tab-group';
+import { TabStateService } from '../tab-state/tab-state.service';
 import { SFTabsModule } from './sf-tabs.module';
 import { TabGroupComponent } from './tab-group.component';
 import { TabComponent } from './tab/tab.component';
@@ -29,24 +30,35 @@ describe('TabGroupComponent', () => {
     component.tabs.reset([new TabComponent(), new TabComponent()]);
   });
 
-  it('should emit "tabSelect" event when a tab is selected', () => {
-    spyOn(component.tabSelect, 'emit');
+  it('should emit "newTabRequest" event when onTabAddRequest is called', () => {
+    spyOn(component.newTabRequest, 'emit');
+    const newTabType = 'test';
+    component.onTabAddRequest(newTabType);
+    expect(component.newTabRequest.emit).toHaveBeenCalledWith(newTabType);
+  });
+
+  it('should select tab using TabStateService when selectTab is called', () => {
     const tabIndex = 1;
+    const tabStateService = TestBed.inject(TabStateService);
+    spyOn(tabStateService, 'selectTab');
     component.selectTab(tabIndex);
-    expect(component.tabSelect.emit).toHaveBeenCalledWith(tabIndex);
+    expect(tabStateService.selectTab).toHaveBeenCalledWith(component.groupId, tabIndex);
   });
 
-  it('should emit "closeTabRequest" event when a removable tab is closed', () => {
-    spyOn(component.closeTabRequest, 'emit');
+  it('should remove tab using TabStateService when removeTab is called on a removable tab', () => {
     const tabIndex = 1;
+    const tabStateService = TestBed.inject(TabStateService);
+    spyOn(tabStateService, 'removeTab');
+    component.tabs.reset([new TabComponent(), new TabComponent(), new TabComponent()]);
     component.removeTab(tabIndex);
-    expect(component.closeTabRequest.emit).toHaveBeenCalledWith(tabIndex);
+    expect(tabStateService.removeTab).toHaveBeenCalledWith(component.groupId, tabIndex);
   });
 
-  it('should not emit "closeTabRequest" event when a non-removable tab is closed', () => {
-    spyOn(component.closeTabRequest, 'emit');
+  it('should not remove tab using TabStateService when removeTab is called on a non-removable tab', () => {
     const tabIndex = 0;
+    const tabStateService = TestBed.inject(TabStateService);
+    spyOn(tabStateService, 'removeTab');
     component.removeTab(tabIndex);
-    expect(component.closeTabRequest.emit).not.toHaveBeenCalled();
+    expect(tabStateService.removeTab).not.toHaveBeenCalled();
   });
 });
