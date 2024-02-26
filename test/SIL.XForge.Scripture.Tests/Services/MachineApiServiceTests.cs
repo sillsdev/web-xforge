@@ -2333,6 +2333,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2353,6 +2355,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2384,6 +2388,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);

@@ -131,29 +131,34 @@ describe('DraftGenerationComponent', () => {
         'pollBuildProgress',
         'getLastCompletedBuild'
       ]);
+      const projectDoc = {
+        id: 'testProjectId',
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'en'
+          },
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: false
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'es'
+              }
+            }
+          },
+          sync: {
+            lastSyncSuccessful: true
+          }
+        })
+      } as SFProjectProfileDoc;
       mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
         projectId: 'testProjectId',
         projectId$: of('testProjectId'),
-        projectDoc$: of({
-          id: 'testProjectId',
-          data: createTestProjectProfile({
-            writingSystem: {
-              tag: 'en'
-            },
-            translateConfig: {
-              draftConfig: {
-                alternateTrainingSourceEnabled: false
-              },
-              projectType: ProjectType.BackTranslation,
-              source: {
-                projectRef: 'testSourceProjectId',
-                writingSystem: {
-                  tag: 'es'
-                }
-              }
-            }
-          })
-        } as SFProjectProfileDoc)
+        projectDoc: projectDoc,
+        projectDoc$: of(projectDoc)
       });
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
@@ -914,6 +919,95 @@ describe('DraftGenerationComponent', () => {
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBe(null);
+      });
+    });
+
+    describe('synchronization', () => {
+      describe('project will be synchronized message', () => {
+        it('should not show that the project will be synchronized if a build is queued', () => {
+          let env = new TestEnvironment();
+          env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
+          env.component.isBackTranslation = true;
+          env.fixture.detectChanges();
+          expect(env.component.lastSyncSuccessful).toBeTruthy();
+          expect(env.getElementByTestId('notice-project-will-sync')).toBe(null);
+          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
+        });
+
+        it('should show that the project will be synchronized for approved translations', () => {
+          let env = new TestEnvironment();
+          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
+          env.component.isPreTranslationApproved = true;
+          env.fixture.detectChanges();
+          expect(env.component.lastSyncSuccessful).toBeTruthy();
+          expect(env.getElementByTestId('notice-project-will-sync')).not.toBe(null);
+          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
+        });
+
+        it('should show that the project will be synchronized for back translations', () => {
+          let env = new TestEnvironment();
+          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
+          env.component.isBackTranslation = true;
+          env.fixture.detectChanges();
+          expect(env.component.lastSyncSuccessful).toBeTruthy();
+          expect(env.getElementByTestId('notice-project-will-sync')).not.toBe(null);
+          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
+        });
+      });
+
+      describe('synchronization failed warning', () => {
+        const projectDoc = {
+          data: createTestProjectProfile({
+            sync: { lastSyncSuccessful: false }
+          })
+        };
+        it('should not show that the project will be synchronized if a build is queued', () => {
+          let env = new TestEnvironment(() => {
+            mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+              projectId: 'testProjectId',
+              projectId$: of('testProjectId'),
+              projectDoc$: of(projectDoc)
+            });
+          });
+          env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
+          env.component.isBackTranslation = true;
+          env.fixture.detectChanges();
+          expect(env.component.lastSyncSuccessful).toBeFalsy();
+          expect(env.getElementByTestId('notice-project-will-sync')).toBe(null);
+          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
+        });
+
+        it('should show that the project will be synchronized for approved translations', () => {
+          let env = new TestEnvironment(() => {
+            mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+              projectId: 'testProjectId',
+              projectId$: of('testProjectId'),
+              projectDoc$: of(projectDoc)
+            });
+          });
+          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
+          env.component.isPreTranslationApproved = true;
+          env.fixture.detectChanges();
+          expect(env.component.lastSyncSuccessful).toBeFalsy();
+          expect(env.getElementByTestId('notice-project-will-sync')).toBe(null);
+          expect(env.getElementByTestId('warning-last-sync-failed')).not.toBe(null);
+        });
+
+        it('should show that the project will be synchronized for back translations', () => {
+          let env = new TestEnvironment(() => {
+            mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+              projectId: 'testProjectId',
+              projectId$: of('testProjectId'),
+              projectDoc$: of(projectDoc)
+            });
+          });
+          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
+          env.component.isBackTranslation = true;
+          env.fixture.detectChanges();
+          expect(env.component.lastSyncSuccessful).toBeFalsy();
+          expect(env.getElementByTestId('notice-project-will-sync')).toBe(null);
+          expect(env.getElementByTestId('warning-last-sync-failed')).not.toBe(null);
+        });
       });
     });
   });
