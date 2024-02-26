@@ -205,14 +205,14 @@
     "select_verses": "Pilih ayat-ayat",
     "select": "Pilih",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
-    "tooltip_status_export": "Export to Paratext if configured in Settings",
+    "tooltip_status_export": "Ekspor ke Paratext jika dikonfigurasi di Pengaturan",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
     "your_answer": "Jawaban Anda"
   },
   "chapter_audio_dialog": {
     "audio": "Suara",
     "audio_already_exists": "Berkas suara sudah tersedia untuk pilihan ini.",
-    "audio_file_less_than_one_hundred_mb": "Audio files under 95MB only",
+    "audio_file_less_than_one_hundred_mb": "Hanya file audio di bawah 95MB",
     "browse_files": "Telusuri Berkas",
     "cancel": "Batal",
     "chapter_audio": "Pasal Audio",
@@ -231,7 +231,7 @@
     "upload": "Unggah",
     "upload_failed": "File audio tidak dapat diunggah. Silakan coba lagi atau gunakan file lain.",
     "upload_timing_file": "Unggah File Pengaturan Waktu",
-    "uploading": "Uploading...",
+    "uploading": "Mengunggah...",
     "zero_segments": "Nol segmen ditemukan."
   },
   "checking_audio_combined": {
@@ -247,7 +247,7 @@
   },
   "checking_audio_recorder": {
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
-    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
     "not_available": "Browser/Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan browser/peramban lain yang mendukung.",
     "record": "Rekam",
     "stop_recording": "Hentikan Perekaman",
@@ -395,7 +395,7 @@
   "share_dialog": {
     "anyone": "Siapa pun yang memiliki tautan",
     "anyone_can": "Siapa pun yang memiliki tautan tersebut dapat",
-    "change": "change",
+    "change": "ganti",
     "copy_link": "Salin tautan",
     "invitation_language": "Mengubah bahasa undangan",
     "invitation_link_type": "Mengubah cara penggunaan tautan",
