@@ -42,7 +42,7 @@ export class Auth0Service {
   }
 
   changePassword(email: string): Promise<string> {
-    const body = { connection: 'Username-Password-Authentication', email };
+    const body = { client_id: environment.authClientId, connection: 'Username-Password-Authentication', email };
     return this.post('dbconnections/change_password', body);
   }
 
