@@ -55,7 +55,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
-import { NewTabMenuManager } from 'src/app/shared/sf-tab-group';
+import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -82,7 +82,6 @@ import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-import { TabInfo, TabStateService } from '../../shared/tab-state/tab-state.service';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -111,7 +110,7 @@ import {
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
-import { EditorTabsMenuService } from './tabs/editor-tabs-menu.service';
+import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabGroupType, EditorTabInfo, EditorTabType } from './tabs/editor-tabs.types';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
@@ -147,7 +146,8 @@ const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
   styleUrls: ['./editor.component.scss'],
   providers: [
     TabStateService<EditorTabGroupType, EditorTabInfo>,
-    { provide: NewTabMenuManager, useClass: EditorTabsMenuService }
+    { provide: TabFactoryService, useClass: EditorTabFactoryService },
+    { provide: TabMenuService, useClass: EditorTabMenuService }
   ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
@@ -1138,11 +1138,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       message: of(this.stripXml(copyrightNotice)),
       options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
     });
-  }
-
-  addTab(tabGroupType: EditorTabGroupType, newTabType: string | null): void {
-    const tab = this.editorTabFactory.createEditorTab(newTabType as EditorTabType);
-    this.tabState.addTab(tabGroupType, tab);
   }
 
   setHistoryTabRevisionLabel(tab: TabInfo<EditorTabType>, revision: Revision): void {
@@ -2296,7 +2291,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     if (this.sourceLabel) {
       const sourceTabs: EditorTabInfo[] = [
-        this.editorTabFactory.createEditorTab('project-source', {
+        this.editorTabFactory.createTab('project-source', {
           headerText: this.sourceLabel
         })
       ];
@@ -2305,7 +2300,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const targetTabs: EditorTabInfo[] = [
-      this.editorTabFactory.createEditorTab('project', {
+      this.editorTabFactory.createTab('project', {
         headerText: this.targetLabel
       })
     ];

@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
+import { TabFactoryService } from 'src/app/shared/sf-tab-group';
 import { EditorTabInfo, EditorTabType } from './editor-tabs.types';
 
 @Injectable({
   providedIn: 'root'
 })
-export class EditorTabFactoryService {
-  constructor() {}
-
-  createEditorTab(tabType: EditorTabType, tabOptions: Partial<EditorTabInfo> = {}): EditorTabInfo {
+export class EditorTabFactoryService implements TabFactoryService<EditorTabType, EditorTabInfo> {
+  createTab(tabType: EditorTabType, tabOptions?: Partial<EditorTabInfo>): EditorTabInfo {
     switch (tabType) {
       case 'history':
         return {
@@ -26,7 +25,7 @@ export class EditorTabFactoryService {
         };
       case 'project-source':
       case 'project':
-        if (!tabOptions.headerText) {
+        if (!tabOptions?.headerText) {
           throw new Error(`'tabOptions' must include 'headerText'`);
         }
 

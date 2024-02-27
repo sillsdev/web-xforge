@@ -1,9 +1,14 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
-import { NewTabMenuItem, NewTabMenuManager } from 'src/app/shared/sf-tab-group';
-import { TabInfo, TabStateService } from '../tab-state/tab-state.service';
-import { SFTabsModule } from './sf-tabs.module';
+import {
+  NewTabMenuItem,
+  SFTabsModule,
+  TabFactoryService,
+  TabInfo,
+  TabMenuService,
+  TabStateService
+} from 'src/app/shared/sf-tab-group';
 
 @Component({
   selector: 'app-tab-group-stories',
@@ -30,37 +35,6 @@ class SFTabGroupStoriesComponent implements OnChanges {
   ngOnChanges(): void {
     this.tabState.addTabGroup(this.groupId, this.tabs);
   }
-
-  addTab(groupId: string, tabType: string | null): void {
-    let tab: TabInfo<string>;
-
-    switch (tabType) {
-      case 'blank':
-        tab = {
-          type: 'blank',
-          headerText: 'New tab',
-          closeable: true
-        };
-        break;
-      case 'type-a':
-        tab = {
-          type: 'type-a',
-          headerText: 'Tab A',
-          closeable: true
-        };
-        break;
-      case 'type-b':
-      default:
-        tab = {
-          type: 'type-b',
-          headerText: 'Tab B',
-          closeable: true
-        };
-        break;
-    }
-
-    this.tabState.addTab(groupId, tab);
-  }
 }
 
 export default {
@@ -73,7 +47,7 @@ export default {
       providers: [
         TabStateService<string, TabInfo<string>>,
         {
-          provide: NewTabMenuManager,
+          provide: TabMenuService,
           useValue: {
             getMenuItems(): Observable<NewTabMenuItem[]> {
               return of([
@@ -88,6 +62,41 @@ export default {
                   icon: 'auto_stories'
                 }
               ]);
+            }
+          }
+        },
+        {
+          provide: TabFactoryService,
+          useValue: {
+            createTab(tabType: string): TabInfo<string> {
+              let tab: TabInfo<string>;
+
+              switch (tabType) {
+                case 'blank':
+                  tab = {
+                    type: 'blank',
+                    headerText: 'New tab',
+                    closeable: true
+                  };
+                  break;
+                case 'type-a':
+                  tab = {
+                    type: 'type-a',
+                    headerText: 'Tab A',
+                    closeable: true
+                  };
+                  break;
+                case 'type-b':
+                default:
+                  tab = {
+                    type: 'type-b',
+                    headerText: 'Tab B',
+                    closeable: true
+                  };
+                  break;
+              }
+
+              return tab;
             }
           }
         }
@@ -115,7 +124,7 @@ export const EmptyAddTabMenu: Story = {
   ...Default,
   decorators: [
     moduleMetadata({
-      providers: [{ provide: NewTabMenuManager, useValue: { getMenuItems: () => of([]) } }]
+      providers: [{ provide: TabMenuService, useValue: { getMenuItems: () => of([]) } }]
     })
   ]
 };

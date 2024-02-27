@@ -1,4 +1,4 @@
-import { TabInfo } from '../../../shared/tab-state/tab-state.service';
+import { TabInfo } from 'src/app/shared/sf-tab-group';
 
 export type EditorTabGroupType = 'source' | 'target';
 

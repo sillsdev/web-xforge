@@ -8,7 +8,7 @@ export interface NewTabMenuItem {
   disabled?: boolean;
 }
 
-export abstract class NewTabMenuManager {
+export abstract class TabMenuService {
   abstract getMenuItems(tabGroup: string): Observable<NewTabMenuItem[]>;
 }
 
@@ -19,7 +19,7 @@ export abstract class NewTabMenuManager {
 @Injectable({
   providedIn: 'root'
 })
-export class NewTabMenuManagerService implements NewTabMenuManager {
+export class DefaultTabMenuService implements TabMenuService {
   constructor() {}
 
   getMenuItems(): Observable<NewTabMenuItem[]> {

@@ -3,20 +3,19 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
-import { NewTabMenuItem, NewTabMenuManager } from 'src/app/shared/sf-tab-group';
+import { NewTabMenuItem, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { TabStateService } from '../../../shared/tab-state/tab-state.service';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabGroupType, EditorTabInfo, EditorTabType, editorTabTypes } from './editor-tabs.types';
 
 @Injectable({
   providedIn: 'root'
 })
-export class EditorTabsMenuService implements NewTabMenuManager {
+export class EditorTabMenuService implements TabMenuService {
   constructor(
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,

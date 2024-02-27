@@ -24,7 +24,7 @@ import {
   Observable,
   Subscription
 } from 'rxjs';
-import { NewTabMenuItem, NewTabMenuManager } from 'src/app/shared/sf-tab-group';
+import { NewTabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
 import { TabHeaderMouseEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
@@ -67,7 +67,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly elementRef: ElementRef<HTMLElement>,
-    private readonly newTabMenuManager: NewTabMenuManager
+    private readonly newTabMenuManager: TabMenuService
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {

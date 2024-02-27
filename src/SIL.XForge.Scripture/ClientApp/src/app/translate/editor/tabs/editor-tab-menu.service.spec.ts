@@ -4,6 +4,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { SF_TYPE_REGISTRY } from 'src/app/core/models/sf-type-registry';
+import { TabStateService } from 'src/app/shared/sf-tab-group';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -12,12 +13,11 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../../machine-api/build-dto';
-import { TabStateService } from '../../../shared/tab-state/tab-state.service';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { EditorTabsMenuService } from './editor-tabs-menu.service';
+import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
-let service: EditorTabsMenuService;
+let service: EditorTabMenuService;
 const userServiceMock = mock(UserService);
 const activatedProjectMock = mock(ActivatedProjectService);
 const draftGenerationServiceMock = mock(DraftGenerationService);
@@ -29,7 +29,7 @@ describe('EditorTabsMenuService', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      EditorTabsMenuService,
+      EditorTabMenuService,
       { provide: UserService, useMock: userServiceMock },
       { provide: ActivatedProjectService, useMock: activatedProjectMock },
       { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
@@ -164,7 +164,7 @@ class TestEnvironment {
   } as SFProjectProfileDoc;
 
   constructor() {
-    service = TestBed.inject(EditorTabsMenuService);
+    service = TestBed.inject(EditorTabMenuService);
     when(activatedProjectMock.projectDoc$).thenReturn(of(this.projectDoc));
     when(mockI18nService.translate(anything())).thenReturn(of(''));
   }

@@ -1,8 +1,9 @@
 import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { NewTabMenuManager } from 'src/app/shared/sf-tab-group';
-import { TabStateService } from '../tab-state/tab-state.service';
+import { TabMenuService } from 'src/app/shared/sf-tab-group';
+import { TabStateService } from './tab-state/tab-state.service';
+import { TabFactoryService } from './base-services/tab-factory.service';
 import { SFTabsModule } from './sf-tabs.module';
 import { TabGroupComponent } from './tab-group.component';
 import { TabComponent } from './tab/tab.component';
@@ -15,7 +16,10 @@ describe('TabGroupComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SFTabsModule],
       declarations: [TabGroupComponent, TabComponent],
-      providers: [{ provide: NewTabMenuManager, useValue: { getMenuItems: () => of([]) } }]
+      providers: [
+        { provide: TabFactoryService, useValue: { createTab: () => {} } },
+        { provide: TabMenuService, useValue: { getMenuItems: () => of([]) } }
+      ]
     }).compileComponents();
   });
 
@@ -30,11 +34,24 @@ describe('TabGroupComponent', () => {
     component.tabs.reset([new TabComponent(), new TabComponent()]);
   });
 
-  it('should emit "newTabRequest" event when onTabAddRequest is called', () => {
-    spyOn(component.newTabRequest, 'emit');
+  it('should add tab using TabFactory and TabStateService when addTab is called', () => {
     const newTabType = 'test';
-    component.onTabAddRequest(newTabType);
-    expect(component.newTabRequest.emit).toHaveBeenCalledWith(newTabType);
+    const tab = {
+      type: 'test',
+      headerText: 'Tab Header',
+      closeable: false
+    };
+
+    const tabFactory = TestBed.inject(TabFactoryService);
+    const tabStateService = TestBed.inject(TabStateService);
+
+    spyOn(tabFactory, 'createTab').and.returnValue(tab);
+    spyOn(tabStateService, 'addTab');
+
+    component.addTab(newTabType);
+
+    expect(tabFactory.createTab).toHaveBeenCalledWith(newTabType);
+    expect(tabStateService.addTab).toHaveBeenCalledWith(component.groupId, tab);
   });
 
   it('should select tab using TabStateService when selectTab is called', () => {

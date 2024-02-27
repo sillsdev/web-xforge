@@ -61,7 +61,6 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
-import { SFTabsModule } from 'src/app/shared/sf-tab-group';
 import { anything, capture, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
@@ -91,6 +90,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { SFTabsModule, TabFactoryService, TabMenuService } from '../../shared/sf-tab-group';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
@@ -102,6 +102,7 @@ import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component'
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
+import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
 const mockedAuthService = mock(AuthService);
@@ -175,7 +176,9 @@ describe('EditorComponent', () => {
       { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
-      { provide: ParatextService, useMock: mockedParatextService }
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: TabFactoryService, useValue: EditorTabFactoryService },
+      { provide: TabMenuService, useValue: EditorTabMenuService }
     ]
   }));
 
@@ -3626,30 +3629,30 @@ describe('EditorComponent', () => {
   describe('populateEditorTabs', () => {
     it('should add source tab group when sourceLabel is defined', () => {
       const env = new TestEnvironment();
-      const spyCreateEditorTab = spyOn(env.tabFactory, 'createEditorTab');
+      const spyCreateTab = spyOn(env.tabFactory, 'createTab');
       const sourceLabel = 'source label';
       env.component['sourceLabel'] = sourceLabel;
       env.component['populateEditorTabs']();
 
-      expect(spyCreateEditorTab).toHaveBeenCalledWith('project-source', { headerText: sourceLabel });
+      expect(spyCreateTab).toHaveBeenCalledWith('project-source', { headerText: sourceLabel });
     });
 
     it('should not add source tab group when sourceLabel is undefined', () => {
       const env = new TestEnvironment();
-      const spyCreateEditorTab = spyOn(env.tabFactory, 'createEditorTab');
+      const spyCreateTab = spyOn(env.tabFactory, 'createTab');
       env.component['populateEditorTabs']();
 
-      expect(spyCreateEditorTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
+      expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
     });
 
     it('should add target tab group', () => {
       const env = new TestEnvironment();
-      const spyCreateEditorTab = spyOn(env.tabFactory, 'createEditorTab');
+      const spyCreateTab = spyOn(env.tabFactory, 'createTab');
       const targetLabel = 'target label';
       env.component['targetLabel'] = targetLabel;
       env.component['populateEditorTabs']();
 
-      expect(spyCreateEditorTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
+      expect(spyCreateTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
     });
   });
 });

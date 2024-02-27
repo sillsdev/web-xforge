@@ -11,7 +11,7 @@ describe('EditorTabFactoryService', () => {
   });
 
   it('should create a "history" tab', () => {
-    const tab = service.createEditorTab('history');
+    const tab = service.createTab('history');
     expect(tab.type).toEqual('history');
     expect(tab.icon).toEqual('history');
     expect(tab.headerText).toEqual('History');
@@ -19,7 +19,7 @@ describe('EditorTabFactoryService', () => {
   });
 
   it('should create a "draft" tab', () => {
-    const tab = service.createEditorTab('draft');
+    const tab = service.createTab('draft');
     expect(tab.type).toEqual('draft');
     expect(tab.icon).toEqual('model_training');
     expect(tab.headerText).toEqual('Auto Draft');
@@ -28,7 +28,7 @@ describe('EditorTabFactoryService', () => {
   });
 
   it('should create a "project" tab', () => {
-    const tab = service.createEditorTab('project', { headerText: 'Project 1' });
+    const tab = service.createTab('project', { headerText: 'Project 1' });
     expect(tab.type).toEqual('project');
     expect(tab.icon).toEqual('book');
     expect(tab.headerText).toEqual('Project 1');
@@ -37,7 +37,7 @@ describe('EditorTabFactoryService', () => {
   });
 
   it('should create a "project-source" tab', () => {
-    const tab = service.createEditorTab('project-source', { headerText: 'Project 1' });
+    const tab = service.createTab('project-source', { headerText: 'Project 1' });
     expect(tab.type).toEqual('project-source');
     expect(tab.icon).toEqual('book');
     expect(tab.headerText).toEqual('Project 1');
@@ -46,14 +46,14 @@ describe('EditorTabFactoryService', () => {
   });
 
   it('should throw error for unknown tab type', () => {
-    expect(() => service.createEditorTab('unknown' as EditorTabType)).toThrowError('Unknown TabType: unknown');
+    expect(() => service.createTab('unknown' as EditorTabType)).toThrowError('Unknown TabType: unknown');
   });
 
   it('should throw error for "project" tab without headerText', () => {
-    expect(() => service.createEditorTab('project')).toThrowError("'tabOptions' must include 'headerText'");
+    expect(() => service.createTab('project')).toThrowError("'tabOptions' must include 'headerText'");
   });
 
   it('should throw error for "project-source" tab without headerText', () => {
-    expect(() => service.createEditorTab('project-source')).toThrowError("'tabOptions' must include 'headerText'");
+    expect(() => service.createTab('project-source')).toThrowError("'tabOptions' must include 'headerText'");
   });
 });

@@ -10,7 +10,6 @@ import { TabScrollButtonComponent } from './tab-group-header/tab-scroll-button/t
 import { TabGroupComponent } from './tab-group.component';
 import { TabHeaderComponent } from './tab-header/tab-header.component';
 import { TabHeaderDirective } from './tab-header/tab-header.directive';
-import { NewTabMenuManager, NewTabMenuManagerService } from './tab-menu/new-tab-menu-manager.service';
 import { TabComponent } from './tab/tab.component';
 
 @NgModule({
@@ -23,7 +22,6 @@ import { TabComponent } from './tab/tab.component';
     TabScrollButtonComponent
   ],
   imports: [CommonModule, MatTabsModule, MatButtonModule, MatIconModule, MatMenuModule, TranslocoModule],
-  exports: [TabGroupComponent, TabComponent, TabHeaderDirective],
-  providers: [{ provide: NewTabMenuManager, useClass: NewTabMenuManagerService }]
+  exports: [TabGroupComponent, TabComponent, TabHeaderDirective]
 })
 export class SFTabsModule {}

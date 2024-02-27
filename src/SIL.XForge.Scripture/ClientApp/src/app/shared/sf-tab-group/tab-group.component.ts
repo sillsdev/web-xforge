@@ -1,14 +1,6 @@
-import {
-  Component,
-  ContentChildren,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  QueryList,
-  SimpleChanges
-} from '@angular/core';
-import { TabStateService } from '../tab-state/tab-state.service';
+import { Component, ContentChildren, Input, OnChanges, QueryList, SimpleChanges } from '@angular/core';
+import { TabStateService } from './tab-state/tab-state.service';
+import { TabFactoryService } from './base-services/tab-factory.service';
 import { TabHeaderMouseEvent } from './sf-tabs.types';
 import { TabComponent } from './tab/tab.component';
 
@@ -20,11 +12,13 @@ import { TabComponent } from './tab/tab.component';
 export class TabGroupComponent implements OnChanges {
   @Input() groupId: string = '';
   @Input() selectedIndex = 0;
-  @Output() newTabRequest = new EventEmitter<string | null>();
 
   @ContentChildren(TabComponent) tabs!: QueryList<TabComponent>;
 
-  constructor(private readonly tabState: TabStateService<string, any>) {}
+  constructor(
+    private readonly tabState: TabStateService<string, any>,
+    private readonly tabFactory: TabFactoryService<string, any>
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     const indexChange = changes.selectedIndex;
@@ -46,8 +40,9 @@ export class TabGroupComponent implements OnChanges {
     }
   }
 
-  onTabAddRequest(newTabType: string | null): void {
-    this.newTabRequest.emit(newTabType);
+  addTab(newTabType: string): void {
+    const tab = this.tabFactory.createTab(newTabType);
+    this.tabState.addTab(this.groupId, tab);
   }
 
   selectTab(tabIndex: number): void {
