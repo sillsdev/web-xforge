@@ -7,6 +7,7 @@ import { Auth0ClientOptions, GenericError, GetTokenSilentlyVerboseResponse } fro
 import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { environment } from '../environments/environment';
 
 const mockedHttpClient = mock(HttpClient);
 const mockedCookieService = mock(CookieService);
@@ -39,7 +40,11 @@ describe('Auth0Service', () => {
     env.service.changePassword(email);
     const httpOptions = capture(mockedHttpClient.post).last();
     expect(httpOptions[0].includes('dbconnections/change_password')).toBe(true);
-    expect(httpOptions[1]).toEqual({ connection: 'Username-Password-Authentication', email });
+    expect(httpOptions[1]).toEqual({
+      client_id: environment.authClientId,
+      connection: 'Username-Password-Authentication',
+      email
+    });
   }));
 
   it('should authenticate transparently with a cookie', fakeAsync(() => {
