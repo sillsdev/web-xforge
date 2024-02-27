@@ -118,43 +118,43 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="LearnCheckingHow" xml:space="preserve">
-    <value>Learn how to set up and use {0}Community Checking{1}.</value>
+    <value>Pelajari cara mengatur dan menggunakan {0}Pemeriksaan Masyarakat{1}.</value>
   </data>
   <data name="LearnCheckingTitle" xml:space="preserve">
     <value>Pemeriksaan Komunitas</value>
   </data>
   <data name="LearnHeader" xml:space="preserve">
-    <value>Learn more on Scripture Forge</value>
+    <value>Pelajari lebih lanjut tentang Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
     <value>{0}Answering questions{1}, including recording an audio answer, offline.</value>
   </data>
   <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
-    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how users can keep working, even when offline. It covers:</value>
+    <value>{0}Pemeriksa Komunitas{1} dan {0}Administrator{1} harus {2}menonton video ini{3} untuk melihat bagaimana pengguna dapat tetap bekerja, bahkan ketika luring. Meliputi:</value>
   </data>
   <data name="LearnSliderCheckingOfflineHeader" xml:space="preserve">
-    <value>Working Offline</value>
+    <value>Bekerja luring</value>
   </data>
   <data name="LearnSliderCheckingOfflineInstalling" xml:space="preserve">
-    <value>{0}Installing the app{1} on your device by using {2}Add to Home screen{3}.</value>
+    <value>{0}Memasang aplikasi{1} di perangkat Anda dengan menggunakan {2}Tambahkan ke layar Beranda{3}.</value>
   </data>
   <data name="LearnSliderCheckingOfflineLoading" xml:space="preserve">
-    <value>{0}Loading questions{1} automatically before going offline.</value>
+    <value>{0}Memuat pertanyaan{1} secara otomatis sebelum luring.</value>
   </data>
   <data name="LearnSliderCheckingOfflineSaving" xml:space="preserve">
-    <value>{0}Automatically saving{1} updated answers once you're back online.</value>
+    <value>{0}Secara otomatis menyimpan{1} jawaban yang telah diperbarui setelah Anda kembali daring.</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
-    <value>{0}Answering questions{1} in text and audio form.</value>
+    <value>{0}Menjawab pertanyaan{1} dalam bentuk teks dan audio.</value>
   </data>
   <data name="LearnSliderCheckingSeeConnect" xml:space="preserve">
-    <value>{0}Connecting to a Scripture Forge project{1} as an invited {2}Community Checker{3}.</value>
+    <value>{0}Terhubung ke proyek Scripture Forge{1} sebagai pemeriksa komunitas {2}yang diundang{3}.</value>
   </data>
   <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
-    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how {0}Community Checkers{1} can answer questions and interact with each other. It covers:</value>
+    <value>{0}Pemeriksa Masyarakat{1} dan {0}Administrator{1} harus {2}menonton video ini{3} untuk melihat bagaimana {0}Pemeriksa Masyarakat{1} dapat menjawab pertanyaan dan berinteraksi satu sama lain. Ini mencakup:</value>
   </data>
   <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
-    <value>Watch How Community Checking Works</value>
+    <value>Tonton Cara Kerja Pemeriksaan Masyarakat</value>
   </data>
   <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
     <value>{0}Interacting{1} with other {2}Community Checkers{3} by adding comments to their answers.</value>
