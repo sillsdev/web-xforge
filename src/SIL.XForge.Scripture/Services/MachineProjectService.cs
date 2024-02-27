@@ -13,8 +13,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Serval.Client;
-using SIL.Machine.Corpora;
-using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -31,61 +29,28 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
-/// Provides functionality to add, remove, and build Machine projects in both
-/// the In-Process Machine and Serval implementations.
+/// Provides functionality to add, remove, and build Machine projects.
 /// </summary>
-public class MachineProjectService : IMachineProjectService
+public class MachineProjectService(
+    IDataFilesClient dataFilesClient,
+    IExceptionHandler exceptionHandler,
+    IFeatureManager featureManager,
+    IFileSystemService fileSystemService,
+    ILogger<MachineProjectService> logger,
+    IParatextService paratextService,
+    IRepository<SFProjectSecret> projectSecrets,
+    IRealtimeService realtimeService,
+    IOptions<SiteOptions> siteOptions,
+    ISFTextCorpusFactory textCorpusFactory,
+    ITranslationEnginesClient translationEnginesClient,
+    IRepository<UserSecret> userSecrets
+) : IMachineProjectService
 {
     // Supported translation engines (Serval 1.2 format)
     // Serval 1.2 accepts the translation engine type in 1.1 (PascalCase) and 1.2 (kebab-case) format
     internal const string Echo = "echo";
     internal const string Nmt = "nmt";
     internal const string SmtTransfer = "smt-transfer";
-
-    private readonly IDataFilesClient _dataFilesClient;
-    private readonly IEngineService _engineService;
-    private readonly IExceptionHandler _exceptionHandler;
-    private readonly IFeatureManager _featureManager;
-    private readonly IFileSystemService _fileSystemService;
-    private readonly ILogger<MachineProjectService> _logger;
-    private readonly IParatextService _paratextService;
-    private readonly IRepository<SFProjectSecret> _projectSecrets;
-    private readonly IRealtimeService _realtimeService;
-    private readonly IOptions<SiteOptions> _siteOptions;
-    private readonly ISFTextCorpusFactory _textCorpusFactory;
-    private readonly ITranslationEnginesClient _translationEnginesClient;
-    private readonly IRepository<UserSecret> _userSecrets;
-
-    public MachineProjectService(
-        IDataFilesClient dataFilesClient,
-        IEngineService engineService,
-        IExceptionHandler exceptionHandler,
-        IFeatureManager featureManager,
-        IFileSystemService fileSystemService,
-        ILogger<MachineProjectService> logger,
-        IParatextService paratextService,
-        IRepository<SFProjectSecret> projectSecrets,
-        IRealtimeService realtimeService,
-        IOptions<SiteOptions> siteOptions,
-        ISFTextCorpusFactory textCorpusFactory,
-        ITranslationEnginesClient translationEnginesClient,
-        IRepository<UserSecret> userSecrets
-    )
-    {
-        _dataFilesClient = dataFilesClient;
-        _engineService = engineService;
-        _exceptionHandler = exceptionHandler;
-        _featureManager = featureManager;
-        _fileSystemService = fileSystemService;
-        _logger = logger;
-        _paratextService = paratextService;
-        _projectSecrets = projectSecrets;
-        _realtimeService = realtimeService;
-        _siteOptions = siteOptions;
-        _textCorpusFactory = textCorpusFactory;
-        _translationEnginesClient = translationEnginesClient;
-        _userSecrets = userSecrets;
-    }
 
     public async Task<string> AddProjectAsync(
         string curUserId,
@@ -95,45 +60,24 @@ public class MachineProjectService : IMachineProjectService
     )
     {
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
-        }
-
-        // Add the project to the in process Machine instance
-        var machineProject = new Machine.WebApi.Models.Project
-        {
-            Id = sfProjectId,
-            SourceLanguageTag = project.TranslateConfig.Source!.WritingSystem.Tag,
-            TargetLanguageTag = project.WritingSystem.Tag,
-        };
-
-        // Only add to the In Process instance if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
-        {
-            await _engineService.AddProjectAsync(machineProject);
-        }
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return string.Empty;
         }
 
         // We may not have the source language tag or target language tag if either is a back translation
         // If that is the case, we will create the translation engine on first sync by running this method again
         // After ensuring that the source and target language tags are present
         if (
-            !string.IsNullOrWhiteSpace(machineProject.SourceLanguageTag)
-            && !string.IsNullOrWhiteSpace(machineProject.TargetLanguageTag)
+            !string.IsNullOrWhiteSpace(project.TranslateConfig.Source?.WritingSystem.Tag)
+            && !string.IsNullOrWhiteSpace(project.WritingSystem.Tag)
         )
         {
             return await CreateServalProjectAsync(project, preTranslate, cancellationToken);
         }
 
-        _logger.LogInformation("The source or target language is missing from the project");
+        logger.LogInformation("The source or target language is missing from the project");
         return string.Empty;
     }
 
@@ -144,27 +88,14 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Build the project with the In Process Machine instance
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
-        {
-            await _engineService.StartBuildByProjectIdAsync(buildConfig.ProjectId);
-        }
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return null;
-        }
-
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
 
         // Load the project from the realtime service
-        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
         if (!projectDoc.IsLoaded)
         {
@@ -196,14 +127,14 @@ public class MachineProjectService : IMachineProjectService
             )
             {
                 // Get the user secret
-                Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+                Attempt<UserSecret> userSecretAttempt = await userSecrets.TryGetAsync(curUserId);
                 if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                     throw new DataNotFoundException("The user does not exist.");
 
                 // Update the target writing system tag
                 if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
                 {
-                    string targetLanguageTag = _paratextService.GetLanguageId(userSecret, projectDoc.Data.ParatextId);
+                    string targetLanguageTag = paratextService.GetLanguageId(userSecret, projectDoc.Data.ParatextId);
                     if (!string.IsNullOrEmpty(targetLanguageTag))
                     {
                         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.WritingSystem.Tag, targetLanguageTag));
@@ -213,7 +144,7 @@ public class MachineProjectService : IMachineProjectService
                 // Update the source writing system tag
                 if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source!.WritingSystem.Tag))
                 {
-                    string sourceLanguageTag = _paratextService.GetLanguageId(
+                    string sourceLanguageTag = paratextService.GetLanguageId(
                         userSecret,
                         projectDoc.Data.TranslateConfig.Source!.ParatextId
                     );
@@ -232,8 +163,8 @@ public class MachineProjectService : IMachineProjectService
                     .ServalData?.Corpora
                     .Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                     .Select(c => c.Key)
-                    .ToArray() ?? Array.Empty<string>();
-            await _projectSecrets.UpdateAsync(
+                    .ToArray() ?? [];
+            await projectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
                 {
@@ -266,7 +197,7 @@ public class MachineProjectService : IMachineProjectService
         // Get the translation engine from Serval
         try
         {
-            TranslationEngine translationEngine = await _translationEnginesClient.GetAsync(
+            TranslationEngine translationEngine = await translationEnginesClient.GetAsync(
                 translationEngineId,
                 cancellationToken
             );
@@ -278,7 +209,7 @@ public class MachineProjectService : IMachineProjectService
             {
                 string message =
                     $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
-                _logger.LogInformation(message);
+                logger.LogInformation(message);
                 recreateTranslationEngine = true;
             }
 
@@ -288,7 +219,7 @@ public class MachineProjectService : IMachineProjectService
             {
                 string message =
                     $"Source language has changed from {translationEngine.SourceLanguage} to {projectSourceLanguage}.";
-                _logger.LogInformation(message);
+                logger.LogInformation(message);
                 recreateTranslationEngine = true;
             }
 
@@ -297,21 +228,19 @@ public class MachineProjectService : IMachineProjectService
             {
                 // Removal can be a slow process
                 await RemoveProjectAsync(curUserId, buildConfig.ProjectId, preTranslate, cancellationToken);
-
-                // We use AddProjectAsync, as the In-Process Machine may be enabled
                 await AddProjectAsync(curUserId, buildConfig.ProjectId, preTranslate, cancellationToken);
             }
         }
         catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
         {
             // A 404 means that the translation engine does not exist
-            _logger.LogInformation($"Translation Engine {translationEngineId} does not exist.");
+            logger.LogInformation($"Translation Engine {translationEngineId} does not exist.");
             string? corporaId = projectSecret
                 .ServalData?.Corpora
                 .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                 .Key;
             // Clear the existing translation engine id and corpora
-            await _projectSecrets.UpdateAsync(
+            await projectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
                 {
@@ -333,7 +262,7 @@ public class MachineProjectService : IMachineProjectService
 
             // Create the new translation engine id
             translationEngineId = await CreateServalProjectAsync(projectDoc.Data, preTranslate, cancellationToken);
-            _logger.LogInformation($"Created Translation Engine {translationEngineId}.");
+            logger.LogInformation($"Created Translation Engine {translationEngineId}.");
         }
 
         // Sync the corpus
@@ -343,7 +272,7 @@ public class MachineProjectService : IMachineProjectService
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
 
             // Get the updated project secrets
-            projectSecret = await _projectSecrets.GetAsync(buildConfig.ProjectId);
+            projectSecret = await projectSecrets.GetAsync(buildConfig.ProjectId);
 
             // Get the appropriate translation engine
             TranslationBuildConfig translationBuildConfig;
@@ -365,7 +294,7 @@ public class MachineProjectService : IMachineProjectService
             }
 
             // Start the build
-            TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
+            TranslationBuild translationBuild = await translationEnginesClient.StartBuildAsync(
                 translationEngineId,
                 translationBuildConfig,
                 cancellationToken
@@ -374,7 +303,7 @@ public class MachineProjectService : IMachineProjectService
             // Clear the pre-translation queued status and job id
             if (preTranslate)
             {
-                await _projectSecrets.UpdateAsync(
+                await projectSecrets.UpdateAsync(
                     buildConfig.ProjectId,
                     u =>
                     {
@@ -409,7 +338,7 @@ public class MachineProjectService : IMachineProjectService
             // Exclude TaskCanceledException with an inner TimeoutException, as this generated by an HttpClient timeout
 
             // Ensure that the queued at timestamp is not present
-            await _projectSecrets.UpdateAsync(
+            await projectSecrets.UpdateAsync(
                 buildConfig.ProjectId,
                 u => u.Unset(p => p.ServalData.PreTranslationQueuedAt)
             );
@@ -417,7 +346,7 @@ public class MachineProjectService : IMachineProjectService
         catch (ServalApiException e) when (e.StatusCode == 409)
         {
             // A build is already in progress - clear the job details and do not record the error
-            await _projectSecrets.UpdateAsync(
+            await projectSecrets.UpdateAsync(
                 buildConfig.ProjectId,
                 u =>
                 {
@@ -431,11 +360,11 @@ public class MachineProjectService : IMachineProjectService
             // Log the error and report to bugsnag
             string message =
                 $"Build exception occurred for project ${buildConfig.ProjectId} running in background job.";
-            _logger.LogError(e, message);
-            _exceptionHandler.ReportException(e);
+            logger.LogError(e, message);
+            exceptionHandler.ReportException(e);
 
             // Update the project secret with the error message
-            await _projectSecrets.UpdateAsync(
+            await projectSecrets.UpdateAsync(
                 buildConfig.ProjectId,
                 u =>
                 {
@@ -454,7 +383,7 @@ public class MachineProjectService : IMachineProjectService
     /// <returns>The translation engine type string for Serval.</returns>
     public async Task<string> GetTranslationEngineTypeAsync(bool preTranslate)
     {
-        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+        bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
         return preTranslate switch
         {
             true when useEcho => Echo,
@@ -470,21 +399,8 @@ public class MachineProjectService : IMachineProjectService
         CancellationToken cancellationToken
     )
     {
-        // Remove the project from the In Process Machine instance
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
-        {
-            await _engineService.RemoveProjectAsync(sfProjectId);
-        }
-
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return;
-        }
-
         // Load the target project secrets, so we can get the translation engine ID
-        if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -495,7 +411,7 @@ public class MachineProjectService : IMachineProjectService
             : projectSecret.ServalData?.TranslationEngineId;
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
-            _logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
+            logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
             return;
         }
 
@@ -513,7 +429,7 @@ public class MachineProjectService : IMachineProjectService
             {
                 try
                 {
-                    await _dataFilesClient.DeleteAsync(fileId, cancellationToken);
+                    await dataFilesClient.DeleteAsync(fileId, cancellationToken);
                 }
                 catch (ServalApiException e)
                 {
@@ -524,14 +440,14 @@ public class MachineProjectService : IMachineProjectService
                         message =
                             $"Corpora file {fileId} in corpus {corpusId} for project {sfProjectId}"
                             + " was missing or already deleted.";
-                        _logger.LogInformation(message);
+                        logger.LogInformation(message);
                     }
                     else
                     {
                         message =
                             $"Ignored exception while deleting file {fileId} in corpus {corpusId}"
                             + $" for project {sfProjectId}.";
-                        _logger.LogError(e, message);
+                        logger.LogError(e, message);
                     }
                 }
             }
@@ -539,7 +455,7 @@ public class MachineProjectService : IMachineProjectService
             // Delete the corpus
             try
             {
-                await _translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
+                await translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
             }
             catch (ServalApiException e)
             {
@@ -550,32 +466,32 @@ public class MachineProjectService : IMachineProjectService
                     message =
                         $"Translation Engine {translationEngineId} for project {sfProjectId}"
                         + " was missing or already deleted.";
-                    _logger.LogInformation(message);
+                    logger.LogInformation(message);
                 }
                 else
                 {
                     message =
                         $"Ignored exception while deleting translation engine {translationEngineId}"
                         + $" for project {sfProjectId}.";
-                    _logger.LogError(e, message);
+                    logger.LogError(e, message);
                 }
             }
 
             // Remove our record of the corpus
-            await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora[corpusId]));
+            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora[corpusId]));
         }
 
         // Remove the project from Serval
-        await _translationEnginesClient.DeleteAsync(translationEngineId, cancellationToken);
+        await translationEnginesClient.DeleteAsync(translationEngineId, cancellationToken);
 
         // Remove the Serval Data
         if (preTranslate)
         {
-            await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationEngineId));
+            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationEngineId));
         }
         else
         {
-            await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.TranslationEngineId));
+            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.TranslationEngineId));
         }
     }
 
@@ -604,22 +520,15 @@ public class MachineProjectService : IMachineProjectService
         // Used to return whether the corpus was updated
         bool corpusUpdated = false;
 
-        // Ensure that the Serval feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
-        {
-            _logger.LogInformation("Serval feature flag is not enabled");
-            return false;
-        }
-
         // Load the project from the realtime service
-        Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(buildConfig.ProjectId);
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(buildConfig.ProjectId);
         if (!attempt.TryResult(out SFProject project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }
 
         // Load the project secrets, so we can get the corpus files
-        if (!(await _projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -649,7 +558,7 @@ public class MachineProjectService : IMachineProjectService
         // See if we are uploading a Paratext zip file
         bool uploadParatextZipFile =
             preTranslate
-            && await _featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+            && await featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
             && (corpusId == null || projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile);
 
         // See if there is an alternate training source corpus
@@ -675,7 +584,7 @@ public class MachineProjectService : IMachineProjectService
         IEnumerable<ISFText> texts = new List<ISFText>();
         if (!uploadParatextZipFile)
         {
-            texts = await _textCorpusFactory.CreateAsync(
+            texts = await textCorpusFactory.CreateAsync(
                 new[] { project.Id },
                 TextCorpusType.Source,
                 preTranslate,
@@ -706,7 +615,7 @@ public class MachineProjectService : IMachineProjectService
         // Only specify the text corpus if we are not uploading to Paratext
         if (!uploadParatextZipFile)
         {
-            texts = await _textCorpusFactory.CreateAsync(
+            texts = await textCorpusFactory.CreateAsync(
                 new[] { project.Id },
                 TextCorpusType.Target,
                 preTranslate,
@@ -743,7 +652,7 @@ public class MachineProjectService : IMachineProjectService
             // Only specify the text corpus if we are not uploading to Paratext
             if (!uploadParatextZipFile)
             {
-                texts = await _textCorpusFactory.CreateAsync(
+                texts = await textCorpusFactory.CreateAsync(
                     new[] { project.Id },
                     TextCorpusType.Source,
                     preTranslate,
@@ -768,7 +677,7 @@ public class MachineProjectService : IMachineProjectService
             // If there is an existing alternate training source
 
             // Remove the corpus from Serval
-            await _translationEnginesClient.DeleteCorpusAsync(
+            await translationEnginesClient.DeleteCorpusAsync(
                 translationEngineId,
                 alternateTrainingSourceCorpusId,
                 cancellationToken
@@ -777,11 +686,11 @@ public class MachineProjectService : IMachineProjectService
             // Remove the files from Serval
             foreach (ServalCorpusFile file in oldAlternateTrainingSourceCorpusFiles)
             {
-                await _dataFilesClient.DeleteAsync(file.FileId, cancellationToken);
+                await dataFilesClient.DeleteAsync(file.FileId, cancellationToken);
             }
 
             // Remove the reference to the corpus from the project secret
-            await _projectSecrets.UpdateAsync(
+            await projectSecrets.UpdateAsync(
                 project.Id,
                 u => u.Unset(p => p.ServalData.Corpora[alternateTrainingSourceCorpusId])
             );
@@ -843,7 +752,7 @@ public class MachineProjectService : IMachineProjectService
 
         try
         {
-            TranslationEngine translationEngine = await _translationEnginesClient.GetAsync(
+            TranslationEngine translationEngine = await translationEnginesClient.GetAsync(
                 translationEngineId,
                 cancellationToken
             );
@@ -868,13 +777,13 @@ public class MachineProjectService : IMachineProjectService
     public async Task UpdateTranslationSourcesAsync(string curUserId, string sfProjectId)
     {
         // Get the user secret
-        if (!(await _userSecrets.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
+        if (!(await userSecrets.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
         {
             throw new DataNotFoundException("The user secret does not exist.");
         }
 
         // Load the project from the realtime service
-        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
         if (!projectDoc.IsLoaded)
         {
@@ -884,7 +793,7 @@ public class MachineProjectService : IMachineProjectService
         // If there is an alternate source, ensure that writing system and RTL is correct
         if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource is not null)
         {
-            ParatextSettings? alternateSourceSettings = _paratextService.GetParatextSettings(
+            ParatextSettings? alternateSourceSettings = paratextService.GetParatextSettings(
                 userSecret,
                 projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource.ParatextId
             );
@@ -908,7 +817,7 @@ public class MachineProjectService : IMachineProjectService
         // If there is an alternate training source, ensure that writing system and RTL is correct
         if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource is not null)
         {
-            ParatextSettings? alternateSourceSettings = _paratextService.GetParatextSettings(
+            ParatextSettings? alternateSourceSettings = paratextService.GetParatextSettings(
                 userSecret,
                 projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
             );
@@ -967,16 +876,7 @@ public class MachineProjectService : IMachineProjectService
         // For pre-translation, we must upload empty lines with segment refs for the correct references to be returned
         foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty || includeBlankSegments))
         {
-            // We pad the verse number so the string based key comparisons in Machine will be accurate.
-            // If the int does not parse successfully, it will be because it is a Biblical Term - which has a Greek or
-            // Hebrew word as the key, or because the verse number is unusual (i.e. 12a or 12-13). Usually the key is
-            // a standard verse number, so will be at most in the hundreds.
-            string key = segment.SegmentRef is TextSegmentRef textSegmentRef
-                ? string.Join('_', textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k))
-                : (string)segment.SegmentRef;
-
-            // Strip characters from the key that will corrupt the line
-            sb.Append(key.Replace('\n', '_').Replace('\t', '_'));
+            sb.Append(segment.SegmentRef);
             sb.Append('\t');
             sb.Append(segment.SegmentText);
             sb.Append('\t');
@@ -1039,7 +939,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // See if uploading Paratext Zip files is enabled
-        bool uploadParatextZipFile = await _featureManager.IsEnabledAsync(
+        bool uploadParatextZipFile = await featureManager.IsEnabledAsync(
             FeatureFlags.UploadParatextZipForPreTranslation
         );
 
@@ -1127,7 +1027,7 @@ public class MachineProjectService : IMachineProjectService
     )
     {
         // Get the existing project secret, so we can see how to create the engine and update the Serval data
-        SFProjectSecret projectSecret = await _projectSecrets.GetAsync(sfProject.Id);
+        SFProjectSecret projectSecret = await projectSecrets.GetAsync(sfProject.Id);
         string translationEngineId = preTranslate
             ? projectSecret.ServalData?.PreTranslationEngineId
             : projectSecret.ServalData?.TranslationEngineId;
@@ -1142,7 +1042,7 @@ public class MachineProjectService : IMachineProjectService
             };
 
             // Add the project to Serval
-            TranslationEngine translationEngine = await _translationEnginesClient.CreateAsync(
+            TranslationEngine translationEngine = await translationEnginesClient.CreateAsync(
                 engineConfig,
                 cancellationToken
             );
@@ -1157,7 +1057,7 @@ public class MachineProjectService : IMachineProjectService
             if (projectSecret.ServalData is not null && preTranslate)
             {
                 // Store the Pre-Translation Engine ID
-                await _projectSecrets.UpdateAsync(
+                await projectSecrets.UpdateAsync(
                     sfProject.Id,
                     u => u.Set(p => p.ServalData.PreTranslationEngineId, translationEngine.Id)
                 );
@@ -1165,7 +1065,7 @@ public class MachineProjectService : IMachineProjectService
             else if (projectSecret.ServalData is not null)
             {
                 // Store the Translation Engine ID
-                await _projectSecrets.UpdateAsync(
+                await projectSecrets.UpdateAsync(
                     sfProject.Id,
                     u => u.Set(p => p.ServalData.TranslationEngineId, translationEngine.Id)
                 );
@@ -1173,7 +1073,7 @@ public class MachineProjectService : IMachineProjectService
             else if (preTranslate)
             {
                 // Store the Pre-Translation Engine ID
-                await _projectSecrets.UpdateAsync(
+                await projectSecrets.UpdateAsync(
                     sfProject.Id,
                     u => u.Set(p => p.ServalData, new ServalData { PreTranslationEngineId = translationEngine.Id })
                 );
@@ -1181,7 +1081,7 @@ public class MachineProjectService : IMachineProjectService
             else
             {
                 // Store the Translation Engine ID
-                await _projectSecrets.UpdateAsync(
+                await projectSecrets.UpdateAsync(
                     sfProject.Id,
                     u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = translationEngine.Id })
                 );
@@ -1250,7 +1150,7 @@ public class MachineProjectService : IMachineProjectService
         DataFile dataFile;
         if (previousCorpusFile is null)
         {
-            dataFile = await _dataFilesClient.CreateAsync(
+            dataFile = await dataFilesClient.CreateAsync(
                 new FileParameter(stream),
                 fileFormat,
                 textId,
@@ -1263,23 +1163,23 @@ public class MachineProjectService : IMachineProjectService
             bool dataFileExists;
             try
             {
-                dataFile = await _dataFilesClient.GetAsync(previousCorpusFile.FileId, cancellationToken);
+                dataFile = await dataFilesClient.GetAsync(previousCorpusFile.FileId, cancellationToken);
                 dataFileExists = dataFile.Format == fileFormat;
             }
             catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
             {
-                _logger.LogInformation($"File {previousCorpusFile.FileId} does not exist - creating.");
+                logger.LogInformation($"File {previousCorpusFile.FileId} does not exist - creating.");
                 dataFileExists = false;
             }
 
             // Update the file if it exists, otherwise create it
             dataFile = dataFileExists
-                ? await _dataFilesClient.UpdateAsync(
+                ? await dataFilesClient.UpdateAsync(
                     previousCorpusFile.FileId,
                     new FileParameter(stream),
                     cancellationToken
                 )
-                : await _dataFilesClient.CreateAsync(new FileParameter(stream), fileFormat, textId, cancellationToken);
+                : await dataFilesClient.CreateAsync(new FileParameter(stream), fileFormat, textId, cancellationToken);
         }
 
         newCorpusFiles.Add(
@@ -1303,7 +1203,7 @@ public class MachineProjectService : IMachineProjectService
     private async Task<string> GetTargetLanguageAsync(SFProject project)
     {
         // Echo requires the target and source language to be the same, as it outputs your source texts
-        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+        bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
         return useEcho ? GetSourceLanguage(project, useAlternateTrainingSource: false) : project.WritingSystem.Tag;
     }
 
@@ -1352,7 +1252,7 @@ public class MachineProjectService : IMachineProjectService
         // See if we need to create or update the corpus
         if (string.IsNullOrEmpty(corpusId))
         {
-            corpus = await _translationEnginesClient.AddCorpusAsync(
+            corpus = await translationEnginesClient.AddCorpusAsync(
                 translationEngineId,
                 corpusConfig,
                 cancellationToken
@@ -1365,7 +1265,7 @@ public class MachineProjectService : IMachineProjectService
             bool deleteCorpus;
             try
             {
-                corpus = await _translationEnginesClient.GetCorpusAsync(
+                corpus = await translationEnginesClient.GetCorpusAsync(
                     translationEngineId,
                     corpusId,
                     cancellationToken
@@ -1378,9 +1278,7 @@ public class MachineProjectService : IMachineProjectService
             catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
             {
                 // A 404 means that the translation engine does not exist
-                _logger.LogInformation(
-                    $"Corpus {corpusId} in Translation Engine {translationEngineId} does not exist."
-                );
+                logger.LogInformation($"Corpus {corpusId} in Translation Engine {translationEngineId} does not exist.");
                 createCorpus = true;
                 deleteCorpus = false;
             }
@@ -1391,11 +1289,11 @@ public class MachineProjectService : IMachineProjectService
                 // Delete the old corpus
                 if (deleteCorpus)
                 {
-                    await _translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
+                    await translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
                 }
 
                 // Recreate the corpus
-                corpus = await _translationEnginesClient.AddCorpusAsync(
+                corpus = await translationEnginesClient.AddCorpusAsync(
                     translationEngineId,
                     corpusConfig,
                     cancellationToken
@@ -1409,7 +1307,7 @@ public class MachineProjectService : IMachineProjectService
                     SourceFiles = corpusConfig.SourceFiles,
                     TargetFiles = corpusConfig.TargetFiles,
                 };
-                corpus = await _translationEnginesClient.UpdateCorpusAsync(
+                corpus = await translationEnginesClient.UpdateCorpusAsync(
                     translationEngineId,
                     corpusId,
                     corpusUpdateConfig,
@@ -1424,7 +1322,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Update the project secret with the new corpus information
-        await _projectSecrets.UpdateAsync(
+        await projectSecrets.UpdateAsync(
             project.Id,
             u =>
                 u.Set(
@@ -1481,10 +1379,10 @@ public class MachineProjectService : IMachineProjectService
         if (uploadParatextZipFile)
         {
             // Get the path to the Paratext directory
-            string path = Path.Combine(_siteOptions.Value.SiteDir, "sync", paratextId, "target");
+            string path = Path.Combine(siteOptions.Value.SiteDir, "sync", paratextId, "target");
 
             // Ensure that the path exists
-            if (!_fileSystemService.DirectoryExists(path))
+            if (!fileSystemService.DirectoryExists(path))
             {
                 throw new DirectoryNotFoundException($"The following directory could not be found: {path}");
             }
@@ -1495,9 +1393,9 @@ public class MachineProjectService : IMachineProjectService
             {
                 // Do not convert the ZipArchive using statement above into a using declaration,
                 // otherwise the ZipArchive disposal will crash after the MemoryStream disposal.
-                foreach (string filePath in _fileSystemService.EnumerateFiles(path))
+                foreach (string filePath in fileSystemService.EnumerateFiles(path))
                 {
-                    await using Stream fileStream = _fileSystemService.OpenFile(filePath, FileMode.Open);
+                    await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
                     ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
                     await using Stream entryStream = entry.Open();
                     await fileStream.CopyToAsync(entryStream, cancellationToken);
@@ -1545,7 +1443,7 @@ public class MachineProjectService : IMachineProjectService
             {
                 try
                 {
-                    await _dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
+                    await dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
                 }
                 catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
                 {
@@ -1553,7 +1451,7 @@ public class MachineProjectService : IMachineProjectService
                     string message =
                         $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {projectId}"
                         + " was missing or already deleted.";
-                    _logger.LogInformation(e, message);
+                    logger.LogInformation(e, message);
                 }
 
                 corpusUpdated = true;

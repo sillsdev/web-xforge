@@ -8,9 +8,6 @@ using System.Xml.Linq;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using SIL.Machine.Corpora;
-using SIL.Machine.Tokenization;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
@@ -20,41 +17,17 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
-/// This class represents a Machine text corpus for a SF project. It is used during batch training of the Machine
-/// translation engine.
+/// This class represents a Serval text corpus file for an SF project.
+/// It is used during generation of text files for upload to Serval.
 /// </summary>
-public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
+public class SFTextCorpusFactory(
+    IOptions<DataAccessOptions> dataAccessOptions,
+    IRealtimeService realtimeService,
+    IOptions<SiteOptions> siteOptions,
+    IFileSystemService fileSystemService
+) : ISFTextCorpusFactory
 {
-    private readonly IMongoClient _mongoClient;
-    private readonly IOptions<DataAccessOptions> _dataAccessOptions;
-    private readonly IRealtimeService _realtimeService;
-    private readonly IOptions<SiteOptions> _siteOptions;
-    private readonly IFileSystemService _fileSystemService;
-
-    public SFTextCorpusFactory(
-        IOptions<DataAccessOptions> dataAccessOptions,
-        IRealtimeService realtimeService,
-        IOptions<SiteOptions> siteOptions,
-        IFileSystemService fileSystemService
-    )
-    {
-        _dataAccessOptions = dataAccessOptions;
-        _mongoClient = new MongoClient(dataAccessOptions.Value.ConnectionString);
-        _realtimeService = realtimeService;
-        _siteOptions = siteOptions;
-        _fileSystemService = fileSystemService;
-    }
-
-    public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(
-            await CreateTextsAsync(
-                projects,
-                type,
-                preTranslate: false,
-                useAlternateTrainingSource: false,
-                new BuildConfig()
-            )
-        );
+    private readonly IMongoClient _mongoClient = new MongoClient(dataAccessOptions.Value.ConnectionString);
 
     public Task<IEnumerable<ISFText>> CreateAsync(
         IEnumerable<string> projects,
@@ -72,15 +45,14 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
         BuildConfig buildConfig
     )
     {
-        StringTokenizer wordTokenizer = new LatinWordTokenizer();
-        IMongoDatabase database = _mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
+        IMongoDatabase database = _mongoClient.GetDatabase(dataAccessOptions.Value.MongoDatabaseName);
         IMongoCollection<BsonDocument> textDataColl = database.GetCollection<BsonDocument>(
-            _realtimeService.GetCollectionName<TextData>()
+            realtimeService.GetCollectionName<TextData>()
         );
         var texts = new List<ISFText>();
         foreach (string projectId in projects)
         {
-            SFProject project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
+            SFProject project = await realtimeService.GetSnapshotAsync<SFProject>(projectId);
             List<TextInfo> projectTexts = project.Texts.Where(t => t.HasSource).ToList();
             List<int> books = new List<int>();
             string textCorpusProjectId;
@@ -114,7 +86,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                     // If we are pre-translating, get all source texts to generate all needed pre-translations
                     if (preTranslate)
                     {
-                        var sourceProject = await _realtimeService.GetSnapshotAsync<SFProject>(textCorpusProjectId);
+                        var sourceProject = await realtimeService.GetSnapshotAsync<SFProject>(textCorpusProjectId);
                         projectTexts = sourceProject.Texts;
                     }
 
@@ -154,7 +126,6 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                     if (doc != null && doc.TryGetValue("ops", out BsonValue ops) && ops as BsonArray != null)
                         texts.Add(
                             new SFScriptureText(
-                                wordTokenizer,
                                 projectId,
                                 text.BookNum,
                                 chapter.Number,
@@ -172,33 +143,33 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                 break;
 
             // Get the Biblical Terms
-            List<BiblicalTerm> biblicalTerms = await _realtimeService
+            List<BiblicalTerm> biblicalTerms = await realtimeService
                 .QuerySnapshots<BiblicalTerm>()
                 .Where(b => b.ProjectRef == textCorpusProjectId)
                 .ToListAsync();
             if (biblicalTerms.Any())
             {
-                texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, biblicalTerms));
+                texts.Add(new SFBiblicalTermsText(projectId, biblicalTerms));
             }
             else
             {
                 // Use the legacy upload method for projects which do not yet have their biblical terms populated in Mongo
                 string termRenderingsFileName = Path.Combine(
-                    _siteOptions.Value.SiteDir,
+                    siteOptions.Value.SiteDir,
                     "sync",
                     paratextId,
                     "target",
                     "TermRenderings.xml"
                 );
-                if (_fileSystemService.FileExists(termRenderingsFileName))
+                if (fileSystemService.FileExists(termRenderingsFileName))
                 {
-                    await using Stream stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
+                    await using Stream stream = fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
                     XDocument termRenderingsDoc = await XDocument.LoadAsync(
                         stream,
                         LoadOptions.None,
                         CancellationToken.None
                     );
-                    texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, termRenderingsDoc));
+                    texts.Add(new SFBiblicalTermsText(projectId, termRenderingsDoc));
                 }
             }
         }

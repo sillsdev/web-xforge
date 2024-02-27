@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
-using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -169,11 +168,14 @@ public class MachineApiController : ControllerBase
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetEngine)]
-    public async Task<ActionResult<EngineDto>> GetEngineAsync(string sfProjectId, CancellationToken cancellationToken)
+    public async Task<ActionResult<ServalEngineDto>> GetEngineAsync(
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
-            EngineDto engine = await _machineApiService.GetEngineAsync(
+            ServalEngineDto engine = await _machineApiService.GetEngineAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 cancellationToken

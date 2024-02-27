@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MongoDB.Bson;
-using SIL.Machine.Corpora;
-using SIL.Machine.Tokenization;
 using SIL.Machine.Utils;
 using SIL.XForge.Scripture.Models;
 
@@ -16,7 +14,6 @@ public class SFScriptureText : ISFText
     /// <summary>
     /// Initializes a new instance of the <see cref="SFScriptureText"/> class.
     /// </summary>
-    /// <param name="wordTokenizer">The word tokenizer.</param>
     /// <param name="projectId">The SF project identifier.</param>
     /// <param name="book">The book number.</param>
     /// <param name="chapter">The chapter number.</param>
@@ -35,7 +32,6 @@ public class SFScriptureText : ISFText
     /// <exception cref="ArgumentNullException">The doc is empty.</exception>
     /// <exception cref="ArgumentException">The doc has no ops.</exception>
     public SFScriptureText(
-        ITokenizer<string, int, string> wordTokenizer,
         string projectId,
         int book,
         int chapter,
@@ -52,7 +48,7 @@ public class SFScriptureText : ISFText
             throw new ArgumentException(@"Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
         Id = $"{projectId}_{book}_{chapter}";
-        Segments = GetSegments(wordTokenizer, doc, includeBlankSegments, doNotSendSegmentText, sendAllSegments)
+        Segments = GetSegments(doc, includeBlankSegments, doNotSendSegmentText, sendAllSegments)
             .OrderBy(s => s.SegmentRef)
             .ToArray();
     }
@@ -61,12 +57,7 @@ public class SFScriptureText : ISFText
 
     public IEnumerable<SFTextSegment> Segments { get; }
 
-    public string SortKey => Id;
-
-    public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => Segments;
-
-    private IEnumerable<SFTextSegment> GetSegments(
-        ITokenizer<string, int, string> wordTokenizer,
+    private static IEnumerable<SFTextSegment> GetSegments(
         BsonDocument doc,
         bool includeBlankSegments,
         bool doNotSendSegmentText,
@@ -119,13 +110,7 @@ public class SFScriptureText : ISFText
             if (prevRef != null && prevRef != curRef)
             {
                 // Return the previous segment, using the current segment to calculate ss,ir,rs values
-                yield return CreateSegment(
-                    wordTokenizer,
-                    prevRef,
-                    sb.ToString(),
-                    isSentenceStart,
-                    doNotSendSegmentText
-                );
+                yield return CreateSegment(prevRef, sb.ToString(), isSentenceStart, doNotSendSegmentText);
                 isSentenceStart = sb.ToString().HasSentenceEnding();
                 sb.Clear();
             }
@@ -137,12 +122,11 @@ public class SFScriptureText : ISFText
 
         if (prevRef != null)
         {
-            yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart, doNotSendSegmentText);
+            yield return CreateSegment(prevRef, sb.ToString(), isSentenceStart, doNotSendSegmentText);
         }
     }
 
-    private SFTextSegment CreateSegment(
-        ITokenizer<string, int, string> wordTokenizer,
+    private static SFTextSegment CreateSegment(
         string segRef,
         string segmentStr,
         bool isSentenceStart,
@@ -156,22 +140,7 @@ public class SFScriptureText : ISFText
             // do not include the paragraph style for sub-segments, so that the segments sort correctly
             keys.AddRange(keys.Count > 0 ? partKeys.Skip(1) : partKeys);
         }
-        string[] segment = Array.Empty<string>();
-        string segmentText = string.Empty;
-        if (!doNotSendSegmentText)
-        {
-            segment = wordTokenizer.Tokenize(segmentStr).ToArray();
-            segmentText = segmentStr;
-        }
-        return new SFTextSegment(
-            Id,
-            new TextSegmentRef(keys),
-            segmentText,
-            segment,
-            isSentenceStart,
-            false,
-            false,
-            !segment.Any()
-        );
+        string segmentText = doNotSendSegmentText ? string.Empty : segmentStr;
+        return new SFTextSegment(keys, segmentText, isSentenceStart, false, false);
     }
 }
