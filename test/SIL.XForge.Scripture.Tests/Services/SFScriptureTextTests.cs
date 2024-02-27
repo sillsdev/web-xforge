@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using MongoDB.Bson;
 using NUnit.Framework;
-using SIL.Machine.Tokenization;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -30,11 +29,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -45,7 +42,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -70,11 +67,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -85,7 +80,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -108,11 +103,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -123,7 +116,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -132,13 +125,11 @@ public class SFScriptureTextTests
         const int bookNumber = 40;
         const int chapterNumber = 1;
         const string projectId = "myProject";
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         Assert.Throws<ArgumentNullException>(
             () =>
                 new SFScriptureText(
-                    tokenizer,
                     projectId,
                     bookNumber,
                     chapterNumber,
@@ -162,13 +153,11 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(doc.Contains("ops"), Is.False, "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         Assert.Throws<ArgumentException>(
             () =>
                 new SFScriptureText(
-                    tokenizer,
                     projectId,
                     bookNumber,
                     chapterNumber,
@@ -197,11 +186,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -212,7 +199,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -232,11 +219,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -247,7 +232,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -267,11 +252,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -282,7 +265,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -302,11 +285,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -317,7 +298,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -337,11 +318,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -352,7 +331,7 @@ public class SFScriptureTextTests
         );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-        Assert.That(text.GetSegments().Count(), Is.EqualTo(expectedNumberSegments));
+        Assert.That(text.Segments.Count(), Is.EqualTo(expectedNumberSegments));
     }
 
     [Test]
@@ -372,11 +351,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
@@ -408,11 +385,9 @@ public class SFScriptureTextTests
         const int chapterNumber = 1;
         const string projectId = "myProject";
         Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
-        var tokenizer = new LatinWordTokenizer();
 
         // SUT
         var text = new SFScriptureText(
-            tokenizer,
             projectId,
             bookNumber,
             chapterNumber,
