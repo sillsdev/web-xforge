@@ -10,6 +10,7 @@ $questionsHeaderInlineStartPadding: 8px;
 :host {
   display: flex;
   flex: 1;
+  height: 100%;
 }
 
 header {
@@ -132,11 +133,7 @@ header {
   #split-container {
     display: flex;
     flex: 1;
-    max-height: calc(100vh - 194px);
-
-    @include media-breakpoint('<', md) {
-      max-height: calc(100vh - 180px);
-    }
+    overflow: hidden;
 
     > as-split {
       height: auto; /* fix for SF-754 */
@@ -147,6 +144,7 @@ header {
     display: flex;
     flex-direction: column;
     flex: 1;
+    overflow: hidden;
 
     header {
       align-items: center;
@@ -160,7 +158,8 @@ header {
     .panel-content {
       height: 100%;
       display: flex;
-      flex-direction: column-reverse;
+      flex-direction: column;
+      position: unset;
     }
 
     .panel-nav {
@@ -303,6 +302,11 @@ header {
   :not(.selected) mat-icon {
     visibility: hidden;
   }
+}
+
+.scripture {
+  flex-grow: 1;
+  position: relative;
 }
 
 .scripture-audio-player-wrapper {
