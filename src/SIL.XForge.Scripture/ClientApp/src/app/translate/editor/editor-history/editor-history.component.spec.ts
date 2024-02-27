@@ -76,10 +76,47 @@ describe('EditorHistoryComponent', () => {
 
     revisionSelect$.next({ revision, snapshot });
     showDiffChange$.next(false);
-
     tick();
 
     expect(mockTextComponent.editor!.setContents).toHaveBeenCalledTimes(2);
     expect(mockTextComponent.editor!.updateContents).toHaveBeenCalledTimes(1); // Test if diff set
+  }));
+
+  it('should reload history if browser goes offline and comes back online', fakeAsync(() => {
+    const onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+    const diff = new Delta();
+    const revision: Revision = { key: 'date_here', value: 'description_here' };
+    const textDoc: TextDoc = { data: { ops: [] } } as unknown as TextDoc;
+    const snapshot: Snapshot<TextData> = {
+      data: { ops: [] } as TextData,
+      id: '',
+      type: ''
+    };
+
+    when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
+    when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
+
+    component.historyChooser = mockHistoryChooserComponent;
+    component.snapshotText = mockTextComponent;
+    component.diffText = mockTextComponent;
+    component.ngAfterViewInit();
+
+    revisionSelect$.next({ revision, snapshot });
+    showDiffChange$.next(false);
+    tick();
+    expect(mockTextComponent.editor!.setContents).toHaveBeenCalled();
+
+    // Clear call count
+    (mockTextComponent.editor! as jasmine.SpyObj<Quill>).setContents.calls.reset();
+
+    // Go offline
+    onlineStatusService.setIsOnline(false);
+    tick();
+    expect(mockTextComponent.editor!.setContents).not.toHaveBeenCalled();
+
+    // Go back online
+    onlineStatusService.setIsOnline(true);
+    tick();
+    expect(mockTextComponent.editor!.setContents).toHaveBeenCalled();
   }));
 });

@@ -7,15 +7,16 @@
     [chapter]="chapter"
     [showDiff]="true"
   ></app-history-chooser>
-
-  <app-text
-    [isReadOnly]="true"
-    [subscribeToUpdates]="false"
-    [isRightToLeft]="isRightToLeft"
-    [fontSize]="fontSize"
-    [placeholder]="''"
-  ></app-text>
 </ng-container>
+
+<app-text
+  [isReadOnly]="true"
+  [subscribeToUpdates]="false"
+  [isRightToLeft]="isRightToLeft"
+  [fontSize]="fontSize"
+  [placeholder]="''"
+  [class.online]="onlineStatusService.onlineStatus$ | async"
+></app-text>
 
 <ng-template #offline>
   <app-notice icon="warning" type="warning">{{ "editor_history_tab.offline_notice" | transloco }}</app-notice>

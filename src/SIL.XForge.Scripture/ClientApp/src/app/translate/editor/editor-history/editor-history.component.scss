@@ -5,6 +5,7 @@
 
 mat-progress-bar {
   position: absolute;
+  z-index: 2;
 }
 
 app-history-chooser {
@@ -18,4 +19,8 @@ app-history-chooser {
 
 app-notice {
   margin: 1em;
+}
+
+app-text:not(.online) {
+  display: none;
 }

@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
-import { combineLatest, startWith, tap } from 'rxjs';
+import { combineLatest, filter, startWith, tap } from 'rxjs';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { Delta, TextDoc } from '../../../core/models/text-doc';
@@ -49,10 +49,11 @@ export class EditorHistoryComponent implements AfterViewInit {
           this.revisionSelect.emit(e.revision);
         })
       ),
-      this.historyChooser.showDiffChange.pipe(startWith(this.historyChooser.showDiff))
+      this.historyChooser.showDiffChange.pipe(startWith(this.historyChooser.showDiff)),
+      this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline))
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(async ([e, showDiff]: [RevisionSelectEvent, boolean]) => {
+      .subscribe(async ([e, showDiff, _isOnline]: [RevisionSelectEvent, boolean, boolean]) => {
         let snapshotContents: DeltaStatic = new Delta(e.snapshot?.data.ops);
         this.snapshotText?.editor?.setContents(snapshotContents, 'api');
 
