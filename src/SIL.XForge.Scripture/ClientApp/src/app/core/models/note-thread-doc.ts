@@ -76,8 +76,13 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
       return toVerseRef(this.data.verseRef);
     }
 
-    const verseStr: string = lastReattach.reattached.split(REATTACH_SEPARATOR)[0];
-    return new VerseRef(verseStr);
+    try {
+      const verseStr: string = lastReattach.reattached.split(REATTACH_SEPARATOR)[0];
+      return new VerseRef(verseStr);
+    } catch {
+      // Ignore any errors parsing the re-attached verse
+      return toVerseRef(this.data.verseRef);
+    }
   }
 
   canUserResolveThread(userId: string, userRole: string, noteTags: NoteTag[]): boolean {
