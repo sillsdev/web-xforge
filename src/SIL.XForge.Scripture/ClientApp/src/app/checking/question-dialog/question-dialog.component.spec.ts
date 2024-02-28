@@ -696,7 +696,6 @@ class TestEnvironment {
 
   get errorText(): DebugElement[] {
     return this.fixture.debugElement.queryAll(By.css('.form-helper-text'));
-    // return this.overlayContainerElement.querySelector('.form-helper-text') as HTMLElement;
   }
 
   inputValue(element: HTMLElement, value: string): void {
