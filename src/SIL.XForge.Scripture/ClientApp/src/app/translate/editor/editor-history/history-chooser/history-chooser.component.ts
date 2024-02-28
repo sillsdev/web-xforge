@@ -6,7 +6,6 @@ import {
   asyncScheduler,
   BehaviorSubject,
   combineLatest,
-  filter,
   map,
   Observable,
   observeOn,
@@ -67,7 +66,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
 
   loadHistory(): void {
     combineLatest([
-      this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline)),
+      this.onlineStatusService.onlineStatus$,
       this.inputChanged$.pipe(
         startWith(undefined),
         tap(() => {
@@ -77,8 +76,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
           this.historyRevisions = [];
         })
       )
-    ]).subscribe(async () => {
-      if (this.projectId != null && this.bookNum != null && this.chapter != null) {
+    ]).subscribe(async ([isOnline]) => {
+      if (isOnline && this.projectId != null && this.bookNum != null && this.chapter != null) {
         this.loading$.next(true);
         try {
           if (this.historyRevisions.length === 0) {
