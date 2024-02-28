@@ -67,14 +67,19 @@ describe('EditorDraftComponent', () => {
     when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
+    testOnlineStatus.setIsOnline(false);
     fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.draftCheckState).toEqual('draft-unknown');
+
+    testOnlineStatus.setIsOnline(true);
     tick(EDITOR_READY_TIMEOUT);
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
 
     testOnlineStatus.setIsOnline(false);
     fixture.detectChanges();
-    expect(component.draftCheckState).toEqual('draft-unknown');
+    expect(component.draftCheckState).toEqual('draft-present'); // Display if already fetched
 
     testOnlineStatus.setIsOnline(true);
     tick(EDITOR_READY_TIMEOUT);
