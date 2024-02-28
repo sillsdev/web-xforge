@@ -1,11 +1,26 @@
 import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { obj } from '../../common/utils/obj-path';
 import { BiblicalTermNoteHeadingInfo } from './biblical-term-note-heading-info';
 import { Note } from './note';
 import { TextAnchor } from './text-anchor';
 import { VerseRefData } from './verse-ref-data';
 
 export const NOTE_THREAD_COLLECTION = 'note_threads';
-export const NOTE_THREAD_INDEX_PATHS = PROJECT_DATA_INDEX_PATHS;
+export const NOTE_THREAD_INDEX_PATHS = [
+  ...PROJECT_DATA_INDEX_PATHS,
+  // Index for SFProjectService.queryNoteThreads()
+  {
+    [obj<NoteThread>().pathStr(n => n.projectRef)]: 1,
+    [obj<NoteThread>().pathStr(n => n.status)]: 1,
+    [obj<NoteThread>().pathStr(n => n.verseRef.bookNum)]: 1,
+    [obj<NoteThread>().pathStr(n => n.verseRef.chapterNum)]: 1
+  },
+  // Index for SFProjectService.queryBiblicalTermNoteThreads()
+  {
+    [obj<NoteThread>().pathStr(n => n.projectRef)]: 1,
+    [obj<NoteThread>().pathStr(n => n.biblicalTermId)]: 1
+  }
+];
 
 /**
  * Note status, mimicking PT CommentList.cs.
