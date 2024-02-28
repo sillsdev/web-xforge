@@ -183,8 +183,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
     this.dialogRef.close({
       verseRef: this._selection,
-      text: this.textAndAudio?.text.value,
-      audio: this.textAndAudio?.audioAttachment ?? {}
+      text: this.textAndAudio!.text.value,
+      audio: this.textAndAudio!.audioAttachment ?? {}
     });
   }
 
