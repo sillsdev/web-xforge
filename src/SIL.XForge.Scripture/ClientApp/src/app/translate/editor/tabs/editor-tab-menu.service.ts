@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
