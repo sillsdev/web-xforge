@@ -1143,8 +1143,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  setHistoryTabRevisionLabel(tab: TabInfo<EditorTabType>, revision: Revision): void {
-    tab.headerText = `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`;
+  setHistoryTabRevisionLabel(tab: TabInfo<EditorTabType>, revision: Revision | undefined): void {
+    tab.headerText =
+      revision != null
+        ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`
+        : `${this.targetLabel} - History`;
     // TODO: Respond to locale changes
   }
 
