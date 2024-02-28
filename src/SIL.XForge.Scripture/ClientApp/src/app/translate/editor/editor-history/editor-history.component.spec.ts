@@ -54,6 +54,10 @@ describe('EditorHistoryComponent', () => {
     component = fixture.componentInstance;
     mockHistoryChooserComponent.revisionSelect = revisionSelect$ as EventEmitter<RevisionSelectEvent>;
     mockHistoryChooserComponent.showDiffChange = showDiffChange$ as EventEmitter<boolean>;
+
+    // Clear call counts
+    (mockTextComponent.editor! as jasmine.SpyObj<Quill>).setContents.calls.reset();
+    (mockTextComponent.editor! as jasmine.SpyObj<Quill>).updateContents.calls.reset();
   });
 
   it('should load history after view init', fakeAsync(() => {
@@ -82,7 +86,7 @@ describe('EditorHistoryComponent', () => {
     expect(mockTextComponent.editor!.updateContents).toHaveBeenCalledTimes(1); // Test if diff set
   }));
 
-  it('should reload history if browser goes offline and comes back online', fakeAsync(() => {
+  it('should not reload history if browser goes offline and comes back online', fakeAsync(() => {
     const onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     const diff = new Delta();
     const revision: Revision = { key: 'date_here', value: 'description_here' };
@@ -117,6 +121,6 @@ describe('EditorHistoryComponent', () => {
     // Go back online
     onlineStatusService.setIsOnline(true);
     tick();
-    expect(mockTextComponent.editor!.setContents).toHaveBeenCalled();
+    expect(mockTextComponent.editor!.setContents).not.toHaveBeenCalled();
   }));
 });
