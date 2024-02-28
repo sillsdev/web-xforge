@@ -16,5 +16,7 @@
 ></app-text>
 
 <ng-template #offline>
-  <app-notice icon="warning" type="warning">{{ "editor_draft_tab.offline_notice" | transloco }}</app-notice>
+  <app-notice *ngIf="draftCheckState !== 'draft-present'" icon="warning" type="warning">
+    {{ "editor_draft_tab.offline_notice" | transloco }}
+  </app-notice>
 </ng-template>

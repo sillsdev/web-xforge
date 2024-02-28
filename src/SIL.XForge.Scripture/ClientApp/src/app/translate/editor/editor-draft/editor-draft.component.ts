@@ -55,14 +55,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           this.bookChapterName = this.getLocalizedBookChapter();
         }),
         switchMap(() => {
-          return this.onlineStatusService.onlineStatus$.pipe(
-            tap(isOnline => {
-              if (!isOnline) {
-                this.draftCheckState = 'draft-unknown';
-              }
-            }),
-            filter(isOnline => isOnline)
-          );
+          return this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline));
         }),
         switchMap(() => this.getTargetOps()),
         switchMap((targetOps: DeltaOperation[] | undefined) => {
