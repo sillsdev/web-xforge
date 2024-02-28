@@ -2,19 +2,6 @@
   padding-top: 0.5em;
 }
 
-mat-form-field {
-  .scripture-helper-text .scripture-reference {
-    max-width: 248px;
-    .mat-form-field-suffix {
-      top: 0.5em;
-    }
-  }
-  &.question-container {
-    width: 100%;
-    margin-bottom: 0;
-  }
-}
-
 .dialog-container {
   max-width: 560px;
 }
