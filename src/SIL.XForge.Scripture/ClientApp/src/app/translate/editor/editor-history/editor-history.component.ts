@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
 import { DeltaStatic } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { SFProjectService } from 'src/app/core/sf-project.service';
@@ -14,14 +14,14 @@ import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/
   templateUrl: './editor-history.component.html',
   styleUrls: ['./editor-history.component.scss']
 })
-export class EditorHistoryComponent implements AfterViewInit {
+export class EditorHistoryComponent implements OnChanges, AfterViewInit {
   @Input() projectId?: string;
   @Input() bookNum?: number;
   @Input() chapter?: number;
   @Input() isRightToLeft!: boolean;
   @Input() fontSize?: string;
   @Input() diffText?: TextComponent;
-  @Output() revisionSelect = new EventEmitter<Revision>();
+  @Output() revisionSelect = new EventEmitter<Revision | undefined>();
 
   @ViewChild(HistoryChooserComponent) historyChooser?: HistoryChooserComponent;
   @ViewChild(TextComponent) snapshotText?: TextComponent;
@@ -29,11 +29,16 @@ export class EditorHistoryComponent implements AfterViewInit {
   loadedRevision?: Revision;
 
   constructor(
-    private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly editorHistoryService: EditorHistoryService,
     readonly onlineStatusService: OnlineStatusService
   ) {}
+
+  ngOnChanges(): void {
+    // Clear any loaded revision if chapter changes
+    this.loadedRevision = undefined;
+    this.revisionSelect.emit(undefined);
+  }
 
   ngAfterViewInit(): void {
     this.loadHistory();
