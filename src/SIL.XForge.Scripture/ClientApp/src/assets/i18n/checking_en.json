@@ -188,7 +188,7 @@
   "checking_answers": {
     "add_answer": "Add answer",
     "answers": "{{ count }} Answers",
-    "attach": "Attach",
+    "attach": "Attach Verses",
     "cancel": "Cancel",
     "cannot_like_own_answer": "You cannot like your own answer.",
     "confirm_delete": "Are you sure you want to delete this answer?",
