@@ -67,7 +67,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
       );
       return this.createWordGraph(response.data as WordGraphDto);
     } catch (err: any) {
-      if (err.status === 404 || err.status === 409) {
+      if (err.status === 403 || err.status === 404 || err.status === 409) {
         this.noticeService.showError(
           translate('error_messages.suggestion_engine_requires_retrain'),
           translate('error_messages.go_to_retrain'),

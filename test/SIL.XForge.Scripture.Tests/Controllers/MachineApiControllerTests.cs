@@ -51,7 +51,8 @@ public class MachineApiControllerTests
         // SUT
         ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<ForbidResult>(actual);
+        Assert.IsInstanceOf<StatusCodeResult>(actual);
+        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual as StatusCodeResult)?.StatusCode);
     }
 
     [Test]
@@ -703,7 +704,8 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
     }
 
     [Test]
@@ -824,7 +826,8 @@ public class MachineApiControllerTests
         // SUT
         ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
     }
 
     [Test]
@@ -897,7 +900,8 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
     }
 
     [Test]
@@ -971,7 +975,8 @@ public class MachineApiControllerTests
         // SUT
         ActionResult actual = await env.Controller.TrainSegmentAsync(Project01, segmentPair, CancellationToken.None);
 
-        Assert.IsInstanceOf<ForbidResult>(actual);
+        Assert.IsInstanceOf<StatusCodeResult>(actual);
+        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual as StatusCodeResult)?.StatusCode);
     }
 
     [Test]
@@ -1117,7 +1122,8 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status403Forbidden, (actual.Result as StatusCodeResult)?.StatusCode);
     }
 
     [Test]
