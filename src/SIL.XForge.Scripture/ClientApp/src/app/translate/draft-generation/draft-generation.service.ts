@@ -56,7 +56,7 @@ export class DraftGenerationService {
       map(res => res.data),
       catchError(err => {
         // If no build has ever been started, return undefined
-        if (err.status === 404) {
+        if (err.status === 403 || err.status === 404) {
           return of(undefined);
         }
         return throwError(err);
@@ -77,7 +77,7 @@ export class DraftGenerationService {
         map(res => res.data),
         catchError(err => {
           // If project doesn't exist on Serval, return undefined
-          if (err.status === 404) {
+          if (err.status === 403 || err.status === 404) {
             return of(undefined);
           }
           return throwError(err);
@@ -139,7 +139,7 @@ export class DraftGenerationService {
         map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}),
         catchError(err => {
           // If no pretranslations exist, return empty dictionary
-          if (err.status === 404 || err.status === 409) {
+          if (err.status === 403 || err.status === 404 || err.status === 409) {
             return of({});
           }
           return throwError(err);

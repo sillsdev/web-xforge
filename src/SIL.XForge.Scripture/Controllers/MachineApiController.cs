@@ -78,7 +78,8 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
     }
 
@@ -334,7 +335,8 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
         catch (InvalidOperationException)
         {
@@ -399,7 +401,8 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
     }
 
@@ -442,7 +445,8 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
     }
 
@@ -484,7 +488,8 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
     }
 
@@ -571,7 +576,8 @@ public class MachineApiController : ControllerBase
         }
         catch (ForbiddenException)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
     }
 }
