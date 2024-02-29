@@ -2,6 +2,17 @@
   padding-top: 0.5em;
 }
 
+.references {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 1em;
+}
+
+mat-form-field {
+  margin-bottom: 2px;
+}
+
 .dialog-container {
   max-width: 560px;
 }
