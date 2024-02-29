@@ -4,7 +4,7 @@
       <mat-icon class="mirror-rtl">live_help</mat-icon> {{ modeLabel }}
     </h1>
     <mat-dialog-content [formGroup]="versesForm" class="content-padding">
-      <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
+      <div class="references">
         <mat-form-field class="scripture-reference" id="scripture-start" appearance="outline">
           <mat-label>{{ t("scripture_reference") }}</mat-label>
           <input matInput type="text" formControlName="scriptureStart" (input)="updateScriptureEndEnabled()" />

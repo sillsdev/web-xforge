@@ -62,15 +62,15 @@ export class CheckingAudioRecorderComponent
     super();
   }
 
-  writeValue(obj: any): void {
+  writeValue(obj: AudioAttachment): void {
     this.audio = obj;
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: ((value: AudioAttachment) => void) | undefined): void {
     this.subscribe(this.status, fn);
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: ((value: AudioAttachment) => void) | undefined): void {
     this.subscribe(this._onTouched, fn);
   }
 
