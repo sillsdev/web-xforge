@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MatLegacyDialog as MatDialog,
@@ -25,7 +25,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
+import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -35,9 +35,9 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
   ChildViewContainerComponent,
-  TestTranslocoModule,
   configureTestingModule,
-  getAudioBlob
+  getAudioBlob,
+  TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -99,11 +99,22 @@ describe('QuestionDialogComponent', () => {
 
   it('should not allow Save without required fields', fakeAsync(() => {
     env = new TestEnvironment();
-    expect(env.errorText[0].classes['visible']).not.toBeDefined();
-
     env.clickElement(env.saveButton);
     flush();
     expect(env.afterCloseCallback).not.toHaveBeenCalled();
+  }));
+
+  it('should show error text for required fields', fakeAsync(() => {
+    env = new TestEnvironment();
+    expect(env.errorText[0].classes['visible']).not.toBeDefined();
+
+    env.component.scriptureStart.markAsTouched();
+    env.clickElement(env.saveButton);
+    flush();
+
+    expect(env.scriptureStartValidationMsg.textContent).toContain('Required');
+    expect(env.scriptureStartValidationMsg.textContent).not.toContain('e.g.');
+    expect(env.scriptureStartValidationMsg.textContent).not.toContain('range');
     expect(env.errorText[0].classes['visible']).toBe(true);
   }));
 
