@@ -722,7 +722,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                 this.loadingStarted();
               }
             }
-            this.source!.id = sourceId;
+
+            if (this.source != null) {
+              this.source.id = sourceId;
+            }
+
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
