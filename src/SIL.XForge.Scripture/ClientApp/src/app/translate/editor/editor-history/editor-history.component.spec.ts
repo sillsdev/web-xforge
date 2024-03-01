@@ -44,7 +44,6 @@ describe('EditorHistoryComponent', () => {
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: EditorHistoryService, useMock: mockEditorHistoryService },
       { provide: HistoryChooserComponent, useMock: mockHistoryChooserComponent },
-      { provide: TextComponent, useValue: mockTextComponent },
       { provide: Quill, useValue: mockEditor }
     ]
   }));
