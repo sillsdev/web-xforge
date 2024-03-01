@@ -8,8 +8,10 @@ import {
   Inject,
   OnDestroy,
   OnInit,
+  QueryList,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  ViewChildren
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MediaObserver } from '@angular/flex-layout';
@@ -55,7 +57,13 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
-import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
+import {
+  TabFactoryService,
+  TabGroupComponent,
+  TabInfo,
+  TabMenuService,
+  TabStateService
+} from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -173,6 +181,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
+  @ViewChildren(TabGroupComponent) tabGroups?: QueryList<TabGroupComponent>;
 
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
@@ -2185,20 +2194,26 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
+    const sourceScrollContainer: HTMLElement | undefined = this.tabGroups?.find(tab => tab.groupId === 'source')
+      ?.scrollContainer?.nativeElement;
+
+    if (sourceScrollContainer == null) {
+      return;
+    }
+
     const targetRange = this.target.segment.range;
     const targetSelectionBounds = this.target.editor.selection.getBounds(targetRange.index);
 
     const sourceRange = this.source.segment.range;
     const sourceSelectionBounds = this.source.editor.selection.getBounds(sourceRange.index, sourceRange.length);
 
-    const scrollContainer = this.source.editor.scrollingContainer;
-    let newScrollTop: number = scrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
+    let newScrollTop: number = sourceScrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
 
     // Check to see if the top of source selection would be visible after the scroll adjustment
-    const sourceTopPosition = targetSelectionBounds.top - scrollContainer.getBoundingClientRect().top;
+    const sourceTopPosition = targetSelectionBounds.top - sourceScrollContainer.getBoundingClientRect().top;
 
     // Check to see if the bottom of source selection would be visible after the scroll adjustment
-    const sourceBottomPosition = sourceTopPosition + sourceSelectionBounds.height - scrollContainer.clientHeight;
+    const sourceBottomPosition = sourceTopPosition + sourceSelectionBounds.height - sourceScrollContainer.clientHeight;
 
     // Adjust the scroll to ensure the selection fits within the container
     // Only adjust the bottom position so long as that doesn't hide the top position i.e. a long verse(s)
@@ -2207,7 +2222,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else if (sourceBottomPosition > 0 && sourceTopPosition - sourceBottomPosition > 0) {
       newScrollTop += sourceBottomPosition;
     }
-    this.source.editor.scrollingContainer.scrollTop = newScrollTop;
+
+    sourceScrollContainer.scrollTop = newScrollTop;
   }
 
   private observeResize(editor: Quill): void {

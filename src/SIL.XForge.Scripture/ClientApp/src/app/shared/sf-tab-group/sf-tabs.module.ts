@@ -10,6 +10,7 @@ import { TabScrollButtonComponent } from './tab-group-header/tab-scroll-button/t
 import { TabGroupComponent } from './tab-group.component';
 import { TabHeaderComponent } from './tab-header/tab-header.component';
 import { TabHeaderDirective } from './tab-header/tab-header.directive';
+import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
 
 @NgModule({
@@ -19,7 +20,8 @@ import { TabComponent } from './tab/tab.component';
     TabHeaderComponent,
     TabHeaderDirective,
     TabGroupHeaderComponent,
-    TabScrollButtonComponent
+    TabScrollButtonComponent,
+    TabBodyComponent
   ],
   imports: [CommonModule, MatTabsModule, MatButtonModule, MatIconModule, MatMenuModule, TranslocoModule],
   exports: [TabGroupComponent, TabComponent, TabHeaderDirective]
