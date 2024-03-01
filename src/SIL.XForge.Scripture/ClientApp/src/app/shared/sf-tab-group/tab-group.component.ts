@@ -1,7 +1,17 @@
-import { Component, ContentChildren, Input, OnChanges, QueryList, SimpleChanges } from '@angular/core';
-import { TabStateService } from './tab-state/tab-state.service';
+import {
+  Component,
+  ContentChildren,
+  ElementRef,
+  Input,
+  OnChanges,
+  QueryList,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { TabFactoryService } from './base-services/tab-factory.service';
 import { TabHeaderMouseEvent } from './sf-tabs.types';
+import { TabStateService } from './tab-state/tab-state.service';
+import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
 
 @Component({
@@ -13,6 +23,7 @@ export class TabGroupComponent implements OnChanges {
   @Input() groupId: string = '';
   @Input() selectedIndex = 0;
 
+  @ViewChild(TabBodyComponent, { read: ElementRef }) scrollContainer?: ElementRef<HTMLElement>;
   @ContentChildren(TabComponent) tabs!: QueryList<TabComponent>;
 
   constructor(

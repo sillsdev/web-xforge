@@ -1,0 +1,8 @@
+:host {
+  border: var(--sf-tab-group-border-width) solid var(--sf-tab-group-border-color);
+  overflow-y: auto;
+
+  &:not(.active) {
+    display: none;
+  }
+}
