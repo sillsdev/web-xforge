@@ -12,7 +12,7 @@ public static class Product
         string? location = Assembly.GetEntryAssembly()?.Location;
         if (!string.IsNullOrWhiteSpace(location))
         {
-            version = FileVersionInfo.GetVersionInfo(location).ProductVersion;
+            version = FileVersionInfo.GetVersionInfo(location).ProductVersion?.Split('+')[0];
         }
 
         Version = version ?? "1.0";
