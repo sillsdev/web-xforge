@@ -25,13 +25,6 @@ describe('EditorHistoryComponent', () => {
   const mockEditorHistoryService = mock(EditorHistoryService);
   const mockHistoryChooserComponent = mock(HistoryChooserComponent);
 
-  // Not sure how to do this with ts-mockito
-  const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-  const mockTextComponent = jasmine.createSpyObj<TextComponent>([], {
-    id: {} as TextDocId,
-    editor: mockEditor
-  });
-
   const revisionSelect$ = new Subject<RevisionSelectEvent>();
   const showDiffChange$ = new Subject<boolean>();
 
@@ -43,8 +36,7 @@ describe('EditorHistoryComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: EditorHistoryService, useMock: mockEditorHistoryService },
-      { provide: HistoryChooserComponent, useMock: mockHistoryChooserComponent },
-      { provide: Quill, useValue: mockEditor }
+      { provide: HistoryChooserComponent, useMock: mockHistoryChooserComponent }
     ]
   }));
 
@@ -53,10 +45,6 @@ describe('EditorHistoryComponent', () => {
     component = fixture.componentInstance;
     mockHistoryChooserComponent.revisionSelect = revisionSelect$ as EventEmitter<RevisionSelectEvent>;
     mockHistoryChooserComponent.showDiffChange = showDiffChange$ as EventEmitter<boolean>;
-
-    // Clear call counts
-    (mockTextComponent.editor! as jasmine.SpyObj<Quill>).setContents.calls.reset();
-    (mockTextComponent.editor! as jasmine.SpyObj<Quill>).updateContents.calls.reset();
   });
 
   it('should load history after view init', fakeAsync(() => {
@@ -68,6 +56,9 @@ describe('EditorHistoryComponent', () => {
       id: '',
       type: ''
     };
+
+    const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>([], { id: {} as TextDocId, editor: mockEditor });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
     when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
@@ -95,6 +86,9 @@ describe('EditorHistoryComponent', () => {
       id: '',
       type: ''
     };
+
+    const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>([], { id: {} as TextDocId, editor: mockEditor });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
     when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
