@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.FeatureManagement;
 using Serval.Client;
 using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
@@ -24,7 +23,6 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
-    IFeatureManager featureManager,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
     IPreTranslationService preTranslationService,
@@ -587,27 +585,10 @@ public class MachineApiService(
             );
         });
 
-        // If support for uploading Paratext zip files is enabled
-        string? jobId = null;
-        if (await featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation))
-        {
-            // Sync the project if this is a pre-translation project using Paratext Zip format
-            // If a build has not been run, we will still need to sync, as the upload will be a zip by default
-            if (!(await projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
-            {
-                throw new DataNotFoundException("The project secret cannot be found.");
-            }
-            string? corpusId = projectSecret
-                .ServalData?.Corpora
-                .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
-                .Key;
-            if (corpusId is null || projectSecret.ServalData?.Corpora[corpusId].UploadParatextZipFile == true)
-            {
-                jobId = await syncService.SyncAsync(
-                    new SyncConfig { ProjectId = buildConfig.ProjectId, UserId = curUserId }
-                );
-            }
-        }
+        // Sync the source and target before running the build
+        string jobId = await syncService.SyncAsync(
+            new SyncConfig { ProjectId = buildConfig.ProjectId, UserId = curUserId }
+        );
 
         // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
@@ -647,21 +628,11 @@ public class MachineApiService(
             );
         }
 
-        if (!string.IsNullOrWhiteSpace(jobId))
-        {
-            // Run the training after the sync has completed
-            jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
-                jobId,
-                r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
-            );
-        }
-        else
-        {
-            // No sync required, just run the training
-            jobId = backgroundJobClient.Enqueue<MachineProjectService>(
-                r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
-            );
-        }
+        // Run the training after the sync has completed
+        jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
+            jobId,
+            r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
+        );
 
         // Set the pre-translation queued date and time, and hang fire job id
         await projectSecrets.UpdateAsync(

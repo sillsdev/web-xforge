@@ -160,6 +160,13 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return issuesEmailTemplate();
   }
 
+  /**
+   * Whether the last sync with Paratext was successful.
+   */
+  get lastSyncSuccessful(): boolean {
+    return this.activatedProject.projectDoc?.data?.sync.lastSyncSuccessful ?? false;
+  }
+
   ngOnInit(): void {
     // Display dialog for supported languages when route fragment is 'supported-languages'
     this.subscribe(
