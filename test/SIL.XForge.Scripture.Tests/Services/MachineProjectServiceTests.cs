@@ -14,7 +14,6 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -23,7 +22,6 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -58,25 +56,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task AddProjectAsync_ExecutesInProcessMachineAndServal()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        string actual = await env.Service.AddProjectAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-        Assert.AreEqual(TranslationEngine01, actual);
-        Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).ServalData?.TranslationEngineId);
-    }
-
-    [Test]
     public async Task AddProjectAsync_DoesNotCreateIfLanguageMissing()
     {
         // Set up test environment
@@ -90,32 +69,6 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsEmpty(actual);
-    }
-
-    [Test]
-    public async Task AddProjectAsync_DoesNotCallServalIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
-
-        // SUT
-        await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-
-        await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
-    }
-
-    [Test]
-    public async Task AddProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MachineSupport = false });
-
-        // SUT
-        await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-
-        await env.EngineService.DidNotReceiveWithAnyArgs().AddProjectAsync(Arg.Any<MachineProject>());
     }
 
     [Test]
@@ -432,41 +385,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_DoesNotCallServalIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
-
-        // SUT
-        await env.Service.BuildProjectAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-    }
-
-    [Test]
-    public async Task BuildProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MachineSupport = false });
-
-        // SUT
-        await env.Service.BuildProjectAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project02);
-    }
-
-    [Test]
     public async Task BuildProjectAsync_DoesNotBuildServalIfNoLocalChanges()
     {
         // Set up test environment
@@ -603,23 +521,6 @@ public class MachineProjectServiceTests
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         await env.DataFilesClient.Received()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
-    }
-
-    [Test]
-    public async Task BuildProjectAsync_ExecutesInProcessMachine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.BuildProjectAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            preTranslate: false,
-            CancellationToken.None
-        );
-
-        await env.EngineService.Received().StartBuildByProjectIdAsync(Project02);
     }
 
     [Test]
@@ -1037,23 +938,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task RemoveProjectAsync_DoesNotCallServalIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
-
-        // SUT
-        await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
-
-        // Ensure that the translation engine, corpus and any files were not deleted
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .DeleteCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
-        await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(File01, CancellationToken.None);
-    }
-
-    [Test]
     public async Task RemoveProjectAsync_DoesNotCallServalIfNoTranslationEngineId()
     {
         // Set up test environment
@@ -1068,31 +952,6 @@ public class MachineProjectServiceTests
         await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(TranslationEngine01, Corpus01, CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(File01, CancellationToken.None);
-    }
-
-    [Test]
-    public async Task RemoveProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MachineSupport = false });
-
-        // SUT
-        await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
-
-        // Ensure that the in process instance was not called
-        await env.EngineService.DidNotReceiveWithAnyArgs().RemoveProjectAsync(Project02);
-    }
-
-    [Test]
-    public async Task RemoveProjectAsync_ExecutesInProcessMachine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-
-        await env.EngineService.Received().RemoveProjectAsync(Project01);
     }
 
     [Test]
@@ -1223,31 +1082,6 @@ public class MachineProjectServiceTests
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
-    }
-
-    [Test]
-    public async Task SyncProjectCorporaAsync_DoesNotCallServalIfFeatureDisabled()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
-
-        // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            preTranslate: false,
-            CancellationToken.None
-        );
-        Assert.IsFalse(actual);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .UpdateCorpusAsync(
-                TranslationEngine02,
-                Corpus01,
-                Arg.Any<TranslationCorpusUpdateConfig>(),
-                CancellationToken.None
-            );
     }
 
     [Test]
@@ -1903,8 +1737,6 @@ public class MachineProjectServiceTests
         public bool BuildIsPending { get; init; }
         public bool PreTranslationBuildIsQueued { get; init; }
         public bool UseEchoForPreTranslation { get; init; }
-        public bool MachineSupport { get; init; } = true;
-        public bool ServalSupport { get; init; } = true;
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
         public bool AlternateTrainingSourceConfigured { get; init; }
@@ -1918,7 +1750,6 @@ public class MachineProjectServiceTests
         public TestEnvironment(TestEnvironmentOptions? options = null)
         {
             options ??= new TestEnvironmentOptions();
-            EngineService = Substitute.For<IEngineService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             MockLogger = new MockLogger<MachineProjectService>();
             DataFilesClient = Substitute.For<IDataFilesClient>();
@@ -2067,10 +1898,6 @@ public class MachineProjectServiceTests
             featureManager
                 .IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
                 .Returns(Task.FromResult(options.UploadParatextZipForPreTranslation));
-            featureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(options.ServalSupport));
-            featureManager
-                .IsEnabledAsync(FeatureFlags.MachineInProcess)
-                .Returns(Task.FromResult(options.MachineSupport));
 
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
@@ -2215,7 +2042,6 @@ public class MachineProjectServiceTests
 
             Service = new MachineProjectService(
                 DataFilesClient,
-                EngineService,
                 ExceptionHandler,
                 featureManager,
                 FileSystemService,
@@ -2245,33 +2071,14 @@ public class MachineProjectServiceTests
                         Id = "textId",
                         Segments = new List<SFTextSegment>
                         {
-                            new SFTextSegment(
-                                "textId",
-                                "segRef",
-                                "segment01",
-                                new string[] { "segment01" },
-                                false,
-                                false,
-                                false,
-                                false
-                            ),
-                            new SFTextSegment(
-                                "textId_2",
-                                "segRef_2",
-                                string.Empty,
-                                Array.Empty<string>(),
-                                false,
-                                false,
-                                false,
-                                true
-                            ),
+                            new SFTextSegment(["segRef"], "segment01", false, false, false),
+                            new SFTextSegment(["segRef_2"], string.Empty, false, false, false),
                         },
                     },
                 }
             );
 
         public MachineProjectService Service { get; }
-        public IEngineService EngineService { get; }
         public IDataFilesClient DataFilesClient { get; }
         public IFileSystemService FileSystemService { get; }
         public IParatextService ParatextService { get; }
