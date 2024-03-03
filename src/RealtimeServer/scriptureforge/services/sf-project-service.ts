@@ -118,6 +118,9 @@ export class SFProjectService extends ProjectService<SFProject> {
           draftConfig: {
             bsonType: 'object',
             properties: {
+              additionalTrainingData: {
+                bsonType: 'bool'
+              },
               alternateSource: {
                 bsonType: 'object',
                 properties: {
@@ -187,6 +190,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                 bsonType: 'array',
                 items: {
                   bsonType: 'int'
+                }
+              },
+              lastSelectedTrainingDataFiles: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
                 }
               },
               lastSelectedTranslationBooks: {

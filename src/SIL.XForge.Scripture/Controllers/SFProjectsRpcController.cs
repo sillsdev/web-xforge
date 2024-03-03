@@ -23,16 +23,19 @@ public class SFProjectsRpcController : RpcControllerBase
 
     private readonly IExceptionHandler _exceptionHandler;
     private readonly ISFProjectService _projectService;
+    private readonly ITrainingDataService _trainingDataService;
 
     public SFProjectsRpcController(
         IUserAccessor userAccessor,
         ISFProjectService projectService,
+        ITrainingDataService trainingDataService,
         IExceptionHandler exceptionHandler
     )
         : base(userAccessor, exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
         _projectService = projectService;
+        _trainingDataService = trainingDataService;
     }
 
     public async Task<IRpcMethodResult> Create(SFProjectCreateSettings settings)
@@ -119,6 +122,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                     { "SourceParatextId", settings?.SourceParatextId },
                     { "BiblicalTermsEnabled", settings?.BiblicalTermsEnabled?.ToString() },
+                    { "AdditionalTrainingData", settings?.AdditionalTrainingData?.ToString() },
                     { "AlternateSourceParatextId", settings?.AlternateSourceParatextId },
                     { "AlternateTrainingSourceEnabled", settings?.AlternateTrainingSourceEnabled?.ToString() },
                     { "AlternateTrainingSourceParatextId", settings?.AlternateTrainingSourceParatextId },
@@ -532,6 +536,40 @@ public class SFProjectsRpcController : RpcControllerBase
                 new Dictionary<string, string>
                 {
                     { "method", "DeleteAudio" },
+                    { "projectId", projectId },
+                    { "ownerId", ownerId },
+                    { "dataId", dataId },
+                }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> DeleteTrainingData(string projectId, string ownerId, string dataId)
+    {
+        try
+        {
+            await _trainingDataService.DeleteTrainingDataAsync(UserId, projectId, ownerId, dataId);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (FormatException fe)
+        {
+            return InvalidParamsError(fe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "DeleteTrainingData" },
                     { "projectId", projectId },
                     { "ownerId", ownerId },
                     { "dataId", dataId },

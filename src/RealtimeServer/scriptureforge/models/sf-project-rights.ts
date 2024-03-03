@@ -14,7 +14,8 @@ export enum SFProjectDomain {
   PTNoteThreads = 'pt_note_threads',
   SFNoteThreads = 'sf_note_threads',
   Notes = 'notes',
-  TextAudio = 'text_audio'
+  TextAudio = 'text_audio',
+  TrainingData = 'training_data'
 }
 
 // See https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
@@ -87,7 +88,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     pt_note_threads: ['view', 'create', 'edit', 'delete_own'],
     sf_note_threads: ['view', 'create', 'edit', 'delete_own'],
     notes: ['view', 'create', 'edit_own', 'delete_own'],
-    text_audio: ['view']
+    text_audio: ['view'],
+    training_data: ['view', 'create', 'edit_own', 'delete_own']
   },
   pt_administrator: {
     project_user_configs: ['view_own', 'edit_own'],
@@ -102,7 +104,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     pt_note_threads: ['view', 'create', 'edit', 'delete'],
     sf_note_threads: ['view', 'create', 'edit', 'delete'],
     notes: ['view', 'create', 'edit_own', 'delete'],
-    text_audio: ['view', 'edit', 'create', 'delete']
+    text_audio: ['view', 'edit', 'create', 'delete'],
+    training_data: ['view', 'create', 'edit', 'delete']
   },
   none: {}
 };
