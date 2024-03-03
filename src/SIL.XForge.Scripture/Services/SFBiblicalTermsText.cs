@@ -46,7 +46,7 @@ public class SFBiblicalTermsText : ISFText
         return rendering.Trim();
     }
 
-    private IEnumerable<SFTextSegment> GetSegments(IList<BiblicalTerm> biblicalTerms)
+    private static IEnumerable<SFTextSegment> GetSegments(IList<BiblicalTerm> biblicalTerms)
     {
         if (!biblicalTerms.Any())
         {
@@ -69,7 +69,7 @@ public class SFBiblicalTermsText : ISFText
         }
     }
 
-    private IEnumerable<SFTextSegment> GetSegments(XDocument termRenderingsDoc)
+    private static IEnumerable<SFTextSegment> GetSegments(XDocument termRenderingsDoc)
     {
         if (termRenderingsDoc.Root is null)
         {
