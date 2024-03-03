@@ -562,24 +562,29 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 {
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs = noteDocs.Where(
-                    n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null
-                );
+
+                List<IDocument<NoteThread>> noteThreadDocs = noteDocs
+                    .Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null)
+                    .ToList();
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
                 // Only update the note tag if there are SF note threads in the project
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
 
-                int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
-                _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
-                    _userSecret,
-                    paratextId,
-                    text.BookNum,
-                    noteThreadDocs,
-                    _userIdsToDisplayNames,
-                    _currentPtSyncUsers,
-                    sfNoteTagId
-                );
+                // If there are no editable notes, do not update Paratext
+                if (noteThreadDocs.Any(nt => nt.Data.Notes.Any(n => n.Editable == true)))
+                {
+                    int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
+                    _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
+                        _userSecret,
+                        paratextId,
+                        text.BookNum,
+                        noteThreadDocs,
+                        _userIdsToDisplayNames,
+                        _currentPtSyncUsers,
+                        sfNoteTagId
+                    );
+                }
             }
         }
 
