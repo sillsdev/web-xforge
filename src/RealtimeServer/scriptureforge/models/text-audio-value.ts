@@ -1,9 +1,8 @@
-import { Value } from './value';
-
 /*
   This interface indicates a value represented by text,
   audio, or both.
 */
-export interface DynamicValue extends Value {
+export interface TextAudioValue {
+  text?: string;
   audioUrl?: string;
 }

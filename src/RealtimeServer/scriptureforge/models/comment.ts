@@ -1,7 +1,7 @@
 import { OwnedData } from '../../common/models/owned-data';
-import { Value } from './value';
 
-export interface Comment extends OwnedData, Value {
+export interface Comment extends OwnedData {
+  text?: string;
   dataId: string;
   deleted: boolean;
   syncUserRef?: string;
