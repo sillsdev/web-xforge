@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Serval.Client;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
@@ -39,6 +40,20 @@ public interface IMachineApiService
     Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
         string curUserId,
         string sfProjectId,
+        CancellationToken cancellationToken
+    );
+    Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    );
+    Task<string> GetPreTranslationUsfmAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
         CancellationToken cancellationToken
     );
     Task<WordGraph> GetWordGraphAsync(
