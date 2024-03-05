@@ -561,6 +561,7 @@ public class MachineProjectService(
         bool uploadParatextZipFile =
             preTranslate
             && await featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
+            && !project.TranslateConfig.DraftConfig.SendAllSegments
             && (corpusId == null || projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile);
 
         // See if there is an alternate training source corpus
