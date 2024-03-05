@@ -1,17 +1,13 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
-import { TextAudioValue } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-value';
+import { DynamicValue } from 'realtime-server/lib/esm/scriptureforge/models/dynamic-value';
 import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 const NOT_A_FILE = {} as File;
-
-type AtLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U];
-
-type TextOrAudio = AtLeastOne<Required<TextAudioValue>>;
 
 @Component({
   selector: 'app-text-and-audio',
@@ -20,7 +16,7 @@ type TextOrAudio = AtLeastOne<Required<TextAudioValue>>;
 })
 export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
-  @Input() input?: TextOrAudio;
+  @Input() input?: DynamicValue;
   @Input() textLabel: string = '';
   @Input() uploadEnabled: boolean = false;
   suppressErrors: boolean = true;
