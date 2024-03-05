@@ -616,6 +616,38 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_CreatesDataFilesOnServalIfMissing_SendAllSegments_RequiresTextFiles()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                SendAllSegments = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // Make the Serval API return the error code for a missing data file
+        env.DataFilesClient.GetAsync(Arg.Any<string>(), CancellationToken.None).Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.DataFilesClient.Received()
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
     public async Task BuildProjectAsync_CreatesDataFilesOnServalIfMissing_Text()
     {
         // Set up test environment
@@ -649,8 +681,8 @@ public class MachineProjectServiceTests
             new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
         );
         SFProject project = env.Projects.Get(Project03);
-        Assert.IsNull(project.WritingSystem?.Tag);
-        Assert.IsNull(project.TranslateConfig?.Source?.WritingSystem.Tag);
+        Assert.IsNull(project.WritingSystem.Tag);
+        Assert.IsNull(project.TranslateConfig.Source?.WritingSystem.Tag);
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -1304,16 +1336,16 @@ public class MachineProjectServiceTests
                     p => p.ServalData.Corpora[Corpus01],
                     new ServalCorpus
                     {
-                        SourceFiles = new List<ServalCorpusFile>
-                        {
+                        SourceFiles =
+                        [
                             new ServalCorpusFile
                             {
                                 FileChecksum = "a_previous_checksum",
                                 FileId = "File03",
                                 TextId = "textId",
                             },
-                        },
-                        TargetFiles = new List<ServalCorpusFile>(),
+                        ],
+                        TargetFiles = [],
                     }
                 )
         );
@@ -1483,7 +1515,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true, }
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
         );
         await env.SetDataInSync(Project02);
 
@@ -1517,7 +1549,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true, }
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
         );
         await env.SetDataInSync(Project02);
 
@@ -1859,7 +1891,8 @@ public class MachineProjectServiceTests
         public bool LocalTargetTextHasData { get; init; }
         public bool AlternateTrainingSourceConfigured { get; init; }
         public bool AlternateTrainingSourceEnabled { get; init; }
-        public string? ServalConfig { get; set; }
+        public bool SendAllSegments { get; init; }
+        public string? ServalConfig { get; init; }
         public bool UploadParatextZipForPreTranslation { get; init; }
     }
 
@@ -2051,14 +2084,8 @@ public class MachineProjectServiceTests
                                     {
                                         PreTranslate = false,
                                         AlternateTrainingSource = false,
-                                        SourceFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File01 },
-                                        },
-                                        TargetFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File02 },
-                                        },
+                                        SourceFiles = [new ServalCorpusFile { FileId = File01 }],
+                                        TargetFiles = [new ServalCorpusFile { FileId = File02 }],
                                     }
                                 },
                                 {
@@ -2067,14 +2094,8 @@ public class MachineProjectServiceTests
                                     {
                                         PreTranslate = true,
                                         AlternateTrainingSource = false,
-                                        SourceFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File01 },
-                                        },
-                                        TargetFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File02 },
-                                        },
+                                        SourceFiles = [new ServalCorpusFile { FileId = File01 }],
+                                        TargetFiles = [new ServalCorpusFile { FileId = File02 }],
                                     }
                                 },
                             },
@@ -2098,7 +2119,7 @@ public class MachineProjectServiceTests
                         ShortName = "P01",
                         ParatextId = Paratext01,
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                        UserRoles = new Dictionary<string, string>(),
+                        UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
@@ -2108,7 +2129,11 @@ public class MachineProjectServiceTests
                                 ParatextId = Paratext02,
                                 WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
-                            DraftConfig = new DraftConfig { ServalConfig = options.ServalConfig, },
+                            DraftConfig = new DraftConfig
+                            {
+                                SendAllSegments = options.SendAllSegments,
+                                ServalConfig = options.ServalConfig,
+                            },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_GB" },
                     },
@@ -2119,7 +2144,7 @@ public class MachineProjectServiceTests
                         ShortName = "P02",
                         ParatextId = Paratext02,
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                        UserRoles = new Dictionary<string, string>(),
+                        UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
@@ -2135,6 +2160,7 @@ public class MachineProjectServiceTests
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
                                     : null,
+                                SendAllSegments = options.SendAllSegments,
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
@@ -2145,7 +2171,7 @@ public class MachineProjectServiceTests
                         Name = "project03",
                         ShortName = "P03",
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                        UserRoles = new Dictionary<string, string>(),
+                        UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
@@ -2229,8 +2255,8 @@ public class MachineProjectServiceTests
                         p => p.ServalData.Corpora[Corpus01],
                         new ServalCorpus
                         {
-                            SourceFiles = new List<ServalCorpusFile>
-                            {
+                            SourceFiles =
+                            [
                                 new ServalCorpusFile
                                 {
                                     FileChecksum = requiresUpdate
@@ -2239,9 +2265,9 @@ public class MachineProjectServiceTests
                                     FileId = File01,
                                     TextId = "textId",
                                 },
-                            },
-                            TargetFiles = new List<ServalCorpusFile>
-                            {
+                            ],
+                            TargetFiles =
+                            [
                                 new ServalCorpusFile
                                 {
                                     FileChecksum = requiresUpdate switch
@@ -2253,7 +2279,7 @@ public class MachineProjectServiceTests
                                     FileId = File02,
                                     TextId = "textId",
                                 },
-                            },
+                            ],
                             AlternateTrainingSource = false,
                             PreTranslate = preTranslate,
                             UploadParatextZipFile = uploadParatextZipFile,
@@ -2265,8 +2291,8 @@ public class MachineProjectServiceTests
                             p => p.ServalData.Corpora[Corpus02],
                             new ServalCorpus
                             {
-                                SourceFiles = new List<ServalCorpusFile>
-                                {
+                                SourceFiles =
+                                [
                                     new ServalCorpusFile
                                     {
                                         FileChecksum = requiresUpdate
@@ -2275,9 +2301,9 @@ public class MachineProjectServiceTests
                                         FileId = File01,
                                         TextId = "textId",
                                     },
-                                },
-                                TargetFiles = new List<ServalCorpusFile>
-                                {
+                                ],
+                                TargetFiles =
+                                [
                                     new ServalCorpusFile
                                     {
                                         FileChecksum = requiresUpdate switch
@@ -2289,7 +2315,7 @@ public class MachineProjectServiceTests
                                         FileId = File02,
                                         TextId = "textId",
                                     },
-                                },
+                                ],
                                 AlternateTrainingSource = true,
                                 PreTranslate = preTranslate,
                                 UploadParatextZipFile = uploadParatextZipFile,
