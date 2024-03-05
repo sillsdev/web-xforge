@@ -62,10 +62,6 @@
       mat-divider + .card-content {
         padding-top: 16px;
       }
-
-      mat-checkbox {
-        padding-bottom: 12px;
-      }
     }
 
     #connect-submit-button {
@@ -92,15 +88,6 @@
       font-size: 14px;
       margin-top: 10px;
     }
-  }
-}
-::ng-deep .checkbox-placeholder {
-  .mat-checkbox-inner-container {
-    visibility: hidden;
-  }
-
-  .mat-checkbox-label {
-    color: initial;
   }
 }
 
