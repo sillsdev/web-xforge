@@ -1,6 +1,6 @@
-import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
 import { Answer } from './answer';
-import { TextAudioValue } from './text-audio-value';
+import { DynamicValue } from './dynamic-value';
 import { VerseRefData } from './verse-ref-data';
 
 export const QUESTIONS_COLLECTION = 'questions';
@@ -10,7 +10,7 @@ export function getQuestionDocId(projectId: string, questionId: string): string 
   return `${projectId}:${questionId}`;
 }
 
-export interface Question extends ProjectData, TextAudioValue {
+export interface Question extends ProjectData, DynamicValue {
   dataId: string;
   verseRef: VerseRefData;
   answers: Answer[];
