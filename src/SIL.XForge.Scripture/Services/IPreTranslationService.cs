@@ -13,4 +13,12 @@ public interface IPreTranslationService
         int chapterNum,
         CancellationToken cancellationToken
     );
+
+    Task<string> GetPreTranslationUsfmAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    );
 }

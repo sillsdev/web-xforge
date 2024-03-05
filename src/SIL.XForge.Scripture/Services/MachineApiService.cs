@@ -24,6 +24,7 @@ public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
+    IParatextService paratextService,
     IPreTranslationService preTranslationService,
     IRepository<SFProjectSecret> projectSecrets,
     IRealtimeService realtimeService,
@@ -298,6 +299,46 @@ public class MachineApiService(
         return preTranslation;
     }
 
+    public async Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+
+        // Do not allow retrieving the entire book as a delta
+        if (chapterNum == 0)
+        {
+            throw new DataNotFoundException("Chapter not specified");
+        }
+
+        try
+        {
+            string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                curUserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            return new Snapshot<TextData>
+            {
+                Id = TextData.GetTextDocId(sfProjectId, bookNum, chapterNum),
+                Version = 0,
+                Data = new TextData(await paratextService.GetDeltaFromUsfmAsync(curUserId, sfProjectId, usfm, bookNum)),
+            };
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+            throw;
+        }
+    }
+
     public async Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
         string curUserId,
         string sfProjectId,
@@ -357,6 +398,34 @@ public class MachineApiService(
         }
 
         return null;
+    }
+
+    public async Task<string> GetPreTranslationUsfmAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+
+        try
+        {
+            return await preTranslationService.GetPreTranslationUsfmAsync(
+                curUserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+        }
+        catch (ServalApiException e)
+        {
+            ProcessServalApiException(e);
+            throw;
+        }
     }
 
     public async Task<WordGraph> GetWordGraphAsync(
@@ -770,7 +839,9 @@ public class MachineApiService(
     /// <param name="e">The Serval API Exception</param>>
     /// <exception cref="DataNotFoundException">Entity Deleted.</exception>
     /// <exception cref="ForbiddenException">Access Denied.</exception>
-    /// <exception cref="NotSupportedException">Method not allowed.</exception>
+    /// <exception cref="NotSupportedException">
+    /// Method not allowed or not supported for the specified translation engine.
+    /// </exception>
     /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
     private static void ProcessServalApiException(ServalApiException e)
     {
@@ -778,6 +849,8 @@ public class MachineApiService(
         {
             case { StatusCode: StatusCodes.Status204NoContent }:
                 throw new DataNotFoundException("Entity Deleted");
+            case { StatusCode: StatusCodes.Status400BadRequest }:
+                throw new NotSupportedException();
             case { StatusCode: StatusCodes.Status403Forbidden }:
                 throw new ForbiddenException();
             case { StatusCode: StatusCodes.Status404NotFound }:
