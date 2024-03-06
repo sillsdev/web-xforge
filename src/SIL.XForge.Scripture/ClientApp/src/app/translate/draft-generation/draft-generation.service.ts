@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@angular/core';
-import { Observable, of, throwError, timer, EMPTY } from 'rxjs';
+import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { DeltaOperation } from 'rich-text';
+import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
+import { Snapshot } from 'xforge-common/models/snapshot';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -143,6 +146,31 @@ export class DraftGenerationService {
             return of({});
           }
           return throwError(err);
+        })
+      );
+  }
+
+  /**
+   * Gets the pre-translations as delta operations for the specified book/chapter using the last completed build.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number.
+   * @returns An array of delta operations or an empty array at if no pre-translations exist.
+   * The 405 error that occurs when there is no USFM support is thrown to the caller.
+   */
+  getGeneratedDraftDeltaOperations(projectId: string, book: number, chapter: number): Observable<DeltaOperation[]> {
+    return this.httpClient
+      .get<Snapshot<TextData> | undefined>(
+        `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+      )
+      .pipe(
+        map(res => res.data?.data.ops ?? []),
+        catchError(err => {
+          // If no pre-translations exist, return empty dictionary
+          if (err.status === 403 || err.status === 404 || err.status === 409) {
+            return of([]);
+          }
+          return throwError(() => err);
         })
       );
   }
