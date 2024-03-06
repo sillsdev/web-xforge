@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
@@ -12,7 +13,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -77,7 +78,6 @@ describe('DraftViewerComponent', () => {
         this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
       );
       when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
-      when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
       when(mockUserService.getCurrentUser()).thenCall(() =>
         this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
       );
@@ -87,6 +87,9 @@ describe('DraftViewerComponent', () => {
       );
       when(mockDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
         of(cloneDeep(draftSegmentMap))
+      );
+      when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
+        throwError(() => new HttpErrorResponse({ status: 405 }))
       );
       when(mockActivatedRoute.paramMap).thenReturn(
         of({
@@ -332,6 +335,57 @@ describe('DraftViewerComponent', () => {
     env.component.currentBook = 1;
     env.component.currentChapter = 1;
     expect(env.component.canEdit).toBeFalsy();
+  }));
+
+  it('should use the legacy method when send all segments is enabled', fakeAsync(() => {
+    const env = new TestEnvironment(() => {
+      when(mockActivatedProjectService.projectDoc).thenReturn({
+        data: createTestProject({
+          ...cloneDeep(projectProfileDoc.data),
+          translateConfig: {
+            ...cloneDeep(projectProfileDoc.data?.translateConfig),
+            draftConfig: {
+              sendAllSegments: true
+            }
+          }
+        }) as SFProjectProfile
+      } as SFProjectProfileDoc);
+    });
+    env.waitForEditor();
+
+    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).once();
+    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 2)).never();
+    expect(env.component.hasDraft).toBeTruthy();
+    expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_verse_2_suggested);
+  }));
+
+  it('should return ops and update the editor', fakeAsync(() => {
+    const env = new TestEnvironment(() => {
+      when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
+        of(cloneDeep(delta_verse_2_accepted.ops!))
+      );
+    });
+    env.waitForEditor();
+
+    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).never();
+    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 2)).once();
+    expect(env.component.hasDraft).toBeTruthy();
+    expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_verse_2_accepted);
+  }));
+
+  it('should not suggest changes if not different', fakeAsync(() => {
+    const env = new TestEnvironment(() => {
+      when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
+        of(cloneDeep(delta_no_verse_2.ops!))
+      );
+    });
+    env.waitForEditor();
+
+    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).never();
+    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 2)).once();
+    expect(env.component.hasDraft).toBeFalsy();
+    expect(env.component.preDraftTargetDelta).toEqual(delta_no_verse_2);
+    expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_no_verse_2);
   }));
 
   const projectProfileDoc = {

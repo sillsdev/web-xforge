@@ -8,14 +8,15 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Chapter } from 'realtime-server/scriptureforge/models/text-info';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
-import { Delta, TextDocId } from 'src/app/core/models/text-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
-import { TextComponent } from 'src/app/shared/text/text.component';
+import { Observable, Subscription, throwError } from 'rxjs';
+import { catchError, filter, map, switchMap, take, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { Delta, TextDocId } from '../../../core/models/text-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { TextComponent } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftViewerService } from './draft-viewer.service';
@@ -44,6 +45,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   targetTextDocId?: TextDocId;
 
   isDraftApplied = false;
+  isLegacyDraft = false;
   hasDraft = false;
   draftPopulated = false;
   isOnline = this.onlineStatusService.isOnline;
@@ -53,6 +55,8 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   //       the source is only used for display, and may not include some books contained in the alternate source.
   bookHasSource = false;
 
+  draftSubscription?: Subscription;
+  generateDraftUrl?: string;
   projectSettingsUrl?: string;
   preDraftTargetDelta?: DeltaStatic;
 
@@ -129,6 +133,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
     this.targetProject = this.activatedProjectService.projectDoc?.data;
     this.sourceProjectId = this.targetProject?.translateConfig.source?.projectRef!;
     this.projectSettingsUrl = `/projects/${this.activatedProjectService.projectId}/settings`;
+    this.generateDraftUrl = `/projects/${this.activatedProjectService.projectId}/draft-generation`;
     this.books = this.targetProject?.texts.map(t => t.bookNum).sort((a, b) => a - b) ?? [];
 
     if (this.sourceProjectId) {
@@ -208,8 +213,46 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
       return;
     }
 
-    this.draftGenerationService
-      .getGeneratedDraft(this.targetProjectId!, this.currentBook, this.currentChapter)
+    this.draftSubscription?.unsubscribe();
+    if (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.sendAllSegments) {
+      this.draftSubscription = this.getLegacyGeneratedDraft().subscribe((draftOps: DeltaOperation[]) => {
+        // Set the draft editor with the pre-translation segments
+        this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
+      });
+    } else {
+      this.draftSubscription = this.draftGenerationService
+        .getGeneratedDraftDeltaOperations(this.targetProjectId!, this.currentBook, this.currentChapter)
+        .pipe(
+          take(1),
+          catchError(err => {
+            // If the corpus does not support USFM
+            if (err.status === 405) {
+              // Prompt the user to run a new build to use the new features
+              this.isLegacyDraft = true;
+              return this.getLegacyGeneratedDraft();
+            }
+            return throwError(() => err);
+          })
+        )
+        .subscribe((draftOps: DeltaOperation[]) => {
+          if (draftOps.length > 0) {
+            // For USFM drafts, see if there are changes
+            if (!this.isLegacyDraft) {
+              // Only allow applying of the draft if there is a difference between the target and draft
+              this.hasDraft =
+                this.preDraftTargetDelta
+                  ?.diff(new Delta(draftOps))
+                  ?.ops?.some(op => op.insert != null || op.delete != null) ?? true;
+            }
+            this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
+          }
+        });
+    }
+  }
+
+  private getLegacyGeneratedDraft(): Observable<DeltaOperation[]> {
+    return this.draftGenerationService
+      .getGeneratedDraft(this.targetProjectId!, this.currentBook!, this.currentChapter!)
       .pipe(
         filter((draft: DraftSegmentMap) => {
           this.hasDraft = this.draftViewerService.hasDraftOps(draft, this.preDraftTargetDelta!.ops!);
@@ -217,11 +260,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
           return this.hasDraft;
         }),
         map((draft: DraftSegmentMap) => this.draftViewerService.toDraftOps(draft, this.preDraftTargetDelta!.ops!))
-      )
-      .subscribe((draftOps: DeltaOperation[]) => {
-        // Set the draft editor with the pre-translation segments
-        this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
-      });
+      );
   }
 
   applyDraft(): void {
