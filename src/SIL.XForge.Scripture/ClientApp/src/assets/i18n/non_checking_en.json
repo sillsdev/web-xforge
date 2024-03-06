@@ -208,6 +208,7 @@
     "draft_indicator_not_applied": "DRAFT",
     "draft_preview_and_apply": "Draft preview and apply",
     "edit": "Edit",
+    "legacy_draft_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "loading": "Loading...",
     "offline_message": "Draft preview is not available while offline.",
     "select_apply_to_project": "Select [em]\"{{ draft_viewer.apply_to_project }}\"[/em] for each chapter that you want to overwrite with the draft text.",
