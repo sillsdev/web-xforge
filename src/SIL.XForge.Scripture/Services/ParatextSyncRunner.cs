@@ -918,8 +918,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 targetTextDocs = new SortedList<int, IDocument<TextData>>();
             }
 
+            LogMetric("Updating text docs - get deltas");
+            Dictionary<int, ChapterDelta> chapterDeltas = GetParatextChaptersAsDeltas(text, targetParatextId);
+
             LogMetric("Updating text docs");
-            List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+            List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetTextDocs, chapterDeltas);
 
             // update question docs
             if (questionDocsByBook.TryGetValue(text.BookNum, out IReadOnlyList<IDocument<Question>> questionDocs))
@@ -927,9 +930,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 LogMetric("Updating question docs");
                 await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
             }
-
-            LogMetric("Updating thread docs - get deltas");
-            Dictionary<int, ChapterDelta> chapterDeltas = GetParatextChaptersAsDeltas(text, targetParatextId);
 
             LogMetric("Updating thread docs - updating");
 
@@ -1217,80 +1217,52 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     private async Task<List<Chapter>> UpdateTextDocsAsync(
         TextInfo text,
-        string paratextId,
         SortedList<int, IDocument<TextData>> textDocs,
-        ISet<int>? chaptersToInclude = null
+        Dictionary<int, ChapterDelta> chapterDeltas
     )
     {
-        Dictionary<int, ChapterDelta> deltas = GetParatextChaptersAsDeltas(text, paratextId);
         var tasks = new List<Task>();
         var chapters = new List<Chapter>();
-        List<int> chaptersToRemove = textDocs.Keys.Where(c => !deltas.ContainsKey(c)).ToList();
-        foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
+        foreach (KeyValuePair<int, ChapterDelta> kvp in chapterDeltas)
         {
-            bool addChapter = true;
             if (textDocs.TryGetValue(kvp.Key, out IDocument<TextData> textDataDoc))
             {
-                if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
+                Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
+                if (diffDelta.Ops.Count > 0)
                 {
-                    Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
-                    if (diffDelta.Ops.Count > 0)
-                    {
-                        tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
-                        _syncMetrics.TextDocs.Updated++;
-                    }
-
-                    textDocs.Remove(kvp.Key);
+                    tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
+                    _syncMetrics.TextDocs.Updated++;
                 }
-                else
-                {
-                    // We are not to update this chapter
-                    Chapter existingChapter = text.Chapters.FirstOrDefault(c => c.Number == kvp.Key);
-                    if (existingChapter != null)
-                    {
-                        chapters.Add(existingChapter);
-                    }
 
-                    addChapter = false;
-                }
+                textDocs.Remove(kvp.Key);
             }
-            else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
+            else
             {
                 textDataDoc = GetTextDoc(text, kvp.Key);
-                async Task createText(int chapterNum, Delta delta)
+                async Task CreateText(Delta delta)
                 {
                     await textDataDoc.FetchAsync();
                     if (textDataDoc.IsLoaded)
                         await textDataDoc.DeleteAsync();
                     await textDataDoc.CreateAsync(new TextData(delta));
                 }
-                tasks.Add(createText(kvp.Key, kvp.Value.Delta));
+                tasks.Add(CreateText(kvp.Value.Delta));
                 _syncMetrics.TextDocs.Added++;
             }
-            else
-            {
-                addChapter = false;
-            }
-            if (addChapter)
-            {
-                chapters.Add(
-                    new Chapter
-                    {
-                        Number = kvp.Key,
-                        LastVerse = kvp.Value.LastVerse,
-                        IsValid = kvp.Value.IsValid,
-                        Permissions = { }
-                    }
-                );
-            }
+            chapters.Add(
+                new Chapter
+                {
+                    Number = kvp.Key,
+                    LastVerse = kvp.Value.LastVerse,
+                    IsValid = kvp.Value.IsValid,
+                    Permissions = [],
+                }
+            );
         }
         foreach (KeyValuePair<int, IDocument<TextData>> kvp in textDocs)
         {
-            if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key) || chaptersToRemove.Contains(kvp.Key))
-            {
-                tasks.Add(kvp.Value.DeleteAsync());
-                _syncMetrics.TextDocs.Deleted++;
-            }
+            tasks.Add(kvp.Value.DeleteAsync());
+            _syncMetrics.TextDocs.Deleted++;
         }
 
         await Task.WhenAll(tasks);
