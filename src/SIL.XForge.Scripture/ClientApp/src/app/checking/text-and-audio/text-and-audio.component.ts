@@ -1,7 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
-import { DynamicValue } from 'realtime-server/lib/esm/scriptureforge/models/dynamic-value';
 import {
   AudioAttachment,
   CheckingAudioRecorderComponent
@@ -16,7 +15,7 @@ const NOT_A_FILE = {} as File;
 })
 export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
-  @Input() input?: DynamicValue;
+  @Input() input?: { text?: string; audioUrl?: string };
   @Input() textLabel: string = '';
   @Input() uploadEnabled: boolean = false;
   suppressErrors: boolean = true;
