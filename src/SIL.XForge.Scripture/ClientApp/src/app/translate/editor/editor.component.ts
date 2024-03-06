@@ -95,7 +95,8 @@ import {
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
   VERSE_REGEX,
-  verseRefFromMouseEvent
+  verseRefFromMouseEvent,
+  XmlUtils
 } from '../../shared/utils';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
@@ -1143,6 +1144,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // only set the tag id if it is the first note in the thread
     const tagId: number | undefined =
       params.threadDataId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
+    const noteContent: string | undefined = params.content == null ? undefined : XmlUtils.encodeForXml(params.content);
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -1151,7 +1153,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       dataId: params.dataId ?? objectId(),
       tagId,
       ownerRef: this.userService.currentUserId,
-      content: params.content,
+      content: noteContent,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
       status: params.status ?? NoteStatus.Todo,
@@ -1186,7 +1188,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         // updated the existing note
         if (threadDoc.data?.notes[noteIndex].editable === true) {
           await threadDoc!.submitJson0Op(op => {
-            op.set(t => t.notes[noteIndex].content, params.content);
+            op.set(t => t.notes[noteIndex].content, noteContent);
             op.set(t => t.notes[noteIndex].dateModified, currentDate);
           });
         } else {

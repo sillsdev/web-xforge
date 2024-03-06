@@ -92,6 +92,7 @@ import { SFTabsModule, TabFactoryService, TabMenuService } from '../../shared/sf
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
+import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
@@ -2769,6 +2770,30 @@ describe('EditorComponent', () => {
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
       expect(noteThread.notes[0].content).toEqual(content);
+      env.dispose();
+    }));
+
+    it('bottom sheet can accept xml reserved symbols', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCommenterUser();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
+      expect(env.insertNoteFabMobile).toBeTruthy();
+      env.insertNoteFabMobile!.click();
+      expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
+      const content = 'mobile <note> with xml symbols';
+      env.component.mobileNoteControl.setValue(content);
+      env.saveMobileNoteButton!.click();
+      env.wait();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
+      expect(noteThread.notes[0].content).toEqual(XmlUtils.encodeForXml(content));
       env.dispose();
     }));
 
