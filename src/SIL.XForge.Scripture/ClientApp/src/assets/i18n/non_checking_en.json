@@ -473,6 +473,7 @@
     "cancel": "Cancel",
     "drag_and_drop_files": "Drag and drop training data file here",
     "drag_and_drop_or_browse": "OR",
+    "filename_already_exists": "A file already exists with this name.",
     "skip_first_row": "Skip first row of data file",
     "no_training_data_file_uploaded": "No training data file uploaded",
     "no_upload_offline": "Training data cannot be uploaded without connecting to the internet.",

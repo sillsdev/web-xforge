@@ -106,7 +106,7 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
   openUploadDialog(): void {
     if (this.activatedProjectService.projectId == null) return;
     const dialogConfig: MatDialogConfig<TrainingDataUploadDialogData> = {
-      data: { projectId: this.activatedProjectService.projectId },
+      data: { projectId: this.activatedProjectService.projectId, availableTrainingData: this.availableTrainingData },
       width: '320px'
     };
     const dialogRef = this.dialogService.openMatDialog(TrainingDataUploadDialogComponent, dialogConfig);

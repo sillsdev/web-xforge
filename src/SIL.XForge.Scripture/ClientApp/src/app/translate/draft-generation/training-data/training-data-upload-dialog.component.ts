@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
+import { MatCheckbox, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
-import { MatCheckbox, MatCheckboxModule } from '@angular/material/checkbox';
 import {
   MatLegacyDialogModule as MatDialogModule,
   MatLegacyDialogRef as MatDialogRef,
@@ -19,10 +19,12 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
+import { SharedModule } from '../../../shared/shared.module';
 import { TrainingDataService } from './training-data.service';
 
 export interface TrainingDataUploadDialogData {
   projectId: string;
+  availableTrainingData: TrainingData[];
 }
 
 export interface TrainingDataUploadDialogResult {
@@ -46,6 +48,7 @@ export interface TrainingDataFileUpload {
     MatDialogModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    SharedModule,
     TranslocoModule
   ],
   styleUrls: ['./training-data-upload-dialog.component.scss']
@@ -55,7 +58,7 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('skipFirstRow') skipFirstRow?: MatCheckbox;
   private _isUploading: boolean = false;
-  private _showNotUploadedError: boolean = false;
+  private _showFilenameExists: boolean = false;
   private trainingDataFile?: TrainingDataFileUpload;
 
   constructor(
@@ -81,8 +84,8 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
     return this._isUploading;
   }
 
-  get showNotUploadedError(): boolean {
-    return this._showNotUploadedError;
+  get showFilenameExists(): boolean {
+    return this._showFilenameExists;
   }
 
   get trainingDataFilename(): string {
@@ -94,6 +97,7 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
   }
 
   deleteTrainingData(): void {
+    this._showFilenameExists = false;
     this.trainingDataFile = undefined;
     this.fileDropzone!.nativeElement.value = '';
   }
@@ -117,11 +121,9 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
   async save(): Promise<void> {
     // We cannot save a file if it has not been uploaded, or if offline
     if (!this.hasBeenUploaded) {
-      this._showNotUploadedError = true;
       return;
     }
 
-    this._showNotUploadedError = false;
     this._isUploading = true;
     const dataId: string = objectId();
     const fileUrl: string | undefined = await this.fileService.onlineUploadFileOrFail(
@@ -180,6 +182,7 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
         fileName: file.name
       };
       this.updateTrainingData(trainingDataFileUpload);
+      this._showFilenameExists = this.data.availableTrainingData.some(t => t.title === trainingDataFileUpload.fileName);
     }
   }
 }

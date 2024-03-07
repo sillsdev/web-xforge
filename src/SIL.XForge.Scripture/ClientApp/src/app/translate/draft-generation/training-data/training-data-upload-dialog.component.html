@@ -14,8 +14,14 @@
       </div>
       <div class="wrapper wrapper-training-data-file" [ngClass]="{ valid: hasBeenUploaded }">
         <ng-container *ngIf="hasBeenUploaded">
-          <span *ngIf="hasBeenUploaded">{{ trainingDataFilename }}</span>
-          <mat-icon *ngIf="hasBeenUploaded" (click)="deleteTrainingData()" class="delete">delete</mat-icon>
+          <app-info
+            *ngIf="showFilenameExists"
+            [text]="t('filename_already_exists')"
+            icon="warning"
+            type="warning"
+          ></app-info>
+          <span>{{ trainingDataFilename }}</span>
+          <mat-icon (click)="deleteTrainingData()" class="delete">delete</mat-icon>
         </ng-container>
         <ng-container *ngIf="!hasBeenUploaded">
           <mat-icon>file_download_off</mat-icon>
