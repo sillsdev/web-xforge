@@ -16,13 +16,14 @@
     </mat-form-field>
     <button
       id="show-diff"
-      mat-icon-button
+      mat-button
       appBlurOnClick
       type="button"
       (click)="showDiff = !showDiff"
       matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
     >
       <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
+      {{ showDiff ? t("hide_changes") : t("show_changes") }}
     </button>
     <button mat-icon-button id="close" (click)="showHideHistory()" matTooltip="{{ t('hide') }}">
       <mat-icon>close</mat-icon>

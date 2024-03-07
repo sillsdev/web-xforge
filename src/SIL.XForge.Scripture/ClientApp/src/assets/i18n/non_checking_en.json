@@ -239,6 +239,8 @@
     "loading": "History loading...",
     "not_available_offline": "History is not available offline",
     "show": "Show history",
+    "show_changes": "Show changes",
+    "hide_changes": "Hide changes",
     "show_diff": "Show differences with previous version"
   },
   "import_questions_confirmation_dialog": {
