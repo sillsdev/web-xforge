@@ -85,7 +85,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
               (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
 
             if (this.historyRevisions.length > 0) {
-              this.selectRevision(this.historyRevisions[0]);
+              await this.selectRevision(this.historyRevisions[0]);
             }
           }
         } finally {
@@ -95,8 +95,14 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     });
   }
 
-  onSelectionChanged(e: MatSelectChange): void {
-    this.selectRevision(e.value);
+  async onSelectionChanged(e: MatSelectChange): Promise<void> {
+    this.loading$.next(true);
+
+    try {
+      await this.selectRevision(e.value);
+    } finally {
+      this.loading$.next(false);
+    }
   }
 
   toggleDiff(): void {
@@ -104,7 +110,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     this.showDiffChange.emit(this.showDiff);
   }
 
-  private selectRevision(revision: Revision): void {
+  private async selectRevision(revision: Revision): Promise<void> {
     if (this.projectId == null || this.chapter == null || this.bookNum == null || revision == null) {
       return;
     }
@@ -113,7 +119,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     this.selectedRevision = revision as Revision;
 
     // Get the snapshot from the paratext service
-    this.paratextService.getSnapshot(this.projectId, this.bookId, this.chapter, revision.key).then(snapshot => {
+    await this.paratextService.getSnapshot(this.projectId, this.bookId, this.chapter, revision.key).then(snapshot => {
       this.revisionSelect.emit({ revision: revision, snapshot: snapshot });
     });
   }
