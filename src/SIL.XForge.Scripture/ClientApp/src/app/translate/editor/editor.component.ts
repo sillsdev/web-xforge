@@ -8,10 +8,8 @@ import {
   Inject,
   OnDestroy,
   OnInit,
-  QueryList,
   TemplateRef,
-  ViewChild,
-  ViewChildren
+  ViewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MediaObserver } from '@angular/flex-layout';
@@ -57,13 +55,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
-import {
-  TabFactoryService,
-  TabGroupComponent,
-  TabInfo,
-  TabMenuService,
-  TabStateService
-} from 'src/app/shared/sf-tab-group';
+import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -174,13 +166,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
   @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
-  @ViewChild('targetContainer') targetContainer?: ElementRef;
+  @ViewChild('sourceScrollContainer') sourceScrollContainer?: ElementRef;
+  @ViewChild('targetScrollContainer') targetScrollContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
-  @ViewChildren(TabGroupComponent) tabGroups?: QueryList<TabGroupComponent>;
 
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
@@ -913,16 +905,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
 
-        if (this.target?.editor != null) {
-          const targetScrollContainer: HTMLElement | undefined = this.getTabScrollContainer('target');
-
-          if (targetScrollContainer != null) {
-            this.positionInsertNoteFab();
-            this.observeResize(targetScrollContainer);
-            this.subscribeScroll(targetScrollContainer);
-            this.targetEditorLoaded$.next();
-            this.checkForPreTranslations();
-          }
+        if (this.target?.editor != null && this.targetScrollContainer != null) {
+          this.positionInsertNoteFab();
+          this.observeResize(this.targetScrollContainer.nativeElement);
+          this.subscribeScroll(this.targetScrollContainer.nativeElement);
+          this.targetEditorLoaded$.next();
+          this.checkForPreTranslations();
         }
         break;
     }
@@ -2159,10 +2147,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private getTabScrollContainer(tabGroupId: EditorTabGroupType): HTMLElement | undefined {
-    return this.tabGroups?.find(tab => tab.groupId === tabGroupId)?.scrollContainer?.nativeElement;
-  }
-
   private syncScroll(): void {
     if (
       !this.hasSource ||
@@ -2177,8 +2161,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const sourceScrollContainer: HTMLElement | undefined = this.getTabScrollContainer('source');
-
+    const sourceScrollContainer: HTMLElement | undefined = this.sourceScrollContainer?.nativeElement;
     if (sourceScrollContainer == null) {
       return;
     }
@@ -2230,7 +2213,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.insertNoteFab == null ||
       this.target == null ||
       this.target.editor == null ||
-      this.targetContainer == null
+      this.targetScrollContainer == null
     ) {
       return;
     }

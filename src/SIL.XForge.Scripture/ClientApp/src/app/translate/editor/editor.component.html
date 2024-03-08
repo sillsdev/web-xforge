@@ -84,8 +84,8 @@
           <div #sourceSplitContainer class="container-for-split">
             <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
             <as-split direction="vertical" [style.height]="sourceSplitHeight" [dir]="i18n.direction">
-              <as-split-area [size]="75" [minSize]="20">
-                <div #sourceContainer class="text-container">
+              <as-split-area #sourceScrollContainer [size]="75" [minSize]="20">
+                <div class="text-container">
                   <app-text
                     #source
                     [isReadOnly]="true"
@@ -152,9 +152,8 @@
           <div #targetSplitContainer class="container-for-split">
             <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
             <as-split direction="vertical" [style.height]="targetSplitHeight">
-              <as-split-area [size]="75" [minSize]="20" [dir]="i18n.direction">
+              <as-split-area #targetScrollContainer [size]="75" [minSize]="20" [dir]="i18n.direction">
                 <div
-                  #targetContainer
                   class="text-container"
                   [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
                   [ngClass]="{ 'has-draft': showPreviewDraft }"

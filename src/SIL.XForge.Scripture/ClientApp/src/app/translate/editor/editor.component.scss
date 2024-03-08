@@ -156,7 +156,6 @@ app-text {
 
 .text-container {
   display: flex;
-  height: 100%;
   position: relative;
 
   &.has-draft {
@@ -170,5 +169,6 @@ app-text {
 
 .container-for-split {
   flex-grow: 1;
+  height: 100%;
   overflow: hidden;
 }
