@@ -4017,7 +4017,7 @@ class TestEnvironment {
   }
 
   get insertNoteFab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
+    return this.fixture.debugElement.query(By.css('.insert-note-fab'));
   }
 
   get bottomSheetCloseButton(): HTMLButtonElement | null {

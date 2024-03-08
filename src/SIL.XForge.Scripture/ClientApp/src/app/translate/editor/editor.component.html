@@ -219,11 +219,16 @@
                       </form>
                     </div>
                   </ng-template>
-                  <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
-                    <button mat-mini-fab title="{{ t('add_comment') }}" (click)="insertNote()">
-                      <mat-icon>add_comment</mat-icon>
-                    </button>
-                  </div>
+                  <button
+                    *ngIf="canInsertNote"
+                    #fabButton
+                    class="insert-note-fab"
+                    mat-mini-fab
+                    title="{{ t('add_comment') }}"
+                    (click)="insertNote()"
+                  >
+                    <mat-icon>add_comment</mat-icon>
+                  </button>
                 </div>
               </as-split-area>
               <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget" [dir]="i18n.direction">
