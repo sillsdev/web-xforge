@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Serval.Client;
 using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
@@ -50,6 +49,9 @@ public class MachineApiService(
     internal const string BuildStateQueued = "QUEUED";
     private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
         EqualityComparer<int>.Default
+    );
+    private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
+        EqualityComparer<string>.Default
     );
 
     public async Task CancelPreTranslationBuildAsync(
@@ -568,7 +570,7 @@ public class MachineApiService(
         }
 
         // Ensure that the user has permission on the project
-        EnsureProjectPermission(curUserId, projectDoc.Data);
+        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
 
         // Save the selected books
         await projectDoc.SubmitJson0OpAsync(op =>
@@ -577,6 +579,11 @@ public class MachineApiService(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTrainingBooks,
                 buildConfig.TrainingBooks.ToList(),
                 _listIntComparer
+            );
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles,
+                buildConfig.TrainingDataFiles.ToList(),
+                _listStringComparer
             );
             op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,
@@ -804,20 +811,6 @@ public class MachineApiService(
         return engineDto;
     }
 
-    private static void EnsureProjectPermission(string curUserId, Project project)
-    {
-        // Check for permission
-        if (
-            !(
-                project.UserRoles.TryGetValue(curUserId, out string role)
-                && role is SFProjectRole.Administrator or SFProjectRole.Translator
-            )
-        )
-        {
-            throw new ForbiddenException();
-        }
-    }
-
     private async Task EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
     {
         // Load the project from the realtime service
@@ -828,7 +821,7 @@ public class MachineApiService(
         }
 
         // Check for permission
-        EnsureProjectPermission(curUserId, project);
+        MachineApi.EnsureProjectPermission(curUserId, project);
     }
 
     private async Task<string> GetTranslationIdAsync(

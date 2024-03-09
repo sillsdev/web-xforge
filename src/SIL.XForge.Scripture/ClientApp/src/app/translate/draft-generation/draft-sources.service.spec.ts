@@ -3,14 +3,14 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject } from 'rxjs';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
-import { environment } from 'src/environments/environment';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../../environments/environment';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { DraftSources, DraftSourcesService } from './draft-sources.service';
 
 describe('DraftSourcesService', () => {

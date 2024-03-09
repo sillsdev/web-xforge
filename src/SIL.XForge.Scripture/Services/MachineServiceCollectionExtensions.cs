@@ -82,6 +82,7 @@ public static class MachineServiceCollectionExtensions
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
         services.AddSingleton<IPreTranslationService, PreTranslationService>();
         services.AddSingleton<ISFTextCorpusFactory, SFTextCorpusFactory>();
+        services.AddSingleton<ITrainingDataService, TrainingDataService>();
         return services;
     }
 

@@ -1,0 +1,21 @@
+.training-data-multi-select {
+  margin-top: 20px;
+
+  .mat-mdc-standard-chip {
+    &.mat-mdc-chip-selected,
+    &.mat-mdc-chip-highlighted {
+      --mdc-chip-elevated-container-color: #4a79c9;
+    }
+  }
+
+  button {
+    margin: 0 8px;
+  }
+}
+
+/* Stop overflow of text inside the chips */
+:host ::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__cell--primary,
+:host ::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__action--primary,
+:host ::ng-deep .mat-mdc-standard-chip .mat-mdc-chip-action-label {
+  overflow: hidden;
+}

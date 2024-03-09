@@ -17,13 +17,19 @@ public class BuildConfig
     /// <summary>
     /// Gets or sets the books to use for training the draft.
     /// </summary>
-    /// <value>The books numbers to use as the source texts for training.</value>
+    /// <value>The numbers of the books to use as the source texts for training.</value>
     public HashSet<int> TrainingBooks { get; set; } = new HashSet<int>();
+
+    /// <summary>
+    /// Gets or sets the DataIds of the files to use for training.
+    /// </summary>
+    /// <value>The DataIds of the files to use as for training.</value>
+    public HashSet<string> TrainingDataFiles { get; set; } = new HashSet<string>();
 
     /// <summary>
     /// Gets or sets the books to use for translation.
     /// </summary>
-    /// <value>The books numbers to use as the source texts for training.</value>
+    /// <value>The numbers of the books to use as the source texts for training.</value>
     public HashSet<int> TranslationBooks { get; set; } = new HashSet<int>();
 
     /// <summary>
@@ -39,5 +45,5 @@ public class BuildConfig
     /// <remarks>
     /// A fast training build will be very inaccurate. Only use this value if you are testing or debugging.
     /// </remarks>
-    public bool FastTraining { get; set; } = false;
+    public bool FastTraining { get; set; }
 }

@@ -30,6 +30,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.TrainingBooks);
         }
 
+        if (value.TrainingDataFiles.Count > 0)
+        {
+            writer.WritePropertyName(nameof(value.TrainingDataFiles));
+            serializer.Serialize(writer, value.TrainingDataFiles);
+        }
+
         if (value.TranslationBooks.Count > 0)
         {
             writer.WritePropertyName(nameof(value.TranslationBooks));
