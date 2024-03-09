@@ -1250,7 +1250,7 @@ public class ParatextService : DisposableBase, IParatextService
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
-        IEnumerable<CommentThread>? commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+        CommentManager commentManager = GetCommentManager(userSecret, paratextId);
         CommentTags commentTags = GetCommentTags(userSecret, paratextId);
         List<string> matchedThreadIds = new List<string>();
         List<NoteThreadChange> changes = new List<NoteThreadChange>();
@@ -1274,8 +1274,8 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.ExtraHeadingInfo
             );
             // Find the corresponding comment thread
-            var existingThread = commentThreads?.SingleOrDefault(ct => ct.Id == threadDoc.Data.ThreadId);
-            if (existingThread == null)
+            CommentThread? existingThread = commentManager.FindThread(threadDoc.Data.ThreadId);
+            if (existingThread is null)
             {
                 // The thread has been removed
                 threadChange.NoteIdsRemoved = threadDoc
@@ -1344,12 +1344,13 @@ public class ParatextService : DisposableBase, IParatextService
                 changes.Add(threadChange);
         }
 
+        IEnumerable<CommentThread> commentThreads = GetCommentThreads(commentManager, bookNum);
         IEnumerable<string> ptThreadIds = commentThreads.Select(ct => ct.Id);
         IEnumerable<string> newThreadIds = ptThreadIds.Except(matchedThreadIds);
         foreach (string threadId in newThreadIds)
         {
-            CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
-            if (thread.Comments.All(c => c.Deleted))
+            CommentThread? thread = commentManager.FindThread(threadId);
+            if (thread is null || thread.Comments.All(c => c.Deleted))
                 continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
             NoteThreadChange newThread = new NoteThreadChange(
@@ -1401,10 +1402,10 @@ public class ParatextService : DisposableBase, IParatextService
     )
     {
         string? username = GetParatextUsername(userSecret);
-        IEnumerable<CommentThread>? commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+        CommentManager commentManager = GetCommentManager(userSecret, paratextId);
         List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList = await SFNotesToCommentChangeListAsync(
             noteThreadDocs,
-            commentThreads,
+            commentManager,
             username,
             sfNoteTagId,
             displayNames,
@@ -2440,14 +2441,8 @@ public class ParatextService : DisposableBase, IParatextService
         _hgHelper.Update(clonePath);
     }
 
-    private IEnumerable<CommentThread>? GetCommentThreads(UserSecret userSecret, string paratextId, int? bookNum)
+    private static IEnumerable<CommentThread> GetCommentThreads(CommentManager manager, int? bookNum)
     {
-        ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-        if (scrText == null)
-            return null;
-
-        CommentManager manager = CommentManager.Get(scrText);
-
         // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
         // reallocated within the chapter, so for our query, we only need the first location.
         // A Biblical Term has a VerseRef, but it is usually not useful, so we exclude BT notes when getting a book's notes
@@ -2462,6 +2457,16 @@ public class ParatextService : DisposableBase, IParatextService
                 ) || (bookNum == null && commentThread.IsBTNote),
             false
         );
+    }
+
+    private CommentManager GetCommentManager(UserSecret userSecret, string paratextId)
+    {
+        ScrText scrText =
+            ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
+            ?? throw new DataNotFoundException(
+                "Cannot create comment manager for project with paratextId: " + paratextId
+            );
+        return CommentManager.Get(scrText);
     }
 
     private SyncMetricInfo PutCommentThreads(
@@ -2486,7 +2491,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Algorithm sourced from Paratext DataAccessServer
         foreach (List<Paratext.Data.ProjectComments.Comment> thread in changeList)
         {
-            CommentThread existingThread = manager.FindThread(thread[0].Thread);
+            CommentThread? existingThread = manager.FindThread(thread[0].Thread);
             foreach (Paratext.Data.ProjectComments.Comment comment in thread)
             {
                 Paratext.Data.ProjectComments.Comment existingComment = existingThread
@@ -2693,7 +2698,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// </summary>
     private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-        IEnumerable<CommentThread>? commentThreads,
+        CommentManager commentManager,
         string defaultUsername,
         int sfNoteTagId,
         IReadOnlyDictionary<string, string> displayNames,
@@ -2706,7 +2711,7 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
-            CommentThread? existingThread = commentThreads?.SingleOrDefault(ct => ct.Id == threadDoc.Data.ThreadId);
+            CommentThread? existingThread = commentManager.FindThread(threadDoc.Data.ThreadId);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
