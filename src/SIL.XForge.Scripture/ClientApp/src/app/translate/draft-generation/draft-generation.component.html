@@ -130,6 +130,16 @@
         ></transloco>
       </app-notice>
     </ng-container>
+
+    <!-- Only show sync related messages if approved or a back translation and a build is not underway -->
+    <ng-container *ngIf="(this.isBackTranslationMode || this.isPreTranslationApproved) && !isDraftInProgress(draftJob)">
+      <app-notice *ngIf="!lastSyncSuccessful" type="warning" icon="warning" data-test-id="warning-last-sync-failed">
+        <transloco key="draft_generation.info_alert_last_sync_failed"></transloco>
+      </app-notice>
+      <app-notice *ngIf="lastSyncSuccessful" type="primary" icon="info" data-test-id="notice-project-will-sync">
+        <transloco key="draft_generation.info_alert_project_will_sync"></transloco>
+      </app-notice>
+    </ng-container>
   </section>
 
   <mat-divider *ngIf="hasBottomContent" inset></mat-divider>
