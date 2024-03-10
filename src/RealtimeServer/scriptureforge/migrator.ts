@@ -47,12 +47,10 @@ ShareDB.logger.setMethods({ warn: reportError, error: reportError });
 
 async function runMigrations() {
   const DBType = MetadataDB(ShareDBMongo);
-  let maybeClient: MongoClient | undefined;
   let server: SFRealtimeServer | undefined;
 
   try {
     const client = await MongoClient.connect(`${dataAccessConnectionString}/xforge`);
-    maybeClient = client;
     const db = client.db();
     server = new SFRealtimeServer(
       siteId,
@@ -65,8 +63,8 @@ async function runMigrations() {
     await server.addValidationSchema(db);
     await server.migrateIfNecessary();
   } finally {
+    // The server closes the MongoDB client
     server?.close();
-    maybeClient?.close();
   }
 }
 

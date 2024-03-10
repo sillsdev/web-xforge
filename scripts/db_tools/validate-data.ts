@@ -116,7 +116,7 @@ class ValidateData {
         }
       }
     } finally {
-      client.close();
+      await client.close();
     }
   }
 }
