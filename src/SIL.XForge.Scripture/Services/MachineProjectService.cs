@@ -283,7 +283,7 @@ public class MachineProjectService(
                 translationEngineId = projectSecret.ServalData!.PreTranslationEngineId!;
 
                 // Execute a complete pre-translation
-                translationBuildConfig = await GetTranslationBuildConfigAsync(
+                translationBuildConfig = GetTranslationBuildConfig(
                     projectSecret.ServalData,
                     projectDoc.Data.TranslateConfig.DraftConfig,
                     buildConfig
@@ -558,11 +558,8 @@ public class MachineProjectService(
             .Key;
 
         // See if we are uploading a Paratext zip file
-        bool uploadParatextZipFile =
-            preTranslate
-            && await featureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
-            && !project.TranslateConfig.DraftConfig.SendAllSegments
-            && (corpusId == null || projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile);
+        bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+        bool uploadParatextZipFile = preTranslate && !useEcho && !project.TranslateConfig.DraftConfig.SendAllSegments;
 
         // See if there is an alternate training source corpus
         bool useAlternateTrainingSource =
@@ -1009,7 +1006,7 @@ public class MachineProjectService(
     /// <param name="buildConfig">The build configuration from the user, specified on the front end.</param>
     /// <returns>The TranslationBuildConfig for a Pre-Translate build.</returns>
     /// <remarks>Do not use with SMT builds.</remarks>
-    private async Task<TranslationBuildConfig> GetTranslationBuildConfigAsync(
+    private static TranslationBuildConfig GetTranslationBuildConfig(
         ServalData servalData,
         DraftConfig draftConfig,
         BuildConfig buildConfig
@@ -1032,17 +1029,12 @@ public class MachineProjectService(
             servalConfig["max_steps"] = 20;
         }
 
-        // See if uploading Paratext Zip files is enabled
-        bool uploadParatextZipFile = await featureManager.IsEnabledAsync(
-            FeatureFlags.UploadParatextZipForPreTranslation
-        );
-
         // See if there is an alternate training source corpus
         bool useAlternateTrainingSource =
             draftConfig.AlternateTrainingSourceEnabled && draftConfig.AlternateTrainingSource is not null;
 
         // Set up the pre-translation and training corpora
-        List<PretranslateCorpusConfig> preTranslate = new List<PretranslateCorpusConfig>();
+        List<PretranslateCorpusConfig> preTranslate = [];
         List<TrainingCorpusConfig>? trainOn = null;
 
         // Add the pre-translation books
@@ -1055,7 +1047,7 @@ public class MachineProjectService(
             var preTranslateCorpusConfig = new PretranslateCorpusConfig { CorpusId = corpus.Key };
 
             // If this is a Paratext zip file corpus, and the feature flag is enabled
-            if (uploadParatextZipFile && corpus.Value.UploadParatextZipFile)
+            if (corpus.Value.UploadParatextZipFile)
             {
                 // Since all books are uploaded via the zip file, we need to specify the target books to translate
                 preTranslateCorpusConfig.TextIds = buildConfig.TranslationBooks.Select(Canon.BookNumberToId).ToList();
@@ -1063,7 +1055,7 @@ public class MachineProjectService(
                 if (!useAlternateTrainingSource)
                 {
                     // As we do not have an alternate train on source specified, use the source texts to train on
-                    trainOn ??= new List<TrainingCorpusConfig>();
+                    trainOn ??= [];
                     trainOn.Add(
                         new TrainingCorpusConfig
                         {
@@ -1088,7 +1080,7 @@ public class MachineProjectService(
             )
             {
                 var trainingCorpusConfig = new TrainingCorpusConfig { CorpusId = corpus.Key };
-                if (uploadParatextZipFile && corpus.Value.UploadParatextZipFile)
+                if (corpus.Value.UploadParatextZipFile)
                 {
                     // As all books are uploaded via the zip file, specify the source books to train on
                     trainingCorpusConfig.TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList();

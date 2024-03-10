@@ -147,11 +147,16 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_DoesNotPassTrainOnIfAlternateTrainingSourceEnabledWithoutAlternateSource()
+    public async Task BuildProjectAsync_DoesNotPassTrainOnIfAlternateTrainingSourceEnabledWithoutAlternateSourceWhenSendAllSegments()
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { BuildIsPending = false, AlternateTrainingSourceEnabled = true }
+            new TestEnvironmentOptions
+            {
+                BuildIsPending = false,
+                AlternateTrainingSourceEnabled = true,
+                SendAllSegments = true,
+            }
         );
 
         // SUT
@@ -215,7 +220,7 @@ public class MachineProjectServiceTests
     public async Task BuildProjectAsync_SendsAdditionalTrainingDataWhenFilesPreviouslyUploaded()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(new TestEnvironmentOptions { SendAllSegments = true });
         await env.SetupTrainingDataAsync(Project02, existingData: true);
 
         // SUT
@@ -458,7 +463,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_RunsPreTranslationBuildIfNoTextChangesAndNoPendingBuild()
+    public async Task BuildProjectAsync_RunsPreTranslationBuildIfNoTextChangesAndNoPendingBuildWhenSendAllSegments()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -468,6 +473,7 @@ public class MachineProjectServiceTests
                 PreTranslationBuildIsQueued = true,
                 LocalSourceTextHasData = true,
                 LocalTargetTextHasData = true,
+                SendAllSegments = true,
             }
         );
         await env.SetDataInSync(Project02, true);
@@ -670,7 +676,7 @@ public class MachineProjectServiceTests
         await env.TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         await env.DataFilesClient.Received()
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -1288,7 +1294,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                SendAllSegments = true,
+            }
         );
         await env.SetDataInSync(Project02, preTranslate: true);
 
@@ -1456,7 +1467,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorpora()
+    public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorporaWhenSendAllSegments()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1466,6 +1477,7 @@ public class MachineProjectServiceTests
                 LocalTargetTextHasData = true,
                 AlternateTrainingSourceConfigured = true,
                 AlternateTrainingSourceEnabled = true,
+                SendAllSegments = true,
             }
         );
         await env.SetDataInSync(Project02, true);
@@ -2046,9 +2058,6 @@ public class MachineProjectServiceTests
             featureManager
                 .IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation)
                 .Returns(Task.FromResult(options.UseEchoForPreTranslation));
-            featureManager
-                .IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
-                .Returns(Task.FromResult(options.UploadParatextZipForPreTranslation));
 
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
