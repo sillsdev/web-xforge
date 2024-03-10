@@ -233,7 +233,7 @@ class ProjectInquirer {
         );
       }
     } finally {
-      client.close();
+      await client.close();
       (conn as any).close();
     }
   }
