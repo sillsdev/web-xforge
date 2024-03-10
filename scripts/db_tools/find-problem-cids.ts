@@ -125,7 +125,7 @@ class ProblemCidFinder {
         }
       }
     } finally {
-      client.close();
+      await client.close();
       (conn as any).close();
     }
   }
