@@ -45,7 +45,7 @@ async function run() {
     showJwt(jwt);
     console.log(`refresh_token: ${userSecrets!.paratextTokens.refreshToken}`);
   } finally {
-    client.close();
+    await client.close();
   }
 }
 
