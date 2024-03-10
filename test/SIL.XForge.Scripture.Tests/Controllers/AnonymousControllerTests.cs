@@ -26,8 +26,7 @@ public class AnonymousControllerTests
     {
         var env = new TestEnvironment();
         env.FeatureManager.GetFeatureNamesAsync().Returns(TestEnvironment.GetFeatureFlags());
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.UploadParatextZipForPreTranslation)
-            .Returns(Task.FromResult(true));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation).Returns(Task.FromResult(true));
 
         // SUT
         var actual = await env.Controller.FeatureFlags();
@@ -36,8 +35,7 @@ public class AnonymousControllerTests
         Assert.IsInstanceOf<JsonResult>(actual.Result);
         Dictionary<string, bool> featureFlags = (actual.Result as JsonResult)?.Value as Dictionary<string, bool>;
         Assert.IsNotNull(featureFlags);
-        Assert.IsTrue(featureFlags![FeatureFlags.UploadParatextZipForPreTranslation]);
-        Assert.IsFalse(featureFlags![FeatureFlags.UseEchoForPreTranslation]);
+        Assert.IsTrue(featureFlags![FeatureFlags.UseEchoForPreTranslation]);
     }
 
     [Test]
@@ -160,7 +158,6 @@ public class AnonymousControllerTests
 
         public static async IAsyncEnumerable<string> GetFeatureFlags()
         {
-            yield return FeatureFlags.UploadParatextZipForPreTranslation;
             yield return FeatureFlags.UseEchoForPreTranslation;
             await Task.CompletedTask;
         }
