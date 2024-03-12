@@ -199,8 +199,8 @@
     "loading": "Cargando...",
     "next": "Siguiente",
     "no_available_books": "No tiene libros disponibles para la redacción.",
-    "these_books_cannot_be_used_for_training": "Los siguientes libros no pueden utilizarse para la formación, ya que no se encuentran en el texto fuente de formación ({{ trainingSourceProjectName }}).",
-    "these_books_cannot_be_used_for_translating": "Los siguientes libros no pueden traducirse porque no se encuentran en el texto fuente de redacción ({{ draftingSourceProjectName }})."
+    "these_source_books_cannot_be_used_for_training": "Los siguientes libros no pueden utilizarse para la formación, ya que no se encuentran en el texto fuente de formación ({{ trainingSourceProjectName }}).",
+    "these_source_books_cannot_be_used_for_translating": "Los siguientes libros no pueden traducirse porque no se encuentran en el texto fuente de redacción ({{ draftingSourceProjectName }})."
   },
   "draft_viewer": {
     "apply_to_project": "Aplicar al proyecto",

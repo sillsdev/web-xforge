@@ -199,8 +199,8 @@
     "loading": "Memuat...",
     "next": "Berikutnya",
     "no_available_books": "Anda tidak memiliki kitab yang tersedia untuk menyusun konsep.",
-    "these_books_cannot_be_used_for_training": "Kitab-kitab berikut ini tidak dapat digunakan untuk pelatihan karena tidak ada dalam teks sumber pelatihan ({{ trainingSourceProjectName }}).",
-    "these_books_cannot_be_used_for_translating": "Kitab-kitab berikut ini tidak dapat diterjemahkan karena tidak ada dalam teks sumber pelatihan ({{ draftingSourceProjectName }})."
+    "these_source_books_cannot_be_used_for_training": "Kitab-kitab berikut ini tidak dapat digunakan untuk pelatihan karena tidak ada dalam teks sumber pelatihan ({{ trainingSourceProjectName }}).",
+    "these_source_books_cannot_be_used_for_translating": "Kitab-kitab berikut ini tidak dapat diterjemahkan karena tidak ada dalam teks sumber pelatihan ({{ draftingSourceProjectName }})."
   },
   "draft_viewer": {
     "apply_to_project": "Terapkan ke proyek",
