@@ -29,6 +29,12 @@ export class CacheService {
 
           const textDocId = new TextDocId(project.id, text.bookNum, chapter.number, 'target');
           await this.projectService.getText(textDocId);
+
+          if (text.hasSource && project.data.translateConfig.source != null) {
+            const sourceId: string = project.data.translateConfig.source.projectRef;
+            const sourceTextDocId = new TextDocId(sourceId, text.bookNum, chapter.number, 'target');
+            await this.projectService.getText(sourceTextDocId);
+          }
         }
       }
     }
