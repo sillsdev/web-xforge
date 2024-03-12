@@ -34,7 +34,11 @@ app-notice {
   h4 {
     font-style: italic;
     font-weight: 400;
-    margin: 0 0 16px;
+    margin: 16px 0;
+    /* Remove the top margin for the first h4 */
+    &:first-of-type {
+      margin-top: 0;
+    }
   }
 
   &.warning {
