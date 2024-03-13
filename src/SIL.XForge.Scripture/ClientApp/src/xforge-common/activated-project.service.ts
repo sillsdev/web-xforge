@@ -5,6 +5,7 @@ import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { PermissionsService } from 'src/app/core/permissions.service';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { CacheService } from 'src/app/shared/cache-service/cache-service';
 import { SubscriptionDisposable } from './subscription-disposable';
@@ -132,9 +133,10 @@ export class TestActivatedProjectService extends ActivatedProjectService {
 
   static withProjectId(projectId: string): TestActivatedProjectService {
     const projectService = TestBed.inject(SFProjectService);
+    const permissionsService = TestBed.inject(PermissionsService);
     return new TestActivatedProjectService(
       projectService,
-      new CacheService(projectService),
+      new CacheService(projectService, permissionsService),
       new TestActiveProjectIdService(projectId)
     );
   }

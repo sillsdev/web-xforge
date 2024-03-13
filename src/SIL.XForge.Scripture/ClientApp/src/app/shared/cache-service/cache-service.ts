@@ -1,6 +1,7 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { TextDocId } from 'src/app/core/models/text-doc';
+import { PermissionsService } from 'src/app/core/permissions.service';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 
 @Injectable({
@@ -8,7 +9,10 @@ import { SFProjectService } from 'src/app/core/sf-project.service';
 })
 export class CacheService {
   private abortCurrent: EventEmitter<void> = new EventEmitter();
-  constructor(private readonly projectService: SFProjectService) {}
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly permissionsService: PermissionsService
+  ) {}
 
   async cache(project: SFProjectProfileDoc): Promise<void> {
     this.abortCurrent.emit();
@@ -20,6 +24,8 @@ export class CacheService {
     const sub = this.abortCurrent.subscribe(() => (abort = true));
 
     if (project?.data != null) {
+      const sourceId = project.data.translateConfig.source?.projectRef;
+
       for (const text of project.data.texts) {
         for (const chapter of text.chapters) {
           if (abort) {
@@ -30,10 +36,11 @@ export class CacheService {
           const textDocId = new TextDocId(project.id, text.bookNum, chapter.number, 'target');
           await this.projectService.getText(textDocId);
 
-          if (text.hasSource && project.data.translateConfig.source != null) {
-            const sourceId: string = project.data.translateConfig.source.projectRef;
+          if (text.hasSource && sourceId != null) {
             const sourceTextDocId = new TextDocId(sourceId, text.bookNum, chapter.number, 'target');
-            await this.projectService.getText(sourceTextDocId);
+            if (await this.permissionsService.canAccessText(sourceTextDocId)) {
+              await this.projectService.getText(sourceTextDocId);
+            }
           }
         }
       }
