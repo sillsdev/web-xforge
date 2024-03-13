@@ -7,6 +7,7 @@ import { AppComponent } from 'src/app/app.component';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from 'src/app/core/models/sf-type-registry';
 import { TextDocId } from 'src/app/core/models/text-doc';
+import { PermissionsService } from 'src/app/core/permissions.service';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -17,6 +18,7 @@ import { CacheService } from './cache-service';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
+const mockedPermissionService = mock(PermissionsService);
 
 describe('cache service', () => {
   configureTestingModule(() => ({
@@ -28,7 +30,10 @@ describe('cache service', () => {
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
-    providers: [{ provide: SFProjectService, useMock: mockedProjectService }]
+    providers: [
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: PermissionsService, useMock: mockedPermissionService }
+    ]
   }));
   describe('load all texts', () => {
     it('gets all texts from project service', fakeAsync(async () => {
@@ -66,6 +71,23 @@ describe('cache service', () => {
       flush();
       expect(true).toBeTruthy();
     }));
+
+    it('gets the source texts if they are present and the user can access', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      when(mockedPermissionService.canAccessText(anything())).thenResolve(true);
+      when(mockedPermissionService.canAccessText(deepEqual(new TextDocId('sourceId', 0, 0, 'target')))).thenResolve(
+        false
+      ); //remove access for one source doc
+
+      await env.service.cache(env.projectDoc);
+      env.wait();
+
+      //verify all sources and targets were gotten except the inaccessible one
+      verify(mockedProjectService.getText(anything())).times(200 * 100 * 2 - 1);
+
+      flush();
+      expect(true).toBeTruthy();
+    }));
   });
 });
 
@@ -78,7 +100,12 @@ class TestEnvironment {
     this.service = TestBed.inject(CacheService);
 
     const data = createTestProjectProfile({
-      texts: this.createTexts()
+      texts: this.createTexts(),
+      translateConfig: {
+        source: {
+          projectRef: 'sourceId'
+        }
+      }
     });
 
     when(mockedProjectDoc.data).thenReturn(data);
@@ -91,7 +118,7 @@ class TestEnvironment {
       for (let chapter = 0; chapter < 100; chapter++) {
         chapters.push({ isValid: true, lastVerse: 1, number: chapter, permissions: {}, hasAudio: false });
       }
-      texts.push({ bookNum: book, chapters: chapters, hasSource: false, permissions: {} });
+      texts.push({ bookNum: book, chapters: chapters, hasSource: true, permissions: {} });
     }
     return texts;
   }
