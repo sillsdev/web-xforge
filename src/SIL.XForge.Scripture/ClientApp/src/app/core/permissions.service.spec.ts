@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
@@ -6,12 +6,17 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from './permissions.service';
+import { SFProjectService } from './sf-project.service';
 
 const mockedUserService = mock(UserService);
+const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
-    providers: [{ provide: UserService, useMock: mockedUserService }]
+    providers: [
+      { provide: UserService, useMock: mockedUserService },
+      { provide: SFProjectService, useMock: mockedProjectService }
+    ]
   }));
 
   it('allows commenters to access Translate', fakeAsync(() => {
