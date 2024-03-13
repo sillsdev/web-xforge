@@ -57,8 +57,8 @@ public static class DataAccessServiceCollectionExtensions
     public static void AddMongoRepository<T>(
         this IServiceCollection services,
         string collection,
-        Action<BsonClassMap<T>> mapSetup = null,
-        Action<IMongoIndexManager<T>> indexSetup = null
+        Action<BsonClassMap<T>>? mapSetup = null,
+        Action<IMongoIndexManager<T>>? indexSetup = null
     )
         where T : IIdentifiable
     {
@@ -69,13 +69,11 @@ public static class DataAccessServiceCollectionExtensions
     private static MongoRepository<T> CreateMongoRepository<T>(
         IServiceProvider sp,
         string collection,
-        Action<IMongoIndexManager<T>> indexSetup
+        Action<IMongoIndexManager<T>>? indexSetup
     )
-        where T : IIdentifiable
-    {
-        return new MongoRepository<T>(
+        where T : IIdentifiable =>
+        new MongoRepository<T>(
             sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
             c => indexSetup?.Invoke(c.Indexes)
         );
-    }
 }
