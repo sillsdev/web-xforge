@@ -13,12 +13,10 @@ public static class DataAccessClassMap
         ConventionRegistry.Register(nspace, conventionPack, t => t.Namespace != null && t.Namespace.StartsWith(nspace));
     }
 
-    public static void RegisterClass<T>(Action<BsonClassMap<T>> mapSetup)
-    {
+    public static void RegisterClass<T>(Action<BsonClassMap<T>>? mapSetup) =>
         BsonClassMap.RegisterClassMap<T>(cm =>
         {
             cm.AutoMap();
             mapSetup?.Invoke(cm);
         });
-    }
 }
