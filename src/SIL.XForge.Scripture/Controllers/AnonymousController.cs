@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Security;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.FeatureManagement;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -21,25 +24,15 @@ namespace SIL.XForge.Scripture.Controllers;
 [Route(UrlConstants.Anonymous)]
 [ApiController]
 [AllowAnonymous]
-public class AnonymousController : ControllerBase
+public class AnonymousController(
+    IAnonymousService anonymousService,
+    IExceptionHandler exceptionHandler,
+    IFeatureManager featureManager,
+    IMachineApiService machineApiService
+) : ControllerBase
 {
-    private readonly IAnonymousService _anonymousService;
-    private readonly IExceptionHandler _exceptionHandler;
-    private readonly IFeatureManager _featureManager;
-
-    public AnonymousController(
-        IAnonymousService anonymousService,
-        IExceptionHandler exceptionHandler,
-        IFeatureManager featureManager
-    )
-    {
-        _anonymousService = anonymousService;
-        _exceptionHandler = exceptionHandler;
-        _featureManager = featureManager;
-    }
-
     /// <summary>
-    /// Checks whether or not the share key is valid.
+    /// Checks whether the share key is valid.
     /// </summary>
     /// <param name="content">The share key to check.</param>
     /// <response code="200">The share key is valid.</response>
@@ -49,7 +42,7 @@ public class AnonymousController : ControllerBase
     {
         try
         {
-            return Ok(await _anonymousService.CheckShareKey(content.ShareKey));
+            return Ok(await anonymousService.CheckShareKey(content.ShareKey));
         }
         catch (DataNotFoundException e)
         {
@@ -61,7 +54,7 @@ public class AnonymousController : ControllerBase
         }
         catch (Exception)
         {
-            _exceptionHandler.RecordEndpointInfoForException(
+            exceptionHandler.RecordEndpointInfoForException(
                 new Dictionary<string, string> { { "method", "CheckShareKey" }, { "shareKey", content.ShareKey } }
             );
             throw;
@@ -77,9 +70,9 @@ public class AnonymousController : ControllerBase
     public async Task<ActionResult<Dictionary<string, bool>>> FeatureFlags()
     {
         Dictionary<string, bool> features = new Dictionary<string, bool>();
-        await foreach (string feature in _featureManager.GetFeatureNamesAsync())
+        await foreach (string feature in featureManager.GetFeatureNamesAsync())
         {
-            features.Add(feature, await _featureManager.IsEnabledAsync(feature));
+            features.Add(feature, await featureManager.IsEnabledAsync(feature));
         }
 
         // Stop JSON.NET overriding the dictionary key casing
@@ -99,13 +92,14 @@ public class AnonymousController : ControllerBase
     /// Generates an anonymous account.
     /// </summary>
     /// <param name="request">The parameters to generate the account.</param>
+    /// <returns><c>true</c> on success.</returns>
     /// <response code="200">The account was generated.</response>
     /// <response code="204">There was a problem communicating with the authentication server.</response>
     /// <response code="404">The share key does not exist.</response>
     [HttpPost("generateAccount")]
     public async Task<ActionResult<bool>> GenerateAccount([FromBody] GenerateAccountRequest request)
     {
-        _exceptionHandler.RecordEndpointInfoForException(
+        exceptionHandler.RecordEndpointInfoForException(
             new Dictionary<string, string>
             {
                 { "method", "GenerateAccount" },
@@ -116,7 +110,7 @@ public class AnonymousController : ControllerBase
         );
         try
         {
-            var credentials = await _anonymousService.GenerateAccount(
+            var credentials = await anonymousService.GenerateAccount(
                 request.ShareKey,
                 request.DisplayName,
                 request.Language
@@ -124,7 +118,7 @@ public class AnonymousController : ControllerBase
             // Store credentials in a cookie as a fallback to the auth0 tokens expiring so the user can log in again
             Response.Cookies.Append(
                 CookieConstants.TransparentAuthentication,
-                Newtonsoft.Json.JsonConvert.SerializeObject(credentials),
+                JsonConvert.SerializeObject(credentials),
                 new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(2) }
             );
             return Ok(true);
@@ -135,22 +129,52 @@ public class AnonymousController : ControllerBase
         }
         catch (HttpRequestException e)
         {
-            _exceptionHandler.ReportException(e);
+            exceptionHandler.ReportException(e);
             return NoContent();
         }
         catch (TaskCanceledException e)
         {
-            _exceptionHandler.ReportException(e);
+            exceptionHandler.ReportException(e);
             return NoContent();
         }
         catch (SecurityException e)
         {
-            _exceptionHandler.ReportException(e);
+            exceptionHandler.ReportException(e);
             return NoContent();
         }
-        catch (Exception)
+    }
+
+    /// <summary>
+    /// Executes a webhook callback.
+    /// </summary>
+    /// <param name="_">The json data containing the event and the payload.</param>
+    /// <param name="signature">The SHA256 signature for the payload.</param>
+    /// <returns><c>true</c> on success.</returns>
+    /// <response code="200">The webhook was executed.</response>
+    /// <response code="204">There was a problem executing the webhook.</response>
+    /// <remarks>Serval requires a Success code, even on failure, so we return </remarks>
+    [HttpPost("webhook")]
+    public async Task<ActionResult<bool>> Webhook(
+        [FromHeader(Name = "HTTP_X_HUB_SIGNATURE_256")] string signature,
+        [BindNever, FromBody] object? _ = null
+    )
+    {
+        // NOTE: The discard parameter is so that Swagger can allow us to enter a Request body, and so we can read the
+        // Request.Body stream in this action. If we did not read the body in this way and set BindNever, we would not
+        // be able to get the JSON data as sent by Serval from the Request Body, and validate the HMAC signature.
+        try
         {
-            throw;
+            // Get the json as a raw string form the body so that we can validate the signature
+            using var reader = new StreamReader(Request.Body, Encoding.UTF8);
+            string json = await reader.ReadToEndAsync();
+            await machineApiService.ExecuteWebhookAsync(json, signature);
+            return Ok(true);
+        }
+        catch (Exception e)
+        {
+            // Report the exception, but do not throw it as Serval requires a success code
+            exceptionHandler.ReportException(e);
+            return NoContent();
         }
     }
 }
