@@ -167,6 +167,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.noticeService.isAppLoading;
   }
 
+  get isServalAdmin(): boolean {
+    return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
+  }
+
   get isSystemAdmin(): boolean {
     return this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
   }
