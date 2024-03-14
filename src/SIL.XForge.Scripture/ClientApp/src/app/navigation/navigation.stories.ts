@@ -62,7 +62,10 @@ function setUpMocks(args: StoryState): void {
   when(mockedResumeCheckingService.checkingLink$).thenReturn(of(['']));
 
   TestBed.resetTestingModule();
-  TestBed.configureTestingModule({ imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)] });
+  TestBed.configureTestingModule({
+    imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    providers: [{ provide: UserService, useValue: instance(mockedUserService) }]
+  });
 
   const realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, { id: projectId, data: project });
