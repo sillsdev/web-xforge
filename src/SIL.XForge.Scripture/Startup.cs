@@ -68,6 +68,7 @@ public class Startup
         "login",
         "projects",
         "join",
+        "serval-administration",
         "system-administration",
         "favicon.ico",
         "assets"

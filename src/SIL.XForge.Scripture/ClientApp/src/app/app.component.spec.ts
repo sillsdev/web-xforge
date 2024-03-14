@@ -6,6 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -342,6 +343,86 @@ describe('AppComponent', () => {
       env.clickEditDisplayName();
       verify(mockedNoticeService.show(anything())).once();
       verify(mockedUserService.editDisplayName(anything())).never();
+    }));
+  });
+
+  describe('Serval Administrator', () => {
+    it('shows serval administration menu item', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      env.init();
+
+      // Show the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+
+      // Verify the menu item is visible
+      expect(env.component.isServalAdmin).toBeTruthy();
+      expect(env.userMenu).not.toBeNull();
+      expect(env.userMenu.query(By.css('#serval-admin-btn'))).not.toBeNull();
+
+      // Hide the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+    }));
+
+    it('does not show system administration menu item', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      env.init();
+
+      // Show the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+
+      // Verify the menu item is not visible
+      expect(env.component.isSystemAdmin).toBeFalsy();
+      expect(env.userMenu).not.toBeNull();
+      expect(env.userMenu.query(By.css('#system-admin-btn'))).toBeNull();
+
+      // Hide the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+    }));
+  });
+
+  describe('System Administrator', () => {
+    it('shows system administration menu item', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+      env.init();
+
+      // Show the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+
+      // Verify the menu item is visible
+      expect(env.component.isSystemAdmin).toBeTruthy();
+      expect(env.userMenu).not.toBeNull();
+      expect(env.userMenu.query(By.css('#system-admin-btn'))).not.toBeNull();
+
+      // Hide the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+    }));
+
+    it('does not show serval administration menu item', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+      env.init();
+
+      // Show the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+
+      // Verify the menu item is not visible
+      expect(env.component.isServalAdmin).toBeFalsy();
+      expect(env.userMenu).not.toBeNull();
+      expect(env.userMenu.query(By.css('#serval-admin-btn'))).toBeNull();
+
+      // Hide the user menu
+      env.avatarIcon.nativeElement.click();
+      env.wait();
     }));
   });
 });
