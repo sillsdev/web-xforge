@@ -65,7 +65,7 @@
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
 
-        <app-notice *ngIf="unusableTrainingSourceBooks.length || unusableTrainingTargetBooks.lastIndexOf" type="light">
+        <app-notice *ngIf="unusableTrainingSourceBooks.length || unusableTrainingTargetBooks.length" type="light">
           <h4>
             <transloco
               *ngIf="unusableTrainingSourceBooks.length"
