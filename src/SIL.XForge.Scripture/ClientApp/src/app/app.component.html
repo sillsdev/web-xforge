@@ -87,8 +87,23 @@
             </div>
           </div>
           <mat-divider></mat-divider>
-          <button mat-menu-item *ngIf="isSystemAdmin" [disabled]="!isAppOnline" appRouterLink="/system-administration">
+          <button
+            mat-menu-item
+            *ngIf="isSystemAdmin"
+            id="system-admin-btn"
+            [disabled]="!isAppOnline"
+            appRouterLink="/system-administration"
+          >
             {{ t("system_administration") }}
+          </button>
+          <button
+            mat-menu-item
+            *ngIf="isServalAdmin"
+            id="serval-admin-btn"
+            [disabled]="!isAppOnline"
+            appRouterLink="/serval-administration"
+          >
+            {{ t("serval_administration") }}
           </button>
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">{{ t("project_home") }}</button>
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
