@@ -1,0 +1,12 @@
+<div fxLayout="column" fxLayoutAlign="center start" class="body-content">
+  <h1>{{ projectName }}</h1>
+  <div>
+    <a mat-raised-button color="primary" [appRouterLink]="'/serval-administration'">Back to Projects</a>
+  </div>
+  <h2>Pre-Translation Configuration</h2>
+  <div>
+    <mat-checkbox [checked]="preTranslate" (change)="onUpdatePreTranslate($event.checked)">
+      Pre-Translation Drafting Enabled
+    </mat-checkbox>
+  </div>
+</div>
