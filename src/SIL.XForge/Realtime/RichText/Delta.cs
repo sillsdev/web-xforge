@@ -357,8 +357,10 @@ public class Delta
     /// <summary>
     /// Test for value equality of two JTokens while ignoring the cid object property in char nodes.
     /// </summary>
-    static bool JTokenDeepEqualsIgnoreCharId(JToken a, JToken b)
+    private static bool JTokenDeepEqualsIgnoreCharId(JToken? a, JToken? b)
     {
+        if (a == null && b == null)
+            return true;
         if (b == null)
             return false;
         // If the token is not an object, it will not have a char property

@@ -663,6 +663,121 @@ public class DeltaTests
     }
 
     [Test]
+    public void Diff_CharIdShouldNotChangeWhenAnPrecedingObjectHasNoAttributes()
+    {
+        JObject chapterObject1 = new JObject(
+            new JProperty("chapter", new JObject(new JProperty("number", "2"), new JProperty("style", "c")))
+        );
+        JObject insertAttributes1 = new JObject(
+            new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "123")))
+        );
+        JObject chapterObject2 = new JObject(
+            new JProperty("chapter", new JObject(new JProperty("number", "2"), new JProperty("style", "c")))
+        );
+        JObject insertAttributes2 = new JObject(
+            new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "456")))
+        );
+
+        var del1 = Delta.New().Insert(chapterObject1).Insert("text1", insertAttributes1);
+        var del2 = Delta.New().Insert(chapterObject2).Insert("text1", insertAttributes2);
+
+        Delta result = del1.Diff(del2);
+        Assert.IsEmpty(result.Ops);
+    }
+
+    [Test]
+    public void Diff_CharIdShouldChangeWhenAnPrecedingObjectHasNoAttributesAndTextChanges()
+    {
+        JObject chapterObject1 = new JObject(
+            new JProperty("chapter", new JObject(new JProperty("number", "2"), new JProperty("style", "c")))
+        );
+        JObject insertAttributes1 = new JObject(
+            new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "123")))
+        );
+        JObject chapterObject2 = new JObject(
+            new JProperty("chapter", new JObject(new JProperty("number", "2"), new JProperty("style", "c")))
+        );
+        JObject insertAttributes2 = new JObject(
+            new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "456")))
+        );
+
+        var del1 = Delta.New().Insert(chapterObject1).Insert("text1", insertAttributes1);
+        var del2 = Delta.New().Insert(chapterObject2).Insert("text2", insertAttributes2);
+
+        var length1 = "2".Length; // Chapter Number
+        var length2 = "text".Length;
+        var length4 = "1".Length; // Removal of "1"
+        JObject expectedObj1 = new JObject(new JProperty("retain", length1));
+        JObject expectedObj2 = new JObject(
+            new JProperty("retain", length2),
+            new JProperty(
+                "attributes",
+                new JObject(
+                    new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "456")))
+                )
+            )
+        );
+        JObject expectedObj3 = new JObject(
+            new JProperty("insert", "2"),
+            new JProperty(
+                "attributes",
+                new JObject(
+                    new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "456")))
+                )
+            )
+        );
+        JObject expectedObj4 = new JObject(new JProperty("delete", length4));
+
+        Delta result = del1.Diff(del2);
+        Assert.That(result.Ops.Count, Is.EqualTo(4));
+        Assert.That(JToken.DeepEquals(result.Ops[0], expectedObj1), Is.True);
+        Assert.That(JToken.DeepEquals(result.Ops[1], expectedObj2), Is.True);
+        Assert.That(JToken.DeepEquals(result.Ops[2], expectedObj3), Is.True);
+        Assert.That(JToken.DeepEquals(result.Ops[3], expectedObj4), Is.True);
+    }
+
+    [Test]
+    public void Diff_CharIdShouldChangeWhenAnPrecedingObjectHasNoAttributesAndTextHasADeletion()
+    {
+        JObject chapterObject1 = new JObject(
+            new JProperty("chapter", new JObject(new JProperty("number", "2"), new JProperty("style", "c")))
+        );
+        JObject insertAttributes1 = new JObject(
+            new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "123")))
+        );
+        JObject chapterObject2 = new JObject(
+            new JProperty("chapter", new JObject(new JProperty("number", "2"), new JProperty("style", "c")))
+        );
+        JObject insertAttributes2 = new JObject(
+            new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "456")))
+        );
+
+        var del1 = Delta.New().Insert(chapterObject1).Insert("text1", insertAttributes1);
+        var del2 = Delta.New().Insert(chapterObject2).Insert("text", insertAttributes2);
+
+        var length1 = "2".Length; // Chapter Number
+        var length2 = "text".Length;
+        var length3 = "1".Length; // Removal of "1"
+        JObject expectedObj1 = new JObject(new JProperty("retain", length1));
+        JObject expectedObj2 = new JObject(
+            new JProperty("retain", length2),
+            new JProperty(
+                "attributes",
+                new JObject(
+                    new JProperty("char", new JObject(new JProperty("style", "sc"), new JProperty("cid", "456")))
+                )
+            )
+        );
+        JObject expectedObj3 = new JObject(new JProperty("delete", length3));
+
+        Delta result = del1.Diff(del2);
+        Assert.That(result.Ops.Count, Is.EqualTo(3));
+        Assert.That(JToken.DeepEquals(result.Ops[0], expectedObj1), Is.True);
+        Assert.That(JToken.DeepEquals(result.Ops[1], expectedObj2), Is.True);
+        Assert.That(JToken.DeepEquals(result.Ops[2], expectedObj3), Is.True);
+    }
+
+    [Test]
     public void Diff_CharIdUpdatedForTextInsertDiffDelta()
     {
         // The path to the cid can look like attributes.char.cid for usfm text formatting
