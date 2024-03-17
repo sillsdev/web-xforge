@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -1018,6 +1019,64 @@ public class MachineProjectServiceTests
         // SUT
         var actual = await env.Service.GetTranslationEngineTypeAsync(preTranslate: false);
         Assert.AreEqual(MachineProjectService.SmtTransfer, actual);
+    }
+
+    [Test]
+    public async Task GetProjectZipAsync_Success()
+    {
+        var env = new TestEnvironment();
+        MemoryStream outputStream = new MemoryStream();
+
+        // SUT
+        string actual = await env.Service.GetProjectZipAsync(Project01, outputStream, CancellationToken.None);
+        Assert.AreEqual("P01.zip", actual);
+
+        // Validate the zip file
+        outputStream.Seek(0, SeekOrigin.Begin);
+        using var archive = new ZipArchive(outputStream, ZipArchiveMode.Read);
+        Assert.AreEqual(1, archive.Entries.Count);
+        Assert.AreEqual("file", archive.Entries[0].FullName);
+    }
+
+    [Test]
+    public void GetProjectZipAsync_ThrowsExceptionWhenProjectDirectoryMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
+        MemoryStream outputStream = new MemoryStream();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetProjectZipAsync(Project01, outputStream, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetProjectZipAsync_ThrowsExceptionWhenProjectDocumentMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        MemoryStream outputStream = new MemoryStream();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetProjectZipAsync("invalid_project_id", outputStream, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetProjectZipAsync_ThrowsExceptionWhenProjectIsAResource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+        MemoryStream outputStream = new MemoryStream();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetProjectZipAsync(Project01, outputStream, CancellationToken.None)
+        );
     }
 
     [Test]
