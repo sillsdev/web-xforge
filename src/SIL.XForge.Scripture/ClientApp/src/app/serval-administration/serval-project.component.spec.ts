@@ -11,11 +11,13 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
+import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
 const mockSFProjectService = mock(SFProjectService);
+const mockServalAdministrationService = mock(ServalAdministrationService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
@@ -29,6 +31,7 @@ describe('ServalProjectComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
+      { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
@@ -60,8 +63,30 @@ describe('ServalProjectComponent', () => {
       const mockProjectDoc = {
         id: this.mockProjectId,
         data: createTestProjectProfile({
+          name: 'Project 01',
+          shortName: 'P1',
           translateConfig: {
-            preTranslate: preTranslate
+            draftConfig: {
+              alternateSource: {
+                paratextId: 'ptproject03',
+                projectRef: 'project03',
+                name: 'Project 03',
+                shortName: 'P3'
+              },
+              alternateTrainingSource: {
+                paratextId: 'ptproject04',
+                projectRef: 'project04',
+                name: 'Project 04',
+                shortName: 'P4'
+              }
+            },
+            preTranslate: preTranslate,
+            source: {
+              paratextId: 'ptproject02',
+              projectRef: 'project02',
+              name: 'Project 02',
+              shortName: 'P2'
+            }
           }
         })
       } as SFProjectProfileDoc;
