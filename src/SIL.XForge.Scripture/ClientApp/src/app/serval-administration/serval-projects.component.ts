@@ -13,7 +13,10 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ServalAdministrationService } from './serval-administration.service';
 
 class Row {
-  constructor(public readonly projectDoc: SFProjectProfileDoc) {}
+  constructor(
+    public readonly projectDoc: SFProjectProfileDoc,
+    private readonly servalAdministrationService: ServalAdministrationService
+  ) {}
 
   get alternateSource(): string {
     return this.projectDoc.data?.translateConfig.draftConfig.alternateSource == null
@@ -24,7 +27,11 @@ class Row {
   }
 
   get alternateSourceId(): string | undefined {
-    if ((this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId?.length ?? 0) > 16) {
+    if (
+      !this.servalAdministrationService.isResource(
+        this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId
+      )
+    ) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
     } else {
       return undefined;
@@ -40,7 +47,11 @@ class Row {
   }
 
   get alternateTrainingSourceId(): string | undefined {
-    if ((this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId?.length ?? 0) > 16) {
+    if (
+      !this.servalAdministrationService.isResource(
+        this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId
+      )
+    ) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
     } else {
       return undefined;
@@ -68,7 +79,7 @@ class Row {
   }
 
   get sourceId(): string | undefined {
-    if ((this.projectDoc.data?.translateConfig.source?.paratextId?.length ?? 0) > 16) {
+    if (!this.servalAdministrationService.isResource(this.projectDoc.data?.translateConfig.source?.paratextId)) {
       return this.projectDoc.data?.translateConfig.source?.projectRef;
     } else {
       return undefined;
@@ -149,7 +160,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
 
     const rows: Row[] = [];
     for (const projectDoc of this.projectDocs) {
-      rows.push(new Row(projectDoc));
+      rows.push(new Row(projectDoc, this.servalAdministrationService));
     }
     this.rows = rows;
   }

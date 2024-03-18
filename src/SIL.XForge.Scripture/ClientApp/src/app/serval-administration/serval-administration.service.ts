@@ -1,5 +1,7 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { Observable } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -16,8 +18,29 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    protected readonly retryingRequestService: RetryingRequestService
+    protected readonly retryingRequestService: RetryingRequestService,
+    private readonly httpClient: HttpClient
   ) {
     super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
+  }
+
+  /**
+   * Downloads a project zip file as a blob
+   * @param projectId The Scripture Forge project identifier.
+   * @returns An observable.
+   */
+  downloadProject(projectId: string): Observable<Blob> {
+    return this.httpClient.get(`paratext-api/projects/${projectId}/download`, {
+      responseType: 'blob' // Set responseType to 'blob' to handle binary data
+    });
+  }
+
+  /**
+   * Determines if a Paratext id refers to a resource.
+   * @param paratextId The Paratext identifier.
+   * @returns True if the Paratext identifier is a resource identifier.
+   */
+  isResource(paratextId?: string): boolean {
+    return (paratextId?.length ?? 0) === 16;
   }
 }
