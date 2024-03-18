@@ -56,10 +56,27 @@ describe('ServalProjectsComponent', () => {
     tick();
 
     expect(env.rows.length).toEqual(3);
+
+    // First row - pre-translate enabled, projects as sources
     expect(env.cell(0, 0).query(By.css('a')).nativeElement.text.trim()).toEqual('P1 - Project 01');
     expect(env.cell(0, 1).nativeElement.textContent).toEqual('Enabled');
+    expect(env.cell(0, 2).query(By.css('a')).nativeElement.text.trim()).toEqual('P2 - Project 02');
+    expect(env.cell(0, 3).query(By.css('a')).nativeElement.text.trim()).toEqual('P3 - Project 03');
+    expect(env.cell(0, 4).query(By.css('a')).nativeElement.text.trim()).toEqual('P4 - Project 04');
+
+    // Second row - pre-translate undefined, no sources
     expect(env.cell(1, 0).query(By.css('a')).nativeElement.text.trim()).toEqual('P2 - Project 02');
     expect(env.cell(1, 1).nativeElement.textContent).toEqual('Disabled');
+    expect(env.cell(1, 2).nativeElement.textContent).toEqual('None');
+    expect(env.cell(1, 3).nativeElement.textContent).toEqual('None');
+    expect(env.cell(1, 4).nativeElement.textContent).toEqual('None');
+
+    // Third row - pre-translate disabled, resources as sources
+    expect(env.cell(2, 0).query(By.css('a')).nativeElement.text.trim()).toEqual('P3 - Project 03');
+    expect(env.cell(2, 1).nativeElement.textContent).toEqual('Disabled');
+    expect(env.cell(2, 2).nativeElement.textContent).toEqual('R1 - Resource 01');
+    expect(env.cell(2, 3).nativeElement.textContent).toEqual('R2 - Resource 02');
+    expect(env.cell(2, 4).nativeElement.textContent).toEqual('R3 - Resource 03');
   }));
 
   it('should display message when there are no projects', fakeAsync(() => {
@@ -128,6 +145,9 @@ class TestEnvironment {
           })
         )
     );
+    when(mockedServalAdministrationService.isResource(anything())).thenCall((paratextId: string) => {
+      return paratextId?.startsWith('ptresource') ?? false;
+    });
 
     this.fixture = TestBed.createComponent(ServalProjectsComponent);
     this.component = this.fixture.componentInstance;
@@ -138,8 +158,6 @@ class TestEnvironment {
   }
 
   get rows(): DebugElement[] {
-    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
-    // to debug elements
     return Array.from(this.table.nativeElement.querySelectorAll('tbody tr')).map(r => getDebugNode(r) as DebugElement);
   }
 
@@ -182,7 +200,27 @@ class TestEnvironment {
         data: createTestProject({
           name: 'Project 01',
           translateConfig: {
-            preTranslate: true
+            draftConfig: {
+              alternateSource: {
+                paratextId: 'ptproject03',
+                projectRef: 'project03',
+                name: 'Project 03',
+                shortName: 'P3'
+              },
+              alternateTrainingSource: {
+                paratextId: 'ptproject04',
+                projectRef: 'project04',
+                name: 'Project 04',
+                shortName: 'P4'
+              }
+            },
+            preTranslate: true,
+            source: {
+              paratextId: 'ptproject02',
+              projectRef: 'project02',
+              name: 'Project 02',
+              shortName: 'P2'
+            }
           },
           userRoles: { user01: 'pt_administrator' },
           userPermissions: {}
@@ -203,6 +241,29 @@ class TestEnvironment {
         data: createTestProject({
           name: 'Project 03',
           shortName: 'P3',
+          translateConfig: {
+            draftConfig: {
+              alternateSource: {
+                paratextId: 'ptresource02',
+                projectRef: 'resource02',
+                name: 'Resource 02',
+                shortName: 'R2'
+              },
+              alternateTrainingSource: {
+                paratextId: 'ptresource03',
+                projectRef: 'resource03',
+                name: 'Resource 03',
+                shortName: 'R3'
+              }
+            },
+            preTranslate: false,
+            source: {
+              paratextId: 'ptresource01',
+              projectRef: 'resource01',
+              name: 'Resource 01',
+              shortName: 'R1'
+            }
+          },
           userRoles: { user01: 'pt_translator' },
           userPermissions: {}
         })
