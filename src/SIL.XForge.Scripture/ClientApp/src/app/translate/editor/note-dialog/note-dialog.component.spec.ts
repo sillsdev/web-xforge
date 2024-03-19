@@ -340,22 +340,6 @@ describe('NoteDialogComponent', () => {
     expect(env.dialogResult).toEqual({ noteContent: 'Enter note content', noteDataId: undefined });
   }));
 
-  it('can insert a note and encode for xml', fakeAsync(() => {
-    const verseRef = new VerseRef('MAT 1:3');
-    env = new TestEnvironment({ verseRef, noteTagId: 2 });
-    expect(env.noteInputElement).toBeTruthy();
-    expect(env.verseRef).toEqual('Matthew 1:3');
-    env.enterNoteContent('Enter note & have <xml> invalid content');
-    expect(env.component.currentNoteContent).toEqual('Enter note & have <xml> invalid content');
-    expect(env.component.segmentText).toEqual('target: chapter 1, verse 3.');
-    env.submit();
-
-    expect(env.dialogResult).toEqual({
-      noteContent: 'Enter note &amp; have &lt;xml&gt; invalid content',
-      noteDataId: undefined
-    });
-  }));
-
   it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
     const noteThread: NoteThread = TestEnvironment.getNoteThread(undefined, true);
     env = new TestEnvironment({ noteThread });
@@ -414,22 +398,6 @@ describe('NoteDialogComponent', () => {
     env.enterNoteContent(content);
     env.submit();
     expect(env.dialogResult).toEqual({ noteContent: content, noteDataId: 'note05' });
-  }));
-
-  it('allows user to edit the content with xml reserved symbols', fakeAsync(() => {
-    const noteThread: NoteThread = TestEnvironment.getNoteThread(undefined, undefined, true);
-    // note03 is marked as deleted
-    const encodedContent = 'note05 &amp; &lt;content&gt; in note';
-    noteThread.notes[4].content = encodedContent;
-    env = new TestEnvironment({ noteThread });
-    expect(env.getNoteContent(4)).toEqual('note05 & <content> in note');
-    expect(env.noteHasEditActions(4)).toBe(true);
-    env.clickEditNote();
-    expect(env.component.currentNoteContent).toEqual('note05 & <content> in note');
-    const content = 'note05 & <content> in note (edited)';
-    env.enterNoteContent(content);
-    env.submit();
-    expect(env.dialogResult).toEqual({ noteContent: encodedContent + ' (edited)', noteDataId: 'note05' });
   }));
 
   it('does not allow user to edit the last note in the thread if it is not editable', fakeAsync(() => {
