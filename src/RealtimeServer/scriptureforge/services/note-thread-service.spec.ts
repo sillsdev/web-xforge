@@ -346,8 +346,7 @@ class TestEnvironment {
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
-        noteRefsRead: [],
-        audioRefsPlayed: []
+        noteRefsRead: []
       }
     );
 
@@ -370,8 +369,7 @@ class TestEnvironment {
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
-        noteRefsRead: [],
-        audioRefsPlayed: []
+        noteRefsRead: []
       }
     );
 
@@ -394,8 +392,7 @@ class TestEnvironment {
         questionRefsRead: [],
         answerRefsRead: [],
         commentRefsRead: [],
-        noteRefsRead: [],
-        audioRefsPlayed: []
+        noteRefsRead: []
       }
     );
 

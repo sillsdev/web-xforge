@@ -35,8 +35,7 @@ const projectUserConfig: SFProjectUserConfig = {
   commentRefsRead: [],
   noteRefsRead: [],
   questionRefsRead: [],
-  answerRefsRead: [],
-  audioRefsPlayed: []
+  answerRefsRead: []
 };
 const textAudioDoc: TextAudioDoc = mock(TextAudioDoc);
 const textAudio: TextAudio = {

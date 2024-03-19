@@ -762,8 +762,7 @@ class TestEnvironment {
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
   private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
@@ -778,8 +777,7 @@ class TestEnvironment {
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
   private translatorProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.translatorUser.id,
@@ -794,8 +792,7 @@ class TestEnvironment {
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
   private testProject: SFProjectProfile = createTestProjectProfile({
     texts: [

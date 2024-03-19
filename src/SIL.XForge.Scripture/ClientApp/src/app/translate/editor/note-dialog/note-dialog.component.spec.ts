@@ -772,7 +772,6 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: [],
-    audioRefsPlayed: [],
     biblicalTermsEnabled: false,
     transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: false,

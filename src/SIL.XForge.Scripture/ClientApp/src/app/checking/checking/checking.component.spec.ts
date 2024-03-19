@@ -2248,70 +2248,6 @@ describe('CheckingComponent', () => {
       verify(chapterAudio.pause()).once();
       expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
-
-    it('updates user played refs while audio is playing ', fakeAsync(() => {
-      const env = new TestEnvironment({
-        user: ADMIN_USER,
-        projectBookRoute: 'JHN',
-        projectChapterRoute: 1,
-        questionScope: 'all',
-        scriptureAudio: true
-      });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
-      when(chapterAudio.isPlaying).thenReturn(false);
-      env.component.scriptureAudioPlayer = instance(chapterAudio);
-
-      const updateAudioRefsPlayed = spyOn(
-        env.component.projectUserConfigDoc!,
-        'updateAudioRefsPlayed'
-      ).and.callThrough();
-
-      const verseRef: VerseRef = toVerseRef({
-        bookNum: 43,
-        chapterNum: 1,
-        verseNum: 1
-      });
-      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
-      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(0);
-      flush();
-      discardPeriodicTasks();
-    }));
-
-    it('should not update user played refs while audio is not playing ', fakeAsync(() => {
-      const env = new TestEnvironment({
-        user: ADMIN_USER,
-        projectBookRoute: 'JHN',
-        projectChapterRoute: 1,
-        questionScope: 'all',
-        scriptureAudio: true
-      });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
-      when(chapterAudio.isPlaying).thenReturn(true);
-      env.component.scriptureAudioPlayer = instance(chapterAudio);
-
-      const updateAudioRefsPlayed = spyOn(
-        env.component.projectUserConfigDoc!,
-        'updateAudioRefsPlayed'
-      ).and.callThrough();
-
-      const verseRef: VerseRef = toVerseRef({
-        bookNum: 43,
-        chapterNum: 1,
-        verseNum: 1
-      });
-      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
-      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(1);
-      // Should equal JHN 1:1
-      expect(updateAudioRefsPlayed.calls.mostRecent().args[0]!.toString()).toBe(verseRef.toString());
-      flush();
-      discardPeriodicTasks();
-    }));
   });
 });
 
@@ -2354,8 +2290,7 @@ class TestEnvironment {
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
 
   private readonly checkerProjectUserConfig: SFProjectUserConfig = {
@@ -2372,8 +2307,7 @@ class TestEnvironment {
     questionRefsRead: [],
     answerRefsRead: ['a0Id', 'a1Id'],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
 
   private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = {
@@ -2389,8 +2323,7 @@ class TestEnvironment {
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
 
   private readonly observerProjectUserConfig: SFProjectUserConfig = {
@@ -2407,8 +2340,7 @@ class TestEnvironment {
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
