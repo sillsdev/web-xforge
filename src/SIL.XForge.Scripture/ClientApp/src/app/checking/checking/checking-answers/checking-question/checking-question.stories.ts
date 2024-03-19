@@ -3,20 +3,22 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { cloneDeep } from 'mingo/util';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { QuestionDoc } from '../../../../core/models/question-doc';
-import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
+import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
-import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedProjectService = mock(SFProjectService);
@@ -80,7 +82,7 @@ const meta: Meta<CheckingQuestionComponent> = {
       declarations: [SingleButtonAudioPlayerComponent]
     })
   ],
-  args: { questionDoc: instance(questionDoc), projectUserConfigDoc: instance(projectUserConfigDoc) }
+  args: { questionDoc: instance(questionDoc) }
 };
 
 export default meta;
@@ -101,5 +103,5 @@ export const Default: Story = {
 };
 
 export const WithQuestionAudio: Story = {
-  args: { questionDoc: instance(questionDocAudio), projectUserConfigDoc: instance(projectUserConfigDoc) }
+  args: { questionDoc: instance(questionDocAudio) }
 };
