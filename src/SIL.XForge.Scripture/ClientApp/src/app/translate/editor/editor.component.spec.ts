@@ -2776,7 +2776,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('bottom sheet can accept xml reserved symbols', fakeAsync(() => {
+    it('can accept xml reserved symbols as note content', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.setCommenterUser();
@@ -2797,6 +2797,32 @@ describe('EditorComponent', () => {
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
       expect(noteThread.notes[0].content).toEqual(XmlUtils.encodeForXml(content));
+      env.dispose();
+    }));
+
+    it('can edit a note with xml reserved symbols as note content', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const projectId: string = 'project01';
+      env.setSelectionAndInsertNote('verse_1_2');
+      const content: string = 'content in the thread';
+      env.mockNoteDialogRef.close({ noteContent: content });
+      env.wait();
+      verify(mockedSFProjectService.createNoteThread(projectId, anything())).once();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
+      expect(noteThreadDoc.data!.notes[0].content).toEqual(content);
+
+      const iconElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_2', 0)!;
+      iconElement.click();
+      const editedContent = 'edited content <xml> tags';
+      env.mockNoteDialogRef.close({ noteDataId: noteThread.notes[0].dataId, noteContent: editedContent });
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
+      noteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
+      expect(noteThreadDoc.data!.notes[0].content).toEqual(XmlUtils.encodeForXml(editedContent));
       env.dispose();
     }));
 
@@ -4863,6 +4889,8 @@ export class MockNoteDialogRef {
     this.onClose();
     this.close$.next(result);
     this.close$.complete();
+    // reset the subject so that the mocked note dialog can be reopened
+    this.close$ = new Subject<NoteDialogResult | void>();
   }
 
   afterClosed(): Observable<NoteDialogResult | void> {
