@@ -759,17 +759,47 @@ class TestEnvironment {
 
   private reviewerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedSegment: '',
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
+  private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
     isTargetTextRight: true,
-    questionRefsRead: ['q1Id', 'q2Id', 'q3Id']
-  });
-
-  private translatorProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
-    projectRef: 'project01',
+    confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedSegment: '',
+    questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
+  private translatorProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.translatorUser.id,
-    isTargetTextRight: true
-  });
-
+    projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedSegment: '',
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
   private testProject: SFProjectProfile = createTestProjectProfile({
     texts: [
       {

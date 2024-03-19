@@ -471,8 +471,9 @@ class TestEnvironment {
         translationSuggestionsEnabled: false,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
-      })
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
+      }
     });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: 'project02:user01',
@@ -484,8 +485,9 @@ class TestEnvironment {
         translationSuggestionsEnabled: false,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
-      })
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
+      }
     });
     if (noteThreads) {
       this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {

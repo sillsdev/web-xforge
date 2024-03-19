@@ -339,8 +339,9 @@ class TestEnvironment {
         ownerRef: this.projectAdminId,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
-      })
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
+      }
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, this.checkerId, createTestUser({}, 2));
@@ -354,8 +355,9 @@ class TestEnvironment {
         ownerRef: this.checkerId,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
-      })
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
+      }
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, this.commenterId, createTestUser({}, 3));
@@ -367,8 +369,18 @@ class TestEnvironment {
       createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: this.commenterId,
-        translationSuggestionsEnabled: false
-      })
+        isTargetTextRight: false,
+        confidenceThreshold: 0.2,
+        biblicalTermsEnabled: false,
+        transliterateBiblicalTerms: false,
+        translationSuggestionsEnabled: false,
+        numSuggestions: 1,
+        selectedSegment: '',
+        questionRefsRead: [],
+        answerRefsRead: [],
+        commentRefsRead: [],
+        noteRefsRead: []
+      }
     );
 
     await createDoc<SFProject>(
