@@ -78,7 +78,7 @@ const meta: Meta<CheckingQuestionComponent> = {
       declarations: [SingleButtonAudioPlayerComponent]
     })
   ],
-  args: { questionDoc: instance(questionDoc), projectUserConfigDoc: instance(projectUserConfigDoc) }
+  args: { questionDoc: instance(questionDoc) }
 };
 
 export default meta;
@@ -99,5 +99,5 @@ export const Default: Story = {
 };
 
 export const WithQuestionAudio: Story = {
-  args: { questionDoc: instance(questionDocAudio), projectUserConfigDoc: instance(projectUserConfigDoc) }
+  args: { questionDoc: instance(questionDocAudio) }
 };
