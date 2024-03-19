@@ -323,7 +323,7 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.dialogRef.close({
-      noteContent: XmlUtils.encodeForXml(this.currentNoteContent),
+      noteContent: this.currentNoteContent,
       noteDataId: this.noteIdBeingEdited
     });
   }
@@ -339,7 +339,7 @@ export class NoteDialogComponent implements OnInit {
     }
     const content: NoteDialogResult = { status: NoteStatus.Resolved };
     if (this.currentNoteContent.trim().length > 0) {
-      content.noteContent = XmlUtils.encodeForXml(this.currentNoteContent);
+      content.noteContent = this.currentNoteContent;
     }
     this.dialogRef.close(content);
   }

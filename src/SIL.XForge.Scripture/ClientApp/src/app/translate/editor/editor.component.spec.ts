@@ -93,6 +93,7 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
+import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
@@ -2768,6 +2769,56 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('can accept xml reserved symbols as note content', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCommenterUser();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
+      expect(env.insertNoteFabMobile).toBeTruthy();
+      env.insertNoteFabMobile!.click();
+      expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
+      const content = 'mobile <note> with xml symbols';
+      env.component.mobileNoteControl.setValue(content);
+      env.saveMobileNoteButton!.click();
+      env.wait();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
+      expect(noteThread.notes[0].content).toEqual(XmlUtils.encodeForXml(content));
+      env.dispose();
+    }));
+
+    it('can edit a note with xml reserved symbols as note content', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const projectId: string = 'project01';
+      env.setSelectionAndInsertNote('verse_1_2');
+      const content: string = 'content in the thread';
+      env.mockNoteDialogRef.close({ noteContent: content });
+      env.wait();
+      verify(mockedSFProjectService.createNoteThread(projectId, anything())).once();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
+      expect(noteThreadDoc.data!.notes[0].content).toEqual(content);
+
+      const iconElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_2', 0)!;
+      iconElement.click();
+      const editedContent = 'edited content <xml> tags';
+      env.mockNoteDialogRef.close({ noteDataId: noteThread.notes[0].dataId, noteContent: editedContent });
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
+      noteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
+      expect(noteThreadDoc.data!.notes[0].content).toEqual(XmlUtils.encodeForXml(editedContent));
+      env.dispose();
+    }));
+
     it('shows SF note with default icon', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -4764,6 +4815,8 @@ export class MockNoteDialogRef {
     this.onClose();
     this.close$.next(result);
     this.close$.complete();
+    // reset the subject so that the mocked note dialog can be reopened
+    this.close$ = new Subject<NoteDialogResult | void>();
   }
 
   afterClosed(): Observable<NoteDialogResult | void> {
