@@ -54,7 +54,6 @@ class MockComponent {
     };
     when(mockedQuestion.verseRef).thenReturn(verseRef);
     when(mockedQuestionDoc.data).thenReturn(instance(mockedQuestion));
-    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn([]);
     when(mockedSFProjectUserConfigDoc.data).thenReturn(instance(mockedSFProjectUserConfig));
   }
 }
@@ -95,9 +94,20 @@ describe('CheckingQuestionComponent', () => {
 
   it('selects question when scripture audio has already been played', async () => {
     const env = new TestEnvironment();
-    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 1:1']);
     await env.wait();
     await env.wait();
+
+    env.scriptureAudio.componentInstance.hasFinishedPlayingOnce$.next(true);
+    await env.wait();
+
+    const newQuestion = mock<Question>();
+    when(newQuestion.projectRef).thenReturn('project01');
+    when(newQuestion.text).thenReturn('another question');
+    when(newQuestion.audioUrl).thenReturn('test-audio-player-b.webm');
+    when(newQuestion.verseRef).thenReturn(env.component.questionDoc.data!.verseRef!);
+    const newQuestionDoc = mock(QuestionDoc);
+    when(newQuestionDoc.data).thenReturn(instance(newQuestion));
+    env.component.questionDoc = instance(newQuestionDoc);
 
     expect(env.component.question.focusedText).toBe('question-audio-label');
     expect(window.getComputedStyle(env.scriptureAudio.nativeElement)['display']).toBe('none');
@@ -106,15 +116,27 @@ describe('CheckingQuestionComponent', () => {
 
   it('selects scripture if not all scripture audio has already been played for question', async () => {
     const env = new TestEnvironment();
-    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 1:1']);
+    await env.wait();
+    await env.wait();
+
+    env.scriptureAudio.componentInstance.hasFinishedPlayingOnce$.next(true);
+    await env.wait();
+
     const verseRef: VerseRefData = {
       bookNum: 8,
       chapterNum: 1,
       verseNum: 1,
       verse: '1-2'
     };
-    when(mockedQuestion.verseRef).thenReturn(verseRef);
-    await env.wait();
+    const newQuestion = mock<Question>();
+    when(newQuestion.projectRef).thenReturn('project01');
+    when(newQuestion.text).thenReturn('another question');
+    when(newQuestion.audioUrl).thenReturn('test-audio-player-b.webm');
+    when(newQuestion.verseRef).thenReturn(verseRef);
+    const newQuestionDoc = mock(QuestionDoc);
+    when(newQuestionDoc.data).thenReturn(instance(newQuestion));
+    env.component.questionDoc = instance(newQuestionDoc);
+
     await env.wait();
 
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
@@ -149,11 +171,6 @@ describe('CheckingQuestionComponent', () => {
 
     await env.wait(3000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
-    verify(
-      mockedSFProjectUserConfigDoc.updateAudioRefsPlayed(
-        deepEqual(toVerseRef(env.component.questionDoc.data!.verseRef))
-      )
-    ).once();
 
     env.component.question.selectScripture();
     env.scriptureAudio.componentInstance.audio.setSeek(98);

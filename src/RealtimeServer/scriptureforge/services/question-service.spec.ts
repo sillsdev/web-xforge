@@ -101,8 +101,9 @@ class TestEnvironment {
         ownerRef: 'projectAdmin',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
-      })
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
+      }
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, 'checker', createTestUser({}, 2));
@@ -116,8 +117,9 @@ class TestEnvironment {
         ownerRef: 'checker',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
-      })
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
+      }
     );
 
     await createDoc<SFProject>(

@@ -2249,70 +2249,6 @@ describe('CheckingComponent', () => {
       verify(chapterAudio.pause()).once();
       expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
-
-    it('updates user played refs while audio is playing ', fakeAsync(() => {
-      const env = new TestEnvironment({
-        user: ADMIN_USER,
-        projectBookRoute: 'JHN',
-        projectChapterRoute: 1,
-        questionScope: 'all',
-        scriptureAudio: true
-      });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
-      when(chapterAudio.isPlaying).thenReturn(false);
-      env.component.scriptureAudioPlayer = instance(chapterAudio);
-
-      const updateAudioRefsPlayed = spyOn(
-        env.component.projectUserConfigDoc!,
-        'updateAudioRefsPlayed'
-      ).and.callThrough();
-
-      const verseRef: VerseRef = toVerseRef({
-        bookNum: 43,
-        chapterNum: 1,
-        verseNum: 1
-      });
-      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
-      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(0);
-      flush();
-      discardPeriodicTasks();
-    }));
-
-    it('should not update user played refs while audio is not playing ', fakeAsync(() => {
-      const env = new TestEnvironment({
-        user: ADMIN_USER,
-        projectBookRoute: 'JHN',
-        projectChapterRoute: 1,
-        questionScope: 'all',
-        scriptureAudio: true
-      });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
-      when(chapterAudio.isPlaying).thenReturn(true);
-      env.component.scriptureAudioPlayer = instance(chapterAudio);
-
-      const updateAudioRefsPlayed = spyOn(
-        env.component.projectUserConfigDoc!,
-        'updateAudioRefsPlayed'
-      ).and.callThrough();
-
-      const verseRef: VerseRef = toVerseRef({
-        bookNum: 43,
-        chapterNum: 1,
-        verseNum: 1
-      });
-      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
-      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(1);
-      // Should equal JHN 1:1
-      expect(updateAudioRefsPlayed.calls.mostRecent().args[0]!.toString()).toBe(verseRef.toString());
-      flush();
-      discardPeriodicTasks();
-    }));
   });
 });
 
@@ -2344,30 +2280,61 @@ class TestEnvironment {
   private readonly queryParams$: BehaviorSubject<Params>;
   private readonly adminProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
-    ownerRef: ADMIN_USER.id,
-    isTargetTextRight: true
-  });
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedSegment: '',
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
 
   private readonly checkerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
     ownerRef: CHECKER_USER.id,
     isTargetTextRight: true,
     selectedQuestionRef: 'project01:q5Id',
-    answerRefsRead: ['a0Id', 'a1Id']
-  });
+    questionRefsRead: [],
+    answerRefsRead: ['a0Id', 'a1Id'],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
 
   private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
-    ownerRef: CLEAN_CHECKER_USER.id,
-    isTargetTextRight: true
-  });
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedSegment: '',
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
 
   private readonly observerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
     ownerRef: OBSERVER_USER.id,
     isTargetTextRight: true,
-    selectedQuestionRef: 'project01:q5Id'
-  });
+    confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedQuestionRef: 'project01:q5Id',
+    selectedSegment: '',
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: []
+  };
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 

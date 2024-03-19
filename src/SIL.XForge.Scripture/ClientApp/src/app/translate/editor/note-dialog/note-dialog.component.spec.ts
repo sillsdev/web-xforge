@@ -767,7 +767,18 @@ class TestEnvironment {
     ...TestEnvironment.testProjectProfile,
     paratextUsers: TestEnvironment.paratextUsers
   });
-  static projectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+  static projectUserConfig: SFProjectUserConfig = {
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: [],
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
+    translationSuggestionsEnabled: false,
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    numSuggestions: 1,
+    selectedSegment: 'verse_1_1',
     projectRef: TestEnvironment.PROJECT01,
     ownerRef: 'user01',
     isTargetTextRight: true,
