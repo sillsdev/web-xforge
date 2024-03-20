@@ -1,5 +1,41 @@
+@use 'src/_variables' as variables;
+
 button {
   .text-padding {
     padding: 0 0.5em;
   }
+}
+
+.wrapper {
+  max-width: 50em;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
+}
+
+mat-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+}
+
+.helper-text {
+  color: variables.$lighterTextColor;
+}
+
+.project-name {
+  font-size: 1.25em;
+  display: flex;
+  gap: 8px;
+}
+
+.active-project {
+  background-color: #e2efdc;
 }

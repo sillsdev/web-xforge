@@ -13,6 +13,7 @@
     "logged_in_as": "Logged in as",
     "manual": "Manual",
     "my_progress": "My progress",
+    "my_projects": "My projects",
     "offline": "Offline",
     "online": "Online",
     "open_source_licenses": "Open source licenses",
@@ -21,7 +22,6 @@
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
-    "project_home": "Project home",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
@@ -355,9 +355,6 @@
   "dialog": {
     "cancel": "Cancel",
     "close": "Close"
-  },
-  "navigation-project_selector": {
-    "connect_project": "Connect project"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choose book",

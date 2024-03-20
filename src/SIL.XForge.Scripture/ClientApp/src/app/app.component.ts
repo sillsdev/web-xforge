@@ -7,9 +7,9 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, startWith } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { Subscription, combineLatest } from 'rxjs';
+import { Subscription, combineLatest, Observable } from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -19,7 +19,6 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -31,6 +30,7 @@ import {
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -53,7 +53,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isExpanded: boolean = false;
   versionNumberClickCount = 0;
 
-  projectDocs?: SFProjectProfileDoc[];
   hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
@@ -66,7 +65,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   constructor(
     private readonly router: Router,
     private readonly authService: AuthService,
-    private readonly locationService: LocationService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService,
@@ -159,8 +157,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  get isLoggedIn(): Promise<boolean> {
-    return this.authService.isLoggedIn;
+  get homeUrl$(): Observable<string> {
+    return this.authService.loggedInState$.pipe(
+      map(state => (state.loggedIn ? '/projects' : '/')),
+      startWith('/')
+    );
   }
 
   get isAppLoading(): boolean {
@@ -183,7 +184,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get selectedProjectDoc(): SFProjectProfileDoc | undefined {
-    return this._selectedProjectDoc;
+    return this.activatedProjectService.projectDoc;
   }
 
   get selectedProjectId(): string | undefined {
@@ -191,7 +192,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isProjectSelected(): boolean {
-    return this.selectedProjectId != null;
+    return this.activatedProjectService.projectId != null;
   }
 
   get selectedProjectRole(): SFProjectRole | undefined {
@@ -231,13 +232,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     const projectDocs$ = this.userProjectsService.projectDocs$;
 
+    const selectedProjectDoc$ = projectDocs$.pipe(
+      map(projectDocs => {
+        const projectId = this.activatedProjectService.projectId;
+        return projectId == null ? undefined : projectDocs.find(p => p.id === projectId);
+      }),
+      filterNullish()
+    );
+
     // select the current project
     this.subscribe(
-      combineLatest([projectDocs$, this.activatedProjectService.projectId$]),
-      async ([projectDocs, projectId]) => {
-        this.projectDocs = projectDocs;
-        const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
-
+      combineLatest([selectedProjectDoc$, this.activatedProjectService.projectId$]),
+      async ([selectedProjectDoc, projectId]) => {
         if (this.selectedProjectDeleteSub != null) {
           this.selectedProjectDeleteSub.unsubscribe();
           this.selectedProjectDeleteSub = undefined;
@@ -331,14 +337,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   logOut(): void {
     this.authService.logOut();
-  }
-
-  async goHome(): Promise<void> {
-    if (await this.isLoggedIn) {
-      this.router.navigateByUrl('/projects');
-    } else {
-      this.locationService.go('/');
-    }
   }
 
   projectChanged(value: string): void {

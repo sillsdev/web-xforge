@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
@@ -14,7 +14,7 @@ import { UserService } from './user.service';
 })
 export class SFUserProjectsService extends SubscriptionDisposable {
   private projectDocs: Map<string, SFProjectProfileDoc> = new Map();
-  private _projectDocs$ = new Subject<SFProjectProfileDoc[]>();
+  private _projectDocs$ = new BehaviorSubject<SFProjectProfileDoc[]>([]);
 
   constructor(
     private readonly userService: UserService,
