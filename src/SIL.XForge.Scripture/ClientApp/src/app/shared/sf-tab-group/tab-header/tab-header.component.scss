@@ -1,0 +1,109 @@
+$tabHeaderBorderRadius: var(--sf-tab-header-border-radius);
+
+:host {
+  position: relative;
+  display: flex;
+  align-items: center;
+  // Allow tab scrolling
+  flex-shrink: 0;
+  gap: 0.2em;
+  padding: 0.3em 0.6em;
+  border: var(--sf-tab-header-border-width) solid var(--sf-tab-group-border-color);
+  border-radius: $tabHeaderBorderRadius $tabHeaderBorderRadius 0 0; // Top left and right border radius
+  cursor: pointer;
+  transition: height 0.1s;
+  border-bottom: 0;
+  height: 100%;
+  overflow: hidden;
+
+  &.closeable {
+    // No padding if there is a close button
+    padding-inline-end: 0;
+  }
+
+  &.active {
+    background-color: var(--sf-tab-group-background-color);
+    box-shadow: var(--sf-tab-header-box-shadow);
+
+    // Colored accent line above active tab
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0.1em;
+      background-color: var(--sf-tab-header-active-tab-accent-color);
+      animation: tab-header-active-accent-grow 0.2s;
+    }
+  }
+
+  &:not(.active) {
+    background-color: var(--sf-tab-header-inactive-background-color);
+    height: 90%;
+
+    &:hover {
+      background-color: var(--sf-tab-header-inactive-hover-background-color);
+    }
+
+    .close-button {
+      &:hover {
+        background-color: var(--sf-tab-header-inactive-button-hover-background-color);
+      }
+    }
+  }
+}
+
+.tab-header-content {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  white-space: nowrap;
+  padding-inline-end: 0.1em; // Prevents cutting off of italic text
+  line-height: 1.5em;
+
+  ::ng-deep > mat-icon {
+    font-size: 1.1em;
+    width: auto;
+    height: auto;
+  }
+}
+
+// 'button' is needed to increase specificity for overriding hover text color
+button.close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 5px;
+  width: 0.8em;
+  height: 0.8em;
+  margin-inline-end: 2px;
+  transition: background-color 0.3s;
+  overflow: hidden; // Prevent close button 'touch target' from overflowing
+
+  &:hover {
+    color: inherit !important;
+    background-color: var(--sf-tab-header-button-hover-background-color);
+  }
+
+  mat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6em;
+    font-weight: 700;
+  }
+}
+
+@keyframes tab-header-active-accent-grow {
+  from {
+    left: 50%;
+    right: 50%;
+  }
+
+  to {
+    left: 0;
+    right: 0;
+  }
+}

@@ -1,0 +1,12 @@
+<app-tab-group-header
+  [tabs]="tabs"
+  [selectedIndex]="selectedIndex"
+  [groupId]="groupId"
+  (tabClick)="onTabHeaderClick($event)"
+  (closeClick)="removeTab($event)"
+  (tabAddRequest)="addTab($event)"
+></app-tab-group-header>
+
+<app-tab-body *ngFor="let tab of tabs; let i = index" [active]="selectedIndex === i">
+  <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
+</app-tab-body>

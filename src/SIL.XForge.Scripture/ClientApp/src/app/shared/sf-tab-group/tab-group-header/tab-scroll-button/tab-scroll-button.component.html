@@ -1,0 +1,11 @@
+<button
+  mat-button
+  class="tab-scroll-button"
+  [disabled]="disabled"
+  (mousedown)="onMouseDown()"
+  (touchstart)="onMouseDown()"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+>
+  <mat-icon class="mirror-rtl">{{ side === "start" ? "navigate_before" : "navigate_next" }}</mat-icon>
+</button>

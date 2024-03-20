@@ -6,12 +6,16 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { SFTabsModule } from '../shared/sf-tab-group';
 import { SharedModule } from '../shared/shared.module';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
+import { EditorDraftComponent } from './editor/editor-draft/editor-draft.component';
+import { EditorHistoryComponent } from './editor/editor-history/editor-history.component';
+import { HistoryChooserComponent } from './editor/editor-history/history-chooser/history-chooser.component';
+import { HistoryRevisionFormatPipe } from './editor/editor-history/history-chooser/history-revision-format.pipe';
 import { EditorComponent } from './editor/editor.component';
-import { HistoryChooserComponent } from './editor/history-chooser/history-chooser.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
@@ -32,7 +36,10 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TrainingProgressComponent,
     TranslateOverviewComponent,
     DraftViewerComponent,
-    HistoryChooserComponent
+    HistoryChooserComponent,
+    EditorHistoryComponent,
+    EditorDraftComponent,
+    HistoryRevisionFormatPipe
   ],
   imports: [
     AngularSplitModule,
@@ -43,7 +50,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     XForgeCommonModule,
     TranslocoModule,
     TranslocoMarkupModule,
-    AvatarComponent
+    AvatarComponent,
+    SFTabsModule
   ]
 })
 export class TranslateModule {}

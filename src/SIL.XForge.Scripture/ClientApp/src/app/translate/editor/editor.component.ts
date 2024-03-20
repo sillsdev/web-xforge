@@ -3,12 +3,15 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   Inject,
   OnDestroy,
+  OnInit,
   TemplateRef,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MediaObserver } from '@angular/flex-layout';
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
@@ -35,35 +38,24 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  getNoteThreadDocId
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { TextData, TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
-import { BehaviorSubject, Subject, Subscription, combineLatest, fromEvent, merge, of, timer } from 'rxjs';
-import {
-  debounceTime,
-  delay,
-  delayWhen,
-  filter,
-  first,
-  repeat,
-  retryWhen,
-  startWith,
-  switchMap,
-  take,
-  tap
-} from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
+import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -72,7 +64,6 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -81,12 +72,13 @@ import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils'
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
-import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDocId } from '../../core/models/text-doc';
+import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -99,17 +91,17 @@ import {
   TextComponent
 } from '../../shared/text/text.component';
 import {
-  VERSE_REGEX,
   canInsertNote,
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
+  VERSE_REGEX,
   verseRefFromMouseEvent
 } from '../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation/draft-generation';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
-import { HistoryChooserComponent } from './history-chooser/history-chooser.component';
+import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -117,6 +109,9 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
+import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
+import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
+import { EditorTabGroupType, EditorTabInfo, EditorTabType } from './tabs/editor-tabs.types';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
@@ -148,9 +143,14 @@ const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 @Component({
   selector: 'app-editor',
   templateUrl: './editor.component.html',
-  styleUrls: ['./editor.component.scss']
+  styleUrls: ['./editor.component.scss'],
+  providers: [
+    TabStateService<EditorTabGroupType, EditorTabInfo>,
+    { provide: TabFactoryService, useClass: EditorTabFactoryService },
+    { provide: TabMenuService, useClass: EditorTabMenuService }
+  ]
 })
-export class EditorComponent extends DataLoadingComponent implements OnDestroy, AfterViewInit {
+export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
   addingMobileNote: boolean = false;
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
@@ -162,20 +162,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   sourceSplitHeight: string = '';
   targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
-  insertNoteFabLeft: string = '0px';
   hasDraft = false;
 
   @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
   @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
-  @ViewChild('snapshotContainer') snapshotContainer?: ElementRef;
-  @ViewChild('targetContainer') targetContainer?: ElementRef;
+  @ViewChild('sourceScrollContainer') sourceScrollContainer?: ElementRef;
+  @ViewChild('targetScrollContainer') targetScrollContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
-  @ViewChild('snapshotText') snapshotText?: TextComponent;
-  @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
+  @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
-  @ViewChild('historyChooser') historyChooser?: HistoryChooserComponent;
 
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
@@ -192,6 +189,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
+  private sourceLabel?: string;
+  private targetLabel?: string;
   private text?: TextInfo;
   private sourceText?: TextInfo;
   private sourceProjectDoc?: SFProjectProfileDoc;
@@ -213,12 +212,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
-  private snapshot?: Snapshot<TextData>;
-  private snapshotSub?: Subscription;
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
-  private readonly fabHorizMargin = 15;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -233,12 +229,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
     private readonly reportingService: ErrorReportingService,
-    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftViewerService: DraftViewerService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
-    private bottomSheet: MatBottomSheet
+    private bottomSheet: MatBottomSheet,
+    readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
+    private readonly editorHistoryService: EditorHistoryService,
+    private readonly editorTabFactory: EditorTabFactoryService,
+    private readonly destroyRef: DestroyRef
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -248,14 +248,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.segmentUpdated$ = new Subject<void>();
     this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
     this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
-  }
-
-  get sourceLabel(): string {
-    return this.projectDoc == null ||
-      this.projectDoc.data == null ||
-      this.projectDoc.data.translateConfig.source == null
-      ? ''
-      : this.projectDoc.data.translateConfig.source.shortName;
   }
 
   get targetFocused(): boolean {
@@ -269,10 +261,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._targetFocused = focused;
   }
 
-  get targetLabel(): string {
-    return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.shortName;
-  }
-
   get isTargetTextRight(): boolean {
     return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
       ? true
@@ -282,7 +270,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set isTargetTextRight(value: boolean) {
     if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
-      this.resetInsertNoteFab(false);
     }
   }
 
@@ -381,7 +368,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get showSource(): boolean {
-    return this.hasSource && this.hasSourceViewRight && !this.showSnapshot;
+    return this.hasSource && this.hasSourceViewRight;
   }
 
   get hasEditRight(): boolean {
@@ -538,34 +525,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  get showHistoryChooser(): boolean {
-    // The user must be a Paratext user. No specific edit permission for the chapter is required
-    return isParatextRole(this.userRole);
-  }
-
-  get showSnapshot(): boolean {
-    return this.snapshot != null;
-  }
-
-  get snapshotLabel(): string {
-    if (this.historyChooser?.historyRevision?.key != null) {
-      const date = new Date(this.historyChooser?.historyRevision?.key);
-      const options: Intl.DateTimeFormatOptions = {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour12: true,
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric'
-      };
-      return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
-    }
-
-    return '';
-  }
-
   get projectId(): string | undefined {
     return this.projectDoc?.id;
   }
@@ -636,6 +595,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.setNoteFabVisibility(value ? 'visible' : 'hidden');
       this.bottomSheet.dismiss();
     }
+  }
+
+  ngOnInit(): void {
+    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(doc => {
+      this.sourceLabel = doc?.data?.translateConfig.source?.shortName ?? '';
+      this.targetLabel = doc?.data?.shortName ?? '';
+
+      this.populateEditorTabs();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -743,74 +711,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                 this.loadingStarted();
               }
             }
-            this.source!.id = sourceId;
+
+            if (this.source != null) {
+              this.source.id = sourceId;
+            }
+
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
           });
-
-          if (this.snapshotSub != null) {
-            this.snapshotSub.unsubscribe();
-          }
-          this.snapshot = undefined;
-          if (this.historyChooser != null) {
-            this.snapshotSub = this.subscribe(
-              merge(this.historyChooser.snapshot$, this.historyChooser.showDiff$).pipe(
-                startWith(undefined),
-                delay(0),
-                tap(async () => {
-                  this.snapshot = this.historyChooser?.snapshot;
-                  let snapshotContents: DeltaStatic = new Delta(this.snapshot?.data.ops);
-                  this.snapshotText?.editor?.setContents(snapshotContents, 'api');
-
-                  // Show the diff, if requested
-                  if (this.historyChooser?.showDiff && this.target?.id != null) {
-                    const textDoc: TextDoc = await this.projectService.getText(this.target.id);
-                    let targetContents: DeltaStatic = new Delta(textDoc.data?.ops);
-
-                    // Remove the cid whenever it is found, as this is confusing the diff
-                    function removeCid(obj: any): void {
-                      if (obj.cid != null) delete obj.cid;
-                      for (let subObj in obj) {
-                        if (typeof obj[subObj] === 'object') removeCid(obj[subObj]);
-                      }
-                    }
-
-                    snapshotContents.forEach(obj => removeCid(obj));
-                    targetContents.forEach(obj => removeCid(obj));
-
-                    let diff: DeltaStatic = snapshotContents.diff(targetContents);
-
-                    // Process each op in the diff
-                    for (const op of diff.ops ?? []) {
-                      if (op.hasOwnProperty('insert')) {
-                        // Color insertions as green
-                        op.attributes = {
-                          'insert-segment': true
-                        };
-                      } else if (op.hasOwnProperty('delete')) {
-                        // Color deletions red and strikethrough
-                        op.retain = op.delete;
-                        delete op.delete;
-                        op.attributes = {
-                          'delete-segment': true
-                        };
-                      }
-                    }
-
-                    this.snapshotText?.editor?.updateContents(diff, 'api');
-                  }
-
-                  // Return focus to the target, and position the note fab
-                  // If we do not do this, the selection gets confused and the fab disappears
-                  if (this.snapshot != null) {
-                    this.target?.focus();
-                    this.positionInsertNoteFab();
-                  }
-                })
-              )
-            );
-          }
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
@@ -849,22 +758,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.projectUserConfigChangesSub != null) {
-      this.projectUserConfigChangesSub.unsubscribe();
-    }
-    if (this.trainingSub != null) {
-      this.trainingSub.unsubscribe();
-    }
-    if (this.projectDataChangesSub != null) {
-      this.projectDataChangesSub.unsubscribe();
-    }
-    if (this.metricsSession != null) {
-      this.metricsSession.dispose();
-    }
-    if (this.onTargetDeleteSub != null) {
-      this.onTargetDeleteSub.unsubscribe();
-    }
+
+    this.projectUserConfigChangesSub?.unsubscribe();
+    this.trainingSub?.unsubscribe();
+    this.projectDataChangesSub?.unsubscribe();
+    this.metricsSession?.dispose();
+    this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();
+    this.resizeObserver?.disconnect();
   }
 
   async onTargetUpdated(
@@ -885,7 +786,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.syncScroll();
       }
       if (segment == null || !VERSE_REGEX.test(segment.ref)) {
-        this.resetInsertNoteFab(true);
+        this.resetCommenterVerseSelection();
       }
 
       this.insertSuggestionEnd = -1;
@@ -1003,10 +904,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
-        if (this.target?.editor != null) {
+
+        if (this.target?.editor != null && this.targetScrollContainer != null) {
           this.positionInsertNoteFab();
-          this.observeResize(this.target.editor);
-          this.subscribeScroll(this.target.editor);
+          this.observeResize(this.targetScrollContainer.nativeElement);
+          this.subscribeScroll(this.targetScrollContainer.nativeElement);
           this.targetEditorLoaded$.next();
           this.checkForPreTranslations();
         }
@@ -1205,9 +1107,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   goToDraftPreview(): void {
     const book = Canon.bookNumberToId(this.bookNum!);
-    this.router.navigateByUrl(
-      `/projects/${this.activatedProjectService.projectId}/draft-preview/${book}/${this.chapter}`
-    );
+    this.router.navigateByUrl(`/projects/${this.activatedProject.projectId}/draft-preview/${book}/${this.chapter}`);
   }
 
   showCopyrightNotice(textType: TextType): void {
@@ -1236,6 +1136,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       message: of(this.stripXml(copyrightNotice)),
       options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
     });
+  }
+
+  setHistoryTabRevisionLabel(tab: TabInfo<EditorTabType>, revision: Revision | undefined): void {
+    tab.headerText =
+      revision != null
+        ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`
+        : `${this.targetLabel} - History`;
+    // TODO: Respond to locale changes
   }
 
   private async saveNote(params: SaveNoteParameters): Promise<void> {
@@ -1485,7 +1393,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     // reset the verse selection before changing text
-    this.resetInsertNoteFab(true);
+    this.resetCommenterVerseSelection();
 
     if (this.source != null) {
       this.source.id = this.hasSource
@@ -1791,24 +1699,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private resetInsertNoteFab(resetVerseSelection: boolean): void {
-    if (resetVerseSelection) {
-      this.resetCommenterVerseSelection();
-    }
-    if (this.bottomSheetRef?.containerInstance != null) return;
-
-    // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
-    setTimeout(() => {
-      const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
-      if (targetRect != null) {
-        const targetLeftBoundary: number = this.fabHorizMargin;
-        const targetRightBoundary: number = targetRect.right - targetRect.left - this.fabHorizMargin - this.fabDiameter;
-        const leftOffset: number = this.isTargetRightToLeft ? targetLeftBoundary : targetRightBoundary;
-        this.insertNoteFabLeft = `${leftOffset}px`;
-      }
-    }, 10);
-  }
-
   /**
    * Opens a MAT dialog and records the current editor selection if one exists
    * and return the cursor to that position on dialog close.
@@ -1962,7 +1852,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (selection != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
-      this.resetInsertNoteFab(false);
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
       // and move to the top left so scrollbars are note affected
@@ -2272,20 +2161,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
+    const sourceScrollContainer: HTMLElement | undefined = this.sourceScrollContainer?.nativeElement;
+    if (sourceScrollContainer == null) {
+      return;
+    }
+
     const targetRange = this.target.segment.range;
     const targetSelectionBounds = this.target.editor.selection.getBounds(targetRange.index);
 
     const sourceRange = this.source.segment.range;
     const sourceSelectionBounds = this.source.editor.selection.getBounds(sourceRange.index, sourceRange.length);
 
-    const scrollContainer = this.source.editor.scrollingContainer;
-    let newScrollTop: number = scrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
+    let newScrollTop: number = sourceScrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
 
     // Check to see if the top of source selection would be visible after the scroll adjustment
-    const sourceTopPosition = targetSelectionBounds.top - scrollContainer.getBoundingClientRect().top;
+    const sourceTopPosition = targetSelectionBounds.top - sourceScrollContainer.getBoundingClientRect().top;
 
     // Check to see if the bottom of source selection would be visible after the scroll adjustment
-    const sourceBottomPosition = sourceTopPosition + sourceSelectionBounds.height - scrollContainer.clientHeight;
+    const sourceBottomPosition = sourceTopPosition + sourceSelectionBounds.height - sourceScrollContainer.clientHeight;
 
     // Adjust the scroll to ensure the selection fits within the container
     // Only adjust the bottom position so long as that doesn't hide the top position i.e. a long verse(s)
@@ -2294,42 +2187,47 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else if (sourceBottomPosition > 0 && sourceTopPosition - sourceBottomPosition > 0) {
       newScrollTop += sourceBottomPosition;
     }
-    this.source.editor.scrollingContainer.scrollTop = newScrollTop;
+
+    sourceScrollContainer.scrollTop = newScrollTop;
   }
 
-  private observeResize(editor: Quill): void {
-    this.resizeObserver?.unobserve(editor.root);
+  private observeResize(scrollContainer: HTMLElement): void {
+    this.resizeObserver?.disconnect();
     this.resizeObserver = new ResizeObserver(entries => {
       entries.forEach(_ => {
-        this.keepInsertNoteFabInView();
+        this.keepInsertNoteFabInView(scrollContainer);
       });
     });
-    this.resizeObserver.observe(editor.root);
+    this.resizeObserver.observe(scrollContainer);
   }
 
-  private subscribeScroll(editor: Quill): void {
+  private subscribeScroll(scrollContainer: HTMLElement): void {
     this.scrollSubscription?.unsubscribe();
-    this.scrollSubscription = this.subscribe(fromEvent(editor.root, 'scroll'), () => {
-      this.keepInsertNoteFabInView();
+    this.scrollSubscription = this.subscribe(fromEvent(scrollContainer, 'scroll'), () => {
+      this.keepInsertNoteFabInView(scrollContainer);
     });
   }
 
-  private keepInsertNoteFabInView(): void {
-    if (this.insertNoteFab == null || this.target == null || this.target.editor == null || this.targetContainer == null)
+  private keepInsertNoteFabInView(scrollContainer: HTMLElement): void {
+    if (
+      this.insertNoteFab == null ||
+      this.target == null ||
+      this.target.editor == null ||
+      this.targetScrollContainer == null
+    ) {
       return;
-    const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
-    const editorMargin = 5;
-
-    // bound the FAB to the top of the editor
-    let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, this.target.editor.root.scrollTop);
-    // bound the FAB to the bottom of the editor
-    const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
-    const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
-    if (scrollTop < minScroll) {
-      scrollTop = minScroll;
     }
 
-    this.insertNoteFab.nativeElement.style.marginTop = `-${scrollTop}px`;
+    const bounds: DOMRect = scrollContainer.getBoundingClientRect();
+    const fabCushion = 5;
+    const fabTop = this.target.selectionBoundsTop - fabCushion;
+    const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + fabCushion;
+
+    // Adjust margin when selection goes outside scroll container (0 if within visible scroll area)
+    const fabTopAdjustment = Math.max(0, scrollContainer.scrollTop - fabTop);
+    const fabBottomAdjustment = Math.min(0, bounds.height - (fabBottom - scrollContainer.scrollTop));
+
+    this.insertNoteFab.nativeElement.style.marginTop = `${fabTopAdjustment + fabBottomAdjustment}px`;
   }
 
   private checkForPreTranslations(): void {
@@ -2372,9 +2270,32 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // If build progress is 'completed', get pre-translations for current chapter
     this.draftGenerationService
-      .getGeneratedDraft(this.activatedProjectService.projectId!, this.bookNum!, this.chapter!)
+      .getGeneratedDraft(this.activatedProject.projectId!, this.bookNum!, this.chapter!)
       .subscribe((draft: DraftSegmentMap) => {
         this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
       });
+  }
+
+  private populateEditorTabs(): void {
+    // TODO: Load persisted tabs
+    this.tabState.clearAllTabGroups();
+
+    if (this.sourceLabel) {
+      const sourceTabs: EditorTabInfo[] = [
+        this.editorTabFactory.createTab('project-source', {
+          headerText: this.sourceLabel
+        })
+      ];
+
+      this.tabState.addTabGroup('source', sourceTabs);
+    }
+
+    const targetTabs: EditorTabInfo[] = [
+      this.editorTabFactory.createTab('project', {
+        headerText: this.targetLabel
+      })
+    ];
+
+    this.tabState.addTabGroup('target', targetTabs);
   }
 }
