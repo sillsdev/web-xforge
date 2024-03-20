@@ -74,7 +74,7 @@ describe('TabHeaderComponent', () => {
   it('should emit closeClick event on close', () => {
     spyOn(component.closeClick, 'emit');
     const event = new MouseEvent('click');
-    component.close(event);
+    component.onCloseClick(event);
     expect(component.closeClick.emit).toHaveBeenCalled();
   });
 });
