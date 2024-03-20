@@ -18,19 +18,32 @@ export class TabHeaderComponent {
   @Input()
   active = false;
 
-  @Output() tabClick = new EventEmitter<MouseEvent>();
+  @Output() tabPress = new EventEmitter<MouseEvent | TouchEvent>();
+  @Output() tabClick = new EventEmitter<MouseEvent | TouchEvent>();
   @Output() closeClick = new EventEmitter<void>();
+
+  @HostListener('mousedown', ['$event'])
+  @HostListener('touchstart', ['$event'])
+  onPress(e: MouseEvent | TouchEvent): void {
+    this.tabPress.emit(e);
+  }
 
   // Listen for left and middle clicks on the tab header
   @HostListener('click', ['$event'])
   @HostListener('auxclick', ['$event'])
-  onClick(e: MouseEvent): void {
+  onClick(e: MouseEvent | TouchEvent): void {
     this.tabClick.emit(e);
   }
 
-  close(e: MouseEvent): void {
+  onCloseClick(e: Event): void {
     // Stop propagation so 'tabClick' does not fire
     e.stopPropagation();
+
     this.closeClick.emit();
+  }
+
+  onClosePress(e: Event): void {
+    // Stop propagation so 'tabPress' does not fire
+    e.stopPropagation();
   }
 }
