@@ -2,8 +2,8 @@ export interface TabEvent {
   index: number;
 }
 
-export interface TabHeaderMouseEvent extends TabEvent {
-  mouseEvent: MouseEvent;
+export interface TabHeaderPointerEvent extends TabEvent {
+  pointerEvent: MouseEvent | TouchEvent;
 }
 
 export interface TabLocation<TGroupId> {

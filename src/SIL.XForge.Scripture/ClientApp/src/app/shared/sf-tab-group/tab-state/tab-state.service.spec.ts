@@ -143,10 +143,23 @@ describe('TabStateService', () => {
           { type: 'type-c', headerText: 'Header 3', closeable: true, movable: true }
         ];
         const group = new TabGroup<string, any>(groupId, tabs);
-        group.selectedIndex = 1;
         service['groups'].set(groupId, group);
+
+        group.selectedIndex = 0;
+        service.moveTab({ groupId, index: 0 }, { groupId, index: 2 });
+        expect(service['groups'].get(groupId)!.selectedIndex).toBe(2);
+
+        group.selectedIndex = 1;
         service.moveTab({ groupId, index: 0 }, { groupId, index: 2 });
         expect(service['groups'].get(groupId)!.selectedIndex).toBe(0);
+
+        group.selectedIndex = 1;
+        service.moveTab({ groupId, index: 1 }, { groupId, index: 2 });
+        expect(service['groups'].get(groupId)!.selectedIndex).toBe(2);
+
+        group.selectedIndex = 1;
+        service.moveTab({ groupId, index: 2 }, { groupId, index: 1 });
+        expect(service['groups'].get(groupId)!.selectedIndex).toBe(2);
       });
 
       it('should move a tab across groups', () => {
@@ -172,21 +185,31 @@ describe('TabStateService', () => {
         const toGroupId: string = 'target';
         const fromTabs: TabInfo<string>[] = [
           { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Header 3', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Header 4', closeable: true, movable: true }
         ];
         const toTabs: TabInfo<string>[] = [
           { type: 'type-c', headerText: 'Header 3', closeable: true, movable: true },
           { type: 'type-d', headerText: 'Header 4', closeable: true, movable: true }
         ];
         const fromGroup = new TabGroup<string, any>(fromGroupId, fromTabs);
-        fromGroup.selectedIndex = 0;
         const toGroup = new TabGroup<string, any>(toGroupId, toTabs);
-        toGroup.selectedIndex = 1;
+
         service['groups'].set(fromGroupId, fromGroup);
         service['groups'].set(toGroupId, toGroup);
+
+        fromGroup.selectedIndex = 0;
+        toGroup.selectedIndex = 1;
         service.moveTab({ groupId: fromGroupId, index: 0 }, { groupId: toGroupId, index: 1 });
         expect(service['groups'].get(fromGroupId)!.selectedIndex).toBe(0);
-        expect(service['groups'].get(toGroupId)!.selectedIndex).toBe(2);
+        expect(service['groups'].get(toGroupId)!.selectedIndex).toBe(1);
+
+        fromGroup.selectedIndex = 2;
+        toGroup.selectedIndex = 2;
+        service.moveTab({ groupId: fromGroupId, index: 2 }, { groupId: toGroupId, index: 1 });
+        expect(service['groups'].get(fromGroupId)!.selectedIndex).toBe(1);
+        expect(service['groups'].get(toGroupId)!.selectedIndex).toBe(1);
       });
     });
   });

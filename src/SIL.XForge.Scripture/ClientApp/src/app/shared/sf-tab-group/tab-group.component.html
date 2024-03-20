@@ -4,6 +4,7 @@
   [groupId]="groupId"
   [allowDragDrop]="allowDragDrop"
   [connectedTo]="connectedTo"
+  (tabPress)="onTabHeaderPress($event)"
   (tabClick)="onTabHeaderClick($event)"
   (closeClick)="removeTab($event)"
   (tabAddRequest)="addTab($event)"

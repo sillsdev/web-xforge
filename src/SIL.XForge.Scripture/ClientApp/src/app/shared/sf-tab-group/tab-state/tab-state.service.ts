@@ -104,7 +104,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
   }
 
   moveTab(from: TabLocation<TGroupId>, to: TabLocation<TGroupId>): void {
-    const fromGroup = this.groups.get(from.groupId);
+    const fromGroup: TabGroup<TGroupId, T> | undefined = this.groups.get(from.groupId);
 
     if (fromGroup) {
       // Tab move within same group
@@ -115,46 +115,30 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
         moveItemInArray(fromGroup.tabs, from.index, to.index);
 
         // Update selected tab index if necessary
-        switch (true) {
+        if (from.index === fromGroup.selectedIndex) {
           // Selected tab moved
-          case from.index === fromGroup.selectedIndex:
-            fromGroup.selectedIndex = to.index;
-            break;
+          fromGroup.selectedIndex = to.index;
+        } else if (from.index < fromGroup.selectedIndex && to.index >= fromGroup.selectedIndex) {
           // Tab before selected tab moved after selected tab
-          case from.index < fromGroup.selectedIndex && to.index >= fromGroup.selectedIndex:
-            fromGroup.selectedIndex--;
-            break;
+          fromGroup.selectedIndex--;
+        } else if (from.index > fromGroup.selectedIndex && to.index <= fromGroup.selectedIndex) {
           // Tab after selected tab moved before selected tab
-          case from.index > fromGroup.selectedIndex && to.index <= fromGroup.selectedIndex:
-            fromGroup.selectedIndex++;
-            break;
+          fromGroup.selectedIndex++;
         }
       } else {
         // Tab move across groups
-        const toGroup = this.groups.get(to.groupId);
+        const toGroup: TabGroup<TGroupId, T> | undefined = this.groups.get(to.groupId);
 
         if (toGroup) {
-          // Add bounds in case tab is dropped after 'add tab'
-          to.index = Math.min(toGroup.tabs.length, to.index);
-
           transferArrayItem(fromGroup.tabs, toGroup.tabs, from.index, to.index);
 
           // Update 'from group' selected tab index if necessary
-          switch (true) {
-            // Selected tab moved to another group
-            case from.index === fromGroup.selectedIndex:
-              fromGroup.selectedIndex = 0;
-              break;
-            // Tab before selected tab moved to another group
-            case from.index < fromGroup.selectedIndex:
-              fromGroup.selectedIndex--;
-              break;
+          if (from.index <= fromGroup.selectedIndex) {
+            fromGroup.selectedIndex = Math.max(0, fromGroup.selectedIndex - 1);
           }
 
-          // Update 'to group' selected tab index if necessary
-          if (to.index <= toGroup.selectedIndex) {
-            toGroup.selectedIndex++;
-          }
+          // 'to group' selected tab is the newly added tab
+          toGroup.selectedIndex = to.index;
         }
       }
     }
