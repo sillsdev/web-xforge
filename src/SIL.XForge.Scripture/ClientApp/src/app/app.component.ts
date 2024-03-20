@@ -9,7 +9,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { Subscription, combineLatest } from 'rxjs';
+import { Subscription, combineLatest, Observable } from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -23,7 +23,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -31,6 +31,7 @@ import {
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
@@ -74,6 +75,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly reportingService: ErrorReportingService,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly localSettings: LocalSettingsService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -126,6 +128,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
+  }
+
+  get canInstallOnDevice$(): Observable<boolean> {
+    return this.pwaService.canInstall$;
+  }
+
+  get showInstallIconOnAvatar$(): Observable<boolean> {
+    return this.canInstallOnDevice$.pipe(
+      filter(() => this.pwaService.installPromptLastShownTime + PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN < Date.now())
+    );
   }
 
   get showCheckingDisabled(): boolean {
@@ -327,6 +339,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     } else {
       this.noticeService.show(translate('app.action_not_available_offline'));
     }
+  }
+
+  dismissInstallIcon(): void {
+    this.pwaService.setInstallPromptLastShownTime();
+  }
+
+  installOnDevice(): void {
+    this.pwaService.install();
   }
 
   logOut(): void {

@@ -1,12 +1,16 @@
 import { fakeAsync, tick } from '@angular/core/testing';
 import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
+import { WINDOW } from 'xforge-common/browser-globals';
 import { LocationService } from './location.service';
-import { PwaService, PWA_CHECK_FOR_UPDATES } from './pwa.service';
+import { PwaService, PWA_CHECK_FOR_UPDATES, InstallPromptOutcome } from './pwa.service';
 
 const mockedSwUpdate = mock(SwUpdate);
 const mockedLocationService = mock(LocationService);
+const mockedLocalSettingsService = mock(LocalSettingsService);
+const mockedWindow: Window = mock(WINDOW);
 
 describe('PwaService', () => {
   it('checks for updates', fakeAsync(() => {
@@ -34,15 +38,50 @@ describe('PwaService', () => {
     expect(isVersionReady).toEqual(true);
     env.dispose();
   }));
+
+  it('before install prompt should trigger the app as available to install', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let canInstall = false;
+    env.pwaService.canInstall$.subscribe((_install: boolean) => {
+      canInstall = _install;
+    });
+    expect(canInstall).toEqual(false);
+    mockedWindow.dispatchEvent(new Event('beforeinstallprompt'));
+    expect(canInstall).toEqual(true);
+    env.dispose();
+  }));
+
+  it('can install', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let canInstall = false;
+    env.pwaService.canInstall$.subscribe((_install: boolean) => {
+      canInstall = _install;
+    });
+    mockedWindow.dispatchEvent(new Event('beforeinstallprompt'));
+    TestEnvironment.isRunningInstalledApp$.next(true);
+    expect(canInstall).toEqual(true);
+    env.pwaService.install();
+    mockedWindow.dispatchEvent(new Event('appinstalled'));
+    tick();
+    expect(canInstall).toEqual(false);
+    env.dispose();
+  }));
 });
 
 class TestEnvironment {
   readonly pwaService: PwaService;
   private versionUpdates$: Subject<VersionEvent> = new Subject<VersionEvent>();
+  static isRunningInstalledApp$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
   constructor() {
+    TestEnvironment.isRunningInstalledApp$.next(false);
     when(mockedSwUpdate.isEnabled).thenReturn(true);
-    this.pwaService = new PwaService(instance(mockedSwUpdate), instance(mockedLocationService));
+    this.pwaService = new PwaService(
+      instance(mockedSwUpdate),
+      instance(mockedLocationService),
+      instance(mockedLocalSettingsService),
+      mockedWindow
+    );
     when(mockedSwUpdate.versionUpdates).thenReturn(this.versionUpdates$);
     when(mockedSwUpdate.checkForUpdate()).thenResolve(true);
     resetCalls(mockedSwUpdate);
@@ -56,3 +95,39 @@ class TestEnvironment {
     this.versionUpdates$.next({ currentVersion: {}, latestVersion: {}, type } as VersionEvent);
   }
 }
+
+// Implement required methods for the injected Window
+const windowEvents: Record<string, EventListenerOrEventListenerObject[]> = {};
+Object.defineProperty(mockedWindow, 'matchMedia', {
+  value: () => ({ matches: TestEnvironment.isRunningInstalledApp$.getValue() })
+});
+Object.defineProperty(mockedWindow, 'preventDefault', {
+  value: () => {}
+});
+Object.defineProperty(mockedWindow, 'addEventListener', {
+  value: (eventName: string, listener: EventListenerOrEventListenerObject) => {
+    if (windowEvents[eventName] == null) {
+      windowEvents[eventName] = [];
+    }
+    windowEvents[eventName].push(listener);
+    return mockedWindow;
+  }
+});
+Object.defineProperty(mockedWindow, 'dispatchEvent', {
+  value: (event: Event) => {
+    let listeners = windowEvents[event.type];
+    if (listeners == null) {
+      return;
+    }
+    for (let listener of listeners) {
+      if (typeof listener !== 'function') {
+        continue;
+      }
+      if (event.type === 'beforeinstallprompt') {
+        (event as any).prompt = () => new Promise(r => r({ outcome: 'accepted' } as InstallPromptOutcome));
+      }
+      listener(event);
+    }
+    return true;
+  }
+});

@@ -25,7 +25,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -235,6 +235,45 @@ describe('AppComponent', () => {
     tick();
   }));
 
+  it('shows install badge and option when installing is available', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.installBadge).toBeNull();
+    expect(env.installButton).toBeNull();
+    env.canInstall$.next(true);
+    env.avatarIcon.nativeElement.click();
+    env.wait();
+    expect(env.installBadge).not.toBeNull();
+    expect(env.installButton).not.toBeNull();
+    env.avatarIcon.nativeElement.click();
+    env.wait();
+  }));
+
+  it('hide install badge after avatar menu click', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    env.canInstall$.next(true);
+    env.wait();
+    expect(env.installBadge).not.toBeNull();
+
+    when(mockedPwaService.installPromptLastShownTime).thenReturn(Date.now());
+    env.avatarIcon.nativeElement.click();
+    env.wait();
+    expect(env.installBadge).toBeNull();
+
+    // The install badge should be visible again
+    tick(PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN);
+    env.wait();
+    expect(env.installBadge).not.toBeNull();
+
+    env.avatarIcon.nativeElement.click();
+    env.wait();
+  }));
+
   it('user added to project after init', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects']);
@@ -314,6 +353,7 @@ class TestEnvironment {
   readonly location: Location;
   // readonly questions: Question[];
   readonly ngZone: NgZone;
+  readonly canInstall$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   readonly canSync$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly canSeeGenerateDraft$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly canSeeSettings$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -401,6 +441,7 @@ class TestEnvironment {
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
+    when(mockedPwaService.canInstall$).thenReturn(this.canInstall$);
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
@@ -432,6 +473,14 @@ class TestEnvironment {
 
   get avatarIcon(): DebugElement {
     return this.navBar.query(By.css('app-avatar'));
+  }
+
+  get installBadge(): DebugElement {
+    return this.navBar.query(By.css('.install-badge'));
+  }
+
+  get installButton(): DebugElement {
+    return this.navBar.query(By.css('.install-button'));
   }
 
   get refreshButton(): DebugElement {
