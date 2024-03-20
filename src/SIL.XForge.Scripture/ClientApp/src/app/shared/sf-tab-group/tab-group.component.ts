@@ -9,7 +9,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { TabFactoryService } from './base-services/tab-factory.service';
-import { TabHeaderMouseEvent, TabMoveEvent } from './sf-tabs.types';
+import { TabHeaderPointerEvent, TabMoveEvent } from './sf-tabs.types';
 import { TabStateService } from './tab-state/tab-state.service';
 import { TabBodyComponent } from './tab/tab-body/tab-body.component';
 import { TabComponent } from './tab/tab.component';
@@ -41,15 +41,20 @@ export class TabGroupComponent implements OnChanges {
     }
   }
 
-  onTabHeaderClick(e: TabHeaderMouseEvent): void {
-    // Close tab on middle button click
-    if (e.mouseEvent.button === 1) {
+  onTabHeaderPress(e: TabHeaderPointerEvent): void {
+    // Select tab on left mouse button press or mobile touch
+    if (e.pointerEvent instanceof TouchEvent || e.pointerEvent.button === 0) {
+      if (e.index < this.tabs.length) {
+        this.selectTab(e.index);
+      }
+    }
+  }
+
+  onTabHeaderClick(e: TabHeaderPointerEvent): void {
+    // Close tab on middle mouse button click
+    if (e.pointerEvent instanceof MouseEvent && e.pointerEvent.button === 1) {
       this.removeTab(e.index);
       return;
-    }
-
-    if (e.index < this.tabs.length) {
-      this.selectTab(e.index);
     }
   }
 

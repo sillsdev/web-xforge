@@ -2,14 +2,14 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { Observable, of } from 'rxjs';
 import {
-  TabMenuItem,
   SFTabsModule,
   TabFactoryService,
   TabGroup,
   TabInfo,
+  TabMenuItem,
   TabMenuService,
   TabStateService
-} from 'src/app/shared/sf-tab-group';
+} from '../sf-tab-group';
 
 @Component({
   selector: 'app-tab-group-stories',
@@ -33,11 +33,7 @@ import {
       [selectedIndex]="tabGroup.value.selectedIndex"
       [connectedTo]="tabState.groupIds$ | async"
     >
-      <app-tab
-        *ngFor="let tab of tabGroup.value.tabs; let i = index"
-        [closeable]="tab.closeable"
-        [movable]="tab.movable"
-      >
+      <app-tab *ngFor="let tab of tabGroup.value.tabs" [closeable]="tab.closeable" [movable]="tab.movable">
         <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
         <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
       </app-tab>

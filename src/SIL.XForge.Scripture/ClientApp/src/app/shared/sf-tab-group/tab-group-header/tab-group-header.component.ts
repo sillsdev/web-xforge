@@ -26,7 +26,7 @@ import {
   Subscription
 } from 'rxjs';
 import { TabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
-import { TabHeaderMouseEvent, TabMoveEvent } from '../sf-tabs.types';
+import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 
@@ -43,7 +43,8 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @Input() selectedIndex = 0;
   @Input() allowDragDrop = true;
   @Input() connectedTo: string[] = [];
-  @Output() tabClick = new EventEmitter<TabHeaderMouseEvent>();
+  @Output() tabPress = new EventEmitter<TabHeaderPointerEvent>();
+  @Output() tabClick = new EventEmitter<TabHeaderPointerEvent>();
   @Output() closeClick = new EventEmitter<number>();
   @Output() tabMove = new EventEmitter<TabMoveEvent<string>>();
 
@@ -117,7 +118,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
   movablePredicate(index: number, _draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
     const tabToMove = dropList.getSortedItems()[index];
-    return tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable;
+    return tabToMove && (tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable);
   }
 
   onAddTabClicked(): void {
@@ -126,8 +127,8 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
   onTabDrop(event: CdkDragDrop<Iterable<TabComponent>>): void {
     // Convert CdkDragDrop event to TabMoveEvent
-    const from = { groupId: event.previousContainer.id, index: event.previousIndex };
-    const to = { groupId: event.container.id, index: event.currentIndex };
+    const from: TabLocation<string> = { groupId: event.previousContainer.id, index: event.previousIndex };
+    const to: TabLocation<string> = { groupId: event.container.id, index: event.currentIndex };
     this.tabMove.emit({ from, to });
   }
 
@@ -183,6 +184,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     // Handle tab overflow
     this.overflowing$.pipe(takeUntilDestroyed(this.destroyRef), distinctUntilChanged()).subscribe(isOverflowing => {
       const host = this.elementRef.nativeElement;
+
       if (isOverflowing) {
         host.classList.add('overflowing');
       } else {

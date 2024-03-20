@@ -2,6 +2,13 @@
   <ng-content></ng-content>
 </div>
 
-<button *ngIf="closeable" mat-icon-button class="close-button" (click)="close($event)">
+<button
+  *ngIf="closeable"
+  mat-icon-button
+  class="close-button"
+  (click)="onCloseClick($event)"
+  (mousedown)="onClosePress($event)"
+  (touchstart)="onClosePress($event)"
+>
   <mat-icon>close</mat-icon>
 </button>
