@@ -21,7 +21,8 @@
     [closeable]="tab.closeable"
     [movable]="tab.movable"
     [active]="i === selectedIndex"
-    (tabClick)="tabClick.next({ index: i, mouseEvent: $event })"
+    (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
+    (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"
     (closeClick)="closeClick.next(i)"
     cdkDrag
     [cdkDragDisabled]="!tab.movable"
