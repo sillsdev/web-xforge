@@ -286,7 +286,7 @@ public class PreTranslationService(
         }
 
         // Get all the pre-translations and update the chapters
-        Dictionary<int, List<int>> bookChapters = [];
+        Dictionary<int, HashSet<int>> bookChapters = [];
         bool useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
         foreach (
             Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
@@ -331,13 +331,10 @@ public class PreTranslationService(
             }
 
             // Store the book number and chapter number
-            if (bookChapters.TryGetValue(bookNum, out List<int> value))
+            if (bookChapters.TryGetValue(bookNum, out HashSet<int> value))
             {
-                // Do not add duplicate chapter numbers for this book
-                if (!value.Contains(chapterNum))
-                {
-                    value.Add(chapterNum);
-                }
+                // The HashSet stops duplicate chapter numbers for this book
+                value.Add(chapterNum);
             }
             else
             {
@@ -356,7 +353,7 @@ public class PreTranslationService(
                     int textIndex = i;
                     int chapterIndex = j;
                     bool hasDraft =
-                        bookChapters.TryGetValue(projectDoc.Data.Texts[i].BookNum, out List<int> chapters)
+                        bookChapters.TryGetValue(projectDoc.Data.Texts[i].BookNum, out HashSet<int> chapters)
                         && chapters.Contains(projectDoc.Data.Texts[i].Chapters[chapterIndex].Number);
 
                     // Update the has draft value for the chapter
