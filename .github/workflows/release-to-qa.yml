@@ -1,0 +1,19 @@
+name: Release to QA
+
+on:
+  schedule:
+    # Run on Tuesday-Sunday at 01:30 UTC, shortly before beginning of tester workday.
+    - cron: "30 1 * * 0,2-6"
+  workflow_dispatch:
+
+jobs:
+  release-to-qa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set sf-qa to master
+        run: |
+          git push origin origin/master:sf-qa
