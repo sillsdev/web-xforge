@@ -16,4 +16,4 @@ const fonts = db.sf_projects.aggregate([
   }}
 ]).toArray();
 
-console.log(fonts.map(font => `${font.count},${font._id}`).join('\n'));
+console.log(fonts.map(font => `${font._id}\t${font.count}`).join('\n'));
