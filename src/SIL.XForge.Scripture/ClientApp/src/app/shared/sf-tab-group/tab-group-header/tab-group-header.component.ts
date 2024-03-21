@@ -11,11 +11,9 @@ import {
   Output,
   QueryList,
   SimpleChanges,
-  ViewChild,
   ViewChildren
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuTrigger } from '@angular/material/menu';
 import {
   BehaviorSubject,
   debounceTime,
@@ -52,7 +50,6 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   @Output() tabAddRequest = new EventEmitter<string>();
 
   @ViewChildren(TabHeaderComponent, { read: ElementRef }) private tabHeaders?: QueryList<ElementRef>;
-  @ViewChild('menuTrigger') private menuTrigger?: MatMenuTrigger;
 
   menuItems$?: Observable<TabMenuItem[]>;
 
@@ -117,8 +114,8 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   movablePredicate(index: number, _draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
-    const tabToMove = dropList.getSortedItems()[index];
-    return tabToMove && (tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable);
+    const tabToMove: CdkDrag<any> = dropList.getSortedItems()[index];
+    return tabToMove != null && (tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable);
   }
 
   onAddTabClicked(): void {
