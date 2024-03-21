@@ -4,8 +4,8 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Chapter } from 'realtime-server/scriptureforge/models/text-info';
-import { environment } from 'src/environments/environment';
 import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../environments/environment';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './models/sf-project-role-info';
 import { TextDocId } from './models/text-doc';
