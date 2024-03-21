@@ -54,7 +54,9 @@ export class RouterDirective {
   }
 
   private get url(): string {
-    return this.router.createUrlTree(this.route, this.routerOptions).toString();
+    const a = this.router.createUrlTree(this.route, this.routerOptions);
+    const b = a.toString();
+    return b;
   }
 
   private get routerOptions(): NavigationExtras {

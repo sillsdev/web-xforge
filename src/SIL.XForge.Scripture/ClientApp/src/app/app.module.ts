@@ -35,7 +35,7 @@ import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/d
 import { SettingsComponent } from './settings/settings.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
-import { MyProjectsComponent } from './start/start.component';
+import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { SyncProgressComponent } from './sync/sync-progress/sync-progress.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';

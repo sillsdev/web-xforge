@@ -87,7 +87,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
     const paratextId: string = this.paratextIdControl.value;
     const project = this._projects.find(p => p.paratextId === paratextId);
-    return project != null && project.projectId == null;
+    return project != null && !this.paratextService.isParatextProjectInSF(project);
   }
 
   get submitDisabled(): boolean {

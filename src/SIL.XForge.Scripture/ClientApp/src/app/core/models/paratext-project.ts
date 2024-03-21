@@ -1,4 +1,3 @@
-/** See documentation in ParatextProject.cs. */
 export interface ParatextProject {
   paratextId: string;
   name: string;

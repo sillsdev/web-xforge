@@ -9,7 +9,7 @@ import { ProjectComponent } from './project/project.component';
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
-import { MyProjectsComponent } from './start/start.component';
+import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { SyncComponent } from './sync/sync.component';
 
 const routes: Routes = [

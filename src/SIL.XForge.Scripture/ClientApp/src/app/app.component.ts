@@ -170,10 +170,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get homeUrl$(): Observable<string> {
-    return this.authService.loggedInState$.pipe(
-      map(state => (state.loggedIn ? '/projects' : '/')),
-      startWith('/')
-    );
+    return this.authService.loggedInState$.pipe(map(state => (state.loggedIn ? '/projects' : '/')));
   }
 
   get isAppLoading(): boolean {

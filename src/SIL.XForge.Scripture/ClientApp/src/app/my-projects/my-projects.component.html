@@ -1,0 +1,62 @@
+<ng-container *transloco="let t; read: 'start'">
+  <div class="wrapper">
+    <app-notice id="no-pt-or-sf-projects" icon="warning" type="warning"
+      >You have no projects. You need to receive an invitation to join a project. Or if you have a Paratext account, you
+      can Log in with Paratext and connect to your Paratext projects.</app-notice
+    >
+    <h3 *ngIf="userConnectedProjects.length > 0">Connected projects</h3>
+    <mat-card
+      *ngFor="let projectDoc of userConnectedProjects"
+      [class.active-project]="isLastSelectedProject(projectDoc)"
+      id="user-connected-project-card-{{ projectDoc.data?.paratextId }}"
+    >
+      <div>
+        <span class="project-name">
+          <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
+        </span>
+        <span class="helper-text">
+          {{ projectDoc.data?.checkingConfig?.checkingEnabled ? "Drafting  • Community checking" : "Drafting" }}
+        </span>
+      </div>
+      <!-- <a routerLink="/page">Click Here</a> -->
+      <a routerLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">Open</a>
+    </mat-card>
+
+    <h3 *ngIf="userConnectedResources.length > 0">DBL resources</h3>
+    <mat-card
+      *ngFor="let projectDoc of userConnectedResources"
+      [class.active-project]="isLastSelectedProject(projectDoc)"
+      id="user-connected-resource-card-{{ projectDoc.data?.paratextId }}"
+    >
+      <div>
+        <span class="project-name">
+          <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
+        </span>
+        <span class="helper-text">DBL resource</span>
+      </div>
+      <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">Open</a>
+    </mat-card>
+
+    <h3 *ngIf="userUnconnectedUserParatextProjects.length > 0">
+      {{ userProjectCount === 0 ? "Connect a project to get started" : "Not connected" }}
+    </h3>
+    <mat-card
+      *ngFor="let ptProject of userUnconnectedUserParatextProjects"
+      id="user-unconnected-project-card-{{ ptProject.paratextId }}"
+    >
+      <div>
+        <span class="project-name">
+          <span>{{ ptProject.shortName }}</span> - <span>{{ ptProject.name }}</span>
+        </span>
+        <span *ngIf="!ptProject.isConnectable" class="helper-text"
+          >This project cannot be connected. You must be the Paratext Administrator of a project to start it here. Ask
+          your Administrator to connect to your project then you can also connect to it here after that.TODO:other text
+          is on the balsalmiq.</span
+        >
+      </div>
+      <a *ngIf="ptProject.isConnectable" appRouterLink="/connect-project" mat-flat-button color="primary">
+        {{ paratextService.isParatextProjectInSF(ptProject) ? "Join" : "Connect" }}
+      </a>
+    </mat-card>
+  </div>
+</ng-container>

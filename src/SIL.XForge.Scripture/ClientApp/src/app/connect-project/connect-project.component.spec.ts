@@ -152,8 +152,10 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
     expect(env.component.paratextIdControl.errors!.required).toBe(true);
 
+    when(mockedParatextService.isParatextProjectInSF(anything())).thenReturn(true);
     env.changeSelectValue(env.projectSelect, 'pt03');
 
+    // The project is already in SF, so do not present settings to configure.
     expect(env.settingsCard).toBeNull();
     env.clickElement(env.submitButton);
 
