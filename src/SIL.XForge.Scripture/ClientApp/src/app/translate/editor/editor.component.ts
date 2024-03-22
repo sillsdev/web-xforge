@@ -2219,7 +2219,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const bounds: DOMRect = scrollContainer.getBoundingClientRect();
-    const fabCushion = 5;
+    const fabCushion = 10;
     const fabTop = this.target.selectionBoundsTop - fabCushion;
     const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + fabCushion;
 
