@@ -159,9 +159,11 @@
     "info_alert_approval_needed_detail": "Generating a translation draft requires contacting the Scripture Forge team with information about your project so that we can determine whether your project can work well with our system. The team will work with you to determine how to produce the highest quality draft possible.",
     "info_alert_approval_needed_header": "Sign up for translation drafting",
     "info_alert_different_training_and_source_language": "The language for your alternate training text must be the same as the source language. Select a different alternate training text on the [link:projectSettingsUrl]settings page[/link].",
+    "info_alert_last_sync_failed": "Your project failed to synchronize. It will be synchronized when you next generate a draft.",
     "info_alert_no_source_access": "You do not have access to the translation source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_alternate_source_access": "You do not have access to the drafting source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_alternate_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
+    "info_alert_project_will_sync": "Your project will be synchronized when you next generate a draft.",
     "info_alert_same_source_and_target_language": "The language for your source text must be different than the target language. Select a different source text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Select a source text on the [link:projectSettingsUrl]settings page[/link].",
     "instructions_draft_process": "The draft will be generated in the background. You can continue to work on other tasks while it is being generated. You can cancel the generation process at any time. The process will typically take at least 8 hours under ideal conditions, but may take longer if the server is busy.",
@@ -183,6 +185,8 @@
   },
   "draft_generation_steps": {
     "back": "Atrás",
+    "choose_additional_training_data_files_subheader": "Select additional training files.",
+    "choose_additional_training_data_files": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
     "choose_books_for_training_subheader": "Select books that have been proofed.",
     "choose_books_for_training": "Choose books for training the language model",
@@ -192,6 +196,7 @@
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generar borrador",
+    "loading": "Cargando...",
     "next": "Siguiente",
     "no_available_books": "You have no books available for drafting.",
     "these_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
@@ -232,13 +237,20 @@
     "verse_too_long_for_suggestions": "Este versículo es demasiado largo para generar sugerencias.",
     "your_comment": "Su comentario"
   },
+  "editor_draft_tab": {
+    "no_draft_notice": "{{ bookChapterName }} has no draft.",
+    "offline_notice": "Auto draft is not available offline."
+  },
+  "editor_history_tab": {
+    "offline_notice": "Editor history is not available offline."
+  },
+  "editor_tabs_menu": {
+    "history_tab_header": "History",
+    "draft_tab_header": "Auto Draft"
+  },
   "history_chooser": {
-    "hide": "Hide history",
-    "hide_diff": "Hide differences with previous version",
-    "loading": "History loading...",
-    "not_available_offline": "History is not available offline",
-    "show": "Show history",
-    "show_diff": "Show differences with previous version"
+    "hide_diff": "Hide differences from the latest version",
+    "show_diff": "Show differences from the latest version"
   },
   "import_questions_confirmation_dialog": {
     "done": "Terminado",
@@ -396,6 +408,8 @@
     "invite_others": "Los administradores siempre pueden invitar a personas desde la página {{ templateTagBoundary }}Usuarios{{ templateTagBoundary }} .",
     "log_in_with_paratext": "Iniciar sesión en Paratext",
     "pre_translation_drafting": "Translation draft generation",
+    "pre_translation_additional_training_data": "Allow additional training data",
+    "pre_translation_additional_training_data_info": "These are two column CSV files specially crafted to provide training data pairs.",
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",
     "pre_translation_drafting_description": "Configure options for generating translation drafts.",
@@ -450,10 +464,33 @@
     "sync_is_disabled": "La sincronización para este proyecto tuvo que ser desactivada, por lo que no está disponible en este momento. Por favor, contacte con {{ email }} para discutir lo que hay que hacer para que la sincronización del proyecto pueda ser activada de nuevo.",
     "sync_failure_support_message": "Algo salió mal la última vez que Scripture Forge intentó sincronizar el proyecto con Paratext. Si sigue sin funcionar después de intentarlo de nuevo, por favor, envíe un informe de problema al respecto escribiendo a {{email}}."
   },
+  "tab_group_header": {
+    "no_tabs_available": "No tabs available."
+  },
   "text_note_dialog": {
     "cross_reference": "Referencia cruzada",
     "end_note": "Nota final",
     "footnote": "Nota al pie"
+  },
+  "training_data_multi_select": {
+    "confirm_delete": "Are you sure you want to permanently delete this training data?",
+    "delete": "Eliminar",
+    "file_information": "The file should be a spreadsheet that has two columns of text: the first column in {{ sourceLanguage }}, the second in {{ targetLanguage }}.",
+    "upload_csv": "Upload CSV"
+  },
+  "training_data_upload_dialog": {
+    "browse_files": "Examinar archivos",
+    "cancel": "Cancelar",
+    "drag_and_drop_files": "Drag and drop training data file here",
+    "drag_and_drop_or_browse": "O",
+    "filename_already_exists": "A file already exists with this name.",
+    "skip_first_row": "Skip first row of data file",
+    "no_training_data_file_uploaded": "No training data file uploaded",
+    "no_upload_offline": "Training data cannot be uploaded without connecting to the internet.",
+    "save": "Guardar",
+    "upload_failed": "The training data file could not be uploaded. Please try again or use a different file.",
+    "upload_training_data": "Upload Training Data",
+    "uploading": "Subiendo..."
   },
   "training_progress": {
     "completed_successfully": "Completado con éxito",

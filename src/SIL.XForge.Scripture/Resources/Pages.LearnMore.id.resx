@@ -127,7 +127,7 @@
     <value>Pelajari lebih lanjut tentang Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingOfflineAnwering" xml:space="preserve">
-    <value>{0}Answering questions{1}, including recording an audio answer, offline.</value>
+    <value>{0}Menjawab pertanyaan{1}, termasuk merekam jawaban audio, secara luring.</value>
   </data>
   <data name="LearnSliderCheckingOfflineDescription" xml:space="preserve">
     <value>{0}Pemeriksa Komunitas{1} dan {0}Administrator{1} harus {2}menonton video ini{3} untuk melihat bagaimana pengguna dapat tetap bekerja, bahkan ketika luring. Meliputi:</value>
@@ -157,90 +157,90 @@
     <value>Tonton Cara Kerja Pemeriksaan Masyarakat</value>
   </data>
   <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
-    <value>{0}Interacting{1} with other {2}Community Checkers{3} by adding comments to their answers.</value>
+    <value>{0}Berinteraksi{1} dengan {2}Masyarakat Pemeriksa{3} lainnya dengan menambahkan komentar pada jawaban mereka.</value>
   </data>
   <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
-    <value>{0}Selecting Scripture{1} to reference with answers.</value>
+    <value>{0}Memilih Alkitab {1} untuk referensi dengan jawaban.</value>
   </data>
   <data name="LearnSliderCheckingSetupAddQuestions" xml:space="preserve">
-    <value>{0}Adding questions{1} to be checked by the community (these can feature audio recordings of the relevant Scripture, or the question itself).</value>
+    <value>{0}Menambahkan pertanyaan{1} untuk diperiksa oleh masyarakat (dapat berupa rekaman audio dari Alkitab yang relevan, atau pertanyaan itu sendiri).</value>
   </data>
   <data name="LearnSliderCheckingSetupConnect" xml:space="preserve">
-    <value>{0}Connecting to a Paratext project{1} in Scripture Forge.</value>
+    <value>{0}Menghubungkan ke proyek Paratext{1} di Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>{4}Paratext{5} project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
+    <value>{4}Proyek Paratext{5} {0}Administrator{1} dapat {2}menonton video ini{3} untuk mempelajari tentang pengaturan {0}Pemeriksaan Masyarakat{1}. Ini mencakup:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
-    <value>Setting Up Community Checking</value>
+    <value>Menyiapkan Pemeriksaan Masyarakat</value>
   </data>
   <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
-    <value>{0}Sharing the project{1} by inviting {2}Community Checkers{3} to answer questions.</value>
+    <value>{0}Membagikan proyek{1} dengan mengundang {2}Masyarakat pemeriksa{3} untuk menjawab pertanyaan.</value>
   </data>
   <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
-    <value>{0}Synchronizing{1} the {2}Community Checkers'{3} answers with Paratext.</value>
+    <value>{0}Menyelaraskan{1} jawaban {2}Masyarakat Pemeriksa '{3} dengan Paratext.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
-    <value>With the suggestion engine set up and trained, Scripture Forge may offer {0}Translators{1} suggestions as they type.</value>
+    <value>Dengan mesin saran yang telah disiapkan dan dilatih, Scripture Forge dapat menawarkan {0}Penerjemah{1} saran terjemahan saat mereka mengetik.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptEnter" xml:space="preserve">
-    <value>Simply hit {0}ENTER{1} or click on the suggestion to accept it, or hit {0}ESC{1} or continue typing to ignore it.</value>
+    <value>Cukup tekan {0}ENTER{1} atau klik saran untuk menerimanya, atau tekan {0}ESC{1} atau lanjutkan mengetik untuk mengabaikannya.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptHeader" xml:space="preserve">
-    <value>Accepting a Translation Suggestion</value>
+    <value>Menerima Saran Penerjemahan</value>
   </data>
   <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
-    <value>The {0}suggestion engine learns{1} and provides better suggestions as each verse is translated.</value>
+    <value>Mesin saran {0}mempelajari{1} dan memberikan saran yang lebih baik saat setiap ayat diterjemahkan.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
-    <value>{0}Translators{1} can {2}receive suggestions{3} about how to translate the next word or phrase, as they type.</value>
+    <value>{0}Penerjemah{1} dapat {2}menerima saran{3} tentang cara menerjemahkan kata atau frasa berikutnya, saat mereka mengetik.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
-    <value>Select a project the translation is {0}Based on{1} and the intelligent suggestion engine can be trained to {2}provide helpful translation suggestions{3}.</value>
+    <value>Pilih proyek terjemahan {0}Berdasarkan{1} dan mesin saran cerdas dapat dilatih untuk {2}memberikan saran terjemahan yang bermanfaat{3}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
-    <value>Most effective on {0}closely related projects{1} with similar grammar and style of translation, such as adaptation projects.</value>
+    <value>Paling efektif untuk {0}proyek yang terkait erat{1} dengan tata bahasa dan gaya penerjemahan yang serupa, seperti proyek adaptasi.</value>
   </data>
   <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can enable {2}Translation Suggestions{3} to assist {0}Translators{1}.</value>
+    <value>{0}Administrator{1} dapat mengaktifkan {2}Saran Penerjemahan{3} untuk membantu {0}Penerjemah{1}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
-    <value>Setting Up Translation Suggestions</value>
+    <value>Menyiapkan Pengaturan Saran Penerjemahan</value>
   </data>
   <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
-    <value>{0}Administrators{1} can connect a {4}Paratext{5} project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
+    <value>{0}Administrator{1} dapat menghubungkan proyek {4}Paratext{5} ke Scripture Forge untuk menyunting Alkitab seperti yang mereka lakukan di Paratext, sementara {2}mendapatkan keuntungan dari peningkatan pilihan kolaborasi{3}.</value>
   </data>
   <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
-    <value>Editing Scripture</value>
+    <value>Menyunting Alkitab</value>
   </data>
   <data name="LearnSliderTranslateEditScripture" xml:space="preserve">
-    <value>{0}Edit Scripture{1} in Scripture Forge as you would in Paratext’s {2}Basic{3} view.</value>
+    <value>{0}Menyunting Alkitab{1} di Scripture Forge seperti yang Anda lakukan di tampilan {2}Dasar{3} dari Paratext.</value>
   </data>
   <data name="LearnSliderTranslateEditSync" xml:space="preserve">
-    <value>{0}Synchronize{1} your Scripture Forge project with Paratext to keep your work up to date.</value>
+    <value>{0}Selaraskan{1} proyek Scripture Forge Anda dengan Paratext agar pekerjaan Anda tetap mutakhir.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateDescription" xml:space="preserve">
-    <value>{0}Translators{1} can work on projects collaboratively, {2}editing Scripture at the same time{3}.</value>
+    <value>{0}Para penerjemah{1} dapat mengerjakan proyek secara kolaboratif, {2}menyunting Alkitab pada saat yang sama{3}.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateHeader" xml:space="preserve">
-    <value>Collaborating on Scripture</value>
+    <value>Berkolaborasi dalam Alkitab</value>
   </data>
   <data name="LearnSliderTranslateCollaborateLocation" xml:space="preserve">
-    <value>Work with {0}Translators{1} in {2}multiple locations{3} on the same project.</value>
+    <value>Bekerja dengan Penerjemah {0}{1} di {2}beberapa lokasi{3} pada proyek yang sama.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
-    <value>See other {0}Translators'{1} {2}edits in real time{3}, as they type.</value>
+    <value>Lihat {0}suntingan{1} {2}penerjemah lain secara langsung/nyata{3}, saat mereka mengetik.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateVerse" xml:space="preserve">
-    <value>Collaborate on the same book, same chapter, or {0}even the same verse{1}.</value>
+    <value>Berkolaborasi dalam kitab yang sama, pasal yang sama, atau {0}bahkan ayat yang sama{1}.</value>
   </data>
   <data name="LearnTranslateHow" xml:space="preserve">
-    <value>Learn how to edit Scripture collaboratively and use translation suggestions.</value>
+    <value>Pelajari cara menyunting Alkitab secara kolaboratif dan menggunakan saran terjemahan.</value>
   </data>
   <data name="LearnTranslateTitle" xml:space="preserve">
-    <value>Translation</value>
+    <value>Penerjemahan</value>
   </data>
   <data name="ReadyToTry" xml:space="preserve">
-    <value>Ready to try Scripture Forge?</value>
+    <value>Siap mencoba Scripture Forge?</value>
   </data>
 </root>

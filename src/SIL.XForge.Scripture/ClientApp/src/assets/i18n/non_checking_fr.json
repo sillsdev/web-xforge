@@ -159,9 +159,11 @@
     "info_alert_approval_needed_detail": "Générer un brouillon de traduction nécessite de contacter l'équipe de Scripture Forge avec des informations sur votre projet afin que nous puissions déterminer si votre projet peut fonctionner correctement avec notre système. L'équipe travaillera avec vous pour déterminer comment produire le brouillon de la meilleure qualité possible.",
     "info_alert_approval_needed_header": "Inscrivez-vous pour la rédaction de traduction",
     "info_alert_different_training_and_source_language": "La langue de votre texte d'entraînement alternatif doit être la même que la langue source. Sélectionnez un texte d'entraînement alternatif différent sur la [link:projectSettingsUrl]page des paramètres[/link].",
+    "info_alert_last_sync_failed": "Votre projet n'a pas réussi à se synchroniser. Il sera synchronisé lorsque vous générerez votre prochain brouillon.",
     "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_no_alternate_source_access": "Vous n'avez pas accès au projet source {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_no_alternate_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
+    "info_alert_project_will_sync": "Votre projet sera synchronisé lorsque vous générerez votre prochain brouillon",
     "info_alert_same_source_and_target_language": "La langue de votre texte source doit être différente de la langue cible. Sélectionnez un texte source différent sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est nécessaire pour produire une ébauche. Sélectionnez un texte source sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "instructions_draft_process": "Le brouillon sera généré en arrière-plan. Vous pouvez continuer à travailler sur d'autres tâches pendant qu'il est en cours de génération. Vous pouvez annuler le processus de génération à tout moment. Le processus prendra généralement au moins 8 heures dans des conditions idéales, mais peut prendre plus de temps si le serveur est occupé.",
@@ -183,6 +185,8 @@
   },
   "draft_generation_steps": {
     "back": "Retour",
+    "choose_additional_training_data_files_subheader": "Sélectionnez des fichiers de formation supplémentaires.",
+    "choose_additional_training_data_files": "Choisir des fichiers supplémentaires pour la formation du modèle de langue",
     "choose_books_for_training_error": "Aucun livre sélectionné. Sélectionnez les livres de formation pour continuer.",
     "choose_books_for_training_subheader": "Sélectionnez les livres qui ont été vérifiés.",
     "choose_books_for_training": "Choisir les livres pour la formation du modèle de langue",
@@ -192,6 +196,7 @@
     "fast_training_warning": "Activer ceci permettra de gagner du temps mais réduira considérablement la précision.",
     "fast_training": "Permettre une formation rapide",
     "generate_draft": "Générer un brouillon",
+    "loading": "Chargement...",
     "next": "Suivant",
     "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage.",
     "these_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
@@ -232,13 +237,20 @@
     "verse_too_long_for_suggestions": "Ce verset est trop long pour générer des suggestions.",
     "your_comment": "Votre commentaire"
   },
+  "editor_draft_tab": {
+    "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
+    "offline_notice": "Le brouillon automatique n'est pas disponible hors ligne."
+  },
+  "editor_history_tab": {
+    "offline_notice": "L'historique de l'éditeur n'est pas disponible hors ligne."
+  },
+  "editor_tabs_menu": {
+    "history_tab_header": "Historique",
+    "draft_tab_header": "Brouillon automatique"
+  },
   "history_chooser": {
-    "hide": "Cacher l'historique",
-    "hide_diff": "Masquer les différences avec la version précédente",
-    "loading": "Chargement de l'historique...",
-    "not_available_offline": "L'historique n'est pas disponible hors ligne",
-    "show": "Afficher l'historique",
-    "show_diff": "Afficher les différences avec la version précédente"
+    "hide_diff": "Masquer les différences par rapport à la dernière version",
+    "show_diff": "Afficher les différences par rapport à la dernière version"
   },
   "import_questions_confirmation_dialog": {
     "done": "Terminé",
@@ -396,6 +408,8 @@
     "invite_others": "Les administrateurs peuvent toujours inviter des personnes depuis la page {{ templateTagBoundary }}Utilisateurs{{ templateTagBoundary }}.",
     "log_in_with_paratext": "Connectez-vous à Paratext",
     "pre_translation_drafting": "Génération de l'ébauche",
+    "pre_translation_additional_training_data": "Autoriser des données de formation supplémentaires",
+    "pre_translation_additional_training_data_info": "Ces fichiers CSV à deux colonnes sont spécialement conçus pour fournir des paires de données de formation.",
     "pre_translation_alternate_training_source_info": "Sélectionner une traduction séparée à des fins d'entraînement, telle qu'une retraduction, peut améliorer la qualité de la rédaction.",
     "pre_translation_alternate_training_source_text_placeholder": "Texte source d'entraînement alternatif (optionnel)",
     "pre_translation_drafting_description": "Configurer les options de génération de brouillons.",
@@ -450,10 +464,33 @@
     "sync_is_disabled": "La synchronisation pour ce projet a dû être désactivée, elle n'est donc pas disponible pour le moment. Veuillez contacter {{ email }} pour discuter de ce qui doit être fait pour que la synchronisation du projet puisse être à nouveau activée.",
     "sync_failure_support_message": "Une erreur est survenue la dernière fois que Scripture Forge a essayé de synchroniser le projet avec Paratext. Si cela ne fonctionne toujours pas après avoir réessayé, veuillez envoyer un rapport de problème à ce sujet en écrivant à {{email}}."
   },
+  "tab_group_header": {
+    "no_tabs_available": "Aucun onglet disponible."
+  },
   "text_note_dialog": {
     "cross_reference": "Renvoi",
     "end_note": "Note de fin",
     "footnote": "Note de bas de page"
+  },
+  "training_data_multi_select": {
+    "confirm_delete": "Êtes-vous sûr de vouloir supprimer définitivement ces données de formation ?",
+    "delete": "Supprimer",
+    "file_information": "Le fichier doit être une feuille de calcul qui a deux colonnes de texte : la première colonne en {{ sourceLanguage }}, la seconde en {{ targetLanguage }}.",
+    "upload_csv": "Téléverser un fichier CSV"
+  },
+  "training_data_upload_dialog": {
+    "browse_files": "Parcourir les fichiers",
+    "cancel": "Annuler",
+    "drag_and_drop_files": "Glissez et déposez le fichier de données d'entraînement ici",
+    "drag_and_drop_or_browse": "OU",
+    "filename_already_exists": "Un fichier portant ce nom existe déjà.",
+    "skip_first_row": "Ignorer la première ligne du fichier de données",
+    "no_training_data_file_uploaded": "Aucun fichier de données d'entraînement n'a été téléversé",
+    "no_upload_offline": "Les données de formation ne peuvent pas être téléversées sans connexion à Internet.",
+    "save": "Enregistrer",
+    "upload_failed": "Le fichier de données de formation n'a pas pu être téléversé. Veuillez réessayer ou utiliser un autre fichier.",
+    "upload_training_data": "Téléverser les données de formation",
+    "uploading": "Téléversement..."
   },
   "training_progress": {
     "completed_successfully": "Terminé avec succès",
