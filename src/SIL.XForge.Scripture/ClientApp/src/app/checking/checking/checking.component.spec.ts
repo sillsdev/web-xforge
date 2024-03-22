@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
@@ -21,19 +21,20 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { Question, getQuestionDocId } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  SFProjectUserConfig,
-  getSFProjectUserConfigDocId
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
-import { TextData, getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
@@ -41,9 +42,9 @@ import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
-import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
+import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -55,7 +56,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -2341,75 +2342,32 @@ class TestEnvironment {
 
   private readonly params$: BehaviorSubject<Params>;
   private readonly queryParams$: BehaviorSubject<Params>;
-  private readonly adminProjectUserConfig: SFProjectUserConfig = {
+  private readonly adminProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
     ownerRef: ADMIN_USER.id,
-    projectRef: 'project01',
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
+    isTargetTextRight: true
+  });
 
-  private readonly checkerProjectUserConfig: SFProjectUserConfig = {
+  private readonly checkerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
     ownerRef: CHECKER_USER.id,
-    projectRef: 'project01',
     isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
     selectedQuestionRef: 'project01:q5Id',
-    questionRefsRead: [],
-    answerRefsRead: ['a0Id', 'a1Id'],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
+    answerRefsRead: ['a0Id', 'a1Id']
+  });
 
-  private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = {
+  private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
     ownerRef: CLEAN_CHECKER_USER.id,
-    projectRef: 'project01',
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
+    isTargetTextRight: true
+  });
 
-  private readonly observerProjectUserConfig: SFProjectUserConfig = {
-    ownerRef: OBSERVER_USER.id,
+  private readonly observerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
+    ownerRef: OBSERVER_USER.id,
     isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedQuestionRef: 'project01:q5Id',
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
+    selectedQuestionRef: 'project01:q5Id'
+  });
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 

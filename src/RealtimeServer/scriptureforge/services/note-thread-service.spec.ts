@@ -1,8 +1,9 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
-import { instance, mock } from 'ts-mockito';
 import { Connection } from 'sharedb/lib/client';
+import { instance, mock } from 'ts-mockito';
 import { User, USERS_COLLECTION } from '../../common/models/user';
+import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import {
@@ -15,26 +16,26 @@ import {
   hasDoc,
   submitJson0Op
 } from '../../common/utils/test-utils';
+import { Note } from '../models/note';
+import {
+  getNoteThreadDocId,
+  NOTE_THREAD_COLLECTION,
+  NoteConflictType,
+  NoteStatus,
+  NoteThread,
+  NoteType
+} from '../models/note-thread';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
+import { createTestProject } from '../models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SF_PROJECT_USER_CONFIGS_COLLECTION,
   SFProjectUserConfig
 } from '../models/sf-project-user-config';
-import {
-  getNoteThreadDocId,
-  NOTE_THREAD_COLLECTION,
-  NoteStatus,
-  NoteThread,
-  NoteType,
-  NoteConflictType
-} from '../models/note-thread';
-import { Note } from '../models/note';
-import { VerseRefData } from '../models/verse-ref-data';
+import { createTestProjectUserConfig } from '../models/sf-project-user-config-test-data';
 import { TextAnchor } from '../models/text-anchor';
-import { createTestProject } from '../models/sf-project-test-data';
-import { createTestUser } from '../../common/models/user-test-data';
+import { VerseRefData } from '../models/verse-ref-data';
 import { NoteThreadService } from './note-thread-service';
 
 describe('NoteThreadService', () => {
@@ -333,22 +334,13 @@ class TestEnvironment {
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       getSFProjectUserConfigDocId('project01', this.projectAdminId),
-      {
+      createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: this.projectAdminId,
-        isTargetTextRight: false,
-        confidenceThreshold: 0.2,
-        biblicalTermsEnabled: false,
-        transliterateBiblicalTerms: false,
-        translationSuggestionsEnabled: true,
-        numSuggestions: 1,
-        selectedSegment: '',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: [],
-        audioRefsPlayed: []
-      }
+        commentRefsRead: ['comment01']
+      })
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, this.checkerId, createTestUser({}, 2));
@@ -357,22 +349,13 @@ class TestEnvironment {
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       getSFProjectUserConfigDocId('project01', this.checkerId),
-      {
+      createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: this.checkerId,
-        isTargetTextRight: false,
-        confidenceThreshold: 0.2,
-        biblicalTermsEnabled: false,
-        transliterateBiblicalTerms: false,
-        translationSuggestionsEnabled: true,
-        numSuggestions: 1,
-        selectedSegment: '',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: [],
-        audioRefsPlayed: []
-      }
+        commentRefsRead: ['comment01']
+      })
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, this.commenterId, createTestUser({}, 3));
@@ -381,22 +364,11 @@ class TestEnvironment {
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       getSFProjectUserConfigDocId('project01', this.commenterId),
-      {
+      createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: this.commenterId,
-        isTargetTextRight: false,
-        confidenceThreshold: 0.2,
-        biblicalTermsEnabled: false,
-        transliterateBiblicalTerms: false,
-        translationSuggestionsEnabled: false,
-        numSuggestions: 1,
-        selectedSegment: '',
-        questionRefsRead: [],
-        answerRefsRead: [],
-        commentRefsRead: [],
-        noteRefsRead: [],
-        audioRefsPlayed: []
-      }
+        translationSuggestionsEnabled: false
+      })
     );
 
     await createDoc<SFProject>(
