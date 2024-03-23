@@ -1708,20 +1708,29 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     dialogConfig: MatDialogConfig<D>
   ): MatDialogRef<T, R> {
     const selection: RangeStatic | null | undefined = this.target?.editor?.getSelection();
-    const scrollTop: number | undefined = this.target?.editor?.root.scrollTop;
+    const targetScrollContainer: HTMLElement | undefined = this.targetScrollContainer?.nativeElement;
+    const targetScrollTop: number | undefined = targetScrollContainer?.scrollTop;
     const dialogRef: MatDialogRef<T, R> = this.dialogService.openMatDialog(component, dialogConfig);
-    if (selection == null || !this.canEdit) return dialogRef;
+
+    if (selection == null || !this.canEdit) {
+      return dialogRef;
+    }
 
     const subscription: Subscription = dialogRef.afterClosed().subscribe(() => {
       if (this.target?.editor != null && this.dialogService.openDialogCount === 0) {
         const currentSelection: RangeStatic | null | undefined = this.target.editor.getSelection();
+
         if (currentSelection?.index !== selection.index) {
           this.target.editor.setSelection(selection.index, 0, 'user');
-          if (scrollTop != null) this.target.editor.root.scrollTop = scrollTop;
+
+          if (targetScrollContainer != null && targetScrollTop != null) {
+            targetScrollContainer.scrollTop = targetScrollTop;
+          }
         }
       }
       subscription.unsubscribe();
     });
+
     return dialogRef;
   }
 
@@ -2219,7 +2228,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const bounds: DOMRect = scrollContainer.getBoundingClientRect();
-    const fabCushion = 5;
+    const fabCushion = 10;
     const fabTop = this.target.selectionBoundsTop - fabCushion;
     const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + fabCushion;
 
