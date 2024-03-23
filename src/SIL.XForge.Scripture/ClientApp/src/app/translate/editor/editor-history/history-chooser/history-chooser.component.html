@@ -13,13 +13,14 @@
 
     <button
       id="show-diff"
-      mat-icon-button
+      mat-button
       appBlurOnClick
       type="button"
       (click)="this.toggleDiff()"
       matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
     >
       <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
+      {{ showDiff ? t("hide_changes") : t("show_changes") }}
     </button>
   </ng-container>
 </ng-container>
