@@ -6,8 +6,6 @@ import {
 } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
-import { of } from 'rxjs';
-import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
@@ -26,7 +24,10 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { of } from 'rxjs';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -41,9 +42,9 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
 import { MockNoteDialogRef } from '../editor/editor.component.spec';
-import { BiblicalTermsComponent, BiblicalTermNoteIcon, BiblicalTermDialogIcon } from './biblical-terms.component';
+import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
+import { BiblicalTermDialogIcon, BiblicalTermNoteIcon, BiblicalTermsComponent } from './biblical-terms.component';
 
 const mockedI18nService = mock(I18nService);
 const mockedMatDialog = mock(MatDialog);
@@ -463,41 +464,28 @@ class TestEnvironment {
     });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: 'project01:user01',
-      data: {
+      data: createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: 'user01',
-        isTargetTextRight: false,
-        confidenceThreshold: 0.2,
         biblicalTermsEnabled: true,
-        transliterateBiblicalTerms: false,
         translationSuggestionsEnabled: false,
-        numSuggestions: 1,
-        selectedSegment: '',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: [],
-        audioRefsPlayed: []
-      }
+        commentRefsRead: ['comment01']
+      })
     });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: 'project02:user01',
-      data: {
+      data: createTestProjectUserConfig({
         projectRef: 'project02',
         ownerRef: 'user01',
-        isTargetTextRight: false,
-        confidenceThreshold: 0.2,
         biblicalTermsEnabled: true,
         transliterateBiblicalTerms: true,
         translationSuggestionsEnabled: false,
-        numSuggestions: 1,
-        selectedSegment: '',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: [],
-        audioRefsPlayed: []
-      }
+        commentRefsRead: ['comment01']
+      })
     });
     if (noteThreads) {
       this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {

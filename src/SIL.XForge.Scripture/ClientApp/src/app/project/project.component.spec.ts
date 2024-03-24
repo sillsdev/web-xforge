@@ -11,6 +11,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -230,24 +231,13 @@ class TestEnvironment {
       const projectId = `project${projectIdSuffix}`;
       this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
         id: getSFProjectUserConfigDocId(projectId, 'user01'),
-        data: {
-          ownerRef: 'user01',
+        data: createTestProjectUserConfig({
           projectRef: projectId,
+          ownerRef: 'user01',
           selectedTask: args.selectedTask,
           selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
-          isTargetTextRight: true,
-          confidenceThreshold: 0.2,
-          biblicalTermsEnabled: false,
-          transliterateBiblicalTerms: false,
-          translationSuggestionsEnabled: true,
-          numSuggestions: 1,
-          selectedSegment: '',
-          questionRefsRead: [],
-          answerRefsRead: [],
-          commentRefsRead: [],
-          noteRefsRead: [],
-          audioRefsPlayed: []
-        }
+          isTargetTextRight: true
+        })
       });
 
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
