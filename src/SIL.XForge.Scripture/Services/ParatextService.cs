@@ -1222,9 +1222,16 @@ public class ParatextService : DisposableBase, IParatextService
 
         CommentManager manager = CommentManager.Get(scrText);
 
+        // We will query the VerseRefStr value, rather than VerseRef to speed up this query
+        string verseRefBook = Canon.BookNumberToId(bookNum) + " ";
+
         // CommentThread.VerseRef determines the location of a thread, even if moved. However, in Paratext a note can
         // only be relocated within the chapter, so for our query, we only need to look at the first note location.
-        var threads = manager.FindThreads(commentThread => commentThread.Comments[0].VerseRef.BookNum == bookNum, true);
+        var threads = manager.FindThreads(
+            commentThread =>
+                commentThread.Comments[0].VerseRefStr.StartsWith(verseRefBook, StringComparison.OrdinalIgnoreCase),
+            true
+        );
         return NotesFormatter.FormatNotes(threads);
     }
 
@@ -2443,6 +2450,9 @@ public class ParatextService : DisposableBase, IParatextService
 
     private static IEnumerable<CommentThread> GetCommentThreads(CommentManager manager, int? bookNum)
     {
+        // We will query the VerseRefStr value, rather than VerseRef to speed up this query
+        string verseRefBook = bookNum is not null ? Canon.BookNumberToId(bookNum.Value) + " " : string.Empty;
+
         // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
         // reallocated within the chapter, so for our query, we only need the first location.
         // A Biblical Term has a VerseRef, but it is usually not useful, so we exclude BT notes when getting a book's notes
@@ -2451,7 +2461,9 @@ public class ParatextService : DisposableBase, IParatextService
             commentThread =>
                 (
                     bookNum != null
-                    && commentThread.Comments[0].VerseRef.BookNum == bookNum
+                    && commentThread
+                        .Comments[0]
+                        .VerseRefStr.StartsWith(verseRefBook, StringComparison.OrdinalIgnoreCase)
                     && !commentThread.IsBTNote
                     && !commentThread.Id.StartsWith("ANSWER_")
                 ) || (bookNum == null && commentThread.IsBTNote),
