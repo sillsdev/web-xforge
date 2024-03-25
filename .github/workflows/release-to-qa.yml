@@ -2,10 +2,10 @@ name: Release to QA
 
 on:
   schedule:
-    # Run on Tuesday-Sunday at 01:30 UTC, shortly before beginning of tester workday.
+    # Run every day except Tuesday, at 01:30 UTC, shortly before beginning of tester workday.
     # Note that this workflow can be disabled from the GitHub UI by going to
     # Actions > Workflows > Release to QA > "..." > Disable workflow
-    - cron: "30 1 * * 0,2-6"
+    - cron: "30 1 * * 0-1,3-6"
   workflow_dispatch:
 
 jobs:
