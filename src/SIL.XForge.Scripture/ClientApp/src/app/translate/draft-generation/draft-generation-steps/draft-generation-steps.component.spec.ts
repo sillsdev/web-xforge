@@ -131,9 +131,14 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.availableTrainingBooks).toEqual([2, 3]);
     }));
 
-    it('should set "unusableTranslateBooks" and "unusableTrainingBooks" correctly', fakeAsync(() => {
-      expect(component.unusableTranslateBooks).toEqual([6, 7]);
-      expect(component.unusableTrainingBooks).toEqual([1, 6, 7]);
+    it('should set "unusableTranslateSourceBooks" and "unusableTrainingSourceBooks" correctly', fakeAsync(() => {
+      expect(component.unusableTranslateSourceBooks).toEqual([6, 7]);
+      expect(component.unusableTrainingSourceBooks).toEqual([1, 6, 7]);
+    }));
+
+    it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
+      expect(component.unusableTranslateTargetBooks).toEqual([4, 5]);
+      expect(component.unusableTrainingTargetBooks).toEqual([4, 5, 8]);
     }));
   });
 
@@ -162,9 +167,14 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.availableTrainingBooks).toEqual([1, 2, 3]);
     }));
 
-    it('should set "unusableTranslateBooks" and "unusableTrainingBooks" correctly', fakeAsync(() => {
-      expect(component.unusableTranslateBooks).toEqual([6, 7]);
-      expect(component.unusableTrainingBooks).toEqual([6, 7]);
+    it('should set "unusableTranslateSourceBooks" and "unusableTrainingSourceBooks" correctly', fakeAsync(() => {
+      expect(component.unusableTranslateSourceBooks).toEqual([6, 7]);
+      expect(component.unusableTrainingSourceBooks).toEqual([6, 7]);
+    }));
+
+    it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
+      expect(component.unusableTranslateTargetBooks).toEqual([4, 5]);
+      expect(component.unusableTrainingTargetBooks).toEqual([4, 5]);
     }));
 
     it('should select no books initially', () => {

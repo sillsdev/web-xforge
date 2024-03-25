@@ -53,9 +53,11 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   availableTrainingBooks: number[] = [];
   availableTrainingData: Readonly<TrainingData>[] = [];
 
-  // Unusable books do not exist in the corresponding drafting/training source project
-  unusableTranslateBooks: number[] = [];
-  unusableTrainingBooks: number[] = [];
+  // Unusable books do not exist in the target or corresponding drafting/training source project
+  unusableTranslateSourceBooks: number[] = [];
+  unusableTranslateTargetBooks: number[] = [];
+  unusableTrainingSourceBooks: number[] = [];
+  unusableTrainingTargetBooks: number[] = [];
 
   initialSelectedTrainingBooks: number[] = [];
   initialSelectedTranslateBooks: number[] = [];
@@ -69,6 +71,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   draftingSourceProjectName?: string;
   trainingSourceProjectName?: string;
+  targetProjectName?: string;
 
   showBookSelectionError = false;
   isTrainingOptional = false;
@@ -93,7 +96,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     this.subscribe(
       this.draftSourcesService.getDraftProjectSources().pipe(
         filter(({ target, source, alternateSource, alternateTrainingSource }) => {
-          this.setSourceProjectDisplayNames(alternateSource ?? source, alternateTrainingSource);
+          this.setProjectDisplayNames(target, alternateSource ?? source, alternateTrainingSource);
           return target != null && source != null;
         })
       ),
@@ -130,8 +133,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         // If book exists in both target and source, add to available books.
         // Otherwise, add to unusable books.
         // Ensure books are displayed in ascending canonical order.
+        const targetBooks = new Set<number>();
         for (const text of target.texts.sort((a, b) => a.bookNum - b.bookNum)) {
           const bookNum = text.bookNum;
+          targetBooks.add(bookNum);
 
           // Exclude non-canonical books
           if (Canon.isExtraMaterial(bookNum)) {
@@ -142,14 +147,14 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
           if (draftingSourceBooks.has(bookNum)) {
             this.availableTranslateBooks.push(bookNum);
           } else {
-            this.unusableTranslateBooks.push(bookNum);
+            this.unusableTranslateSourceBooks.push(bookNum);
           }
 
           // Training books
           if (trainingSourceBooks.has(bookNum)) {
             this.availableTrainingBooks.push(bookNum);
           } else {
-            this.unusableTrainingBooks.push(bookNum);
+            this.unusableTrainingSourceBooks.push(bookNum);
           }
         }
 
@@ -158,6 +163,14 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
         this.setInitialTrainingBooks(this.availableTrainingBooks);
         this.setInitialTranslateBooks(this.availableTranslateBooks);
+
+        // Store the books that are not in the target
+        this.unusableTrainingTargetBooks = [...trainingSourceBooks].filter(
+          bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
+        );
+        this.unusableTranslateTargetBooks = [...draftingSourceBooks].filter(
+          bookNum => !targetBooks.has(bookNum) && Canon.isCanonical(bookNum)
+        );
       }
     );
 
@@ -289,10 +302,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.additionalTrainingData ?? false;
   }
 
-  private setSourceProjectDisplayNames(
+  private setProjectDisplayNames(
+    target: DraftSource | undefined,
     draftingSource: DraftSource | undefined,
     trainingSource: DraftSource | undefined
   ): void {
+    this.targetProjectName = target != null ? `${target.shortName} - ${target.name}` : '';
     this.draftingSourceProjectName =
       draftingSource != null ? `${draftingSource.shortName} - ${draftingSource.name}` : '';
     this.trainingSourceProjectName =
