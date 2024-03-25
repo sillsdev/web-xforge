@@ -63,8 +63,8 @@
             </button>
           </div>
         </h2>
-        <app-notice *ngIf="isLegacyDraft" type="warning" icon="warning" class="legacy-draft-warning">
-          <transloco key="draft_viewer.legacy_draft_warning" [params]="{ generateDraftUrl }"></transloco>
+        <app-notice *ngIf="isDraftLegacy" type="warning" icon="warning" class="draft-legacy-warning">
+          <transloco key="draft_viewer.draft_legacy_warning" [params]="{ generateDraftUrl }"></transloco>
         </app-notice>
         <app-text
           [ngClass]="{ applied: isDraftApplied }"
