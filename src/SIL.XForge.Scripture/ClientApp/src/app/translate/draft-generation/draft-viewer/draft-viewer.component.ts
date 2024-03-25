@@ -45,7 +45,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   targetTextDocId?: TextDocId;
 
   isDraftApplied = false;
-  isLegacyDraft = false;
+  isDraftLegacy = false;
   hasDraft = false;
   draftPopulated = false;
   isOnline = this.onlineStatusService.isOnline;
@@ -55,10 +55,11 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   //       the source is only used for display, and may not include some books contained in the alternate source.
   bookHasSource = false;
 
-  draftSubscription?: Subscription;
   generateDraftUrl?: string;
   projectSettingsUrl?: string;
   preDraftTargetDelta?: DeltaStatic;
+
+  private draftSubscription?: Subscription;
 
   constructor(
     private readonly draftGenerationService: DraftGenerationService,
@@ -228,7 +229,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
             // If the corpus does not support USFM
             if (err.status === 405) {
               // Prompt the user to run a new build to use the new features
-              this.isLegacyDraft = true;
+              this.isDraftLegacy = true;
               return this.getLegacyGeneratedDraft();
             }
             return throwError(() => err);
@@ -237,7 +238,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
         .subscribe((draftOps: DeltaOperation[]) => {
           if (draftOps.length > 0) {
             // For USFM drafts, see if there are changes
-            if (!this.isLegacyDraft) {
+            if (!this.isDraftLegacy) {
               // Only allow applying of the draft if there is a difference between the target and draft
               this.hasDraft =
                 this.preDraftTargetDelta

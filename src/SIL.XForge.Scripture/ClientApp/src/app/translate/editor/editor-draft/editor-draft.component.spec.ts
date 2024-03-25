@@ -28,7 +28,7 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftViewerService = mock(DraftViewerService);
 const mockI18nService = mock(I18nService);
 
-fdescribe('EditorDraftComponent', () => {
+describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
   let component: EditorDraftComponent;
   let testOnlineStatus: TestOnlineStatusService;
@@ -86,17 +86,17 @@ fdescribe('EditorDraftComponent', () => {
 
     testOnlineStatus.setIsOnline(true);
     tick(EDITOR_READY_TIMEOUT);
-    expect(component.draftCheckState).toEqual('legacy-draft');
+    expect(component.draftCheckState).toEqual('draft-legacy');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
 
     testOnlineStatus.setIsOnline(false);
     fixture.detectChanges();
-    expect(component.draftCheckState).toEqual('legacy-draft'); // Display if already fetched
+    expect(component.draftCheckState).toEqual('draft-legacy'); // Display if already fetched
 
     testOnlineStatus.setIsOnline(true);
     tick(EDITOR_READY_TIMEOUT);
     fixture.detectChanges();
-    expect(component.draftCheckState).toEqual('legacy-draft');
+    expect(component.draftCheckState).toEqual('draft-legacy');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 

@@ -40,7 +40,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @ViewChild(TextComponent) draftText!: TextComponent;
 
   inputChanged$ = new Subject<void>();
-  draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-empty' | 'legacy-draft' = 'draft-unknown';
+  draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
   bookChapterName = '';
   generateDraftUrl?: string;
 
@@ -91,7 +91,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
                   // If the corpus does not support USFM
                   if (err.status === 405) {
                     // Prompt the user to run a new build to use the new features
-                    this.draftCheckState = 'legacy-draft';
+                    this.draftCheckState = 'draft-legacy';
                     return this.getLegacyGeneratedDraft(targetOps);
                   }
                   return throwError(() => err);
@@ -100,7 +100,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
                   // Check for empty draft
                   if (ops.length === 0) {
                     this.draftCheckState = 'draft-empty';
-                  } else if (this.draftCheckState !== 'legacy-draft') {
+                  } else if (this.draftCheckState !== 'draft-legacy') {
                     this.draftCheckState = 'draft-present';
                   }
                 })
@@ -121,7 +121,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         if (Object.keys(draft).length === 0) {
           this.draftCheckState = 'draft-empty';
           return [];
-        } else if (this.draftCheckState !== 'legacy-draft') {
+        } else if (this.draftCheckState !== 'draft-legacy') {
           this.draftCheckState = 'draft-present';
         }
 
