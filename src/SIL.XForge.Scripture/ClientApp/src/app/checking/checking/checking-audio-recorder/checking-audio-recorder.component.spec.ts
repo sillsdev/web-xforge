@@ -5,6 +5,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -26,6 +27,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedDialog = mock(DialogService);
 const mockedI18nService = mock(I18nService);
+const mockedConsole: MockConsole = MockConsole.install();
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
@@ -78,10 +80,13 @@ describe('CheckingAudioRecorderComponent', () => {
   });
 
   it('should display message if microphone not accessible', async () => {
+    mockedConsole.expectAndHide(/No microphone/);
     env.rejectUserMedia = true;
     env.clickButton(env.recordButton);
     await env.waitForRecorder(100);
     verify(mockedNoticeService.show(anything())).once();
+    mockedConsole.verify();
+    mockedConsole.reset();
     env.rejectUserMedia = false;
     env.clickButton(env.recordButton);
     await env.waitForRecorder(1000);
@@ -126,7 +131,7 @@ class TestEnvironment {
     });
     when(mockedNavigator.mediaDevices).thenReturn({
       getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
-        this.rejectUserMedia ? Promise.reject({}) : navigator.mediaDevices.getUserMedia(mediaConstraints)
+        this.rejectUserMedia ? Promise.reject('No microphone') : navigator.mediaDevices.getUserMedia(mediaConstraints)
     } as MediaDevices);
     this.fixture.detectChanges();
   }

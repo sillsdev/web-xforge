@@ -1,11 +1,12 @@
 import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { TabMenuService } from 'src/app/shared/sf-tab-group';
-import { TabStateService } from './tab-state/tab-state.service';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { TabMenuService } from '../../shared/sf-tab-group';
 import { TabFactoryService } from './base-services/tab-factory.service';
 import { SFTabsModule } from './sf-tabs.module';
 import { TabGroupComponent } from './tab-group.component';
+import { TabStateService } from './tab-state/tab-state.service';
 import { TabComponent } from './tab/tab.component';
 
 describe('TabGroupComponent', () => {
@@ -14,7 +15,7 @@ describe('TabGroupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SFTabsModule],
+      imports: [SFTabsModule, TestTranslocoModule],
       declarations: [TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },

@@ -1463,7 +1463,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const start: number = performance.now();
     const translator: InteractiveTranslator | undefined = await this.interactiveTranslatorFactory?.create(
       sourceSegment
     );
@@ -1479,8 +1478,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (sourceSegment === this.source.segmentText) {
       this.translator = translator;
-      const finish = performance.now();
-      this.console.log(`Translated segment, length: ${translator.segmentWordRanges.length}, time: ${finish - start}ms`);
     }
   }
 
