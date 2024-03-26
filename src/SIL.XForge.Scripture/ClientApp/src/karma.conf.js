@@ -11,18 +11,28 @@ module.exports = function (config) {
   // For example, KARMA_REPORTERS="mocha,coverage-istanbul" ng test --code-coverage
   if (process.env.KARMA_REPORTERS != null) karmaReporters = process.env.KARMA_REPORTERS.split(',');
 
+  const frameworks = [];
+  const plugins = [];
+  if (process.env.KARMA_PARALLEL === 'true') {
+    frameworks.push('parallel');
+    plugins.push(require('karma-parallel'));
+  }
+
+  frameworks.push('jasmine', '@angular-devkit/build-angular');
+  plugins.push(
+    require('karma-jasmine'),
+    require('karma-chrome-launcher'),
+    require('karma-jasmine-html-reporter'),
+    require('karma-coverage-istanbul-reporter'),
+    require('karma-teamcity-reporter'),
+    require('karma-mocha-reporter'),
+    require('@angular-devkit/build-angular/plugins/karma')
+  );
+
   config.set({
     basePath: '',
-    frameworks: ['jasmine', '@angular-devkit/build-angular'],
-    plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage-istanbul-reporter'),
-      require('karma-teamcity-reporter'),
-      require('karma-mocha-reporter'),
-      require('@angular-devkit/build-angular/plugins/karma')
-    ],
+    frameworks,
+    plugins,
     client: {
       clearContext: false, // leave Jasmine Spec Runner output visible in browser
       jasmine: {
