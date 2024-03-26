@@ -111,6 +111,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new ForbiddenException();
 
         string projectId = ObjectId.GenerateNewId().ToString();
+        bool trainEngine = false;
         await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
         {
             if (
@@ -145,6 +146,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
                 await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, false, CancellationToken.None);
+                trainEngine = true;
             }
         }
 
@@ -152,7 +154,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             new SyncConfig
             {
                 ProjectId = projectId,
-                TrainEngine = true,
+                TrainEngine = trainEngine,
                 UserId = curUserId,
             }
         );

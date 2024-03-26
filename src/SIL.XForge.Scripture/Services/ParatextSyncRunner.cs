@@ -82,7 +82,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<SyncMetrics> _syncMetricsRepository;
     private readonly ISFProjectService _projectService;
-    private readonly IMachineProjectService _machineProjectService;
     private readonly IParatextService _paratextService;
     private readonly IRealtimeService _realtimeService;
     private readonly IDeltaUsxMapper _deltaUsxMapper;
@@ -105,7 +104,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IRepository<SFProjectSecret> projectSecrets,
         IRepository<SyncMetrics> syncMetricsRepository,
         ISFProjectService projectService,
-        IMachineProjectService machineProjectService,
         IParatextService paratextService,
         IRealtimeService realtimeService,
         IDeltaUsxMapper deltaUsxMapper,
@@ -120,7 +118,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _projectSecrets = projectSecrets;
         _syncMetricsRepository = syncMetricsRepository;
         _projectService = projectService;
-        _machineProjectService = machineProjectService;
         _paratextService = paratextService;
         _realtimeService = realtimeService;
         _logger = logger;
@@ -141,7 +138,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <param name="projectSFId">The project's Scripture Forge identifier.</param>
     /// <param name="userId">The user identifier.</param>
     /// <param name="syncMetricsId">The sync metrics identifier.</param>
-    /// <param name="trainEngine"><c>true</c> if we are to train the SMT translation engine; otherwise <c>false</c>.</param>
+    /// <param name="trainEngine">No longer used. This is kept to ensure backwards compatibility with previously created jobs.</param>
     /// <param name="token">The cancellation token.</param>
     /// <remarks>
     /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex that
@@ -162,7 +159,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             if (!await InitAsync(projectSFId, userId, syncMetricsId, token))
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
@@ -243,7 +240,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
@@ -277,7 +274,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
@@ -292,7 +289,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
@@ -323,7 +320,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
@@ -432,7 +429,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
@@ -452,11 +449,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, token);
                 return;
             }
 
-            await CompleteSync(true, canRollbackParatext, trainEngine, token);
+            await CompleteSync(true, canRollbackParatext, token);
         }
         catch (Exception e)
         {
@@ -475,7 +472,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 LogMetric(message);
             }
 
-            await CompleteSync(false, canRollbackParatext, trainEngine, token);
+            await CompleteSync(false, canRollbackParatext, token);
         }
         finally
         {
@@ -1621,12 +1618,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         return deletedNoteThreadDocIds;
     }
 
-    private async Task CompleteSync(
-        bool successful,
-        bool canRollbackParatext,
-        bool trainEngine,
-        CancellationToken token
-    )
+    private async Task CompleteSync(bool successful, bool canRollbackParatext, CancellationToken token)
     {
         await NotifySyncProgress(SyncPhase.Phase9, 60.0);
         if (token.IsCancellationRequested)
@@ -1909,19 +1901,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             // Write the operations to the database
             await _conn.CommitTransactionAsync();
-
-            // The project document and text documents must be committed before we can train the model
-            bool hasSourceTextDocs = _projectDoc.Data.Texts.Any(t => t.HasSource);
-            if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
-            {
-                // Start training Machine engine
-                await _machineProjectService.BuildProjectAsync(
-                    _userSecret.Id,
-                    new BuildConfig { ProjectId = _projectDoc.Id },
-                    preTranslate: false,
-                    token
-                );
-            }
 
             // Backup the repository
             if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))

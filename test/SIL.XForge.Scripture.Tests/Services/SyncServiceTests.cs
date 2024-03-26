@@ -153,6 +153,27 @@ public class SyncServiceTests
     }
 
     [Test]
+    public async Task SyncAsync_DoesNotTrainWhenNoSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
+
+        // Run sync
+        await env.Service.SyncAsync(
+            new SyncConfig
+            {
+                ProjectId = Project01,
+                UserId = "userid",
+                TrainEngine = true
+            }
+        );
+
+        // Verify that only a sync for the target was received
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
     public void SyncAsync_Enqueues()
     {
         var env = new TestEnvironment();
@@ -207,41 +228,32 @@ public class SyncServiceTests
     }
 
     [Test]
-    public async Task SyncAsync_EnqueuesSourceAndTarget()
+    public async Task SyncAsync_EnqueuesTrainingJob()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
 
         // Run sync
-        await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });
+        await env.Service.SyncAsync(
+            new SyncConfig
+            {
+                ProjectId = Project03,
+                UserId = "userid",
+                TrainEngine = true
+            }
+        );
 
-        // Verify that the jobs were queued correctly
-        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project01).Sync.QueuedCount, Is.EqualTo(1));
-        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project02).Sync.QueuedCount, Is.EqualTo(0));
-        Assert.That(env.RealtimeService.GetRepository<SFProject>().Get(Project03).Sync.QueuedCount, Is.EqualTo(1));
-        Assert.That(env.ProjectSecrets.Get(Project01).JobIds.Count, Is.EqualTo(1));
-        Assert.That(env.ProjectSecrets.Get(Project02).JobIds.Count, Is.EqualTo(0));
-        Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
-        Assert.That(env.ProjectSecrets.Get(Project01).JobIds, Contains.Item("jobid"));
-        Assert.That(env.ProjectSecrets.Get(Project02).JobIds, Is.Empty);
-        Assert.That(env.ProjectSecrets.Get(Project03).JobIds, Contains.Item("jobid"));
-        Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.EqualTo(1));
-        Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
-        Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
+        // Verify that three jobs were created - source, target, and training
+        env.BackgroundJobClient.Received(3).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
-    public async Task SyncAsync_EnqueueSourceIfTranslationSuggestionsDisabled()
+    public async Task SyncAsync_EnqueuesSourceAndTarget()
     {
         // Set up test environment
         var env = new TestEnvironment();
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
-        await env.RealtimeService.GetRepository<SFProject>()
-            .UpdateAsync(
-                p => p.Id == "project03",
-                u => u.Set(pr => pr.TranslateConfig.TranslationSuggestionsEnabled, false)
-            );
 
         // Run sync
         await env.Service.SyncAsync(new SyncConfig { ProjectId = Project03, UserId = "userid" });

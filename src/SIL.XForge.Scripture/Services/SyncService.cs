@@ -197,8 +197,49 @@ public class SyncService : ISyncService
                     throw;
                 }
 
-                // Exit so we don't queue the target again, in the following block
-                return targetJobId;
+                // If we are not training SMT suggestions
+                if (!syncConfig.TrainEngine)
+                {
+                    // Exit so we don't queue the target again, in the following block
+                    return targetJobId;
+                }
+
+                // Schedule the build of SMT translation suggestions
+                string? buildJobId = null;
+                try
+                {
+                    // Build the SMT suggestions after the target has synced successfully
+                    buildJobId = _backgroundJobClient.ContinueJobWith<MachineProjectService>(
+                        targetJobId,
+                        r =>
+                            r.BuildProjectForBackgroundJobAsync(
+                                syncConfig.UserId,
+                                new BuildConfig { ProjectId = syncConfig.ProjectId },
+                                false,
+                                CancellationToken.None
+                            ),
+                        null,
+                        JobContinuationOptions.OnAnyFinishedState
+                    );
+
+                    // Store the build job id, so we can cancel the job later if needed
+                    await _projectSecrets.UpdateAsync(projectSecret.Id, u => u.Add(p => p.JobIds, buildJobId));
+
+                    // Return the build job id as it is the last in the chain
+                    return buildJobId;
+                }
+                catch (Exception)
+                {
+                    // Any exceptions should not halt the sync process
+                    if (!string.IsNullOrWhiteSpace(buildJobId))
+                    {
+                        // We only need to delete the build job
+                        _backgroundJobClient.Delete(buildJobId);
+                    }
+
+                    // Return the target job id, as the build job was not created
+                    return targetJobId;
+                }
             }
         }
 
