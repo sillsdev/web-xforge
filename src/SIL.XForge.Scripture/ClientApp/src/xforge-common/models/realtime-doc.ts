@@ -8,7 +8,9 @@ import { RealtimeOfflineData } from './realtime-offline-data';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
-  readonly INDEX_PATHS: string[];
+
+  // string is the legacy one column index format, the associative array corresponds to MongoDB's IndexSpecification
+  readonly INDEX_PATHS: (string | { [x: string]: number | string })[];
 
   new (realtimeService: RealtimeService, adapter: RealtimeDocAdapter): RealtimeDoc;
 }

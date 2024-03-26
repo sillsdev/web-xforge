@@ -74,7 +74,7 @@
           {{ tab.headerText }}
         </ng-template>
 
-        <ng-container *ngIf="tab.type === 'project-source'">
+        <div *ngIf="tab.type === 'project-source'" class="project-tab-container">
           <app-notice *ngIf="hasSourceCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
             <div>
               {{ sourceCopyrightBanner }}
@@ -110,9 +110,9 @@
               </as-split-area>
             </as-split>
           </div>
-        </ng-container>
+        </div>
 
-        <ng-container *ngIf="tab.type === 'project'">
+        <div *ngIf="tab.type === 'project'" class="project-tab-container">
           <app-notice *ngIf="hasTargetCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
             <div>
               {{ targetCopyrightBanner }}
@@ -153,12 +153,14 @@
           <div #targetSplitContainer class="container-for-split">
             <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
             <as-split direction="vertical" [style.height]="targetSplitHeight">
-              <as-split-area #targetScrollContainer [size]="75" [minSize]="20" [dir]="i18n.direction">
-                <div
-                  class="text-container"
-                  [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
-                  [ngClass]="{ 'has-draft': showPreviewDraft }"
-                >
+              <as-split-area
+                #targetScrollContainer
+                [size]="75"
+                [minSize]="20"
+                [dir]="i18n.direction"
+                [class.has-draft]="showPreviewDraft"
+              >
+                <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
                   <app-text
                     #target
                     [isReadOnly]="!canEdit"
@@ -244,7 +246,7 @@
               </as-split-area>
             </as-split>
           </div>
-        </ng-container>
+        </div>
 
         <app-editor-history
           *ngIf="tab.type === 'history'"

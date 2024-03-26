@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
@@ -13,32 +13,33 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import {
-  QUESTIONS_COLLECTION,
+  getQuestionDocId,
   Question,
-  getQuestionDocId
+  QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  SFProjectUserConfig,
-  getSFProjectUserConfigDocId
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -749,54 +750,25 @@ class TestEnvironment {
   checkerUser = this.createUser(2, SFProjectRole.CommunityChecker);
   translatorUser = this.createUser(3, SFProjectRole.ParatextTranslator);
 
-  private adminProjectUserConfig: SFProjectUserConfig = {
+  private adminProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
     ownerRef: this.adminUser.id,
+    isTargetTextRight: true
+  });
+
+  private reviewerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
-  private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
-    projectRef: 'project01',
     isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
-  private translatorProjectUserConfig: SFProjectUserConfig = {
+    questionRefsRead: ['q1Id', 'q2Id', 'q3Id']
+  });
+
+  private translatorProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
     ownerRef: this.translatorUser.id,
-    projectRef: 'project01',
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
-  };
+    isTargetTextRight: true
+  });
+
   private testProject: SFProjectProfile = createTestProjectProfile({
     texts: [
       {

@@ -1796,7 +1796,7 @@ public class ParatextSyncRunnerTests
         string threadExpected = "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1";
         Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
         Assert.That(thread01.Assignment, Is.EqualTo(CommentThread.teamUser));
-        env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
+        env.DeltaUsxMapper.ReceivedWithAnyArgs(1).ToChapterDeltas(default);
         Assert.That(thread01.Notes.Count, Is.EqualTo(startingNoteCount + expectedNoteCountChange));
         Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
         Assert.That(thread01.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));

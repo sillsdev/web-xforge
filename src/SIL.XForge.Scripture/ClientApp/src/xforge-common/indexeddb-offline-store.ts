@@ -32,11 +32,22 @@ function getKeyRange(filter: PropertyFilter): IDBKeyRange | undefined {
   return IDBKeyRange.only(filter);
 }
 
-function createObjectStore(db: IDBDatabase, collection: string, indexPaths?: string[]): void {
+function createObjectStore(
+  db: IDBDatabase,
+  collection: string,
+  indexPaths?: (string | { [x: string]: number | string })[]
+): void {
   const objectStore = db.createObjectStore(collection, { keyPath: 'id' });
   if (indexPaths != null) {
     for (const path of indexPaths) {
-      objectStore.createIndex(path, `data.${path}`);
+      if (typeof path === 'string') {
+        objectStore.createIndex(path, `data.${path}`);
+      } else {
+        objectStore.createIndex(
+          Object.keys(path).join('_'),
+          Object.keys(path).map(key => `data.${key}`)
+        );
+      }
     }
   }
 }
