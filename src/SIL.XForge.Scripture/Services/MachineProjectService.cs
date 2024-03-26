@@ -679,7 +679,7 @@ public class MachineProjectService(
                 cancellationToken
             );
         }
-        else if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
+        else if (preTranslate && !string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
         {
             // If there is an existing alternate training source
 

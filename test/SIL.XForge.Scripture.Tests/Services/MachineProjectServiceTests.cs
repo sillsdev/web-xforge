@@ -1225,6 +1225,40 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotUpdateAlternateTrainingSourceOnSmtBuilds()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateTrainingSourceConfigured = true,
+                AlternateTrainingSourceEnabled = true,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: false,
+            alternateTrainingSource: true
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_FailsLocallyOnRemoteFailure()
     {
         // Set up test environment
