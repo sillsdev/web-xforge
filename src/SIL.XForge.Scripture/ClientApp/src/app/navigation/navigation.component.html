@@ -44,6 +44,7 @@
     <mat-divider></mat-divider>
     <a *ngIf="canSync$ | async" mat-list-item [appRouterLink]="getProjectLink('sync')">
       <mat-icon
+        aria-hidden="false"
         mat-list-icon
         matBadge="error"
         [matBadgeHidden]="!lastSyncFailed || syncInProgress"

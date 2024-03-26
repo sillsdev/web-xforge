@@ -190,6 +190,7 @@ describe('RolesAndPermissionsComponent', () => {
     verify(
       mockedProjectService.onlineSetUserProjectPermissions('project01', 'ptTranslator', deepEqual(permissions))
     ).once();
+    expect().nothing();
   }));
 });
 

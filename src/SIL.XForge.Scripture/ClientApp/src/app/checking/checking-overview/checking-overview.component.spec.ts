@@ -672,6 +672,7 @@ describe('CheckingOverviewComponent', () => {
       verify(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).never();
       verify(mockedNoticeService.showError(anything())).once();
       env.waitForProjectDocChanges();
+      expect().nothing();
     }));
 
     it('can open chapter audio to edit ', fakeAsync(() => {
