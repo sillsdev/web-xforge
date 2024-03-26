@@ -677,16 +677,38 @@ public class MachineProjectService(
             // If there is an existing alternate training source
 
             // Remove the corpus from Serval
-            await translationEnginesClient.DeleteCorpusAsync(
-                translationEngineId,
-                alternateTrainingSourceCorpusId,
-                cancellationToken
-            );
+            try
+            {
+                await translationEnginesClient.DeleteCorpusAsync(
+                    translationEngineId,
+                    alternateTrainingSourceCorpusId,
+                    cancellationToken
+                );
+            }
+            catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+            {
+                // If the file was already deleted, just log a message
+                string message =
+                    $"Corpus {alternateTrainingSourceCorpusId} in project {buildConfig.ProjectId}"
+                    + " was missing or already deleted.";
+                logger.LogInformation(e, message);
+            }
 
             // Remove the files from Serval
-            foreach (ServalCorpusFile file in oldAlternateTrainingSourceCorpusFiles)
+            foreach (ServalCorpusFile corpusFile in oldAlternateTrainingSourceCorpusFiles)
             {
-                await dataFilesClient.DeleteAsync(file.FileId, cancellationToken);
+                try
+                {
+                    await dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
+                }
+                catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+                {
+                    // If the file was already deleted, just log a message
+                    string message =
+                        $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {buildConfig.ProjectId}"
+                        + " was missing or already deleted.";
+                    logger.LogInformation(e, message);
+                }
             }
 
             // Remove the reference to the corpus from the project secret
