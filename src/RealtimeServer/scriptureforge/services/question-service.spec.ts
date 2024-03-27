@@ -7,13 +7,13 @@ import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
-import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
-  SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  SF_PROJECT_USER_CONFIGS_COLLECTION
 } from '../models/sf-project-user-config';
 import { createTestProjectUserConfig } from '../models/sf-project-user-config-test-data';
 import { QuestionService } from './question-service';
@@ -103,7 +103,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, 'checker', createTestUser({}, 2));
@@ -119,7 +119,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<SFProject>(
