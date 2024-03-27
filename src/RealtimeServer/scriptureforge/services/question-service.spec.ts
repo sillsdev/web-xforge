@@ -103,7 +103,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, 'checker', createTestUser({}, 2));
@@ -119,7 +119,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<SFProject>(

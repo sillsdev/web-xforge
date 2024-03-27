@@ -341,7 +341,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, this.checkerId, createTestUser({}, 2));
@@ -357,7 +357,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<User>(conn, USERS_COLLECTION, this.commenterId, createTestUser({}, 3));
@@ -380,7 +380,7 @@ class TestEnvironment {
         answerRefsRead: [],
         commentRefsRead: [],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<SFProject>(

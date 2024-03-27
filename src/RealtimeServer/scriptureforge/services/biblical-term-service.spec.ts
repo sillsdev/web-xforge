@@ -89,7 +89,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     );
 
     await createDoc<SFProjectProfile>(
