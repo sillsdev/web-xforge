@@ -236,17 +236,7 @@ class TestEnvironment {
           ownerRef: 'user01',
           selectedTask: args.selectedTask,
           selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
-          isTargetTextRight: true,
-          confidenceThreshold: 0.2,
-          biblicalTermsEnabled: false,
-          transliterateBiblicalTerms: false,
-          translationSuggestionsEnabled: true,
-          numSuggestions: 1,
-          selectedSegment: '',
-          questionRefsRead: [],
-          answerRefsRead: [],
-          commentRefsRead: [],
-          noteRefsRead: []
+          isTargetTextRight: true
         })
       });
 

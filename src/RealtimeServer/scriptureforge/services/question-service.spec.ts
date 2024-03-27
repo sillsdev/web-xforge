@@ -101,8 +101,7 @@ class TestEnvironment {
         ownerRef: 'projectAdmin',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: []
+        commentRefsRead: ['comment01']
       })
     );
 
@@ -117,8 +116,7 @@ class TestEnvironment {
         ownerRef: 'checker',
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: []
+        commentRefsRead: ['comment01']
       })
     );
 

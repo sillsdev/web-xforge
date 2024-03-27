@@ -355,8 +355,7 @@ class TestEnvironment {
         ownerRef: this.checkerId,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: []
+        commentRefsRead: ['comment01']
       })
     );
 
@@ -369,17 +368,7 @@ class TestEnvironment {
       createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: this.commenterId,
-        isTargetTextRight: false,
-        confidenceThreshold: 0.2,
-        biblicalTermsEnabled: false,
-        transliterateBiblicalTerms: false,
-        translationSuggestionsEnabled: false,
-        numSuggestions: 1,
-        selectedSegment: '',
-        questionRefsRead: [],
-        answerRefsRead: [],
-        commentRefsRead: [],
-        noteRefsRead: []
+        translationSuggestionsEnabled: false
       })
     );
 
