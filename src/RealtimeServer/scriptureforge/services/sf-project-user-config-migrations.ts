@@ -1,4 +1,4 @@
-import { Doc, ObjectInsertOp, ObjectDeleteOp } from 'sharedb/lib/client';
+import { Doc, ObjectDeleteOp, ObjectInsertOp } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 
@@ -56,8 +56,9 @@ class SFProjectUserConfigMigration5 extends DocMigration {
   static readonly VERSION = 5;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    if (doc.data.audioRefsPlayed !== undefined) {
-      const op: ObjectDeleteOp = { p: ['audioRefsPlayed'], od: [] };
+    const audioRefsPlayed: string[] | undefined = doc.data.audioRefsPlayed;
+    if (audioRefsPlayed !== undefined) {
+      const op: ObjectDeleteOp = { p: ['audioRefsPlayed'], od: audioRefsPlayed };
       await submitMigrationOp(SFProjectUserConfigMigration5.VERSION, doc, [op]);
     }
   }
