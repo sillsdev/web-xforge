@@ -12,6 +12,7 @@ public class DraftConfig
     public IList<int> LastSelectedTrainingBooks { get; set; } = new List<int>();
     public IList<string> LastSelectedTrainingDataFiles { get; set; } = new List<string>();
     public IList<int> LastSelectedTranslationBooks { get; set; } = new List<int>();
+    public IList<TranslateSource>? MixSources { get; set; }
     public bool SendAllSegments { get; set; }
     public string? ServalConfig { get; set; }
 }
