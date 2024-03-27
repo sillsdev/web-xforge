@@ -27,13 +27,8 @@ const query: RealtimeQuery<TextAudioDoc> = mock(RealtimeQuery<TextAudioDoc>);
 const projectUserConfigDoc: SFProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
 const projectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
   projectRef: 'project01',
-  selectedSegment: '',
-  translationSuggestionsEnabled: false,
-  transliterateBiblicalTerms: false,
-  commentRefsRead: [],
-  noteRefsRead: [],
-  questionRefsRead: [],
-  answerRefsRead: []
+  ownerRef: 'user01',
+  translationSuggestionsEnabled: false
 });
 const textAudioDoc: TextAudioDoc = mock(TextAudioDoc);
 const textAudio: TextAudio = {

@@ -8,14 +8,14 @@ import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op } from '../../common/utils/test-utils';
-import { BIBLICAL_TERM_COLLECTION, BiblicalTerm, getBiblicalTermDocId } from '../models/biblical-term';
-import { SF_PROJECTS_COLLECTION, SFProjectProfile } from '../models/sf-project';
+import { BiblicalTerm, BIBLICAL_TERM_COLLECTION, getBiblicalTermDocId } from '../models/biblical-term';
+import { SFProjectProfile, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProjectProfile } from '../models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
-  SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  SF_PROJECT_USER_CONFIGS_COLLECTION
 } from '../models/sf-project-user-config';
 import { createTestProjectUserConfig } from '../models/sf-project-user-config-test-data';
 import { BiblicalTermService } from './biblical-term-service';
@@ -87,8 +87,7 @@ class TestEnvironment {
         ownerRef: this.projectAdminId,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01'],
-        noteRefsRead: []
+        commentRefsRead: ['comment01']
       })
     );
 
