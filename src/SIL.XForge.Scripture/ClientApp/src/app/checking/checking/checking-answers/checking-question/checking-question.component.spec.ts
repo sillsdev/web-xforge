@@ -20,6 +20,7 @@ import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { AudioPlayer, AudioStatus } from '../../../../shared/audio/audio-player';
 import { getAudioTimingsPhraseLevel } from '../../../checking-test.utils';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
 import { CheckingQuestionComponent } from './checking-question.component';
@@ -100,14 +101,14 @@ describe('CheckingQuestionComponent', () => {
     env.scriptureAudio.componentInstance.hasFinishedPlayingOnce$.next(true);
     await env.wait();
 
-    const newQuestion = mock<Question>();
-    when(newQuestion.projectRef).thenReturn('project01');
-    when(newQuestion.text).thenReturn('another question');
-    when(newQuestion.audioUrl).thenReturn('test-audio-player-b.webm');
-    when(newQuestion.verseRef).thenReturn(env.component.questionDoc.data!.verseRef!);
-    const newQuestionDoc = mock(QuestionDoc);
-    when(newQuestionDoc.data).thenReturn(instance(newQuestion));
-    env.component.questionDoc = instance(newQuestionDoc);
+    env.component.questionDoc = {
+      data: {
+        audioUrl: 'test-audio-player-b.webm',
+        projectRef: 'project01',
+        text: 'another question',
+        verseRef: env.component.questionDoc.data!.verseRef!
+      }
+    } as QuestionDoc;
 
     expect(env.component.question.focusedText).toBe('question-audio-label');
     expect(window.getComputedStyle(env.scriptureAudio.nativeElement)['display']).toBe('none');
@@ -128,14 +129,14 @@ describe('CheckingQuestionComponent', () => {
       verseNum: 1,
       verse: '1-2'
     };
-    const newQuestion = mock<Question>();
-    when(newQuestion.projectRef).thenReturn('project01');
-    when(newQuestion.text).thenReturn('another question');
-    when(newQuestion.audioUrl).thenReturn('test-audio-player-b.webm');
-    when(newQuestion.verseRef).thenReturn(verseRef);
-    const newQuestionDoc = mock(QuestionDoc);
-    when(newQuestionDoc.data).thenReturn(instance(newQuestion));
-    env.component.questionDoc = instance(newQuestionDoc);
+    env.component.questionDoc = {
+      data: {
+        audioUrl: 'test-audio-player-b.webm',
+        projectRef: 'project01',
+        text: 'another question',
+        verseRef: verseRef
+      }
+    } as QuestionDoc;
 
     await env.wait();
 
