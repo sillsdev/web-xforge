@@ -183,7 +183,7 @@ public class SyncService(
                 // If we are not training SMT suggestions
                 if (!syncConfig.TrainEngine)
                 {
-                    // Exit so we don't queue the target again, in the following block
+                    // Exit so we don't queue the target again, later in this method
                     return targetJobId;
                 }
 
