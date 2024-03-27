@@ -204,6 +204,40 @@ export class SFProjectService extends ProjectService<SFProject> {
                   bsonType: 'int'
                 }
               },
+              mixSources: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'object',
+                  properties: {
+                    paratextId: {
+                      bsonType: 'string'
+                    },
+                    projectRef: {
+                      bsonType: 'string',
+                      pattern: '^[0-9a-f]+$'
+                    },
+                    name: {
+                      bsonType: 'string'
+                    },
+                    shortName: {
+                      bsonType: 'string'
+                    },
+                    writingSystem: {
+                      bsonType: 'object',
+                      properties: {
+                        tag: {
+                          bsonType: 'string'
+                        }
+                      },
+                      additionalProperties: false
+                    },
+                    isRightToLeft: {
+                      bsonType: 'bool'
+                    }
+                  },
+                  additionalProperties: false
+                }
+              },
               sendAllSegments: {
                 bsonType: 'bool'
               },
