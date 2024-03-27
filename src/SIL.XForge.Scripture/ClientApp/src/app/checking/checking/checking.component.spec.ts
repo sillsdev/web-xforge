@@ -2279,17 +2279,8 @@ class TestEnvironment {
   private readonly queryParams$: BehaviorSubject<Params>;
   private readonly adminProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: []
+    ownerRef: ADMIN_USER.id,
+    isTargetTextRight: true
   });
 
   private readonly checkerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
@@ -2297,42 +2288,20 @@ class TestEnvironment {
     ownerRef: CHECKER_USER.id,
     isTargetTextRight: true,
     selectedQuestionRef: 'project01:q5Id',
-    questionRefsRead: [],
-    answerRefsRead: ['a0Id', 'a1Id'],
-    commentRefsRead: [],
-    noteRefsRead: []
+    answerRefsRead: ['a0Id', 'a1Id']
   });
 
   private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: []
+    ownerRef: CLEAN_CHECKER_USER.id,
+    isTargetTextRight: true
   });
 
   private readonly observerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
     ownerRef: OBSERVER_USER.id,
     isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedQuestionRef: 'project01:q5Id',
-    selectedSegment: '',
-    questionRefsRead: [],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: []
+    selectedQuestionRef: 'project01:q5Id'
   });
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
