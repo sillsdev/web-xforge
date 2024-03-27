@@ -34,7 +34,7 @@ const projectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
   noteRefsRead: [],
   questionRefsRead: [],
   answerRefsRead: []
-};
+});
 const textAudioDoc: TextAudioDoc = mock(TextAudioDoc);
 const textAudio: TextAudio = {
   dataId: 'id123',

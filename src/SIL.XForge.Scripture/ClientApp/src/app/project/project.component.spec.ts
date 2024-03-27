@@ -247,7 +247,7 @@ class TestEnvironment {
           answerRefsRead: [],
           commentRefsRead: [],
           noteRefsRead: []
-        }
+        })
       });
 
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

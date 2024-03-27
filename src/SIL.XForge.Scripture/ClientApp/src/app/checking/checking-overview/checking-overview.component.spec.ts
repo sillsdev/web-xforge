@@ -770,21 +770,7 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: []
-  };
-  private reviewerProjectUserConfig: SFProjectUserConfig = {
-    ownerRef: this.checkerUser.id,
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: []
-  };
+  });
   private translatorProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.translatorUser.id,
     projectRef: 'project01',
