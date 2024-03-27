@@ -33,7 +33,6 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
@@ -780,11 +779,8 @@ class TestEnvironment {
     numSuggestions: 1,
     selectedSegment: 'verse_1_1',
     projectRef: TestEnvironment.PROJECT01,
-    ownerRef: 'user01',
-    isTargetTextRight: true,
-    translationSuggestionsEnabled: false,
-    selectedSegment: 'verse_1_1'
-  });
+    ownerRef: 'user01'
+  };
 
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR

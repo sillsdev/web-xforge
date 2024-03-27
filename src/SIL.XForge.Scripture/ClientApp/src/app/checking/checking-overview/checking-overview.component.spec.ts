@@ -18,7 +18,7 @@ import {
   QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
@@ -770,21 +770,7 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: []
-  };
-  private reviewerProjectUserConfig: SFProjectUserConfig = {
-    ownerRef: this.checkerUser.id,
-    isTargetTextRight: true,
-    confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
-    transliterateBiblicalTerms: false,
-    translationSuggestionsEnabled: true,
-    numSuggestions: 1,
-    selectedSegment: '',
-    questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
-    answerRefsRead: [],
-    commentRefsRead: [],
-    noteRefsRead: []
-  };
+  });
   private translatorProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.translatorUser.id,
     projectRef: 'project01',

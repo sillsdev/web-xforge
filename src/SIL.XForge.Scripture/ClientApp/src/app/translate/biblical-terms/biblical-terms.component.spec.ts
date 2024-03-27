@@ -473,7 +473,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: 'project02:user01',
@@ -487,7 +487,7 @@ class TestEnvironment {
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
         noteRefsRead: []
-      }
+      })
     });
     if (noteThreads) {
       this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {

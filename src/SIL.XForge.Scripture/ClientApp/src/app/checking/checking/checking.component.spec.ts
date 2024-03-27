@@ -3,7 +3,6 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
@@ -29,15 +28,12 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
-  getSFProjectUserConfigDocId,
-  SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, of, Subject } from 'rxjs';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
@@ -2294,7 +2290,7 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: []
-  };
+  });
 
   private readonly checkerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
@@ -2305,7 +2301,7 @@ class TestEnvironment {
     answerRefsRead: ['a0Id', 'a1Id'],
     commentRefsRead: [],
     noteRefsRead: []
-  };
+  });
 
   private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
@@ -2320,7 +2316,7 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: []
-  };
+  });
 
   private readonly observerProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
@@ -2337,7 +2333,7 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: []
-  };
+  });
 
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 
