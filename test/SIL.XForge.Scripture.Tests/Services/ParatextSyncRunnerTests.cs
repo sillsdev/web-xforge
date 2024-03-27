@@ -78,6 +78,52 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_KeepsErrorStateWhenRunningAgain()
+    {
+        var env = new TestEnvironment();
+        int count = 0;
+        env.SetupSFData(true, true, false, false);
+        env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+        env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>()))
+            .Do(x =>
+            {
+                // Throw an exception for the first two times this is executed
+                if (count++ < 2)
+                {
+                    throw new Exception();
+                }
+            });
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        SFProject project = env.VerifyProjectSync(false);
+        Assert.That(project.Sync.DataInSync, Is.False);
+
+        // Check that the failure was logged in the sync metrics
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+
+        // Run a second time, keeping the same sync metrics id
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        // Check that the previous failure was logged in the previous sync metrics, and the current failure is recorded too
+        syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+        Assert.That(syncMetrics.PreviousSyncs.Count, Is.EqualTo(1));
+        Assert.That(syncMetrics.PreviousSyncs.First().Status, Is.EqualTo(SyncStatus.Failed));
+
+        // Run for a third time, keeping the same sync metrics id
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        // Check that the previous failures were logged in the previous sync metrics, and the current success is recorded
+        syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+        Assert.That(syncMetrics.PreviousSyncs.Count, Is.EqualTo(2));
+        Assert.That(syncMetrics.PreviousSyncs.First().Status, Is.EqualTo(SyncStatus.Failed));
+        Assert.That(syncMetrics.PreviousSyncs.Last().Status, Is.EqualTo(SyncStatus.Failed));
+    }
+
+    [Test]
     public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingDisabled()
     {
         var env = new TestEnvironment();
@@ -1927,23 +1973,32 @@ public class ParatextSyncRunnerTests
         SFProject project = env.GetProject();
         Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
+        // Verify the sync metrics
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+        Assert.That(
+            syncMetrics.Notes,
+            Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 0, updated: 0, removed: 0))
+        );
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+
         // Add a conflict note
         env.SetupNewConflictNoteThreadChange("conflictthread01");
         env.GuidService.NewObjectId().Returns("conflict01");
-        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        await env.Runner.RunAsync("project01", "user01", "project01_alt1", false, CancellationToken.None);
 
         Assert.That(env.ContainsNoteThread("project01", "conflict01"), Is.True);
         project = env.GetProject();
         Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
         // Verify the sync metrics
-        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        syncMetrics = env.GetSyncMetrics("project01_alt1");
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
         Assert.That(
             syncMetrics.Notes,
-            Is.EqualTo(new NoteSyncMetricInfo(added: 2, deleted: 0, updated: 0, removed: 0))
+            Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 0, updated: 0, removed: 0))
         );
-        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
     }
 
     [Test]
@@ -1997,14 +2052,14 @@ public class ParatextSyncRunnerTests
         env.SetupNoteRemovedChange(dataId, threadId, new[] { "n03" });
 
         // SUT 2
-        await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt", false, CancellationToken.None);
+        await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt1", false, CancellationToken.None);
 
         Assert.That(env.ContainsNoteThread(sfProjectId, dataId), Is.True);
         project = env.GetProject();
         Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
         // Verify the sync metrics
-        syncMetrics = env.GetSyncMetrics("project01_alt");
+        syncMetrics = env.GetSyncMetrics("project01_alt1");
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
         Assert.That(
             syncMetrics.Notes,
@@ -2090,19 +2145,6 @@ public class ParatextSyncRunnerTests
         env.GuidService.NewObjectId().Returns(dataId);
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
-        // Default resolved status is false
-        NoteThread thread02 = env.GetNoteThread("project01", dataId);
-        Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
-        Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
-
-        // Change resolve status to true
-        env.SetupNoteStatusChange(dataId, threadId, NoteStatus.Resolved.InternalValue);
-        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
-
-        thread02 = env.GetNoteThread("project01", dataId);
-        Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
-        Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Resolved.InternalValue));
-
         // Verify the sync metrics
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
@@ -2110,18 +2152,40 @@ public class ParatextSyncRunnerTests
             syncMetrics.Notes,
             Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 0, updated: 0, removed: 0))
         );
-        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 1)));
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+
+        // Default resolved status is false
+        NoteThread thread02 = env.GetNoteThread("project01", dataId);
+        Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+        Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
+
+        // Change resolve status to true
+        env.SetupNoteStatusChange(dataId, threadId, NoteStatus.Resolved.InternalValue);
+        await env.Runner.RunAsync("project01", "user01", "project01_alt1", false, CancellationToken.None);
+
+        thread02 = env.GetNoteThread("project01", dataId);
+        Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
+        Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Resolved.InternalValue));
+
+        // Verify the sync metrics
+        syncMetrics = env.GetSyncMetrics("project01_alt1");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+        Assert.That(
+            syncMetrics.Notes,
+            Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+        );
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
         // Change status back to false - happens if the note becomes unresolved again in Paratext
         env.SetupNoteStatusChange(dataId, threadId, NoteStatus.Todo.InternalValue);
-        await env.Runner.RunAsync("project01", "user01", "project01_alt", false, CancellationToken.None);
+        await env.Runner.RunAsync("project01", "user01", "project01_alt2", false, CancellationToken.None);
 
         thread02 = env.GetNoteThread("project01", dataId);
         Assert.That(thread02.VerseRef.ToString(), Is.EqualTo("MAT 1:1"));
         Assert.That(thread02.Status, Is.EqualTo(NoteStatus.Todo.InternalValue));
 
         // Verify the sync metrics
-        syncMetrics = env.GetSyncMetrics("project01_alt");
+        syncMetrics = env.GetSyncMetrics("project01_alt2");
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
         Assert.That(
             syncMetrics.Notes,
@@ -3236,7 +3300,8 @@ public class ParatextSyncRunnerTests
                 new[]
                 {
                     new SyncMetrics { Id = "project01" },
-                    new SyncMetrics { Id = "project01_alt" },
+                    new SyncMetrics { Id = "project01_alt1" },
+                    new SyncMetrics { Id = "project01_alt2" },
                     new SyncMetrics { Id = "project02" },
                     new SyncMetrics { Id = "project03" },
                     new SyncMetrics { Id = "project04" },

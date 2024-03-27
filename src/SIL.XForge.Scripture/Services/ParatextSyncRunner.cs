@@ -979,6 +979,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
             return false;
         }
 
+        // If there was a sync prior to this one
+        if (_syncMetrics.DateStarted is not null)
+        {
+            // Record the previous sync in clean sync metrics record with the same id
+            _syncMetrics = new SyncMetrics
+            {
+                DateQueued = _syncMetrics.DateQueued,
+                Id = _syncMetrics.Id,
+                ProjectRef = _syncMetrics.ProjectRef,
+                Status = SyncStatus.Queued,
+                UserRef = _syncMetrics.UserRef,
+                PreviousSyncs = [.. _syncMetrics.PreviousSyncs ?? [], _syncMetrics with { PreviousSyncs = [] }],
+            };
+        }
+
+        // Set the sync metrics
         _syncMetrics.ProductVersion = Product.Version;
         _syncMetrics.DateStarted = DateTime.UtcNow;
         _syncMetrics.Status = SyncStatus.Running;
