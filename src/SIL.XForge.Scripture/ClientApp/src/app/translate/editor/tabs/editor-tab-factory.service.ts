@@ -13,7 +13,8 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           type: 'history',
           icon: 'history',
           headerText: 'History',
-          closeable: true
+          closeable: true,
+          movable: true
         };
       case 'draft':
         return {
@@ -21,6 +22,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           icon: 'model_training',
           headerText: 'Auto Draft',
           closeable: true,
+          movable: true,
           unique: true
         };
       case 'project-source':
@@ -34,6 +36,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           icon: 'book',
           headerText: tabOptions.headerText,
           closeable: false,
+          movable: false,
           unique: true
         };
       default:
