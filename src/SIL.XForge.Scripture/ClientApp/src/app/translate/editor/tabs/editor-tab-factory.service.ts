@@ -20,7 +20,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           type: 'draft',
           icon: 'model_training',
           headerText: 'Auto Draft',
-          closeable: true,
+          closeable: false,
           unique: true
         };
       case 'project-source':
