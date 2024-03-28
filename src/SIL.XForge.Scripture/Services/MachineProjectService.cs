@@ -594,9 +594,16 @@ public class MachineProjectService(
         }
 
         var newSourceCorpusFiles = new List<ServalCorpusFile>();
+        string sourceParatextId = project.TranslateConfig.Source!.ParatextId;
+        if (preTranslate && project.TranslateConfig.DraftConfig.AlternateSource is not null)
+        {
+            // Only set the alternate source if we are pre-translating
+            sourceParatextId = project.TranslateConfig.DraftConfig.AlternateSource.ParatextId;
+        }
+
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
-            project.TranslateConfig.Source!.ParatextId,
+            paratextId: sourceParatextId,
             includeBlankSegments: true,
             uploadParatextZipFile,
             texts,
