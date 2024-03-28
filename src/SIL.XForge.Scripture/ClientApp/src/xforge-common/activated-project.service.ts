@@ -1,11 +1,13 @@
 import { Inject, Injectable } from '@angular/core';
-import { ActivationEnd, Router } from '@angular/router';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
-import ObjectID from 'bson-objectid';
-import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { TestBed } from '@angular/core/testing';
+import { ActivationEnd, Router } from '@angular/router';
+import ObjectID from 'bson-objectid';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { filter, map, startWith, switchMap } from 'rxjs/operators';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { PermissionsService } from 'src/app/core/permissions.service';
+import { SFProjectService } from 'src/app/core/sf-project.service';
+import { CacheService } from 'src/app/shared/cache-service/cache-service';
 import { SubscriptionDisposable } from './subscription-disposable';
 
 interface IActiveProjectIdService {
@@ -53,6 +55,7 @@ export class ActivatedProjectService extends SubscriptionDisposable {
 
   constructor(
     private readonly projectService: SFProjectService,
+    private readonly cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
   ) {
     super();
@@ -80,6 +83,9 @@ export class ActivatedProjectService extends SubscriptionDisposable {
   private set projectDoc(projectDoc: SFProjectProfileDoc | undefined) {
     if (this.projectDoc !== projectDoc) {
       this._projectDoc$.next(projectDoc);
+      if (this.projectDoc !== undefined) {
+        this.cacheService.cache(this.projectDoc);
+      }
     }
   }
 
@@ -119,13 +125,19 @@ export class TestActiveProjectIdService implements IActiveProjectIdService {
 export class TestActivatedProjectService extends ActivatedProjectService {
   constructor(
     projectService: SFProjectService,
+    cacheService: CacheService,
     @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
   ) {
-    super(projectService, activeProjectIdService);
+    super(projectService, cacheService, activeProjectIdService);
   }
 
   static withProjectId(projectId: string): TestActivatedProjectService {
     const projectService = TestBed.inject(SFProjectService);
-    return new TestActivatedProjectService(projectService, new TestActiveProjectIdService(projectId));
+    const permissionsService = TestBed.inject(PermissionsService);
+    return new TestActivatedProjectService(
+      projectService,
+      new CacheService(projectService, permissionsService),
+      new TestActiveProjectIdService(projectId)
+    );
   }
 }
