@@ -204,15 +204,15 @@ describe('ShareDialogComponent', () => {
     expect(roles).toContain(SFProjectRole.Commenter);
   }));
 
-  it('admin users can not share with anyone if sharing is disabled', fakeAsync(() => {
-    env = new TestEnvironment({ userId: TestUsers.Admin, checkingEnabled: false, translateShareEnabled: false });
-    expect(env.component.shareRole).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
-    expect(env.canChangeLinkUsage).toBeFalse();
+  it('admin users can share with anyone if sharing is disabled', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Admin, checkingShareEnabled: false, translateShareEnabled: false });
+    expect(env.component.shareRole).toEqual(SFProjectRole.CommunityChecker);
+    expect(env.canChangeLinkUsage).toBeTrue();
 
     env.component.setRole(SFProjectRole.CommunityChecker);
     env.wait();
     expect(env.component.shareRole).toEqual(SFProjectRole.CommunityChecker);
-    expect(env.canChangeLinkUsage).toBeFalse();
+    expect(env.canChangeLinkUsage).toBeTrue();
   }));
 
   it('admin users can share with anyone if sharing is enabled', fakeAsync(() => {

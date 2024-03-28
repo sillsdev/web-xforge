@@ -123,11 +123,13 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     if (this.isProjectAdmin) {
       options.push(ShareLinkType.Recipient);
     }
+
     if (
       (this.shareRole === SFProjectRole.CommunityChecker &&
         this.projectDoc?.data?.checkingConfig.checkingEnabled &&
-        this.projectDoc?.data?.checkingConfig.shareEnabled) ||
-      (this.shareRole !== SFProjectRole.CommunityChecker && this.projectDoc?.data?.translateConfig.shareEnabled)
+        (this.projectDoc?.data?.checkingConfig.shareEnabled || this.isProjectAdmin)) ||
+      (this.shareRole !== SFProjectRole.CommunityChecker &&
+        (this.projectDoc?.data?.translateConfig.shareEnabled || this.isProjectAdmin))
     ) {
       options.push(ShareLinkType.Anyone);
     }
