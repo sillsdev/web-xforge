@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Models;
 /// <summary>
 /// Information on each sync performed.
 /// </summary>
-public class SyncMetrics : IIdentifiable
+public record SyncMetrics : IIdentifiable
 {
     // Sync Details
     public DateTime? DateFinished { get; set; }
@@ -38,5 +38,10 @@ public class SyncMetrics : IIdentifiable
     /// <summary>
     /// The log messages from <see cref="Services.ParatextSyncRunner"/>.
     /// </summary>
-    public List<string> Log { get; set; } = new List<string>();
+    public List<string> Log { get; set; } = [];
+
+    /// <summary>
+    /// Any previous syncs from the same hangfire job.
+    /// </summary>
+    public List<SyncMetrics>? PreviousSyncs { get; set; }
 }
