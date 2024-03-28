@@ -33,4 +33,8 @@ export class ExternalUrlService {
   get csvImportHelpPage(): string {
     return this.helps + '/community-checking#42107c9def434bf396442d0004577710';
   }
+
+  get chapterAudioHelpPage(): string {
+    return this.helps + '/scripture-audio';
+  }
 }
