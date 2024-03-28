@@ -529,10 +529,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.onlineStatusService.isOnline && this.multiCursorViewers.length > 0;
   }
 
-  get showPreviewDraft(): boolean {
-    return this.onlineStatusService.isOnline && this.featureFlags.showNmtDrafting.enabled && this.hasDraft;
-  }
-
   /**
    * Determines whether the comment adding UI should be shown
    * This will be true any time the user has the right to add notes
@@ -2315,6 +2311,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .getGeneratedDraft(this.activatedProject.projectId!, this.bookNum!, this.chapter!)
       .subscribe((draft: DraftSegmentMap) => {
         this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
+        const hasDraftTab = this.tabState.hasTab('target', 'draft');
+        if (this.hasDraft && !hasDraftTab) {
+          this.tabState.addTab('target', this.editorTabFactory.createTab('draft'), false);
+        } else if (!this.hasDraft && hasDraftTab) {
+          this.tabState.removeTab('target', this.tabState.getTab('target', 'draft')!);
+        }
       });
   }
 
@@ -2337,6 +2339,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         headerText: this.targetLabel
       })
     ];
+    if (this.hasDraft) {
+      targetTabs.push(this.editorTabFactory.createTab('draft'));
+    }
 
     this.tabState.addTabGroup('target', targetTabs);
   }

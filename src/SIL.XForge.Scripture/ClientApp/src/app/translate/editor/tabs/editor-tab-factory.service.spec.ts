@@ -23,7 +23,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.type).toEqual('draft');
     expect(tab.icon).toEqual('model_training');
     expect(tab.headerText).toEqual('Auto Draft');
-    expect(tab.closeable).toEqual(true);
+    expect(tab.closeable).toEqual(false);
     expect(tab.unique).toEqual(true);
   });
 

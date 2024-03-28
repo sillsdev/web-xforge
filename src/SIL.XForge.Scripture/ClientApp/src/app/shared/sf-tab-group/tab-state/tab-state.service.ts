@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
+import { EditorTabType } from '../../../translate/editor/tabs/editor-tabs.types';
 import { TabGroup } from './tab-group';
 
 export interface TabInfo<TType extends string> {
@@ -62,13 +63,24 @@ export class TabStateService<TKey extends string, T extends TabInfo<string>> imp
     this.tabGroupsSource$.next(this.groups);
   }
 
-  addTab(groupId: TKey, tab: T): void {
+  addTab(groupId: TKey, tab: T, selectTab: boolean = true): void {
     if (!this.groups.has(groupId)) {
       this.groups.set(groupId, new TabGroup<TKey, T>(groupId, []));
     }
 
-    this.groups.get(groupId)!.addTab(tab, true);
+    this.groups.get(groupId)!.addTab(tab, selectTab);
     this.tabGroupsSource$.next(this.groups);
+  }
+
+  getTab(groupId: TKey, type: EditorTabType): number | undefined {
+    return this.groups.get(groupId)?.tabs?.findIndex(t => t.type === type);
+  }
+
+  hasTab(groupId: TKey, type: EditorTabType): boolean {
+    if (!this.groups.has(groupId)) {
+      return false;
+    }
+    return (this.groups.get(groupId)?.tabs?.filter(t => t.type === type) ?? []).length > 0;
   }
 
   removeTab(groupId: TKey, index: number): void {
