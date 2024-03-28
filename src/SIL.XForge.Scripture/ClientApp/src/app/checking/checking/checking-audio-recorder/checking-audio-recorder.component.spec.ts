@@ -14,13 +14,14 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { SingleButtonAudioPlayerComponent } from '../single-button-audio-player/single-button-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -31,7 +32,13 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
+    declarations: [
+      CheckingAudioRecorderComponent,
+      CheckingAudioPlayerComponent,
+      AudioPlayerComponent,
+      AudioTimePipe,
+      SingleButtonAudioPlayerComponent
+    ],
     imports: [
       UICommonModule,
       TestTranslocoModule,
@@ -137,7 +144,7 @@ class TestEnvironment {
   }
 
   async getAudioDuration(): Promise<number> {
-    const audio = new AudioPlayer(this.component.audioUrl, this.testOnlineStatusService);
+    const audio = new AudioPlayer(this.component.audio.url!, this.testOnlineStatusService);
     await this.waitForRecorder(100);
     return audio.duration;
   }
@@ -147,11 +154,11 @@ class TestEnvironment {
   }
 
   get stopRecordingButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.stop-recording'));
+    return this.fixture.debugElement.query(By.css('.stop'));
   }
 
   get tryAgainButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.try-again'));
+    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
 
   clickButton(button: DebugElement): void {
