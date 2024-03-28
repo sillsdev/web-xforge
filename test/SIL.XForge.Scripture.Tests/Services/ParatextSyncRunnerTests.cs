@@ -101,13 +101,6 @@ public class ParatextSyncRunnerTests
         Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
         Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-        await env.MachineProjectService.DidNotReceive()
-            .BuildProjectAsync(
-                Arg.Any<string>(),
-                Arg.Any<BuildConfig>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -144,13 +137,6 @@ public class ParatextSyncRunnerTests
         Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
         Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-        await env.MachineProjectService.Received()
-            .BuildProjectAsync(
-                "user01",
-                Arg.Is<BuildConfig>(b => b.ProjectId == "project01"),
-                preTranslate: false,
-                CancellationToken.None
-            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -187,13 +173,6 @@ public class ParatextSyncRunnerTests
         Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
         Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-        await env.MachineProjectService.Received()
-            .BuildProjectAsync(
-                "user01",
-                Arg.Is<BuildConfig>(b => b.ProjectId == "project01"),
-                preTranslate: false,
-                CancellationToken.None
-            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -229,13 +208,6 @@ public class ParatextSyncRunnerTests
         Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
         Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-        await env.MachineProjectService.DidNotReceive()
-            .BuildProjectAsync(
-                Arg.Any<string>(),
-                Arg.Any<BuildConfig>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -262,13 +234,6 @@ public class ParatextSyncRunnerTests
         Assert.That(env.ContainsText("project02", "MAT", 1), Is.False);
         Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
-        await env.MachineProjectService.DidNotReceive()
-            .BuildProjectAsync(
-                Arg.Any<string>(),
-                Arg.Any<BuildConfig>(),
-                Arg.Any<bool>(),
-                Arg.Any<CancellationToken>()
-            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -3245,7 +3210,6 @@ public class ParatextSyncRunnerTests
             );
             UserService = Substitute.For<IUserService>();
             SFProjectService = Substitute.For<ISFProjectService>();
-            MachineProjectService = Substitute.For<IMachineProjectService>();
             ParatextService = Substitute.For<IParatextService>();
 
             var ptUserRoles = new Dictionary<string, string>
@@ -3312,7 +3276,6 @@ public class ParatextSyncRunnerTests
                 _projectSecrets,
                 _syncMetrics,
                 SFProjectService,
-                MachineProjectService,
                 ParatextService,
                 substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
                 DeltaUsxMapper,
@@ -3326,7 +3289,6 @@ public class ParatextSyncRunnerTests
         public ParatextSyncRunner Runner { get; }
         public IUserService UserService { get; }
         public ISFProjectService SFProjectService { get; }
-        public IMachineProjectService MachineProjectService { get; }
         public IParatextNotesMapper NotesMapper { get; }
         public IParatextService ParatextService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }

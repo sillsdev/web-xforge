@@ -1225,6 +1225,40 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotUpdateAlternateTrainingSourceOnSmtBuilds()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateTrainingSourceConfigured = true,
+                AlternateTrainingSourceEnabled = true,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: false,
+            alternateTrainingSource: true
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_FailsLocallyOnRemoteFailure()
     {
         // Set up test environment
@@ -1416,6 +1450,103 @@ public class MachineProjectServiceTests
         );
         Assert.IsTrue(actual);
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
+
+        // The 404 exception was logged
+        env.MockLogger.AssertHasEvent(
+            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+        );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_DoesNotCrashWhenDeletingMissingAlternateTrainingSourceCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateTrainingSourceEnabled = false,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: false,
+            alternateTrainingSource: true
+        );
+        ServalApiException ex = ServalApiExceptions.NotFound;
+        env.TranslationEnginesClient.DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None)
+            .Throws(ex);
+
+        // Check that we have more than one pre-translate corpora
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+
+        // The old corpus and its files should be deleted
+        await env.TranslationEnginesClient.Received()
+            .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
+        await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
+
+        // Ensure we have just one pre-translate corpora
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+
+        // The 404 exception was logged
+        env.MockLogger.AssertHasEvent(
+            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+        );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_DoesNotCrashWhenDeletingMissingAlternateTrainingSourceFiles()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateTrainingSourceEnabled = false,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            requiresUpdate: false,
+            uploadParatextZipFile: false,
+            alternateTrainingSource: true
+        );
+        ServalApiException ex = ServalApiExceptions.NotFound;
+        env.DataFilesClient.DeleteAsync(File01, CancellationToken.None).Throws(ex);
+
+        // Check that we have more than one pre-translate corpora
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsFalse(actual);
+
+        // The old corpus and its files should be deleted
+        await env.TranslationEnginesClient.Received()
+            .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
+        await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
+
+        // Ensure we have just one pre-translate corpora
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
 
         // The 404 exception was logged
         env.MockLogger.AssertHasEvent(
