@@ -1304,16 +1304,17 @@ public class MachineProjectServiceTests
                     p => p.ServalData.Corpora[Corpus01],
                     new ServalCorpus
                     {
-                        SourceFiles = new List<ServalCorpusFile>
-                        {
+                        SourceFiles =
+                        [
                             new ServalCorpusFile
                             {
                                 FileChecksum = "a_previous_checksum",
                                 FileId = "File03",
+                                ProjectId = Project03,
                                 TextId = "textId",
                             },
-                        },
-                        TargetFiles = new List<ServalCorpusFile>(),
+                        ],
+                        TargetFiles = [],
                     }
                 )
         );
@@ -1355,6 +1356,7 @@ public class MachineProjectServiceTests
                         {
                             FileChecksum = "a_previous_checksum",
                             FileId = "File03",
+                            ProjectId = Project03,
                             TextId = "textId1",
                         }
                     )
@@ -1364,6 +1366,7 @@ public class MachineProjectServiceTests
                         {
                             FileChecksum = "another_previous_checksum",
                             FileId = "File04",
+                            ProjectId = Project01,
                             TextId = "textId2",
                         }
                     )
@@ -1402,6 +1405,7 @@ public class MachineProjectServiceTests
                     {
                         FileChecksum = "a_previous_checksum",
                         FileId = "File03",
+                        ProjectId = Project03,
                         TextId = "textId1",
                     }
                 )
@@ -2051,14 +2055,14 @@ public class MachineProjectServiceTests
                                     {
                                         PreTranslate = false,
                                         AlternateTrainingSource = false,
-                                        SourceFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File01 },
-                                        },
-                                        TargetFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File02 },
-                                        },
+                                        SourceFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File01, ProjectId = Project03 },
+                                        ],
+                                        TargetFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File02, ProjectId = Project01 },
+                                        ],
                                     }
                                 },
                                 {
@@ -2067,14 +2071,14 @@ public class MachineProjectServiceTests
                                     {
                                         PreTranslate = true,
                                         AlternateTrainingSource = false,
-                                        SourceFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File01 },
-                                        },
-                                        TargetFiles = new List<ServalCorpusFile>
-                                        {
-                                            new ServalCorpusFile { FileId = File02 },
-                                        },
+                                        SourceFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File01, ProjectId = Project03 },
+                                        ],
+                                        TargetFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File02, ProjectId = Project01 },
+                                        ],
                                     }
                                 },
                             },
@@ -2229,19 +2233,20 @@ public class MachineProjectServiceTests
                         p => p.ServalData.Corpora[Corpus01],
                         new ServalCorpus
                         {
-                            SourceFiles = new List<ServalCorpusFile>
-                            {
+                            SourceFiles =
+                            [
                                 new ServalCorpusFile
                                 {
                                     FileChecksum = requiresUpdate
                                         ? "old_checksum"
                                         : MockTextCorpusWithEmptySegmentChecksum,
                                     FileId = File01,
+                                    ProjectId = Project03,
                                     TextId = "textId",
                                 },
-                            },
-                            TargetFiles = new List<ServalCorpusFile>
-                            {
+                            ],
+                            TargetFiles =
+                            [
                                 new ServalCorpusFile
                                 {
                                     FileChecksum = requiresUpdate switch
@@ -2251,9 +2256,10 @@ public class MachineProjectServiceTests
                                         false => MockTextCorpusWithoutEmptySegmentChecksum,
                                     },
                                     FileId = File02,
+                                    ProjectId = projectId,
                                     TextId = "textId",
                                 },
-                            },
+                            ],
                             AlternateTrainingSource = false,
                             PreTranslate = preTranslate,
                             UploadParatextZipFile = uploadParatextZipFile,
@@ -2265,19 +2271,20 @@ public class MachineProjectServiceTests
                             p => p.ServalData.Corpora[Corpus02],
                             new ServalCorpus
                             {
-                                SourceFiles = new List<ServalCorpusFile>
-                                {
+                                SourceFiles =
+                                [
                                     new ServalCorpusFile
                                     {
                                         FileChecksum = requiresUpdate
                                             ? "old_checksum"
                                             : MockTextCorpusWithEmptySegmentChecksum,
                                         FileId = File01,
+                                        ProjectId = Project01,
                                         TextId = "textId",
                                     },
-                                },
-                                TargetFiles = new List<ServalCorpusFile>
-                                {
+                                ],
+                                TargetFiles =
+                                [
                                     new ServalCorpusFile
                                     {
                                         FileChecksum = requiresUpdate switch
@@ -2287,9 +2294,10 @@ public class MachineProjectServiceTests
                                             false => MockTextCorpusWithoutEmptySegmentChecksum,
                                         },
                                         FileId = File02,
+                                        ProjectId = projectId,
                                         TextId = "textId",
                                     },
-                                },
+                                ],
                                 AlternateTrainingSource = true,
                                 PreTranslate = preTranslate,
                                 UploadParatextZipFile = uploadParatextZipFile,
@@ -2399,8 +2407,8 @@ public class MachineProjectServiceTests
                             {
                                 PreTranslate = true,
                                 AdditionalTrainingData = true,
-                                SourceFiles = new List<ServalCorpusFile> { new ServalCorpusFile { FileId = File01 }, },
-                                TargetFiles = new List<ServalCorpusFile> { new ServalCorpusFile { FileId = File02 }, },
+                                SourceFiles = [new ServalCorpusFile { FileId = File01 }],
+                                TargetFiles = [new ServalCorpusFile { FileId = File02 }],
                             }
                         );
                     }
