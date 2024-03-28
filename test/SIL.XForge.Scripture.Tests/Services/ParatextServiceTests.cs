@@ -495,12 +495,10 @@ public class ParatextServiceTests
 
         TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
         XDocument oldDocUsx = XDocument.Parse(ruthBookUsx);
-        DeltaUsxMapper mapper = new DeltaUsxMapper(
-            new TestGuidService(),
-            Substitute.For<ILogger<DeltaUsxMapper>>(),
-            Substitute.For<IExceptionHandler>()
+        var newDocUsx = env.DeltaUsxMapper.ToUsx(
+            oldDocUsx,
+            new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) }
         );
-        var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
         int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx);
         env.ProjectFileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
         Assert.That(booksUpdated, Is.EqualTo(1));
@@ -4958,6 +4956,63 @@ public class ParatextServiceTests
         );
     }
 
+    [Test]
+    public void GetDeltaFromUsfmAsync_MissingProject()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        env.AddProjectRepository(project);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetDeltaFromUsfmAsync(env.User01, "invalid_project_id", env.RuthBookUsfm, 8)
+        );
+    }
+
+    [Test]
+    public void GetDeltaFromUsfmAsync_MissingUserSecret()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        env.AddProjectRepository(project);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetDeltaFromUsfmAsync("invalid_user_id", project.Id, env.RuthBookUsfm, 8)
+        );
+    }
+
+    [Test]
+    public async Task GetDeltaFromUsfmAsync_Success()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        env.AddProjectRepository(project);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Create the expected delta
+        JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
+        JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
+        JToken token3 = JToken.Parse(
+            "{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }"
+        );
+        JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
+        JToken token5 = JToken.Parse(
+            "{\"insert\": \"Verse 2 here.\"," + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
+        );
+        JToken token6 = JToken.Parse("{\"insert\": \"\n\" }");
+        Delta expected = new Delta([token1, token2, token3, token4, token5, token6]);
+
+        // SUT
+        var delta = await env.Service.GetDeltaFromUsfmAsync(env.User01, project.Id, env.RuthBookUsfm, 8);
+        Assert.IsTrue(delta.DeepEquals(expected));
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
@@ -4989,7 +5044,7 @@ public class ParatextServiceTests
         public readonly string ReattachedSelectedText = "reattached text";
         public readonly int TagCount = 10;
 
-        private readonly string ruthBookUsfm =
+        public readonly string RuthBookUsfm =
             "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
 
         public readonly HttpResponseMessage UnauthorizedHttpResponseMessage =
@@ -5024,6 +5079,7 @@ public class ParatextServiceTests
         public readonly IGuidService MockGuidService;
         public readonly ParatextService Service;
         public readonly HttpClient MockRegistryHttpClient;
+        public readonly IDeltaUsxMapper DeltaUsxMapper;
         public readonly Dictionary<string, string> usernames;
         private bool disposed;
 
@@ -5044,7 +5100,11 @@ public class ParatextServiceTests
             MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
             MockGuidService = Substitute.For<IGuidService>();
             MockRegistryHttpClient = Substitute.For<HttpClient>();
-            var mockDeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            DeltaUsxMapper = new DeltaUsxMapper(
+                new TestGuidService(),
+                Substitute.For<ILogger<DeltaUsxMapper>>(),
+                Substitute.For<IExceptionHandler>()
+            );
 
             DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
             string accessToken1 = TokenHelper.CreateAccessToken(
@@ -5114,7 +5174,7 @@ public class ParatextServiceTests
                 MockGuidService,
                 MockRestClientFactory,
                 MockHgWrapper,
-                mockDeltaUsxMapper
+                DeltaUsxMapper
             )
             {
                 ScrTextCollection = MockScrTextCollection,
@@ -5780,7 +5840,7 @@ public class ParatextServiceTests
             ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
             var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId) };
             scrText.Permissions.CreateFirstAdminUser();
-            scrText.Data.Add("RUT", ruthBookUsfm);
+            scrText.Data.Add("RUT", RuthBookUsfm);
             scrText.Settings.BooksPresentSet = new BookSet("RUT");
             scrText.Settings.LanguageID = LanguageId.English;
             if (!hasEditPermission)

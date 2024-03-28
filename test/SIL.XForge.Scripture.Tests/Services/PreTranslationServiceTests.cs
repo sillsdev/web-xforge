@@ -38,8 +38,7 @@ public class PreTranslationServiceTests
         )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
-                    new List<Pretranslation>
-                    {
+                    [
                         new Pretranslation
                         {
                             TextId = "64_1",
@@ -64,7 +63,7 @@ public class PreTranslationServiceTests
                             Refs = { "64_1:verse_001_001_002" },
                             Translation = "whom I love in the truth:",
                         },
-                    }
+                    ]
                 )
             );
 
@@ -100,8 +99,7 @@ public class PreTranslationServiceTests
         )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
-                    new List<Pretranslation>
-                    {
+                    [
                         new Pretranslation
                         {
                             TextId = "64_1",
@@ -126,7 +124,7 @@ public class PreTranslationServiceTests
                             Refs = { "64_1:verse_001_001_002" },
                             Translation = "whom I love in the truth:",
                         },
-                    }
+                    ]
                 )
             );
 
@@ -187,7 +185,7 @@ public class PreTranslationServiceTests
             textId,
             CancellationToken.None
         )
-            .Returns(Task.FromResult<IList<Pretranslation>>(new List<Pretranslation>()));
+            .Returns(Task.FromResult<IList<Pretranslation>>([]));
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
@@ -216,7 +214,7 @@ public class PreTranslationServiceTests
             textId,
             CancellationToken.None
         )
-            .Returns(Task.FromResult<IList<Pretranslation>>(new List<Pretranslation>()));
+            .Returns(Task.FromResult<IList<Pretranslation>>([]));
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
@@ -247,8 +245,7 @@ public class PreTranslationServiceTests
         )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
-                    new List<Pretranslation>
-                    {
+                    [
                         new Pretranslation { TextId = "40_1", Translation = "Matthew" },
                         new Pretranslation
                         {
@@ -277,7 +274,7 @@ public class PreTranslationServiceTests
                             Refs = { "invalid_ref" },
                             Translation = "This will not be returned as it has an invalid ref",
                         },
-                    }
+                    ]
                 )
             );
 
@@ -318,8 +315,7 @@ public class PreTranslationServiceTests
         )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
-                    new List<Pretranslation>
-                    {
+                    [
                         new Pretranslation { TextId = "40_1", Translation = "Matthew" },
                         new Pretranslation
                         {
@@ -359,7 +355,7 @@ public class PreTranslationServiceTests
                             Refs = { "40_1:verse_001:001" },
                             Translation = "This ref has too many colons, so will not be returned",
                         },
-                    }
+                    ]
                 )
             );
 
@@ -384,6 +380,74 @@ public class PreTranslationServiceTests
         );
     }
 
+    [Test]
+    public void GetPreTranslationUsfmAsync_ThrowsExceptionWhenProjectSecretMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationUsfmAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetPreTranslationUsfmAsync_ThrowsExceptionWhenNoPreTranslationConfigured()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationUsfmAsync(User01, Project02, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_ReturnsEntireBook()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 0, CancellationToken.None);
+        Assert.AreEqual(TestEnvironment.MatthewBookUsfm, usfm);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_ReturnsChapterOneWithIntroductoryMaterial()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None);
+        Assert.AreEqual(TestEnvironment.MatthewChapterOneUsfm, usfm);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_ReturnsSpecificChapter()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 2, CancellationToken.None);
+        Assert.AreEqual(TestEnvironment.MatthewChapterTwoUsfm, usfm);
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_ReturnsEmptyStringForMissingChapter()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 3, CancellationToken.None);
+        Assert.IsEmpty(usfm);
+    }
+
     private class TestEnvironmentOptions
     {
         public bool SendAllSegments { get; init; }
@@ -392,12 +456,16 @@ public class PreTranslationServiceTests
 
     private class TestEnvironment
     {
+        public const string MatthewChapterOneUsfm =
+            "\\id MAT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1:1 here.\n" + "\\v 2 Verse 1:2 here.\n";
+        public const string MatthewChapterTwoUsfm = "\\c 2\n" + "\\v 1 Verse 2:1 here.\n";
+        public const string MatthewBookUsfm = MatthewChapterOneUsfm + MatthewChapterTwoUsfm;
+
         public TestEnvironment(TestEnvironmentOptions? options = null)
         {
             options ??= new TestEnvironmentOptions();
             var projectSecrets = new MemoryRepository<SFProjectSecret>(
-                new[]
-                {
+                [
                     new SFProjectSecret
                     {
                         Id = Project01,
@@ -422,23 +490,25 @@ public class PreTranslationServiceTests
                         },
                     },
                     new SFProjectSecret { Id = Project02 },
-                }
+                ]
             );
-
             var realtimeService = new SFMemoryRealtimeService();
             SFProject[] sfProjects =
-            {
+            [
                 new SFProject
                 {
                     Id = Project01,
                     TranslateConfig = new TranslateConfig
                     {
-                        DraftConfig = { SendAllSegments = options.SendAllSegments }
+                        DraftConfig = { SendAllSegments = options.SendAllSegments },
                     },
                 },
-            };
+            ];
             realtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
+            TranslationEnginesClient
+                .GetPretranslatedUsfmAsync(Arg.Any<string>(), Arg.Any<string>(), "MAT", CancellationToken.None)
+                .Returns(MatthewBookUsfm);
             Service = new PreTranslationService(projectSecrets, realtimeService, TranslationEnginesClient);
         }
 

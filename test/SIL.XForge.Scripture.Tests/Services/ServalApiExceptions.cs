@@ -37,6 +37,15 @@ public static class ServalApiExceptions
             null
         );
 
+    public static ServalApiException InvalidCorpus =>
+        new ServalApiException(
+            "The corpus is not a valid Scripture corpus.",
+            StatusCodes.Status400BadRequest,
+            null,
+            new Dictionary<string, IEnumerable<string>>(),
+            null
+        );
+
     public static ServalApiException InternalServerError =>
         new ServalApiException(
             "The HTTP status code of the response was not expected (500).",

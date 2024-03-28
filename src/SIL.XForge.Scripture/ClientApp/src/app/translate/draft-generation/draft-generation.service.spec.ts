@@ -1,7 +1,8 @@
-import { HttpStatusCode } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { Canon } from '@sillsdev/scripture';
+import { of, throwError } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -200,6 +201,105 @@ describe('DraftGenerationService', () => {
           `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
         );
         done();
+      });
+    });
+  });
+
+  describe('getGeneratedDraftDeltaOperations', () => {
+    it('should get the pretranslation ops for the specified book/chapter and return an observable', done => {
+      const book = 43;
+      const chapter = 3;
+      const ops = [
+        {
+          insert: {
+            chapter: {
+              number: '1',
+              style: 'c'
+            }
+          }
+        },
+        {
+          insert: {
+            verse: {
+              number: '1',
+              style: 'v'
+            }
+          }
+        },
+        {
+          insert: 'Verse 1 Contents',
+          attributes: {
+            segment: 'verse_1_1'
+          }
+        }
+      ];
+      const preTranslationDeltaData = {
+        data: {
+          id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
+          version: 0,
+          data: {
+            ops
+          }
+        }
+      };
+
+      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationDeltaData));
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual(ops);
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+        );
+        done();
+      });
+    });
+
+    it('should return an empty array for missing data', done => {
+      const book = 43;
+      const chapter = 3;
+      const preTranslationDeltaData = {
+        data: undefined
+      };
+
+      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationDeltaData));
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual([]);
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+        );
+        done();
+      });
+    });
+
+    it('should return an empty array for a 404 error', done => {
+      const book = 43;
+      const chapter = 3;
+      httpClient.get = jasmine
+        .createSpy()
+        .and.returnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })));
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual([]);
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+        );
+        done();
+      });
+    });
+
+    it('should throw a 405 error', done => {
+      const book = 43;
+      const chapter = 3;
+      httpClient.get = jasmine
+        .createSpy()
+        .and.returnValue(throwError(() => new HttpErrorResponse({ status: 405, statusText: 'Not Allowed' })));
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe({
+        error: (err: HttpErrorResponse) => {
+          expect(err.status).toEqual(405);
+          expect(err.statusText).toEqual('Not Allowed');
+          expect(httpClient.get).toHaveBeenCalledWith(
+            `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+          );
+          done();
+        }
       });
     });
   });

@@ -5,6 +5,5 @@ namespace SIL.XForge.Scripture.Models;
 /// </summary>
 public static class FeatureFlags
 {
-    public const string UploadParatextZipForPreTranslation = "UploadParatextZipForPreTranslation";
     public const string UseEchoForPreTranslation = "UseEchoForPreTranslation";
 }
