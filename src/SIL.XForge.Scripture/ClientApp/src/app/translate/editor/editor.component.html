@@ -94,6 +94,7 @@
                     (updated)="onSourceUpdated($event.delta != null)"
                     [isRightToLeft]="isSourceRightToLeft"
                     [fontSize]="sourceFontSize"
+                    [style.--project-font]="fontService.getFontFamilyFromProject(sourceProjectDoc)"
                   ></app-text>
                 </div>
               </as-split-area>
@@ -183,6 +184,7 @@
                     [fontSize]="fontSize"
                     [selectableVerses]="showAddCommentUI"
                     [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
+                    [style.--project-font]="fontService.getFontFamilyFromProject(projectDoc)"
                   ></app-text>
                   <app-suggestions
                     class="mat-elevation-z2"

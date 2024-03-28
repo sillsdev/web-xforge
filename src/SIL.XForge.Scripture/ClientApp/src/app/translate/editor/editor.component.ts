@@ -70,6 +70,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { FontService } from 'xforge-common/font.service';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -185,7 +186,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private insertSuggestionEnd: number = -1;
   private bottomSheetRef?: MatBottomSheetRef;
   private currentUserDoc?: UserDoc;
-  private projectDoc?: SFProjectProfileDoc;
+  projectDoc?: SFProjectProfileDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
@@ -193,7 +194,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLabel?: string;
   private text?: TextInfo;
   private sourceText?: TextInfo;
-  private sourceProjectDoc?: SFProjectProfileDoc;
+  sourceProjectDoc?: SFProjectProfileDoc;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
@@ -227,6 +228,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly onlineStatusService: OnlineStatusService,
     private readonly translationEngineService: TranslationEngineService,
     readonly i18n: I18nService,
+    readonly fontService: FontService,
     readonly featureFlags: FeatureFlagService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProject: ActivatedProjectService,
