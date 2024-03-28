@@ -103,6 +103,7 @@ import { SuggestionsComponent } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
+import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -146,7 +147,8 @@ describe('EditorComponent', () => {
       EditorComponent,
       HistoryChooserComponent,
       SuggestionsComponent,
-      TrainingProgressComponent
+      TrainingProgressComponent,
+      EditorDraftComponent
     ],
     imports: [
       AngularSplitModule,
@@ -3761,6 +3763,43 @@ describe('EditorComponent', () => {
       env.component.initEditorTabs();
       tick(100);
       expect(spyCreateTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
+    }));
+
+    it('should add auto draft tab when available', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_1_2: 'Abraham was the father of Isaac'
+        })
+      );
+      env.wait();
+
+      const tabGroup = env.component.tabState.getTabGroup('target');
+      expect(tabGroup?.tabs[1].type).toEqual('draft');
+
+      env.dispose();
+    }));
+
+    it('should hide auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_1_2: 'Abraham was the father of Isaac'
+        })
+      );
+      env.wait();
+
+      const tabGroup = env.component.tabState.getTabGroup('target');
+      expect(tabGroup?.tabs[1].type).toEqual('draft');
+      expect(env.component.chapter).toBe(1);
+
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+      env.wait();
+
+      expect(tabGroup?.tabs[1]).toBeUndefined();
+      expect(env.component.chapter).toBe(2);
+
+      env.dispose();
     }));
   });
 });

@@ -27,7 +27,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             type: 'draft',
             icon: 'auto_awesome',
             headerText: 'Auto Draft',
-            closeable: true,
+            closeable: false,
             movable: true,
             unique: true
           },
