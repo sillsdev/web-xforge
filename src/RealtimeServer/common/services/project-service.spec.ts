@@ -13,6 +13,14 @@ import { ProjectService } from './project-service';
 const PROJECTS_COLLECTION = 'projects';
 
 describe('ProjectService', () => {
+  it('allows serval admin to view any project', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'servalAdmin', SystemRole.ServalAdmin);
+    await expect(fetchDoc(conn, PROJECTS_COLLECTION, 'project01')).resolves.not.toThrow();
+  });
+
   it('allows system admin to view any project', async () => {
     const env = new TestEnvironment();
     await env.createData();

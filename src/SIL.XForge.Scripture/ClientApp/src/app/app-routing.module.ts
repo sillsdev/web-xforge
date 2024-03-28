@@ -4,13 +4,16 @@ import { AuthGuard } from 'xforge-common/auth.guard';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
+import { JoinComponent } from './join/join.component';
 import { ProjectComponent } from './project/project.component';
+import { ServalAdminAuthGuard } from './serval-administration/serval-admin-auth.guard';
+import { ServalAdministrationComponent } from './serval-administration/serval-administration.component';
+import { ServalProjectComponent } from './serval-administration/serval-project.component';
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
-import { JoinComponent } from './join/join.component';
 
 const routes: Routes = [
   { path: 'callback/auth0', component: StartComponent, canActivate: [AuthGuard] },
@@ -22,6 +25,8 @@ const routes: Routes = [
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: StartComponent, canActivate: [AuthGuard] },
+  { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },
+  { path: 'serval-administration', component: ServalAdministrationComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
   { path: '**', component: PageNotFoundComponent }
 ];

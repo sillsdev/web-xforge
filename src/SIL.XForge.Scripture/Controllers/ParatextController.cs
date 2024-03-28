@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,22 +26,67 @@ namespace SIL.XForge.Scripture.Controllers;
 public class ParatextController : ControllerBase
 {
     private readonly IExceptionHandler _exceptionHandler;
-    private readonly IRepository<UserSecret> _userSecrets;
+    private readonly IMachineProjectService _machineProjectService;
     private readonly IParatextService _paratextService;
     private readonly IUserAccessor _userAccessor;
+    private readonly IRepository<UserSecret> _userSecrets;
 
     public ParatextController(
-        IRepository<UserSecret> userSecrets,
+        IExceptionHandler exceptionHandler,
+        IMachineProjectService machineProjectService,
         IParatextService paratextService,
         IUserAccessor userAccessor,
-        IExceptionHandler exceptionHandler
+        IRepository<UserSecret> userSecrets
     )
     {
         _userSecrets = userSecrets;
+        _machineProjectService = machineProjectService;
         _paratextService = paratextService;
         _userAccessor = userAccessor;
         _exceptionHandler = exceptionHandler;
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
+    }
+
+    /// <summary>
+    /// Download a project as a Paratext zip file.
+    /// </summary>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The zip data for the project, if present in Scripture Forge.</returns>
+    /// <response code="200">The zip file was successfully downloaded.</response>
+    /// <response code="403">The user is not a system administrator or serval administrator.</response>
+    /// <response code="404">The project does not exist, is a resource, or could not be found on disk.</response>
+    [HttpGet("projects/{projectId}/download")]
+    [ProducesResponseType(typeof(FileStreamResult), 200)]
+    public async Task<ActionResult> DownloadProjectAsync(string projectId, CancellationToken cancellationToken)
+    {
+        // Only a system administrator or serval administrator can download a project
+        if (
+            !(
+                _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin)
+                || _userAccessor.SystemRoles.Contains(SystemRole.SystemAdmin)
+            )
+        )
+        {
+            return Forbid();
+        }
+
+        string fileName;
+        MemoryStream outputStream = new MemoryStream();
+        try
+        {
+            fileName = await _machineProjectService.GetProjectZipAsync(projectId, outputStream, cancellationToken);
+        }
+        catch (DataNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+
+        // Reset the stream to the start
+        outputStream.Seek(0, SeekOrigin.Begin);
+
+        // Return the zip file stream
+        return File(outputStream, "application/zip", fileName);
     }
 
     /// <summary>

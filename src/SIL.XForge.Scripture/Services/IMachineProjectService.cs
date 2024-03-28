@@ -1,3 +1,4 @@
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Serval.Client;
@@ -25,6 +26,7 @@ public interface IMachineProjectService
         bool preTranslate,
         CancellationToken cancellationToken
     );
+    Task<string> GetProjectZipAsync(string sfProjectId, Stream outputStream, CancellationToken cancellationToken);
     Task<string> GetTranslationEngineTypeAsync(bool preTranslate);
     Task RemoveProjectAsync(
         string curUserId,

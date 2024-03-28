@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -23,6 +25,73 @@ public class ParatextControllerTests
     private const string User01 = "user01";
 
     private static readonly DateTime Timestamp = DateTime.UtcNow;
+
+    [Test]
+    public async Task DownloadProjectAsync_Forbidden()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.UserAccessor.SystemRoles.Returns([SystemRole.User]);
+
+        // SUT
+        ActionResult actual = await env.Controller.DownloadProjectAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<ForbidResult>(actual);
+    }
+
+    [Test]
+    public async Task DownloadProjectAsync_NotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string message = "Not Found";
+        env.MachineProjectService.GetProjectZipAsync(Project01, Arg.Any<Stream>(), CancellationToken.None)
+            .Throws(new DataNotFoundException(message));
+
+        // SUT
+        ActionResult actual = await env.Controller.DownloadProjectAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<NotFoundObjectResult>(actual);
+        Assert.AreEqual(message, (actual as NotFoundObjectResult)?.Value);
+    }
+
+    [Test]
+    public async Task DownloadProjectAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        ActionResult actual = await env.Controller.DownloadProjectAsync(Project01, CancellationToken.None);
+
+        // Check the file metadata
+        Assert.IsInstanceOf<FileStreamResult>(actual);
+        var fileStreamResult = (FileStreamResult)actual;
+        Assert.AreEqual("application/zip", fileStreamResult.ContentType);
+        Assert.AreEqual("P01.zip", fileStreamResult.FileDownloadName);
+
+        // Check the file stream
+        Stream stream = fileStreamResult.FileStream;
+        stream.Seek(0, SeekOrigin.Begin);
+        byte[] bytes = new byte[4];
+        Memory<byte> buffer = new Memory<byte>(bytes);
+        int length = await stream.ReadAsync(buffer, CancellationToken.None);
+        Assert.AreEqual(4, length);
+        Assert.AreEqual(env.ZipHeader, bytes);
+    }
+
+    [Test]
+    public async Task DownloadProjectAsync_SystemAdmin()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.UserAccessor.SystemRoles.Returns([SystemRole.SystemAdmin]);
+
+        // SUT
+        ActionResult actual = await env.Controller.DownloadProjectAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<FileStreamResult>(actual);
+    }
 
     [Test]
     public async Task GetRevisionHistoryAsync_Forbidden()
@@ -181,16 +250,31 @@ public class ParatextControllerTests
             Version = 1,
         };
 
+        public readonly byte[] ZipHeader = [80, 75, 05, 06];
+
         public TestEnvironment()
         {
             IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
 
             UserAccessor = Substitute.For<IUserAccessor>();
             UserAccessor.UserId.Returns(User01);
+            UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
 
             MemoryRepository<UserSecret> userSecrets = new MemoryRepository<UserSecret>(
                 new[] { new UserSecret { Id = User01 } }
             );
+
+            MachineProjectService = Substitute.For<IMachineProjectService>();
+            MachineProjectService
+                .GetProjectZipAsync(Project01, Arg.Any<Stream>(), CancellationToken.None)
+                .Returns(async args =>
+                {
+                    // Write the zip header, and return the file name
+                    Stream stream = args.ArgAt<Stream>(1);
+                    var buffer = new ReadOnlyMemory<byte>(ZipHeader);
+                    await stream.WriteAsync(buffer, CancellationToken.None);
+                    return "P01.zip";
+                });
 
             ParatextService = Substitute.For<IParatextService>();
             ParatextService
@@ -200,10 +284,17 @@ public class ParatextControllerTests
                 .GetSnapshotAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter, Timestamp)
                 .Returns(Task.FromResult(TestSnapshot));
 
-            Controller = new ParatextController(userSecrets, ParatextService, UserAccessor, exceptionHandler);
+            Controller = new ParatextController(
+                exceptionHandler,
+                MachineProjectService,
+                ParatextService,
+                UserAccessor,
+                userSecrets
+            );
         }
 
         public ParatextController Controller { get; }
+        public IMachineProjectService MachineProjectService { get; }
         public IParatextService ParatextService { get; }
         public IUserAccessor UserAccessor { get; }
 
