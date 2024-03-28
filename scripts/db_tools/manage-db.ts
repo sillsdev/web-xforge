@@ -98,7 +98,7 @@ class Program {
       const db: Db = client.db();
       await activity(conn, db);
     } finally {
-      client.close();
+      await client.close();
       (conn as any).close();
     }
   }
