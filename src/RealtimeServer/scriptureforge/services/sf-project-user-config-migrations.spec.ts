@@ -67,7 +67,23 @@ describe('SFProjectUserConfigMigrations', () => {
       await env.server.migrateIfNecessary();
 
       userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.audioRefsPlayed).toEqual([]);
+      //property under test is removed in the version 5 migration
+      expect(userConfigDoc.data.audioRefsPlayed).not.toBeDefined();
+    });
+  });
+
+  describe('version 5', () => {
+    it('deletes audioRefsPlayed property', async () => {
+      const env = new TestEnvironment(4);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', { audioRefsPlayed: [] });
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.audioRefsPlayed).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.audioRefsPlayed).not.toBeDefined();
     });
   });
 });

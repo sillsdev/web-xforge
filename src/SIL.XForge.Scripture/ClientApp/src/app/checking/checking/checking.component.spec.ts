@@ -32,11 +32,10 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
@@ -62,6 +61,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
@@ -72,7 +72,6 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
-import { verseSlug } from '../../shared/utils';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { QuestionScope } from '../checking.utils';
@@ -2248,70 +2247,6 @@ describe('CheckingComponent', () => {
 
       verify(chapterAudio.pause()).once();
       expect(env.component.showScriptureAudioPlayer).toBe(true);
-    }));
-
-    it('updates user played refs while audio is playing ', fakeAsync(() => {
-      const env = new TestEnvironment({
-        user: ADMIN_USER,
-        projectBookRoute: 'JHN',
-        projectChapterRoute: 1,
-        questionScope: 'all',
-        scriptureAudio: true
-      });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
-      when(chapterAudio.isPlaying).thenReturn(false);
-      env.component.scriptureAudioPlayer = instance(chapterAudio);
-
-      const updateAudioRefsPlayed = spyOn(
-        env.component.projectUserConfigDoc!,
-        'updateAudioRefsPlayed'
-      ).and.callThrough();
-
-      const verseRef: VerseRef = toVerseRef({
-        bookNum: 43,
-        chapterNum: 1,
-        verseNum: 1
-      });
-      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
-      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(0);
-      flush();
-      discardPeriodicTasks();
-    }));
-
-    it('should not update user played refs while audio is not playing ', fakeAsync(() => {
-      const env = new TestEnvironment({
-        user: ADMIN_USER,
-        projectBookRoute: 'JHN',
-        projectChapterRoute: 1,
-        questionScope: 'all',
-        scriptureAudio: true
-      });
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
-      when(chapterAudio.isPlaying).thenReturn(true);
-      env.component.scriptureAudioPlayer = instance(chapterAudio);
-
-      const updateAudioRefsPlayed = spyOn(
-        env.component.projectUserConfigDoc!,
-        'updateAudioRefsPlayed'
-      ).and.callThrough();
-
-      const verseRef: VerseRef = toVerseRef({
-        bookNum: 43,
-        chapterNum: 1,
-        verseNum: 1
-      });
-      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
-      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(1);
-      // Should equal JHN 1:1
-      expect(updateAudioRefsPlayed.calls.mostRecent().args[0]!.toString()).toBe(verseRef.toString());
-      flush();
-      discardPeriodicTasks();
     }));
   });
 });

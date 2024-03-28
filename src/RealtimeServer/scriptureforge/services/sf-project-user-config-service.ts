@@ -84,12 +84,6 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
         items: {
           bsonType: 'string'
         }
-      },
-      audioRefsPlayed: {
-        bsonType: 'array',
-        items: {
-          bsonType: 'string'
-        }
       }
     },
     additionalProperties: false

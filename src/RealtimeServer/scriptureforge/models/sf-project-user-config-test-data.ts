@@ -17,8 +17,7 @@ export function createTestProjectUserConfig(overrides?: RecursivePartial<SFProje
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: [],
-    noteRefsRead: [],
-    audioRefsPlayed: []
+    noteRefsRead: []
   };
 
   return merge(defaultSFProjectUserConfig, overrides);

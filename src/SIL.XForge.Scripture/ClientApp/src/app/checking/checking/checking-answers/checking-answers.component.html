@@ -4,7 +4,6 @@
       <app-checking-question
         *ngIf="featureFlags.scriptureAudio.enabled"
         [questionDoc]="questionDoc"
-        [projectUserConfigDoc]="projectUserConfigDoc"
         (audioPlayed)="playAudio()"
       >
       </app-checking-question>
