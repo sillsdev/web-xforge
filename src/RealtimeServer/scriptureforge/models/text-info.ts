@@ -4,6 +4,7 @@ export interface Chapter {
   isValid: boolean;
   permissions: { [userRef: string]: string };
   hasAudio?: boolean;
+  hasDraft?: boolean;
 }
 
 /** Documents in the texts collection in the database represent the metadata
