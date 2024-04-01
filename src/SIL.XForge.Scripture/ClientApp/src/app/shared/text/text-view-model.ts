@@ -1,9 +1,11 @@
+import { DestroyRef, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
-import { Subscription } from 'rxjs';
-
+import { merge, Subscription } from 'rxjs';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { TextDocService } from '../../core/text-doc.service';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -117,11 +119,12 @@ class SegmentInfo {
  * consistent and correct.
  * See text.component.spec.ts for some unit tests.
  */
+@Injectable()
 export class TextViewModel {
   editor?: Quill;
 
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
-  private remoteChangesSub?: Subscription;
+  private changesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
   private textDocId?: TextDocId;
@@ -130,6 +133,8 @@ export class TextViewModel {
    * These elements are in addition to the text data i.e. Note threads
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
+
+  constructor(private readonly destroyRef: DestroyRef, private readonly textDocService: TextDocService) {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
@@ -182,13 +187,17 @@ export class TextViewModel {
     this.textDoc = textDoc;
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
+
     if (subscribeToUpdates) {
-      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => {
-        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
-        editor.updateContents(deltaWithEmbeds, 'api');
-      });
+      this.changesSub = merge(this.textDocService.getLocalSystemChanges$(textDocId), this.textDoc.remoteChanges$)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(ops => {
+          const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
+          editor.updateContents(deltaWithEmbeds, 'api');
+        });
     }
-    this.onCreateSub = this.textDoc.create$.subscribe(() => {
+
+    this.onCreateSub = this.textDoc.create$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (textDoc.data != null) {
         editor.setContents(textDoc.data as DeltaStatic);
       }
@@ -198,17 +207,11 @@ export class TextViewModel {
 
   /** Break the association of the editor with the currently associated textdoc. */
   unbind(): void {
-    if (this.remoteChangesSub != null) {
-      this.remoteChangesSub.unsubscribe();
-    }
-    if (this.onCreateSub != null) {
-      this.onCreateSub.unsubscribe();
-    }
+    this.changesSub?.unsubscribe();
+    this.onCreateSub?.unsubscribe();
     this.textDoc = undefined;
 
-    if (this.editor != null) {
-      this.editor.setText('', 'silent');
-    }
+    this.editor?.setText('', 'silent');
     this._segments.clear();
     this._embeddedElements.clear();
   }

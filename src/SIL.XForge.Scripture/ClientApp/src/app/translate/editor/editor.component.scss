@@ -74,11 +74,6 @@
   width: 0;
 }
 
-.preview-draft-button {
-  // Border helps associate button with target editor that shows similar border when it has a draft
-  border: 3px dashed vars.$draft-color;
-}
-
 .ql-suggestions {
   margin: 0 6px;
 }
@@ -173,10 +168,6 @@ app-text {
 
 as-split-area {
   overflow: hidden !important;
-
-  &.has-draft {
-    border: 4px dashed vars.$draft-color;
-  }
 }
 
 .text-container {
