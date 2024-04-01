@@ -243,6 +243,8 @@
     "your_comment": "Your comment"
   },
   "editor_draft_tab": {
+    "apply_to_project": "Apply to project",
+    "draft_indicator_applied": "DRAFT APPLIED",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Auto draft is not available offline."
   },

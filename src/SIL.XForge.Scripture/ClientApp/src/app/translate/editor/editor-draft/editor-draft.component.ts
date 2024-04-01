@@ -1,6 +1,11 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeltaOperation } from 'quill';
+import { DeltaOperation, DeltaStatic } from 'quill';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { Chapter, TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import {
   catchError,
   combineLatest,
@@ -19,6 +24,7 @@ import { SFProjectService } from 'src/app/core/sf-project.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
@@ -43,6 +49,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
   bookChapterName = '';
   generateDraftUrl?: string;
+  isDraftApplied = false;
+
+  private targetProject?: SFProjectProfile;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -51,15 +60,18 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly draftViewerService: DraftViewerService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    readonly onlineStatusService: OnlineStatusService
+    readonly onlineStatusService: OnlineStatusService,
+    private readonly userService: UserService
   ) {}
 
   ngOnChanges(): void {
     this.inputChanged$.next();
   }
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
     this.generateDraftUrl = `/projects/${this.activatedProjectService.projectId}/draft-generation`;
+    const profileDoc = await this.projectService.getProfile(this.projectId!);
+    this.targetProject = profileDoc.data;
     this.populateDraftTextInit();
   }
 
@@ -124,11 +136,101 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         } else if (this.draftCheckState !== 'draft-legacy') {
           this.draftCheckState = 'draft-present';
         }
+        
+        this.isDraftApplied = !this.draftViewerService.hasDraftOps(draft, targetOps);
 
         // Overwrite existing text with draft text
         return this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true });
       })
     );
+  }
+
+  get hasDraft(): boolean {
+    return this.draftCheckState === 'draft-present';
+  }
+
+  async applyDraft(): Promise<void> {
+    const preDraftTargetDelta = new Delta(await this.getTargetOps());
+    if (preDraftTargetDelta?.ops == null) {
+      throw new Error(`'applyDraft()' called when 'preDraftTargetDelta' is not set`);
+    }
+
+    if (this.draftText.editor == null) {
+      throw new Error(`'applyDraft()' called when 'draftText.editor' is not set`);
+    }
+
+    const ops: DeltaOperation[] = [...this.draftText.editor.getContents().ops!];
+    const cleanedOps: DeltaStatic = new Delta(this.cleanDraftOps(ops));
+    const diff: DeltaStatic = preDraftTargetDelta.diff(cleanedOps);
+
+    const targetTextDocId = new TextDocId(this.projectId!, this.bookNum!, this.chapter!, 'target');
+    const textDoc = await this.projectService.getText(targetTextDocId);
+    textDoc.submit(diff);
+
+    this.isDraftApplied = true;
+  }
+
+  /**
+   * This code is reimplemented from editor.component.ts
+   */
+  get canEdit(): boolean {
+    return (
+      this.isUsfmValid &&
+      this.userHasGeneralEditRight &&
+      this.hasChapterEditPermission &&
+      this.targetProject?.sync?.dataInSync !== false &&
+      !this.draftText?.areOpsCorrupted &&
+      this.targetProject?.editable === true
+    );
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts
+   */
+  private get isUsfmValid(): boolean {
+    let text: TextInfo | undefined = this.targetProject?.texts.find(t => t.bookNum === this.bookNum);
+    if (text == null) {
+      return true;
+    }
+
+    const chapter: Chapter | undefined = text.chapters.find(c => c.number === this.chapter);
+    return chapter?.isValid ?? false;
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts.
+   */
+  private get userHasGeneralEditRight(): boolean {
+    if (this.targetProject == null) {
+      return false;
+    }
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.targetProject,
+      this.userService.currentUserId,
+      SFProjectDomain.Texts,
+      Operation.Edit
+    );
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts.
+   */
+  private get hasChapterEditPermission(): boolean {
+    const chapter: Chapter | undefined = this.targetProject?.texts
+      .find(t => t.bookNum === this.bookNum)
+      ?.chapters.find(c => c.number === this.chapter);
+    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+    // is accessed after migration
+    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
+    return permission == null ? false : permission === TextInfoPermission.Write;
+  }
+
+  // Remove draft flag from attributes
+  private cleanDraftOps(draftOps: DeltaOperation[]): DeltaOperation[] {
+    draftOps.forEach((op: DeltaOperation) => {
+      delete op.attributes?.draft;
+    });
+    return draftOps;
   }
 
   private getLocalizedBookChapter(): string {
@@ -143,7 +245,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return (await this.projectService.getText(this.getTextDocId())).data?.ops;
   }
 
-  private getTextDocId(): TextDocId {
+  getTextDocId(): TextDocId {
     if (this.projectId == null || this.bookNum == null || this.chapter == null) {
       throw new Error('projectId, bookNum, or chapter is null');
     }
