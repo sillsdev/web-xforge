@@ -6,7 +6,10 @@
     {{ "editor_draft_tab.no_draft_notice" | transloco : { bookChapterName } }}
   </app-notice>
   <app-notice *ngIf="draftCheckState === 'draft-legacy'" type="warning" icon="warning">
-    <transloco key="draft_viewer.draft_legacy_warning" [params]="{ generateDraftUrl }"></transloco>
+    <transloco
+      key="draft_viewer.draft_legacy_warning"
+      [params]="{ generateDraftUrl: { route: generateDraftUrl } }"
+    ></transloco>
   </app-notice>
 </ng-container>
 
