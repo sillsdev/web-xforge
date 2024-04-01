@@ -1533,7 +1533,7 @@ public class MachineProjectServiceTests
             preTranslate: true,
             CancellationToken.None
         );
-        Assert.IsFalse(actual);
+        Assert.IsTrue(actual);
 
         // The old corpus and its files should be deleted
         await env.TranslationEnginesClient.Received()
@@ -1581,7 +1581,7 @@ public class MachineProjectServiceTests
             preTranslate: true,
             CancellationToken.None
         );
-        Assert.IsFalse(actual);
+        Assert.IsTrue(actual);
 
         // The old corpus and its files should be deleted
         await env.TranslationEnginesClient.Received()
