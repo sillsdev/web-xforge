@@ -43,7 +43,7 @@ export class TabGroupComponent implements OnChanges {
 
   onTabHeaderPress(e: TabHeaderPointerEvent): void {
     // Select tab on left mouse button press or mobile touch
-    if (e.pointerEvent instanceof TouchEvent || e.pointerEvent.button === 0) {
+    if (this.isTouchEvent(e.pointerEvent) || e.pointerEvent.button === 0) {
       if (e.index < this.tabs.length) {
         this.selectTab(e.index);
       }
@@ -80,5 +80,9 @@ export class TabGroupComponent implements OnChanges {
 
   isTabRemovable(tabIndex: number): boolean {
     return this.tabs.get(tabIndex)?.closeable ?? false;
+  }
+
+  private isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
+    return typeof TouchEvent !== 'undefined' && event instanceof TouchEvent;
   }
 }
