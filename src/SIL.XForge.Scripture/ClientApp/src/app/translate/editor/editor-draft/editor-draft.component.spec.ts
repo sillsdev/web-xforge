@@ -7,6 +7,7 @@ import { Delta } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -14,6 +15,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { TextDocService } from '../../../core/text-doc.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
@@ -25,6 +27,8 @@ const mockDraftGenerationService = mock(DraftGenerationService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftViewerService = mock(DraftViewerService);
 const mockI18nService = mock(I18nService);
+const mockDialogService = mock(DialogService);
+const mockTextDocService = mock(TextDocService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -46,7 +50,9 @@ describe('EditorDraftComponent', () => {
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftViewerService, useMock: mockDraftViewerService },
       { provide: I18nService, useMock: mockI18nService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: DialogService, useMock: mockDialogService },
+      { provide: TextDocService, useMock: mockTextDocService }
     ]
   }));
 
@@ -60,6 +66,7 @@ describe('EditorDraftComponent', () => {
     component.bookNum = 1;
     component.chapter = 1;
     component.isRightToLeft = false;
+    component.ngOnChanges();
   });
 
   it('should handle offline when component created', fakeAsync(() => {
@@ -70,6 +77,18 @@ describe('EditorDraftComponent', () => {
   }));
 
   it('should populate draft text correctly and then handle going offline/online', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProject({
+        translateConfig: {
+          draftConfig: {
+            sendAllSegments: false
+          }
+        }
+      }) as SFProjectProfile
+    } as SFProjectProfileDoc;
+
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
     when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
     when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
@@ -99,7 +118,45 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
+  it('should use the legacy method when send all segments is enabled', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProject({
+        translateConfig: {
+          draftConfig: {
+            sendAllSegments: true
+          }
+        }
+      }) as SFProjectProfile
+    } as SFProjectProfileDoc;
+
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
+    when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).once();
+    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 1)).never();
+    expect(component.draftCheckState).toEqual('draft-present');
+    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+  }));
+
   it('should return ops and update the editor', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProject({
+        translateConfig: {
+          draftConfig: {
+            sendAllSegments: false
+          }
+        }
+      }) as SFProjectProfile
+    } as SFProjectProfileDoc;
+
+    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
     when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
       of(cloneDeep(draftDelta.ops!))
@@ -113,6 +170,101 @@ describe('EditorDraftComponent', () => {
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
+
+  describe('applyDraft', () => {
+    it('should show a prompt when applying if the target has content', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProject({
+          translateConfig: {
+            draftConfig: {
+              sendAllSegments: true
+            }
+          }
+        }) as SFProjectProfile
+      } as SFProjectProfileDoc;
+
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
+      spyOn<any>(component, 'getDraft').and.returnValue(of(draftDelta.ops));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      component.draftText.editor?.setContents(draftDelta);
+
+      component.applyDraft();
+      tick(EDITOR_READY_TIMEOUT);
+
+      verify(mockDialogService.confirm(anything(), anything())).once();
+      expect(component.isDraftApplied).toBe(true);
+    }));
+
+    it('should not show a prompt when applying if the target has no content', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProject({
+          translateConfig: {
+            draftConfig: {
+              sendAllSegments: true
+            }
+          }
+        }) as SFProjectProfile
+      } as SFProjectProfileDoc;
+
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of([]));
+      spyOn<any>(component, 'getDraft').and.returnValue(of(draftDelta.ops));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      component.draftText.editor?.setContents(draftDelta);
+
+      component.applyDraft();
+      tick(EDITOR_READY_TIMEOUT);
+
+      verify(mockDialogService.confirm(anything(), anything())).never();
+      expect(component.isDraftApplied).toBe(true);
+    }));
+
+    it('should throw error if there is no draft', fakeAsync(() => {
+      component.applyDraft().catch(e => {
+        expect(e).toEqual(new Error('No draft ops to apply.'));
+      });
+    }));
+
+    it('should apply draft using TextDocService.overwrite()', fakeAsync(() => {
+      const testProjectDoc: SFProjectProfileDoc = {
+        data: createTestProject({
+          translateConfig: {
+            draftConfig: {
+              sendAllSegments: true
+            }
+          }
+        }) as SFProjectProfile
+      } as SFProjectProfileDoc;
+
+      when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+      when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
+      spyOn<any>(component, 'getDraft').and.returnValue(of(draftDelta.ops));
+
+      fixture.detectChanges();
+      tick(EDITOR_READY_TIMEOUT);
+
+      component.draftText.editor?.setContents(draftDelta);
+
+      component.applyDraft();
+      tick();
+
+      expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
+      verify(mockTextDocService.overwrite(component.textDocId!, component['draftDelta']!)).once();
+      expect(component.isDraftApplied).toBe(true);
+    }));
+  });
 
   describe('getLocalizedBookChapter', () => {
     it('should return an empty string if bookNum or chapter is undefined', () => {
@@ -136,25 +288,31 @@ describe('EditorDraftComponent', () => {
 
 const draftMap: DraftSegmentMap = {
   verse_1_1: 'Draft verse 1. ',
-  verse_1_2: 'Draft verse 2. '
+  verse_1_2: 'Draft verse 2. ',
+  verse_1_3: 'Draft verse 3. '
 };
 
 const draftDelta = new Delta([
   {
     attributes: {
       segment: 'verse_1_1',
-      'para-contents': true,
-      draft: true
+      'para-contents': true
     },
     insert: 'Draft verse 1. '
   },
   {
     attributes: {
       segment: 'verse_1_2',
-      'para-contents': true,
-      draft: true
+      'para-contents': true
     },
     insert: 'Draft verse 2. '
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: 'Draft verse 3. '
   },
   {
     insert: '\n',
@@ -180,6 +338,13 @@ const targetDelta = new Delta([
       'para-contents': true
     },
     insert: 'Existing verse 2. '
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: { blank: true }
   },
   {
     insert: '\n',

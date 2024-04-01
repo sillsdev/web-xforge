@@ -1,25 +1,40 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeltaOperation } from 'quill';
+import { DeltaStatic } from 'quill';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { Chapter, TextInfo } from 'realtime-server/scriptureforge/models/text-info';
+import { DeltaOperation } from 'rich-text';
 import {
+  asyncScheduler,
   catchError,
   combineLatest,
+  distinctUntilChanged,
   EMPTY,
   filter,
+  from,
   map,
   Observable,
   startWith,
   Subject,
   switchMap,
-  take,
   tap,
+  throttleTime,
   throwError
 } from 'rxjs';
 import { SFProjectService } from 'src/app/core/sf-project.service';
+import { isString } from 'src/type-utils';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
+import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -43,6 +58,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
   bookChapterName = '';
   generateDraftUrl?: string;
+  textDocId?: TextDocId;
+  isDraftReady = false;
+  isDraftApplied = false;
+  canApplyDraft = false;
+
+  private targetProject?: SFProjectProfile;
+  private draftDelta?: DeltaStatic;
+  private targetDelta?: DeltaStatic;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -51,80 +74,198 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly draftViewerService: DraftViewerService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    readonly onlineStatusService: OnlineStatusService
+    readonly onlineStatusService: OnlineStatusService,
+    private readonly userService: UserService,
+    private readonly textDocService: TextDocService,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnChanges(): void {
+    if (this.projectId == null || this.bookNum == null || this.chapter == null) {
+      throw new Error('projectId, bookNum, or chapter is null');
+    }
+
+    this.textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
     this.inputChanged$.next();
   }
 
-  ngAfterViewInit(): void {
-    this.generateDraftUrl = `/projects/${this.activatedProjectService.projectId}/draft-generation`;
+  async ngAfterViewInit(): Promise<void> {
+    this.generateDraftUrl = `/projects/${this.projectId}/draft-generation`;
     this.populateDraftTextInit();
   }
 
   populateDraftTextInit(): void {
-    combineLatest([this.draftText.editorCreated, this.inputChanged$.pipe(startWith(undefined))])
+    combineLatest([
+      this.onlineStatusService.onlineStatus$,
+      this.draftText.editorCreated,
+      this.inputChanged$.pipe(startWith(undefined))
+    ])
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        tap(() => {
-          this.draftCheckState = 'draft-unknown';
-          this.bookChapterName = this.getLocalizedBookChapter();
-        }),
-        switchMap(() => {
-          return this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline));
-        }),
-        switchMap(() => this.getTargetOps()),
-        switchMap((targetOps: DeltaOperation[] | undefined) => {
-          if (this.projectId == null || this.bookNum == null || this.chapter == null || targetOps == null) {
+        filter(([isOnline]) => isOnline),
+        tap(() => this.setInitialState()),
+        switchMap(() => this.draftExists()),
+        switchMap((draftExists: boolean) => {
+          if (!draftExists) {
+            this.draftCheckState = 'draft-empty';
             return EMPTY;
           }
 
-          return this.draftGenerationService
-            .getGeneratedDraftDeltaOperations(this.projectId, this.bookNum, this.chapter)
-            .pipe(
-              take(1),
-              catchError(err => {
-                // If the corpus does not support USFM
-                if (err.status === 405) {
-                  // Prompt the user to run a new build to use the new features
-                  this.draftCheckState = 'draft-legacy';
-                  return this.getLegacyGeneratedDraft(targetOps);
-                }
-                return throwError(() => err);
-              }),
-              tap((ops: DeltaOperation[]) => {
-                // Check for empty draft
-                if (ops.length === 0) {
-                  this.draftCheckState = 'draft-empty';
-                } else if (this.draftCheckState !== 'draft-legacy') {
-                  this.draftCheckState = 'draft-present';
-                }
-              })
-            );
-        })
+          // Check if project specifies legacy draft format
+          return this.activatedProjectService.changes$.pipe(
+            filterNullish(),
+            tap(projectDoc => {
+              this.targetProject = projectDoc.data;
+              this.canApplyDraft = this.canEdit();
+            }),
+            map(this.isDraftLegacy),
+            distinctUntilChanged()
+          );
+        }),
+        switchMap((isDraftLegacy: boolean) => combineLatest([this.getTargetOps(), this.getDraft({ isDraftLegacy })])),
+        map(([targetOps, draft]) => ({
+          targetOps,
+          // Convert legacy draft to draft ops
+          draftOps: this.isDraftSegmentMap(draft)
+            ? this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true })
+            : draft
+        }))
       )
-      .subscribe((draftOps: DeltaOperation[]) => {
-        // Set the draft editor with the pre-translation segments
-        this.draftText.editor?.setContents(new Delta(draftOps), 'api');
-      });
-  }
+      .subscribe(({ targetOps, draftOps }) => {
+        this.draftDelta = new Delta(draftOps);
+        this.targetDelta = new Delta(targetOps);
 
-  private getLegacyGeneratedDraft(targetOps: DeltaOperation[]): Observable<DeltaOperation[]> {
-    return this.draftGenerationService.getGeneratedDraft(this.projectId!, this.bookNum!, this.chapter!).pipe(
-      map((draft: DraftSegmentMap) => {
-        // Check for empty draft
-        if (Object.keys(draft).length === 0) {
-          this.draftCheckState = 'draft-empty';
-          return [];
-        } else if (this.draftCheckState !== 'draft-legacy') {
+        // Set the draft editor with the pre-translation segments
+        this.draftText.editor?.setContents(this.draftDelta, 'api');
+
+        this.isDraftApplied = this.draftDelta.diff(this.targetDelta).length() === 0;
+
+        if (this.draftCheckState !== 'draft-legacy') {
           this.draftCheckState = 'draft-present';
         }
 
-        // Overwrite existing text with draft text
-        return this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true });
-      })
+        this.isDraftReady = this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
+      });
+  }
+
+  private setInitialState(): void {
+    this.draftCheckState = 'draft-unknown';
+    this.bookChapterName = this.getLocalizedBookChapter();
+    this.isDraftReady = false;
+    this.isDraftApplied = false;
+    this.canApplyDraft = false;
+  }
+
+  private draftExists(): Observable<boolean> {
+    // This method of checking for draft may be temporary until there is a better way supplied by serval
+    return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
+  }
+
+  private getDraft({ isDraftLegacy }: { isDraftLegacy: boolean }): Observable<DeltaOperation[] | DraftSegmentMap> {
+    return isDraftLegacy
+      ? // Fetch legacy draft
+        this.draftGenerationService.getGeneratedDraft(this.projectId!, this.bookNum!, this.chapter!).pipe()
+      : // Fetch draft in USFM format (fallback to legacy)
+        this.draftGenerationService
+          .getGeneratedDraftDeltaOperations(this.projectId!, this.bookNum!, this.chapter!)
+          .pipe(
+            catchError(err => {
+              // If the corpus does not support USFM
+              if (err.status === 405) {
+                // Prompt the user to run a new build to use the new features
+                this.draftCheckState = 'draft-legacy';
+                return this.getDraft({ isDraftLegacy: true });
+              }
+
+              return throwError(() => err);
+            })
+          );
+  }
+
+  async applyDraft(): Promise<void> {
+    if (this.draftDelta == null) {
+      throw new Error('No draft ops to apply.');
+    }
+
+    // Warn before overwriting existing text
+    if (this.hasContent(this.targetDelta?.ops)) {
+      const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
+      if (!proceed) {
+        return;
+      }
+    }
+
+    this.textDocService.overwrite(this.textDocId!, this.draftDelta);
+    this.isDraftApplied = true;
+  }
+
+  private hasContent(delta?: DeltaOperation[]): boolean {
+    const hasContent = delta?.some(op => {
+      if (op.insert == null || op.attributes?.segment == null) {
+        return false;
+      }
+
+      const isInsertBlank = (isString(op.insert) && op.insert.trim().length === 0) || op.insert.blank === true;
+      return !isInsertBlank;
+    });
+
+    return hasContent ?? false;
+  }
+
+  /**
+   * This code is reimplemented from editor.component.ts
+   */
+  private canEdit(): boolean {
+    return (
+      this.isUsfmValid() &&
+      this.userHasGeneralEditRight() &&
+      this.hasChapterEditPermission() &&
+      this.targetProject?.sync?.dataInSync !== false &&
+      !this.draftText?.areOpsCorrupted &&
+      this.targetProject?.editable === true
     );
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts
+   */
+  private isUsfmValid(): boolean {
+    let text: TextInfo | undefined = this.targetProject?.texts.find(t => t.bookNum === this.bookNum);
+    if (text == null) {
+      return true;
+    }
+
+    const chapter: Chapter | undefined = text.chapters.find(c => c.number === this.chapter);
+    return chapter?.isValid ?? false;
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts.
+   */
+  private userHasGeneralEditRight(): boolean {
+    if (this.targetProject == null) {
+      return false;
+    }
+
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.targetProject,
+      this.userService.currentUserId,
+      SFProjectDomain.Texts,
+      Operation.Edit
+    );
+  }
+
+  /**
+   * This function is duplicated from editor.component.ts.
+   */
+  private hasChapterEditPermission(): boolean {
+    const chapter: Chapter | undefined = this.targetProject?.texts
+      .find(t => t.bookNum === this.bookNum)
+      ?.chapters.find(c => c.number === this.chapter);
+    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+    // is accessed after migration
+    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
+    return permission == null ? false : permission === TextInfoPermission.Write;
   }
 
   private getLocalizedBookChapter(): string {
@@ -135,15 +276,24 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.i18n.localizeBook(this.bookNum) + ' ' + this.chapter;
   }
 
-  private async getTargetOps(): Promise<DeltaOperation[] | undefined> {
-    return (await this.projectService.getText(this.getTextDocId())).data?.ops;
+  private getTargetOps(): Observable<DeltaOperation[]> {
+    return from(this.projectService.getText(this.textDocId!)).pipe(
+      switchMap(textDoc =>
+        textDoc.changes$.pipe(
+          startWith(undefined),
+          throttleTime(2000, asyncScheduler, { leading: true, trailing: true }),
+          map(() => textDoc.data?.ops),
+          filterNullish()
+        )
+      )
+    );
   }
 
-  private getTextDocId(): TextDocId {
-    if (this.projectId == null || this.bookNum == null || this.chapter == null) {
-      throw new Error('projectId, bookNum, or chapter is null');
-    }
+  private isDraftLegacy(projectDoc: SFProjectProfileDoc): boolean {
+    return projectDoc.data?.translateConfig.draftConfig.sendAllSegments ?? false;
+  }
 
-    return new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
+  private isDraftSegmentMap(draft: DeltaOperation[] | DraftSegmentMap): draft is DraftSegmentMap {
+    return !Array.isArray(draft);
   }
 }

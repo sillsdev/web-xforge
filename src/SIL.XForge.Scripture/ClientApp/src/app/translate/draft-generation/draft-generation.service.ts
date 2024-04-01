@@ -176,6 +176,17 @@ export class DraftGenerationService {
   }
 
   /**
+   * Determines if a draft exists for the specified book/chapter.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number.
+   * @returns An observable indicating if a draft exists.
+   */
+  draftExists(projectId: string, book: number, chapter: number): Observable<boolean> {
+    return this.getGeneratedDraft(projectId, book, chapter).pipe(map(draft => Object.keys(draft).length > 0));
+  }
+
+  /**
    * Calls the machine api to start a pretranslation build job.
    * This should only be called if no build is currently active.
    * @param buildConfig The build configuration.
