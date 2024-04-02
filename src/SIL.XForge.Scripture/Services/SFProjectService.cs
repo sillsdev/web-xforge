@@ -282,6 +282,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
         bool unsetAlternateTrainingSourceProject =
             settings.AlternateTrainingSourceParatextId == ProjectSettingValueUnset;
+        bool unsetMixSourceProject = settings.MixSourceParatextId == ProjectSettingValueUnset;
+        string[] mixSourceParatextIds = unsetMixSourceProject
+            ? []
+            : settings.MixSourceParatextId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
 
         // Get the list of projects for setting the source or alternate source
         IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
@@ -289,6 +293,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             (settings.SourceParatextId != null && !unsetSourceProject)
             || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
             || (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
+            || (mixSourceParatextIds.Length > 0 && !unsetMixSourceProject)
         )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -355,6 +360,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
+        // Get the mix sources for pre-translation drafting
+        List<TranslateSource> mixSources = [];
+        foreach (string mixSourceParatextId in mixSourceParatextIds)
+        {
+            TranslateSource mixSource = await GetTranslateSourceAsync(
+                curUserId,
+                projectId,
+                mixSourceParatextId,
+                syncIfCreated: true,
+                ptProjects,
+                projectDoc.Data.UserRoles
+            );
+
+            // A project cannot mix into itself
+            if (mixSource.ProjectRef != projectId)
+            {
+                mixSources.Add(mixSource);
+            }
+        }
+
+        // If we had no valid mix source specified, unset the mix source
+        if (mixSources.Count == 0)
+        {
+            mixSources = null;
+        }
+
         bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         await projectDoc.SubmitJson0OpAsync(op =>
         {
@@ -383,6 +414,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 alternateTrainingSource,
                 unsetAlternateTrainingSourceProject
             );
+            UpdateSetting(op, p => p.TranslateConfig.DraftConfig.MixSources, mixSources, unsetMixSourceProject);
             UpdateSetting(
                 op,
                 p => p.TranslateConfig.DraftConfig.AdditionalTrainingData,
@@ -878,6 +910,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 || (
                     p.TranslateConfig.DraftConfig.AlternateTrainingSource != null
                     && (p.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef == projectId)
+                )
+                || (
+                    p.TranslateConfig.DraftConfig.MixSources != null
+                    && p.TranslateConfig.DraftConfig.MixSources.Any(s => s.ProjectRef == projectId)
                 )
         );
     }

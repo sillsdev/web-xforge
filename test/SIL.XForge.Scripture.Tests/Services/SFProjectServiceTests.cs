@@ -2086,7 +2086,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task IsSourceProject_TrueWhenProjectIsAAlternateTrainingSource()
+    public async Task IsSourceProject_TrueWhenProjectIsAnAlternateTrainingSource()
     {
         var env = new TestEnvironment();
         const string paratextId = "paratext_" + Project01;
@@ -2096,6 +2096,23 @@ public class SFProjectServiceTests
             User01,
             Project03,
             new SFProjectSettings { AlternateTrainingSourceParatextId = paratextId }
+        );
+
+        // SUT
+        Assert.That(env.Service.IsSourceProject(Project01), Is.True);
+    }
+
+    [Test]
+    public async Task IsSourceProject_TrueWhenProjectIsAMixSource()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { MixSourceParatextId = paratextId }
         );
 
         // SUT
@@ -2234,6 +2251,74 @@ public class SFProjectServiceTests
         );
         Assert.That(alternateTrainingSourceProject.ParatextId, Is.EqualTo("changedId"));
         Assert.That(alternateTrainingSourceProject.Name, Is.EqualTo("NewSource"));
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        // Check that the project was created
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.True
+        );
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeMixSource_CannotUseTargetProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { MixSourceParatextId = paratextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
+        Assert.That(project.TranslateConfig.DraftConfig.MixSources, Is.Null);
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeMixSource_CreatesProject()
+    {
+        var env = new TestEnvironment();
+        const string newProjectParatextId = "changedId";
+
+        // Ensure that the new project does not exist
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.False
+        );
+
+        // SUT
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { MixSourceParatextId = newProjectParatextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.MixSources?.First().ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.MixSources?.First().ParatextId,
+            Is.EqualTo(newProjectParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.MixSources?.First().Name, Is.EqualTo("NewSource"));
+
+        SFProject mixSourceProject = env.GetProject(project.TranslateConfig.DraftConfig.MixSources!.First().ProjectRef);
+        Assert.That(mixSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
+        Assert.That(mixSourceProject.Name, Is.EqualTo("NewSource"));
 
         await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());

@@ -1539,6 +1539,35 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_MixSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            p => p.Id == Project02,
+            u =>
+                u.Set(
+                    s => s.TranslateConfig.DraftConfig,
+                    new DraftConfig { MixSources = [new TranslateSource { ProjectRef = Project01 }] }
+                )
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
+    }
+
+    [Test]
     public void TrainSegmentAsync_NoPermission()
     {
         // Set up test environment

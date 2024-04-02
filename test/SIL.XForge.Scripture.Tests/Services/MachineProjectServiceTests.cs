@@ -1559,6 +1559,35 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheMixSourcesCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                MixSourcesConfigured = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the upload of the source, target, and mixed source
+        await env.DataFilesClient.Received(3)
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorpora()
     {
         // Set up test environment
@@ -1985,17 +2014,42 @@ public class MachineProjectServiceTests
         );
     }
 
+    [Test]
+    public async Task UpdateTranslationSourcesAsync_UpdatesMixSources()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            p => p.Id == Project01,
+            u =>
+                u.Set(
+                    s => s.TranslateConfig.DraftConfig,
+                    new DraftConfig { MixSources = [new TranslateSource { ParatextId = Paratext01 }], }
+                )
+        );
+
+        // SUT
+        await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
+        env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.MixSources?.First().IsRightToLeft);
+        Assert.AreEqual(
+            LanguageTag,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.MixSources?.First().WritingSystem.Tag
+        );
+    }
+
     private class TestEnvironmentOptions
     {
-        public bool BuildIsPending { get; init; }
-        public bool PreTranslationBuildIsQueued { get; init; }
-        public bool UseEchoForPreTranslation { get; init; }
-        public bool LocalSourceTextHasData { get; init; }
-        public bool LocalTargetTextHasData { get; init; }
         public bool AlternateTrainingSourceConfigured { get; init; }
         public bool AlternateTrainingSourceEnabled { get; init; }
-        public string? ServalConfig { get; set; }
+        public bool BuildIsPending { get; init; }
+        public bool LocalSourceTextHasData { get; init; }
+        public bool LocalTargetTextHasData { get; init; }
+        public bool MixSourcesConfigured { get; init; }
+        public bool PreTranslationBuildIsQueued { get; init; }
+        public string? ServalConfig { get; init; }
         public bool UploadParatextZipForPreTranslation { get; init; }
+        public bool UseEchoForPreTranslation { get; init; }
     }
 
     private class TestEnvironment
@@ -2233,7 +2287,7 @@ public class MachineProjectServiceTests
                         ShortName = "P01",
                         ParatextId = Paratext01,
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                        UserRoles = new Dictionary<string, string>(),
+                        UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
@@ -2243,7 +2297,7 @@ public class MachineProjectServiceTests
                                 ParatextId = Paratext02,
                                 WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
-                            DraftConfig = new DraftConfig { ServalConfig = options.ServalConfig, },
+                            DraftConfig = new DraftConfig { ServalConfig = options.ServalConfig },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_GB" },
                     },
@@ -2254,7 +2308,7 @@ public class MachineProjectServiceTests
                         ShortName = "P02",
                         ParatextId = Paratext02,
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                        UserRoles = new Dictionary<string, string>(),
+                        UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
@@ -2270,6 +2324,9 @@ public class MachineProjectServiceTests
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
                                     : null,
+                                MixSources = options.MixSourcesConfigured
+                                    ? [new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }]
+                                    : null,
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
@@ -2280,7 +2337,7 @@ public class MachineProjectServiceTests
                         Name = "project03",
                         ShortName = "P03",
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                        UserRoles = new Dictionary<string, string>(),
+                        UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
                             TranslationSuggestionsEnabled = true,
