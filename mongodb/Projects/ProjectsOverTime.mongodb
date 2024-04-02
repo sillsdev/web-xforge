@@ -1,0 +1,16 @@
+use('xforge')
+
+// This query prints the time when each project in the database was created, in chronological order.
+// This is useful for graphing the number of projects over time.
+
+db.sf_projects.find({}, {
+  _id: 0,
+  "_m.ctime": 1
+})
+  .toArray()
+  .sort((a, b) => a._m.ctime - b._m.ctime)
+  .map(
+    // Strip off the Z from the end of the date string so Google Docs will recognize it as a date
+    p => new Date(p._m.ctime).toISOString().slice(0, -1)
+  )
+  .join('\n')
