@@ -167,6 +167,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     const textDoc = await this.projectService.getText(targetTextDocId);
     textDoc.submit(diff);
 
+    this.draftViewerService.draftApplied.emit({ id: targetTextDocId, ops: diff });
     this.isDraftApplied = true;
   }
 
