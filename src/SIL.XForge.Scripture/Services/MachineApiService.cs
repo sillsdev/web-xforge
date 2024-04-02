@@ -778,6 +778,7 @@ public class MachineApiService(
         {
             case { StatusCode: StatusCodes.Status204NoContent }:
                 throw new DataNotFoundException("Entity Deleted");
+            case { StatusCode: StatusCodes.Status401Unauthorized }:
             case { StatusCode: StatusCodes.Status403Forbidden }:
                 throw new ForbiddenException();
             case { StatusCode: StatusCodes.Status404NotFound }:
