@@ -150,9 +150,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   async applyDraft(): Promise<void> {
-    const preDraftTargetDelta = new Delta(await this.getTargetOps());
-    if (preDraftTargetDelta?.ops == null) {
-      throw new Error(`'applyDraft()' called when 'preDraftTargetDelta' is not set`);
+    const target = new Delta(await this.getTargetOps());
+    if (target?.ops == null) {
+      throw new Error(`'applyDraft()' called when 'target.ops' is not set`);
     }
 
     if (this.draftText.editor == null) {
@@ -161,7 +161,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
     const ops: DeltaOperation[] = [...this.draftText.editor.getContents().ops!];
     const cleanedOps: DeltaStatic = new Delta(this.cleanDraftOps(ops));
-    const diff: DeltaStatic = preDraftTargetDelta.diff(cleanedOps);
+    const diff: DeltaStatic = target.diff(cleanedOps);
 
     const targetTextDocId = new TextDocId(this.projectId!, this.bookNum!, this.chapter!, 'target');
     const textDoc = await this.projectService.getText(targetTextDocId);
