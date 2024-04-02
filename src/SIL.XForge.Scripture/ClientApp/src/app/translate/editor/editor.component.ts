@@ -53,8 +53,29 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
-import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
+import {
+  asyncScheduler,
+  BehaviorSubject,
+  combineLatest,
+  fromEvent,
+  merge,
+  of,
+  Subject,
+  Subscription,
+  timer
+} from 'rxjs';
+import {
+  debounceTime,
+  delayWhen,
+  filter,
+  first,
+  repeat,
+  retryWhen,
+  switchMap,
+  take,
+  tap,
+  throttleTime
+} from 'rxjs/operators';
 import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
@@ -164,16 +185,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   multiCursorViewers: MultiCursorViewer[] = [];
   hasDraft = false;
 
-  @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
-  @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
-  @ViewChild('sourceScrollContainer') sourceScrollContainer?: ElementRef;
-  @ViewChild('targetScrollContainer') targetScrollContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
 
+  private sourceScrollContainer: Element | undefined;
+  private targetScrollContainer: Element | undefined;
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -209,12 +228,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private targetEditorLoaded$: Subject<void> = new Subject<void>();
+  private syncScrollRequested$: Subject<void> = new Subject<void>();
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
+  readonly fabVerticalCushion = 5;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -754,6 +775,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.checkForPreTranslations();
       }
     );
+
+    // Throttle bursts of sync scroll requests
+    this.syncScrollRequested$
+      .pipe(takeUntilDestroyed(this.destroyRef), throttleTime(100, asyncScheduler, { leading: true, trailing: true }))
+      .subscribe(() => {
+        this.syncScroll();
+      });
   }
 
   ngOnDestroy(): void {
@@ -783,7 +811,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.lastShownSuggestions = [];
       if (this.source != null) {
         this.source.setSegment(this.target.segmentRef);
-        this.syncScroll();
+        this.syncScrollRequested$.next();
       }
       if (segment == null || !VERSE_REGEX.test(segment.ref)) {
         this.resetCommenterVerseSelection();
@@ -861,7 +889,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
       this.segmentUpdated$.next();
-      this.syncScroll();
+      this.syncScrollRequested$.next();
     }
 
     if (delta != null && this.shouldNoteThreadsRespondToEdits) {
@@ -879,7 +907,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (!textChange) {
       return;
     }
-    this.syncScroll();
+
+    this.syncScrollRequested$.next();
+
     if (
       this.target != null &&
       this.target.segment != null &&
@@ -899,16 +929,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     switch (textType) {
       case 'source':
         this.sourceLoaded = true;
+        this.sourceScrollContainer = this.source?.editor?.scrollingContainer;
         break;
       case 'target':
         this.targetLoaded = true;
+        this.targetScrollContainer = this.target?.editor?.scrollingContainer;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
 
         if (this.target?.editor != null && this.targetScrollContainer != null) {
           this.positionInsertNoteFab();
-          this.observeResize(this.targetScrollContainer.nativeElement);
-          this.subscribeScroll(this.targetScrollContainer.nativeElement);
+          this.observeResize(this.targetScrollContainer);
+          this.subscribeScroll(this.targetScrollContainer);
           this.targetEditorLoaded$.next();
           this.checkForPreTranslations();
         }
@@ -1705,8 +1737,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     dialogConfig: MatDialogConfig<D>
   ): MatDialogRef<T, R> {
     const selection: RangeStatic | null | undefined = this.target?.editor?.getSelection();
-    const targetScrollContainer: HTMLElement | undefined = this.targetScrollContainer?.nativeElement;
-    const targetScrollTop: number | undefined = targetScrollContainer?.scrollTop;
+    const targetScrollTop: number | undefined = this.targetScrollContainer?.scrollTop;
     const dialogRef: MatDialogRef<T, R> = this.dialogService.openMatDialog(component, dialogConfig);
 
     if (selection == null || !this.canEdit) {
@@ -1720,8 +1751,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (currentSelection?.index !== selection.index) {
           this.target.editor.setSelection(selection.index, 0, 'user');
 
-          if (targetScrollContainer != null && targetScrollTop != null) {
-            targetScrollContainer.scrollTop = targetScrollTop;
+          if (this.targetScrollContainer != null && targetScrollTop != null) {
+            this.targetScrollContainer.scrollTop = targetScrollTop;
           }
         }
       }
@@ -2159,6 +2190,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.source == null ||
       this.source.segment == null ||
       this.source.editor == null ||
+      this.sourceScrollContainer == null ||
       this.target == null ||
       this.target.segment == null ||
       this.target.editor == null ||
@@ -2167,24 +2199,25 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const sourceScrollContainer: HTMLElement | undefined = this.sourceScrollContainer?.nativeElement;
-    if (sourceScrollContainer == null) {
-      return;
-    }
+    const targetRange: RangeStatic = this.target.segment.range;
+    const targetSelectionBounds: DOMRect = this.target.editor.selection.getBounds(targetRange.index);
 
-    const targetRange = this.target.segment.range;
-    const targetSelectionBounds = this.target.editor.selection.getBounds(targetRange.index);
+    const sourceRange: RangeStatic = this.source.segment.range;
+    const sourceSelectionBounds: DOMRect = this.source.editor.selection.getBounds(
+      sourceRange.index,
+      sourceRange.length
+    );
 
-    const sourceRange = this.source.segment.range;
-    const sourceSelectionBounds = this.source.editor.selection.getBounds(sourceRange.index, sourceRange.length);
-
-    let newScrollTop: number = sourceScrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
+    let newScrollTop: number =
+      this.sourceScrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
 
     // Check to see if the top of source selection would be visible after the scroll adjustment
-    const sourceTopPosition = targetSelectionBounds.top - sourceScrollContainer.getBoundingClientRect().top;
+    const sourceTopPosition: number =
+      sourceSelectionBounds.top - this.sourceScrollContainer.getBoundingClientRect().top;
 
     // Check to see if the bottom of source selection would be visible after the scroll adjustment
-    const sourceBottomPosition = sourceTopPosition + sourceSelectionBounds.height - sourceScrollContainer.clientHeight;
+    const sourceBottomPosition: number =
+      sourceTopPosition + sourceSelectionBounds.height - this.sourceScrollContainer.clientHeight;
 
     // Adjust the scroll to ensure the selection fits within the container
     // Only adjust the bottom position so long as that doesn't hide the top position i.e. a long verse(s)
@@ -2194,10 +2227,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       newScrollTop += sourceBottomPosition;
     }
 
-    sourceScrollContainer.scrollTop = newScrollTop;
+    this.sourceScrollContainer.scrollTop = newScrollTop;
   }
 
-  private observeResize(scrollContainer: HTMLElement): void {
+  private observeResize(scrollContainer: Element): void {
     this.resizeObserver?.disconnect();
     this.resizeObserver = new ResizeObserver(entries => {
       entries.forEach(_ => {
@@ -2207,14 +2240,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.resizeObserver.observe(scrollContainer);
   }
 
-  private subscribeScroll(scrollContainer: HTMLElement): void {
+  private subscribeScroll(scrollContainer: Element): void {
     this.scrollSubscription?.unsubscribe();
     this.scrollSubscription = this.subscribe(fromEvent(scrollContainer, 'scroll'), () => {
       this.keepInsertNoteFabInView(scrollContainer);
     });
   }
 
-  private keepInsertNoteFabInView(scrollContainer: HTMLElement): void {
+  private keepInsertNoteFabInView(scrollContainer: Element): void {
     if (
       this.insertNoteFab == null ||
       this.target == null ||
@@ -2225,15 +2258,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const bounds: DOMRect = scrollContainer.getBoundingClientRect();
-    const fabCushion = 10;
-    const fabTop = this.target.selectionBoundsTop - fabCushion;
-    const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + fabCushion;
+    const fabTop = this.target.selectionBoundsTop - this.fabVerticalCushion;
+    const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + this.fabVerticalCushion;
 
-    // Adjust margin when selection goes outside scroll container (0 if within visible scroll area)
-    const fabTopAdjustment = Math.max(0, scrollContainer.scrollTop - fabTop);
-    const fabBottomAdjustment = Math.min(0, bounds.height - (fabBottom - scrollContainer.scrollTop));
+    // Editor top is FAB upper bound
+    const fabTopAdjustment = Math.min(fabTop, scrollContainer.scrollTop);
 
-    this.insertNoteFab.nativeElement.style.marginTop = `${fabTopAdjustment + fabBottomAdjustment}px`;
+    // Editor bottom is FAB lower bound
+    const minAdjustment: number = Math.max(fabBottom - bounds.height, 0);
+
+    this.insertNoteFab.nativeElement.style.marginTop = `-${Math.max(fabTopAdjustment, minAdjustment)}px`;
   }
 
   private checkForPreTranslations(): void {

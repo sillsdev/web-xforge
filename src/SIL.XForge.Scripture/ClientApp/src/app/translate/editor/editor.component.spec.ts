@@ -3200,6 +3200,108 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: originalPos.start, length: originalPos.length + 1 });
       env.dispose();
     }));
+
+    it('should position FAB beside selected segment', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const segmentRef = 'verse_1_1';
+
+      env.clickSegmentRef(segmentRef);
+      env.wait();
+
+      const segmentElRect = env.getSegmentElement(segmentRef)!.getBoundingClientRect();
+      const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
+      expect(segmentElRect.top).toEqual(fabRect.top);
+
+      env.dispose();
+    }));
+
+    it('should position FAB beside selected segment when scrolling segment in view', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Set window size to be narrow to test scrolling
+      const contentContainer: HTMLElement = document.getElementsByClassName('content')[0] as HTMLElement;
+      Object.assign(contentContainer.style, { width: '360px', height: '300px' });
+
+      const segmentRef = 'verse_1_1';
+
+      // Select segment
+      env.clickSegmentRef(segmentRef);
+      env.wait();
+
+      // Scroll, keeping selected segment in view
+      const scrollContainer: Element = env.component['targetScrollContainer'] as Element;
+      scrollContainer.scrollTop = 20;
+      scrollContainer.dispatchEvent(new Event('scroll'));
+
+      const segmentElRect = env.getSegmentElement(segmentRef)!.getBoundingClientRect();
+      const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
+      expect(fabRect.top).toEqual(segmentElRect.top);
+
+      env.dispose();
+    }));
+
+    it('should position FAB within scroll container when scrolling segment above view', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Set window size to be narrow to test scrolling
+      const contentContainer: HTMLElement = document.getElementsByClassName('content')[0] as HTMLElement;
+      Object.assign(contentContainer.style, { width: '360px', height: '300px' });
+
+      // Verse near top of scroll container
+      const segmentRef = 'verse_1_1';
+
+      // Select segment
+      env.clickSegmentRef(segmentRef);
+      env.wait();
+
+      const scrollContainer: Element = env.component['targetScrollContainer'] as Element;
+      const scrollContainerRect: DOMRect = scrollContainer.getBoundingClientRect();
+
+      // Scroll segment above view
+      scrollContainer.scrollTop = 200;
+      scrollContainer.dispatchEvent(new Event('scroll'));
+
+      const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
+      expect(fabRect.top).toEqual(scrollContainerRect.top + env.component.fabVerticalCushion);
+
+      env.dispose();
+    }));
+
+    it('should position FAB within scroll container when scrolling segment below view', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Set window size to be narrow to test scrolling
+      const contentContainer: HTMLElement = document.getElementsByClassName('content')[0] as HTMLElement;
+      Object.assign(contentContainer.style, { width: '360px', height: '300px' });
+
+      // Verse near bottom of scroll container
+      const segmentRef = 'verse_1_6';
+
+      // Select segment
+      env.clickSegmentRef(segmentRef);
+      env.wait();
+
+      const scrollContainer: Element = env.component['targetScrollContainer'] as Element;
+      const scrollContainerRect: DOMRect = scrollContainer.getBoundingClientRect();
+
+      // Scroll segment below view
+      scrollContainer.scrollTop = 0;
+      scrollContainer.dispatchEvent(new Event('scroll'));
+
+      const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
+      expect(fabRect.bottom).toEqual(scrollContainerRect.bottom - env.component.fabVerticalCushion);
+
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
