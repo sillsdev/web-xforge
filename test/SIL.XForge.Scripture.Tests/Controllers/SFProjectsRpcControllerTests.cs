@@ -368,6 +368,7 @@ public class SFProjectsRpcControllerTests
             SourceParatextId = string.Empty,
             AlternateTrainingSourceEnabled = true,
             AlternateTrainingSourceParatextId = string.Empty,
+            MixSourceParatextId = string.Empty,
             TranslateShareEnabled = true,
             TranslationSuggestionsEnabled = true,
             UsersSeeEachOthersResponses = true,
