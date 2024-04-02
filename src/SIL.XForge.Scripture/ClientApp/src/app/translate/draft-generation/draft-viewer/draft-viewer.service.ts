@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import { DeltaOperation } from 'quill';
+import { DeltaOperation, DeltaStatic } from 'quill';
+import { TextDocId } from 'src/app/core/models/text-doc';
 import { isString } from '../../../../type-utils';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
@@ -9,10 +10,17 @@ export interface DraftMappingOptions {
   overwrite?: boolean;
 }
 
+export interface DraftDiff {
+  id: TextDocId;
+  ops: DeltaStatic;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class DraftViewerService {
+  draftApplied: EventEmitter<DraftDiff> = new EventEmitter();
+
   /**
    * Whether draft has any pretranslation segments that are not already translated in target ops.
    * @param draft dictionary of segment refs to pretranslations
