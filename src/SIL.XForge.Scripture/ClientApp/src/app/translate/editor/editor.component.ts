@@ -45,7 +45,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -117,8 +117,8 @@ import {
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
-  VERSE_REGEX,
-  verseRefFromMouseEvent
+  verseRefFromMouseEvent,
+  VERSE_REGEX
 } from '../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation/draft-generation';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
@@ -224,6 +224,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private onTargetDeleteSub?: Subscription;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
+  private draftAppliedSub?: Subscription;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
@@ -744,6 +745,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             }
           });
 
+          this.draftAppliedSub = this.draftViewerService.draftApplied.subscribe(e => {
+            if (this.target?.id?.toString() === e.id.toString()) {
+              this.target.editor?.updateContents(e.ops, 'user');
+              this.hasDraft = false;
+            }
+          });
+
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
           }
@@ -792,6 +800,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.projectUserConfigChangesSub?.unsubscribe();
     this.trainingSub?.unsubscribe();
     this.projectDataChangesSub?.unsubscribe();
+    this.draftAppliedSub?.unsubscribe();
     this.metricsSession?.dispose();
     this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();
