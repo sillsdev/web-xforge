@@ -821,6 +821,20 @@ public class MachineApiService(
             );
         }
 
+        // If we have any mixed sources, sync those next, but only if we are uploading a Paratext project
+        foreach (TranslateSource mixSource in projectDoc.Data.TranslateConfig.DraftConfig.MixSources ?? [])
+        {
+            jobId = await syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ParentJobId = jobId,
+                    ProjectId = mixSource.ProjectRef,
+                    TargetOnly = true,
+                    UserId = curUserId,
+                }
+            );
+        }
+
         // Run the training after the sync has completed
         jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             jobId,

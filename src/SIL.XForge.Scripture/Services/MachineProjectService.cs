@@ -665,8 +665,8 @@ public class MachineProjectService(
             .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
             .Key;
 
-        // Get the files we have already synced
-        var oldSourceCorpusFiles = new List<ServalCorpusFile>();
+        // Get the source files we have already synced
+        List<ServalCorpusFile> oldSourceCorpusFiles = [];
         if (!string.IsNullOrWhiteSpace(corpusId))
         {
             oldSourceCorpusFiles = projectSecret.ServalData.Corpora[corpusId].SourceFiles;
@@ -702,6 +702,7 @@ public class MachineProjectService(
             useSourceAsAlternateTrainingSource = !useAlternateTrainingSource;
         }
 
+        // Update the source files
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             targetProjectId: project.Id,
             sourceProjectId,
@@ -714,7 +715,28 @@ public class MachineProjectService(
             cancellationToken
         );
 
-        // Get the files we have already synced
+        // We can only mix in Paratext zip files on pre-translation
+        if (preTranslate && uploadParatextZipFile)
+        {
+            // Mix in any other sources specified
+            foreach (TranslateSource mixSource in project.TranslateConfig.DraftConfig.MixSources ?? [])
+            {
+                // Update the mixed in source files
+                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                    targetProjectId: project.Id,
+                    sourceProjectId: mixSource.ProjectRef,
+                    mixSource.ParatextId,
+                    includeBlankSegments: true,
+                    uploadParatextZipFile,
+                    texts: [],
+                    oldSourceCorpusFiles,
+                    newSourceCorpusFiles,
+                    cancellationToken
+                );
+            }
+        }
+
+        // Get the target files we have already synced
         List<ServalCorpusFile> oldTargetCorpusFiles = [];
         if (!string.IsNullOrWhiteSpace(corpusId))
         {
@@ -734,6 +756,7 @@ public class MachineProjectService(
             );
         }
 
+        // Update the target files
         List<ServalCorpusFile> newTargetCorpusFiles = [];
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             targetProjectId: project.Id,
@@ -746,6 +769,7 @@ public class MachineProjectService(
             newTargetCorpusFiles,
             cancellationToken
         );
+
         // Get the files we have already synced for the alternate training source
         List<ServalCorpusFile> oldAlternateTrainingSourceCorpusFiles = [];
         if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
@@ -778,6 +802,7 @@ public class MachineProjectService(
                 texts = Array.Empty<ISFText>();
             }
 
+            // Update the alternate training source files
             corpusUpdated |= await UploadNewCorpusFilesAsync(
                 targetProjectId: project.Id,
                 sourceProjectId: project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef,
@@ -945,7 +970,7 @@ public class MachineProjectService(
                         .TargetFiles;
                 }
 
-                // Upload the source files
+                // Upload the source files for the training data
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
                     targetProjectId: project.Id,
                     sourceProjectId: project.Id,
@@ -958,7 +983,7 @@ public class MachineProjectService(
                     cancellationToken
                 );
 
-                // Upload the target files
+                // Upload the target files for the training data
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
                     targetProjectId: project.Id,
                     sourceProjectId: project.Id,
@@ -1096,6 +1121,35 @@ public class MachineProjectService(
                             alternateSourceSettings.LanguageTag
                         );
                 });
+            }
+        }
+
+        // If there are mix in sources, ensure that their writing system and RTL is correct
+        if (projectDoc.Data.TranslateConfig.DraftConfig.MixSources is not null)
+        {
+            for (int i = 0; i < projectDoc.Data.TranslateConfig.DraftConfig.MixSources.Count; i++)
+            {
+                ParatextSettings? mixSourceSettings = paratextService.GetParatextSettings(
+                    userSecret,
+                    projectDoc.Data.TranslateConfig.DraftConfig.MixSources[i].ParatextId
+                );
+                if (mixSourceSettings is not null)
+                {
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        // Capture the variable in this scope from the outer scope
+                        int j = i;
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.MixSources[j].IsRightToLeft,
+                            mixSourceSettings.IsRightToLeft
+                        );
+                        if (mixSourceSettings.LanguageTag is not null)
+                            op.Set(
+                                pd => pd.TranslateConfig.DraftConfig.MixSources[j].WritingSystem.Tag,
+                                mixSourceSettings.LanguageTag
+                            );
+                    });
+                }
             }
         }
     }
@@ -1718,9 +1772,14 @@ public class MachineProjectService(
                 string textFileData = GetTextFileData(text, includeBlankSegments);
                 if (!string.IsNullOrWhiteSpace(textFileData))
                 {
-                    // Remove the project id from the start of the text id (if present)
+                    // Remove the target project id from the start of the text id (if present)
                     string textId = text.Id.StartsWith($"{targetProjectId}_")
                         ? text.Id[(targetProjectId.Length + 1)..]
+                        : text.Id;
+
+                    // Remove the source project id from the start of the text id (if present)
+                    textId = text.Id.StartsWith($"{sourceProjectId}_")
+                        ? text.Id[(sourceProjectId.Length + 1)..]
                         : text.Id;
 
                     // Upload the text file
