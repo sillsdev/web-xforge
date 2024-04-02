@@ -17,6 +17,7 @@ import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
+import { PermissionsService } from 'src/app/core/permissions.service';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -42,6 +43,7 @@ const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedUserService = mock(UserService);
+const mockedPermissionService = mock(PermissionsService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
@@ -61,7 +63,8 @@ describe('TranslateOverviewComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mock(CookieService) }
+      { provide: CookieService, useMock: mock(CookieService) },
+      { provide: PermissionsService, useMock: mockedPermissionService }
     ]
   }));
 
@@ -364,6 +367,7 @@ class TestEnvironment {
     const projectId: string = projectConfig.projectId ?? 'project01';
     const translationSuggestionsEnabled = projectConfig.translationSuggestionsEnabled ?? true;
     const textPermission: TextInfoPermission = projectConfig?.textPermission ?? TextInfoPermission.Write;
+    when(mockedPermissionService.canAccessText(anything())).thenResolve(textPermission !== TextInfoPermission.None);
 
     // Setup the project data
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
