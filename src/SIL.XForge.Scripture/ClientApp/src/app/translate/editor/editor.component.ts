@@ -53,7 +53,17 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
-import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
+import {
+  asyncScheduler,
+  BehaviorSubject,
+  combineLatest,
+  fromEvent,
+  merge,
+  of,
+  Subject,
+  Subscription,
+  timer
+} from 'rxjs';
 import {
   debounceTime,
   delayWhen,
@@ -225,7 +235,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
-  private readonly fabCushion = 5;
+  readonly fabVerticalCushion = 5;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -767,9 +777,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
 
     // Throttle bursts of sync scroll requests
-    this.syncScrollRequested$.pipe(takeUntilDestroyed(this.destroyRef), throttleTime(200)).subscribe(() => {
-      this.syncScroll();
-    });
+    this.syncScrollRequested$
+      .pipe(takeUntilDestroyed(this.destroyRef), throttleTime(100, asyncScheduler, { leading: true, trailing: true }))
+      .subscribe(() => {
+        this.syncScroll();
+      });
   }
 
   ngOnDestroy(): void {
@@ -2246,8 +2258,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const bounds: DOMRect = scrollContainer.getBoundingClientRect();
-    const fabTop = this.target.selectionBoundsTop - this.fabCushion;
-    const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + this.fabCushion;
+    const fabTop = this.target.selectionBoundsTop - this.fabVerticalCushion;
+    const fabBottom = this.target.selectionBoundsTop + this.fabDiameter + this.fabVerticalCushion;
 
     // Editor top is FAB upper bound
     const fabTopAdjustment = Math.min(fabTop, scrollContainer.scrollTop);
