@@ -114,7 +114,7 @@ public class MachineProjectServiceTests
     public async Task BuildProjectAsync_CallsServalIfTranslationEngineIdPresent()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -513,7 +513,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                HasTranslationEngineForSmt = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
         );
         await env.SetDataInSync(Project02);
 
@@ -710,7 +715,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                HasTranslationEngineForSmt = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
         );
 
         // Make the Serval API return the translation engine
@@ -957,6 +967,28 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectForBackgroundJobAsync_RecordsDataNotFoundExceptionAsWarning()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            new BuildConfig { ProjectId = "project_does_not_exist" },
+            preTranslate: false,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(
+            logEvent =>
+                logEvent.Message.Contains("DataNotFoundException", StringComparison.OrdinalIgnoreCase)
+                && logEvent.LogLevel == LogLevel.Warning
+        );
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
     public async Task BuildProjectForBackgroundJobAsync_RecordsErrors()
     {
         // Set up test environment
@@ -972,10 +1004,31 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Error);
         env.ExceptionHandler.Received().ReportException(ex);
         Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueuedAt);
         Assert.AreEqual(ex.Message, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationErrorMessage);
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_DoesNotUpdatePreTranslationSecretsOnSmtErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+        ServalApiException ex = ServalApiExceptions.Forbidden;
+        env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None).Throws(ex);
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex && logEvent.LogLevel == LogLevel.Error);
+        env.ExceptionHandler.Received().ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationErrorMessage);
     }
 
     [Test]
@@ -1080,7 +1133,7 @@ public class MachineProjectServiceTests
     public async Task RemoveProjectAsync_CallsServalIfTranslationEngineIdPresent()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
 
         // SUT
         await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
@@ -1198,7 +1251,9 @@ public class MachineProjectServiceTests
     public async Task SyncProjectCorporaAsync_CreatesRemoteDataFileForNewLocalText()
     {
         // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { HasTranslationEngineForSmt = true, LocalSourceTextHasData = true }
+        );
         await env.NoFilesSynced(Project02);
 
         // SUT
@@ -1223,7 +1278,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                HasTranslationEngineForSmt = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
         );
         await env.SetDataInSync(Project02);
 
@@ -1244,7 +1304,7 @@ public class MachineProjectServiceTests
     public async Task SyncProjectCorporaAsync_DoesNotUpdateRemoteIfNoLocalText()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
         await env.NoFilesSynced(Project02);
 
         // SUT
@@ -1269,6 +1329,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment(
             new TestEnvironmentOptions
             {
+                HasTranslationEngineForSmt = true,
                 LocalSourceTextHasData = true,
                 LocalTargetTextHasData = true,
                 AlternateTrainingSourceConfigured = true,
@@ -1373,7 +1434,9 @@ public class MachineProjectServiceTests
     public async Task SyncProjectCorporaAsync_UpdatesRemoteCorpusIfLocalTextChanges()
     {
         // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { HasTranslationEngineForSmt = true, LocalSourceTextHasData = true }
+        );
 
         // Set sync state so that there is one file and the local copy has changed since last sync
         await env.ProjectSecrets.UpdateAsync(
@@ -1421,7 +1484,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                HasTranslationEngineForSmt = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
         );
 
         // Set the sync state so that there are two files on remote that no longer exist locally
@@ -1466,7 +1534,7 @@ public class MachineProjectServiceTests
     public async Task SyncProjectCorporaAsync_DoesNotCrashWhenDeletingAlreadyDeletedRemoteFiles()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
 
         // Make the Serval API return the error code for an already deleted file
         env.DataFilesClient.DeleteAsync("File03", CancellationToken.None).Throws(ServalApiExceptions.NotFound);
@@ -1790,7 +1858,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                HasTranslationEngineForSmt = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
         );
         await env.SetDataInSync(Project02);
 
@@ -1824,7 +1897,12 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment(
-            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+            new TestEnvironmentOptions
+            {
+                HasTranslationEngineForSmt = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
         );
         await env.SetDataInSync(Project02);
 
@@ -2168,13 +2246,14 @@ public class MachineProjectServiceTests
         public bool AlternateTrainingSourceConfigured { get; init; }
         public bool AlternateTrainingSourceEnabled { get; init; }
         public bool BuildIsPending { get; init; }
-        public bool PreTranslationBuildIsQueued { get; init; }
-        public bool UseEchoForPreTranslation { get; init; }
+        public bool HasTranslationEngineForSmt { get; init; }
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
+        public bool PreTranslationBuildIsQueued { get; init; }
         public bool SendAllSegments { get; init; }
         public string? ServalConfig { get; init; }
         public bool UploadParatextZipForPreTranslation { get; init; }
+        public bool UseEchoForPreTranslation { get; init; }
     }
 
     private class TestEnvironment
@@ -2356,7 +2435,7 @@ public class MachineProjectServiceTests
                         {
                             PreTranslationJobId = options.PreTranslationBuildIsQueued ? "jobId" : null,
                             PreTranslationQueuedAt = options.PreTranslationBuildIsQueued ? DateTime.UtcNow : null,
-                            TranslationEngineId = TranslationEngine02,
+                            TranslationEngineId = options.HasTranslationEngineForSmt ? TranslationEngine02 : null,
                             Corpora = new Dictionary<string, ServalCorpus>
                             {
                                 {

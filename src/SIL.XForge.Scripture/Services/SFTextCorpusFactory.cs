@@ -54,7 +54,9 @@ public class SFTextCorpusFactory(
         var texts = new List<ISFText>();
         foreach (string projectId in projects)
         {
-            SFProject project = await realtimeService.GetSnapshotAsync<SFProject>(projectId);
+            SFProject project =
+                await realtimeService.GetSnapshotAsync<SFProject>(projectId)
+                ?? throw new DataNotFoundException("The project does not exist.");
             List<TextInfo> projectTexts = project.Texts.Where(t => t.HasSource).ToList();
             List<int> books = [];
             string textCorpusProjectId;
