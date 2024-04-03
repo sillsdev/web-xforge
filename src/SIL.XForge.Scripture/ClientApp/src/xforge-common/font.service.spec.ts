@@ -1,4 +1,5 @@
 import { FontService, FONT_FACE_DEFINITIONS, FONT_FACE_FALLBACKS } from './font.service';
+import { MockConsole } from './mock-console';
 
 // Mocking the document with ts-mockito does not work because the type definitions for document.fonts does not include
 // the add method
@@ -10,6 +11,8 @@ class FakeDocument {
     }
   };
 }
+
+const mockedConsole: MockConsole = MockConsole.install();
 
 describe('FontService', () => {
   let fontService: FontService;
@@ -24,7 +27,10 @@ describe('FontService', () => {
   });
 
   it('should default to Charis SIL when font is not recognized', () => {
+    mockedConsole.expectAndHide(/No font definition/);
     expect(fontService.getCSSFontName('zyz123')).toEqual('Charis SIL');
+    mockedConsole.verify();
+    mockedConsole.reset();
   });
 
   it('should default to Charis SIL for proprietary serif fonts', () => {
