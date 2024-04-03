@@ -15,7 +15,11 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
-import { ProjectType, TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  DraftConfig,
+  ProjectType,
+  TranslateConfig
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -197,14 +201,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateSourceEnabled: true
+          } as DraftConfig,
           preTranslate: true
         });
         env.wait();
@@ -232,14 +230,8 @@ describe('SettingsComponent', () => {
                 tag: 'qaa'
               }
             },
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateSourceEnabled: true
+          } as DraftConfig,
           preTranslate: true
         });
         when(mockedParatextService.getProjects()).thenResolve([
@@ -267,14 +259,8 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: true,
           draftConfig: {
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          }
+            alternateSourceEnabled: true
+          } as DraftConfig
         });
         env.wait();
         env.wait();
@@ -289,14 +275,8 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: false,
           draftConfig: {
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateSourceEnabled: true
+          } as DraftConfig,
           projectType: ProjectType.BackTranslation
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
@@ -310,14 +290,8 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: true,
           draftConfig: {
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          }
+            alternateSourceEnabled: true
+          } as DraftConfig
         });
         env.wait();
         env.wait();
@@ -340,14 +314,8 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: true,
           draftConfig: {
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateSourceEnabled: true
+          } as DraftConfig,
           projectType: ProjectType.BackTranslation
         });
         env.wait();
@@ -369,14 +337,8 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: false,
           draftConfig: {
-            alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          }
+            alternateSourceEnabled: true
+          } as DraftConfig
         });
         env.wait();
         env.wait();
@@ -389,14 +351,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: true,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
           preTranslate: true
         });
         env.wait();
@@ -424,14 +380,8 @@ describe('SettingsComponent', () => {
                 tag: 'qaa'
               }
             },
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: true,
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
           preTranslate: true
         });
         env.wait();
@@ -461,14 +411,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: true,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
           preTranslate: true
         });
         env.wait();
@@ -493,14 +437,8 @@ describe('SettingsComponent', () => {
                 tag: 'qaa'
               }
             },
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: true,
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
           preTranslate: true
         });
         when(mockedParatextService.getProjects()).thenResolve([
@@ -542,14 +480,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: true,
-            additionalTrainingData: false
-          },
+            sendAllSegments: true
+          } as DraftConfig,
           preTranslate: true
         });
         env.wait();
@@ -581,14 +513,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: true
-          },
+          } as DraftConfig,
           preTranslate: true
         });
         env.wait();
@@ -615,15 +541,6 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           preTranslate: false,
-          draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
           projectType: ProjectType.BackTranslation
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
@@ -653,18 +570,7 @@ describe('SettingsComponent', () => {
 
       it('should display for system administrators on forward translations when not approved', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          preTranslate: false,
-          draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
-            additionalTrainingData: false
-          }
-        });
+        env.setupProject();
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
         env.wait();
         env.wait();
@@ -697,15 +603,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
-            servalConfig: '{}',
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: false,
-            sendAllSegments: false,
-            additionalTrainingData: false
-          },
+            servalConfig: '{}'
+          } as DraftConfig,
           preTranslate: true
         });
         when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
@@ -1424,7 +1323,9 @@ class TestEnvironment {
         alternateSourceEnabled: false,
         alternateTrainingSourceEnabled: false,
         sendAllSegments: false,
-        additionalTrainingData: false
+        additionalTrainingData: false,
+        mixSourcesEnabled: false,
+        mixSources: []
       }
     },
     checkingConfig: Partial<CheckingConfig> = {
