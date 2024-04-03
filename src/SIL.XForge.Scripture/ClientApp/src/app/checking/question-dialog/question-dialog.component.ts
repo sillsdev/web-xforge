@@ -6,8 +6,8 @@ import {
   MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
 } from '@angular/material/legacy-dialog';
 import { translate } from '@ngneat/transloco';
-import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from '@sillsdev/scripture';
+import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -15,6 +15,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { QuestionDoc } from '../../core/models/question-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import {
@@ -28,6 +29,7 @@ import { AudioAttachment } from '../checking/checking-audio-recorder/checking-au
 
 export interface QuestionDialogData {
   questionDoc?: QuestionDoc;
+  projectDoc: SFProjectProfileDoc;
   textsByBookId: TextsByBookId;
   projectId: string;
   defaultVerse?: VerseRef;
@@ -117,6 +119,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   get isTextRightToLeft(): boolean {
     return this.data.isRightToLeft == null ? false : this.data.isRightToLeft;
+  }
+
+  get projectDoc(): SFProjectProfileDoc {
+    return this.data.projectDoc;
   }
 
   ngOnInit(): void {

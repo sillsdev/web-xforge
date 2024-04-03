@@ -348,7 +348,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   async questionDialog(): Promise<void> {
-    if (this._questionDoc == null || this._questionDoc.data == null) {
+    if (this._questionDoc?.data == null || this._projectProfileDoc == null) {
       return;
     }
     const projectId = this._questionDoc.data.projectRef;
@@ -366,6 +366,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
     const data: QuestionDialogData = {
       questionDoc: this._questionDoc,
+      projectDoc: this._projectProfileDoc,
       textsByBookId: this.textsByBookId!,
       projectId,
       isRightToLeft: this.project?.isRightToLeft

@@ -466,6 +466,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
     const data: QuestionDialogData = {
       questionDoc,
+      projectDoc: this.projectDoc,
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id,
       isRightToLeft: this.projectDoc.data?.isRightToLeft

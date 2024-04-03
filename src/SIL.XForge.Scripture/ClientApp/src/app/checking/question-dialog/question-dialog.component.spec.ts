@@ -14,6 +14,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
@@ -581,9 +582,15 @@ class TestEnvironment {
       questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId);
       questionDoc.onlineFetch();
     }
+    this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
+      id: 'project01',
+      data: createTestProjectProfile()
+    });
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
     const config: MatDialogConfig<QuestionDialogData> = {
       data: {
         questionDoc,
+        projectDoc,
         textsByBookId: {
           MAT: {
             bookNum: 40,
