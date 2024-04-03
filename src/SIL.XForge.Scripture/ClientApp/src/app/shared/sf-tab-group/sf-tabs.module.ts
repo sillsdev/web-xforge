@@ -1,4 +1,4 @@
-import { CdkDrag, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,9 +30,7 @@ import { TabComponent } from './tab/tab.component';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    CdkDrag,
-    CdkDropList,
-    CdkDropListGroup,
+    DragDropModule,
     TranslocoModule
   ],
   exports: [TabGroupComponent, TabComponent, TabHeaderDirective]
