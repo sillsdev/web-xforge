@@ -55,6 +55,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
   isScrollBoundsStart = false;
   isScrollBoundsEnd = false;
+  direction: LocaleDirection = 'ltr';
 
   // Used to time scroll movements while scrolling via left/right scroll buttons
   private scrollTimer$ = interval(20).pipe(takeUntilDestroyed(this.destroyRef));
@@ -62,7 +63,6 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   private scrollButtonSubscription?: Subscription;
   private resizeObserver?: ResizeObserver;
   private dirMutObserver?: MutationObserver;
-  private direction: LocaleDirection = 'ltr';
   private overflowing$ = new BehaviorSubject(false);
   private tabsWrapper!: HTMLElement;
 
@@ -113,8 +113,23 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     this.dirMutObserver?.disconnect();
   }
 
-  movablePredicate(index: number, _draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
-    const tabToMove: CdkDrag<any> = dropList.getSortedItems()[index];
+  movablePredicate(index: number, draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
+    const dropListItems = dropList.getSortedItems();
+    const isGroupTransfer = !dropListItems.includes(draggingTab);
+    let dragIndex: number = index;
+
+    // As of (v16), CDK drag and drop seems to have some issues transferring horizontally-oriented items in RTL
+    if (this.direction === 'rtl') {
+      // Reverse the index if RTL.  The sorted items are in DOM order.
+      dragIndex = dropListItems.length - 1 - index;
+
+      // Adjust for 1 less drop list item, as the index references the wrong item when transferring groups in RTL
+      if (isGroupTransfer) {
+        dragIndex += 1;
+      }
+    }
+
+    const tabToMove: CdkDrag<any> = dropListItems[dragIndex];
     return tabToMove != null && (tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable);
   }
 
