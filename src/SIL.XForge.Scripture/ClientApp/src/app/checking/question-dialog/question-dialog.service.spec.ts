@@ -167,6 +167,7 @@ class TestEnvironment {
   readonly service: QuestionDialogService;
   readonly mockedDialogRef = mock<MatDialogRef<QuestionDialogComponent, QuestionDialogResult | 'close'>>(MatDialogRef);
   textsByBookId: TextsByBookId;
+  projectDoc: SFProjectDoc;
   matthewText: TextInfo = {
     bookNum: 40,
     hasSource: false,
@@ -198,6 +199,7 @@ class TestEnvironment {
       id: this.PROJECT01,
       data: this.testProject
     });
+    this.projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
 
     when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
     when(mockedUserService.currentUserId).thenReturn(this.adminUser.id);
@@ -231,7 +233,7 @@ class TestEnvironment {
   }
 
   getQuestionDialogData(questionDoc?: QuestionDoc): QuestionDialogData {
-    return { questionDoc, textsByBookId: this.textsByBookId, projectId: this.PROJECT01 };
+    return { questionDoc, projectDoc: this.projectDoc, textsByBookId: this.textsByBookId, projectId: this.PROJECT01 };
   }
 
   updateUserRole(role: string): void {

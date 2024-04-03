@@ -14,6 +14,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -28,6 +29,7 @@ import { AudioAttachment } from '../checking/checking-audio-recorder/checking-au
 
 export interface QuestionDialogData {
   questionDoc?: QuestionDoc;
+  projectDoc: SFProjectProfileDoc;
   textsByBookId: TextsByBookId;
   projectId: string;
   defaultVerse?: VerseRef;
@@ -117,6 +119,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   get isTextRightToLeft(): boolean {
     return this.data.isRightToLeft == null ? false : this.data.isRightToLeft;
+  }
+
+  get projectDoc(): SFProjectProfileDoc {
+    return this.data.projectDoc;
   }
 
   ngOnInit(): void {
