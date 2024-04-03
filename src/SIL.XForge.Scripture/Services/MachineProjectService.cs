@@ -1692,9 +1692,7 @@ public class MachineProjectService(
                         : text.Id;
 
                     // Remove the source project id from the start of the text id (if present)
-                    textId = text.Id.StartsWith($"{sourceProjectId}_")
-                        ? text.Id[(sourceProjectId.Length + 1)..]
-                        : text.Id;
+                    textId = textId.StartsWith($"{sourceProjectId}_") ? textId[(sourceProjectId.Length + 1)..] : textId;
 
                     // Upload the text file
                     corpusUpdated |= await UploadFileAsync(
