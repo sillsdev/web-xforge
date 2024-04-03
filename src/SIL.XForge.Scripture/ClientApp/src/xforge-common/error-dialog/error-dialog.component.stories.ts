@@ -1,15 +1,15 @@
 import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
 import {
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
   MatLegacyDialog as MatDialog,
-  MatLegacyDialogConfig as MatDialogConfig
+  MatLegacyDialogConfig as MatDialogConfig,
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
 } from '@angular/material/legacy-dialog';
 
-import { Meta, StoryFn } from '@storybook/angular';
 import { CommonModule } from '@angular/common';
+import { Meta, StoryFn } from '@storybook/angular';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { UICommonModule } from '../ui-common.module';
-import { ErrorDialogComponent, ErrorAlertData } from './error-dialog.component';
+import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
 interface StoryArgs {
   browserUnsupported: true;

@@ -1,10 +1,10 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Auth0Client, Auth0ClientOptions, GetTokenSilentlyVerboseResponse } from '@auth0/auth0-spa-js';
-import { HttpClient } from '@angular/common/http';
-import { AUTH0_SCOPE } from 'xforge-common/auth.service';
 import { CookieService } from 'ngx-cookie-service';
-import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { lastValueFrom } from 'rxjs';
+import { AUTH0_SCOPE } from 'xforge-common/auth.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { environment } from '../environments/environment';
 
 interface ResourceOwnerTokenEndpoint {

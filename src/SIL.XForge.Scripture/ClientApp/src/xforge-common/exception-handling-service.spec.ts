@@ -1,16 +1,16 @@
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
-import { NotifiableError } from '@bugsnag/js';
-import { Breadcrumb } from '@bugsnag/js';
+import { Breadcrumb, NotifiableError } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { Observable } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
+import { DialogService } from './dialog.service';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
 import { ExceptionHandlingService } from './exception-handling-service';
@@ -18,7 +18,6 @@ import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
-import { DialogService } from './dialog.service';
 
 const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);

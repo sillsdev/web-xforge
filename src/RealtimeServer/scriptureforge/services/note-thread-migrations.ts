@@ -1,6 +1,6 @@
 import { Doc, Op } from 'sharedb/lib/client';
-import { submitMigrationOp } from '../../common/realtime-server';
 import { DocMigration, MigrationConstructor } from '../../common/migration';
+import { submitMigrationOp } from '../../common/realtime-server';
 
 class NoteThreadMigration1 extends DocMigration {
   static readonly VERSION = 1;

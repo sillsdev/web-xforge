@@ -3,15 +3,15 @@ import { Delta } from 'rich-text';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { createTestUser } from '../../common/models/user-test-data';
 import { User, USERS_COLLECTION } from '../../common/models/user';
+import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
-import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
-import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { createTestProject } from '../models/sf-project-test-data';
+import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TextService } from './text-service';
 
 ShareDB.types.register(RichText.type);

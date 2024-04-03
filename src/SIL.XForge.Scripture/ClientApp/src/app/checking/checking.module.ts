@@ -9,6 +9,7 @@ import { AudioPlayerComponent } from '../shared/audio/audio-player/audio-player.
 import { AudioTimePipe } from '../shared/audio/audio-time-pipe';
 import { SharedModule } from '../shared/shared.module';
 import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
+import { ChapterAudioDialogComponent } from './chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
 import { CheckingRoutingModule } from './checking-routing.module';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
@@ -25,7 +26,6 @@ import { FontSizeComponent } from './checking/font-size/font-size.component';
 import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
 import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
-import { ChapterAudioDialogComponent } from './chapter-audio-dialog/chapter-audio-dialog.component';
 
 @NgModule({
   declarations: [

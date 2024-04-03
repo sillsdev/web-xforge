@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import clone from 'lodash-es/clone';
 import isEqual from 'lodash-es/isEqual';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import { fromEvent, Subscription } from 'rxjs';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { FontService } from 'xforge-common/font.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shared/utils';

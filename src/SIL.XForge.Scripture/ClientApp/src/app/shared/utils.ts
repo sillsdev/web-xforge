@@ -1,7 +1,7 @@
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
 

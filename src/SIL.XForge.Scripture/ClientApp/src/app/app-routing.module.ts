@@ -4,13 +4,13 @@ import { AuthGuard } from 'xforge-common/auth.guard';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
+import { JoinComponent } from './join/join.component';
 import { ProjectComponent } from './project/project.component';
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
-import { JoinComponent } from './join/join.component';
 
 const routes: Routes = [
   { path: 'callback/auth0', component: StartComponent, canActivate: [AuthGuard] },

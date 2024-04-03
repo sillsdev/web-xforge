@@ -1,12 +1,12 @@
-import { anything, capture, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { HttpClient } from '@angular/common/http';
-import { configureTestingModule } from 'xforge-common/test-utils';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Auth0Service, TransparentAuthenticationCookie } from 'xforge-common/auth0.service';
 import { Auth0ClientOptions, GenericError, GetTokenSilentlyVerboseResponse } from '@auth0/auth0-spa-js';
-import { of } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
+import { of } from 'rxjs';
+import { anything, capture, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { Auth0Service, TransparentAuthenticationCookie } from 'xforge-common/auth0.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { environment } from '../environments/environment';
 
 const mockedHttpClient = mock(HttpClient);

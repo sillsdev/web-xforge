@@ -2,10 +2,10 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { WINDOW } from 'xforge-common/browser-globals';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from './location.service';
-import { PwaService, PWA_CHECK_FOR_UPDATES, InstallPromptOutcome } from './pwa.service';
+import { InstallPromptOutcome, PwaService, PWA_CHECK_FOR_UPDATES } from './pwa.service';
 
 const mockedSwUpdate = mock(SwUpdate);
 const mockedLocationService = mock(LocationService);

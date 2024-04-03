@@ -1,23 +1,23 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
-import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
+import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import {
-  VerseRefData,
   toStartAndEndVerseRefs,
-  toVerseRef
+  toVerseRef,
+  VerseRefData
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { QuestionDoc } from '../../../../core/models/question-doc';
-import { SFProjectService } from '../../../../core/sf-project.service';
-import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
+import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
+import { SFProjectService } from '../../../../core/sf-project.service';
 import { CheckingUtils } from '../../../checking.utils';
+import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
 
 @Component({
   selector: 'app-checking-question',

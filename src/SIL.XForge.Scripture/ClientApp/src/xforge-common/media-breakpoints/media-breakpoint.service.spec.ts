@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MediaBreakpointService, Breakpoint } from './media-breakpoint.service';
+import { Breakpoint, MediaBreakpointService } from './media-breakpoint.service';
 
 describe('MediaBreakpointService', () => {
   let service: MediaBreakpointService;

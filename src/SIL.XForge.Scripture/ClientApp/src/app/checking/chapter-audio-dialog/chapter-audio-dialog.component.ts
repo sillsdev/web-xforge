@@ -1,30 +1,30 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import {
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
-  MatLegacyDialogRef as MatDialogRef
+  MatLegacyDialogRef as MatDialogRef,
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
 } from '@angular/material/legacy-dialog';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { QuestionDoc } from 'src/app/core/models/question-doc';
+import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { filter } from 'rxjs/operators';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService, formatFileSource } from 'xforge-common/file.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { objectId } from 'xforge-common/utils';
-import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { filter } from 'rxjs/operators';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { objectId } from 'xforge-common/utils';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { SFProjectService } from '../../core/sf-project.service';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
-import { SFProjectService } from '../../core/sf-project.service';
 
 const TIMING_FILE_EXTENSION_REGEX = /.(tsv|csv|txt)$/i;
 

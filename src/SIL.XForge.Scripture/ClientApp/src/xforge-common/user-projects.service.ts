@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
+import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
-import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { environment } from '../environments/environment';
 import { AuthService, LoginResult } from './auth.service';
 import { UserDoc } from './models/user-doc';

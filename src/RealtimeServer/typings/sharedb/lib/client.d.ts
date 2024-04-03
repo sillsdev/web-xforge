@@ -4,20 +4,20 @@ import WS from 'ws';
 import { ClientRequest, Op, RawOp, Snapshot } from './common';
 
 export {
-  Op,
   AddNumOp,
-  ListMoveOp,
-  ListInsertOp,
   ListDeleteOp,
+  ListInsertOp,
+  ListMoveOp,
   ListReplaceOp,
-  StringInsertOp,
-  StringDeleteOp,
-  ObjectInsertOp,
   ObjectDeleteOp,
+  ObjectInsertOp,
   ObjectReplaceOp,
-  SubtypeOp,
+  Op,
+  Path,
   RawOp,
-  Path
+  StringDeleteOp,
+  StringInsertOp,
+  SubtypeOp
 } from './common';
 
 export class Connection extends EventEmitter {

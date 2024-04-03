@@ -12,12 +12,12 @@
 //   Show a list of books in each project: ./show-project.ts --books
 //   Show a textdoc: ./show-projects.ts --proj ABC --book RUT --chapter 1 --text --no-color > out.json
 
-import { MongoClient, Db, Collection } from 'mongodb';
+import { Canon } from '@sillsdev/scripture';
+import { Collection, Db, MongoClient } from 'mongodb';
+import { Connection } from 'sharedb/lib/client';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { Connection } from 'sharedb/lib/client';
-import { colored, colors, ConnectionSettings, databaseConfigs, useColor, createWS } from './utils';
-import { Canon } from '@sillsdev/scripture';
+import { colored, colors, ConnectionSettings, createWS, databaseConfigs, useColor } from './utils';
 
 type ProgArgs = {
   color: boolean;

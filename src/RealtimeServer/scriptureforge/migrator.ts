@@ -2,11 +2,11 @@ import fs from 'fs';
 import { MongoClient } from 'mongodb';
 import ShareDB from 'sharedb';
 import ShareDBMongo from 'sharedb-mongo';
+import '../common/diagnostics';
 import { ExceptionReporter } from '../common/exception-reporter';
 import { MetadataDB } from '../common/metadata-db';
 import { SchemaVersionRepository } from '../common/schema-version-repository';
 import SFRealtimeServer from './realtime-server';
-import '../common/diagnostics';
 
 console.log(`Migrator has been invoked with ${JSON.stringify(process.argv.slice(2))}`);
 

@@ -2,9 +2,9 @@ import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import {
-  SF_PROJECT_USER_CONFIG_INDEX_PATHS,
+  SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SFProjectUserConfig
+  SF_PROJECT_USER_CONFIG_INDEX_PATHS
 } from '../models/sf-project-user-config';
 import { SFProjectDataService } from './sf-project-data-service';
 import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';

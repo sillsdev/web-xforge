@@ -1,19 +1,19 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
+import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
+import { DialogService } from '../dialog.service';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
-import { DialogService } from '../dialog.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface ProjectInfo {

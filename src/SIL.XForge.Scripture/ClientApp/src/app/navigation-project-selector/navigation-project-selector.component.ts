@@ -1,14 +1,14 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { CommonModule } from '@angular/common';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { projectLabel } from '../shared/utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SelectableProject } from '../core/paratext.service';
+import { projectLabel } from '../shared/utils';
 
 @Component({
   standalone: true,

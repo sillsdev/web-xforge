@@ -1,4 +1,4 @@
-import { Observable, from } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { filterNullish } from './rxjs-util';
 
 describe('filterNullUndefined', () => {

@@ -1,5 +1,5 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AudioPlayerStub } from 'src/app/checking/checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from 'src/app/checking/checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { SFProjectService } from 'src/app/core/sf-project.service';
