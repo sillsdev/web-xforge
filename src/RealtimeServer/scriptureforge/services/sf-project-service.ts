@@ -1,7 +1,11 @@
 import ShareDB from 'sharedb';
+import { ConnectSession } from '../../common/connect-session';
 import { MigrationConstructor } from '../../common/migration';
-import { ProjectDomainConfig } from '../../common/services/project-data-service';
+import { Operation } from '../../common/models/project-rights';
+import { SystemRole } from '../../common/models/system-role';
+import { ValidationSchema } from '../../common/models/validation-schema';
 import { RealtimeServer } from '../../common/realtime-server';
+import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ProjectService } from '../../common/services/project-service';
 import {
   SFProject,
@@ -9,12 +13,8 @@ import {
   SF_PROJECT_INDEX_PATHS,
   SF_PROJECT_PROFILES_COLLECTION
 } from '../models/sf-project';
-import { SFProjectRole } from '../models/sf-project-role';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
-import { ConnectSession } from '../../common/connect-session';
-import { Operation } from '../../common/models/project-rights';
-import { SystemRole } from '../../common/models/system-role';
-import { ValidationSchema } from '../../common/models/validation-schema';
+import { SFProjectRole } from '../models/sf-project-role';
 
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,

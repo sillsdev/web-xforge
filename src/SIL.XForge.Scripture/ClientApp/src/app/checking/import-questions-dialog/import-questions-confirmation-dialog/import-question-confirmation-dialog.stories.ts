@@ -1,9 +1,9 @@
 import { Meta } from '@storybook/angular';
+import { MatDialogLaunchComponent, matDialogStory } from '../../../../../.storybook/story-utils';
 import {
   ImportQuestionsConfirmationDialogComponent,
   ImportQuestionsConfirmationDialogData
 } from './import-question-confirmation-dialog.component';
-import { MatDialogLaunchComponent, matDialogStory } from '.storybook/story-utils';
 
 const meta: Meta = {
   title: 'Import/Import Questions',

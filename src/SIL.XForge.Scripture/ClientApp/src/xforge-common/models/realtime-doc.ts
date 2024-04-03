@@ -1,10 +1,10 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { Presence } from 'sharedb/lib/sharedb';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { RealtimeDocAdapter } from '../realtime-remote-store';
 import { PresenceData } from '../../app/shared/text/text.component';
-import { Snapshot } from './snapshot';
+import { RealtimeDocAdapter } from '../realtime-remote-store';
 import { RealtimeOfflineData } from './realtime-offline-data';
+import { Snapshot } from './snapshot';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;

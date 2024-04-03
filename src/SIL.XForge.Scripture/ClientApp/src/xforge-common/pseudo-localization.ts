@@ -1,5 +1,5 @@
-import { Locale } from './models/i18n-locale';
 import { DateFormat } from './i18n.service';
+import { Locale } from './models/i18n-locale';
 
 function pseudoLocalizeCharacter(char: string): string {
   const lowerA = 'a'.charCodeAt(0);

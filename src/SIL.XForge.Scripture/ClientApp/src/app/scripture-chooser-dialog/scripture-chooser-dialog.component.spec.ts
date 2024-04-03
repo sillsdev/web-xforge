@@ -1,24 +1,23 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { DebugElement, NgModule } from '@angular/core';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import {
   MatLegacyDialog as MatDialog,
   MatLegacyDialogConfig as MatDialogConfig,
   MatLegacyDialogModule as MatDialogModule,
   MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { fakeAsync, flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import { mock } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 

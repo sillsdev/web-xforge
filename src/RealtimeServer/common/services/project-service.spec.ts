@@ -1,10 +1,10 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { createTestUser } from '../models/user-test-data';
 import { Project } from '../models/project';
 import { SystemRole } from '../models/system-role';
 import { User, USERS_COLLECTION } from '../models/user';
+import { createTestUser } from '../models/user-test-data';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from '../utils/test-utils';

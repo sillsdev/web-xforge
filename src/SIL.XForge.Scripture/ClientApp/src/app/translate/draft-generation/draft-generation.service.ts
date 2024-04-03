@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { Observable, of, throwError, timer, EMPTY } from 'rxjs';
+import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { BuildDto } from '../../machine-api/build-dto';

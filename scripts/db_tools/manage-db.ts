@@ -41,8 +41,8 @@
   "
 */
 
-import * as RichText from 'rich-text';
 import { Db, MongoClient } from 'mongodb';
+import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
 import { Connection } from 'sharedb/lib/client';
 import WebSocket from 'ws';

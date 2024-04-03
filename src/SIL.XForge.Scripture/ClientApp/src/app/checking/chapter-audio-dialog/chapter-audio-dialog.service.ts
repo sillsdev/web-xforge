@@ -1,7 +1,7 @@
-import { DialogService } from 'xforge-common/dialog.service';
-import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { Injectable } from '@angular/core';
+import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { firstValueFrom } from 'rxjs';
+import { DialogService } from 'xforge-common/dialog.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   ChapterAudioDialogComponent,

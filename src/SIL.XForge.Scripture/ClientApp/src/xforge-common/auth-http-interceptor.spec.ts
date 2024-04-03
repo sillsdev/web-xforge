@@ -1,9 +1,9 @@
-import { HTTP_INTERCEPTORS, HttpClient, HttpErrorResponse, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpRequest, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { mock, verify, when } from 'ts-mockito';
+import { AuthHttpInterceptor, AUTH_APIS } from 'xforge-common/auth-http-interceptor';
 import { AuthService } from 'xforge-common/auth.service';
-import { AUTH_APIS, AuthHttpInterceptor } from 'xforge-common/auth-http-interceptor';
 import { CommandErrorCode, JsonRpcResponse } from 'xforge-common/command.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL, USERS_URL } from 'xforge-common/url-constants';

@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { ANONYMOUS_URL } from 'xforge-common/url-constants';
 import { Injectable } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
+import { ANONYMOUS_URL } from 'xforge-common/url-constants';
 import { AnonymousShareKeyResponse } from '../app/join/join.component';
 
 interface GenerateAccountRequest {

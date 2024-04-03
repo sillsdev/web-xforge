@@ -1,16 +1,16 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { createTestUser } from '../../common/models/user-test-data';
 import { User, USERS_COLLECTION } from '../../common/models/user';
+import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op } from '../../common/utils/test-utils';
-import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
+import { createTestProject } from '../models/sf-project-test-data';
 import { TextAudio, TEXT_AUDIO_COLLECTION } from '../models/text-audio';
 import { getTextDocId } from '../models/text-data';
-import { createTestProject } from '../models/sf-project-test-data';
 import { TextAudioService } from './text-audio-service';
 
 describe('TextAudioService', () => {

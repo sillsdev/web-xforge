@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import isObjectLike from 'lodash-es/isObjectLike';
 import { environment } from '../environments/environment';
 import { OfflineData, OfflineStore } from './offline-store';
-import { PropertyFilter, performQuery, QueryParameters, QueryResults } from './query-parameters';
+import { performQuery, PropertyFilter, QueryParameters, QueryResults } from './query-parameters';
 import { TypeRegistry } from './type-registry';
 
 const DATABASE_NAME = 'xforge';

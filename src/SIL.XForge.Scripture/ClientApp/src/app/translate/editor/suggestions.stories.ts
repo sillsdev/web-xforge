@@ -1,7 +1,7 @@
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { within } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
 import { CommonModule } from '@angular/common';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { expect } from '@storybook/jest';
+import { within } from '@storybook/testing-library';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SuggestionsComponent } from './suggestions.component';
 

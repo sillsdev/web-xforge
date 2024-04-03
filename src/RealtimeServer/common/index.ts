@@ -5,12 +5,12 @@ import ShareDB from 'sharedb';
 import MongoMilestoneDB from 'sharedb-milestone-mongo';
 import ShareDBMongo from 'sharedb-mongo';
 import { Connection, Doc, OTType } from 'sharedb/lib/client';
+import './diagnostics';
 import { ExceptionReporter } from './exception-reporter';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { WebSocketStreamListener } from './web-socket-stream-listener';
-import './diagnostics';
 
 ShareDB.types.register(RichText.type);
 ShareDB.types.register(OTJson0.type);

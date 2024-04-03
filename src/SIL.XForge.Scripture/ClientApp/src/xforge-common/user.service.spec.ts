@@ -1,21 +1,21 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { LocalSettingsService } from './local-settings.service';
 import { UserDoc } from './models/user-doc';
+import { NoticeService } from './notice.service';
+import { TestRealtimeModule } from './test-realtime.module';
 import { TestRealtimeService } from './test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
-import { TestRealtimeModule } from './test-realtime.module';
 import { TypeRegistry } from './type-registry';
-import { NoticeService } from './notice.service';
+import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 
 const mockedAuthService = mock(AuthService);
 const mockedLocalSettingsService = mock(LocalSettingsService);
