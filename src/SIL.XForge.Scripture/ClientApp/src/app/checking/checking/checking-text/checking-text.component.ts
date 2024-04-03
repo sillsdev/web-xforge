@@ -5,6 +5,8 @@ import isEqual from 'lodash-es/isEqual';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { FontService } from 'xforge-common/font.service';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shared/utils';
@@ -19,6 +21,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
   @Input() isRightToLeft: boolean = false;
   @Input() fontSize?: string;
+  @Input() projectDoc?: SFProjectProfileDoc;
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
@@ -26,6 +29,10 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
+
+  constructor(readonly fontService: FontService) {
+    super();
+  }
 
   @Input() set placeholder(value: string) {
     this._placeholder = value;
