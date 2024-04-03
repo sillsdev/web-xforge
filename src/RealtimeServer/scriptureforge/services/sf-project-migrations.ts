@@ -309,6 +309,12 @@ class SFProjectMigration18 extends DocMigration {
         ops.push({ p: ['translateConfig', 'draftConfig', 'alternateSourceEnabled'], oi: false });
       }
     }
+    if (doc.data.translateConfig.draftConfig.mixSources == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'mixSources'], oi: [] });
+    }
+    if (doc.data.translateConfig.draftConfig.mixSourcesEnabled == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'mixSourcesEnabled'], oi: false });
+    }
 
     await submitMigrationOp(SFProjectMigration18.VERSION, doc, ops);
   }

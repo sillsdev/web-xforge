@@ -35,7 +35,8 @@ export interface DraftConfig {
   lastSelectedTrainingBooks: number[];
   lastSelectedTrainingDataFiles: string[];
   lastSelectedTranslationBooks: number[];
-  mixSources?: TranslateSource[];
+  mixSourcesEnabled: boolean;
+  mixSources: TranslateSource[];
   sendAllSegments: boolean;
   servalConfig?: string;
 }

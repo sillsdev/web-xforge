@@ -2204,17 +2204,21 @@ public class MachineProjectServiceTests
             u =>
                 u.Set(
                     s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig { MixSources = [new TranslateSource { ParatextId = Paratext01 }], }
+                    new DraftConfig
+                    {
+                        MixSourcesEnabled = true,
+                        MixSources = [new TranslateSource { ParatextId = Paratext01 }],
+                    }
                 )
         );
 
         // SUT
         await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
         env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
-        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.MixSources?.First().IsRightToLeft);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.MixSources.First().IsRightToLeft);
         Assert.AreEqual(
             LanguageTag,
-            env.Projects.Get(Project01).TranslateConfig.DraftConfig.MixSources?.First().WritingSystem.Tag
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.MixSources.First().WritingSystem.Tag
         );
     }
 
@@ -2515,9 +2519,10 @@ public class MachineProjectServiceTests
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
                                     : null,
+                                MixSourcesEnabled = options.MixSourcesConfigured,
                                 MixSources = options.MixSourcesConfigured
                                     ? [new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }]
-                                    : null,
+                                    : [],
                                 SendAllSegments = options.SendAllSegments,
                             },
                         },
