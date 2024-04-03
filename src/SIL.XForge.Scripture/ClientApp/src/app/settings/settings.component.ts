@@ -38,6 +38,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   alternateSourceParatextId = new FormControl<string | undefined>(undefined);
   alternateTrainingSourceEnabled = new FormControl(false);
   alternateTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
+  mixSourcesEnabled = new FormControl(false);
+  mixSourcesParatextId = new FormControl<string | undefined>(undefined);
   sendAllSegments = new FormControl(false);
   additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
@@ -58,6 +60,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     alternateSourceParatextId: this.alternateSourceParatextId,
     alternateTrainingSourceEnabled: this.alternateTrainingSourceEnabled,
     alternateTrainingSourceParatextId: this.alternateTrainingSourceParatextId,
+    mixSourcesEnabled: this.mixSourcesEnabled,
+    mixSourcesParatextId: this.mixSourcesParatextId,
     sendAllSegments: this.sendAllSegments,
     additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
@@ -131,6 +135,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isAlternateTrainingSourceEnabled(): boolean {
     return this.alternateTrainingSourceEnabled.value ?? false;
+  }
+
+  get isMixSourcesEnabled(): boolean {
+    return this.mixSourcesEnabled.value ?? false;
   }
 
   get showPreTranslationSettings(): boolean {
@@ -378,6 +386,21 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    if (this.settingChanged(newValue, 'mixSourcesEnabled')) {
+      this.updateSetting(newValue, 'mixSourcesEnabled');
+    }
+
+    // Check if the pre-translation mix sources project needs to be updated
+    if (this.settingChanged(newValue, 'mixSourcesParatextId')) {
+      const settings: SFProjectSettings = {
+        mixSourcesParatextId: newValue.mixSourcesParatextId ?? SettingsComponent.projectSettingValueUnset
+      };
+      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
+      this.checkUpdateStatus('mixSourcesParatextId', updateTaskPromise);
+      this.previousFormValues = newValue;
+      return;
+    }
+
     this.updateCheckingConfig(newValue);
   }
 
@@ -432,6 +455,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
+    const mixSources: TranslateSource[] = this.projectDoc.data.translateConfig.draftConfig?.mixSources ?? [];
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
@@ -441,6 +465,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       alternateTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled,
       alternateTrainingSourceParatextId:
         this.projectDoc.data.translateConfig.draftConfig?.alternateTrainingSource?.paratextId,
+      mixSourcesEnabled: this.projectDoc.data.translateConfig.draftConfig.mixSourcesEnabled,
+      mixSourcesParatextId: mixSources.length > 0 ? mixSources[0].paratextId : undefined,
       sendAllSegments: this.projectDoc.data.translateConfig.draftConfig.sendAllSegments,
       additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
@@ -476,6 +502,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
     this.controlStates.set('alternateTrainingSourceEnabled', ElementState.InSync);
     this.controlStates.set('alternateTrainingSourceParatextId', ElementState.InSync);
+    this.controlStates.set('mixSourcesEnabled', ElementState.InSync);
+    this.controlStates.set('mixSourcesParatextId', ElementState.InSync);
     this.controlStates.set('sendAllSegments', ElementState.InSync);
     this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
@@ -492,6 +520,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.source);
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource);
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource);
+    for (const mixSource of this.projectDoc?.data?.translateConfig?.draftConfig?.mixSources ?? []) {
+      this.addNonSelectableProject(mixSource);
+    }
   }
 
   private addNonSelectableProject(project?: TranslateSource): void {
