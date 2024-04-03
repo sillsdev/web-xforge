@@ -366,7 +366,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.updateSetting(newValue, 'alternateTrainingSourceEnabled');
     }
 
-    if (this.settingChanged(newValue, 'sendAllSegments')) {
+    if (this.settingChanged(newValue, 'sendAllSegments', false)) {
       this.updateSetting(newValue, 'sendAllSegments');
     }
 
@@ -386,7 +386,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    if (this.settingChanged(newValue, 'mixSourcesEnabled')) {
+    if (this.settingChanged(newValue, 'mixSourcesEnabled', false)) {
       this.updateSetting(newValue, 'mixSourcesEnabled');
     }
 
@@ -404,8 +404,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.updateCheckingConfig(newValue);
   }
 
-  private settingChanged(newValue: SFProjectSettings, setting: keyof SFProjectSettings): boolean {
-    return (newValue[setting] ?? null) !== (this.previousFormValues[setting] ?? null);
+  private settingChanged(
+    newValue: SFProjectSettings,
+    setting: keyof SFProjectSettings,
+    undefinedValue: null | boolean = null
+  ): boolean {
+    return (newValue[setting] ?? undefinedValue) !== (this.previousFormValues[setting] ?? undefinedValue);
   }
 
   private updateSetting(newValue: SFProjectSettings, setting: keyof SFProjectSettings): void {
@@ -490,7 +494,19 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc?.data?.biblicalTermsConfig.errorMessage == null) {
       this.biblicalTermsEnabled.enable({ onlySelf: true });
     } else {
-      this.biblicalTermsEnabled.disable();
+      this.biblicalTermsEnabled.disable({ onlySelf: true });
+    }
+
+    // If mix sources is enabled, send all segments is disabled, and vice-versa
+    if (this.projectDoc?.data?.translateConfig?.draftConfig?.sendAllSegments) {
+      this.mixSourcesEnabled.disable({ onlySelf: true });
+      this.sendAllSegments.enable({ onlySelf: true });
+    } else if (this.projectDoc?.data?.translateConfig?.draftConfig?.mixSourcesEnabled) {
+      this.mixSourcesEnabled.enable({ onlySelf: true });
+      this.sendAllSegments.disable({ onlySelf: true });
+    } else {
+      this.mixSourcesEnabled.enable({ onlySelf: true });
+      this.sendAllSegments.enable({ onlySelf: true });
     }
   }
 

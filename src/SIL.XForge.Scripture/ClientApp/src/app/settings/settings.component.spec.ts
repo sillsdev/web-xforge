@@ -576,6 +576,19 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.mixSourcesStatus)).not.toBeNull();
       }));
 
+      it('should disable the send all segments checkbox when checked', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        expect(env.inputElement(env.mixSourcesCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.sendAllSegmentsCheckbox).disabled).toBe(true);
+      }));
+
       it('should display mix sources project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
@@ -740,6 +753,19 @@ describe('SettingsComponent', () => {
     });
 
     describe('Send All Segments', () => {
+      it('should disable the mix sources checkbox when checked', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            sendAllSegments: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.mixSourcesCheckbox).disabled).toBe(true);
+      }));
+
       it('should update when the send all segments checkbox is ticked', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
