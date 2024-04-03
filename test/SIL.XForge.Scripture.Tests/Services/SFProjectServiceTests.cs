@@ -2112,7 +2112,7 @@ public class SFProjectServiceTests
         await env.Service.UpdateSettingsAsync(
             User01,
             Project03,
-            new SFProjectSettings { MixSourceParatextId = paratextId }
+            new SFProjectSettings { MixSourcesParatextId = paratextId }
         );
 
         // SUT
@@ -2296,12 +2296,12 @@ public class SFProjectServiceTests
         await env.Service.UpdateSettingsAsync(
             User01,
             Project01,
-            new SFProjectSettings { MixSourceParatextId = paratextId }
+            new SFProjectSettings { MixSourcesParatextId = paratextId }
         );
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.ParatextId, Is.EqualTo(paratextId));
-        Assert.That(project.TranslateConfig.DraftConfig.MixSources, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.MixSources, Is.Empty);
 
         await env.MachineProjectService.DidNotReceive()
             .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
@@ -2326,18 +2326,18 @@ public class SFProjectServiceTests
         await env.Service.UpdateSettingsAsync(
             User01,
             Project01,
-            new SFProjectSettings { MixSourceParatextId = newProjectParatextId }
+            new SFProjectSettings { MixSourcesParatextId = newProjectParatextId }
         );
 
         SFProject project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.DraftConfig.MixSources?.First().ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.MixSources.First().ProjectRef, Is.Not.Null);
         Assert.That(
-            project.TranslateConfig.DraftConfig.MixSources?.First().ParatextId,
+            project.TranslateConfig.DraftConfig.MixSources.First().ParatextId,
             Is.EqualTo(newProjectParatextId)
         );
-        Assert.That(project.TranslateConfig.DraftConfig.MixSources?.First().Name, Is.EqualTo("NewSource"));
+        Assert.That(project.TranslateConfig.DraftConfig.MixSources.First().Name, Is.EqualTo("NewSource"));
 
-        SFProject mixSourceProject = env.GetProject(project.TranslateConfig.DraftConfig.MixSources!.First().ProjectRef);
+        SFProject mixSourceProject = env.GetProject(project.TranslateConfig.DraftConfig.MixSources.First().ProjectRef);
         Assert.That(mixSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
         Assert.That(mixSourceProject.Name, Is.EqualTo("NewSource"));
 
@@ -2353,6 +2353,44 @@ public class SFProjectServiceTests
             env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
             Is.True
         );
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_EnableMixSources_NoSync()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { MixSourcesEnabled = true });
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.MixSourcesEnabled, Is.True);
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_EnableAlternateSource_NoSync()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateSourceEnabled = true }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSourceEnabled, Is.True);
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]

@@ -420,6 +420,34 @@ describe('version 12', () => {
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(true);
     });
+
+    it('adds mixSources to draftConfig', async () => {
+      const env = new TestEnvironment(17);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: { draftConfig: {} } });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.mixSources).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.mixSources).toEqual([]);
+    });
+
+    it('adds mixSourcesEnabled to draftConfig', async () => {
+      const env = new TestEnvironment(17);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.mixSourcesEnabled).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.mixSourcesEnabled).toBe(false);
+    });
   });
 });
 

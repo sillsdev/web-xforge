@@ -716,10 +716,10 @@ public class MachineProjectService(
         );
 
         // We can only mix in Paratext zip files on pre-translation
-        if (preTranslate && uploadParatextZipFile)
+        if (preTranslate && uploadParatextZipFile && project.TranslateConfig.DraftConfig.MixSourcesEnabled)
         {
             // Mix in any other sources specified
-            foreach (TranslateSource mixSource in project.TranslateConfig.DraftConfig.MixSources ?? [])
+            foreach (TranslateSource mixSource in project.TranslateConfig.DraftConfig.MixSources)
             {
                 // Update the mixed in source files
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
@@ -1125,7 +1125,7 @@ public class MachineProjectService(
         }
 
         // If there are mix in sources, ensure that their writing system and RTL is correct
-        if (projectDoc.Data.TranslateConfig.DraftConfig.MixSources is not null)
+        if (projectDoc.Data.TranslateConfig.DraftConfig.MixSourcesEnabled)
         {
             for (int i = 0; i < projectDoc.Data.TranslateConfig.DraftConfig.MixSources.Count; i++)
             {

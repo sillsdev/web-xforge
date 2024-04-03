@@ -18,7 +18,8 @@ public class SFProjectSettings
     public string? AlternateSourceParatextId { get; set; }
     public bool? AlternateTrainingSourceEnabled { get; set; }
     public string? AlternateTrainingSourceParatextId { get; set; }
-    public string? MixSourceParatextId { get; set; }
+    public bool? MixSourcesEnabled { get; set; }
+    public string? MixSourcesParatextId { get; set; }
     public bool? SendAllSegments { get; set; }
 
     // checking settings

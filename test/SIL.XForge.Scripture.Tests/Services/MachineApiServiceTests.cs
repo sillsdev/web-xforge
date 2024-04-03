@@ -1792,7 +1792,11 @@ public class MachineApiServiceTests
             u =>
                 u.Set(
                     s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig { MixSources = [new TranslateSource { ProjectRef = Project01 }] }
+                    new DraftConfig
+                    {
+                        MixSourcesEnabled = true,
+                        MixSources = [new TranslateSource { ProjectRef = Project01 }],
+                    }
                 )
         );
 
