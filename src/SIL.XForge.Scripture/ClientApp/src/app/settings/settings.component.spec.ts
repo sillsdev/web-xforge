@@ -344,6 +344,35 @@ describe('SettingsComponent', () => {
         env.wait();
         expect(env.alternateSourceSelect).toBeNull();
       }));
+
+      it('should unset alternate source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            },
+            alternateSourceEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+        expect(env.alternateSourceSelectValue).toContain('ParatextP1');
+        expect(env.statusDone(env.alternateSourceStatus)).toBeNull();
+
+        env.resetAlternateSourceProject();
+
+        expect(env.alternateSourceSelectValue).toBe('');
+        expect(env.statusDone(env.alternateSourceStatus)).not.toBeNull();
+      }));
     });
 
     describe('Alternate Training Source', () => {
@@ -365,63 +394,6 @@ describe('SettingsComponent', () => {
 
         expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP2');
         expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
-      }));
-
-      it('should unset alternate training source select value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          draftConfig: {
-            alternateTrainingSource: {
-              paratextId: 'paratextId01',
-              projectRef: 'paratext01',
-              name: 'ParatextP1',
-              shortName: 'PT1',
-              writingSystem: {
-                tag: 'qaa'
-              }
-            },
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
-        });
-        env.wait();
-        env.wait();
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-        expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP1');
-        expect(env.statusDone(env.alternateTrainingSourceStatus)).toBeNull();
-
-        env.resetAlternateTrainingSourceProject();
-
-        expect(env.alternateTrainingSourceSelectValue).toBe('');
-        expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
-      }));
-
-      it('should hide alternate training source dropdown when alternate training source is disabled', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(false);
-        expect(env.alternateTrainingSourceSelect).toBeNull();
-        env.clickElement(env.inputElement(env.alternateTrainingSourceCheckbox));
-        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-      }));
-
-      it('should display projects then resources', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          draftConfig: {
-            alternateTrainingSourceEnabled: true
-          } as DraftConfig,
-          preTranslate: true
-        });
-        env.wait();
-        env.wait();
-        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
-        expect(env.alternateTrainingSourceSelect).not.toBeNull();
-        expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(5);
-        expect(env.alternateTrainingSourceSelectProjectsResources[1].name).toBe('ParatextP2');
-        expect(env.alternateTrainingSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
       }));
 
       it('should display alternate training source project even if user is not a member', fakeAsync(() => {
@@ -459,6 +431,311 @@ describe('SettingsComponent', () => {
         expect(env.alternateTrainingSourceSelectValue).toBe('ParatextP1');
         expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(1);
         expect(env.alternateTrainingSourceSelectProjectsResources[0].name).toBe('ParatextP2');
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+        expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(5);
+        expect(env.alternateTrainingSourceSelectProjectsResources[1].name).toBe('ParatextP2');
+        expect(env.alternateTrainingSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+
+      it('should display for back translations for system administrators', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
+          projectType: ProjectType.BackTranslation
+        });
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+      }));
+
+      it('should display for forward translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+      }));
+
+      it('should hide alternate training source dropdown when alternate training source is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(false);
+        expect(env.alternateTrainingSourceSelect).toBeNull();
+        env.clickElement(env.inputElement(env.alternateTrainingSourceCheckbox));
+        expect(env.inputElement(env.alternateTrainingSourceCheckbox).checked).toBe(true);
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+      }));
+
+      it('should not display for back translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
+          projectType: ProjectType.BackTranslation
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).toBeNull();
+      }));
+
+      it('should not display when the feature flag is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).toBeNull();
+      }));
+
+      it('should not display for forward translations when not approved', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).toBeNull();
+      }));
+
+      it('should unset alternate training source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateTrainingSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            },
+            alternateTrainingSourceEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateTrainingSourceSelect).not.toBeNull();
+        expect(env.alternateTrainingSourceSelectValue).toContain('ParatextP1');
+        expect(env.statusDone(env.alternateTrainingSourceStatus)).toBeNull();
+
+        env.resetAlternateTrainingSourceProject();
+
+        expect(env.alternateTrainingSourceSelectValue).toBe('');
+        expect(env.statusDone(env.alternateTrainingSourceStatus)).not.toBeNull();
+      }));
+    });
+
+    describe('Mix Sources', () => {
+      it('should change mix sources select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).not.toBeNull();
+        expect(env.mixSourcesSelectValue).toBe('');
+        expect(env.statusDone(env.mixSourcesStatus)).toBeNull();
+
+        env.setMixSourcesValue('paratextId02');
+
+        expect(env.mixSourcesSelectValue).toContain('ParatextP2');
+        expect(env.statusDone(env.mixSourcesStatus)).not.toBeNull();
+      }));
+
+      it('should display mix sources project even if user is not a member', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            mixSources: [
+              {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              }
+            ],
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        when(mockedParatextService.getProjects()).thenResolve([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        when(mockedParatextService.getResources()).thenResolve([]);
+
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).not.toBeNull();
+        expect(env.mixSourcesSelectValue).toBe('ParatextP1');
+        expect(env.mixSourcesSelectProjectsResources.length).toEqual(1);
+        expect(env.mixSourcesSelectProjectsResources[0].name).toBe('ParatextP2');
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.mixSourcesCheckbox).checked).toBe(true);
+        expect(env.mixSourcesSelect).not.toBeNull();
+        expect(env.mixSourcesSelectProjectsResources.length).toEqual(5);
+        expect(env.mixSourcesSelectProjectsResources[1].name).toBe('ParatextP2');
+        expect(env.mixSourcesSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+
+      it('should display for back translations for system administrators', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          projectType: ProjectType.BackTranslation
+        });
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).not.toBeNull();
+      }));
+
+      it('should display for forward translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig
+        });
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).not.toBeNull();
+      }));
+
+      it('should hide mix sources dropdown when mix sources is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        expect(env.inputElement(env.mixSourcesCheckbox).checked).toBe(false);
+        expect(env.mixSourcesSelect).toBeNull();
+        env.clickElement(env.inputElement(env.mixSourcesCheckbox));
+        expect(env.inputElement(env.mixSourcesCheckbox).checked).toBe(true);
+        expect(env.mixSourcesSelect).not.toBeNull();
+      }));
+
+      it('should not display for back translations', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          projectType: ProjectType.BackTranslation
+        });
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).toBeNull();
+      }));
+
+      it('should not display when the feature flag is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).toBeNull();
+      }));
+
+      it('should not display for forward translations when not approved', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: false,
+          draftConfig: {
+            mixSourcesEnabled: true
+          } as DraftConfig
+        });
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).toBeNull();
+      }));
+
+      it('should unset mix sources select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            mixSources: [
+              {
+                paratextId: 'paratextId01',
+                projectRef: 'paratext01',
+                name: 'ParatextP1',
+                shortName: 'PT1',
+                writingSystem: {
+                  tag: 'qaa'
+                }
+              }
+            ],
+            mixSourcesEnabled: true
+          } as DraftConfig,
+          preTranslate: true
+        });
+        env.wait();
+        env.wait();
+        expect(env.mixSourcesSelect).not.toBeNull();
+        expect(env.mixSourcesSelectValue).toContain('ParatextP1');
+        expect(env.statusDone(env.mixSourcesStatus)).toBeNull();
+
+        env.resetMixSourcesProject();
+
+        expect(env.mixSourcesSelectValue).toBe('');
+        expect(env.statusDone(env.mixSourcesStatus)).not.toBeNull();
       }));
     });
 
@@ -1058,6 +1335,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#alternate-training-source-status'));
   }
 
+  get mixSourcesSelect(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-project-select#mixSourcesParatextId'));
+  }
+
+  get mixSourcesStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#mix-sources-status'));
+  }
+
   get servalConfigTextArea(): DebugElement {
     return this.fixture.debugElement.query(By.css('#serval-config'));
   }
@@ -1178,6 +1463,22 @@ class TestEnvironment {
     );
   }
 
+  get mixSourcesCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-mix-sources-enabled'));
+  }
+
+  get mixSourcesSelectValue(): string {
+    return this.mixSourcesSelectComponent.paratextIdControl.value?.name || '';
+  }
+
+  get mixSourcesSelectComponent(): ProjectSelectComponent {
+    return this.mixSourcesSelect.componentInstance as ProjectSelectComponent;
+  }
+
+  get mixSourcesSelectProjectsResources(): SelectableProject[] {
+    return (this.mixSourcesSelectComponent.projects || []).concat(this.mixSourcesSelectComponent.resources || []);
+  }
+
   get servalConfigTextAreaElement(): HTMLTextAreaElement {
     return this.servalConfigTextArea?.nativeElement as HTMLTextAreaElement;
   }
@@ -1258,8 +1559,18 @@ class TestEnvironment {
     this.wait();
   }
 
+  resetAlternateSourceProject(): void {
+    this.alternateSourceSelectComponent.paratextIdControl.setValue('');
+    this.wait();
+  }
+
   resetAlternateTrainingSourceProject(): void {
     this.alternateTrainingSourceSelectComponent.paratextIdControl.setValue('');
+    this.wait();
+  }
+
+  resetMixSourcesProject(): void {
+    this.mixSourcesSelectComponent.paratextIdControl.setValue('');
     this.wait();
   }
 
@@ -1277,6 +1588,11 @@ class TestEnvironment {
 
   setAlternateSourceValue(value: string): void {
     this.alternateSourceSelectComponent.value = value;
+    this.wait();
+  }
+
+  setMixSourcesValue(value: string): void {
+    this.mixSourcesSelectComponent.value = value;
     this.wait();
   }
 
