@@ -83,6 +83,6 @@ export class TabGroupComponent implements OnChanges {
   }
 
   private isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
-    return typeof TouchEvent !== 'undefined' && event instanceof TouchEvent;
+    return window.TouchEvent != null && event instanceof TouchEvent;
   }
 }
