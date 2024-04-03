@@ -13,7 +13,7 @@
   cdkDropListOrientation="horizontal"
   [cdkDropListDisabled]="!allowDragDrop"
   [cdkDropListConnectedTo]="connectedTo"
-  [cdkDropListSortPredicate]="movablePredicate"
+  [cdkDropListSortPredicate]="movablePredicate.bind(this)"
   (cdkDropListDropped)="onTabDrop($event)"
 >
   <app-tab-header
