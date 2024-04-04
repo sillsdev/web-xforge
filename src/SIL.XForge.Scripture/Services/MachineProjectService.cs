@@ -727,7 +727,7 @@ public class MachineProjectService(
                     sourceProjectId: mixSource.ProjectRef,
                     mixSource.ParatextId,
                     includeBlankSegments: true,
-                    uploadParatextZipFile,
+                    uploadParatextZipFile: true,
                     texts: [],
                     oldSourceCorpusFiles,
                     newSourceCorpusFiles,
