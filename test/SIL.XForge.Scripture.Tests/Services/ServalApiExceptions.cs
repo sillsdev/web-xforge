@@ -64,6 +64,15 @@ public static class ServalApiExceptions
             null
         );
 
+    public static ServalApiException NotAuthenticated =>
+        new ServalApiException(
+            "The client is not authenticated.",
+            StatusCodes.Status401Unauthorized,
+            null,
+            new Dictionary<string, IEnumerable<string>>(),
+            null
+        );
+
     public static ServalApiException NotFound =>
         new ServalApiException(
             "The build does not exist.",

@@ -114,7 +114,7 @@ app-text {
 .insert-note-fab {
   position: absolute;
   visibility: hidden;
-  inset-inline-end: 2px;
+  inset-inline-end: 10px;
 }
 
 .fab-bottom-sheet {
@@ -171,14 +171,18 @@ app-text {
   overflow: hidden;
 }
 
-as-split-area.has-draft {
-  border: 4px dashed vars.$draft-color;
+as-split-area {
+  overflow: hidden !important;
+
+  &.has-draft {
+    border: 4px dashed vars.$draft-color;
+  }
 }
 
 .text-container {
   display: flex;
   position: relative;
-  min-height: 100%;
+  height: 100%;
 }
 
 .text-area {

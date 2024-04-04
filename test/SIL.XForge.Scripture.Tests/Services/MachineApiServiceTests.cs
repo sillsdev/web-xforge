@@ -832,6 +832,20 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetPreTranslationAsync_InvalidCredentials()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotAuthenticated);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public void GetPreTranslationAsync_NoPermission()
     {
         // Set up test environment
