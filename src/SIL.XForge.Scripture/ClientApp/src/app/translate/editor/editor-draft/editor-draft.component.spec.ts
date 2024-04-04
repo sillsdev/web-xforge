@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { EventEmitter } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { cloneDeep } from 'lodash-es';
@@ -8,6 +9,8 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { Delta } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { TextDoc } from 'src/app/core/models/text-doc';
+import { isBadDelta } from 'src/app/shared/utils';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -21,7 +24,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
+import { DraftDiff, DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
 import { EditorDraftComponent } from './editor-draft.component';
 
 const mockDraftGenerationService = mock(DraftGenerationService);
@@ -140,6 +143,31 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
+  it('should apply draft correctly', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    const emitter = new EventEmitter<DraftDiff>();
+    when(mockDraftViewerService.draftApplied).thenReturn(emitter);
+
+    const textDoc: TextDoc = jasmine.createSpyObj<TextDoc>(['submit']) as TextDoc;
+    spyOn(component['projectService'], 'getText').and.returnValue(Promise.resolve(textDoc));
+
+    spyOn<any>(component, 'getTargetOps').and.returnValue(Promise.resolve(targetDelta.ops!));
+    component.draftText.editor?.setContents(draftDelta);
+    const draftDiff = targetDelta.diff(draftCleanedDelta);
+
+    component.applyDraft();
+    tick(EDITOR_READY_TIMEOUT);
+
+    expect(textDoc.submit).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        ops: draftDiff.ops
+      })
+    );
+    expect(textDoc.submit).toHaveBeenCalledTimes(1);
+    expect(isBadDelta(component.draftText.editor?.getContents().ops!)).toBeFalsy();
+  }));
+
   describe('getLocalizedBookChapter', () => {
     it('should return an empty string if bookNum or chapter is undefined', () => {
       component.bookNum = undefined;
@@ -162,7 +190,8 @@ describe('EditorDraftComponent', () => {
 
 const draftMap: DraftSegmentMap = {
   verse_1_1: 'Draft verse 1. ',
-  verse_1_2: 'Draft verse 2. '
+  verse_1_2: 'Draft verse 2. ',
+  verse_1_3: 'Draft verse 3. '
 };
 
 const draftDelta = new Delta([
@@ -181,6 +210,46 @@ const draftDelta = new Delta([
       draft: true
     },
     insert: 'Draft verse 2. '
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true,
+      draft: true
+    },
+    insert: 'Draft verse 3. '
+  },
+  {
+    insert: '\n',
+    attributes: {
+      para: {
+        style: 'p'
+      }
+    }
+  }
+]);
+
+const draftCleanedDelta = new Delta([
+  {
+    attributes: {
+      segment: 'verse_1_1',
+      'para-contents': true
+    },
+    insert: 'Draft verse 1. '
+  },
+  {
+    attributes: {
+      segment: 'verse_1_2',
+      'para-contents': true
+    },
+    insert: 'Draft verse 2. '
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: 'Draft verse 3. '
   },
   {
     insert: '\n',
@@ -206,6 +275,13 @@ const targetDelta = new Delta([
       'para-contents': true
     },
     insert: 'Existing verse 2. '
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: { blank: true }
   },
   {
     insert: '\n',
