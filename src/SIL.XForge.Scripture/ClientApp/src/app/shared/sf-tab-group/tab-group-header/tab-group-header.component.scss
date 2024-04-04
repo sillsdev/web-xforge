@@ -52,6 +52,7 @@ app-tab-scroll-button {
   align-items: flex-end;
   gap: 0.1em;
   border-radius: var(--sf-tab-header-border-radius) var(--sf-tab-header-border-radius) 0 0;
+  width: 100%;
 
   // Hide scroll bar
   scrollbar-width: none;

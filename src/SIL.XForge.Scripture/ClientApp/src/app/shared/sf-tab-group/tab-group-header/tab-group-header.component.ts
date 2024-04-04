@@ -1,5 +1,6 @@
 import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import {
+  AfterViewInit,
   Component,
   DestroyRef,
   ElementRef,
@@ -35,7 +36,7 @@ type LocaleDirection = 'ltr' | 'rtl';
   templateUrl: './tab-group-header.component.html',
   styleUrls: ['./tab-group-header.component.scss']
 })
-export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
+export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @Input() groupId: string = '';
   @Input() tabs: Iterable<TabComponent> = [];
   @Input() selectedIndex = 0;
@@ -61,7 +62,7 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
   private scrollTimer$ = interval(20).pipe(takeUntilDestroyed(this.destroyRef));
 
   private scrollButtonSubscription?: Subscription;
-  private resizeObserver?: ResizeObserver;
+  private intersectionObserver?: IntersectionObserver;
   private dirMutObserver?: MutationObserver;
   private overflowing$ = new BehaviorSubject(false);
   private tabsWrapper!: HTMLElement;
@@ -92,9 +93,6 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     // Monitor the ltr/rtl dir in order to correctly calculate scroll bounds
     this.initDirectionChangeDetection();
 
-    // Check for horizontal overflow to display scroll buttons
-    this.initResizeDetection();
-
     this.initOverflowHandler();
 
     // Check if scroll is at the start or end to enable/disable scroll buttons
@@ -108,8 +106,13 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
       .subscribe((e: Event) => this.scrollOnWheel(e as WheelEvent));
   }
 
+  ngAfterViewInit(): void {
+    // Check for horizontal overflow to display scroll buttons
+    this.initOverflowDetection();
+  }
+
   ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
+    this.intersectionObserver?.disconnect();
     this.dirMutObserver?.disconnect();
   }
 
@@ -185,11 +188,12 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     this.dirMutObserver.observe(closestDirEl, { attributeFilter: ['dir'] });
   }
 
-  private initResizeDetection(): void {
-    this.resizeObserver = new ResizeObserver(() => {
-      this.detectOverflow();
+  private initOverflowDetection(): void {
+    this.intersectionObserver = new IntersectionObserver(() => this.detectOverflow(), {
+      root: this.tabsWrapper,
+      threshold: 1
     });
-    this.resizeObserver.observe(this.tabsWrapper);
+    this.intersectionObserver.observe(this.tabHeaders?.last.nativeElement);
   }
 
   private initOverflowHandler(): void {
