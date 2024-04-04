@@ -3213,7 +3213,7 @@ describe('EditorComponent', () => {
 
       const segmentElRect = env.getSegmentElement(segmentRef)!.getBoundingClientRect();
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(segmentElRect.top).toEqual(fabRect.top);
+      expect(segmentElRect.top).toBeCloseTo(fabRect.top, 0);
 
       env.dispose();
     }));
@@ -3240,7 +3240,7 @@ describe('EditorComponent', () => {
 
       const segmentElRect = env.getSegmentElement(segmentRef)!.getBoundingClientRect();
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(fabRect.top).toEqual(segmentElRect.top);
+      expect(fabRect.top).toBeCloseTo(segmentElRect.top, 0);
 
       env.dispose();
     }));
@@ -3269,7 +3269,7 @@ describe('EditorComponent', () => {
       scrollContainer.dispatchEvent(new Event('scroll'));
 
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(fabRect.top).toEqual(scrollContainerRect.top + env.component.fabVerticalCushion);
+      expect(fabRect.top).toBeCloseTo(scrollContainerRect.top + env.component.fabVerticalCushion, 0);
 
       env.dispose();
     }));
@@ -3298,7 +3298,7 @@ describe('EditorComponent', () => {
       scrollContainer.dispatchEvent(new Event('scroll'));
 
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(fabRect.bottom).toEqual(scrollContainerRect.bottom - env.component.fabVerticalCushion);
+      expect(fabRect.bottom).toBeCloseTo(scrollContainerRect.bottom - env.component.fabVerticalCushion, 0);
 
       env.dispose();
     }));

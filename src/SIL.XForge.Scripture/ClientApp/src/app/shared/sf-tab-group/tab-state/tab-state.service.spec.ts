@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { take } from 'rxjs';
 import { TabGroup } from './tab-group';
 import { TabInfo, TabStateService } from './tab-state.service';
 
@@ -41,7 +42,7 @@ describe('TabStateService', () => {
     });
 
     describe('clearAllTabGroups', () => {
-      it('should clear all tab groups', () => {
+      it('should clear all tab groups and emit an empty map after clearing all tab groups', done => {
         const groupId1: string = 'group1';
         const groupId2: string = 'group2';
         const tabs: TabInfo<string>[] = [
@@ -50,25 +51,15 @@ describe('TabStateService', () => {
         ];
         service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs));
         service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs));
-        service.clearAllTabGroups();
-        expect(service['groups'].size).toBe(0);
-      });
-
-      it('should emit an empty map after clearing all tab groups', done => {
-        const groupId1: string = 'group1';
-        const groupId2: string = 'group2';
-        const tabs: TabInfo<string>[] = [
-          { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
-          { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
-        ];
-        service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs));
-        service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs));
-        service.tabGroups$.subscribe(groups => {
-          if (groups.size === 0) {
-            done();
-          }
+        service.tabGroups$.pipe(take(1)).subscribe(groups => {
+          expect(groups.size).toBe(2);
         });
         service.clearAllTabGroups();
+        expect(service['groups'].size).toBe(0);
+        service.tabGroups$.pipe(take(1)).subscribe(groups => {
+          expect(groups.size).toBe(0);
+          done();
+        });
       });
     });
   });
