@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Paratext.Data;
 using Serval.Client;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
@@ -32,7 +33,7 @@ public class PreTranslationService(
         CancellationToken cancellationToken
     )
     {
-        List<PreTranslation> preTranslations = new List<PreTranslation>();
+        List<PreTranslation> preTranslations = [];
 
         // Load the target project secrets, so we can get the translation engine ID and corpus ID
         if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
@@ -49,7 +50,10 @@ public class PreTranslationService(
 
         // Ensure we have the parameters to retrieve the pre-translation
         string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
-        string corpusId = projectSecret.ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate).Key;
+        string corpusId = projectSecret
+            .ServalData?.Corpora
+            .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+            .Key;
         if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
         {
             throw new DataNotFoundException("The pre-translation engine is not configured.");
@@ -185,6 +189,71 @@ public class PreTranslationService(
             }
         }
 
-        return preTranslations.ToArray();
+        return [..preTranslations];
+    }
+
+    /// <summary>
+    /// Gets the pre-translations as USFM.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The SF project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number. If 0, all chapters in the book are returned.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns></returns>
+    /// <exception cref="DataNotFoundException">
+    /// The project secret or pre-translation configuration was not found.
+    /// </exception>
+    public async Task<string> GetPreTranslationUsfmAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Load the project secrets, so we can get the translation engine ID and corpus ID
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        {
+            throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        // Ensure we have the parameters to retrieve the pre-translation
+        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+        string? corpusId = projectSecret
+            .ServalData?.Corpora
+            .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+            .Key;
+        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
+        {
+            throw new DataNotFoundException("The pre-translation engine is not configured.");
+        }
+
+        // Get the USFM
+        string usfm = await translationEnginesClient.GetPretranslatedUsfmAsync(
+            translationEngineId,
+            corpusId,
+            GetTextId(bookNum),
+            cancellationToken
+        );
+
+        // Return the entire book
+        if (chapterNum == 0)
+        {
+            return usfm;
+        }
+
+        // Return the chapter, if present
+        if (
+            ScrText.TrySplitIntoChapters(usfm, out List<string> chapters)
+            && chapterNum <= chapters.Count
+            && chapterNum >= 1
+        )
+        {
+            return chapters[chapterNum - 1];
+        }
+
+        // Chapter not found
+        return string.Empty;
     }
 }

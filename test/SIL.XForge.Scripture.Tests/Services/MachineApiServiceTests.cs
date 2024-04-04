@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -13,6 +14,7 @@ using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
@@ -909,6 +911,82 @@ public class MachineApiServiceTests
         Assert.IsNotNull(actual);
         Assert.AreEqual(reference, actual.PreTranslations.First().Reference);
         Assert.AreEqual(translation, actual.PreTranslations.First().Translation);
+    }
+
+    [Test]
+    public void GetPreTranslationDeltaAsync_CorpusDoesNotSupportUsfm()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(ServalApiExceptions.InvalidCorpus);
+
+        // SUT
+        Assert.ThrowsAsync<NotSupportedException>(
+            () => env.Service.GetPreTranslationDeltaAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetPreTranslationDeltaAsync_ChapterNotSpecified()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationDeltaAsync(User01, Project01, 40, 0, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationDeltaAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
+        Delta expected = new Delta([token]);
+        env.ParatextService.GetDeltaFromUsfmAsync(User01, Project01, Arg.Any<string>(), 40)
+            .Returns(Task.FromResult(expected));
+
+        // SUT
+        Snapshot<TextData> actual = await env.Service.GetPreTranslationDeltaAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected.Ops[0], actual.Data.Ops[0]);
+        Assert.AreEqual($"{Project01}:MAT:1:target", actual.Id);
+    }
+
+    [Test]
+    public void GetPreTranslationUsfmAsync_CorpusDoesNotSupportUsfm()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(ServalApiExceptions.InvalidCorpus);
+
+        // SUT
+        Assert.ThrowsAsync<NotSupportedException>(
+            () => env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string expected = "\\c 1 \\v1 Verse 1";
+        env.PreTranslationService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(expected));
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None);
+        Assert.AreEqual(expected, usfm);
     }
 
     [Test]
@@ -1822,6 +1900,7 @@ public class MachineApiServiceTests
                 )
                 .Returns(Task.FromResult(true));
             var mockLogger = new MockLogger<MachineApiService>();
+            ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
@@ -1884,6 +1963,7 @@ public class MachineApiServiceTests
                 BackgroundJobClient,
                 mockLogger,
                 MachineProjectService,
+                ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
                 realtimeService,
@@ -1895,6 +1975,7 @@ public class MachineApiServiceTests
 
         public IBackgroundJobClient BackgroundJobClient { get; }
         public IMachineProjectService MachineProjectService { get; }
+        public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }

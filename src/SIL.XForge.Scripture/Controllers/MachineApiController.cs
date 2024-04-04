@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -73,7 +74,7 @@ public class MachineApiController : ControllerBase
         }
         catch (NotSupportedException)
         {
-            return new StatusCodeResult(405);
+            return new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
         }
         catch (ForbiddenException)
         {
@@ -245,7 +246,7 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
-    /// Gets all of the pre-translations for the specified chapter.
+    /// Gets all the pre-translations for the specified chapter.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
@@ -295,6 +296,116 @@ public class MachineApiController : ControllerBase
         catch (InvalidOperationException)
         {
             return Conflict();
+        }
+    }
+
+    /// <summary>
+    /// Gets the pre-translations for the specified chapter as a delta.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The pre-translations were successfully queried for.</response>
+    /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetPreTranslationDelta)]
+    public async Task<ActionResult<Snapshot<TextData>>> GetPreTranslationDeltaAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            Snapshot<TextData> delta = await _machineApiService.GetPreTranslationDeltaAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            return Ok(delta);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
+        }
+    }
+
+    /// <summary>
+    /// Gets the pre-translations for the specified chapter as USFM.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number. If zero, the entire book is returned</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The pre-translations were successfully queried for.</response>
+    /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetPreTranslationUsfm)]
+    public async Task<ActionResult<string>> GetPreTranslationUsfmAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            return Ok(usfm);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
         }
     }
 

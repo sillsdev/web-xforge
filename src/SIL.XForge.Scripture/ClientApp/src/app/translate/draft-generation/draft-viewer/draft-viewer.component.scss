@@ -71,6 +71,11 @@ h2 {
       display: none;
     }
   }
+
+  // Show a small amount of padding below the notice
+  .draft-legacy-warning {
+    margin-bottom: 4px;
+  }
 }
 
 .controls {
