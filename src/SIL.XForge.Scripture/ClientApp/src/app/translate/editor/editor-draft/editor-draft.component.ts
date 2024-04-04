@@ -151,7 +151,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   async applyDraft(): Promise<void> {
     const target = new Delta(await this.getTargetOps());
-    if (target?.ops == null) {
+    if (target.ops == null) {
       throw new Error(`'applyDraft()' called when 'target.ops' is not set`);
     }
 
