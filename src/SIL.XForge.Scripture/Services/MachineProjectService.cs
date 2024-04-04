@@ -715,8 +715,14 @@ public class MachineProjectService(
             cancellationToken
         );
 
-        // We can only mix in Paratext zip files on pre-translation
-        if (preTranslate && uploadParatextZipFile && project.TranslateConfig.DraftConfig.MixSourcesEnabled)
+        // We can only mix in Paratext zip files on pre-translation.
+        // We add it to the corpus here only if we do not have a train on source to mix it into
+        if (
+            preTranslate
+            && !useAlternateTrainingSource
+            && uploadParatextZipFile
+            && project.TranslateConfig.DraftConfig.MixSourcesEnabled
+        )
         {
             // Mix in any other sources specified
             foreach (TranslateSource mixSource in project.TranslateConfig.DraftConfig.MixSources)
@@ -814,6 +820,27 @@ public class MachineProjectService(
                 newAlternateTrainingSourceCorpusFiles,
                 cancellationToken
             );
+
+            // Mix the other sources into the train on source, if we are uploading a zip file
+            if (uploadParatextZipFile && project.TranslateConfig.DraftConfig.MixSourcesEnabled)
+            {
+                // Mix in any other sources specified
+                foreach (TranslateSource mixSource in project.TranslateConfig.DraftConfig.MixSources)
+                {
+                    // Update the mixed in source files
+                    corpusUpdated |= await UploadNewCorpusFilesAsync(
+                        targetProjectId: project.Id,
+                        sourceProjectId: mixSource.ProjectRef,
+                        mixSource.ParatextId,
+                        includeBlankSegments: true,
+                        uploadParatextZipFile: true,
+                        texts: [],
+                        oldAlternateTrainingSourceCorpusFiles,
+                        newAlternateTrainingSourceCorpusFiles,
+                        cancellationToken
+                    );
+                }
+            }
         }
         else if (useSourceAsAlternateTrainingSource)
         {

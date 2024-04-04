@@ -1887,6 +1887,37 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheMixSourceIntoTheAlternateTrainingSourceCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                AlternateTrainingSourceConfigured = true,
+                AlternateTrainingSourceEnabled = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                MixSourcesConfigured = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the upload of the source, target, alternate training source, and mixed source
+        await env.DataFilesClient.Received(4)
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorporaWhenSendAllSegments()
     {
         // Set up test environment
