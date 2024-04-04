@@ -361,9 +361,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Get the mix sources for pre-translation drafting
-        List<TranslateSource> mixSources = [];
+        List<TranslateSource>? mixSources = null;
         foreach (string mixSourceParatextId in mixSourceParatextIds)
         {
+            mixSources ??= [];
             TranslateSource mixSource = await GetTranslateSourceAsync(
                 curUserId,
                 projectId,
