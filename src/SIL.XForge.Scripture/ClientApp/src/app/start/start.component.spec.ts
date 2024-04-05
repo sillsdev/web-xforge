@@ -12,7 +12,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
-import { StartComponent } from './start.component';
+import { MyProjectsComponent } from './start.component';
 
 const mockedRouter = mock(Router);
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -21,7 +21,7 @@ const mockedUserService = mock(UserService);
 
 describe('StartComponent', () => {
   configureTestingModule(() => ({
-    declarations: [StartComponent],
+    declarations: [MyProjectsComponent],
     imports: [UICommonModule, RouterTestingModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: Router, useMock: mockedRouter },
@@ -87,8 +87,8 @@ describe('StartComponent', () => {
 });
 
 class TestEnvironment {
-  readonly component: StartComponent;
-  readonly fixture: ComponentFixture<StartComponent>;
+  readonly component: MyProjectsComponent;
+  readonly fixture: ComponentFixture<MyProjectsComponent>;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -97,7 +97,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
 
-    this.fixture = TestBed.createComponent(StartComponent);
+    this.fixture = TestBed.createComponent(MyProjectsComponent);
     this.component = this.fixture.componentInstance;
   }
 

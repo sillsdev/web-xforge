@@ -10,11 +10,12 @@
         <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
           <mat-icon>menu</mat-icon>
         </button>
-        <span (click)="goHome()" class="title">
-          <img src="/assets/images/sf_logo_with_name.svg" height="40" fxHide.xs />
-          <button mat-icon-button fxHide.gt-xs>
-            <img src="/assets/images/sf.svg" height="38" />
-          </button>
+        <a mat-icon-button fxHide.xs [routerLink]="homeUrl$ | async" class="logo">
+          <img src="/assets/images/sf.svg" height="38" />
+        </a>
+        <span class="project-name-wrapper" *ngIf="isProjectSelected" fxHide.xs>
+          <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
+          <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
         </span>
         <span class="toolbar-spacer"></span>
         <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu" *ngIf="isAppOnline">
@@ -86,17 +87,19 @@
           </div>
           <mat-divider></mat-divider>
           <button mat-menu-item *ngIf="isSystemAdmin" [disabled]="!isAppOnline" appRouterLink="/system-administration">
+            <mat-icon>admin_panel_settings</mat-icon>
             {{ t("system_administration") }}
           </button>
-          <button mat-menu-item appRouterLink="/projects" id="project-home-link">{{ t("project_home") }}</button>
+          <button mat-menu-item appRouterLink="/projects" id="project-home-link">
+            <mat-icon>home</mat-icon> {{ t("my_projects") }}
+          </button>
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
+            <mat-icon>vpn_key</mat-icon>
             {{ t("change_password") }}
           </button>
-          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()" class="install-button">
-            {{ t("install_on_device") }}
-            <mat-icon>install_mobile</mat-icon>
+          <button mat-menu-item (click)="logOut()" id="log-out-link">
+            <mat-icon>logout</mat-icon> {{ t("log_out") }}
           </button>
-          <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
           <mat-divider></mat-divider>
           <div class="pseudo-menu-item online-status">
             <ng-container *ngIf="isAppOnline">
@@ -126,11 +129,6 @@
       [opened]="isExpanded || isDrawerPermanent"
       (closed)="drawerCollapsed()"
     >
-      <app-navigation-project-selector
-        [projectDocs]="projectDocs"
-        [selected]="selectedProjectDoc"
-        (changed)="projectChanged($event)"
-      ></app-navigation-project-selector>
       <app-navigation (menuItemClicked)="itemSelected()"></app-navigation>
     </mat-drawer>
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->

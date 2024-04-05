@@ -27,7 +27,6 @@ import { CheckingModule } from './checking/checking.module';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { CoreModule } from './core/core.module';
 import { JoinComponent } from './join/join.component';
-import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 import { NavigationComponent } from './navigation/navigation.component';
 import { ProjectSelectComponent } from './project-select/project-select.component';
 import { ProjectComponent } from './project/project.component';
@@ -36,7 +35,7 @@ import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/d
 import { SettingsComponent } from './settings/settings.component';
 import { SharedModule } from './shared/shared.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
-import { StartComponent } from './start/start.component';
+import { MyProjectsComponent } from './start/start.component';
 import { SyncProgressComponent } from './sync/sync-progress/sync-progress.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
@@ -50,7 +49,7 @@ import { UsersModule } from './users/users.module';
     DeleteProjectDialogComponent,
     ProjectComponent,
     SettingsComponent,
-    StartComponent,
+    MyProjectsComponent,
     SyncComponent,
     ScriptureChooserDialogComponent,
     SupportedBrowsersDialogComponent,
@@ -79,7 +78,6 @@ import { UsersModule } from './users/users.module';
     TranslocoModule,
     AppRoutingModule,
     SharedModule,
-    NavigationProjectSelectorComponent,
     AvatarComponent
   ],
   providers: [
