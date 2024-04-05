@@ -1,0 +1,78 @@
+@use 'src/_variables' as variables;
+
+h3 {
+  margin-top: 2em;
+  margin-bottom: 0em;
+}
+
+button {
+  .text-padding {
+    padding: 0 0.5em;
+  }
+}
+
+.wrapper {
+  max-width: 50em;
+  margin: 0 auto 2em;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
+}
+
+mat-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+}
+
+.helper-text {
+  color: variables.$lighterTextColor;
+}
+
+.project-name {
+  font-size: 1.25em;
+  display: flex;
+  gap: 8px;
+}
+
+.active-project {
+  background-color: #e2efdc;
+}
+
+.loading-card {
+  animation: loading-card-animation 30s infinite;
+
+  background-image: linear-gradient(
+    135deg,
+    #d3d3d3 25%,
+    #f5f5f5 25%,
+    #f5f5f5 50%,
+    #d3d3d3 50%,
+    #d3d3d3 75%,
+    #f5f5f5 75%
+  );
+  background-size: 50px 50px;
+}
+
+@keyframes loading-card-animation {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+#message-looking-for-another-project {
+  box-shadow: none;
+
+  p {
+    font-size: initial;
+  }
+}
