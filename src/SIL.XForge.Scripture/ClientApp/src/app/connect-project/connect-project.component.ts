@@ -43,6 +43,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
+  /** The Paratext project id of what was requested to connect. */
+  incomingPTProjectId?: string;
 
   projectLabel = projectLabel;
 
@@ -62,6 +64,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
+    this.incomingPTProjectId = this.router.getCurrentNavigation()?.extras.state?.ptProjectId;
   }
 
   get hasConnectableProjects(): boolean {
@@ -87,7 +90,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
     const paratextId: string = this.paratextIdControl.value;
     const project = this._projects.find(p => p.paratextId === paratextId);
-    return project != null && project.projectId == null;
+    return project != null && !this.paratextService.isParatextProjectInSF(project);
   }
 
   get submitDisabled(): boolean {
@@ -157,6 +160,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         this.state = 'offline';
       }
     });
+
+    if (this.incomingPTProjectId != null) this.paratextIdControl.setValue(this.incomingPTProjectId);
   }
 
   logInWithParatext(): void {
