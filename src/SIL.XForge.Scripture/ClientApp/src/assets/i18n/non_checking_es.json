@@ -206,6 +206,7 @@
     "apply_to_project": "Aplicar al proyecto",
     "draft_indicator_applied": "BORRADOR APLICADO",
     "draft_indicator_not_applied": "BORRADOR",
+    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "draft_preview_and_apply": "Vista previa del borrador y aplicar",
     "edit": "Editar",
     "loading": "Cargando...",
@@ -249,7 +250,9 @@
     "draft_tab_header": "Guardado Automático"
   },
   "history_chooser": {
+    "hide_changes": "Ocultar los cambios",
     "hide_diff": "Ocultar las diferencias con la última versión",
+    "show_changes": "Mostrar cambios",
     "show_diff": "Mostrar las diferencias con la última versión"
   },
   "import_questions_confirmation_dialog": {

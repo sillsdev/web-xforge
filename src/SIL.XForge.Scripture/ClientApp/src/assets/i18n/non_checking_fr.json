@@ -206,6 +206,7 @@
     "apply_to_project": "Appliquer au projet",
     "draft_indicator_applied": "EBAUCHE APPLIQUE",
     "draft_indicator_not_applied": "EBAUCHE",
+    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "draft_preview_and_apply": "Prévisualisation l'ébauche et appliquer",
     "edit": "Modifier",
     "loading": "Chargement...",
@@ -249,7 +250,9 @@
     "draft_tab_header": "Brouillon automatique"
   },
   "history_chooser": {
+    "hide_changes": "Masquer les modifications",
     "hide_diff": "Masquer les différences par rapport à la dernière version",
+    "show_changes": "Afficher les modifications",
     "show_diff": "Afficher les différences par rapport à la dernière version"
   },
   "import_questions_confirmation_dialog": {

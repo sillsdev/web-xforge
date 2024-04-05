@@ -206,6 +206,7 @@
     "apply_to_project": "Apply to project",
     "draft_indicator_applied": "DRAFT APPLIED",
     "draft_indicator_not_applied": "DRAFT",
+    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "draft_preview_and_apply": "Draft preview and apply",
     "edit": "编辑",
     "loading": "Loading...",
@@ -249,7 +250,9 @@
     "draft_tab_header": "Auto Draft"
   },
   "history_chooser": {
+    "hide_changes": "Hide changes",
     "hide_diff": "Hide differences from the latest version",
+    "show_changes": "Show changes",
     "show_diff": "Show differences from the latest version"
   },
   "import_questions_confirmation_dialog": {
