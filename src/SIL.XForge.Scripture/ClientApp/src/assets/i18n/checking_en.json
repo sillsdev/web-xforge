@@ -14,6 +14,7 @@
     "logged_in_as": "Logged in as",
     "manual": "Manual",
     "my_progress": "My progress",
+    "my_projects": "My projects",
     "offline": "Offline",
     "online": "Online",
     "open_source_licenses": "Open source licenses",
@@ -22,7 +23,6 @@
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
-    "project_home": "Project home",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
@@ -357,8 +357,17 @@
     "cancel": "Cancel",
     "close": "Close"
   },
-  "navigation-project_selector": {
-    "connect_project": "Connect project"
+  "my_projects": {
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected_projects": "Connected projects",
+    "dbl_resource": "DBL resource",
+    "dbl_resources": "DBL resources",
+    "drafting": "Drafting",
+    "join": "Join",
+    "no_projects_so_need_invitation_or_paratext": "You have no projects. You need to receive an invitation to join a project. Or if you have a Paratext account, you can Log in with Paratext and connect to your Paratext projects.",
+    "not_connected": "Not connected",
+    "open": "Open",
+    "project_cannot_be_connected": "This project cannot be connected."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choose book",
@@ -410,10 +419,6 @@
     "share": "Share",
     "share_project": "Share {{ project }}",
     "share_with_others": "Share with others"
-  },
-  "start": {
-    "connect_project": "Connect project",
-    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "Audio recording is not supported in this browser.",

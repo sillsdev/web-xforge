@@ -152,8 +152,10 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
     expect(env.component.paratextIdControl.errors!.required).toBe(true);
 
+    when(mockedParatextService.isParatextProjectInSF(anything())).thenReturn(true);
     env.changeSelectValue(env.projectSelect, 'pt03');
 
+    // The project is already in SF, so do not present settings to configure.
     expect(env.settingsCard).toBeNull();
     env.clickElement(env.submitButton);
 
@@ -367,6 +369,18 @@ describe('ConnectProjectComponent', () => {
     verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
+
+  it('knows what pt project id is being asked to connect to', fakeAsync(() => {
+    when(mockedRouter.getCurrentNavigation()).thenReturn({
+      extras: { state: { ptProjectId: 'requested-pt-project-id' } }
+    } as any);
+    const env = new TestEnvironment();
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+    expect(env.component.ptProjectId).toEqual('requested-pt-project-id');
+    expect(env.component.paratextIdControl.value).toEqual('requested-pt-project-id');
+  }));
 });
 
 class TestEnvironment {
@@ -492,6 +506,10 @@ class TestEnvironment {
 
   get resourceLoadingErrorMessage(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-project-select + mat-error'));
+  }
+
+  get projectIdMessage(): DebugElement {
+    return this.getElement('#project-id-message');
   }
 
   selectSourceProject(projectId: string): void {
@@ -623,5 +641,15 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
+  }
+
+  click(element: DebugElement): void {
+    element.nativeElement.click();
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  private getElement(query: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(query));
   }
 }
