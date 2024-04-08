@@ -28,6 +28,7 @@ export interface DraftSources {
   source?: Readonly<DraftSource>;
   alternateSource?: Readonly<DraftSource>;
   alternateTrainingSource?: Readonly<DraftSource>;
+  mixSources?: Readonly<DraftSource>[];
 }
 
 @Injectable({
@@ -81,7 +82,31 @@ export class DraftSourcesService {
           targetDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource
         );
 
-        // Include alternate training source project if it exists
+        // If the user cannot access the a mix source project,
+        // populate using the target's mix source information, if enabled
+        let mixSourceProjectIds: string[] | undefined;
+        let mixSourceProjects: DraftSourceDoc[] | undefined;
+        if (translateConfig?.draftConfig.mixSourcesEnabled) {
+          for (let i = 0; i < translateConfig.draftConfig.mixSources.length; i++) {
+            const mixSource: TranslateSource = translateConfig.draftConfig.mixSources[i];
+            const mixSourceProjectId: string = mixSource.projectRef;
+            mixSourceProjectIds ??= [];
+            mixSourceProjectIds.push(mixSourceProjectId);
+
+            // mixDraftSource will be not null if the user does not have access to the project
+            const mixDraftSource: DraftSourceDoc | undefined = this.getDraftSource(
+              mixSourceProjectId,
+              currentUser,
+              mixSource
+            );
+            if (mixDraftSource != null) {
+              mixSourceProjects ??= [];
+              mixSourceProjects.push(mixDraftSource);
+            }
+          }
+        }
+
+        // Include the source projects, if they exist
         return from(
           Promise.all([
             sourceProjectId
@@ -92,15 +117,28 @@ export class DraftSourcesService {
               : Promise.resolve(undefined),
             alternateTrainingSourceProjectId
               ? alternateTrainingSourceProject ?? this.projectService.getProfile(alternateTrainingSourceProjectId)
+              : Promise.resolve(undefined),
+            mixSourceProjectIds
+              ? mixSourceProjects ?? Promise.all(mixSourceProjectIds.map(s => this.projectService.getProfile(s)))
               : Promise.resolve(undefined)
           ])
         ).pipe(
-          map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc]) => {
+          map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc, mixSourceDocs]) => {
+            // We cannot use filter() to filter the mixSources due to the nested Promise.all()
+            let mixSources: Readonly<DraftSource>[] | undefined;
+            for (const mixSourceDoc of mixSourceDocs ?? []) {
+              if (mixSourceDoc?.data != null) {
+                mixSources ??= [];
+                mixSources.push(mixSourceDoc.data);
+              }
+            }
+
             return {
               target: targetDoc?.data,
               source: sourceDoc?.data,
               alternateSource: alternateSourceDoc?.data,
-              alternateTrainingSource: alternateTrainingSourceDoc?.data
+              alternateTrainingSource: alternateTrainingSourceDoc?.data,
+              mixSources: mixSources
             };
           })
         );

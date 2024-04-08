@@ -73,10 +73,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
   isSourceAndTrainingSourceLanguageIdentical = true;
+  isSourceAndMixSourceLanguageIdentical = true;
 
   source?: DraftSource;
   alternateSource?: DraftSource;
   alternateTrainingSource?: DraftSource;
+  mixSources?: DraftSource[];
+
+  // This is used to display the names of the mixed sources. Usually there will be just one.
+  mixSourcesNames: string | undefined;
 
   jobSubscription?: Subscription;
   isOnline = true;
@@ -132,6 +137,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
       this.isSourceAndTrainingSourceLanguageIdentical &&
+      this.isSourceAndMixSourceLanguageIdentical &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
@@ -216,6 +222,35 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
               this.isSourceAndTrainingSourceLanguageIdentical = true;
             }
 
+            // The mix sources and source languages must match
+            if (
+              (translateConfig?.draftConfig.mixSourcesEnabled ?? false) &&
+              translateConfig?.draftConfig.mixSources != null
+            ) {
+              // Reset the variable so we can check each mix source via &&=
+              this.isSourceAndMixSourceLanguageIdentical = true;
+              if (
+                (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
+                translateConfig?.draftConfig.alternateTrainingSource != null
+              ) {
+                // Compare the mix sources with the alternate training source (must be true for all mix sources)
+                for (const mixSource of translateConfig.draftConfig.mixSources) {
+                  this.isSourceAndMixSourceLanguageIdentical &&=
+                    mixSource.writingSystem.tag ===
+                    translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
+                }
+              } else {
+                // Compare the mix source with the source (must be true for all mix sources)
+                for (const mixSource of translateConfig.draftConfig.mixSources) {
+                  this.isSourceAndMixSourceLanguageIdentical &&=
+                    mixSource.writingSystem.tag === translateConfig?.source?.writingSystem.tag;
+                }
+              }
+            } else {
+              // There is no mix source specified
+              this.isSourceAndMixSourceLanguageIdentical = true;
+            }
+
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
@@ -224,10 +259,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
         this.draftSourcesService.getDraftProjectSources().pipe(
-          tap(({ source, alternateSource, alternateTrainingSource }) => {
+          tap(({ source, alternateSource, alternateTrainingSource, mixSources }) => {
             this.source = source;
             this.alternateSource = alternateSource;
             this.alternateTrainingSource = alternateTrainingSource;
+            this.mixSources = mixSources;
+            this.mixSourcesNames = mixSources?.map(s => s?.name)?.join(', ');
           })
         )
       ]),
@@ -344,12 +381,21 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   /**
-   * Determines if a user has access to a draft source.
+   * Determines if a user has access to a draft source, or all of an array of sources.
    * @param source The draft source from the draft generation service.
    * @returns true if the user has access to the source, or if there is no source.
    */
-  canAccessDraftSourceIfAvailable(source: DraftSource | undefined): boolean {
-    return !(source?.noAccess ?? false);
+  canAccessDraftSourceIfAvailable(source: DraftSource | DraftSource[] | undefined): boolean {
+    if (Array.isArray(source)) {
+      for (const mixSource of source) {
+        if (mixSource?.noAccess === true) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      return !(source?.noAccess ?? false);
+    }
   }
 
   hasDraftQueueDepth(job?: BuildDto): boolean {
