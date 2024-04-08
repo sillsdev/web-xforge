@@ -72,6 +72,24 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
+          !isSourceAndMixSourceLanguageIdentical
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-mix-source-different"
+      >
+        <transloco
+          key="draft_generation.info_alert_different_mix_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndMixSourceLanguageIdentical &&
           !canAccessDraftSourceIfAvailable(source)
         "
         type="warning"
@@ -92,6 +110,7 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndMixSourceLanguageIdentical &&
           canAccessDraftSourceIfAvailable(source) &&
           !canAccessDraftSourceIfAvailable(alternateSource)
         "
@@ -113,6 +132,7 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndMixSourceLanguageIdentical &&
           canAccessDraftSourceIfAvailable(source) &&
           canAccessDraftSourceIfAvailable(alternateSource) &&
           !canAccessDraftSourceIfAvailable(alternateTrainingSource)
@@ -126,6 +146,30 @@
           [params]="{
             connectProjectUrl: { route: '/connect-project' },
             name: alternateTrainingSource?.name,
+          }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndMixSourceLanguageIdentical &&
+          canAccessDraftSourceIfAvailable(source) &&
+          canAccessDraftSourceIfAvailable(alternateSource) &&
+          canAccessDraftSourceIfAvailable(alternateTrainingSource) &&
+          !canAccessDraftSourceIfAvailable(mixSources)
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-mix-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_mix_source_access"
+          [params]="{
+            connectProjectUrl: { route: '/connect-project' },
+            name: mixSourcesNames
           }"
         ></transloco>
       </app-notice>

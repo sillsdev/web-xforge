@@ -44,7 +44,8 @@ describe('DraftSourcesService', () => {
           target: undefined,
           source: undefined,
           alternateSource: undefined,
-          alternateTrainingSource: undefined
+          alternateTrainingSource: undefined,
+          mixSources: undefined
         } as DraftSources);
         done();
       });
@@ -83,7 +84,18 @@ describe('DraftSourcesService', () => {
               }
             },
             alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true
+            alternateTrainingSourceEnabled: true,
+            mixSources: [
+              {
+                projectRef: 'mix_source_project',
+                name: 'Mix Source Project',
+                shortName: 'MSP',
+                writingSystem: {
+                  tag: 'en_UK'
+                }
+              }
+            ],
+            mixSourcesEnabled: true
           }
         }
       });
@@ -122,7 +134,18 @@ describe('DraftSourcesService', () => {
               tag: 'en_AU'
             },
             noAccess: true
-          }
+          },
+          mixSources: [
+            {
+              name: 'Mix Source Project',
+              shortName: 'MSP',
+              texts: [],
+              writingSystem: {
+                tag: 'en_UK'
+              },
+              noAccess: true
+            }
+          ]
         } as DraftSources);
         done();
       });
@@ -142,7 +165,13 @@ describe('DraftSourcesService', () => {
               projectRef: 'alternate_training_source_project'
             },
             alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true
+            alternateTrainingSourceEnabled: true,
+            mixSources: [
+              {
+                projectRef: 'mix_source_project'
+              }
+            ],
+            mixSourcesEnabled: true
           }
         }
       });
@@ -170,6 +199,14 @@ describe('DraftSourcesService', () => {
           tag: 'en_AU'
         }
       });
+      const mixSourceProject = createTestProjectProfile({
+        name: 'Mix Source Project',
+        shortName: 'MSP',
+        texts: [{ bookNum: 1 }],
+        writingSystem: {
+          tag: 'en_UK'
+        }
+      });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           data: targetProject
@@ -184,12 +221,20 @@ describe('DraftSourcesService', () => {
       when(mockProjectService.getProfile('alternate_training_source_project')).thenResolve({
         data: alternateTrainingSourceProject
       } as SFProjectProfileDoc);
+      when(mockProjectService.getProfile('mix_source_project')).thenResolve({
+        data: mixSourceProject
+      } as SFProjectProfileDoc);
       when(mockUserService.getCurrentUser()).thenResolve({
         data: createTestUser(
           {
             sites: {
               [environment.siteId]: {
-                projects: ['source_project', 'alternate_source_project', 'alternate_training_source_project']
+                projects: [
+                  'source_project',
+                  'alternate_source_project',
+                  'alternate_training_source_project',
+                  'mix_source_project'
+                ]
               }
             }
           },
@@ -202,7 +247,68 @@ describe('DraftSourcesService', () => {
           target: targetProject,
           source: sourceProject,
           alternateSource: alternateSourceProject,
-          alternateTrainingSource: alternateTrainingSourceProject
+          alternateTrainingSource: alternateTrainingSourceProject,
+          mixSources: [mixSourceProject]
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the alternate source project if disabled', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            alternateSource: {
+              projectRef: 'alternate_source_project',
+              name: 'Alternate Source Project',
+              shortName: 'ASP',
+              writingSystem: {
+                tag: 'en_NZ'
+              }
+            },
+            alternateSourceEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          mixSources: undefined
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the alternate source project if enabled but missing', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            alternateSourceEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          mixSources: undefined
         } as DraftSources);
         done();
       });
@@ -235,7 +341,8 @@ describe('DraftSourcesService', () => {
           target: targetProject,
           source: undefined,
           alternateSource: undefined,
-          alternateTrainingSource: undefined
+          alternateTrainingSource: undefined,
+          mixSources: undefined
         } as DraftSources);
         done();
       });
@@ -260,7 +367,70 @@ describe('DraftSourcesService', () => {
           target: targetProject,
           source: undefined,
           alternateSource: undefined,
-          alternateTrainingSource: undefined
+          alternateTrainingSource: undefined,
+          mixSources: undefined
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the mix sources projects if disabled', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            mixSources: [
+              {
+                projectRef: 'mix_source_project',
+                name: 'Mix Source Project',
+                shortName: 'MSP',
+                writingSystem: {
+                  tag: 'en_UK'
+                }
+              }
+            ],
+            mixSourcesEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          mixSources: undefined
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the mix sources projects if enabled but missing', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            mixSourcesEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          mixSources: undefined
         } as DraftSources);
         done();
       });
