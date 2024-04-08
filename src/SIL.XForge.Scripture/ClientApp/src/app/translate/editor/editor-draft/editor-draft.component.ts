@@ -136,7 +136,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         } else if (this.draftCheckState !== 'draft-legacy') {
           this.draftCheckState = 'draft-present';
         }
-        
+
         this.isDraftApplied = !this.draftViewerService.hasDraftOps(draft, targetOps);
 
         // Overwrite existing text with draft text
