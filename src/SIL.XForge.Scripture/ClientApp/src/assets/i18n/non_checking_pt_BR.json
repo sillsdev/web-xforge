@@ -1,13 +1,13 @@
 {
   "app": {
     "beta": "beta",
-    "generate_draft": "Generate draft",
-    "manage_questions": "Manage questions",
+    "generate_draft": "Gerar Rascunho",
+    "manage_questions": "Gerenciar perguntas",
     "settings": "Configurações",
     "synchronize": "Sincronizar",
     "system_administration": "Administração do Sistema",
     "translate": "Traduzir",
-    "edit_review": "Edit & review",
+    "edit_review": "Editar e revisar",
     "users": "Usuários"
   },
   "biblical_term_dialog": {
@@ -147,9 +147,9 @@
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
     "generate_back_translation_drafts_header": "Generate back translation drafts",
-    "generate_draft_button": "Generate draft",
+    "generate_draft_button": "Gerar Rascunho",
     "generate_draft_detail": "Click [em]\"{{ draft_generation.generate_draft_button }}\"[/em] to start the process of generating a translation draft. This will take at least a few hours.",
-    "generate_draft_header": "Generate draft",
+    "generate_draft_header": "Gerar Rascunho",
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft_button": "Generate new draft",
     "generate_new_draft_detail": "Click [em]\"{{ draft_generation.generate_new_draft_button }}\"[/em] to start the process of generating a new translation draft. This will take at least a few hours and could take as long as 16 hours.",
@@ -195,7 +195,7 @@
     "configure_advanced_settings": "Configure advanced settings",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
-    "generate_draft": "Generate draft",
+    "generate_draft": "Gerar Rascunho",
     "loading": "Carregando...",
     "next": "Próximo",
     "no_available_books": "You have no books available for drafting.",
@@ -206,6 +206,7 @@
     "apply_to_project": "Apply to project",
     "draft_indicator_applied": "DRAFT APPLIED",
     "draft_indicator_not_applied": "DRAFT",
+    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
     "draft_preview_and_apply": "Draft preview and apply",
     "edit": "Editar",
     "loading": "Carregando...",
@@ -249,7 +250,9 @@
     "draft_tab_header": "Auto Draft"
   },
   "history_chooser": {
+    "hide_changes": "Ocultar alterações",
     "hide_diff": "Hide differences from the latest version",
+    "show_changes": "Exibir alterações",
     "show_diff": "Show differences from the latest version"
   },
   "import_questions_confirmation_dialog": {
