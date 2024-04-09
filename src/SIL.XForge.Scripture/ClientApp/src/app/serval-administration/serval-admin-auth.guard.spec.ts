@@ -23,7 +23,7 @@ describe('ServalAdminAuthGuard', () => {
     const env = new TestEnvironment(true, SystemRole.ServalAdmin);
 
     env.service.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot).subscribe(result => {
-      expect(result).toBeTruthy();
+      expect(result).toBe(true);
     });
   });
 
@@ -31,7 +31,7 @@ describe('ServalAdminAuthGuard', () => {
     const env = new TestEnvironment(false, SystemRole.None);
 
     env.service.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot).subscribe(result => {
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
   });
 
@@ -39,7 +39,7 @@ describe('ServalAdminAuthGuard', () => {
     const env = new TestEnvironment(true, SystemRole.SystemAdmin);
 
     env.service.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot).subscribe(result => {
-      expect(result).toBeFalsy();
+      expect(result).toBe(false);
     });
   });
 

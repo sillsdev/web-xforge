@@ -95,8 +95,6 @@ class Row {
   imports: [CommonModule, UICommonModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
-  @HostBinding('class') classes = 'flex-column';
-
   columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'alternateSource', 'alternateTrainingSource'];
   rows: Row[] = [];
 
@@ -131,7 +129,6 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
         obj<SFProjectProfile>().pathStr(p => p.shortName)
       ]),
       searchResults => {
-        this.loadingStarted();
         this.projectDocs = searchResults.docs;
         this.length = searchResults.unpagedCount;
         this.generateRows();

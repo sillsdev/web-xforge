@@ -411,7 +411,7 @@ public class MachineProjectService(
         // Ensure that the path exists
         if (!fileSystemService.DirectoryExists(path))
         {
-            throw new DataNotFoundException($"The following directory could not be found: {path}");
+            throw new DataNotFoundException($"The directory could not be found for {project.ParatextId}");
         }
 
         // Create the zip file from the directory in memory
@@ -1569,7 +1569,7 @@ public class MachineProjectService(
             // Ensure that the path exists
             if (!fileSystemService.DirectoryExists(path))
             {
-                throw new DirectoryNotFoundException($"The following directory could not be found: {path}");
+                throw new DirectoryNotFoundException($"The directory could not be found for {paratextId}");
             }
 
             // Create the zip file from the directory in memory
