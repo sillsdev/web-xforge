@@ -2311,11 +2311,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .getGeneratedDraft(this.activatedProject.projectId!, this.bookNum!, this.chapter!)
       .subscribe((draft: DraftSegmentMap) => {
         this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
-        const hasDraftTab = this.tabState.hasTab('target', 'draft');
+        const hasDraftTab = this.tabState.hasTab('source', 'draft');
         if (this.hasDraft && !hasDraftTab) {
-          this.tabState.addTab('target', this.editorTabFactory.createTab('draft'), false);
+          this.tabState.addTab('source', this.editorTabFactory.createTab('draft'), false);
         } else if (!this.hasDraft && hasDraftTab) {
-          this.tabState.removeTab('target', this.tabState.getTab('target', 'draft')!);
+          this.tabState.removeTab('source', this.tabState.getTab('source', 'draft')!);
         }
       });
   }
