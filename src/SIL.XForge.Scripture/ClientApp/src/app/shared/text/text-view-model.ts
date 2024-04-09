@@ -121,6 +121,7 @@ export class TextViewModel {
   editor?: Quill;
 
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
+  private localUpdateSub?: Subscription;
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
@@ -187,6 +188,10 @@ export class TextViewModel {
         const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
         editor.updateContents(deltaWithEmbeds, 'api');
       });
+      this.localUpdateSub = this.textDoc.localUpdate.asObservable().subscribe(ops => {
+        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops);
+        editor.updateContents(deltaWithEmbeds, 'api');
+      });
     }
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
@@ -200,6 +205,9 @@ export class TextViewModel {
   unbind(): void {
     if (this.remoteChangesSub != null) {
       this.remoteChangesSub.unsubscribe();
+    }
+    if (this.localUpdateSub != null) {
+      this.localUpdateSub.unsubscribe();
     }
     if (this.onCreateSub != null) {
       this.onCreateSub.unsubscribe();

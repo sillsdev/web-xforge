@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeltaOperation } from 'quill';
+import { DeltaOperation, DeltaStatic } from 'quill';
 import {
   catchError,
   combineLatest,
@@ -63,6 +63,25 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.populateDraftTextInit();
   }
 
+  draftOps?: DeltaOperation[];
+
+  async applyDraft(): Promise<void> {
+    // Get the target document
+    const textDoc = await this.projectService.getText(this.getTextDocId().toString());
+
+    // Get the diff between the ops in the target and the ops from the draft
+    const diff: DeltaStatic = new Delta(textDoc.data?.ops).diff(new Delta(this.draftOps));
+
+    // Apply the difference between the draft and the target to the target doc
+    await textDoc.submit(diff);
+
+    // Editor does not update as it is only subscribed to remote updates! (See text-model-view.ts:186)
+    // We can either perform this diff submit above on the backend, and have it then pushed out
+    // Or, I have a subject that we can manually push the updates to all subscribes to the textdoc
+    // NOTE: I am not sure if a Subject is the best way - it was just the first way I could think of!
+    textDoc.localUpdate.next(diff);
+  }
+
   populateDraftTextInit(): void {
     combineLatest([this.draftText.editorCreated, this.inputChanged$.pipe(startWith(undefined))])
       .pipe(
@@ -110,6 +129,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       )
       .subscribe((draftOps: DeltaOperation[]) => {
         // Set the draft editor with the pre-translation segments
+        this.draftOps = draftOps;
         this.draftText.editor?.setContents(new Delta(draftOps), 'api');
       });
   }

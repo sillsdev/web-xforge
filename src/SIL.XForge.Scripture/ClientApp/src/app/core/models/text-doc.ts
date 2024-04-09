@@ -1,3 +1,4 @@
+import { Subject } from 'rxjs';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic } from 'quill';
 import {
   getTextDocId,
@@ -40,6 +41,8 @@ export class TextDocId {
 export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
+
+  localUpdate = new Subject<DeltaStatic>();
 
   getSegmentCount(): { translated: number; blank: number } {
     let blank = 0;
