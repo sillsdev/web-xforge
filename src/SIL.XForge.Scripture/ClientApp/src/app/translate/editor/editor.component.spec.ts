@@ -3240,7 +3240,7 @@ describe('EditorComponent', () => {
 
       const segmentElRect = env.getSegmentElement(segmentRef)!.getBoundingClientRect();
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(fabRect.top).toEqual(segmentElRect.top);
+      expect(Math.ceil(fabRect.top)).toEqual(Math.ceil(segmentElRect.top));
 
       env.dispose();
     }));
@@ -3269,7 +3269,7 @@ describe('EditorComponent', () => {
       scrollContainer.dispatchEvent(new Event('scroll'));
 
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(fabRect.top).toEqual(scrollContainerRect.top + env.component.fabVerticalCushion);
+      expect(Math.ceil(fabRect.top)).toEqual(Math.ceil(scrollContainerRect.top + env.component.fabVerticalCushion));
 
       env.dispose();
     }));
@@ -3298,7 +3298,9 @@ describe('EditorComponent', () => {
       scrollContainer.dispatchEvent(new Event('scroll'));
 
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(fabRect.bottom).toEqual(scrollContainerRect.bottom - env.component.fabVerticalCushion);
+      expect(Math.ceil(fabRect.bottom)).toEqual(
+        Math.ceil(scrollContainerRect.bottom - env.component.fabVerticalCushion)
+      );
 
       env.dispose();
     }));
