@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ParatextProject } from './models/paratext-project';
 
 /**
@@ -35,17 +36,21 @@ export class ParatextService {
 
   getParatextUsername(): Observable<string | undefined> {
     return this.http
-      .get<string | null>('paratext-api/username', { headers: this.headers })
+      .get<string | null>(`${PARATEXT_API_NAMESPACE}/username`, { headers: this.headers })
       .pipe(map(r => r ?? undefined));
   }
 
   getProjects(): Promise<ParatextProject[] | undefined> {
-    return this.http.get<ParatextProject[] | undefined>('paratext-api/projects', { headers: this.headers }).toPromise();
+    return this.http
+      .get<ParatextProject[] | undefined>(`${PARATEXT_API_NAMESPACE}/projects`, { headers: this.headers })
+      .toPromise();
   }
 
   getResources(): Promise<SelectableProject[] | undefined> {
     return this.http
-      .get<{ [id: string]: [shortName: string, name: string] }>('paratext-api/resources', { headers: this.headers })
+      .get<{ [id: string]: [shortName: string, name: string] }>(`${PARATEXT_API_NAMESPACE}/resources`, {
+        headers: this.headers
+      })
       .toPromise()
       .then(result =>
         result == null
@@ -60,9 +65,12 @@ export class ParatextService {
 
   async getRevisions(projectId: string, book: string, chapter: number): Promise<Revision[] | undefined> {
     return await this.http
-      .get<Revision[] | undefined>(`paratext-api/history/revisions/${projectId}_${book}_${chapter}_target`, {
-        headers: this.headers
-      })
+      .get<Revision[] | undefined>(
+        `${PARATEXT_API_NAMESPACE}/history/revisions/${projectId}_${book}_${chapter}_target`,
+        {
+          headers: this.headers
+        }
+      )
       .toPromise();
   }
 
@@ -74,7 +82,7 @@ export class ParatextService {
   ): Promise<Snapshot<TextData> | undefined> {
     return await this.http
       .get<Snapshot<TextData>>(
-        `paratext-api/history/snapshot/${projectId}_${book}_${chapter}_target?timestamp=${timestamp}`,
+        `${PARATEXT_API_NAMESPACE}/history/snapshot/${projectId}_${book}_${chapter}_target?timestamp=${timestamp}`,
         {
           headers: this.headers
         }

@@ -6,6 +6,7 @@ import { CommandService } from 'xforge-common/command.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequestService } from 'xforge-common/retrying-request.service';
+import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../core/models/sf-project-role-info';
 
@@ -30,7 +31,7 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
    * @returns An observable.
    */
   downloadProject(projectId: string): Observable<Blob> {
-    return this.httpClient.get(`paratext-api/projects/${projectId}/download`, {
+    return this.httpClient.get(`${PARATEXT_API_NAMESPACE}/projects/${projectId}/download`, {
       responseType: 'blob' // Set responseType to 'blob' to handle binary data
     });
   }
