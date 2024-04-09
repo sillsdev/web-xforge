@@ -244,12 +244,10 @@ describe('AppComponent', () => {
     expect(env.installBadge).toBeNull();
     expect(env.installButton).toBeNull();
     env.canInstall$.next(true);
-    env.avatarIcon.nativeElement.click();
-    env.wait();
+    env.showHideUserMenu();
     expect(env.installBadge).not.toBeNull();
     expect(env.installButton).not.toBeNull();
-    env.avatarIcon.nativeElement.click();
-    env.wait();
+    env.showHideUserMenu();
   }));
 
   it('hide install badge after avatar menu click', fakeAsync(() => {
@@ -262,8 +260,7 @@ describe('AppComponent', () => {
     expect(env.installBadge).not.toBeNull();
 
     when(mockedPwaService.installPromptLastShownTime).thenReturn(Date.now());
-    env.avatarIcon.nativeElement.click();
-    env.wait();
+    env.showHideUserMenu();
     expect(env.installBadge).toBeNull();
 
     // The install badge should be visible again
@@ -271,8 +268,7 @@ describe('AppComponent', () => {
     env.wait();
     expect(env.installBadge).not.toBeNull();
 
-    env.avatarIcon.nativeElement.click();
-    env.wait();
+    env.showHideUserMenu();
   }));
 
   it('user added to project after init', fakeAsync(() => {
@@ -324,8 +320,7 @@ describe('AppComponent', () => {
       const env = new TestEnvironment('online');
       env.init();
 
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
       expect(env.userMenu).not.toBeNull();
       env.clickEditDisplayName();
       verify(mockedUserService.editDisplayName(false)).once();
@@ -336,8 +331,7 @@ describe('AppComponent', () => {
       env.setCurrentUser('user02');
       env.init();
 
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
       expect(env.userMenu).not.toBeNull();
       expect(env.editNameButton).not.toBeNull();
       env.clickEditDisplayName();
@@ -353,17 +347,15 @@ describe('AppComponent', () => {
       env.init();
 
       // Show the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
 
       // Verify the menu item is visible
-      expect(env.component.isServalAdmin).toBeTruthy();
+      expect(env.component.isServalAdmin).toBe(true);
       expect(env.userMenu).not.toBeNull();
-      expect(env.userMenu.query(By.css('#serval-admin-btn'))).not.toBeNull();
+      expect(env.servalAdminButton).not.toBeNull();
 
       // Hide the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
     }));
 
     it('does not show system administration menu item', fakeAsync(() => {
@@ -372,17 +364,15 @@ describe('AppComponent', () => {
       env.init();
 
       // Show the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
 
       // Verify the menu item is not visible
-      expect(env.component.isSystemAdmin).toBeFalsy();
+      expect(env.component.isSystemAdmin).toBe(false);
       expect(env.userMenu).not.toBeNull();
-      expect(env.userMenu.query(By.css('#system-admin-btn'))).toBeNull();
+      expect(env.systemAdminButton).toBeNull();
 
       // Hide the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
     }));
   });
 
@@ -393,17 +383,15 @@ describe('AppComponent', () => {
       env.init();
 
       // Show the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
 
       // Verify the menu item is visible
-      expect(env.component.isSystemAdmin).toBeTruthy();
+      expect(env.component.isSystemAdmin).toBe(true);
       expect(env.userMenu).not.toBeNull();
-      expect(env.userMenu.query(By.css('#system-admin-btn'))).not.toBeNull();
+      expect(env.systemAdminButton).not.toBeNull();
 
       // Hide the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
     }));
 
     it('does not show serval administration menu item', fakeAsync(() => {
@@ -412,17 +400,15 @@ describe('AppComponent', () => {
       env.init();
 
       // Show the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
 
       // Verify the menu item is not visible
-      expect(env.component.isServalAdmin).toBeFalsy();
+      expect(env.component.isServalAdmin).toBe(false);
       expect(env.userMenu).not.toBeNull();
-      expect(env.userMenu.query(By.css('#serval-admin-btn'))).toBeNull();
+      expect(env.servalAdminButton).toBeNull();
 
       // Hide the user menu
-      env.avatarIcon.nativeElement.click();
-      env.wait();
+      env.showHideUserMenu();
     }));
   });
 });
@@ -548,6 +534,14 @@ class TestEnvironment {
     return this.userMenu.query(By.css('#edit-name-btn'));
   }
 
+  get servalAdminButton(): DebugElement {
+    return this.userMenu.query(By.css('#serval-admin-btn'));
+  }
+
+  get systemAdminButton(): DebugElement {
+    return this.userMenu.query(By.css('#system-admin-btn'));
+  }
+
   get navBar(): DebugElement {
     return this.fixture.debugElement.query(By.css('mat-toolbar'));
   }
@@ -662,6 +656,11 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
+    this.wait();
+  }
+
+  showHideUserMenu(): void {
+    this.avatarIcon.nativeElement.click();
     this.wait();
   }
 

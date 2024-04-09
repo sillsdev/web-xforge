@@ -5,6 +5,7 @@ import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ServalAdministrationService } from './serval-administration.service';
 
 const mockedCommandService = mock(CommandService);
@@ -25,13 +26,13 @@ describe('ServalAdministrationService', () => {
     it('should return true for a resource id', () => {
       const env = new TestEnvironment();
       const id = '1234567890abcdef';
-      expect(env.service.isResource(id)).toBeTruthy();
+      expect(env.service.isResource(id)).toBe(true);
     });
 
-    it('should return true for a project id', () => {
+    it('should return false for a project id', () => {
       const env = new TestEnvironment();
       const id = '123456781234567890abcdef1234567890abcdef1234567890abcdef';
-      expect(env.service.isResource(id)).toBeFalsy();
+      expect(env.service.isResource(id)).toBe(false);
     });
   });
 
@@ -44,7 +45,7 @@ describe('ServalAdministrationService', () => {
         expect(blob).toEqual(mockBlob);
       });
 
-      const request = env.httpTestingController.expectOne(`paratext-api/projects/${projectId}/download`);
+      const request = env.httpTestingController.expectOne(`${PARATEXT_API_NAMESPACE}/projects/${projectId}/download`);
       expect(request.request.method).toBe('GET');
       request.flush(mockBlob);
       env.httpTestingController.verify();
