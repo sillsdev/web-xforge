@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import {
   MatLegacyDialog as MatDialog,
   MatLegacyDialogConfig as MatDialogConfig
@@ -52,6 +52,7 @@ describe('ErrorDialogComponent', () => {
     expect(env.stackTrace).toBeNull();
 
     env.closeButton.click();
+    flush();
   }));
 
   it('should not render "Show details" link when no stack trace', fakeAsync(() => {
@@ -64,6 +65,7 @@ describe('ErrorDialogComponent', () => {
     expect(env.stackTrace).toBeNull();
 
     env.closeButton.click();
+    flush();
   }));
 });
 
