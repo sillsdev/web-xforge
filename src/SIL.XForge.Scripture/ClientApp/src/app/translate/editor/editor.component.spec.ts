@@ -76,6 +76,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -3774,7 +3775,7 @@ describe('EditorComponent', () => {
       );
       env.wait();
 
-      const tabGroup = env.component.tabState.getTabGroup('target');
+      const tabGroup = env.component.tabState.getTabGroup('source');
       expect(tabGroup?.tabs[1].type).toEqual('draft');
 
       env.dispose();
@@ -3789,7 +3790,7 @@ describe('EditorComponent', () => {
       );
       env.wait();
 
-      const tabGroup = env.component.tabState.getTabGroup('target');
+      const tabGroup = env.component.tabState.getTabGroup('source');
       expect(tabGroup?.tabs[1].type).toEqual('draft');
       expect(env.component.chapter).toBe(1);
 
@@ -3866,6 +3867,9 @@ class TestEnvironment {
     translateConfig: {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
+      draftConfig: {
+        sendAllSegments: true
+      },
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
@@ -4101,6 +4105,15 @@ class TestEnvironment {
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
+    this.spyActivatedProjectService = spy(this.activatedProjectService);
+    when(this.spyActivatedProjectService.projectDoc$).thenCall(() =>
+      of(this.getProjectDoc(this.params$.getValue().projectId))
+    );
+    when(this.spyActivatedProjectService.projectDoc).thenCall(() =>
+      this.getProjectDoc(this.params$.getValue().projectId)
+    );
+    when(this.spyActivatedProjectService.projectId).thenCall(() => this.params$.getValue().projectId);
+
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
     this.ngZone = TestBed.inject(NgZone);
