@@ -140,7 +140,7 @@
           <div class="container-for-split">
             <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
             <as-split direction="vertical" [style.height]="targetSplitHeight">
-              <as-split-area  [size]="75" [minSize]="20" [dir]="i18n.direction">
+              <as-split-area [size]="75" [minSize]="20" [dir]="i18n.direction">
                 <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
                   <app-text
                     #target
