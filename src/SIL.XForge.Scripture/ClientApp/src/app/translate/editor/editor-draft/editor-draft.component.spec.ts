@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { cloneDeep } from 'lodash-es';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Delta } from 'rich-text';
@@ -40,7 +41,8 @@ describe('EditorDraftComponent', () => {
       SharedModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      TestTranslocoModule
+      TestTranslocoModule,
+      TranslocoMarkupModule
     ],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
