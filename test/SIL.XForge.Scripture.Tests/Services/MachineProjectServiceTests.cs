@@ -1350,6 +1350,7 @@ public class MachineProjectServiceTests
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Target,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Is<BuildConfig>(
                     b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
@@ -1360,6 +1361,7 @@ public class MachineProjectServiceTests
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Source,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Is<BuildConfig>(
                     b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
@@ -1623,6 +1625,65 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateSourceCorporaWhenSendAllSegments()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateSourceConfigured = true,
+                AlternateSourceEnabled = true,
+                SendAllSegments = true,
+            }
+        );
+        await env.SetDataInSync(Project02, true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the generation of the training source
+        await env.TextCorpusFactory.Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateSource: false,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+
+        // Check for the generation of the alternate training source
+        await env.TextCorpusFactory.Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateSource: true,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+
+        // The target is shared between the two corpora, so it will only be generated once
+        await env.TextCorpusFactory.Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Target,
+                preTranslate: true,
+                useAlternateSource: false,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorporaWhenSendAllSegments()
     {
         // Set up test environment
@@ -1653,6 +1714,7 @@ public class MachineProjectServiceTests
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Source,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Any<BuildConfig>()
             );
@@ -1663,6 +1725,7 @@ public class MachineProjectServiceTests
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Source,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: true,
                 Arg.Any<BuildConfig>()
             );
@@ -1673,6 +1736,7 @@ public class MachineProjectServiceTests
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Target,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Any<BuildConfig>()
             );
@@ -2187,6 +2251,7 @@ public class MachineProjectServiceTests
                         Arg.Any<TextCorpusType>(),
                         Arg.Any<bool>(),
                         Arg.Any<bool>(),
+                        Arg.Any<bool>(),
                         Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
@@ -2199,6 +2264,7 @@ public class MachineProjectServiceTests
                         TextCorpusType.Source,
                         Arg.Any<bool>(),
                         Arg.Any<bool>(),
+                        Arg.Any<bool>(),
                         Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
@@ -2209,6 +2275,7 @@ public class MachineProjectServiceTests
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Target,
+                        Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<BuildConfig>()

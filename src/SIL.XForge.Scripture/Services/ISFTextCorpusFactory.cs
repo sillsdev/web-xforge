@@ -16,6 +16,7 @@ public interface ISFTextCorpusFactory
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool useAlternateSource,
         bool useAlternateTrainingSource,
         BuildConfig buildConfig
     );
