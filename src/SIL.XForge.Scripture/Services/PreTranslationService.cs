@@ -9,6 +9,7 @@ using Serval.Client;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -189,7 +190,7 @@ public class PreTranslationService(
             }
         }
 
-        return [..preTranslations];
+        return [.. preTranslations];
     }
 
     /// <summary>
@@ -255,5 +256,110 @@ public class PreTranslationService(
 
         // Chapter not found
         return string.Empty;
+    }
+
+    public async Task UpdatePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken)
+    {
+        // Load the target project secrets, so we can get the translation engine ID and corpus ID
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        {
+            throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        // Load the project from the realtime service
+        await using IConnection conn = await realtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Ensure we have the parameters to retrieve the pre-translation
+        string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+        string corpusId = projectSecret
+            .ServalData?.Corpora
+            .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+            .Key;
+        if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
+        {
+            throw new DataNotFoundException("The pre-translation engine is not configured.");
+        }
+
+        // Get all the pre-translations and update the chapters
+        Dictionary<int, HashSet<int>> bookChapters = [];
+        bool useParatextVerseRef = projectSecret.ServalData.Corpora[corpusId].UploadParatextZipFile;
+        foreach (
+            Pretranslation preTranslation in await translationEnginesClient.GetAllPretranslationsAsync(
+                translationEngineId,
+                corpusId,
+                textId: null,
+                cancellationToken
+            )
+        )
+        {
+            // Get the book and chapter number
+            int bookNum;
+            int chapterNum;
+            if (useParatextVerseRef)
+            {
+                // The file format is FileFormat.Paratext
+                // We need to get the chapter number from the reference, as the textId is the book code
+                // A reference will be in the format: MAT 1:2
+                string reference = preTranslation.Refs.FirstOrDefault();
+
+                // Ensure we have a valid verse reference and it is for this chapter
+                if (string.IsNullOrWhiteSpace(reference) || !VerseRef.TryParse(reference, out VerseRef verseRef))
+                {
+                    continue;
+                }
+
+                bookNum = verseRef.BookNum;
+                chapterNum = verseRef.ChapterNum;
+            }
+            else
+            {
+                // The textId will be in the format bookNum_chapterNum
+                string[] textIdParts = preTranslation.TextId.Split('_', StringSplitOptions.RemoveEmptyEntries);
+                if (
+                    textIdParts.Length != 2
+                    || !int.TryParse(textIdParts[0], out bookNum)
+                    || !int.TryParse(textIdParts[1], out chapterNum)
+                )
+                {
+                    continue;
+                }
+            }
+
+            // Store the book number and chapter number
+            if (bookChapters.TryGetValue(bookNum, out HashSet<int> value))
+            {
+                // The HashSet stops duplicate chapter numbers for this book
+                value.Add(chapterNum);
+            }
+            else
+            {
+                bookChapters.Add(bookNum, [chapterNum]);
+            }
+        }
+
+        // Update the project chapters
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            for (int i = 0; i < projectDoc.Data.Texts.Count; i++)
+            {
+                for (int j = 0; j < projectDoc.Data.Texts[i].Chapters.Count; j++)
+                {
+                    // As we will use these in a closure, instantiate to stop out of scope modification
+                    int textIndex = i;
+                    int chapterIndex = j;
+                    bool hasDraft =
+                        bookChapters.TryGetValue(projectDoc.Data.Texts[i].BookNum, out HashSet<int> chapters)
+                        && chapters.Contains(projectDoc.Data.Texts[i].Chapters[chapterIndex].Number);
+
+                    // Update the has draft value for the chapter
+                    op.Set(p => p.Texts[textIndex].Chapters[chapterIndex].HasDraft, hasDraft);
+                }
+            }
+        });
     }
 }

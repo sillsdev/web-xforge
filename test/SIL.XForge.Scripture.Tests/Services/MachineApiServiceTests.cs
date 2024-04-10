@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -18,6 +19,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
+using ServalOptions = SIL.XForge.Configuration.ServalOptions;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -34,6 +36,9 @@ public class MachineApiServiceTests
     private const string TargetSegment = "targetSegment";
     private const string JobId = "jobId";
     private const string Data01 = "data01";
+
+    private const string JsonPayload =
+        """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/translationEngine01/builds/65f0c455682bb17bc4066917"},"engine":{"id":"translationEngine01","url":"/api/v1/translation/engines/translationEngine01"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoPermission()
@@ -98,6 +103,69 @@ public class MachineApiServiceTests
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+    }
+
+    [Test]
+    public void ExecuteWebhook_InvalidSignature()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string signature = "sha256=A7B193B79CE717541B3EF2A306FDD441F2CE0DEAA674404F212E35AECC4F3EA3";
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentException>(() => env.Service.ExecuteWebhookAsync(JsonPayload, signature));
+    }
+
+    [Test]
+    public void ExecuteWebhook_MissingProjectId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string json =
+            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce/builds/65f0c455682bb17bc4066917"},"engine":{"id":"65e66c70682bb17bc405e9ce","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
+        const string signature = "sha256=24BBC1C61AEE03CEC0A100478A38FB16AAD7CCFDAC1D9B6170CB6AA2EFF82F81";
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
+    }
+
+    [Test]
+    public void ExecuteWebhook_MissingTranslationEngineId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string json =
+            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"65f0c455682bb17bc4066917","url":"/api/v1/translation/engines/65e66c70682bb17bc405e9ce/builds/65f0c455682bb17bc4066917"},"buildState":"Completed","dateFinished":"2024-03-12T21:14:10.789Z"}}""";
+        const string signature = "sha256=A45F54207BF128799A7EE803B3822A9956A24B41E5134A0E9663E64D3FC9D9A3";
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
+    }
+
+    [Test]
+    public async Task ExecuteWebhook_UnsupportedEvent()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string json =
+            """{"event":"TranslationBuildStarted","payload":{"build":{"id":"65d65811352b5d93e8a2c02d","url":"/api/v1/translation/engines/65c94648352b5d93e8a24538/builds/65d65811352b5d93e8a2c02d"},"engine":{"id":"65c94648352b5d93e8a24538","url":"/api/v1/translation/engines/65c94648352b5d93e8a24538"}}}""";
+        const string signature = "sha256=27F96A1483806939905686D944B9753AB4C023F6EFB07A9F91E3E1A208DADF32";
+
+        // SUT
+        await env.Service.ExecuteWebhookAsync(json, signature);
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task ExecuteWebhook_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string signature = "sha256=8C8E8C11165F748AFC6621F1DB213F79CE52759757D9BD6382C94E92C5B31063";
+
+        // SUT
+        await env.Service.ExecuteWebhookAsync(JsonPayload, signature);
+        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -1147,6 +1215,89 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task RetrievePreTranslationStatusAsync_DoesNotRecordTaskCancellation()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None)
+            .Throws(new TaskCanceledException());
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_DoesNotUpdateIfAlreadyRunning()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false));
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.DidNotReceive()
+            .UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_ReportsErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        ServalApiException ex = ServalApiExceptions.Forbidden;
+        env.PreTranslationService.UpdatePreTranslationStatusAsync(Project01, CancellationToken.None).Throws(ex);
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
+        env.ExceptionHandler.Received().ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_ReportsErrorWhenProjectDoesNotExist()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync("invalid_project_id", CancellationToken.None);
+
+        env.ExceptionHandler.Received().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationsRetrieved);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatus()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RetrievePreTranslationStatusAsync_UpdatesPreTranslationStatusIfPreviouslyRun()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true));
+
+        // SUT
+        await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
+
+        await env.PreTranslationService.Received().UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
+    }
+
+    [Test]
     public async Task IsLanguageSupportedAsync_LanguageNotSupported()
     {
         // Set up test environment
@@ -1886,6 +2037,7 @@ public class MachineApiServiceTests
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
             MachineProjectService
@@ -1899,7 +2051,7 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
                 .Returns(Task.FromResult(true));
-            var mockLogger = new MockLogger<MachineApiService>();
+            MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
@@ -1951,6 +2103,7 @@ public class MachineApiServiceTests
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
 
+            var servalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
@@ -1961,12 +2114,14 @@ public class MachineApiServiceTests
 
             Service = new MachineApiService(
                 BackgroundJobClient,
-                mockLogger,
+                ExceptionHandler,
+                MockLogger,
                 MachineProjectService,
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
                 realtimeService,
+                servalOptions,
                 SyncService,
                 TranslationEnginesClient,
                 TranslationEngineTypesClient
@@ -1974,7 +2129,9 @@ public class MachineApiServiceTests
         }
 
         public IBackgroundJobClient BackgroundJobClient { get; }
+        public IExceptionHandler ExceptionHandler { get; }
         public IMachineProjectService MachineProjectService { get; }
+        public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
         public IPreTranslationService PreTranslationService { get; }
         public MemoryRepository<SFProject> Projects { get; }

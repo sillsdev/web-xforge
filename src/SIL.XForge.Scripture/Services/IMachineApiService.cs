@@ -9,6 +9,7 @@ namespace SIL.XForge.Scripture.Services;
 public interface IMachineApiService
 {
     Task CancelPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task ExecuteWebhookAsync(string json, string signature);
     Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
@@ -63,6 +64,7 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
+    Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
     Task<ServalBuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(

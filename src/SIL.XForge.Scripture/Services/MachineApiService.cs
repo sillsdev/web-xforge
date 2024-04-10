@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Serval.Client;
 using SIL.ObjectModel;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -22,12 +27,14 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
+    IExceptionHandler exceptionHandler,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
     IRepository<SFProjectSecret> projectSecrets,
     IRealtimeService realtimeService,
+    IOptions<ServalOptions> servalOptions,
     ISyncService syncService,
     ITranslationEnginesClient translationEnginesClient,
     ITranslationEngineTypesClient translationEngineTypesClient
@@ -106,6 +113,61 @@ public class MachineApiService(
         {
             ProcessServalApiException(e);
         }
+    }
+
+    public async Task ExecuteWebhookAsync(string json, string signature)
+    {
+        // Generate a signature for the JSON
+        using HMACSHA256 hmacHasher = new HMACSHA256(Encoding.UTF8.GetBytes(servalOptions.Value.WebhookSecret));
+        byte[] hash = hmacHasher.ComputeHash(Encoding.UTF8.GetBytes(json));
+        string calculatedSignature = $"sha256={Convert.ToHexString(hash)}";
+
+        // Ensure that the signatures match
+        if (signature != calculatedSignature)
+        {
+            throw new ArgumentException(@"Signatures do not match", nameof(signature));
+        }
+
+        // Get the translation id from the JSON
+        var anonymousType = new
+        {
+            Event = string.Empty,
+            Payload = new { Build = new { Id = string.Empty }, Engine = new { Id = string.Empty } }
+        };
+        var delivery = JsonConvert.DeserializeAnonymousType(json, anonymousType);
+
+        // We only support translation build finished events
+        if (delivery.Event != "TranslationBuildFinished")
+        {
+            return;
+        }
+
+        // Retrieve the translation engine id from the delivery
+        string translationEngineId = delivery.Payload?.Engine?.Id;
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("A translation engine id could not be retrieved from the webhook");
+        }
+
+        // Get the project id from the project secret
+        string? projectId = await projectSecrets
+            .Query()
+            .Where(p => p.ServalData.PreTranslationEngineId == translationEngineId)
+            .Select(p => p.Id)
+            .FirstOrDefaultAsync();
+
+        // Ensure we have a project id
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            throw new DataNotFoundException(
+                $"A project id could not be found for translation engine id {translationEngineId}"
+            );
+        }
+
+        // Run the background job
+        backgroundJobClient.Enqueue<MachineApiService>(
+            r => r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
+        );
     }
 
     public async Task<ServalBuildDto?> GetBuildAsync(
@@ -463,6 +525,58 @@ public class MachineApiService(
             LanguageCode = languageInfo.InternalCode ?? languageCode,
             IsSupported = languageInfo.IsNative,
         };
+    }
+
+    [Mutex]
+    public async Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Get the project secret to see if this is being run from another process
+            if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+            {
+                throw new DataNotFoundException("The project secret does not exist.");
+            }
+
+            // Ensure that the flag is unset or successfully set previously.
+            // False means another process is running this function.
+            if (projectSecret.ServalData?.PreTranslationsRetrieved ?? true)
+            {
+                // Set the retrieved flag as in progress
+                await projectSecrets.UpdateAsync(
+                    sfProjectId,
+                    u => u.Set(p => p.ServalData.PreTranslationsRetrieved, false)
+                );
+
+                // Get the pre-translations
+                await preTranslationService.UpdatePreTranslationStatusAsync(sfProjectId, cancellationToken);
+
+                // Set the retrieved flag as complete
+                await projectSecrets.UpdateAsync(
+                    sfProjectId,
+                    u => u.Set(p => p.ServalData.PreTranslationsRetrieved, true)
+                );
+            }
+        }
+        catch (TaskCanceledException e) when (e.InnerException is not TimeoutException)
+        {
+            // Do not log error - the job was cancelled
+            // Exclude TaskCanceledException with an inner TimeoutException, as this generated by an HttpClient timeout
+
+            // Ensure that the retrieved flag is cleared
+            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationsRetrieved));
+        }
+        catch (Exception e)
+        {
+            // Log the error and report to bugsnag
+            string message =
+                $"Retrieve pre-translation status exception occurred for project ${sfProjectId} running in background job.";
+            logger.LogError(e, message);
+            exceptionHandler.ReportException(e);
+
+            // Ensure that the retrieved flag is cleared
+            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationsRetrieved));
+        }
     }
 
     public async Task<ServalBuildDto> StartBuildAsync(
