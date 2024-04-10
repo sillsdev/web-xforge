@@ -196,6 +196,12 @@ public class MachineProjectService(
             translationEngineId = await CreateServalProjectAsync(projectDoc.Data, preTranslate, cancellationToken);
         }
 
+        // Ensure a translation engine id is present
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("The translation engine is not specified.");
+        }
+
         // Get the translation engine from Serval
         try
         {
@@ -581,7 +587,7 @@ public class MachineProjectService(
 
         // Reuse the SFTextCorpusFactory implementation
         // This is only necessary for SMT suggestions or pre-Paratext zip support NMT projects
-        IEnumerable<ISFText> texts = new List<ISFText>();
+        IList<ISFText> texts = [];
         if (!uploadParatextZipFile)
         {
             texts = await textCorpusFactory.CreateAsync(
@@ -619,7 +625,7 @@ public class MachineProjectService(
         );
 
         // Get the files we have already synced
-        var oldTargetCorpusFiles = new List<ServalCorpusFile>();
+        List<ServalCorpusFile> oldTargetCorpusFiles = [];
         if (!string.IsNullOrWhiteSpace(corpusId))
         {
             oldTargetCorpusFiles = projectSecret.ServalData.Corpora[corpusId].TargetFiles;
@@ -649,7 +655,7 @@ public class MachineProjectService(
             cancellationToken
         );
         // Get the files we have already synced for the alternate training source
-        var oldAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
+        List<ServalCorpusFile> oldAlternateTrainingSourceCorpusFiles = [];
         if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
         {
             oldAlternateTrainingSourceCorpusFiles = projectSecret
@@ -659,7 +665,7 @@ public class MachineProjectService(
         }
 
         // Upload the alternate training corpus
-        List<ServalCorpusFile> newAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
+        List<ServalCorpusFile> newAlternateTrainingSourceCorpusFiles = [];
         if (useAlternateTrainingSource)
         {
             // Only specify the text corpus if we are not uploading to Paratext
@@ -668,7 +674,7 @@ public class MachineProjectService(
                 texts = await textCorpusFactory.CreateAsync(
                     new[] { project.Id },
                     TextCorpusType.Source,
-                    preTranslate,
+                    preTranslate: true,
                     useAlternateTrainingSource: true,
                     buildConfig
                 );
@@ -780,15 +786,15 @@ public class MachineProjectService(
                 .Key;
 
             // If there are training data files, or they were removed (i.e. we have a corpus record for it)
-            if (buildConfig.TrainingDataFiles.Any() || !string.IsNullOrWhiteSpace(trainingDataCorpusId))
+            if (buildConfig.TrainingDataFiles.Count > 0 || !string.IsNullOrWhiteSpace(trainingDataCorpusId))
             {
                 // Set up the collections required to upload the corpus data files
-                var newTrainingDataSourceTexts = new List<ISFText>();
-                var newTrainingDataTargetTexts = new List<ISFText>();
-                var newTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
-                var newTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
-                var oldTrainingDataSourceCorpusFiles = new List<ServalCorpusFile>();
-                var oldTrainingDataTargetCorpusFiles = new List<ServalCorpusFile>();
+                List<ISFText> newTrainingDataSourceTexts = [];
+                List<ISFText> newTrainingDataTargetTexts = [];
+                List<ServalCorpusFile> newTrainingDataSourceCorpusFiles = [];
+                List<ServalCorpusFile> newTrainingDataTargetCorpusFiles = [];
+                List<ServalCorpusFile> oldTrainingDataSourceCorpusFiles = [];
+                List<ServalCorpusFile> oldTrainingDataTargetCorpusFiles = [];
 
                 // Get the training data texts
                 await trainingDataService.GetTextsAsync(
@@ -1134,7 +1140,7 @@ public class MachineProjectService(
 
         // If we have an alternate training source, we need to add the additional files
         // If not, Serval will use the additional files corpus automatically, so we do not need to do anything
-        if (buildConfig.TrainingDataFiles.Any() && useAlternateTrainingSource)
+        if (buildConfig.TrainingDataFiles.Count > 0 && useAlternateTrainingSource)
         {
             // Include the additional training data with the alternate training corpora
             translationBuildConfig.TrainOn.AddRange(

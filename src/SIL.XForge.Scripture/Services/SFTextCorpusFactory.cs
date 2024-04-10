@@ -29,7 +29,7 @@ public class SFTextCorpusFactory(
 {
     private readonly IMongoClient _mongoClient = new MongoClient(dataAccessOptions.Value.ConnectionString);
 
-    public Task<IEnumerable<ISFText>> CreateAsync(
+    public Task<IList<ISFText>> CreateAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
@@ -37,7 +37,7 @@ public class SFTextCorpusFactory(
         BuildConfig buildConfig
     ) => CreateTextsAsync(projects, type, preTranslate, useAlternateTrainingSource, buildConfig);
 
-    private async Task<IEnumerable<ISFText>> CreateTextsAsync(
+    private async Task<IList<ISFText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
