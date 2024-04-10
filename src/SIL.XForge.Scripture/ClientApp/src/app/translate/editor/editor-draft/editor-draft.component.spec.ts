@@ -33,7 +33,7 @@ const mockDraftViewerService = mock(DraftViewerService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
 
-fdescribe('EditorDraftComponent', () => {
+describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
   let component: EditorDraftComponent;
   let testOnlineStatus: TestOnlineStatusService;
