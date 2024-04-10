@@ -2386,10 +2386,9 @@ public class MachineProjectServiceTests
         private static string MockTextCorpusWithEmptySegmentChecksum =>
             StringUtils.ComputeMd5Hash("segRef\tsegment01\nsegRef_2\t\n");
 
-        private static Task<IEnumerable<ISFText>> MockTextCorpus =>
-            Task.FromResult<IEnumerable<ISFText>>(
-                new[]
-                {
+        private static Task<IList<ISFText>> MockTextCorpus =>
+            Task.FromResult<IList<ISFText>>(
+                [
                     new MockText
                     {
                         Id = "textId",
@@ -2399,7 +2398,7 @@ public class MachineProjectServiceTests
                             new SFTextSegment(["segRef_2"], string.Empty, false, false, false),
                         },
                     },
-                }
+                ]
             );
 
         public MachineProjectService Service { get; }
@@ -2523,7 +2522,7 @@ public class MachineProjectServiceTests
                 projectId,
                 u =>
                 {
-                    List<ServalCorpusFile> noFiles = new List<ServalCorpusFile>();
+                    List<ServalCorpusFile> noFiles = [];
                     u.Set(p => p.ServalData.Corpora[Corpus01].SourceFiles, noFiles);
                     u.Set(p => p.ServalData.Corpora[Corpus01].TargetFiles, noFiles);
                 }
