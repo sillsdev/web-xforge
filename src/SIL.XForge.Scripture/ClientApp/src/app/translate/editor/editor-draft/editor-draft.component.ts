@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { cloneDeep } from 'lodash-es';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -229,10 +230,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   // Remove draft flag from attributes
   private cleanDraftOps(draftOps: DeltaOperation[]): DeltaOperation[] {
-    draftOps.forEach((op: DeltaOperation) => {
+    const newOps = draftOps.map(op => cloneDeep(op));
+    newOps.forEach((op: DeltaOperation) => {
       delete op.attributes?.draft;
     });
-    return draftOps;
+    return newOps;
   }
 
   private getLocalizedBookChapter(): string {
