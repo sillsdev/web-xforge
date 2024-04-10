@@ -8,14 +8,14 @@
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Bugsnag.AspNet.Core" Version="3.1.0" />
     <PackageReference Include="EdjCase.JsonRpc.Router" Version="6.0.0" />
-    <PackageReference Include="Hangfire" Version="1.7.32" />
-    <PackageReference Include="Hangfire.Mongo" Version="1.9.1" />
+    <PackageReference Include="Hangfire" Version="1.8.12" />
+    <PackageReference Include="Hangfire.Mongo" Version="1.10.5" />
     <PackageReference Include="IdentityModel" Version="6.2.0" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.2" />
-    <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
-    <PackageReference Include="MailKit" Version="4.3.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
+    <PackageReference Include="MailKit" Version="4.4.0" />
     <PackageReference Include="idunno.Authentication.Basic" Version="2.3.1" />
     <PackageReference Include="AbrarJahin.DiffMatchPatch" Version="0.1.0" />
     <PackageReference Include="SIL.Core" Version="13.0.1" />
