@@ -55,6 +55,10 @@ export function getBrowserEngine(): string {
   return engine == null ? '' : engine.toLowerCase();
 }
 
+export function isGecko(): boolean {
+  return getBrowserEngine() === 'gecko';
+}
+
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
   const subject: string = translate('issue_email.subject', { siteName: environment.siteName });
