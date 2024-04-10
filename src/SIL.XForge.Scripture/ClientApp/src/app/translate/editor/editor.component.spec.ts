@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DebugElement, NgZone } from '@angular/core';
+import { DebugElement, EventEmitter, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MediaObserver } from '@angular/flex-layout';
 import {
@@ -96,6 +96,7 @@ import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/te
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftDiff, DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { HistoryChooserComponent } from './editor-history/history-chooser/history-chooser.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
@@ -118,6 +119,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedDraftViewerService = mock(DraftViewerService);
 const mockedParatextService = mock(ParatextService);
 
 class MockComponent {}
@@ -176,6 +178,7 @@ describe('EditorComponent', () => {
       { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: DraftViewerService, useMock: mockedDraftViewerService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
       { provide: TabMenuService, useValue: EditorTabMenuService }
@@ -3732,6 +3735,32 @@ describe('EditorComponent', () => {
       env.component['checkForPreTranslations']();
       expect(env.component.hasDraft).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).never();
+      env.dispose();
+    }));
+
+    it('updates editor when a draft is applied', fakeAsync(() => {
+      const event = new EventEmitter<DraftDiff>();
+      when(mockedDraftViewerService.draftApplied).thenReturn(event);
+      const env = new TestEnvironment();
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      env.targetEditor.updateContents = jasmine.createSpy();
+      const targetDelta = new Delta([
+        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
+        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } },
+        { insert: { 'note-thread-embed': {} }, attributes: { segment: 'verse_1_3' } }
+      ]);
+
+      event.emit({
+        id: env.component.target?.id!,
+        ops: targetDelta
+      });
+
+      expect(env.component.hasDraft).toBe(false);
+      expect(env.targetEditor.updateContents).toHaveBeenCalledTimes(1);
+      expect(env.targetEditor.updateContents).toHaveBeenCalledWith(targetDelta, 'user');
       env.dispose();
     }));
 
