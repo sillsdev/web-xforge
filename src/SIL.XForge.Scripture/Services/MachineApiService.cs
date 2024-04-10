@@ -782,7 +782,10 @@ public class MachineApiService(
 
         // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
-        if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
+        if (
+            projectDoc.Data.TranslateConfig.DraftConfig.AlternateSourceEnabled
+            && !string.IsNullOrWhiteSpace(alternateSourceProjectId)
+        )
         {
             jobId = await syncService.SyncAsync(
                 new SyncConfig

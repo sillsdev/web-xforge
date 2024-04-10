@@ -195,7 +195,18 @@ describe('SettingsComponent', () => {
     describe('Alternate Source Dropdown', () => {
       it('should change alternate source select value', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({
+          draftConfig: {
+            alternateSourceEnabled: true,
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false,
+            additionalTrainingData: false
+          },
+          preTranslate: true
+        });
         env.wait();
         env.wait();
         expect(env.alternateSourceSelect).not.toBeNull();
@@ -224,6 +235,7 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
+            alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: false,
             sendAllSegments: false,
             additionalTrainingData: false
@@ -252,7 +264,18 @@ describe('SettingsComponent', () => {
 
       it('should display projects then resources', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            alternateSourceEnabled: true,
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false,
+            additionalTrainingData: false
+          }
+        });
         env.wait();
         env.wait();
         expect(env.alternateSourceSelect).not.toBeNull();
@@ -266,6 +289,7 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: false,
           draftConfig: {
+            alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -283,17 +307,40 @@ describe('SettingsComponent', () => {
 
       it('should display for forward translations', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            alternateSourceEnabled: true,
+            alternateTrainingSourceEnabled: false,
+            lastSelectedTrainingBooks: [],
+            lastSelectedTrainingDataFiles: [],
+            lastSelectedTranslationBooks: [],
+            sendAllSegments: false,
+            additionalTrainingData: false
+          }
+        });
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+      }));
+
+      it('should hide alternate source dropdown when alternate source is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
         env.setupProject();
         env.wait();
-        env.wait();
+        expect(env.inputElement(env.alternateSourceCheckbox).checked).toBe(false);
+        expect(env.alternateSourceSelect).toBeNull();
+        env.clickElement(env.inputElement(env.alternateSourceCheckbox));
+        expect(env.inputElement(env.alternateSourceCheckbox).checked).toBe(true);
         expect(env.alternateSourceSelect).not.toBeNull();
       }));
 
       it('should not display for back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          preTranslate: false,
+          preTranslate: true,
           draftConfig: {
+            alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -322,6 +369,7 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: false,
           draftConfig: {
+            alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -341,6 +389,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -378,6 +427,7 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: true,
             sendAllSegments: false,
             additionalTrainingData: false
@@ -411,6 +461,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: true,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -445,6 +496,7 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: true,
             sendAllSegments: false,
             additionalTrainingData: false
@@ -490,6 +542,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -528,6 +581,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           draftConfig: {
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -562,6 +616,7 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: false,
           draftConfig: {
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -601,6 +656,7 @@ describe('SettingsComponent', () => {
         env.setupProject({
           preTranslate: false,
           draftConfig: {
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: false,
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
@@ -645,6 +701,7 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
+            alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: false,
             sendAllSegments: false,
             additionalTrainingData: false
@@ -1204,6 +1261,10 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get alternateSourceCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-alternate-source-enabled'));
+  }
+
   get alternateSourceSelectValue(): string {
     return this.alternateSourceSelectComponent.paratextIdControl.value?.name || '';
   }
@@ -1360,6 +1421,7 @@ class TestEnvironment {
         lastSelectedTrainingBooks: [],
         lastSelectedTrainingDataFiles: [],
         lastSelectedTranslationBooks: [],
+        alternateSourceEnabled: false,
         alternateTrainingSourceEnabled: false,
         sendAllSegments: false,
         additionalTrainingData: false
