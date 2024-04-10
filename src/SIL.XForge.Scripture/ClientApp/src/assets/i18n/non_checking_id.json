@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Setelah Anda menghapus proyek, tidak bisa dikembalikan. Harap pastikan.",
     "delete_this_project": "Menghapus Proyek ini",
     "email_invitations_only": "Hanya undangan email",
-    "enable_alternate_training_source": "Gunakan sumber terpisah untuk pelatihan",
     "enable_community_checking": "Mengaktifkan Pemeriksaan Komunitas",
     "enable_translation_suggestions": "untuk mengaktifkan {{ boldStart }}Saran Terjemahan{{ boldEnd }}dan melihat pilihan lebih banyak",
     "engage_the_wider_community": "Libatkan komunitas yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
