@@ -368,6 +368,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
             UpdateSetting(
                 op,
+                p => p.TranslateConfig.DraftConfig.AlternateSourceEnabled,
+                settings.AlternateSourceEnabled
+            );
+            UpdateSetting(
+                op,
                 p => p.TranslateConfig.DraftConfig.AlternateSource,
                 alternateSource,
                 unsetAlternateSourceProject

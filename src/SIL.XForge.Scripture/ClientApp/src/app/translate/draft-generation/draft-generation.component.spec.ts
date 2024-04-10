@@ -289,6 +289,7 @@ describe('DraftGenerationComponent', () => {
                       tag: 'def'
                     }
                   },
+                  alternateSourceEnabled: true,
                   alternateSource: {
                     projectRef: 'alternateSourceProjectId',
                     writingSystem: {

@@ -389,6 +389,38 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingData).toBe(false);
     });
   });
+
+  describe('version 18', () => {
+    it('adds alternateSourceEnabled to draftConfig', async () => {
+      const env = new TestEnvironment(17);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(false);
+    });
+
+    it('sets alternateSourceEnabled to true when an alternate source is present', async () => {
+      const env = new TestEnvironment(17);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { alternateSource: { projectRef: 'project02' } } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(true);
+    });
+  });
 });
 
 class TestEnvironment {

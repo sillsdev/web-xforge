@@ -82,6 +82,7 @@ describe('DraftSourcesService', () => {
                 tag: 'en_AU'
               }
             },
+            alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: true
           }
         }
@@ -140,6 +141,7 @@ describe('DraftSourcesService', () => {
             alternateTrainingSource: {
               projectRef: 'alternate_training_source_project'
             },
+            alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: true
           }
         }

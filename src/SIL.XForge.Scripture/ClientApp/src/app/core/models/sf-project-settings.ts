@@ -10,6 +10,7 @@ export interface SFProjectSettings {
   translateShareEnabled?: boolean | null;
 
   additionalTrainingData?: boolean | null;
+  alternateSourceEnabled?: boolean | null;
   alternateSourceParatextId?: string | null;
   alternateTrainingSourceEnabled?: boolean | null;
   alternateTrainingSourceParatextId?: string | null;

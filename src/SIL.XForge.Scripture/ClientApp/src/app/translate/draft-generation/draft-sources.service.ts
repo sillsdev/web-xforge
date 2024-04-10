@@ -60,7 +60,9 @@ export class DraftSourcesService {
         );
 
         // If the user cannot access the alternate source project, populate using the target's alternate source info
-        const alternateSourceProjectId: string | undefined = translateConfig?.draftConfig.alternateSource?.projectRef;
+        const alternateSourceProjectId: string | undefined = translateConfig?.draftConfig.alternateSourceEnabled
+          ? translateConfig.draftConfig.alternateSource?.projectRef
+          : undefined;
         let alternateSourceProject = this.getDraftSource(
           alternateSourceProjectId,
           currentUser,

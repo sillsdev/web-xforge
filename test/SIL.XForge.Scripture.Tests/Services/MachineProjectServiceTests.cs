@@ -1598,6 +1598,31 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheAlternateSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                AlternateSourceEnabled = true,
+                AlternateSourceConfigured = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorporaWhenSendAllSegments()
     {
         // Set up test environment
@@ -1983,7 +2008,11 @@ public class MachineProjectServiceTests
             u =>
                 u.Set(
                     s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig { AlternateSource = new TranslateSource { ParatextId = Paratext01 } }
+                    new DraftConfig
+                    {
+                        AlternateSourceEnabled = true,
+                        AlternateSource = new TranslateSource { ParatextId = Paratext01 }
+                    }
                 )
         );
 
@@ -2027,13 +2056,15 @@ public class MachineProjectServiceTests
 
     private class TestEnvironmentOptions
     {
+        public bool AlternateSourceEnabled { get; init; }
+        public bool AlternateSourceConfigured { get; init; }
+        public bool AlternateTrainingSourceConfigured { get; init; }
+        public bool AlternateTrainingSourceEnabled { get; init; }
         public bool BuildIsPending { get; init; }
         public bool PreTranslationBuildIsQueued { get; init; }
         public bool UseEchoForPreTranslation { get; init; }
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
-        public bool AlternateTrainingSourceConfigured { get; init; }
-        public bool AlternateTrainingSourceEnabled { get; init; }
         public bool SendAllSegments { get; init; }
         public string? ServalConfig { get; init; }
         public bool UploadParatextZipForPreTranslation { get; init; }
@@ -2296,6 +2327,10 @@ public class MachineProjectServiceTests
                             },
                             DraftConfig = new DraftConfig
                             {
+                                AlternateSourceEnabled = options.AlternateSourceEnabled,
+                                AlternateSource = options.AlternateSourceConfigured
+                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
+                                    : null,
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }

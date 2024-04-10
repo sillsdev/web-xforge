@@ -14,6 +14,7 @@ public class SFProjectSettings
 
     // pre-translation settings
     public bool? AdditionalTrainingData { get; set; }
+    public bool? AlternateSourceEnabled { get; set; }
     public string? AlternateSourceParatextId { get; set; }
     public bool? AlternateTrainingSourceEnabled { get; set; }
     public string? AlternateTrainingSourceParatextId { get; set; }

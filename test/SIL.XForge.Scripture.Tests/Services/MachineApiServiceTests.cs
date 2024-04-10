@@ -1597,7 +1597,8 @@ public class MachineApiServiceTests
                     s => s.TranslateConfig.DraftConfig,
                     new DraftConfig
                     {
-                        AlternateSource = new TranslateSource { ProjectRef = Project03, },
+                        AlternateSourceEnabled = true,
+                        AlternateSource = new TranslateSource { ProjectRef = Project03 },
                         AlternateTrainingSourceEnabled = true,
                         AlternateTrainingSource = new TranslateSource { ProjectRef = Project01 },
                     }
@@ -2069,7 +2070,7 @@ public class MachineApiServiceTests
                     new SFProjectSecret
                     {
                         Id = Project02,
-                        ServalData = new ServalData { PreTranslationEngineId = TranslationEngine01, },
+                        ServalData = new ServalData { PreTranslationEngineId = TranslationEngine01 },
                     },
                 }
             );
@@ -2088,6 +2089,7 @@ public class MachineApiServiceTests
                         {
                             DraftConfig = new DraftConfig
                             {
+                                AlternateSourceEnabled = true,
                                 AlternateSource = new TranslateSource { ProjectRef = Project03 },
                             },
                         },
