@@ -146,7 +146,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get hasDraft(): boolean {
-    return this.draftCheckState === 'draft-present';
+    return this.draftCheckState === 'draft-present' || this.draftCheckState === 'draft-legacy';
   }
 
   async applyDraft(): Promise<void> {
