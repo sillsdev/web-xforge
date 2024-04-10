@@ -21,6 +21,6 @@ public interface IPreTranslationService
         int chapterNum,
         CancellationToken cancellationToken
     );
-    
+
     Task UpdatePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 }

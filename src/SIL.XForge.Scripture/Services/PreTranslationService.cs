@@ -190,7 +190,7 @@ public class PreTranslationService(
             }
         }
 
-        return [..preTranslations];
+        return [.. preTranslations];
     }
 
     /// <summary>
