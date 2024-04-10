@@ -12,6 +12,7 @@ import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc'
 import { TextDoc } from 'src/app/core/models/text-doc';
 import { anything, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -30,8 +31,9 @@ const mockDraftGenerationService = mock(DraftGenerationService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDraftViewerService = mock(DraftViewerService);
 const mockI18nService = mock(I18nService);
+const mockDialogService = mock(DialogService);
 
-describe('EditorDraftComponent', () => {
+fdescribe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
   let component: EditorDraftComponent;
   let testOnlineStatus: TestOnlineStatusService;
@@ -51,7 +53,8 @@ describe('EditorDraftComponent', () => {
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftViewerService, useMock: mockDraftViewerService },
       { provide: I18nService, useMock: mockI18nService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: DialogService, useMock: mockDialogService }
     ]
   }));
 
@@ -147,6 +150,7 @@ describe('EditorDraftComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     const emitter: EventEmitter<DraftDiff> = mock(EventEmitter<DraftDiff>);
     when(mockDraftViewerService.draftApplied).thenReturn(instance(emitter));
+    when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
 
     const textDoc: TextDoc = jasmine.createSpyObj<TextDoc>(['submit']) as TextDoc;
     spyOn(component['projectService'], 'getText').and.returnValue(Promise.resolve(textDoc));
@@ -172,6 +176,34 @@ describe('EditorDraftComponent', () => {
       )
     ).once();
     expect(component.isDraftApplied).toBe(true);
+  }));
+
+  it('should show a prompt when applying if the target has content', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    spyOn<any>(component, 'getTargetOps').and.returnValue(Promise.resolve(targetDelta.ops!));
+    component.draftText.editor?.setContents(draftDelta);
+
+    component.applyDraft();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDialogService.confirm(anything(), anything())).once();
+  }));
+
+  it('should not show a prompt when applying if the target has no content', fakeAsync(() => {
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    const emitter: EventEmitter<DraftDiff> = mock(EventEmitter<DraftDiff>);
+    when(mockDraftViewerService.draftApplied).thenReturn(instance(emitter));
+
+    spyOn<any>(component, 'getTargetOps').and.returnValue(Promise.resolve([]));
+    component.draftText.editor?.setContents(draftDelta);
+
+    component.applyDraft();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDialogService.confirm(anything(), anything())).never();
   }));
 
   describe('getLocalizedBookChapter', () => {
