@@ -142,7 +142,7 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
-  fit('should apply draft correctly', fakeAsync(() => {
+  it('should apply draft correctly', fakeAsync(() => {
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
     const emitter: EventEmitter<DraftDiff> = mock(EventEmitter<DraftDiff>);
