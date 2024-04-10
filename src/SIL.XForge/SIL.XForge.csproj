@@ -12,8 +12,8 @@
     <PackageReference Include="Hangfire.Mongo" Version="1.10.5" />
     <PackageReference Include="IdentityModel" Version="6.2.0" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.4" />
     <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
     <PackageReference Include="MailKit" Version="4.4.0" />
     <PackageReference Include="idunno.Authentication.Basic" Version="2.3.1" />
