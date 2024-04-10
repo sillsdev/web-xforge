@@ -120,9 +120,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           }
         })
       )
-      .subscribe((draftOps: DeltaOperation[]) => {
+      .subscribe(async (draftOps: DeltaOperation[]) => {
         // Set the draft editor with the pre-translation segments
         this.draftText.editor?.setContents(new Delta(draftOps), 'api');
+        this.isDraftApplied = (await this.getDiff()).length() === 0;
       });
   }
 
@@ -137,8 +138,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           this.draftCheckState = 'draft-present';
         }
 
-        this.isDraftApplied = !this.draftViewerService.hasDraftOps(draft, targetOps);
-
         // Overwrite existing text with draft text
         return this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true });
       })
@@ -150,18 +149,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   async applyDraft(): Promise<void> {
-    const target = new Delta(await this.getTargetOps());
-    if (target.ops == null) {
-      throw new Error(`'applyDraft()' called when 'target.ops' is not set`);
-    }
-
-    if (this.draftText.editor == null) {
-      throw new Error(`'applyDraft()' called when 'draftText.editor' is not set`);
-    }
-
-    const ops: DeltaOperation[] = [...this.draftText.editor.getContents().ops!];
-    const cleanedOps: DeltaStatic = new Delta(this.cleanDraftOps(ops));
-    const diff: DeltaStatic = target.diff(cleanedOps);
+    const diff: DeltaStatic = await this.getDiff();
 
     const targetTextDocId = new TextDocId(this.projectId!, this.bookNum!, this.chapter!, 'target');
     this.draftViewerService.draftApplied.emit({ id: targetTextDocId, ops: diff });
@@ -180,6 +168,22 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       !this.draftText?.areOpsCorrupted &&
       this.targetProject?.editable === true
     );
+  }
+
+  private async getDiff(): Promise<DeltaStatic> {
+    const target = new Delta(await this.getTargetOps());
+    if (target.ops == null) {
+      throw new Error(`Computing diff when 'target.ops' is not set`);
+    }
+
+    if (this.draftText.editor == null) {
+      throw new Error(`'Computing diff when 'draftText.editor' is not set`);
+    }
+
+    const draftOps: DeltaOperation[] = [...this.draftText.editor.getContents().ops!];
+    const cleanedOps: DeltaStatic = new Delta(this.cleanDraftOps(draftOps));
+    const diff: DeltaStatic = target.diff(cleanedOps);
+    return diff;
   }
 
   /**
