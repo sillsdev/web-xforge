@@ -1,10 +1,13 @@
 import { Inject, Injectable } from '@angular/core';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { DOCUMENT } from './browser-globals';
+import { isGecko } from './utils';
 
 const DEFAULT_SERIF_FONT_FAMILY = 'Charis SIL';
 const DEFAULT_SANS_SERIF_FONT_FAMILY = 'Andika';
 const DEFAULT_FONT_FAMILY = DEFAULT_SERIF_FONT_FAMILY;
+
+const GRAPHITE_SUPPORTED = isGecko();
 
 export const FONT_FACE_FALLBACKS: { [key: string]: string } = {
   // Proprietary fonts typically used for English (where we suspect the specified font isn't that critical)
@@ -37,6 +40,12 @@ export const FONT_FACE_FALLBACKS: { [key: string]: string } = {
   'Karenni Unicode': 'Kay Pho Du',
   'Adobe Arabic': 'Scheherazade New',
   'Simplified Arabic': 'Scheherazade New'
+};
+
+// Only Gecko supports Graphite. When Graphite is not supported, sometimes a non-ideal font is better than trying to
+// use the Graphite font.
+export const NON_GRAPHITE_FALLBACKS: { [key: string]: string } = {
+  'Awami Nastaliq': 'Scheherazade New'
 };
 
 export const FONT_FACE_DEFINITIONS: { [key: string]: string } = {
@@ -106,6 +115,8 @@ export class FontService {
       projectFont = DEFAULT_FONT_FAMILY;
     } else if (FONT_FACE_DEFINITIONS[projectFont] == null && FONT_FACE_FALLBACKS[projectFont] != null) {
       projectFont = FONT_FACE_FALLBACKS[projectFont];
+    } else if (!GRAPHITE_SUPPORTED && NON_GRAPHITE_FALLBACKS[projectFont] != null) {
+      projectFont = NON_GRAPHITE_FALLBACKS[projectFont];
     } else if (FONT_FACE_DEFINITIONS[projectFont] == null) {
       this.warnUnsupportedFont(projectFont);
       projectFont = DEFAULT_FONT_FAMILY;
