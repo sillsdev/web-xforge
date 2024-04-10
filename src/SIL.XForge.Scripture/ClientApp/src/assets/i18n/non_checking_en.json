@@ -246,7 +246,9 @@
     "apply_to_project": "Apply to project",
     "draft_indicator_applied": "DRAFT APPLIED",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
-    "offline_notice": "Auto draft is not available offline."
+    "offline_notice": "Auto draft is not available offline.",
+    "overwrite": "Applying a draft will overwrite the current chapter. Continue?",
+    "yes": "Continue"
   },
   "editor_history_tab": {
     "offline_notice": "Editor history is not available offline."
