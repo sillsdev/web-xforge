@@ -3668,6 +3668,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
+      when(mockedDraftViewerService.hasDraftOps(anything(), anything())).thenReturn(true);
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
         of({
           verse_3_16: 'For God so loved the world',
@@ -3695,6 +3696,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
+      when(mockedDraftViewerService.hasDraftOps(anything(), anything())).thenReturn(false);
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
         of({
           verse_3_16: 'For God so loved the world',
@@ -3739,9 +3741,9 @@ describe('EditorComponent', () => {
     }));
 
     it('updates editor when a draft is applied', fakeAsync(() => {
+      const env = new TestEnvironment();
       const event = new EventEmitter<DraftDiff>();
       when(mockedDraftViewerService.draftApplied).thenReturn(event);
-      const env = new TestEnvironment();
 
       env.setProjectUserConfig();
       env.wait();
@@ -4121,6 +4123,7 @@ class TestEnvironment {
     });
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
+    when(mockedDraftViewerService.draftApplied).thenReturn(new EventEmitter<DraftDiff>());
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
     this.spyActivatedProjectService = spy(this.activatedProjectService);
