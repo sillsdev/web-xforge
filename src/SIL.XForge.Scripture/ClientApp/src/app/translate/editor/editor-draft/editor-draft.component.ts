@@ -270,7 +270,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return (await this.projectService.getText(this.getTextDocId())).data?.ops;
   }
 
-  getTextDocId(): TextDocId {
+  private getTextDocId(): TextDocId {
     if (this.projectId == null || this.bookNum == null || this.chapter == null) {
       throw new Error('projectId, bookNum, or chapter is null');
     }
