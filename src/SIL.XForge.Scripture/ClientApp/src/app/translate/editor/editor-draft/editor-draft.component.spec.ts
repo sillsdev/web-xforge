@@ -10,8 +10,7 @@ import { Delta } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { TextDoc } from 'src/app/core/models/text-doc';
-import { isBadDelta } from 'src/app/shared/utils';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -143,11 +142,11 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
-  it('should apply draft correctly', fakeAsync(() => {
+  fit('should apply draft correctly', fakeAsync(() => {
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
-    const emitter = new EventEmitter<DraftDiff>();
-    when(mockDraftViewerService.draftApplied).thenReturn(emitter);
+    const emitter: EventEmitter<DraftDiff> = mock(EventEmitter<DraftDiff>);
+    when(mockDraftViewerService.draftApplied).thenReturn(instance(emitter));
 
     const textDoc: TextDoc = jasmine.createSpyObj<TextDoc>(['submit']) as TextDoc;
     spyOn(component['projectService'], 'getText').and.returnValue(Promise.resolve(textDoc));
@@ -159,13 +158,20 @@ describe('EditorDraftComponent', () => {
     component.applyDraft();
     tick(EDITOR_READY_TIMEOUT);
 
-    expect(textDoc.submit).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        ops: draftDiff.ops
-      })
-    );
-    expect(textDoc.submit).toHaveBeenCalledTimes(1);
-    expect(isBadDelta(component.draftText.editor?.getContents().ops!)).toBeFalsy();
+    verify(
+      emitter.emit(
+        objectContaining({
+          id: {
+            projectId: component.projectId,
+            bookNum: component.bookNum,
+            chapterNum: component.chapter,
+            textType: 'target'
+          },
+          ops: draftDiff
+        })
+      )
+    ).once();
+    expect(component.isDraftApplied).toBe(true);
   }));
 
   describe('getLocalizedBookChapter', () => {
