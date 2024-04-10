@@ -22,7 +22,9 @@ import {
   throwError
 } from 'rxjs';
 import { SFProjectService } from 'src/app/core/sf-project.service';
+import { isString } from 'src/type-utils';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -62,7 +64,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly dialogService: DialogService
   ) {}
 
   ngOnChanges(): void {
@@ -150,11 +153,29 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   async applyDraft(): Promise<void> {
+    if (await this.doesTargetHaveContent()) {
+      const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
+      if (!proceed) return;
+    }
+
     const diff: DeltaStatic = await this.getDiff();
 
     const targetTextDocId = new TextDocId(this.projectId!, this.bookNum!, this.chapter!, 'target');
     this.draftViewerService.draftApplied.emit({ id: targetTextDocId, ops: diff });
     this.isDraftApplied = true;
+  }
+
+  private async doesTargetHaveContent(): Promise<boolean> {
+    const target = await this.getTargetOps();
+    const doesTargetHaveContent = target?.some(op => {
+      if (op.insert == null || op.attributes?.segment == null) {
+        return false;
+      }
+
+      const isInsertBlank = (isString(op.insert) && op.insert.trim().length === 0) || op.insert.blank === true;
+      return !isInsertBlank;
+    });
+    return doesTargetHaveContent ?? false;
   }
 
   /**
