@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Odată ce ați șters un proiect, nu mai există cale de întoarcere. Sunteți sigur că doriți să ștergeți?",
     "delete_this_project": "Șterge proiectul",
     "email_invitations_only": "Email invitations only",
-    "enable_alternate_training_source": "Use a separate source for training",
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "pentru a activa {{ boldStart }}sugestiile de traducere{{ boldEnd }} și a vedea mai multe opțiuni",
     "engage_the_wider_community": "Implicați comunitatea mai largă pentru ca traducerea să fie clară, corectă și naturală. Selectați versete, puneți întrebări țintite, conduceți discuții despre răspunsuri.",

@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Siz layihəni sildikdən sonra geriyə qaytarmaq mümkün deyil. Xahiş edirik, buna əmin olun.",
     "delete_this_project": "Bu layihəni silmək",
     "email_invitations_only": "Email invitations only",
-    "enable_alternate_training_source": "Use a separate source for training",
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "{{ boldStart }}-u aktivləşdirmək üçün {{ boldEnd }}-da Təklifləri Tərcümə edin və daha çox seçimləri görün",
     "engage_the_wider_community": "Tərcümənin aydın, dəqiq və təbii olduğuna əmin olmaq üçün daha böyük kollektivi cəlb edin.",

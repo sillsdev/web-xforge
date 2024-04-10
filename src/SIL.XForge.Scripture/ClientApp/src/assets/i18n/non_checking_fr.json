@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Une fois que vous avez supprimé un projet, il est impossible de revenir en arrière. Soyez sûr de vous.",
     "delete_this_project": "Supprimer ce projet",
     "email_invitations_only": "Envoyer les invitations par e-mail uniquement",
-    "enable_alternate_training_source": "Utilisez une source distincte pour l'entraînement",
     "enable_community_checking": "Activer la vérification par la communauté",
     "enable_translation_suggestions": "pour activer {{ boldStart }}Suggestions de traduction{{ boldEnd }} et voir plus d'options",
     "engage_the_wider_community": "Impliquez la communauté au sens large pour vous assurer que la traduction soit claire, précise et naturelle. Sélectionnez des versets, posez des questions ciblées, autorisez l'échange autour des réponses.",
