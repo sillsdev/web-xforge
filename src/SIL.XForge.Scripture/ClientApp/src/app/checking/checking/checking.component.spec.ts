@@ -212,15 +212,15 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('should re-calculate scripture slide position on resize', fakeAsync(() => {
+    it('should re-calculate scripture slide position on drag end', fakeAsync(() => {
       const testProject: SFProject = TestEnvironment.generateTestProject();
-      testProject.checkingConfig.hideCommunityCheckingText = true;
       const env = new TestEnvironment({ user: CHECKER_USER, testProject });
       env.waitForSliderUpdate();
-      (env.component as any)._scriptureAreaMaxSize = 1;
-      expect(env.component.scriptureAreaMaxSize).toEqual(1);
-      window.dispatchEvent(new Event('resize'));
-      expect(env.component.scriptureAreaMaxSize).toBeGreaterThan(1);
+      env.component.splitComponent?.setVisibleAreaSizes(['*', 1]);
+      expect(env.component.splitComponent?.getVisibleAreaSizes()[1]).toEqual(1);
+      env.component.checkSliderPosition({ sizes: ['*', 20] });
+      env.waitForSliderUpdate();
+      expect(env.component.splitComponent?.getVisibleAreaSizes()[1]).toBeGreaterThan(1);
       flush();
       discardPeriodicTasks();
     }));

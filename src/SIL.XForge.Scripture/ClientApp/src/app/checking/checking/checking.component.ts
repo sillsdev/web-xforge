@@ -1359,12 +1359,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
       let answerPanelHeight: number;
       if (maximizeAnswerPanel) {
-        answerPanelHeight = this.fullyExpandedAnswerPanelHeight;
+        answerPanelHeight = Math.min(this.splitContainerElementHeight * 0.75, this.fullyExpandedAnswerPanelHeight);
       } else {
         answerPanelHeight = this.answerPanelElementMinimumHeight;
       }
-      answerPanelHeight = Math.min(this.splitContainerElementHeight * 0.75, answerPanelHeight);
-
       this.splitComponent.setVisibleAreaSizes([
         '*',
         this.showScriptureAudioPlayer ? this.scriptureAudioPlayerAreaHeight : answerPanelHeight
