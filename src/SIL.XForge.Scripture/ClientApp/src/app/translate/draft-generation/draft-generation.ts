@@ -8,7 +8,9 @@ export interface BuildConfig {
   projectId: string;
   trainingBooks: number[];
   trainingDataFiles: string[];
+  trainingScriptureRange?: string;
   translationBooks: number[];
+  translationScriptureRange?: string;
   fastTraining: boolean;
 }
 

@@ -338,7 +338,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       projectId: this.activatedProject.projectId!,
       trainingBooks: result.trainingBooks,
       trainingDataFiles: result.trainingDataFiles,
+      trainingScriptureRange: result.trainingScriptureRange,
       translationBooks: result.translationBooks,
+      translationScriptureRange: result.translationScriptureRange,
       fastTraining: result.fastTraining
     });
   }

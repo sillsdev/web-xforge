@@ -25,7 +25,9 @@ import { TrainingDataService } from '../training-data/training-data.service';
 export interface DraftGenerationStepsResult {
   trainingBooks: number[];
   trainingDataFiles: string[];
+  trainingScriptureRange?: string;
   translationBooks: number[];
+  translationScriptureRange?: string;
   fastTraining: boolean;
 }
 

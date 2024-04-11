@@ -201,11 +201,17 @@ export class SFProjectService extends ProjectService<SFProject> {
                   bsonType: 'string'
                 }
               },
+              lastSelectedTrainingScriptureRange: {
+                bsonType: 'string'
+              },
               lastSelectedTranslationBooks: {
                 bsonType: 'array',
                 items: {
                   bsonType: 'int'
                 }
+              },
+              lastSelectedTranslationScriptureRange: {
+                bsonType: 'string'
               },
               sendAllSegments: {
                 bsonType: 'bool'
