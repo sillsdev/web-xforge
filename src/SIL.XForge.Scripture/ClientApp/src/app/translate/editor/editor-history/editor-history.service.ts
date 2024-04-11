@@ -64,10 +64,10 @@ export class EditorHistoryService {
     return diff;
   }
 
-  private removeCid(obj: any): void {
+  removeCid(obj: any): void {
     if (obj.cid != null) delete obj.cid;
     for (let subObj in obj) {
-      if (typeof obj[subObj] === 'object') this.removeCid(obj[subObj]);
+      if (typeof obj[subObj] === 'object' && obj[subObj] != null) this.removeCid(obj[subObj]);
     }
   }
 }
