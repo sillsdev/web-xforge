@@ -128,12 +128,14 @@
           <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
           <as-split
             direction="vertical"
+            unit="pixel"
             [disabled]="!questionsList.activeQuestionDoc"
             (dragEnd)="checkSliderPosition($event)"
             [useTransition]="true"
+            [gutterSize]="showScriptureAudioPlayer ? 0 : 11"
           >
             <!-- Splitter area sizes are controlled programmatically. -->
-            <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize" [dir]="i18n.direction">
+            <as-split-area size="*" [dir]="i18n.direction" [visible]="!hideChapterText" [order]="1">
               <div class="panel-content" #scripturePanelContainer>
                 <div class="scripture">
                   <app-checking-text
@@ -148,19 +150,14 @@
                     [projectDoc]="projectDoc"
                   ></app-checking-text>
                 </div>
-                <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
-                  <app-checking-scripture-audio-player
-                    [source]="chapterAudioSource"
-                    [timing]="chapterTextAudioTiming"
-                    [textDocId]="textDocId"
-                    [canClose]="!hideChapterText"
-                    (currentVerseChanged)="handleAudioTextRefChanged($event)"
-                    (closed)="hideChapterAudio()"
-                  ></app-checking-scripture-audio-player>
-                </div>
               </div>
             </as-split-area>
-            <as-split-area [size]="0" [dir]="i18n.direction">
+            <as-split-area
+              [dir]="i18n.direction"
+              [order]="2"
+              [size]="hideChapterText ? '*' : 0"
+              [visible]="!showScriptureAudioPlayer || hideChapterText"
+            >
               <div *ngIf="questionsList.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
                 <app-checking-answers
                   #answersPanel
@@ -172,6 +169,23 @@
                   (action)="answerAction($event)"
                   (commentAction)="commentAction($event)"
                 ></app-checking-answers>
+              </div>
+            </as-split-area>
+            <as-split-area
+              lockSize="true"
+              [order]="hideChapterText ? 0 : 3"
+              [size]="130"
+              [visible]="showScriptureAudioPlayer"
+            >
+              <div class="scripture-audio-player-wrapper">
+                <app-checking-scripture-audio-player
+                  [source]="chapterAudioSource"
+                  [timing]="chapterTextAudioTiming"
+                  [textDocId]="textDocId"
+                  [canClose]="!hideChapterText"
+                  (currentVerseChanged)="handleAudioTextRefChanged($event)"
+                  (closed)="hideChapterAudio()"
+                ></app-checking-scripture-audio-player>
               </div>
             </as-split-area>
           </as-split>
