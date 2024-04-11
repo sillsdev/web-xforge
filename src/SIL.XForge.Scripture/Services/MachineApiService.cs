@@ -755,6 +755,21 @@ public class MachineApiService(
         // Ensure that the user has permission on the project
         MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
 
+        // Do not allow using scripture ranges with send all segments, as we must send a Paratext project
+        if (
+            projectDoc.Data.TranslateConfig.DraftConfig.SendAllSegments
+            && (
+                !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
+                || !string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange)
+            )
+        )
+        {
+            throw new DataNotFoundException(
+                $"You may not pre-translate non-Scripture material and specify "
+                    + $"{nameof(buildConfig.TranslationScriptureRange)} or {nameof(buildConfig.TranslationScriptureRange)}"
+            );
+        }
+
         // Save the selected books
         await projectDoc.SubmitJson0OpAsync(op =>
         {
@@ -769,9 +784,17 @@ public class MachineApiService(
                 _listStringComparer
             );
             op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRange,
+                buildConfig.TrainingScriptureRange
+            );
+            op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,
                 buildConfig.TranslationBooks.ToList(),
                 _listIntComparer
+            );
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRange,
+                buildConfig.TranslationScriptureRange
             );
         });
 

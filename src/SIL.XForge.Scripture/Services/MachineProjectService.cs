@@ -1185,7 +1185,11 @@ public class MachineProjectService(
             if (corpus.Value.UploadParatextZipFile)
             {
                 // Since all books are uploaded via the zip file, we need to specify the target books to translate
-                preTranslateCorpusConfig.TextIds = buildConfig.TranslationBooks.Select(Canon.BookNumberToId).ToList();
+                preTranslateCorpusConfig.ScriptureRange = !string.IsNullOrWhiteSpace(
+                    buildConfig.TranslationScriptureRange
+                )
+                    ? buildConfig.TranslationScriptureRange
+                    : string.Join(';', buildConfig.TranslationBooks.Select(Canon.BookNumberToId));
 
                 if (!useAlternateTrainingCorpus)
                 {
@@ -1195,7 +1199,9 @@ public class MachineProjectService(
                         new TrainingCorpusConfig
                         {
                             CorpusId = corpus.Key,
-                            TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList(),
+                            ScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
+                                ? buildConfig.TrainingScriptureRange
+                                : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId)),
                         }
                     );
                 }
@@ -1219,7 +1225,9 @@ public class MachineProjectService(
                 if (corpus.Value.UploadParatextZipFile)
                 {
                     // As all books are uploaded via the zip file, specify the source books to train on
-                    trainingCorpusConfig.TextIds = buildConfig.TrainingBooks.Select(Canon.BookNumberToId).ToList();
+                    trainingCorpusConfig.ScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
+                        ? buildConfig.TrainingScriptureRange
+                        : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
                 }
 
                 trainOn.Add(trainingCorpusConfig);

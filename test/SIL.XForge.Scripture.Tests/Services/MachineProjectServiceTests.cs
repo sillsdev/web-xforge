@@ -879,11 +879,11 @@ public class MachineProjectServiceTests
                 Arg.Is<TranslationBuildConfig>(
                     b =>
                         b.TrainOn.Count == 1
-                        && b.TrainOn.First().TextIds.SequenceEqual(new[] { "GEN", "EXO" })
+                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
                         && b.TrainOn.First().CorpusId == Corpus01
                         && b.Pretranslate.Count == 1
                         && b.Pretranslate.First().CorpusId == Corpus01
-                        && b.Pretranslate.First().TextIds.SequenceEqual(new[] { "LEV", "NUM" })
+                        && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
                 ),
                 CancellationToken.None
             );
@@ -929,11 +929,11 @@ public class MachineProjectServiceTests
                 Arg.Is<TranslationBuildConfig>(
                     b =>
                         b.TrainOn.Count == 1
-                        && b.TrainOn.First().TextIds.SequenceEqual(new[] { "GEN", "EXO" })
+                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
                         && b.TrainOn.First().CorpusId == Corpus02
                         && b.Pretranslate.Count == 1
                         && b.Pretranslate.First().CorpusId == Corpus01
-                        && b.Pretranslate.First().TextIds.SequenceEqual(new[] { "LEV", "NUM" })
+                        && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
                 ),
                 CancellationToken.None
             );
