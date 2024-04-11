@@ -5,7 +5,7 @@ import { UserProfile } from 'realtime-server/common/models/user';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';

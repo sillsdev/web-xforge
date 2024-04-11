@@ -1,9 +1,9 @@
 #!./node_modules/.bin/ts-node
 
-import { createWS, devConfig, fetchDoc, visualizeOps } from './utils';
 import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
 import { Connection } from 'sharedb/lib/client';
+import { createWS, devConfig, fetchDoc, visualizeOps } from './utils';
 
 const docId = '';
 const connectionConfig = devConfig;

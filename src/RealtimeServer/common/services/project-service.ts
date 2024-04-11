@@ -1,7 +1,7 @@
-import { ValidationSchema } from '../models/validation-schema';
 import { ConnectSession } from '../connect-session';
 import { Project } from '../models/project';
 import { SystemRole } from '../models/system-role';
+import { ValidationSchema } from '../models/validation-schema';
 import { JsonDocService } from './json-doc-service';
 
 /**

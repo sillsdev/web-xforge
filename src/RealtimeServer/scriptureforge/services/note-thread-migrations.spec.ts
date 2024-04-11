@@ -1,10 +1,10 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
-import { instance, mock, when } from 'ts-mockito';
 import { Doc } from 'sharedb/lib/client';
+import { instance, mock, when } from 'ts-mockito';
+import { MetadataDB } from '../../common/metadata-db';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { MetadataDB } from '../../common/metadata-db';
 import { createDoc, fetchDoc } from '../../common/utils/test-utils';
 import { NOTE_THREAD_COLLECTION } from '../models/note-thread';
 import { NoteThreadService } from './note-thread-service';

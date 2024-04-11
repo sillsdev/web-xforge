@@ -6,8 +6,8 @@ import Quill, {
   DeltaStatic,
   History,
   HistoryStackType,
-  StringMap,
-  QuillOptionsStatic
+  QuillOptionsStatic,
+  StringMap
 } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { DragAndDrop } from './drag-and-drop';

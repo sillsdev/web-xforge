@@ -1,5 +1,5 @@
-import { eq } from './eq';
 import 'jest-expect-message';
+import { eq } from './eq';
 
 describe('eq', () => {
   it('compares two objects', () => {

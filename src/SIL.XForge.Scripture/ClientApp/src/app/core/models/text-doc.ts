@@ -1,3 +1,4 @@
+import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic } from 'quill';
 import {
   getTextDocId,
@@ -6,7 +7,6 @@ import {
   TextType,
   TEXT_INDEX_PATHS
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { VerseRef } from '@sillsdev/scripture';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 

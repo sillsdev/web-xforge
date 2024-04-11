@@ -1,9 +1,9 @@
+import { CommonModule } from '@angular/common';
+import { Component, Inject, InjectionToken, OnInit, Provider } from '@angular/core';
 import {
   MatLegacyDialog as MatDialog,
   MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
 } from '@angular/material/legacy-dialog';
-import { CommonModule } from '@angular/common';
-import { Component, Inject, InjectionToken, OnInit, Provider } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { StoryFn } from '@storybook/angular';
 import { UICommonModule } from 'xforge-common/ui-common.module';

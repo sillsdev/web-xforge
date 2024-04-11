@@ -1,22 +1,22 @@
+import { VerseRef } from '@sillsdev/scripture';
+import { clone } from 'lodash-es';
+import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
-  NoteTag,
   DEFAULT_TAG_ICON,
+  NoteTag,
   SF_TAG_ICON,
   TO_DO_TAG_ID
 } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
+  AssignedUsers,
   NoteThread,
   NOTE_THREAD_COLLECTION,
   NOTE_THREAD_INDEX_PATHS
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
-import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { clone } from 'lodash-es';
-import { VerseRef } from '@sillsdev/scripture';
-import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 
 /** Returns the given tag icon formatted for retrieval in the html template, or the default icon. */
 export function defaultNoteThreadIcon(tagIcon: string | undefined): NoteThreadIcon {

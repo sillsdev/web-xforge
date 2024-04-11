@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { BehaviorSubject, interval, Observable } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { WINDOW } from 'xforge-common/browser-globals';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocationService } from './location.service';
 
 export const PWA_CHECK_FOR_UPDATES = 30_000;

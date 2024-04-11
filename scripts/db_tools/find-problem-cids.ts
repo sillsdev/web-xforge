@@ -9,24 +9,24 @@
 // Usage example: ./find-problem-cids.ts --server dev --no-color > output.txt
 // Potential problems are flagged with 'NOT EQUAL' and less significantly, 'more than one'.
 
-import * as RichText from 'rich-text';
-import { MongoClient, Db, Collection } from 'mongodb';
+import { Canon } from '@sillsdev/scripture';
+import { Collection, Db, MongoClient } from 'mongodb';
 import OTJson0 from 'ot-json0';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
+import * as RichText from 'rich-text';
 import ShareDB, { Snapshot } from 'sharedb';
 import { Connection, Doc } from 'sharedb/lib/client';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import {
   colored,
   colors,
   ConnectionSettings,
+  createWS,
   databaseConfigs,
   fetchSnapshotByVersion,
   useColor,
-  visualizeOps,
-  createWS
+  visualizeOps
 } from './utils';
-import { Canon } from '@sillsdev/scripture';
 
 type ProgArgs = { color: boolean; server: string; proj: string | undefined };
 type StyleUsage = { style: string; cid: string };

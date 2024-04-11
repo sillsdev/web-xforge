@@ -1,12 +1,12 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SystemRole } from '../../common/models/system-role';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-utils';
-import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
+import { SFProject, SF_PROJECTS_COLLECTION, SF_PROJECT_PROFILES_COLLECTION } from '../models/sf-project';
 import { createTestProject } from '../models/sf-project-test-data';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';

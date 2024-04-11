@@ -15,12 +15,12 @@ import { Connection, Doc } from 'sharedb/lib/client';
 import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { ConnectionSettings, fetchDoc, submitDocOp, createWS, databaseConfigs, useColor } from './utils';
+import { User } from '../../src/RealtimeServer/common/models/user';
 import { SFProject } from '../../src/RealtimeServer/scriptureforge/models/sf-project';
 import { SFProjectRole } from '../../src/RealtimeServer/scriptureforge/models/sf-project-role';
-import { TextInfoPermission } from '../../src/RealtimeServer/scriptureforge/models/text-info-permission';
-import { User } from '../../src/RealtimeServer/common/models/user';
 import { Chapter, TextInfo } from '../../src/RealtimeServer/scriptureforge/models/text-info';
+import { TextInfoPermission } from '../../src/RealtimeServer/scriptureforge/models/text-info-permission';
+import { ConnectionSettings, createWS, databaseConfigs, fetchDoc, submitDocOp, useColor } from './utils';
 
 /** Specifies a specific collection in the SF MongoDB (eg 'texts') and the name of a field that can be used to lookup
  * unique records (eg '_id' or 'd') */

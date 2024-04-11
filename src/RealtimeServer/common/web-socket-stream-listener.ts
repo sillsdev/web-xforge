@@ -1,5 +1,5 @@
-import * as http from 'http';
 import express from 'express';
+import * as http from 'http';
 import { JwtHeader, SigningKeyCallback, verify } from 'jsonwebtoken';
 import jwks from 'jwks-rsa';
 import ShareDB from 'sharedb';

@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { NmtDraftAuthGuard, TranslateAuthGuard } from '../shared/project-router.guard';
+import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
+import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { EditorComponent } from './editor/editor.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
-import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
-import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
 
 const routes: Routes = [
   {

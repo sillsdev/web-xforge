@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { when, anything, instance, spy } from 'ts-mockito';
 import { of, throwError } from 'rxjs';
+import { anything, instance, spy, when } from 'ts-mockito';
 import { OnlineStatusService } from './online-status.service';
 
 /** This class is a helper for tests. */

@@ -73,7 +73,12 @@
         ],
         "id-blacklist": "off",
         "id-match": "off",
-        "import/order": "error",
+        "import/order": [
+          "error",
+          {
+            "groups": [["builtin", "external"]]
+          }
+        ],
         "max-len": [
           "error",
           {
