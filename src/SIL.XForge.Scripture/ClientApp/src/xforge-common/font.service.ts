@@ -59,6 +59,14 @@ export class FontService {
 
   constructor(@Inject(DOCUMENT) private readonly document: Document) {}
 
+  isFontFullySupported(fontFamily: string): boolean {
+    return fontFamily in FONT_FACE_DEFINITIONS;
+  }
+
+  fontFallback(fontFamily: string): string {
+    return FONT_FACE_FALLBACKS[fontFamily] ?? DEFAULT_FONT_FAMILY;
+  }
+
   /**
    * Gets a CSS font family name for a given project or project document.
    *
@@ -70,6 +78,14 @@ export class FontService {
       project = project.data;
     }
     return this.getCSSFontName(project?.defaultFont);
+  }
+
+  isGraphiteFont(fontFamily: string): boolean {
+    return fontFamily in NON_GRAPHITE_FALLBACKS;
+  }
+
+  nonGraphiteFallback(fontFamily: string): string {
+    return NON_GRAPHITE_FALLBACKS[fontFamily];
   }
 
   /**
