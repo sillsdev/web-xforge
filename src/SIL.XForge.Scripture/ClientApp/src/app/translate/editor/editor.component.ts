@@ -35,6 +35,7 @@ import { isEqual } from 'lodash-es';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { EditorTabGroupType, EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
@@ -69,6 +70,7 @@ import {
   delayWhen,
   filter,
   first,
+  map,
   repeat,
   retryWhen,
   switchMap,
@@ -76,7 +78,7 @@ import {
   tap,
   throttleTime
 } from 'rxjs/operators';
-import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
+import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -94,6 +96,7 @@ import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils'
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
+import { filterNullish } from '../../../xforge-common/util/rxjs-util';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -133,7 +136,8 @@ import {
 import { Suggestion } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
-import { EditorTabGroupType, EditorTabInfo, EditorTabType } from './tabs/editor-tabs.types';
+import { EditorTabPersistenceService } from './tabs/editor-tab-persistence.service';
+import { EditorTabInfo } from './tabs/editor-tabs.types';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
@@ -261,6 +265,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly editorHistoryService: EditorHistoryService,
     private readonly editorTabFactory: EditorTabFactoryService,
+    private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -621,11 +626,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   ngOnInit(): void {
-    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(doc => {
+    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef), filterNullish()).subscribe(doc => {
       this.sourceLabel = doc?.data?.translateConfig.source?.shortName ?? '';
       this.targetLabel = doc?.data?.shortName ?? '';
 
-      this.populateEditorTabs();
+      this.initEditorTabs();
     });
   }
 
@@ -633,6 +638,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.subscribe(fromEvent(window, 'resize'), () => {
       this.positionInsertNoteFab();
     });
+
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
       async params => {
@@ -653,7 +659,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
-          const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
+          const userRole: string | undefined = this.projectDoc?.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
             if (projectDoc?.data?.paratextUsers != null) {
@@ -1172,12 +1178,84 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  setHistoryTabRevisionLabel(tab: TabInfo<EditorTabType>, revision: Revision | undefined): void {
+  setHistoryTabRevisionLabel(tab: EditorTabInfo, revision: Revision | undefined): void {
     tab.headerText =
       revision != null
         ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`
         : `${this.targetLabel} - History`;
+
     // TODO: Respond to locale changes
+  }
+
+  initEditorTabs(): void {
+    const tabStateInitialized$ = new Subject<void>();
+
+    // Set tab state from persisted tabs plus non-persisted tabs
+    this.editorTabPersistenceService.persistedTabs$.pipe(take(1)).subscribe(persistedTabs => {
+      const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
+      const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
+
+      if (this.sourceLabel) {
+        sourceTabGroup.addTab(
+          this.editorTabFactory.createTab('project-source', {
+            headerText: this.sourceLabel
+          })
+        );
+      }
+
+      targetTabGroup.addTab(
+        this.editorTabFactory.createTab('project', {
+          headerText: this.targetLabel
+        })
+      );
+
+      persistedTabs.forEach((tabData: EditorTabPersistData) => {
+        const tab = this.editorTabFactory.createTab(tabData.tabType, {
+          projectId: tabData.projectId
+        });
+
+        if (tabData.groupId === 'source') {
+          sourceTabGroup.addTab(tab, tabData.isSelected);
+        } else {
+          targetTabGroup.addTab(tab, tabData.isSelected);
+        }
+      });
+
+      this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
+
+      // Notify to start tab persistence on tab state changes
+      tabStateInitialized$.next();
+      tabStateInitialized$.complete();
+
+      // View is initialized before the tab state is initialized, so re-run change detection
+      this.changeDetector.detectChanges();
+    });
+
+    // Persist tabs from tab state changes once tab state has been initialized
+    combineLatest([this.tabState.tabs$, tabStateInitialized$])
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        map(([tabs]) => {
+          const tabsToPersist: EditorTabPersistData[] = [];
+
+          tabs.forEach((tab, index) => {
+            // Only persist tabs flagged as persistable
+            if (tab.persist) {
+              tabsToPersist.push({
+                tabType: tab.type,
+                groupId: tab.groupId,
+                isSelected: tab.selectedIndex === index,
+                projectId: tab.projectId
+              });
+            }
+          });
+
+          return tabsToPersist;
+        })
+      )
+      .subscribe((tabs: EditorTabPersistData[]) => {
+        this.editorTabPersistenceService.persistTabsOpen(tabs);
+      });
   }
 
   private async saveNote(params: SaveNoteParameters): Promise<void> {
@@ -2316,28 +2394,5 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .subscribe((draft: DraftSegmentMap) => {
         this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
       });
-  }
-
-  private populateEditorTabs(): void {
-    // TODO: Load persisted tabs
-    this.tabState.clearAllTabGroups();
-
-    if (this.sourceLabel) {
-      const sourceTabs: EditorTabInfo[] = [
-        this.editorTabFactory.createTab('project-source', {
-          headerText: this.sourceLabel
-        })
-      ];
-
-      this.tabState.addTabGroup('source', sourceTabs);
-    }
-
-    const targetTabs: EditorTabInfo[] = [
-      this.editorTabFactory.createTab('project', {
-        headerText: this.targetLabel
-      })
-    ];
-
-    this.tabState.addTabGroup('target', targetTabs);
   }
 }
