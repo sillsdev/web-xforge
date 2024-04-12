@@ -1,21 +1,18 @@
 export class TabGroup<TKey, T> {
   selectedIndex: number = 0;
 
-  constructor(readonly groupId: TKey, readonly tabs: T[] = []) {}
+  constructor(readonly groupId: TKey, public tabs: ReadonlyArray<T> = []) {}
 
   setTabs(tabs: Iterable<T>): void {
-    this.tabs.splice(0, this.tabs.length); // Clear tabs for group
-    this.addTabs(tabs);
+    this.tabs = [...tabs];
   }
 
   addTabs(tabs: Iterable<T>): void {
-    for (const tab of tabs) {
-      this.addTab(tab, false);
-    }
+    this.tabs = [...this.tabs, ...tabs];
   }
 
   addTab(tab: T, selectTab: boolean = true): void {
-    this.tabs.push(tab);
+    this.tabs = [...this.tabs, tab];
 
     if (selectTab) {
       this.selectedIndex = this.tabs.length - 1;
@@ -23,7 +20,7 @@ export class TabGroup<TKey, T> {
   }
 
   removeTab(index: number): void {
-    this.tabs.splice(index, 1);
+    this.tabs = this.tabs.filter((_, i) => i !== index);
 
     // Select preceding tab if removed tab is or is before before the currently selected tab
     if (index <= this.selectedIndex) {

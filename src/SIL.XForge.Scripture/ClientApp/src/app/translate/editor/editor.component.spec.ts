@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MediaObserver } from '@angular/flex-layout';
 import {
   MatLegacyDialog as MatDialog,
@@ -61,7 +61,8 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -77,7 +78,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -125,7 +125,8 @@ class MockComponent {}
 const ROUTES: Route[] = [
   { path: 'projects/:projectId/translate/:bookId/:chapter', component: MockComponent },
   { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
-  { path: 'projects/:projectId/translate', component: MockComponent }
+  { path: 'projects/:projectId/translate', component: MockComponent },
+  { path: 'projects', component: MockComponent }
 ];
 
 class MockConsole {
@@ -184,14 +185,15 @@ describe('EditorComponent', () => {
 
   it('sharing is only enabled for administrators', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.updateParams({ projectId: 'project02', bookId: 'MAT' });
+    flush();
+    env.routeWithParams({ projectId: 'project02', bookId: 'MAT' });
     env.wait();
     // Null for non admins
     expect(env.sharingButton).toBeNull();
 
     // Truthy for admins
     env.setCurrentUser('user04');
-    env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+    env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
     env.wait();
     expect(env.sharingButton).not.toBeNull();
     env.dispose();
@@ -199,12 +201,12 @@ describe('EditorComponent', () => {
 
   it('response to remote text deletion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.updateParams({ projectId: 'project02', bookId: 'MAT' });
+    flush();
+    env.routeWithParams({ projectId: 'project02', bookId: 'MAT' });
     env.wait();
 
     const dialogMessage = spyOn((env.component as any).dialogService, 'message').and.callThrough();
     const textDocId = new TextDocId('project02', 40, 1, 'target');
-    reset(env.spyActivatedProjectService);
     env.deleteText(textDocId.toString());
     expect(dialogMessage).toHaveBeenCalledTimes(1);
     tick();
@@ -704,13 +706,13 @@ describe('EditorComponent', () => {
       env.insertSuggestion();
       expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
 
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.target!.segmentRef).toEqual('verse_1_5');
       verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
 
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_5');
@@ -732,7 +734,7 @@ describe('EditorComponent', () => {
         selectedSegment: 'verse_1_5',
         selectedSegmentChecksum: 0
       });
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('');
       expect(env.component.showSuggestions).toBe(false);
@@ -776,7 +778,7 @@ describe('EditorComponent', () => {
       when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
       env.wait();
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
-      env.updateParams({ projectId: 'project02', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project02', bookId: 'MAT' });
       env.wait();
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect().nothing();
@@ -792,14 +794,14 @@ describe('EditorComponent', () => {
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
@@ -818,9 +820,8 @@ describe('EditorComponent', () => {
         verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
         resetCalls(env.mockedRemoteTranslationEngine);
-        reset(env.spyActivatedProjectService);
         env.component.chapter = 2;
-        env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
         const verseText = env.component.target!.getSegmentText('verse_2_1');
         expect(verseText).toBe('target: chapter 2, verse 1.');
@@ -829,7 +830,7 @@ describe('EditorComponent', () => {
 
         resetCalls(env.mockedRemoteTranslationEngine);
         env.component.chapter = 1;
-        env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
         env.wait();
         expect(env.component.target!.segmentRef).toBe('verse_1_1');
         verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
@@ -942,7 +943,7 @@ describe('EditorComponent', () => {
     it('no source', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
@@ -985,7 +986,7 @@ describe('EditorComponent', () => {
         'project02'
       );
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
@@ -997,7 +998,7 @@ describe('EditorComponent', () => {
       expect(env.component.canEdit).toBe(true);
       expect(env.isSourceAreaHidden).toBe(true);
 
-      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
       expect(env.bookName).toEqual('Acts');
       expect(env.component.chapter).toBe(1);
@@ -1033,7 +1034,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(2);
@@ -1067,7 +1068,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
@@ -1171,7 +1172,7 @@ describe('EditorComponent', () => {
       });
       env.setCurrentUser('user01');
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
@@ -1189,7 +1190,7 @@ describe('EditorComponent', () => {
     it('empty book', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'JHN' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'JHN' });
       env.wait();
       expect(env.bookName).toEqual('John');
       expect(env.component.chapter).toBe(1);
@@ -1205,7 +1206,7 @@ describe('EditorComponent', () => {
     it('chapter is invalid', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.chapter).toBe(1);
@@ -1224,7 +1225,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject();
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'ROM' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'ROM' });
       env.wait();
       expect(env.bookName).toEqual('Romans');
       expect(env.component.chapter).toBe(2);
@@ -1470,7 +1471,7 @@ describe('EditorComponent', () => {
       const segmentEndNote = env.getSegmentElement('verse_1_4')!.querySelector('display-note') as HTMLElement;
       expect(segmentEndNote).not.toBeNull();
 
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       const redFlagIcon = '01flag1.png';
       const grayFlagIcon = '01flag4.png';
@@ -1665,7 +1666,7 @@ describe('EditorComponent', () => {
     it('shows note on verse with letter', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.addParatextNoteThread(6, 'LUK 1:6a', '', { start: 0, length: 0 }, ['user01']);
       env.addParatextNoteThread(7, 'LUK 1:6b', '', { start: 0, length: 0 }, ['user01']);
       env.wait();
@@ -1847,11 +1848,11 @@ describe('EditorComponent', () => {
       expect(textDoc.data!.ops![3].insert).toBe('targettapter 1, verse 1.');
 
       // switch to a different text
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(noteThreadDoc.data!.position).toEqual({ start: 7, length: 7 });
 
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(Array.from(env.component!.target!.embeddedElements.values())).toEqual([10, 31, 52, 53, 91]);
       env.dispose();
@@ -2127,7 +2128,7 @@ describe('EditorComponent', () => {
       const origThread06Pos: TextAnchor = { start: 38, length: 7 };
       env.addParatextNoteThread(6, 'LUK 1:2-3', 'section', origThread06Pos, ['user01']);
       env.wait();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       const textBeforeNote = 'Text in ';
       let range: RangeStatic = env.component.target!.getSegmentRange('s_2')!;
@@ -2174,9 +2175,9 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 2, length: 9 });
 
       // switch to a new book and back
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       let note5Index: number = env.getNoteThreadEditorPosition('dataid05');
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
@@ -2192,9 +2193,9 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: nextSegmentLength + text.length, length: 9 });
 
       // switch to a new book and back
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(noteThreadDoc.data!.position).toEqual({ start: nextSegmentLength + text.length, length: 9 });
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
@@ -2756,7 +2757,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.setCommenterUser();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
       // Allow check for mobile viewports to return TRUE
@@ -2964,7 +2965,7 @@ describe('EditorComponent', () => {
 
       // reselect verse 2, check that it is not selected when moving to a new book
       verse2Elem.click();
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       verse2Elem = env.getSegmentElement('verse_1_2')!;
       expect(verse2Elem.classList).not.toContain('commenter-selection');
@@ -3043,11 +3044,10 @@ describe('EditorComponent', () => {
         env.wait();
 
         const segmentRef = 'verse_1_1';
-        reset(env.spyActivatedProjectService);
         env.setSelectionAndInsertNote(segmentRef);
         expect(env.mobileNoteTextArea).toBeTruthy();
         env.component.chapter = 2;
-        env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
         env.clickSegmentRef('verse_2_2');
         env.wait();
@@ -3092,7 +3092,7 @@ describe('EditorComponent', () => {
     it('shows the correct combined verse ref for a new note', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
       const segmentRef = 'verse_1_2-3';
@@ -3108,7 +3108,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.setCommenterUser();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
       let elem: HTMLElement = env.getSegmentElement('s_1')!;
@@ -3311,7 +3311,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
@@ -3328,7 +3328,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(2);
@@ -3348,7 +3348,7 @@ describe('EditorComponent', () => {
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
@@ -3367,7 +3367,7 @@ describe('EditorComponent', () => {
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(2);
@@ -3386,7 +3386,7 @@ describe('EditorComponent', () => {
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setCurrentUser('user03');
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
@@ -3422,7 +3422,7 @@ describe('EditorComponent', () => {
       });
       env.setCurrentUser('user01');
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
       env.wait();
       verify(mockedSFProjectService.get('resource01')).never();
       expect(env.bookName).toEqual('Acts');
@@ -3441,7 +3441,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.chapter).toBe(1);
@@ -3459,7 +3459,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'ROM' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'ROM' });
       env.wait();
       expect(env.bookName).toEqual('Romans');
       expect(env.component.chapter).toBe(2);
@@ -3476,7 +3476,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
       expect(env.component.hasEditRight).toBe(true);
       expect(env.component.canEdit).toBe(false);
@@ -3493,7 +3493,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(projectConfig);
       env.setProjectUserConfig();
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.suggestionsSettingsButton).toBeTruthy();
       env.dispose();
@@ -3509,7 +3509,7 @@ describe('EditorComponent', () => {
       env.setCurrentUser('user06'); //has read but not edit
       env.setupProject(projectConfig);
       env.setProjectUserConfig();
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.suggestionsSettingsButton).toBeFalsy();
       env.dispose();
@@ -3525,7 +3525,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(projectConfig);
       env.setProjectUserConfig();
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.suggestionsSettingsButton).toBeTruthy();
       env.dispose();
@@ -3540,7 +3540,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(projectConfig);
       env.setProjectUserConfig();
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.suggestionsSettingsButton).toBeFalsy();
       env.dispose();
@@ -3556,7 +3556,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(projectConfig);
       env.setProjectUserConfig({ biblicalTermsEnabled: true });
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.targetBiblicalTerms).toBeTruthy();
       env.dispose();
@@ -3576,7 +3576,7 @@ describe('EditorComponent', () => {
       env.setupProject(targetProjectConfig, 'project01');
       env.setupProject(sourceProjectConfig, 'project02');
       env.setProjectUserConfig({ biblicalTermsEnabled: true });
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
       expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
@@ -3595,7 +3595,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(projectConfig, 'project02');
       env.setProjectUserConfig({ biblicalTermsEnabled: true });
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
       expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
@@ -3619,7 +3619,7 @@ describe('EditorComponent', () => {
       env.setupProject(targetProjectConfig, 'project01');
       env.setupProject(sourceProjectConfig, 'project02');
       env.setProjectUserConfig({ biblicalTermsEnabled: true });
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
       expect(env.sourceBiblicalTerms).toBeFalsy();
       env.dispose();
@@ -3629,7 +3629,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.copyrightBanner).not.toBeNull();
       env.dispose();
@@ -3639,7 +3639,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
 
       // SUT
@@ -3740,7 +3740,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
 
       env.setProjectUserConfig();
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
 
       expect(env.bookName).toEqual('Mark');
@@ -3752,45 +3752,51 @@ describe('EditorComponent', () => {
     it('should navigate to "projects" route if url book is not in project', fakeAsync(() => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
       const env = new TestEnvironment();
+      flush();
       const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
 
-      when(env.spyActivatedProjectService.projectId).thenReturn('testProjectId');
-
-      env.updateParams(navigationParams);
+      env.routeWithParams(navigationParams);
       env.wait();
 
       expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
+      discardPeriodicTasks();
     }));
   });
 
-  describe('populateEditorTabs', () => {
-    it('should add source tab group when sourceLabel is defined', () => {
+  describe('initEditorTabs', () => {
+    it('should add source tab group when sourceLabel is defined', fakeAsync(() => {
       const env = new TestEnvironment();
-      const spyCreateTab = spyOn(env.tabFactory, 'createTab');
+      flush();
+      const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
       const sourceLabel = 'source label';
       env.component['sourceLabel'] = sourceLabel;
-      env.component['populateEditorTabs']();
-
+      env.component['targetLabel'] = 'target label';
+      env.component.initEditorTabs();
+      flush();
       expect(spyCreateTab).toHaveBeenCalledWith('project-source', { headerText: sourceLabel });
-    });
+    }));
 
-    it('should not add source tab group when sourceLabel is undefined', () => {
+    it('should not add source tab group when sourceLabel is undefined', fakeAsync(() => {
       const env = new TestEnvironment();
-      const spyCreateTab = spyOn(env.tabFactory, 'createTab');
-      env.component['populateEditorTabs']();
-
+      flush();
+      const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+      env.component['sourceLabel'] = undefined;
+      env.component['targetLabel'] = 'target label';
+      env.component.initEditorTabs();
+      flush();
       expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
-    });
+    }));
 
-    it('should add target tab group', () => {
+    it('should add target tab group', fakeAsync(() => {
       const env = new TestEnvironment();
-      const spyCreateTab = spyOn(env.tabFactory, 'createTab');
+      flush();
+      const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
       const targetLabel = 'target label';
       env.component['targetLabel'] = targetLabel;
-      env.component['populateEditorTabs']();
-
+      env.component.initEditorTabs();
+      flush();
       expect(spyCreateTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
-    });
+    }));
   });
 });
 
@@ -3808,7 +3814,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<EditorComponent>;
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
   readonly activatedProjectService: ActivatedProjectService;
-  readonly spyActivatedProjectService: ActivatedProjectService;
   readonly router: Router;
   readonly location: Location;
   readonly mockNoteDialogRef;
@@ -4094,15 +4099,12 @@ class TestEnvironment {
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
-    this.spyActivatedProjectService = spy(this.activatedProjectService);
-    when(this.spyActivatedProjectService.projectDoc$).thenCall(() => of(this.getProjectDoc('project01')));
-
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
-    this.ngZone.run(() => this.router.initialNavigation());
+    this.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
   }
 
   get activeElementClasses(): DOMTokenList | undefined {
@@ -4490,8 +4492,18 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  updateParams(params: Params): void {
-    this.params$.next(params);
+  routeWithParams(params: Params): void {
+    this.ngZone.run(() => {
+      // Need to both update ActivatedRoute params and navigate route because ActivatedRoute
+      // provided by the RouterTestingModule is not the same instance that the component under test injects.
+      this.params$.next(params);
+
+      // ActivatedProjectService checks router event, not ActivatedRoute,
+      // so trigger route change in addition to ActivatedRoute change.
+      this.router.navigateByUrl(`/projects/${params.projectId}/translate/${params.bookId}/${params.chapter ?? ''}`);
+    });
+
+    this.fixture.detectChanges();
   }
 
   throwTrainingProgressError(): void {

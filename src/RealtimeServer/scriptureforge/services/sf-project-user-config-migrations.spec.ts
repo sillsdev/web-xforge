@@ -86,6 +86,21 @@ describe('SFProjectUserConfigMigrations', () => {
       expect(userConfigDoc.data.audioRefsPlayed).not.toBeDefined();
     });
   });
+
+  describe('version 6', () => {
+    it('adds editorTabsOpen property', async () => {
+      const env = new TestEnvironment(5);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen).toEqual([]);
+    });
+  });
 });
 
 class TestEnvironment {
