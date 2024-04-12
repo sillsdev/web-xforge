@@ -8,7 +8,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 export class HistoryRevisionFormatPipe implements PipeTransform {
   constructor(private readonly i18n: I18nService) {}
 
-  transform(revision: Revision): string {
-    return this.i18n.formatDate(new Date(revision.key));
+  transform(revision: Revision | string): string {
+    const revisionKey = typeof revision === 'string' ? revision : revision.key;
+    return this.i18n.formatDate(new Date(revisionKey));
   }
 }

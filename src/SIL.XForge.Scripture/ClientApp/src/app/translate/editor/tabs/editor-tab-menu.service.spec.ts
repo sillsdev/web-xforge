@@ -170,7 +170,7 @@ class TestEnvironment {
   }
 
   setExistingTabs(tabs: EditorTabInfo[]): void {
-    when(tabStateMock.tabs$).thenReturn(of(tabs));
+    when(tabStateMock.tabs$).thenReturn(of(tabs as any));
   }
 
   setLastCompletedBuildExists(exists: boolean): void {
