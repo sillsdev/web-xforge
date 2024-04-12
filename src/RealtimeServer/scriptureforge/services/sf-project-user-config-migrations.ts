@@ -64,10 +64,22 @@ class SFProjectUserConfigMigration5 extends DocMigration {
   }
 }
 
+class SFProjectUserConfigMigration6 extends DocMigration {
+  static readonly VERSION = 6;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    if (doc.data.editorTabsOpen === undefined) {
+      const op: ObjectInsertOp = { p: ['editorTabsOpen'], oi: [] };
+      await submitMigrationOp(SFProjectUserConfigMigration6.VERSION, doc, [op]);
+    }
+  }
+}
+
 export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
   SFProjectUserConfigMigration1,
   SFProjectUserConfigMigration2,
   SFProjectUserConfigMigration3,
   SFProjectUserConfigMigration4,
-  SFProjectUserConfigMigration5
+  SFProjectUserConfigMigration5,
+  SFProjectUserConfigMigration6
 ];
