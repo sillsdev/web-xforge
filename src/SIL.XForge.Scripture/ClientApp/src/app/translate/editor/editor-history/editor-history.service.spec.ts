@@ -22,9 +22,16 @@ describe('EditorHistoryService', () => {
 
   it('should remove cid', () => {
     const obj = { cid: '123', subObj: { cid: '456' } };
-    service['removeCid'](obj);
+    service.removeCid(obj);
     expect(obj.cid).toBeUndefined();
     expect(obj.subObj.cid).toBeUndefined();
+  });
+
+  it('should remove cid when null values are present', () => {
+    const obj = { cid: '123', subObj: null };
+    service.removeCid(obj);
+    expect(obj.cid).toBeUndefined();
+    expect(obj.subObj).toBeNull();
   });
 
   describe('formatTimestamp', () => {
