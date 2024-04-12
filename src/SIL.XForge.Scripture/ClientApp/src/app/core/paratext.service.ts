@@ -105,7 +105,7 @@ export class ParatextService {
    * @param paratextId The Paratext identifier.
    * @returns True if the Paratext identifier is a resource identifier.
    */
-  isResource(paratextId: string): boolean {
+  static isResource(paratextId: string): boolean {
     return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
   }
 }

@@ -7,18 +7,22 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
+import { PermissionsService } from 'src/app/core/permissions.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
+import { FontService } from '../../../xforge-common/font.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
-import { PermissionsService } from '../../core/permissions.service';
+import { ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -71,7 +75,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly activatedRoute: ActivatedRoute,
     private readonly authService: AuthService,
     private readonly onlineStatusService: OnlineStatusService,
-    readonly noticeService: NoticeService,
+    noticeService: NoticeService,
+    readonly activatedProjectService: ActivatedProjectService,
+    readonly fontService: FontService,
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
@@ -121,6 +127,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   get projectId(): string | undefined {
     return this.projectDoc?.id;
+  }
+
+  get selectedFont(): string | undefined {
+    return this.activatedProjectService.projectDoc?.data?.defaultFont;
+  }
+
+  get isPtProject(): boolean {
+    return this.projectDoc?.data != null && !ParatextService.isResource(this.projectDoc?.data?.paratextId);
   }
 
   ngOnInit(): void {
@@ -214,6 +228,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   trackTextByBookNum(_index: number, item: TextProgress): number {
     return item.text.bookNum;
+  }
+
+  get isPTUser(): boolean {
+    return isParatextRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId]);
   }
 
   private async calculateProgress(): Promise<void> {

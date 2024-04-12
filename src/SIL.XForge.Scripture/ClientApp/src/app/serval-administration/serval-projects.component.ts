@@ -28,7 +28,7 @@ class Row {
     const paratextId: string | undefined =
       this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId;
 
-    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
+    if (paratextId != null && !ParatextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
     } else {
       return undefined;
@@ -47,7 +47,7 @@ class Row {
     const paratextId: string | undefined =
       this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId;
 
-    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
+    if (paratextId != null && !ParatextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
     } else {
       return undefined;
@@ -77,7 +77,7 @@ class Row {
   get sourceId(): string | undefined {
     const paratextId: string | undefined = this.projectDoc.data?.translateConfig.source?.paratextId;
 
-    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
+    if (paratextId != null && !ParatextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.source?.projectRef;
     } else {
       return undefined;

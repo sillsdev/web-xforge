@@ -151,9 +151,6 @@ class TestEnvironment {
           })
         )
     );
-    when(mockedParatextService.isResource(anything())).thenCall((paratextId: string) => {
-      return paratextId?.startsWith('ptresource') ?? false;
-    });
 
     this.fixture = TestBed.createComponent(ServalProjectsComponent);
     this.component = this.fixture.componentInstance;

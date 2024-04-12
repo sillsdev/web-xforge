@@ -73,7 +73,7 @@ export class PermissionsService {
     const role: string = projectDoc.data.userRoles[userId ?? this.userService.currentUserId];
 
     // Any paratext user role can sync DBL resources
-    if (this.paratextService.isResource(projectDoc.data.paratextId)) {
+    if (ParatextService.isResource(projectDoc.data.paratextId)) {
       return isParatextRole(role);
     }
 
