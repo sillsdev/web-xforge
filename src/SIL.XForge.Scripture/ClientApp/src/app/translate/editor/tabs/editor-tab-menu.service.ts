@@ -1,4 +1,9 @@
 import { Injectable } from '@angular/core';
+import {
+  EditorTabGroupType,
+  EditorTabType,
+  editorTabTypes
+} from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
@@ -9,7 +14,7 @@ import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { EditorTabGroupType, EditorTabInfo, EditorTabType, editorTabTypes } from './editor-tabs.types';
+import { EditorTabInfo } from './editor-tabs.types';
 
 @Injectable({
   providedIn: 'root'

@@ -1,4 +1,5 @@
 import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { EditorTabPersistData } from './editor-tab';
 
 export const SF_PROJECT_USER_CONFIGS_COLLECTION = 'sf_project_user_configs';
 export const SF_PROJECT_USER_CONFIG_INDEX_PATHS: string[] = PROJECT_DATA_INDEX_PATHS;
@@ -25,4 +26,5 @@ export interface SFProjectUserConfig extends ProjectData {
   answerRefsRead: string[];
   commentRefsRead: string[];
   audioRefsPlayed: string[];
+  editorTabsOpen: EditorTabPersistData[];
 }

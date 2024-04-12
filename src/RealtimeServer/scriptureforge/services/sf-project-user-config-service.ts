@@ -90,6 +90,28 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
         items: {
           bsonType: 'string'
         }
+      },
+      editorTabsOpen: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['tabType', 'groupId'],
+          properties: {
+            tabType: {
+              bsonType: 'string'
+            },
+            groupId: {
+              bsonType: 'string'
+            },
+            isSelected: {
+              bsonType: 'bool'
+            },
+            projectId: {
+              bsonType: 'string'
+            }
+          },
+          additionalProperties: false
+        }
       }
     },
     additionalProperties: false

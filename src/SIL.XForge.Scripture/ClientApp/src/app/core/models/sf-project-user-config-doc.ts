@@ -1,4 +1,5 @@
 import { VerseRef } from '@sillsdev/scripture';
+import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import {
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION,
@@ -21,6 +22,16 @@ export class SFProjectUserConfigDoc extends ProjectDataDoc<SFProjectUserConfig> 
         }
         op.add(puc => puc.audioRefsPlayed, ref.toString());
       }
+    });
+  }
+
+  updateEditorOpenTabs(tabs: EditorTabPersistData[]): void {
+    if (this.data == null) {
+      return;
+    }
+
+    this.submitJson0Op(op => {
+      op.set(puc => puc.editorTabsOpen, tabs);
     });
   }
 }

@@ -20,13 +20,14 @@ public class SFProjectUserConfig : ProjectData
     public int? SelectedSegmentChecksum { get; set; }
 
     /// <summary>Ids of notes (not threads) which the user has read.</summary>
-    public List<string> NoteRefsRead { get; set; } = new List<string>();
+    public List<string> NoteRefsRead { get; set; } = [];
 
     // checking
-    public List<string> QuestionRefsRead { get; set; } = new List<string>();
-    public List<string> AnswerRefsRead { get; set; } = new List<string>();
-    public List<string> CommentRefsRead { get; set; } = new List<string>();
-    public List<string> AudioRefsPlayed { get; set; } = new List<string>();
+    public List<string> QuestionRefsRead { get; set; } = [];
+    public List<string> AnswerRefsRead { get; set; } = [];
+    public List<string> CommentRefsRead { get; set; } = [];
+    public List<string> AudioRefsPlayed { get; set; } = [];
+    public List<EditorTab> EditorTabsOpen { get; set; } = [];
     public string? SelectedQuestionRef { get; set; }
     public bool BiblicalTermsEnabled { get; set; }
 }
