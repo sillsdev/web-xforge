@@ -1610,9 +1610,10 @@ public class MachineProjectServiceTests
                 AlternateSourceConfigured = true,
                 LocalSourceTextHasData = true,
                 LocalTargetTextHasData = true,
+                UploadParatextZipForPreTranslation = true,
             }
         );
-        await env.SetDataInSync(Project02, preTranslate: true);
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(
@@ -1622,6 +1623,48 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
+
+        // Verify that it was just the alternate source, source, and target directories that were read for data
+        var project = env.Projects.Get(Project02);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo(Paratext01));
+        Assert.That(project.TranslateConfig.Source?.ParatextId, Is.EqualTo(Paratext03));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext01)));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext02)));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext03)));
+        env.FileSystemService.Received(3).EnumerateFiles(Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_UsesTheSourceWhenAlternateSourceIsEnabledButNotConfigured()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateSourceConfigured = false,
+                AlternateSourceEnabled = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Verify that it was just the source and target directories that were read for data
+        var project = env.Projects.Get(Project02);
+        Assert.That(project.TranslateConfig.Source?.ParatextId, Is.EqualTo(Paratext03));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext02)));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext03)));
+        env.FileSystemService.Received(2).EnumerateFiles(Arg.Any<string>());
     }
 
     [Test]
