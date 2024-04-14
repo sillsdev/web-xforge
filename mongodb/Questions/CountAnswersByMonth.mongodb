@@ -2,8 +2,15 @@ use('xforge');
 
 // Get the number of answers per month across all projects
 
+const excludedProjects = ['Stp22'];
+
+const excludedProjectIds = db.sf_projects.find({
+  shortName: { $in: excludedProjects }
+}).toArray().map(p => p._id);
+
 const answersByMonth = db.questions.aggregate([
   {$match: {
+    projectRef: { $nin: excludedProjectIds },
     answers: { $exists: true }
   }},
   {$project: {
