@@ -241,12 +241,12 @@
     "your_comment": "Your comment"
   },
   "editor_draft_tab": {
-    "apply_to_project": "Apply to project",
-    "draft_indicator_applied": "DRAFT APPLIED",
+    "apply_to_project": "Add to project",
+    "draft_indicator_applied": "Added",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Auto draft is not available offline.",
-    "overwrite": "Applying a draft will overwrite the current chapter. Continue?",
-    "yes": "Continue"
+    "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "yes": "Overwrite chapter"
   },
   "editor_history_tab": {
     "offline_notice": "Editor history is not available offline."
