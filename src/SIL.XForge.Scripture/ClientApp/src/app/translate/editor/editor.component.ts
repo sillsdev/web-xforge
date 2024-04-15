@@ -745,12 +745,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             }
           });
 
-          this.draftAppliedSub = this.draftViewerService.draftApplied.subscribe(e => {
-            if (this.target?.id?.toString() === e.id.toString()) {
-              this.target.editor?.updateContents(e.ops, 'user');
+          this.draftViewerService.draftApplied
+            .pipe(filter(diff => this.target?.id?.toString() === diff.id.toString()))
+            .subscribe(diff => {
+              this.target?.editor?.updateContents(diff.ops, 'user');
               this.hasDraft = false;
-            }
-          });
+            });
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
