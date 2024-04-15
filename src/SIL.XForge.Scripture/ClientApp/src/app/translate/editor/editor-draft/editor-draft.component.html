@@ -16,8 +16,8 @@
 <div class="toolbar">
   <div class="apply-draft-button-container">
     <span *ngIf="isDraftApplied && hasDraft" class="draft-indicator">
-      <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
       <mat-icon class="check-icon">check</mat-icon>
+      <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
     </span>
     <button *ngIf="!isDraftApplied && hasDraft && canEdit" mat-flat-button color="primary" (click)="applyDraft()">
       <mat-icon>auto_awesome</mat-icon>
