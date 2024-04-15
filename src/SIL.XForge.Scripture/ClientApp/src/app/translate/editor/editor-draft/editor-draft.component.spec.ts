@@ -148,6 +148,7 @@ describe('EditorDraftComponent', () => {
   it('should apply draft correctly', fakeAsync(() => {
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
+    expect(component.isDraftApplied).toBe(false);
     const emitter: EventEmitter<DraftDiff> = mock(EventEmitter<DraftDiff>);
     when(mockDraftViewerService.draftApplied).thenReturn(instance(emitter));
     when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
