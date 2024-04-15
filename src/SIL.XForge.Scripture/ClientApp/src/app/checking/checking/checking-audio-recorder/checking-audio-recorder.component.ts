@@ -4,7 +4,6 @@ import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
-import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import {
