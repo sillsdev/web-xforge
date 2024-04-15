@@ -126,7 +126,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       )
       .subscribe(async (draftOps: DeltaOperation[]) => {
         // Set the draft editor with the pre-translation segments
-        this.draftText.editor?.setContents(new Delta(draftOps), 'api');
+        const contents = this.draftText.editor?.setContents(new Delta(draftOps), 'api');
+        if (!this.doesDeltaHaveContent(contents?.ops)) return;
         this.isDraftApplied = (await this.getDiff()).length() === 0;
       });
   }
@@ -153,7 +154,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   async applyDraft(): Promise<void> {
-    if (await this.doesTargetHaveContent()) {
+    if (this.doesDeltaHaveContent(await this.getTargetOps())) {
       const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
       if (!proceed) return;
     }
@@ -165,9 +166,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.isDraftApplied = true;
   }
 
-  private async doesTargetHaveContent(): Promise<boolean> {
-    const target = await this.getTargetOps();
-    const doesTargetHaveContent = target?.some(op => {
+  private doesDeltaHaveContent(delta?: DeltaOperation[]): boolean {
+    const hasContent = delta?.some(op => {
       if (op.insert == null || op.attributes?.segment == null) {
         return false;
       }
@@ -175,7 +175,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       const isInsertBlank = (isString(op.insert) && op.insert.trim().length === 0) || op.insert.blank === true;
       return !isInsertBlank;
     });
-    return doesTargetHaveContent ?? false;
+    return hasContent ?? false;
   }
 
   /**
