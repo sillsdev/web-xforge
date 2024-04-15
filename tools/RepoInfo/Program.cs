@@ -1,7 +1,7 @@
 /*
  * Paratext Repository Information Tool
  *
- * Usage: dotnet run [CSV] projectpath
+ * Usage: dotnet run [CSV] project_path
  *
  * Examples:
  *  - Display the repository information in the console:
@@ -18,7 +18,7 @@
  *    NA: Does not affect Scripture Forge
  *    NT: Notes
  *    PE: Permissions
- *    PR: Project level (may affect all SF Books, Notes, Biblical Terms, etc)
+ *    PR: Project level (may affect all SF Books, Notes, Biblical Terms, etc.)
  */
 
 using System;
@@ -39,17 +39,17 @@ using SIL.XForge.Scripture.Services;
 // Allow the arguments to be in any order
 bool csv = false;
 string projectPath = string.Empty;
-if (args.Any())
+if (args.Length > 0)
 {
     projectPath = args[0];
-    csv = args[0].ToUpperInvariant() == "CSV";
+    csv = string.Equals(args[0], "CSV", StringComparison.OrdinalIgnoreCase);
     if (csv && args.Length > 1)
     {
         projectPath = args[1];
     }
     else
     {
-        csv = args.Length > 1 && args[1].ToUpperInvariant() == "CSV";
+        csv = args.Length > 1 && string.Equals(args[1], "CSV", StringComparison.OrdinalIgnoreCase);
     }
 }
 
@@ -106,7 +106,7 @@ if (!File.Exists(settingsPath))
 using TextReader reader = File.OpenText(settingsPath);
 ProjectSettings settings = new ProjectSettings(reader);
 
-// Initialise the localizer, and hide its output
+// Initialize the localizer, and hide its output
 var oldOut = Console.Out;
 Console.SetOut(StreamWriter.Null);
 Localizer.Str(string.Empty);
@@ -123,18 +123,18 @@ if (revisions is null)
 // Order revisions from oldest to newest
 revisions.Reverse();
 
-// Setup the columns to display in the table
+// Set up the columns to display in the table
 //
 // Explanation of pad right values for each column:
 // 1. The highest revision I have seen is < 99999
 // 2. A short commit hash is 12 characters
-// 3. Classification is a 2 letter code (see comments at top of the file)
+// 3. Classification is a 2-letter code (see comments at top of the file)
 // 4. "Properties and Settings" is the longest file type at 23 characters long
 const int col1 = 5;
 const int col2 = 12;
 const int col3 = 2;
 const int col4 = 23;
-int[] cols = { col1, col2, col3, col4 };
+int[] cols = [col1, col2, col3, col4];
 int lastCol = Console.WindowWidth - cols.Sum() - cols.Length;
 bool canDrawDivider = !csv && lastCol > 0;
 if (lastCol < 0)
@@ -196,7 +196,6 @@ foreach (var revision in revisions)
                 or ProjectFileType.RubyGlosses
                 or ProjectFileType.SavedFilters
                 or ProjectFileType.SharedFiles
-                or ProjectFileType.SimplifiedMenus
                 or ProjectFileType.Spelling
                 or ProjectFileType.StatusCheckBoxes
                 or ProjectFileType.StudyBibleAdditions
@@ -222,7 +221,7 @@ foreach (var revision in revisions)
     }
 
     // Show the details of the merge commit
-    if (!revision.AffectedFileNames.Any())
+    if (revision.AffectedFileNames.Length == 0)
     {
         WriteLine(revision, string.Join(',', revision.ParentRevNumbers), "NA", "Merge Commit", ref drawDivider);
     }
@@ -242,6 +241,8 @@ foreach (var revision in revisions)
     }
 }
 
+return;
+
 void WriteLine(HgRevision revision, string fileName, string classification, string fileChangeType, ref bool drawDivider)
 {
     if (csv)
@@ -249,7 +250,7 @@ void WriteLine(HgRevision revision, string fileName, string classification, stri
         // Do not let commas in the file name break the CSV file
         if (fileName.Contains(',', StringComparison.OrdinalIgnoreCase))
         {
-            fileName = $@"""{fileName}""";
+            fileName = $"\"{fileName}\"";
         }
         Console.WriteLine(
             $"{revision.LocalRevisionNumber},{revision.Id[..12]},{classification},{fileChangeType},{fileName}"
