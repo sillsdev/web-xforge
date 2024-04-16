@@ -986,6 +986,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     const data: QuestionDialogData = {
       questionDoc: undefined,
+      projectDoc: this.projectDoc,
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id,
       defaultVerse: new VerseRef(this.book ?? 0, this.chapter ?? 1, 1),
