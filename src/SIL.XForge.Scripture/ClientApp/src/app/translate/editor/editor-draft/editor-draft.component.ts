@@ -157,6 +157,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     if (this.doesDeltaHaveContent(await this.getTargetOps())) {
       const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
       if (!proceed) return;
+    } else {
+      return;
     }
 
     const diff: DeltaStatic = await this.getDiff();
