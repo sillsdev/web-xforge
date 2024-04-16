@@ -401,6 +401,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /**
    * Determines whether the user has the right to edit texts generally, without considering permissions on this chapter.
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
    */
   get userHasGeneralEditRight(): boolean {
     const project = this.projectDoc?.data;
@@ -413,6 +414,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /**
    * Determines whether the user has permission to edit the currently active chapter.
    * Returns undefined if the necessary data is not yet available.
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
    */
   get hasChapterEditPermission(): boolean | undefined {
     const chapter = this.text?.chapters.find(c => c.number === this._chapter);
@@ -452,6 +454,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
+  /**
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
+   */
   get canEdit(): boolean {
     return (
       this.isUsfmValid &&
@@ -509,6 +514,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
+  /**
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
+   */
   get isUsfmValid(): boolean {
     if (this.text == null) {
       return true;
