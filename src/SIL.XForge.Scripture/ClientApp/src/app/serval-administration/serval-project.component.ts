@@ -5,6 +5,7 @@ import { catchError, lastValueFrom, tap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectService } from '../core/sf-project.service';
@@ -36,10 +37,15 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     noticeService: NoticeService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
+  }
+
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
   }
 
   ngOnInit(): void {
