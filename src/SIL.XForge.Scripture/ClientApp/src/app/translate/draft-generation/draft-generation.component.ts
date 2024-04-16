@@ -239,11 +239,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
 
     this.subscribe(
-      this.activatedProject.projectId$.pipe(
+      this.activatedProject.projectDoc$.pipe(
         filterNullish(),
-        switchMap(projectId =>
-          this.draftGenerationService.getLastCompletedBuild(projectId).pipe(map(build => !isEmpty(build)))
-        )
+        switchMap(projectDoc => {
+          // Pre-translation must be enabled for the project
+          if (!(projectDoc.data?.translateConfig.preTranslate ?? false)) {
+            return of(false);
+          }
+          return this.draftGenerationService.getLastCompletedBuild(projectDoc.id).pipe(map(build => !isEmpty(build)));
+        })
       ),
       (hasAnyCompletedBuild: boolean) => {
         this.hasAnyCompletedBuild = hasAnyCompletedBuild;
@@ -410,17 +414,21 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   private pollBuild(): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
-      this.activatedProject.projectId$.pipe(
+      this.activatedProject.projectDoc$.pipe(
         filterNullish(),
-        switchMap(projectId =>
-          this.draftGenerationService
-            .getBuildProgress(projectId)
+        switchMap(projectDoc => {
+          // Pre-translation must be enabled for the project
+          if (!(projectDoc.data?.translateConfig.preTranslate ?? false)) {
+            return of(undefined);
+          }
+          return this.draftGenerationService
+            .getBuildProgress(projectDoc.id)
             .pipe(
               switchMap((job?: BuildDto) =>
-                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
+                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectDoc.id) : of(job)
               )
-            )
-        )
+            );
+        })
       ),
       (job?: BuildDto) => {
         this.draftJob = job;
