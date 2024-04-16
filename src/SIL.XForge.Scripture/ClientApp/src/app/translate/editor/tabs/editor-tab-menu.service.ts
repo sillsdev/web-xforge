@@ -29,7 +29,9 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
       switchMap(projectDoc => {
         return combineLatest([
           of(projectDoc),
-          this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
+          projectDoc.data?.translateConfig.preTranslate ?? false
+            ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id)
+            : of(undefined),
           this.tabState.tabs$
         ]);
       }),

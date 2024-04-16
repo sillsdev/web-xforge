@@ -9,13 +9,13 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import {
+  activeBuildStates,
   BuildConfig,
-  DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
+  DRAFT_GENERATION_SERVICE_OPTIONS,
   PreTranslation,
-  PreTranslationData,
-  activeBuildStates
+  PreTranslationData
 } from './draft-generation';
 
 @Injectable({
@@ -45,7 +45,7 @@ export class DraftGenerationService {
   }
 
   /**
-   * Gets pretranslation build job state for specified project.
+   * Gets pre-translation build job state for specified project.
    * @param projectId The SF project id for the target translation.
    * @returns An observable BuildDto describing the state and progress of the current build job,
    * or the latest build job if no build is currently running, or undefined if no build has ever
@@ -62,7 +62,7 @@ export class DraftGenerationService {
         if (err.status === 403 || err.status === 404) {
           return of(undefined);
         }
-        return throwError(err);
+        return throwError(() => err);
       })
     );
   }
@@ -74,6 +74,9 @@ export class DraftGenerationService {
    * or undefined if no build has ever been completed.
    */
   getLastCompletedBuild(projectId: string): Observable<BuildDto | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
     return this.httpClient
       .get<BuildDto>(`translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`)
       .pipe(
@@ -83,13 +86,13 @@ export class DraftGenerationService {
           if (err.status === 403 || err.status === 404) {
             return of(undefined);
           }
-          return throwError(err);
+          return throwError(() => err);
         })
       );
   }
 
   /**
-   * Starts a pretranslation build job if one is not already active.
+   * Starts a pre-translation build job if one is not already active.
    * @param buildConfig The build configuration.
    * @returns An observable BuildDto describing the state and progress of a currently active or newly started build job.
    */
@@ -111,7 +114,7 @@ export class DraftGenerationService {
   }
 
   /**
-   * Cancels any pretranslation builds for the specified project.
+   * Cancels any pre-translation builds for the specified project.
    * @param projectId The SF project id for the target translation.
    */
   cancelBuild(projectId: string): Observable<void> {
@@ -122,30 +125,33 @@ export class DraftGenerationService {
         if (err.status === 404) {
           return EMPTY;
         }
-        return throwError(err);
+        return throwError(() => err);
       })
     );
   }
 
   /**
-   * Gets the pretranslations for the specified book/chapter using the last completed build.
+   * Gets the pre-translations for the specified book/chapter using the last completed build.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number.
    * @returns An observable dictionary of 'segmentRef -> segment text',
-   * or an empty dictionary if no pretranslations exist.
+   * or an empty dictionary if no pre-translations exist.
    */
   getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
+    if (!this.onlineStatusService.isOnline) {
+      return of({});
+    }
     return this.httpClient
       .get<PreTranslationData>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`)
       .pipe(
         map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}),
         catchError(err => {
-          // If no pretranslations exist, return empty dictionary
+          // If no pre-translations exist, return empty dictionary
           if (err.status === 403 || err.status === 404 || err.status === 409) {
             return of({});
           }
-          return throwError(err);
+          return throwError(() => err);
         })
       );
   }
@@ -159,6 +165,9 @@ export class DraftGenerationService {
    * The 405 error that occurs when there is no USFM support is thrown to the caller.
    */
   getGeneratedDraftDeltaOperations(projectId: string, book: number, chapter: number): Observable<DeltaOperation[]> {
+    if (!this.onlineStatusService.isOnline) {
+      return of([]);
+    }
     return this.httpClient
       .get<Snapshot<TextData> | undefined>(
         `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
@@ -176,7 +185,7 @@ export class DraftGenerationService {
   }
 
   /**
-   * Calls the machine api to start a pretranslation build job.
+   * Calls the machine api to start a pre-translation build job.
    * This should only be called if no build is currently active.
    * @param buildConfig The build configuration.
    */

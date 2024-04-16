@@ -3654,14 +3654,15 @@ describe('EditorComponent', () => {
     }));
   });
 
-  describe('Back translation draft', () => {
-    it('detects available back translation draft', fakeAsync(() => {
+  describe('pre-translation draft', () => {
+    it('detects available pre-translation draft', fakeAsync(() => {
       const env = new TestEnvironment();
       const targetDelta = new Delta([{ insert: '', attributes: { segment: 'verse_1_1' } }]);
 
       // Stop text loading from triggering
       spyOn(env.component, 'onTextLoaded');
 
+      env.setupProject({ translateConfig: { preTranslate: true } });
       env.setProjectUserConfig();
       env.wait();
 
@@ -3679,7 +3680,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('detects when back translation draft is not available', fakeAsync(() => {
+    it('detects when pre-translation draft is not available', fakeAsync(() => {
       const env = new TestEnvironment();
       const targetDelta = new Delta([
         { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
@@ -3689,6 +3690,7 @@ describe('EditorComponent', () => {
       // Stop text loading from triggering
       spyOn(env.component, 'onTextLoaded');
 
+      env.setupProject({ translateConfig: { preTranslate: true } });
       env.setProjectUserConfig();
       env.wait();
 
@@ -3703,6 +3705,26 @@ describe('EditorComponent', () => {
       env.component['checkForPreTranslations']();
       expect(env.component.hasDraft).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
+      env.dispose();
+    }));
+
+    it('does not detect a pre-translation draft if not enabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([
+        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
+        { insert: { blank: true }, attributes: { segment: 'verse_1_2' } }
+      ]);
+
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).never();
       env.dispose();
     }));
 
@@ -4289,6 +4311,9 @@ class TestEnvironment {
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;
+    }
+    if (data.translateConfig?.preTranslate != null) {
+      projectProfileData.translateConfig.preTranslate = data.translateConfig.preTranslate;
     }
     if (data.translateConfig?.source !== undefined) {
       projectProfileData.translateConfig.source = merge(

@@ -146,6 +146,7 @@ describe('DraftGenerationComponent', () => {
             draftConfig: {
               alternateTrainingSourceEnabled: false
             },
+            preTranslate: true,
             projectType: ProjectType.BackTranslation,
             source: {
               projectRef: 'testSourceProjectId',

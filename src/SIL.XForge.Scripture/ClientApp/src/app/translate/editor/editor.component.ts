@@ -2288,6 +2288,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Check to see if the user has edit rights
     if (!this.userHasGeneralEditRight) return;
 
+    // Ensure that pre-translation is enabled
+    if (!(this.projectDoc?.data?.translateConfig.preTranslate ?? false)) return;
+
     // Check to see if chapter is complete
     const targetOps: DeltaOperation[] = this.target.editor.getContents().ops!;
     const isChapterComplete: boolean = targetOps.every(op => {
