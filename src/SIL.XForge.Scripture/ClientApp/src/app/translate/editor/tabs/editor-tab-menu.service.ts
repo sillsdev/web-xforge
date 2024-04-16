@@ -46,7 +46,9 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           of(projectDoc),
           this.onlineStatus.onlineStatus$.pipe(
             switchMap(isOnline =>
-              isOnline ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id) : of(undefined)
+              isOnline && (projectDoc.data?.translateConfig.preTranslate ?? false)
+                ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id)
+                : of(undefined)
             )
           ),
           this.tabState.tabs$

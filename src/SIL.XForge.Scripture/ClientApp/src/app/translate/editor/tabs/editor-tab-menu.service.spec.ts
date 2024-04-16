@@ -195,6 +195,9 @@ class TestEnvironment {
   readonly projectDoc = {
     id: 'project1',
     data: createTestProjectProfile({
+      translateConfig: {
+        preTranslate: true
+      },
       userRoles: this.rolesByUser
     })
   } as SFProjectProfileDoc;
