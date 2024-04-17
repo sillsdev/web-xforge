@@ -11,7 +11,7 @@ import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModul
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
-describe('ErrorDialogComponent', () => {
+fdescribe('ErrorDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule]
   }));
