@@ -1,4 +1,3 @@
-import { VerseRef } from '@sillsdev/scripture';
 import {
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION,

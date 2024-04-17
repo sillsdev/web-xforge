@@ -13,7 +13,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { QuestionDoc } from '../../../../core/models/question-doc';
-import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { CheckingUtils } from '../../../checking.utils';
