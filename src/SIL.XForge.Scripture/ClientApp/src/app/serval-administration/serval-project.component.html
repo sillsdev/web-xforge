@@ -2,7 +2,7 @@
 <a mat-raised-button color="primary" [appRouterLink]="'/serval-administration'">Back to Projects</a>
 
 <h2>Pre-Translation Configuration</h2>
-<mat-checkbox [checked]="preTranslate" (change)="onUpdatePreTranslate($event.checked)">
+<mat-checkbox [checked]="preTranslate" (change)="onUpdatePreTranslate($event.checked)" [disabled]="!isOnline">
   Pre-Translation Drafting Enabled
 </mat-checkbox>
 
@@ -23,7 +23,12 @@
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let row">
-        <button mat-raised-button color="primary" (click)="downloadProject(row['id'], row['fileName'])">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="downloadProject(row['id'], row['fileName'])"
+          [disabled]="!isOnline"
+        >
           Download
         </button>
       </td>
