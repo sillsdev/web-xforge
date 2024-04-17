@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { isEqual } from 'lodash-es';
-import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
+import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { combineLatest, firstValueFrom, Observable, of, startWith, Subject, Subscription, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged, finalize, shareReplay } from 'rxjs/operators';
 import { SFProjectUserConfigDoc } from 'src/app/core/models/sf-project-user-config-doc';
