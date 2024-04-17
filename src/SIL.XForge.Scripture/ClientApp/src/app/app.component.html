@@ -5,6 +5,8 @@
     [class.mat-progress-bar--closed]="isAppLoading !== true"
   ></mat-progress-bar>
   <header [class.overlay-drawer]="!isDrawerPermanent" [dir]="i18n.direction">
+    <!-- site admin notice is deliberately only shown on live site, as a warning that actions impact live projects -->
+    <span class="site-admin" *ngIf="isSystemAdmin">site admin</span>
     <mat-toolbar color="primary">
       <mat-toolbar-row>
         <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
