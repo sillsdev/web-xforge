@@ -127,7 +127,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       .subscribe(async (draftOps: DeltaOperation[]) => {
         // Set the draft editor with the pre-translation segments
         const contents = this.draftText.editor?.setContents(new Delta(draftOps), 'api');
-        if (!this.doesDeltaHaveContent(contents?.ops)) return;
+        if (!this.hasContent(contents?.ops)) return;
         this.isDraftApplied = (await this.getDiff()).length() === 0;
       });
   }
@@ -154,11 +154,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   async applyDraft(): Promise<void> {
-    if (this.doesDeltaHaveContent(await this.getTargetOps())) {
+    if (this.hasContent(await this.getTargetOps())) {
       const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
       if (!proceed) return;
-    } else {
-      return;
     }
 
     const diff: DeltaStatic = await this.getDiff();
@@ -168,7 +166,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.isDraftApplied = true;
   }
 
-  private doesDeltaHaveContent(delta?: DeltaOperation[]): boolean {
+  private hasContent(delta?: DeltaOperation[]): boolean {
     const hasContent = delta?.some(op => {
       if (op.insert == null || op.attributes?.segment == null) {
         return false;
