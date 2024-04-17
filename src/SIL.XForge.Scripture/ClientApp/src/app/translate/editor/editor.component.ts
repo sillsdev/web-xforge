@@ -1236,6 +1236,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     combineLatest([this.tabState.tabs$, tabStateInitialized$])
       .pipe(
         takeUntilDestroyed(this.destroyRef),
+        debounceTime(100),
         map(([tabs]) => {
           const tabsToPersist: EditorTabPersistData[] = [];
 
