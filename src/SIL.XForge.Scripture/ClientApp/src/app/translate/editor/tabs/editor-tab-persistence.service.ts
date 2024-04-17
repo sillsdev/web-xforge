@@ -3,11 +3,11 @@ import { isEqual } from 'lodash-es';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { combineLatest, firstValueFrom, Observable, of, startWith, Subject, Subscription, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged, finalize, shareReplay } from 'rxjs/operators';
-import { SFProjectUserConfigDoc } from 'src/app/core/models/sf-project-user-config-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 
 @Injectable({
   providedIn: 'root'
