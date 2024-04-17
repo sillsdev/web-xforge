@@ -37,7 +37,6 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
@@ -1070,12 +1069,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   handleAudioTextRefChanged(segmentRef: string): void {
-    if (this.book == null || !this.isAudioPlaying()) {
+    if (!this.isAudioPlaying()) {
       return;
     }
     this.scripturePanel!.setAudioTextRef(segmentRef);
-    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.book, segmentRef);
-    this.projectUserConfigDoc?.updateAudioRefsPlayed(verseRef);
   }
 
   isAudioPlaying(): boolean {

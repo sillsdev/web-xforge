@@ -763,13 +763,11 @@ class TestEnvironment {
     isTargetTextRight: true,
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id']
   });
-
   private translatorProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
     projectRef: 'project01',
     ownerRef: this.translatorUser.id,
     isTargetTextRight: true
   });
-
   private testProject: SFProjectProfile = createTestProjectProfile({
     texts: [
       {

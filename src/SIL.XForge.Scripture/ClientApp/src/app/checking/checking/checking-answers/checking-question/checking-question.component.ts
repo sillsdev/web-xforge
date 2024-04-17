@@ -13,7 +13,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { QuestionDoc } from '../../../../core/models/question-doc';
-import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { CheckingUtils } from '../../../checking.utils';
@@ -45,9 +44,9 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   private _focusedText: 'question-audio-label' | 'scripture-audio-label' = 'scripture-audio-label';
   private _audioChangeSub?: Subscription;
   private _questionDoc?: QuestionDoc;
-  private _projectUserConfigDoc?: SFProjectUserConfigDoc;
   private audioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectId?: string;
+  private _versesListenedTo = new Set<string>();
 
   constructor(private readonly projectService: SFProjectService, private readonly i18n: I18nService) {
     super();
@@ -62,13 +61,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       return;
     }
     this._questionDoc = doc;
-  }
-
-  @Input() set projectUserConfigDoc(doc: SFProjectUserConfigDoc | undefined) {
-    if (doc?.data == null) {
-      return;
-    }
-    this._projectUserConfigDoc = doc;
   }
 
   get referenceForDisplay(): string {
@@ -197,19 +189,16 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   private setDefaultFocus(): void {
-    if (this._projectUserConfigDoc?.data == null || this._questionDoc?.data == null) {
+    if (this._questionDoc?.data == null) {
       this.selectQuestion();
       return;
     }
 
     const verseRefs: VerseRef[] = toVerseRef(this._questionDoc.data.verseRef).allVerses();
+    const haveListenedToAllVerses = verseRefs.every(v => this._versesListenedTo.has(v.toString()));
 
-    // Select a question if there is no audio or if any of the verse refs haven't been played yet
-    if (
-      this._scriptureTextAudioData == null ||
-      this.scriptureAudioUrl == null ||
-      verseRefs.every(r => this._projectUserConfigDoc!.data!.audioRefsPlayed.includes(r.toString()))
-    ) {
+    // Select a question if there is no audio or if all verses have been played already
+    if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null || haveListenedToAllVerses) {
       this.selectQuestion();
     } else {
       this.selectScripture();
@@ -222,10 +211,11 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   private updateUserRefsPlayed(): void {
-    if (this._questionDoc?.data?.verseRef == null || this._projectUserConfigDoc == null) {
+    if (this._questionDoc?.data?.verseRef == null) {
       return;
     }
 
-    this._projectUserConfigDoc.updateAudioRefsPlayed(toVerseRef(this._questionDoc.data.verseRef));
+    const verses = toVerseRef(this._questionDoc.data.verseRef).allVerses();
+    verses.forEach(v => this._versesListenedTo.add(v.toString()));
   }
 }

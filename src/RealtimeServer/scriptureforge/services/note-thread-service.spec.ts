@@ -339,7 +339,8 @@ class TestEnvironment {
         ownerRef: this.projectAdminId,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
+        commentRefsRead: ['comment01'],
+        noteRefsRead: []
       })
     );
 
