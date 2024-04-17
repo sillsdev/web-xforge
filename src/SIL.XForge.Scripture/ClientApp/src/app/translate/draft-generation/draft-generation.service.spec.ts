@@ -1,21 +1,52 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { mock } from 'ts-mockito';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
-import { HttpClient } from '../../machine-api/http-client';
+import { MACHINE_API_BASE_URL } from '../../machine-api/http-client';
 import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationService', () => {
   let service: DraftGenerationService;
-  let httpClient: HttpClient;
   let httpTestingController: HttpTestingController;
+  let mockNoticeService: NoticeService;
+  let testOnlineStatusService: TestOnlineStatusService;
+
+  configureTestingModule(() => ({
+    imports: [
+      HttpClientTestingModule,
+      NoopAnimationsModule,
+      TestOnlineStatusModule.forRoot(),
+      TestTranslocoModule,
+      UICommonModule
+    ],
+    providers: [
+      DraftGenerationService,
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: NoticeService, useMock: mockNoticeService }
+    ]
+  }));
 
   const projectId = 'testProjectId';
+  const buildConfig: BuildConfig = {
+    projectId,
+    trainingBooks: [],
+    trainingDataFiles: [],
+    translationBooks: [],
+    fastTraining: false
+  };
   const buildDto: BuildDto = {
     id: 'testId',
     href: 'testHref',
@@ -30,92 +61,148 @@ describe('DraftGenerationService', () => {
     queueDepth: 0
   };
 
-  beforeAll(() => {
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [DraftGenerationService, { provide: HttpClient, useValue: { get: () => of({}), post: () => of({}) } }]
-    });
-
+  beforeEach(() => {
     service = TestBed.inject(DraftGenerationService);
-    httpClient = TestBed.inject(HttpClient);
+    mockNoticeService = mock(NoticeService);
     httpTestingController = TestBed.inject(HttpTestingController);
+    testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
   });
 
   afterEach(() => {
+    testOnlineStatusService.setIsOnline(true);
+    httpTestingController.expectOne('anonymous/featureFlags');
     httpTestingController.verify();
   });
 
   describe('pollBuildProgress', () => {
-    it('should poll build progress and return an observable of BuildDto', done => {
-      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
+    it('should poll build progress and return an observable of BuildDto', fakeAsync(() => {
+      // SUT
       service
         .pollBuildProgress(projectId)
         .pipe(first())
         .subscribe(result => {
           expect(result).toEqual(buildDto);
-          expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
-          done();
         });
-    });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?pretranslate=true`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(buildDto);
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service
+        .pollBuildProgress(projectId)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toBeUndefined();
+        });
+      tick();
+    }));
   });
 
   describe('getLastCompletedBuild', () => {
-    it('should get last completed build and return an observable of BuildDto', done => {
-      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
+    it('should get last completed build and return an observable of BuildDto', fakeAsync(() => {
+      // SUT
       service.getLastCompletedBuild(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`
-        );
-        done();
       });
-    });
+      tick();
 
-    it('should return undefined when no build has ever completed', done => {
-      httpClient.get = jasmine.createSpy().and.returnValue(of({ status: HttpStatusCode.NoContent }));
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(buildDto);
+      tick();
+    }));
+
+    it('should return undefined when no build has ever completed', fakeAsync(() => {
+      // SUT
       service.getLastCompletedBuild(projectId).subscribe(result => {
-        expect(result).toEqual(undefined);
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`
-        );
-        done();
+        expect(result).toBeUndefined();
       });
-    });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NoContent, statusText: 'No Content' });
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getLastCompletedBuild(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
   });
 
   describe('getBuildProgress', () => {
-    it('should get build progress and return an observable of BuildDto', done => {
-      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
+    it('should get build progress and return an observable of BuildDto', fakeAsync(() => {
+      // SUT
       service.getBuildProgress(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
-        expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
-        done();
       });
-    });
+      tick();
 
-    it('should return faulted build', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?pretranslate=true`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(buildDto);
+      tick();
+    }));
+
+    it('should return faulted build', fakeAsync(() => {
+      // SUT
       const faultedBuild = { ...buildDto, state: BuildStates.Faulted };
-      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: faultedBuild }));
       service.getBuildProgress(projectId).subscribe(result => {
         expect(result).toEqual(faultedBuild);
-        expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
-        done();
       });
-    });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?pretranslate=true`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(faultedBuild);
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getBuildProgress(projectId).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+    }));
   });
 
-  describe('startBuild', () => {
-    it('should start a pretranslation build job and return an observable of BuildDto', done => {
+  describe('startBuildOrGetActiveBuild', () => {
+    it('should start a pre-translation build job and return an observable of BuildDto', fakeAsync(() => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
-      const buildConfig: BuildConfig = {
-        projectId,
-        trainingBooks: [],
-        trainingDataFiles: [],
-        translationBooks: [],
-        fastTraining: false
-      };
-      httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
+
+      // SUT
       service
         .startBuildOrGetActiveBuild(buildConfig)
         .pipe(first())
@@ -123,90 +210,104 @@ describe('DraftGenerationService', () => {
           expect(result).toEqual(buildDto);
           expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
           expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
-          expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, buildConfig);
-          done();
         });
-    });
+      tick();
 
-    it('should return already active build job', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/pretranslations`);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body).toEqual(buildConfig);
+      req.flush(buildDto);
+      tick();
+    }));
+
+    it('should return already active build job', fakeAsync(() => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
-      const buildConfig: BuildConfig = {
-        projectId,
-        trainingBooks: [],
-        trainingDataFiles: [],
-        translationBooks: [],
-        fastTraining: false
-      };
-      httpClient.post = jasmine.createSpy();
+
+      // SUT
       service.startBuildOrGetActiveBuild(buildConfig).subscribe(result => {
         expect(result).toEqual(buildDto);
         expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
         expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
-        expect(httpClient.post).not.toHaveBeenCalled();
-        done();
       });
-    });
+      tick();
+
+      // Verify the absence of an HTTP request
+      httpTestingController.expectNone(`${MACHINE_API_BASE_URL}translation/pretranslations`);
+      tick();
+    }));
   });
 
   describe('cancelBuild', () => {
-    it('should cancel a pretranslation build job and return an empty observable', done => {
-      httpClient.post = jasmine.createSpy().and.returnValue(of({ data: {} }));
-      service.cancelBuild(projectId).subscribe(() => {
-        expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations/cancel`, JSON.stringify(projectId));
-        done();
-      });
-    });
+    it('should cancel a pre-translation build job and return an empty observable', fakeAsync(() => {
+      // SUT
+      service.cancelBuild(projectId).subscribe(() => {});
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/pretranslations/cancel`);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body).toEqual(JSON.stringify(projectId));
+      req.flush({});
+      tick();
+    }));
   });
 
   describe('getGeneratedDraft', () => {
-    it('should get the pretranslations for the specified book/chapter and return an observable of DraftSegmentMap', done => {
+    it('should get the pre-translations for the specified book/chapter and return an observable of DraftSegmentMap', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
       const preTranslationData = {
-        data: {
-          preTranslations: [
-            { reference: 'verse_3_16', translation: 'For God so loved the world' },
-            { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
-          ]
-        }
+        preTranslations: [
+          { reference: 'verse_3_16', translation: 'For God so loved the world' },
+          { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
+        ]
       };
 
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
+      // SUT
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({
           verse_3_16: 'For God so loved the world ',
           verse_1_1: 'In the beginning was the Word '
         });
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-        );
-        done();
       });
-    });
+      tick();
 
-    it('should handle empty preTranslations array', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationData);
+      tick();
+    }));
+
+    it('should handle empty preTranslations array', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
       const preTranslationData = {
-        data: {
-          preTranslations: []
-        }
+        preTranslations: []
       };
 
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
+      // SUT
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({});
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
-        );
-        done();
       });
-    });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationData);
+      tick();
+    }));
   });
 
   describe('getGeneratedDraftDeltaOperations', () => {
-    it('should get the pretranslation ops for the specified book/chapter and return an observable', done => {
+    it('should get the pre-translation ops for the specified book/chapter and return an observable', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
       const ops = [
@@ -234,74 +335,111 @@ describe('DraftGenerationService', () => {
         }
       ];
       const preTranslationDeltaData = {
+        id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
+        version: 0,
         data: {
-          id: `${projectId}:${Canon.bookNumberToId(book)}:${chapter}:target`,
-          version: 0,
-          data: {
-            ops
-          }
+          ops
         }
       };
 
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationDeltaData));
+      // SUT
       service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual(ops);
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
-        );
-        done();
       });
-    });
+      tick();
 
-    it('should return an empty array for missing data', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationDeltaData);
+      tick();
+    }));
+
+    it('should return an empty array for missing data', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
-      const preTranslationDeltaData = {
-        data: undefined
-      };
 
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationDeltaData));
+      // SUT
       service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual([]);
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
-        );
-        done();
       });
-    });
+      tick();
 
-    it('should return an empty array for a 404 error', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null);
+      tick();
+    }));
+
+    it('should return an empty array for a 404 error', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
-      httpClient.get = jasmine
-        .createSpy()
-        .and.returnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })));
+
+      // SUT
       service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual([]);
-        expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
-        );
-        done();
       });
-    });
+      tick();
 
-    it('should throw a 405 error', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
+      tick();
+    }));
+
+    it('should throw a 405 error', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
-      httpClient.get = jasmine
-        .createSpy()
-        .and.returnValue(throwError(() => new HttpErrorResponse({ status: 405, statusText: 'Not Allowed' })));
+
+      // SUT
       service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe({
         error: (err: HttpErrorResponse) => {
           expect(err.status).toEqual(405);
           expect(err.statusText).toEqual('Not Allowed');
-          expect(httpClient.get).toHaveBeenCalledWith(
-            `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
-          );
-          done();
         }
       });
-    });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.MethodNotAllowed, statusText: 'Not Allowed' });
+      tick();
+    }));
+
+    it('should return an empty value if offline', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual({});
+      });
+      tick();
+    }));
+
+    it('should return an empty array for a delta if offline', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
   });
 
   describe('draftExists', () => {

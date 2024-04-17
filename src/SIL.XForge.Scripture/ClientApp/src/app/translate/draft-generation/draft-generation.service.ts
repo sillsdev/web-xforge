@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { DeltaOperation } from 'rich-text';
 import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -24,6 +26,7 @@ import {
 export class DraftGenerationService {
   constructor(
     private readonly httpClient: HttpClient,
+    private readonly noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     @Inject(DRAFT_GENERATION_SERVICE_OPTIONS) private readonly options: DraftGenerationServiceOptions
   ) {}
@@ -62,7 +65,9 @@ export class DraftGenerationService {
         if (err.status === 403 || err.status === 404) {
           return of(undefined);
         }
-        return throwError(() => err);
+
+        this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        return of(undefined);
       })
     );
   }
@@ -86,7 +91,9 @@ export class DraftGenerationService {
           if (err.status === 403 || err.status === 404) {
             return of(undefined);
           }
-          return throwError(() => err);
+
+          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+          return of(undefined);
         })
       );
   }
@@ -151,7 +158,9 @@ export class DraftGenerationService {
           if (err.status === 403 || err.status === 404 || err.status === 409) {
             return of({});
           }
-          return throwError(() => err);
+
+          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+          return of({});
         })
       );
   }
@@ -178,8 +187,13 @@ export class DraftGenerationService {
           // If no pre-translations exist, return empty dictionary
           if (err.status === 403 || err.status === 404 || err.status === 409) {
             return of([]);
+          } else if (err.status === 405) {
+            // Rethrow a 405 so the frontend can use getGeneratedDraft()
+            return throwError(() => err);
           }
-          return throwError(() => err);
+
+          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+          return of([]);
         })
       );
   }
