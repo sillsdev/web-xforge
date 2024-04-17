@@ -34,7 +34,6 @@ const mockedSFProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
   template: `<app-checking-question
     #question
     [questionDoc]="questionDoc"
-    [projectUserConfigDoc]="projectUserConfigDoc"
     (audioPlayed)="played = true"
   ></app-checking-question>`
 })
