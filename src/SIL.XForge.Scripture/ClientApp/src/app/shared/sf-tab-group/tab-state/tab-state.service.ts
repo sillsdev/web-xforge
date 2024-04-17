@@ -7,7 +7,7 @@ import { TabGroup } from './tab-group';
 
 export type FlatTabInfo<TGroupId extends string, T extends TabInfo<string>> = T & {
   groupId: TGroupId;
-  selectedIndex: number;
+  isSelected: boolean;
 };
 
 export interface TabInfo<TType extends string> {
@@ -37,11 +37,11 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
     map(tabGroups => {
       const tabs: FlatTabInfo<TGroupId, T>[] = [];
       tabGroups.forEach(group => {
-        group.tabs.forEach(tab => {
+        group.tabs.forEach((tab, index) => {
           tabs.push({
             ...tab,
             groupId: group.groupId,
-            selectedIndex: group.selectedIndex
+            isSelected: group.selectedIndex === index
           });
         });
       });
