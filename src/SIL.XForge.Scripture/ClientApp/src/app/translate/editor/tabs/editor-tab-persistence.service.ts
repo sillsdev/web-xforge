@@ -37,7 +37,7 @@ export class EditorTabPersistenceService {
     const existingTabs = pucDoc.data?.editorTabsOpen;
 
     if (existingTabs != null && !isEqual(existingTabs, tabs)) {
-      pucDoc.updateEditorOpenTabs(tabs);
+      await pucDoc.updateEditorOpenTabs(tabs);
     }
   }
 

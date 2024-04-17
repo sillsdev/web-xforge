@@ -10,12 +10,12 @@ export class SFProjectUserConfigDoc extends ProjectDataDoc<SFProjectUserConfig> 
   static readonly COLLECTION = SF_PROJECT_USER_CONFIGS_COLLECTION;
   static readonly INDEX_PATHS = SF_PROJECT_USER_CONFIG_INDEX_PATHS;
 
-  updateEditorOpenTabs(tabs: EditorTabPersistData[]): void {
+  async updateEditorOpenTabs(tabs: EditorTabPersistData[]): Promise<void> {
     if (this.data == null) {
       return;
     }
 
-    this.submitJson0Op(op => {
+    await this.submitJson0Op(op => {
       op.set(puc => puc.editorTabsOpen, tabs);
     });
   }
