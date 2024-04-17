@@ -201,8 +201,7 @@
     "no_available_books": "You have no books available for drafting.",
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
-    "these_target_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the target text ({{ targetProjectName }}).",
-    "these_target_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the target text ({{ targetProjectName }})."
+    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
