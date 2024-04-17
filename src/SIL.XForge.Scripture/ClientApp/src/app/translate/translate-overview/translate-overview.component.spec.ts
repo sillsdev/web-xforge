@@ -17,12 +17,14 @@ import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
-import { PermissionsService } from 'src/app/core/permissions.service';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -31,6 +33,7 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -53,6 +56,7 @@ describe('TranslateOverviewComponent', () => {
       UICommonModule,
       TestTranslocoModule,
       HttpClientTestingModule,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
@@ -64,7 +68,8 @@ describe('TranslateOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mock(CookieService) },
-      { provide: PermissionsService, useMock: mockedPermissionService }
+      { provide: PermissionsService, useMock: mockedPermissionService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -248,6 +253,17 @@ describe('TranslateOverviewComponent', () => {
 
       expect(env.component.canTrainSuggestions).toBeFalsy();
     }));
+
+    it('retrain should be disabled if offline', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+
+      expect(env.retrainButton).toBeTruthy();
+      expect(env.retrainButton.nativeElement.disabled).toBe(false);
+
+      env.isOnline = false;
+      expect(env.retrainButton.nativeElement.disabled).toBe(true);
+    }));
   });
 });
 
@@ -264,6 +280,9 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<TranslateOverviewComponent>;
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private trainingProgress$ = new Subject<ProgressStatus>();
@@ -334,6 +353,12 @@ class TestEnvironment {
 
   get engineCard(): DebugElement {
     return this.fixture.debugElement.query(By.css('.engine-card'));
+  }
+
+  set isOnline(value: boolean) {
+    this.testOnlineStatusService.setIsOnline(value);
+    this.fixture.detectChanges();
+    tick();
   }
 
   setCurrentUser(userId: string = 'user01'): void {
