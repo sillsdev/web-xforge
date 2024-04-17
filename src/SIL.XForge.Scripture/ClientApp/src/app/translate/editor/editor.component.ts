@@ -1240,13 +1240,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         map(([tabs]) => {
           const tabsToPersist: EditorTabPersistData[] = [];
 
-          tabs.forEach((tab, index) => {
+          tabs.forEach(tab => {
             // Only persist tabs flagged as persistable
             if (tab.persist) {
               tabsToPersist.push({
                 tabType: tab.type,
                 groupId: tab.groupId,
-                isSelected: tab.selectedIndex === index,
+                isSelected: tab.isSelected,
                 projectId: tab.projectId
               });
             }
