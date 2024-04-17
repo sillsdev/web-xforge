@@ -3772,7 +3772,7 @@ describe('EditorComponent', () => {
       env.component['sourceLabel'] = sourceLabel;
       env.component['targetLabel'] = 'target label';
       env.component.initEditorTabs();
-      flush();
+      tick(100);
       expect(spyCreateTab).toHaveBeenCalledWith('project-source', { headerText: sourceLabel });
     }));
 
@@ -3783,7 +3783,7 @@ describe('EditorComponent', () => {
       env.component['sourceLabel'] = undefined;
       env.component['targetLabel'] = 'target label';
       env.component.initEditorTabs();
-      flush();
+      tick(100);
       expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
     }));
 
@@ -3794,7 +3794,7 @@ describe('EditorComponent', () => {
       const targetLabel = 'target label';
       env.component['targetLabel'] = targetLabel;
       env.component.initEditorTabs();
-      flush();
+      tick(100);
       expect(spyCreateTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
     }));
   });
