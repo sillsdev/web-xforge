@@ -107,7 +107,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
   totalVisibleQuestionsString: string = '0';
-  visibleQuestions?: QuestionDoc[];
+  visibleQuestions: Readonly<QuestionDoc[] | undefined>;
   showScriptureAudioPlayer: boolean = false;
   hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
@@ -311,7 +311,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return this._book;
   }
 
-  private set book(book: number | undefined) {
+  set book(book: number | undefined) {
     if (book === this.book) {
       return;
     }
@@ -921,6 +921,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
       if (this.onlineStatusService.isOnline) {
         questionDoc.updateAnswerFileCache();
+      }
+
+      if (this.showScriptureAudioPlayer) {
+        this.showScriptureAudioPlayer = false;
+        this._scriptureAudioPlayer?.stop();
       }
 
       // Ensure navigation is set to book/chapter of selected question

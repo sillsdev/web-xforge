@@ -1500,7 +1500,7 @@ describe('CheckingComponent', () => {
       env.simulateNewRemoteAnswer();
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.answers.length).withContext('broken unrelated functionality').toEqual(0);
-      // Incoming remote answer should have been absorbed into the set of i
+      // Incoming remote answer should have been absorbed into the set of
       // answers pending to show, since user was looking at the Add Answer button
       expect(env.component.answersPanel!.answers.length).toEqual(2);
       // We don't show the total answer count in the heading until the user adds her answer.
@@ -2108,25 +2108,15 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('audio continues when changing question on the same chapter', fakeAsync(() => {
+    it('audio stops when changing question on the same chapter', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(4);
 
-      verify(audio.stop()).never();
+      verify(audio.stop()).once();
       expect(env.component).toBeDefined();
       flush();
-    }));
-
-    it('audio continues when adding an answer on a question', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
-      const audio = env.mockScriptureAudioAndPlay();
-
-      env.answerQuestion('Answer while audio is playing');
-      env.waitForQuestionTimersToComplete();
-      verify(audio.stop()).never();
-      expect(env.component).toBeDefined();
     }));
 
     it('pauses chapter audio when adding a question', fakeAsync(() => {
