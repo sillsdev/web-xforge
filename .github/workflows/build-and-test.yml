@@ -81,6 +81,10 @@ jobs:
       - name: "Build: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
+      - name: "Test: Ensure tests not focused on a subset"
+        # grep returns code 123 when no matches are found. The operator ! negates the exit code.
+        run: |
+          ! git ls-files | grep "\\.spec\\.ts" | xargs grep -P "(fdescribe|fit)\("
       - name: "Test: RealtimeServer"
         run: cd src/RealtimeServer && npm run test:ci
       - name: "Test: Backend"
