@@ -3,7 +3,7 @@ export const environment = {
   pwaTest: false,
   production: true,
   masterUrl: 'https://qa.scriptureforge.org',
-  issueEmail: 'scriptureforgeissues@sil.org',
+  issueEmail: 'help@scriptureforge.org',
   siteName: 'Scripture Forge',
   audience: 'https://scriptureforge.org/',
   scope: 'sf_data',
