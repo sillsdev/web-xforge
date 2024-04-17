@@ -1,4 +1,4 @@
-import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
+import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import {
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION,

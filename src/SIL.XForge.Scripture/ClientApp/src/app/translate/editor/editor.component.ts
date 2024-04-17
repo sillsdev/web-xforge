@@ -35,7 +35,8 @@ import { isEqual } from 'lodash-es';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { EditorTabGroupType, EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
+import { EditorTabGroupType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
+import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
