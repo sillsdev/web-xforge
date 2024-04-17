@@ -10,7 +10,7 @@ export const environment = {
   pwaTest: false,
   production: false,
   masterUrl: 'http://localhost:5000',
-  issueEmail: 'scriptureforgeissues@sil.org',
+  issueEmail: 'help@scriptureforge.org',
   siteName: 'Scripture Forge',
   audience: 'https://scriptureforge.org/',
   scope: 'sf_data',
