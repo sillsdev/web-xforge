@@ -6,6 +6,9 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject } from 'rxjs';
 import { mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -22,15 +25,17 @@ const mockServalAdministrationService = mock(ServalAdministrationService);
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      ServalProjectComponent,
+      HttpClientTestingModule,
       NoopAnimationsModule,
-      TestTranslocoModule,
+      ServalProjectComponent,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      HttpClientTestingModule
+      TestTranslocoModule
     ],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: SFProjectService, useMock: mockSFProjectService }
     ]
@@ -38,23 +43,45 @@ describe('ServalProjectComponent', () => {
 
   it('should allow enabling pre-translation drafting', fakeAsync(() => {
     const env = new TestEnvironment(false);
-    expect(env.preTranslateCheckbox.checked).toBeFalsy();
+    expect(env.preTranslateCheckbox.checked).toBe(false);
     env.clickElement(env.preTranslateCheckbox);
-    expect(env.preTranslateCheckbox.checked).toBeTruthy();
+    expect(env.preTranslateCheckbox.checked).toBe(true);
     verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, true)).once();
   }));
 
   it('should allow disabling pre-translation drafting', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    expect(env.preTranslateCheckbox.checked).toBeTruthy();
+    expect(env.preTranslateCheckbox.checked).toBe(true);
     env.clickElement(env.preTranslateCheckbox);
-    expect(env.preTranslateCheckbox.checked).toBeFalsy();
+    expect(env.preTranslateCheckbox.checked).toBe(false);
     verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, false)).once();
+  }));
+
+  it('should disable the pre-translation drafting checkbox when offline', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    env.onlineStatus = false;
+    expect(env.preTranslateCheckbox.disabled).toBe(true);
+  }));
+
+  it('should disable the download button when offline', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    env.onlineStatus = false;
+    expect(env.firstDownloadButton.innerText).toBe('Download');
+    expect(env.firstDownloadButton.disabled).toBe(true);
+  }));
+
+  it('should have a download button', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    expect(env.firstDownloadButton.innerText).toBe('Download');
+    expect(env.firstDownloadButton.disabled).toBe(false);
   }));
 
   class TestEnvironment {
     readonly component: ServalProjectComponent;
     readonly fixture: ComponentFixture<ServalProjectComponent>;
+    readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+      OnlineStatusService
+    ) as TestOnlineStatusService;
 
     mockProjectId = 'project01';
 
@@ -104,6 +131,16 @@ describe('ServalProjectComponent', () => {
 
     get preTranslateCheckbox(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('mat-checkbox input');
+    }
+
+    get firstDownloadButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('td button');
+    }
+
+    set onlineStatus(hasConnection: boolean) {
+      this.testOnlineStatusService.setIsOnline(hasConnection);
+      tick();
+      this.fixture.detectChanges();
     }
 
     clickElement(button: HTMLElement): void {
