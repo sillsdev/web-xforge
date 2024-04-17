@@ -26,7 +26,7 @@ public class SFProjectUserConfig : ProjectData
     public List<string> QuestionRefsRead { get; set; } = [];
     public List<string> AnswerRefsRead { get; set; } = [];
     public List<string> CommentRefsRead { get; set; } = [];
-    public List<EditorTab> EditorTabsOpen { get; set; } = [];
+    public List<EditorTabPersistData> EditorTabsOpen { get; set; } = [];
     public string? SelectedQuestionRef { get; set; }
     public bool BiblicalTermsEnabled { get; set; }
 }

@@ -3,7 +3,7 @@ namespace SIL.XForge.Scripture.Models;
 /// <summary>
 /// Minimal data to persist and reconstruct an editor tab.
 /// </summary>
-public class EditorTab
+public class EditorTabPersistData
 {
     /// <summary>
     /// Corresponds to EditorTabType.
