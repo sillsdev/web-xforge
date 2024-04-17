@@ -1,3 +1,4 @@
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,7 +24,15 @@ import { TabComponent } from './tab/tab.component';
     TabScrollButtonComponent,
     TabBodyComponent
   ],
-  imports: [CommonModule, MatTabsModule, MatButtonModule, MatIconModule, MatMenuModule, TranslocoModule],
+  imports: [
+    CommonModule,
+    MatTabsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    DragDropModule,
+    TranslocoModule
+  ],
   exports: [TabGroupComponent, TabComponent, TabHeaderDirective]
 })
 export class SFTabsModule {}

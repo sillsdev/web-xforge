@@ -1,4 +1,6 @@
+import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import {
+  AfterViewInit,
   Component,
   DestroyRef,
   ElementRef,
@@ -10,11 +12,9 @@ import {
   Output,
   QueryList,
   SimpleChanges,
-  ViewChild,
   ViewChildren
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatMenuTrigger } from '@angular/material/menu';
 import {
   BehaviorSubject,
   debounceTime,
@@ -24,8 +24,8 @@ import {
   Observable,
   Subscription
 } from 'rxjs';
-import { NewTabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
-import { TabHeaderMouseEvent } from '../sf-tabs.types';
+import { TabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
+import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';
 
@@ -36,47 +36,50 @@ type LocaleDirection = 'ltr' | 'rtl';
   templateUrl: './tab-group-header.component.html',
   styleUrls: ['./tab-group-header.component.scss']
 })
-export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
+export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @Input() groupId: string = '';
   @Input() tabs: Iterable<TabComponent> = [];
   @Input() selectedIndex = 0;
-  @Output() tabClick = new EventEmitter<TabHeaderMouseEvent>();
+  @Input() allowDragDrop = true;
+  @Input() connectedTo: string[] = [];
+  @Output() tabPress = new EventEmitter<TabHeaderPointerEvent>();
+  @Output() tabClick = new EventEmitter<TabHeaderPointerEvent>();
   @Output() closeClick = new EventEmitter<number>();
+  @Output() tabMove = new EventEmitter<TabMoveEvent<string>>();
 
   /** Emits `type` from menu selection. */
   @Output() tabAddRequest = new EventEmitter<string>();
 
   @ViewChildren(TabHeaderComponent, { read: ElementRef }) private tabHeaders?: QueryList<ElementRef>;
-  @ViewChild('menuTrigger') private menuTrigger?: MatMenuTrigger;
 
-  menuItems$?: Observable<NewTabMenuItem[]>;
+  menuItems$?: Observable<TabMenuItem[]>;
 
   isScrollBoundsStart = false;
   isScrollBoundsEnd = false;
+  direction: LocaleDirection = 'ltr';
 
   // Used to time scroll movements while scrolling via left/right scroll buttons
   private scrollTimer$ = interval(20).pipe(takeUntilDestroyed(this.destroyRef));
 
   private scrollButtonSubscription?: Subscription;
-  private resizeObserver?: ResizeObserver;
+  private intersectionObserver?: IntersectionObserver;
   private dirMutObserver?: MutationObserver;
-  private direction: LocaleDirection = 'ltr';
   private overflowing$ = new BehaviorSubject(false);
   private tabsWrapper!: HTMLElement;
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly elementRef: ElementRef<HTMLElement>,
-    private readonly newTabMenuManager: TabMenuService
+    private readonly tabMenuService: TabMenuService<string>
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.groupId) {
-      this.menuItems$ = this.newTabMenuManager.getMenuItems(changes.groupId.currentValue);
+      this.menuItems$ = this.tabMenuService.getMenuItems(this.groupId);
     }
 
     if (changes.selectedIndex) {
-      this.scrollTabIntoView(changes.selectedIndex.currentValue);
+      this.scrollTabIntoView(this.selectedIndex);
     }
   }
 
@@ -89,9 +92,6 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     // Monitor the ltr/rtl dir in order to correctly calculate scroll bounds
     this.initDirectionChangeDetection();
-
-    // Check for horizontal overflow to display scroll buttons
-    this.initResizeDetection();
 
     this.initOverflowHandler();
 
@@ -106,13 +106,45 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
       .subscribe((e: Event) => this.scrollOnWheel(e as WheelEvent));
   }
 
+  ngAfterViewInit(): void {
+    // Check for horizontal overflow to display scroll buttons
+    this.initOverflowDetection();
+  }
+
   ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
+    this.intersectionObserver?.disconnect();
     this.dirMutObserver?.disconnect();
+  }
+
+  movablePredicate(index: number, draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
+    const dropListItems = dropList.getSortedItems();
+    const isGroupTransfer = !dropListItems.includes(draggingTab);
+    let dragIndex: number = index;
+
+    // As of (v16), CDK drag and drop seems to have some issues transferring horizontally-oriented items in RTL
+    if (this.direction === 'rtl') {
+      // Reverse the index if RTL.  The sorted items are in DOM order.
+      dragIndex = dropListItems.length - 1 - index;
+
+      // Adjust for 1 less drop list item, as the index references the wrong item when transferring groups in RTL
+      if (isGroupTransfer) {
+        dragIndex += 1;
+      }
+    }
+
+    const tabToMove: CdkDrag<any> = dropListItems[dragIndex];
+    return tabToMove != null && (tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable);
   }
 
   onAddTabClicked(): void {
     this.scrollToEnd();
+  }
+
+  onTabDrop(event: CdkDragDrop<Iterable<TabComponent>>): void {
+    // Convert CdkDragDrop event to TabMoveEvent
+    const from: TabLocation<string> = { groupId: event.previousContainer.id, index: event.previousIndex };
+    const to: TabLocation<string> = { groupId: event.container.id, index: event.currentIndex };
+    this.tabMove.emit({ from, to });
   }
 
   scrollToEnd(): void {
@@ -156,17 +188,19 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, OnDestroy {
     this.dirMutObserver.observe(closestDirEl, { attributeFilter: ['dir'] });
   }
 
-  private initResizeDetection(): void {
-    this.resizeObserver = new ResizeObserver(() => {
-      this.detectOverflow();
+  private initOverflowDetection(): void {
+    this.intersectionObserver = new IntersectionObserver(() => this.detectOverflow(), {
+      root: this.tabsWrapper,
+      threshold: 1
     });
-    this.resizeObserver.observe(this.tabsWrapper);
+    this.intersectionObserver.observe(this.tabHeaders?.last.nativeElement);
   }
 
   private initOverflowHandler(): void {
     // Handle tab overflow
     this.overflowing$.pipe(takeUntilDestroyed(this.destroyRef), distinctUntilChanged()).subscribe(isOverflowing => {
       const host = this.elementRef.nativeElement;
+
       if (isOverflowing) {
         host.classList.add('overflowing');
       } else {

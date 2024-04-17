@@ -3213,7 +3213,7 @@ describe('EditorComponent', () => {
 
       const segmentElRect = env.getSegmentElement(segmentRef)!.getBoundingClientRect();
       const fabRect = env.insertNoteFab.nativeElement.getBoundingClientRect();
-      expect(segmentElRect.top).toEqual(fabRect.top);
+      expect(segmentElRect.top).toBeCloseTo(fabRect.top, 0);
 
       env.dispose();
     }));

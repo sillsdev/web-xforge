@@ -1,3 +1,4 @@
+import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
@@ -250,5 +251,115 @@ describe('TabGroupHeaderComponent', () => {
       expect(scrollIntoViewSpy).toHaveBeenCalled();
       expect(scrollToEndSpy).not.toHaveBeenCalled();
     }));
+  });
+
+  describe('movablePredicate', () => {
+    let tabToMove: any;
+    let cdkDraggingTab = {} as CdkDrag;
+    let cdkDropList: CdkDropList;
+
+    describe('move within same tab group', () => {
+      beforeEach(() => {
+        // Dragging tab is in the drop list (not group transfer)
+        cdkDropList = { getSortedItems: () => [{ data: tabToMove } as CdkDrag, cdkDraggingTab] } as CdkDropList;
+        tabToMove = {};
+      });
+
+      it('should return true when direction is ltr and the tab at index is an "add" tab', () => {
+        const index = 0;
+        tabToMove.isAddTab = true;
+        component.direction = 'ltr';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return true when direction is rtl and the tab at index is an "add" tab', () => {
+        const index = 1;
+        tabToMove.isAddTab = true;
+        component.direction = 'rtl';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return true when direction is ltr and the tab at index is movable', () => {
+        const index = 0;
+        tabToMove.movable = true;
+        component.direction = 'ltr';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return true when direction is rtl and the tab at index is movable', () => {
+        const index = 1;
+        tabToMove.movable = true;
+        component.direction = 'rtl';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return false when direction is ltr and the tab at index is not an "add" and not movable', () => {
+        const index = 0;
+        tabToMove.movable = false;
+        component.direction = 'ltr';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(false);
+      });
+
+      it('should return false when direction is rtl and the tab at index is not an "add" and not movable', () => {
+        const index = 1;
+        tabToMove.movable = false;
+        component.direction = 'rtl';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(false);
+      });
+    });
+
+    describe('transfer to another tab group', () => {
+      beforeEach(() => {
+        // Dragging tab is not in the drop list (meaning group transfer)
+        cdkDropList = {
+          getSortedItems: () => [{ data: tabToMove } as CdkDrag, { data: {} } as CdkDrag]
+        } as CdkDropList;
+        tabToMove = {};
+      });
+
+      it('should return true when direction is ltr and the tab at index is an "add" tab', () => {
+        const index = 0;
+        tabToMove.isAddTab = true;
+        component.direction = 'ltr';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return true when direction is rtl and the tab at index is an "add" tab', () => {
+        // As of (v16), CDK drag and drop seems to have some issues transferring horizontally-oriented items in RTL.
+        // The library passes an index that references the wrong item when transferring groups in RTL.
+        const index = 2;
+        tabToMove.isAddTab = true;
+        component.direction = 'rtl';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return true when direction is ltr and the tab at index is movable', () => {
+        const index = 0;
+        tabToMove.movable = true;
+        component.direction = 'ltr';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return true when direction is rtl and the tab at index is movable', () => {
+        const index = 2;
+        tabToMove.movable = true;
+        component.direction = 'rtl';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(true);
+      });
+
+      it('should return false when direction is ltr and the tab at index is not an "add" and not movable', () => {
+        const index = 0;
+        tabToMove.movable = false;
+        component.direction = 'ltr';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(false);
+      });
+
+      it('should return false when direction is rtl and the tab at index is not an "add" and not movable', () => {
+        const index = 2;
+        tabToMove.movable = false;
+        component.direction = 'rtl';
+        expect(component.movablePredicate(index, cdkDraggingTab, cdkDropList)).toBe(false);
+      });
+    });
   });
 });

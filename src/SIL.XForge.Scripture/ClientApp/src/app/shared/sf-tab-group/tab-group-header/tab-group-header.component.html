@@ -5,13 +5,28 @@
   (scrollStop)="stopButtonScroll()"
 ></app-tab-scroll-button>
 
-<div class="tabs">
+<div
+  [id]="groupId!"
+  class="tabs"
+  cdkDropList
+  cdkDropListLockAxis="x"
+  cdkDropListOrientation="horizontal"
+  [cdkDropListDisabled]="!allowDragDrop"
+  [cdkDropListConnectedTo]="connectedTo"
+  [cdkDropListSortPredicate]="movablePredicate.bind(this)"
+  (cdkDropListDropped)="onTabDrop($event)"
+>
   <app-tab-header
     *ngFor="let tab of tabs; let i = index"
     [closeable]="tab.closeable"
+    [movable]="tab.movable"
     [active]="i === selectedIndex"
-    (tabClick)="tabClick.next({ index: i, mouseEvent: $event })"
+    (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
+    (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"
     (closeClick)="closeClick.next(i)"
+    cdkDrag
+    [cdkDragDisabled]="!tab.movable"
+    [cdkDragData]="tab"
   >
     <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
   </app-tab-header>
@@ -22,6 +37,9 @@
     [closeable]="false"
     class="add-tab"
     (click)="onAddTabClicked()"
+    cdkDrag
+    cdkDragDisabled
+    [cdkDragData]="{ isAddTab: true }"
   >
     <mat-icon>add</mat-icon>
   </app-tab-header>
