@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -12,6 +13,7 @@ import { PermissionsService } from 'src/app/core/permissions.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -65,7 +67,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
-    noticeService: NoticeService,
+    private readonly onlineStatusService: OnlineStatusService,
+    readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
@@ -101,6 +104,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     );
   }
 
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
+  }
+
   get showCannotTrainEngineMessage(): boolean {
     if (this.projectDoc?.data == null) {
       return false;
@@ -118,7 +125,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       this.loadingStarted();
       try {
         this.projectDoc = await this.projectService.getProfile(projectId);
-        this.setupTranslationEngine();
+        if (this.isOnline) {
+          this.setupTranslationEngine();
+        }
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
       } finally {
         this.loadingFinished();
@@ -165,7 +174,13 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
     this.trainingPercentage = 0;
     this.isTraining = true;
-    this.translationEngine.startTraining().then(() => this.listenForStatus());
+    this.translationEngine
+      .startTraining()
+      .catch(() => {
+        this.noticeService.showError(translate('translate_overview.training_unavailable'));
+        this.isTraining = false;
+      })
+      .then(() => this.listenForStatus());
   }
 
   getBookName(text: TextInfo): string {

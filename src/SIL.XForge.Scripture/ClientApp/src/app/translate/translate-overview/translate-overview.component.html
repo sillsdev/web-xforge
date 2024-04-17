@@ -70,7 +70,13 @@
       </mat-card-content>
       <mat-divider></mat-divider>
       <mat-card-actions>
-        <button id="retrain-button" mat-button [disabled]="isTraining" type="button" (click)="startTraining()">
+        <button
+          id="retrain-button"
+          mat-button
+          [disabled]="isTraining || !isOnline"
+          type="button"
+          (click)="startTraining()"
+        >
           {{ isTraining ? t("training") : t("retrain") }}
         </button>
       </mat-card-actions>
