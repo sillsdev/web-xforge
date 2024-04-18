@@ -923,10 +923,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         questionDoc.updateAnswerFileCache();
       }
 
-      if (this.showScriptureAudioPlayer) {
-        this.showScriptureAudioPlayer = false;
-        this._scriptureAudioPlayer?.stop();
-      }
+      this.toggleAudio(true);
 
       // Ensure navigation is set to book/chapter of selected question
       if (this.navigateQuestionChapter(questionDoc)) {
@@ -1045,9 +1042,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.showScriptureAudioPlayer = this.hideChapterText;
   }
 
-  toggleAudio(): void {
-    this.showScriptureAudioPlayer = true;
-    this._scriptureAudioPlayer?.isPlaying ? this._scriptureAudioPlayer?.pause() : this._scriptureAudioPlayer?.play();
+  toggleAudio(forceStopAndHide: boolean = false): void {
+    this.showScriptureAudioPlayer = forceStopAndHide ? false : !this.showScriptureAudioPlayer;
+    this._scriptureAudioPlayer?.isPlaying || forceStopAndHide
+      ? this._scriptureAudioPlayer?.stop()
+      : this._scriptureAudioPlayer?.play();
   }
 
   /**
