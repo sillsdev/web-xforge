@@ -112,7 +112,7 @@
                 [matTooltipDisabled]="isAudioPlaying()"
                 (click)="toggleAudio()"
               >
-                <mat-icon>{{ isAudioPlaying() ? "pause" : "play_circle_outline" }}</mat-icon>
+                <mat-icon>{{ isAudioPlaying() ? "stop" : "play_circle_outline" }}</mat-icon>
               </button>
               <app-font-size [class.hidden]="hideChapterText" (apply)="applyFontChange($event)"></app-font-size>
               <app-share-button *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share-button>
