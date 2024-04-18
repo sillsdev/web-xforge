@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "После удаления восстановить проект будет невозможно. Пожалуйста, убедитесь, что вы знаете, что делаете.",
     "delete_this_project": "Удалить этот проект",
     "email_invitations_only": "Email invitations only",
-    "enable_alternate_training_source": "Use a separate source for training",
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "чтобы включить {{ boldStart }}Предложения по переводу{{ boldEnd }} и просмотреть дополнительные параметры",
     "engage_the_wider_community": "Привлекайте более широкое сообщество, чтобы убедиться, что перевод является понятным, точным и естественным. Выбирайте стихи, задавайте целевые вопросы, разрешайте обсуждать ответы.",

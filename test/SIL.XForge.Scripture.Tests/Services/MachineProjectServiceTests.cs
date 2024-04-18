@@ -1350,6 +1350,7 @@ public class MachineProjectServiceTests
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Target,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Is<BuildConfig>(
                     b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
@@ -1360,6 +1361,7 @@ public class MachineProjectServiceTests
                 Arg.Is<string[]>(p => p.Length == 1 && p.First() == Project02),
                 TextCorpusType.Source,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Is<BuildConfig>(
                     b => b.TrainingBooks.Count == 2 && b.TrainingBooks.First() == 1 && b.TrainingBooks.Last() == 2
@@ -1598,6 +1600,133 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheAlternateSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                AlternateSourceEnabled = true,
+                AlternateSourceConfigured = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Verify that it was just the alternate source, source, and target directories that were read for data
+        var project = env.Projects.Get(Project02);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo(Paratext01));
+        Assert.That(project.TranslateConfig.Source?.ParatextId, Is.EqualTo(Paratext03));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext01)));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext02)));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext03)));
+        env.FileSystemService.Received(3).EnumerateFiles(Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_UsesTheSourceWhenAlternateSourceIsEnabledButNotConfigured()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateSourceConfigured = false,
+                AlternateSourceEnabled = true,
+                UploadParatextZipForPreTranslation = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Verify that it was just the source and target directories that were read for data
+        var project = env.Projects.Get(Project02);
+        Assert.That(project.TranslateConfig.Source?.ParatextId, Is.EqualTo(Paratext03));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext02)));
+        env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext03)));
+        env.FileSystemService.Received(2).EnumerateFiles(Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateSourceCorporaWhenSendAllSegments()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AlternateSourceConfigured = true,
+                AlternateSourceEnabled = true,
+                SendAllSegments = true,
+            }
+        );
+        await env.SetDataInSync(Project02, true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the generation of the training source
+        await env.TextCorpusFactory.Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateSource: false,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+
+        // Check for the generation of the alternate training source
+        await env.TextCorpusFactory.Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateSource: true,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+
+        // The target is shared between the two corpora, so it will only be generated once
+        await env.TextCorpusFactory.Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Target,
+                preTranslate: true,
+                useAlternateSource: false,
+                useAlternateTrainingSource: false,
+                Arg.Any<BuildConfig>()
+            );
+    }
+
+    [Test]
     public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndAlternateTrainingSourceCorporaWhenSendAllSegments()
     {
         // Set up test environment
@@ -1628,6 +1757,7 @@ public class MachineProjectServiceTests
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Source,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Any<BuildConfig>()
             );
@@ -1638,6 +1768,7 @@ public class MachineProjectServiceTests
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Source,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: true,
                 Arg.Any<BuildConfig>()
             );
@@ -1648,6 +1779,7 @@ public class MachineProjectServiceTests
                 Arg.Any<IEnumerable<string>>(),
                 TextCorpusType.Target,
                 preTranslate: true,
+                useAlternateSource: false,
                 useAlternateTrainingSource: false,
                 Arg.Any<BuildConfig>()
             );
@@ -1983,7 +2115,11 @@ public class MachineProjectServiceTests
             u =>
                 u.Set(
                     s => s.TranslateConfig.DraftConfig,
-                    new DraftConfig { AlternateSource = new TranslateSource { ParatextId = Paratext01 } }
+                    new DraftConfig
+                    {
+                        AlternateSourceEnabled = true,
+                        AlternateSource = new TranslateSource { ParatextId = Paratext01 }
+                    }
                 )
         );
 
@@ -2027,13 +2163,15 @@ public class MachineProjectServiceTests
 
     private class TestEnvironmentOptions
     {
+        public bool AlternateSourceEnabled { get; init; }
+        public bool AlternateSourceConfigured { get; init; }
+        public bool AlternateTrainingSourceConfigured { get; init; }
+        public bool AlternateTrainingSourceEnabled { get; init; }
         public bool BuildIsPending { get; init; }
         public bool PreTranslationBuildIsQueued { get; init; }
         public bool UseEchoForPreTranslation { get; init; }
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
-        public bool AlternateTrainingSourceConfigured { get; init; }
-        public bool AlternateTrainingSourceEnabled { get; init; }
         public bool SendAllSegments { get; init; }
         public string? ServalConfig { get; init; }
         public bool UploadParatextZipForPreTranslation { get; init; }
@@ -2156,6 +2294,7 @@ public class MachineProjectServiceTests
                         Arg.Any<TextCorpusType>(),
                         Arg.Any<bool>(),
                         Arg.Any<bool>(),
+                        Arg.Any<bool>(),
                         Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
@@ -2168,6 +2307,7 @@ public class MachineProjectServiceTests
                         TextCorpusType.Source,
                         Arg.Any<bool>(),
                         Arg.Any<bool>(),
+                        Arg.Any<bool>(),
                         Arg.Any<BuildConfig>()
                     )
                     .Returns(MockTextCorpus);
@@ -2178,6 +2318,7 @@ public class MachineProjectServiceTests
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Target,
+                        Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<BuildConfig>()
@@ -2296,6 +2437,10 @@ public class MachineProjectServiceTests
                             },
                             DraftConfig = new DraftConfig
                             {
+                                AlternateSourceEnabled = options.AlternateSourceEnabled,
+                                AlternateSource = options.AlternateSourceConfigured
+                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
+                                    : null,
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
@@ -2351,10 +2496,9 @@ public class MachineProjectServiceTests
         private static string MockTextCorpusWithEmptySegmentChecksum =>
             StringUtils.ComputeMd5Hash("segRef\tsegment01\nsegRef_2\t\n");
 
-        private static Task<IEnumerable<ISFText>> MockTextCorpus =>
-            Task.FromResult<IEnumerable<ISFText>>(
-                new[]
-                {
+        private static Task<IList<ISFText>> MockTextCorpus =>
+            Task.FromResult<IList<ISFText>>(
+                [
                     new MockText
                     {
                         Id = "textId",
@@ -2364,7 +2508,7 @@ public class MachineProjectServiceTests
                             new SFTextSegment(["segRef_2"], string.Empty, false, false, false),
                         },
                     },
-                }
+                ]
             );
 
         public MachineProjectService Service { get; }
@@ -2488,7 +2632,7 @@ public class MachineProjectServiceTests
                 projectId,
                 u =>
                 {
-                    List<ServalCorpusFile> noFiles = new List<ServalCorpusFile>();
+                    List<ServalCorpusFile> noFiles = [];
                     u.Set(p => p.ServalData.Corpora[Corpus01].SourceFiles, noFiles);
                     u.Set(p => p.ServalData.Corpora[Corpus01].TargetFiles, noFiles);
                 }

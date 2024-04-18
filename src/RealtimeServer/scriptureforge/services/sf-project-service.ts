@@ -121,6 +121,9 @@ export class SFProjectService extends ProjectService<SFProject> {
               additionalTrainingData: {
                 bsonType: 'bool'
               },
+              alternateSourceEnabled: {
+                bsonType: 'bool'
+              },
               alternateSource: {
                 bsonType: 'object',
                 properties: {

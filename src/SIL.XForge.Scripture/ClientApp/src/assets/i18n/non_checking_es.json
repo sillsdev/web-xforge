@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Una vez que se borra un proyecto, no hay vuelta atrás. Por favor, asegúrese.",
     "delete_this_project": "Borrar este proyecto",
     "email_invitations_only": "Sólo invitaciones por correo electrónico",
-    "enable_alternate_training_source": "Utilice una fuente separada para la formación",
     "enable_community_checking": "Habilitar la Comprobación por la Comunidad",
     "enable_translation_suggestions": "para habilitar {{ boldStart }}Traducir Sugerencias{{ boldEnd }} y ver más opciones",
     "engage_the_wider_community": "Involucrar a la comunidad en general para asegurar que la traducción sea clara, precisa y natural. Seleccione versículos, haga preguntas específicas, permita la discusión de las respuestas.",

@@ -12,10 +12,11 @@ public enum TextCorpusType
 
 public interface ISFTextCorpusFactory
 {
-    Task<IEnumerable<ISFText>> CreateAsync(
+    Task<IList<ISFText>> CreateAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool useAlternateSource,
         bool useAlternateTrainingSource,
         BuildConfig buildConfig
     );

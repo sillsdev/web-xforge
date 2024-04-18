@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Depois de excluir um projeto, não há como voltar atrás. Por favor, verifique se tem certeza.",
     "delete_this_project": "Excluir este projeto",
     "email_invitations_only": "Somente convites por e-mail",
-    "enable_alternate_training_source": "Use a separate source for training",
     "enable_community_checking": "Ativar a Verificação da Comunidade",
     "enable_translation_suggestions": "para habilitar {{ boldStart }}Traduzir Sugestões{{ boldEnd }} e ver mais opções",
     "engage_the_wider_community": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",

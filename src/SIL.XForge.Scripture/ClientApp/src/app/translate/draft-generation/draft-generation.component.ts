@@ -197,7 +197,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
               (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
               translateConfig?.draftConfig.alternateTrainingSource != null
             ) {
-              if (translateConfig?.draftConfig.alternateSource != null) {
+              if (
+                (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
+                translateConfig?.draftConfig.alternateSource != null
+              ) {
                 // Compare the alternate training source with the alternate source
                 this.isSourceAndTrainingSourceLanguageIdentical =
                   translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag ===

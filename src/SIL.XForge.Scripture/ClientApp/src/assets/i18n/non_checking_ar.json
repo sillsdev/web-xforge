@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "بمجرد حذفك مشروعاً ما، لا يمكن العودة إلى الوراء. يُرجى أن تكون متأكداً.",
     "delete_this_project": "حذف هذا المشروع",
     "email_invitations_only": "Email invitations only",
-    "enable_alternate_training_source": "Use a separate source for training",
     "enable_community_checking": "فعِّل إمكانية المراجعة المجتمعية",
     "enable_translation_suggestions": "لتمكين {{ boldStart }} ترجمة الاقتراحات {{ boldEnd }} ومشاهدة المزيد من الخيارات",
     "engage_the_wider_community": "إشراك المجتمع الأوسع لضمان أن تكون الترجمة واضحة، ودقيقة، وطبيعية. اختر الأعداد الكتابية، واطرح أسئلة هادفة، واسمح بمناقشة الإجابات.",

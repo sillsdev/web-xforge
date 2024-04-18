@@ -396,7 +396,6 @@
     "delete_project_cannot_be_undone": "Once you delete a project, there is no going back. Please be certain.",
     "delete_this_project": "Delete this project",
     "email_invitations_only": "Email invitations only",
-    "enable_alternate_training_source": "Use a separate source for training",
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "to enable {{ boldStart }}Translate Suggestions{{ boldEnd }} and see more options",
     "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask questions, and discuss answers.",
