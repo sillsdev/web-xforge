@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
@@ -14,16 +15,19 @@ public class InternetSharedRepositorySourceProvider : IInternetSharedRepositoryS
     private readonly IJwtTokenHelper _jwtTokenHelper;
     private readonly IOptions<SiteOptions> _siteOptions;
     private readonly IHgWrapper _hgWrapper;
+    private readonly ILogger<InternetSharedRepositorySourceProvider> _logger;
 
     public InternetSharedRepositorySourceProvider(
         IJwtTokenHelper jwtTokenHelper,
         IOptions<SiteOptions> siteOptions,
-        IHgWrapper hgWrapper
+        IHgWrapper hgWrapper,
+        ILogger<InternetSharedRepositorySourceProvider> logger
     )
     {
         _jwtTokenHelper = jwtTokenHelper;
         _siteOptions = siteOptions;
         _hgWrapper = hgWrapper;
+        _logger = logger;
     }
 
     public IInternetSharedRepositorySource GetSource(
@@ -49,7 +53,8 @@ public class InternetSharedRepositorySourceProvider : IInternetSharedRepositoryS
             jwtClient,
             _hgWrapper,
             ptUser,
-            sendReceiveServerUri
+            sendReceiveServerUri,
+            _logger
         );
         source.RefreshToken(userSecret.ParatextTokens.AccessToken);
         return source;
