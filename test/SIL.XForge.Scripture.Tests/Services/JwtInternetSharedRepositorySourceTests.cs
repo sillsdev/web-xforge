@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.Users;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -71,7 +72,8 @@ public class JwtInternetSharedRepositorySourceTests
                 mockPTRegistryClient,
                 Substitute.For<IHgWrapper>(),
                 ptUser,
-                "sr-server-uri"
+                "sr-server-uri",
+                new MockLogger<InternetSharedRepositorySourceProvider>()
             );
             MockPTArchivesClient = Substitute.For<RESTClient>("pt-archives-server.example.com", "product-version-123");
             RepoSource.Configure().GetClient().Returns(MockPTArchivesClient);

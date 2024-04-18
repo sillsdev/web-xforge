@@ -83,7 +83,8 @@ public class InternetSharedRepositorySourceProviderTests
             Provider = new InternetSharedRepositorySourceProvider(
                 MockJwtTokenHelper,
                 siteOptions,
-                Substitute.For<IHgWrapper>()
+                Substitute.For<IHgWrapper>(),
+                new MockLogger<InternetSharedRepositorySourceProvider>()
             );
         }
     }

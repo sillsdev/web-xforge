@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Paratext;
 using Paratext.Data;
@@ -15,18 +16,21 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
 {
     private readonly JwtRestClient _registryClient;
     private readonly IHgWrapper _hgWrapper;
+    private readonly ILogger _logger;
 
     public JwtInternetSharedRepositorySource(
         string accessToken,
         JwtRestClient registryClient,
         IHgWrapper hgWrapper,
         ParatextUser authenticationPtUser,
-        string srServerUri
+        string srServerUri,
+        ILogger logger
     )
         : base(authenticationPtUser, srServerUri)
     {
         _registryClient = registryClient;
         _hgWrapper = hgWrapper;
+        _logger = logger;
         SetToken(accessToken);
     }
 
@@ -171,7 +175,23 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
 
     private JArray GetJsonArray(string cgiCall)
     {
-        string projectData = _registryClient.Get(cgiCall);
+        DateTime startTime = DateTime.UtcNow;
+        string projectData;
+        try
+        {
+            projectData = _registryClient.Get(cgiCall);
+        }
+        catch (Paratext.Data.HttpException e)
+        {
+            _logger.LogInformation(
+                e,
+                $"external_api_request_timing pt_registry GET {cgiCall} failed after {(DateTime.UtcNow - startTime).Milliseconds} ms"
+            );
+            throw;
+        }
+        _logger.LogInformation(
+            $"external_api_request_timing pt_registry GET {cgiCall} took {(DateTime.UtcNow - startTime).Milliseconds} ms"
+        );
         if (!string.IsNullOrEmpty(projectData) && !projectData.Equals("null", StringComparison.OrdinalIgnoreCase))
             return JArray.Parse(projectData);
         return null;
