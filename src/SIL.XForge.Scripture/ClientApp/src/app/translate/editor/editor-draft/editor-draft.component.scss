@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables';
 
 :host {
   display: flex;
@@ -32,7 +32,7 @@ app-notice {
 }
 
 .draft-indicator {
-  color: $greenDark;
+  color: variables.$greenDark;
   font-style: italic;
   font-size: 18px;
   font-weight: 400;
