@@ -7,7 +7,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { VerseRefData, fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -33,6 +33,7 @@ import { QuestionDialogService } from '../../question-dialog/question-dialog.ser
 import { TextAndAudioComponent } from '../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
+import { SingleButtonAudioPlayerComponent } from '../single-button-audio-player/single-button-audio-player.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
@@ -83,6 +84,7 @@ enum LikeAnswerResponse {
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
+  @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
   @Input() checkingTextComponent?: CheckingTextComponent;
@@ -369,6 +371,22 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return this.fileSources.get(url);
     }
     return undefined;
+  }
+
+  startRecording(): void {
+    this.textAndAudio?.audioComponent?.startRecording();
+  }
+
+  stopRecording(): void {
+    this.textAndAudio?.audioComponent?.stopRecording();
+  }
+
+  deleteAudio(): void {
+    this.textAndAudio?.audioComponent?.resetRecording();
+  }
+
+  toggleAudio(): void {
+    this.audioPlayer?.playing ? this.audioPlayer?.stop() : this.audioPlayer?.play();
   }
 
   selectScripture(): void {
