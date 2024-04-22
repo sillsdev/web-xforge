@@ -1,7 +1,14 @@
 @import 'src/variables';
 
-$progressColor: $purpleLight;
 $progressBackgroundColor: rgba(205, 219, 204, 0.33);
+
+.primary {
+  --theme: #{$purpleLight};
+}
+
+.secondary {
+  --theme: black;
+}
 
 button {
   padding: 0;
@@ -17,7 +24,7 @@ button {
   // Create a radial gradient and then remove the center of it with a conic gradient to create a circular progress bar
   // The transition between white and transparent happens over several percentage points to avoid aliasing
   background: radial-gradient(white 57%, transparent 61% 100%),
-    conic-gradient($progressColor var(--audio-progress), $progressBackgroundColor 0);
+    conic-gradient(var(--theme) var(--audio-progress), $progressBackgroundColor 0);
 }
 
 button:hover {
@@ -33,5 +40,5 @@ mat-icon {
 }
 
 .ng-star-inserted {
-  color: $purpleLight;
+  color: var(--theme);
 }
