@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { InvalidFileItem } from 'angular-file/file-upload/fileTools';
 import {
@@ -13,7 +13,7 @@ const NOT_A_FILE = {} as File;
   templateUrl: './text-and-audio.component.html',
   styleUrls: ['./text-and-audio.component.scss']
 })
-export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
+export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
   @Input() input?: { text?: string; audioUrl?: string };
   @Input() textLabel: string = '';
@@ -27,9 +27,15 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
 
   constructor(private cdr: ChangeDetectorRef) {}
 
+  ngOnInit(): void {
+    if (!this.input) {
+      this.input = {};
+    }
+  }
+
   ngAfterViewInit(): void {
-    this.text.setValue(this.input?.text);
-    this.audio.setValue({ url: this.input?.audioUrl });
+    this.text.setValue(this.input!.text);
+    this.audio.setValue({ url: this.input!.audioUrl });
     this.cdr.detectChanges();
   }
 
@@ -52,6 +58,9 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
   updateFormValidity(): void {
     if (this.hasTextOrAudio() || this.audioAttachment.status === 'recording') {
       this.text.setErrors(null);
+      this.input!.audioUrl = this.audioAttachment.url;
+    } else if (this.audioAttachment.status === 'reset') {
+      this.input!.audioUrl = '';
     }
   }
 
@@ -61,6 +70,10 @@ export class TextAndAudioComponent implements AfterViewInit, OnDestroy {
 
   hasAudio(): boolean {
     return this.audioComponent?.hasAudioAttachment ?? false;
+  }
+
+  isAudioPlaying(): boolean {
+    return (this.hasAudio() && this.audioComponent?.audioPlayer?.playing) ?? false;
   }
 
   hasTextOrAudio(): boolean {
