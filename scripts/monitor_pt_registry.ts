@@ -3,28 +3,21 @@
 import { existsSync } from 'https://deno.land/std@0.223.0/fs/exists.ts';
 import axios from 'npm:axios@1.6.8';
 
-if (
-  Deno.args.length !== 6 ||
-  Deno.args[0] !== '--project-id' ||
-  Deno.args[2] !== '--client-id' ||
-  Deno.args[4] !== '--client-secret'
-) {
-  console.error(
-    'Usage: ./monitor_pt_registry.ts --project-id paratext_id --client-id some_id --client-secret some_secret'
-  );
+if (Deno.args.length !== 4 || Deno.args[0] !== '--client-id' || Deno.args[2] !== '--client-secret') {
+  console.error('Usage: ./monitor_pt_registry.ts --client-id some_id --client-secret some_secret');
   Deno.exit(1);
 }
 
+const clientId = Deno.args[1];
+const clientSecret = Deno.args[3];
+
 const tokens = JSON.parse(Deno.readTextFileSync('tokens.json'));
 
-const clientId = Deno.args[3];
-const clientSecret = Deno.args[5];
 const apiRoot = 'https://registry.paratext.org/api8';
 let accessToken = tokens.access_token;
 let refreshToken = tokens.refresh_token;
 const intervalRefreshTokenMinutes = 5;
 const intervalQueryMembersMinutes = 1;
-const projectId = Deno.args[1];
 const logFileName = 'request_log.json';
 
 type RequestEvent = {
@@ -41,7 +34,9 @@ function logRequest(event: RequestEvent) {
   Deno.writeTextFileSync(logFileName, JSON.stringify(requestLog, null, 2));
 }
 
-await refreshTokenWithRegistry(); // make sure tokens are up to date before starting
+// Make sure tokens are up to date before starting
+await refreshTokenWithRegistry();
+const projectId = await getFirstPTProjectId();
 setInterval(refreshTokenWithRegistry, 1000 * 60 * intervalRefreshTokenMinutes);
 queryMembers();
 setInterval(queryMembers, 1000 * 60 * intervalQueryMembersMinutes);
@@ -86,6 +81,48 @@ async function refreshTokenWithRegistry(): Promise<void> {
         response_time_ms: duration
       });
     });
+}
+
+async function getFirstPTProjectId(): Promise<string> {
+  const userProjects = await queryProjects();
+  return firstProjectId(userProjects);
+}
+
+async function queryProjects(): Promise<object[] | undefined> {
+  const startTime = new Date();
+  let response;
+  try {
+    response = await axios.get(`${apiRoot}/projects`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+  } catch (error) {
+    const endTime = new Date();
+    const duration = endTime.getTime() - startTime.getTime();
+    console.log(`Error: queryProjects ${error.response.status} ${error.response.statusText}`);
+    logRequest({
+      timestamp: startTime,
+      endpoint: 'GET /projects',
+      success: false,
+      response_time_ms: duration
+    });
+    return undefined;
+  }
+  const endTime = new Date();
+  const duration = endTime.getTime() - startTime.getTime();
+  logRequest({
+    timestamp: startTime,
+    endpoint: 'GET /projects',
+    success: true,
+    response_time_ms: duration
+  });
+  return response.data;
+}
+
+function firstProjectId(projects: any): string {
+  return projects[0].identification_systemId.filter(item => item.type === 'paratext')[0].text;
 }
 
 async function queryMembers(): Promise<void> {
