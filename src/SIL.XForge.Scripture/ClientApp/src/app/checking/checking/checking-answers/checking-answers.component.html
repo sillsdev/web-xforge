@@ -41,22 +41,50 @@
       </div>
       <div *ngIf="answerFormVisible">
         <form autocomplete="off" id="answer-form" appScrollIntoView>
-          <app-text-and-audio appAutofocus [input]="activeAnswer" [textLabel]="t('your_answer')"></app-text-and-audio>
+          <app-text-and-audio
+            #answer
+            appAutofocus
+            [input]="activeAnswer"
+            [textLabel]="t('your_answer')"
+          ></app-text-and-audio>
           <div class="bottom-row">
-            <button mat-button *ngIf="!selectedText" id="select-scripture" (click)="selectScripture()">
-              <mat-icon class="attach-icon">attach_file</mat-icon>
-              {{ t("attach") }}
-            </button>
-            <div *ngIf="selectedText" class="answer-scripture">
-              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
-              <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
-                <mat-icon>clear</mat-icon>
+            <div class="left-side">
+              <div class="add-audio">
+                <button
+                  mat-icon-button
+                  *ngIf="!answer.input?.audioUrl && answer.audioAttachment.status !== 'recording'"
+                  (click)="startRecording()"
+                >
+                  <mat-icon>mic</mat-icon>
+                </button>
+                <button mat-icon-button *ngIf="answer.audioAttachment.status === 'recording'" (click)="stopRecording()">
+                  <mat-icon class="stop-recording">stop</mat-icon>
+                </button>
+              </div>
+              <div class="audio-added" *ngIf="answer.input?.audioUrl">
+                <app-single-button-audio-player #audio [source]="answer.input?.audioUrl" (click)="toggleAudio()">
+                  <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
+                </app-single-button-audio-player>
+                <button mat-icon-button (click)="deleteAudio()" class="clear">
+                  <mat-icon>clear</mat-icon>
+                </button>
+              </div>
+              <button mat-icon-button *ngIf="!selectedText" id="select-scripture" (click)="selectScripture()">
+                <mat-icon class="attach-icon">attach_file</mat-icon>
               </button>
+              <div *ngIf="selectedText" class="answer-scripture">
+                <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+                <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
+                  <mat-icon>clear</mat-icon>
+                </button>
+              </div>
             </div>
             <div class="form-actions">
-              <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
+              <button mat-icon-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
+                <mat-icon class="material-icons-outlined">cancel</mat-icon>
+              </button>
               <button
-                mat-flat-button
+                mat-icon-button
                 color="primary"
                 form="answer-form"
                 id="save-answer"
@@ -64,7 +92,7 @@
                 (click)="submit()"
                 [disabled]="submittingAnswer"
               >
-                {{ t("save_answer") }}
+                <mat-icon>check_circle</mat-icon>
               </button>
             </div>
           </div>

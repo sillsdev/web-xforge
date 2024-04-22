@@ -45,7 +45,7 @@
 #answer-form {
   display: flex;
   flex-direction: column;
-  row-gap: 5px;
+  row-gap: 2px;
   .attach-icon {
     rotate: 45deg;
   }
@@ -53,10 +53,16 @@
     display: flex;
     justify-content: space-between;
   }
+  .left-side {
+    display: flex;
+    flex-direction: row;
+  }
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    column-gap: checking-vars.$button-spacing;
+  }
+  .stop-recording {
+    color: red;
   }
 }
 
@@ -162,7 +168,8 @@
 }
 
 .answer-scripture,
-.scripture-text {
+.scripture-text,
+.audio-added {
   display: flex;
   align-items: center;
   color: checking-vars.$greenDark;
@@ -172,14 +179,19 @@
   font-size: 0.9em;
 }
 
+.audio-added {
+  margin-inline-end: 4px;
+}
+
 .answer-scripture-text {
   padding-block: 6px;
 }
 
-.answer-scripture-clear {
+.answer-scripture-clear,
+.clear {
   width: 36px;
   height: 36px;
-  line-height: 14px;
+  line-height: 24px;
 }
 
 .answer-scripture-verse {
