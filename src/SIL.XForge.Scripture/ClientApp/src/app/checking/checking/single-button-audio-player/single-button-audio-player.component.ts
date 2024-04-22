@@ -16,6 +16,7 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
   readonly AudioStatus = AudioStatus;
   readonly hasFinishedPlayingOnce$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
+  @Input() theme: 'primary' | 'secondary' = 'primary';
   @Input() start?: number;
   @Input() end?: number;
   @Input() override set source(source: string | undefined) {
