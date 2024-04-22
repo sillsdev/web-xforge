@@ -2,7 +2,7 @@
   <div *ngIf="availableBooks.length > 0 && !readonly">
     <mat-card class="bulk-select">
       <div>
-        <span>Select:</span>
+        <span>{{ t("book_select.select") }}:</span>
         <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
           <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
             {{ t("book_select.old_testament") }}
