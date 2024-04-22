@@ -1,0 +1,121 @@
+#!/usr/bin/env -S deno run --allow-read --allow-write --allow-env --allow-net
+
+import { existsSync } from 'https://deno.land/std@0.223.0/fs/exists.ts';
+import axios from 'npm:axios@1.6.8';
+
+if (
+  Deno.args.length !== 6 ||
+  Deno.args[0] !== '--project-id' ||
+  Deno.args[2] !== '--client-id' ||
+  Deno.args[4] !== '--client-secret'
+) {
+  console.error(
+    'Usage: ./monitor_pt_registry.ts --project-id paratext_id --client-id some_id --client-secret some_secret'
+  );
+  Deno.exit(1);
+}
+
+const tokens = JSON.parse(Deno.readTextFileSync('tokens.json'));
+
+const clientId = Deno.args[3];
+const clientSecret = Deno.args[5];
+const apiRoot = 'https://registry.paratext.org/api8';
+let accessToken = tokens.access_token;
+let refreshToken = tokens.refresh_token;
+const intervalRefreshTokenMinutes = 5;
+const intervalQueryMembersMinutes = 1;
+const projectId = Deno.args[1];
+const logFileName = 'request_log.json';
+
+type RequestEvent = {
+  timestamp: Date;
+  endpoint: string;
+  success: boolean;
+  response_time_ms: number;
+};
+
+const requestLog: RequestEvent[] = existsSync(logFileName) ? JSON.parse(Deno.readTextFileSync(logFileName)) : [];
+
+function logRequest(event: RequestEvent) {
+  requestLog.push(event);
+  Deno.writeTextFileSync(logFileName, JSON.stringify(requestLog, null, 2));
+}
+
+await refreshTokenWithRegistry(); // make sure tokens are up to date before starting
+setInterval(refreshTokenWithRegistry, 1000 * 60 * intervalRefreshTokenMinutes);
+queryMembers();
+setInterval(queryMembers, 1000 * 60 * intervalQueryMembersMinutes);
+
+async function refreshTokenWithRegistry(): Promise<void> {
+  const startTime = new Date();
+  return await axios
+    .post(`${apiRoot}/token`, {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken
+    })
+    .catch((error: any) => {
+      const endTime = new Date();
+      console.error(error.response.data);
+      const duration = endTime.getTime() - startTime.getTime();
+      logRequest({
+        timestamp: startTime,
+        endpoint: 'POST /token',
+        success: false,
+        response_time_ms: duration
+      });
+    })
+    .then((response: any) => {
+      const endTime = new Date();
+      accessToken = response.data.access_token;
+      refreshToken = response.data.refresh_token;
+      console.log('Refreshed token');
+      console.log('New access token:', accessToken);
+      console.log('New refresh token:', refreshToken);
+
+      const tokens = { access_token: accessToken, refresh_token: refreshToken };
+      Deno.writeTextFileSync('tokens.json', JSON.stringify(tokens, null, 2));
+
+      const duration = endTime.getTime() - startTime.getTime();
+      logRequest({
+        timestamp: startTime,
+        endpoint: 'POST /token',
+        success: true,
+        response_time_ms: duration
+      });
+    });
+}
+
+async function queryMembers(): Promise<void> {
+  const startTime = new Date();
+  return await axios
+    .get(`${apiRoot}/projects/${projectId}/members`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`
+      }
+    })
+    .catch((error: any) => {
+      const endTime = new Date();
+      console.error(error.response.data);
+      const duration = endTime.getTime() - startTime.getTime();
+      logRequest({
+        timestamp: startTime,
+        endpoint: 'GET /projects/id/members',
+        success: false,
+        response_time_ms: duration
+      });
+    })
+    .then((response: any) => {
+      const endTime = new Date();
+      console.log(response.data);
+      const duration = endTime.getTime() - startTime.getTime();
+      logRequest({
+        timestamp: startTime,
+        endpoint: 'GET /projects/id/members',
+        success: true,
+        response_time_ms: duration
+      });
+    });
+}
