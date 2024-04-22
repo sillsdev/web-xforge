@@ -43,6 +43,7 @@ setInterval(queryMembers, 1000 * 60 * intervalQueryMembersMinutes);
 
 async function refreshTokenWithRegistry(): Promise<void> {
   const startTime = new Date();
+  console.log(`${startTime.toISOString()} Refreshing token`);
   return await axios
     .post(`${apiRoot}/token`, {
       client_id: clientId,
@@ -90,6 +91,7 @@ async function getFirstPTProjectId(): Promise<string> {
 
 async function queryProjects(): Promise<object[] | undefined> {
   const startTime = new Date();
+  console.log(`${startTime.toISOString()} Querying projects`);
   let response;
   try {
     response = await axios.get(`${apiRoot}/projects`, {
@@ -128,6 +130,7 @@ function firstProjectId(projects: any): string {
 
 async function queryMembers(): Promise<void> {
   const startTime = new Date();
+  console.log(`${startTime.toISOString()} Querying members`);
   return await axios
     .get(`${apiRoot}/projects/${projectId}/members`, {
       headers: {
