@@ -57,6 +57,7 @@ async function refreshTokenWithRegistry(): Promise<void> {
     })
     .catch((error: any) => {
       const endTime = new Date();
+      console.error(`Error: refreshTokenWithRegistry ${error.response.status} ${error.response.statusText}`);
       console.error(error.response.data);
       const duration = endTime.getTime() - startTime.getTime();
       logRequest({
@@ -98,6 +99,7 @@ async function queryMembers(): Promise<void> {
     })
     .catch((error: any) => {
       const endTime = new Date();
+      console.error(`Error: queryMembers ${error.response.status} ${error.response.statusText}`);
       console.error(error.response.data);
       const duration = endTime.getTime() - startTime.getTime();
       logRequest({
