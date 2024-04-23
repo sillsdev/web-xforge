@@ -3060,28 +3060,24 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetPreTranslate_RequiresSysAdmin()
+    public void SetPreTranslate_RequiresSystemAdminOrServalAdmin()
     {
         var env = new TestEnvironment();
         // SUT 1
         Assert.ThrowsAsync<ForbiddenException>(
-            async () =>
-                await env.Service.SetPreTranslateAsync(User03, new string[] { SystemRole.User }, Project01, false)
+            () => env.Service.SetPreTranslateAsync(User03, [SystemRole.User], Project01, false)
         );
         // SUT 2
         Assert.ThrowsAsync<ForbiddenException>(
-            async () =>
-                await env.Service.SetPreTranslateAsync(User03, new string[] { SystemRole.None }, Project01, false)
+            () => env.Service.SetPreTranslateAsync(User03, [SystemRole.None], Project01, false)
         );
         // SUT 3
         Assert.DoesNotThrowAsync(
-            async () =>
-                await env.Service.SetPreTranslateAsync(
-                    User03,
-                    new string[] { SystemRole.SystemAdmin },
-                    Project01,
-                    false
-                )
+            () => env.Service.SetPreTranslateAsync(User03, [SystemRole.SystemAdmin], Project01, false)
+        );
+        // SUT 4
+        Assert.DoesNotThrowAsync(
+            () => env.Service.SetPreTranslateAsync(User03, [SystemRole.ServalAdmin], Project01, false)
         );
     }
 
@@ -3092,12 +3088,12 @@ public class SFProjectServiceTests
 
         Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(false));
         // SUT 1
-        await env.Service.SetPreTranslateAsync(User01, new string[] { SystemRole.SystemAdmin }, Project02, true);
+        await env.Service.SetPreTranslateAsync(User01, [SystemRole.SystemAdmin], Project02, true);
         Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(true));
 
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(true));
         // SUT 2
-        await env.Service.SetPreTranslateAsync(User01, new string[] { SystemRole.SystemAdmin }, Project01, false);
+        await env.Service.SetPreTranslateAsync(User01, [SystemRole.ServalAdmin], Project01, false);
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(false));
     }
 

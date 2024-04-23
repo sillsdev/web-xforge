@@ -385,6 +385,58 @@ public class MachineProjectService(
     }
 
     /// <summary>
+    /// Gets the project as a zip file, writing it to <paramref name="outputStream"/>.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="outputStream">The output stream.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The name of the zip file, e.g. <c>ABC.zip</c>.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist, is a resource, or could not be found on disk.</exception>
+    public async Task<string> GetProjectZipAsync(
+        string sfProjectId,
+        Stream outputStream,
+        CancellationToken cancellationToken
+    )
+    {
+        // Load the project from the realtime service
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        if (!attempt.TryResult(out SFProject project))
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Ensure that the project is not a resource
+        if (paratextService.IsResource(project.ParatextId))
+        {
+            throw new DataNotFoundException("You cannot download a resource.");
+        }
+
+        // Get the path to the Paratext directory
+        string path = Path.Combine(siteOptions.Value.SiteDir, "sync", project.ParatextId, "target");
+
+        // Ensure that the path exists
+        if (!fileSystemService.DirectoryExists(path))
+        {
+            throw new DataNotFoundException($"The directory could not be found for {project.ParatextId}");
+        }
+
+        // Create the zip file from the directory in memory
+        using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create, true);
+        foreach (string filePath in fileSystemService.EnumerateFiles(path))
+        {
+            await using Stream fileStream = fileSystemService.OpenFile(filePath, FileMode.Open);
+            ZipArchiveEntry entry = archive.CreateEntry(Path.GetFileName(filePath));
+            await using Stream entryStream = entry.Open();
+            await fileStream.CopyToAsync(entryStream, cancellationToken);
+        }
+
+        // Strip invalid characters from the file name
+        string fileName = Path.GetInvalidFileNameChars()
+            .Aggregate(project.ShortName, (current, c) => current.Replace(c.ToString(), string.Empty));
+        return $"{fileName}.zip";
+    }
+
+    /// <summary>
     /// Gets the translation engine type string for Serval.
     /// </summary>
     /// <param name="preTranslate">If <c>true</c>, then the translation engine is for pre-translation.</param>
@@ -1572,7 +1624,7 @@ public class MachineProjectService(
             // Ensure that the path exists
             if (!fileSystemService.DirectoryExists(path))
             {
-                throw new DirectoryNotFoundException($"The following directory could not be found: {path}");
+                throw new DirectoryNotFoundException($"The directory could not be found for {paratextId}");
             }
 
             // Create the zip file from the directory in memory

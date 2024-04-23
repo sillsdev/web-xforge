@@ -1034,7 +1034,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task SetPreTranslateAsync(string curUserId, string[] systemRoles, string projectId, bool preTranslate)
     {
-        if (!systemRoles.Contains(SystemRole.SystemAdmin))
+        if (!(systemRoles.Contains(SystemRole.SystemAdmin) || systemRoles.Contains(SystemRole.ServalAdmin)))
             throw new ForbiddenException();
 
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
