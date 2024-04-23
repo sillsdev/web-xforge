@@ -44,7 +44,34 @@
           [projectDoc]="projectDoc"
         ></app-checking-text>
       </div>
-      <app-text-and-audio [input]="question" [textLabel]="t('question')"></app-text-and-audio>
+      <app-text-and-audio #input [input]="question" [textLabel]="t('question')"></app-text-and-audio>
+      <div class="left-side">
+        <div class="add-audio">
+          <button
+            mat-icon-button
+            *ngIf="!input.input?.audioUrl && input.audioAttachment.status !== 'recording'"
+            (click)="startRecording()"
+          >
+            <mat-icon>mic</mat-icon>
+          </button>
+          <button mat-icon-button *ngIf="input.audioAttachment.status === 'recording'" (click)="stopRecording()">
+            <mat-icon class="stop-recording">stop</mat-icon>
+          </button>
+        </div>
+        <div class="audio-added" *ngIf="input.input?.audioUrl">
+          <app-single-button-audio-player
+            #audio
+            [source]="input.input?.audioUrl"
+            (click)="toggleAudio()"
+            theme="secondary"
+          >
+            <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
+          </app-single-button-audio-player>
+          <button mat-icon-button (click)="deleteAudio()" class="clear">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
+      </div>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">
       <button mat-button [mat-dialog-close]="'close'" type="button" id="question-cancel-btn">

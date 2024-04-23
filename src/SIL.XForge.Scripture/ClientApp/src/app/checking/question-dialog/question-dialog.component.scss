@@ -1,4 +1,5 @@
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
+@use '../checking/checking-global-vars' as checking-vars;
 
 .mat-dialog-content.content-padding {
   padding-top: 0.5em;
@@ -19,6 +20,10 @@ mat-form-field {
   }
 }
 
+.mat-dialog-content {
+  max-height: 70vh;
+}
+
 .dialog-container {
   max-width: 560px;
 }
@@ -29,4 +34,31 @@ mat-form-field {
   app-checking-text {
     position: relative;
   }
+}
+
+.left-side {
+  display: flex;
+  flex-direction: row;
+  margin-top: 2px;
+  min-height: 40px;
+}
+
+.audio-added {
+  display: flex;
+  align-items: center;
+  color: checking-vars.$greenDark;
+  background: rgba(0, 0, 0, 0.05);
+  padding-inline-start: 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.clear {
+  width: 36px;
+  height: 36px;
+  line-height: 24px;
+}
+
+.stop-recording {
+  color: red;
 }
