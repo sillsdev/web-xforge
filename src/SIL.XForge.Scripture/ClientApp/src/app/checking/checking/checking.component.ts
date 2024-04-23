@@ -1043,7 +1043,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   toggleAudio(forceStopAndHide: boolean = false): void {
-    this.showScriptureAudioPlayer = forceStopAndHide ? false : !this.showScriptureAudioPlayer;
+    this.showScriptureAudioPlayer = this.hideChapterText
+      ? true
+      : forceStopAndHide
+      ? false
+      : !this.showScriptureAudioPlayer;
     this._scriptureAudioPlayer?.isPlaying || forceStopAndHide
       ? this._scriptureAudioPlayer?.stop()
       : this._scriptureAudioPlayer?.play();
