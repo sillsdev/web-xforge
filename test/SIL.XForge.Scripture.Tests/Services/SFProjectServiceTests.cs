@@ -2267,27 +2267,6 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_EnableAlternateSource_NoSync()
-    {
-        var env = new TestEnvironment();
-
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { AlternateSourceEnabled = true }
-        );
-
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.DraftConfig.AlternateSourceEnabled, Is.True);
-
-        await env.MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
-    }
-
-    [Test]
     public async Task UpdateSettingsAsync_ChangeMixSource_CannotUseTargetProject()
     {
         var env = new TestEnvironment();

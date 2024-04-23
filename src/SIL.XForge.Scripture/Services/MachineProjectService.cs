@@ -866,7 +866,8 @@ public class MachineProjectService(
 
             // Use the reference source for the alternate training source
             corpusUpdated |= await UploadNewCorpusFilesAsync(
-                project.Id,
+                targetProjectId: project.Id,
+                sourceProjectId: project.TranslateConfig.Source.ProjectRef,
                 project.TranslateConfig.Source.ParatextId,
                 includeBlankSegments: true,
                 uploadParatextZipFile,
