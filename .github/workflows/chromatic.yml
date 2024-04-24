@@ -12,8 +12,8 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-20.04"]
-        node_version: ["16.15.0"]
-        npm_version: ["8.10.0"]
+        node_version: ["20.x"]
+        npm_version: ["10.x"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
