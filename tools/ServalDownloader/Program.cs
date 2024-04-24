@@ -39,11 +39,15 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
         string sourcePath = Path.Combine(corpusPath, "source");
         Directory.CreateDirectory(sourcePath);
 
+        // Get the file extension
+        DataFile dataFile = await dataFilesClient.GetAsync(sourceFile.File.Id);
+        string extension = dataFile.Format == FileFormat.Paratext ? ".zip" : ".txt";
+
         // Download the file
-        var file = await dataFilesClient.DownloadAsync(sourceFile.File.Id);
+        FileResponse file = await dataFilesClient.DownloadAsync(sourceFile.File.Id);
 
         // Write the file
-        string path = Path.Combine(sourcePath, (sourceFile.TextId ?? sourceFile.File.Id) + ".txt");
+        string path = Path.Combine(sourcePath, (sourceFile.TextId ?? sourceFile.File.Id) + extension);
         Console.WriteLine($"Writing {path}...");
         await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         file.Stream.CopyTo(fileStream);
@@ -54,11 +58,15 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
         string targetPath = Path.Combine(corpusPath, "target");
         Directory.CreateDirectory(targetPath);
 
+        // Get the file extension
+        DataFile dataFile = await dataFilesClient.GetAsync(targetFile.File.Id);
+        string extension = dataFile.Format == FileFormat.Paratext ? ".zip" : ".txt";
+
         // Download the file
         FileResponse file = await dataFilesClient.DownloadAsync(targetFile.File.Id);
 
         // Write the file
-        string path = Path.Combine(targetPath, (targetFile.TextId ?? targetFile.File.Id) + ".txt");
+        string path = Path.Combine(targetPath, (targetFile.TextId ?? targetFile.File.Id) + extension);
         Console.WriteLine($"Writing {path}...");
         await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         file.Stream.CopyTo(fileStream);
