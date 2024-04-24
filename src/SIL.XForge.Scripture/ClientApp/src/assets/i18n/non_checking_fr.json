@@ -199,8 +199,8 @@
     "loading": "Chargement...",
     "next": "Suivant",
     "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage.",
-    "these_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
-    "these_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne sont pas dans le texte source ({{ draftingSourceProjectName }})."
+    "these_source_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
+    "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne sont pas dans le texte source ({{ draftingSourceProjectName }})."
   },
   "draft_viewer": {
     "apply_to_project": "Appliquer au projet",

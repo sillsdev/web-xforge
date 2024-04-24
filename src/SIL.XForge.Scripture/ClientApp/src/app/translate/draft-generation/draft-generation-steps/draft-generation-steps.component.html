@@ -13,14 +13,22 @@
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
 
-        <app-notice *ngIf="unusableTranslateBooks.length" type="light">
-          <h4>
+        <app-notice *ngIf="unusableTranslateTargetBooks.length">
+          <transloco key="draft_generation_steps.unusable_target_books"></transloco>
+        </app-notice>
+
+        <app-notice *ngIf="unusableTranslateSourceBooks.length">
+          <h4 *ngIf="unusableTranslateSourceBooks.length">
             <transloco
-              key="draft_generation_steps.these_books_cannot_be_used_for_translating"
+              key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
               [params]="{ draftingSourceProjectName }"
             ></transloco>
           </h4>
-          <app-book-multi-select [availableBooks]="unusableTranslateBooks" [readonly]="true"></app-book-multi-select>
+          <app-book-multi-select
+            *ngIf="unusableTranslateSourceBooks.length"
+            [availableBooks]="unusableTranslateSourceBooks"
+            [readonly]="true"
+          ></app-book-multi-select>
         </app-notice>
 
         <app-notice *ngIf="showBookSelectionError" type="error">
@@ -49,14 +57,23 @@
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
 
-        <app-notice *ngIf="unusableTrainingBooks.length" type="light">
+        <app-notice *ngIf="unusableTranslateTargetBooks.length">
+          <transloco key="draft_generation_steps.unusable_target_books"></transloco>
+        </app-notice>
+
+        <app-notice *ngIf="unusableTrainingSourceBooks.length">
           <h4>
             <transloco
-              key="draft_generation_steps.these_books_cannot_be_used_for_training"
+              *ngIf="unusableTrainingSourceBooks.length"
+              key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
               [params]="{ trainingSourceProjectName }"
             ></transloco>
           </h4>
-          <app-book-multi-select [availableBooks]="unusableTrainingBooks" [readonly]="true"></app-book-multi-select>
+          <app-book-multi-select
+            *ngIf="unusableTrainingSourceBooks.length"
+            [availableBooks]="unusableTrainingSourceBooks"
+            [readonly]="true"
+          ></app-book-multi-select>
         </app-notice>
 
         <app-notice *ngIf="showBookSelectionError" type="error">
