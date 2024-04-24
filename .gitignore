@@ -3,6 +3,7 @@
 .DS_Store
 .externalToolBuilders
 .idea/
+.nx/
 .settings
 .vagrant/
 deploy/**/*.retry
