@@ -5,6 +5,7 @@
     "manage_questions": "Gérer les questions",
     "settings": "Paramètres",
     "synchronize": "Synchronisation",
+    "serval_administration": "Administration du système",
     "system_administration": "Administration du système",
     "translate": "Traduire",
     "edit_review": "Modifier et réviser",
@@ -136,10 +137,10 @@
     "dialog_confirm_draft_cancellation_no": "Non",
     "dialog_confirm_draft_cancellation_title": "Annuler la génération de l'ébauche ?",
     "dialog_confirm_draft_cancellation_yes": "Oui, annuler la génération de l'ébauche",
-    "dialog_confirm_draft_regeneration_message": "Cela va recréer toute l'ébauche non appliquée.",
-    "dialog_confirm_draft_regeneration_no": "Non",
-    "dialog_confirm_draft_regeneration_title": "Régénérer l'ébauche ?",
-    "dialog_confirm_draft_regeneration_yes": "Oui, démarrer la génération",
+    "dialog_confirm_draft_regeneration_message": "La création d'un nouveau brouillon supprimera le brouillon existant.",
+    "dialog_confirm_draft_regeneration_no": "Annuler",
+    "dialog_confirm_draft_regeneration_title": "Est-ce que vous avez terminé avec le projet actuel?",
+    "dialog_confirm_draft_regeneration_yes": "Continuer",
     "draft_active_detail": "Génération de l'ébauche ; cela peut prendre quelques heures.",
     "draft_active_header": "L'ébauche en cours",
     "draft_generation_complete": "Génération de l'ébauche terminée",
@@ -200,7 +201,8 @@
     "next": "Suivant",
     "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage.",
     "these_source_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
-    "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne sont pas dans le texte source ({{ draftingSourceProjectName }})."
+    "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne sont pas dans le texte source ({{ draftingSourceProjectName }}).",
+    "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
   },
   "draft_viewer": {
     "apply_to_project": "Appliquer au projet",
