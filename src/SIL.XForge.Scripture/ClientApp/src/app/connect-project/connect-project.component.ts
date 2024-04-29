@@ -23,6 +23,8 @@ interface ConnectProjectFormValues {
   };
 }
 
+/** Page allowing user to connect a Paratext project to SF for the first time, or join a project that another user has
+ * already connected. */
 @Component({
   selector: 'app-connect-project',
   templateUrl: './connect-project.component.html',
@@ -49,8 +51,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   projectLabel = projectLabel;
 
   private _isAppOnline: boolean = false;
-  private _projects?: ParatextProject[];
-  private targetProjects?: ParatextProject[];
+  private _userPTProjects?: ParatextProject[];
+  private connectableProjects?: ParatextProject[];
 
   constructor(
     private readonly paratextService: ParatextService,
@@ -67,10 +69,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.incomingPTProjectId = this.router.getCurrentNavigation()?.extras.state?.ptProjectId;
   }
 
-  get hasConnectableProjects(): boolean {
-    return this.state === 'input' && this.targetProjects != null && this.targetProjects.length > 0;
-  }
-
   set isAppOnline(isOnline: boolean) {
     isOnline ? this.connectProjectForm.enable() : this.connectProjectForm.disable();
     this._isAppOnline = isOnline;
@@ -81,35 +79,52 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get paratextIdControl(): AbstractControl<any, any> {
+    // todo delete this getter.
     return this.connectProjectForm.controls.paratextId;
   }
 
   get showSettings(): boolean {
-    if (this.state !== 'input' || this._projects == null) {
+    if (this.state !== 'input' || this._userPTProjects == null) {
       return false;
     }
-    const paratextId: string = this.paratextIdControl.value;
-    const project = this._projects.find(p => p.paratextId === paratextId);
+    if (!this.usablePTProjectIdRequested) return false;
+    if (this.incomingPTProjectId == null) return false;
+    const paratextId: string = this.incomingPTProjectId;
+    const project = this._userPTProjects.find(p => p.paratextId === paratextId);
     return project != null && !this.paratextService.isParatextProjectInSF(project);
   }
 
+  get usablePTProjectIdRequested(): boolean {
+    if (this.incomingPTProjectId == null) return false;
+    const requestedPTProject: ParatextProject | undefined = this.userPTProjects.find(
+      p => p.paratextId === this.incomingPTProjectId
+    );
+    // Check if the user has access to the PT project at all.
+    if (requestedPTProject == null) return false;
+    // Check if the user can Join or Connect the PT project.
+    const canJoin: boolean = requestedPTProject.projectId != null;
+    const canConnect: boolean = requestedPTProject.isConnectable;
+    return canJoin || canConnect;
+  }
+
   get submitDisabled(): boolean {
-    return !this.hasConnectableProjects || !this.isAppOnline;
+    if (!this.usablePTProjectIdRequested) return true;
+    return !this.isAppOnline;
   }
 
   get hasNonAdministratorProject(): boolean {
-    if (!this._projects) {
+    if (!this._userPTProjects) {
       return false;
     }
-    return this._projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
+    return this._userPTProjects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
   }
 
   get isBasedOnProjectSet(): boolean {
     return this.settings.controls.sourceParatextId.value != null;
   }
 
-  get projects(): ParatextProject[] {
-    return this._projects != null ? this._projects : [];
+  get userPTProjects(): ParatextProject[] {
+    return this._userPTProjects != null ? this._userPTProjects : [];
   }
 
   get translationSuggestionsEnabled(): boolean {
@@ -151,7 +166,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
-        if (this._projects == null) {
+        if (this._userPTProjects == null) {
           await this.populateProjectList();
         } else {
           this.state = 'input';
@@ -173,11 +188,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     // when the user clicks it. Marking it untouched does not appear to work.
     this.paratextIdControl.setValidators(Validators.required);
     this.paratextIdControl.updateValueAndValidity();
-    if (!this.connectProjectForm.valid || this._projects == null) {
+    if (!this.connectProjectForm.valid || this._userPTProjects == null) {
       return;
     }
     const values = this.connectProjectForm.value as ConnectProjectFormValues;
-    const project = this._projects.find(p => p.paratextId === values.paratextId);
+    const project = this._userPTProjects.find(p => p.paratextId === values.paratextId);
     if (project == null) {
       return;
     }
@@ -231,8 +246,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     if (projects == null) {
       this.state = 'login';
     } else {
-      this._projects = projects.sort(compareProjectsForSorting);
-      this.targetProjects = this._projects.filter(p => p.isConnectable);
+      this._userPTProjects = projects.sort(compareProjectsForSorting);
+      this.connectableProjects = this._userPTProjects.filter(p => p.isConnectable);
       this.state = 'input';
       await resourceFetchPromise;
     }

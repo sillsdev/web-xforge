@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -65,8 +65,8 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should display login button when PT projects is null', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources(undefined, undefined);
+    const env = new TestEnvironment({});
+    env.setupProjectsAndResources(undefined, undefined);
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('login');
@@ -77,8 +77,8 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should display form when PT projects is empty', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources([], []);
+    const env = new TestEnvironment({});
+    env.setupProjectsAndResources([], []);
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -87,8 +87,11 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should display projects then resources', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({});
     env.setupDefaultProjectData();
+    const projectCount: number = 6;
+    const resourceCount: number = 3;
+
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -100,17 +103,17 @@ describe('ConnectProjectComponent', () => {
     expect(env.translationSuggestionsCheckbox).toBeNull();
     env.openSourceProjectAutocomplete();
     // NOTE: The source projects list excludes pt01 (as it is our selected project above)
-    expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(3);
-    expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(3);
-    expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('THA - Thai');
+    expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(projectCount - 1);
+    expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(resourceCount);
+    expect(env.selectableSourceProjectsAndResources.projects).toContain('THA - Thai');
     expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('SJL - Sob Jonah and Luke');
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);
   }));
 
   it('should do nothing when form is invalid', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources([], []);
+    const env = new TestEnvironment({});
+    env.setupProjectsAndResources([], []);
     env.waitForProjectsResponse();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -122,8 +125,8 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should display loading when getting PT projects', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources([], []);
+    const env = new TestEnvironment({});
+    env.setupProjectsAndResources([], []);
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('loading');
@@ -141,44 +144,103 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should join when existing project is selected', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanJoinOrCouldInitiatePTProjectId
+    });
+    const correspondingSFProjectId = 'project05';
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-
-    // Simulate touching the control
-    env.component.paratextIdControl.markAsTouched();
-    expect(env.component.paratextIdControl.valid).toBe(true);
-    env.clickElement(env.submitButton);
-    expect(env.component.paratextIdControl.errors!.required).toBe(true);
-
-    when(mockedParatextService.isParatextProjectInSF(anything())).thenReturn(true);
-    env.changeSelectValue(env.projectSelect, 'pt03');
 
     // The project is already in SF, so do not present settings to configure.
     expect(env.settingsCard).toBeNull();
     env.clickElement(env.submitButton);
 
-    verify(mockedSFProjectService.onlineAddCurrentUser('project03')).once();
-    verify(mockedRouter.navigate(deepEqual(['/projects', 'project03']))).once();
+    verify(mockedSFProjectService.onlineAddCurrentUser(correspondingSFProjectId)).once();
+    verify(mockedRouter.navigate(deepEqual(['/projects', correspondingSFProjectId]))).once();
   }));
 
-  it('should display non-connectable projects disabled', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('not-accessible PT project id requested, shows error', fakeAsync(() => {
+    // Suppose our application comes to this component with a PT project id that the user doesn't actually have access
+    // to.
+    const env = new TestEnvironment({ incomingPTProjectId: 'non-matching-pt-id' });
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(false);
-    expect(env.nonAdminMessage).not.toBeNull();
+
+    // Show an error message.
+    expect(env.messageNoSuchPTProject).not.toBeNull();
+    // Don't let the user submit
+    expect(env.submitButton.nativeElement.disabled).toBe(true);
   }));
 
+  it('no PT project id was requested, shows error', fakeAsync(() => {
+    // Suppose the user opens this component without a PT project id specified. Perhaps this happened because the user
+    // came directly to the URL, or maybe our application made a mistake.
+    const env = new TestEnvironment({ incomingPTProjectId: null });
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+
+    // Show an error message.
+    expect(env.messageNoSuchPTProject).not.toBeNull();
+    // Don't let the user submit
+    expect(env.submitButton.nativeElement.disabled).toBe(true);
+  }));
+
+  it('not connectable or joinable PT project id requested, shows error', fakeAsync(() => {
+    // Suppose the user gets here requesting a PT project id that they can not initiate an initial connection to, and
+    // that they can not join. Perhaps our application made a mistake in getting here.
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserAndCanNotInitiatePTProjectId
+    });
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+
+    // Show an error message.
+    expect(env.messageNoSuchPTProject).not.toBeNull();
+    // Don't let the user submit
+    expect(env.submitButton.nativeElement.disabled).toBe(true);
+  }));
+
+  it('not connectable but joinable PT project id requested. No error.', fakeAsync(() => {
+    // The user can join the chosen project, but not initiate a connection to it. So it must already be on SF for them
+    // to proceed.
+
+    // TODO This doesn't seem to match how the template builds the project selector's items, or how the component
+    // hasNonAdministratorProject was written. Revisit.
+
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserAndCanNotInitiateButCanJoinPTProjectId
+    });
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+
+    // Does not show the no-such-project error message.
+    expect(env.messageNoSuchPTProject).toBeNull();
+  }));
+
+  it('connectable but not joinable PT project id requested. No error.', fakeAsync(() => {
+    // The user can make an initial connection to the chosen project. But it is not yet on SF for there to be an
+    // existing SF project to join.
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanInitiatePTProjectId
+    });
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+
+    // Does not show the no-such-project error message.
+    expect(env.messageNoSuchPTProject).toBeNull();
+  }));
+
+  it('user is already on an SF project with the requested PT project id - TODO worth handling?');
+
   it('should not display non-administrator message', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources(
+    const env = new TestEnvironment({});
+    env.setupProjectsAndResources(
       [
         {
           paratextId: 'pt01',
@@ -219,7 +281,10 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('disables page if offline', fakeAsync(() => {
-    const env = new TestEnvironment(false);
+    const env = new TestEnvironment({
+      hasConnection: false,
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanJoinOrCouldInitiatePTProjectId
+    });
     env.setupDefaultProjectData();
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('offline');
@@ -229,20 +294,22 @@ describe('ConnectProjectComponent', () => {
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
     env.onlineStatus = true;
+    env.waitForProjectsResponse();
     expect(env.offlineMessage).toBeNull();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
+    // expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
     expect(env.component.connectProjectForm.enabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(false);
     expect(env.nonAdminMessage).not.toBeNull();
 
     env.onlineStatus = false;
+    env.waitForProjectsResponse();
     expect(env.nonAdminMessage).toBeNull();
     expect(env.component.state).toEqual('offline');
   }));
 
   it('should create when non-existent project is selected', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({});
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
@@ -278,7 +345,7 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should create when no setting is selected', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({});
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
@@ -310,7 +377,7 @@ describe('ConnectProjectComponent', () => {
     // that will have mysteriously been ignored. So for the unlikely event that two users connect the same project at
     // the same time, give one user an error and they can try the process again, and probably join the now-connected
     // project the second time they try.
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({});
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
@@ -340,7 +407,7 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('shows error message when resources fail to load, but still allows selecting a based on project', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({});
     env.setupDefaultProjectData();
     when(mockedParatextService.getResources()).thenReject(new Error('Failed to fetch resources'));
     env.waitForProjectsResponse();
@@ -371,28 +438,42 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('knows what PT project id the prior page asked to connect to', fakeAsync(() => {
-    when(mockedRouter.getCurrentNavigation()).thenReturn({
-      extras: { state: { ptProjectId: 'requested-pt-project-id' } }
-    } as any);
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({});
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.component.incomingPTProjectId).toEqual('requested-pt-project-id');
-    expect(env.component.paratextIdControl.value).toEqual('requested-pt-project-id');
+    expect(env.component.incomingPTProjectId).toEqual(env.incomingPTProjectId);
+    expect(env.component.paratextIdControl.value).toEqual(env.incomingPTProjectId);
   }));
 });
 
 class TestEnvironment {
+  static readonly notConnectedToUserButCanInitiatePTProjectId: string = 'pt01';
+  static readonly connectedToUserButCouldNotInitiatePTProjectId: string = 'pt02';
+  static readonly notConnectedToUserAndCanNotInitiatePTProjectId: string = 'pt04';
+  static readonly connectedToUserAndCouldInitiatePTProjectId: string = 'pt03';
+  static readonly notConnectedToUserButCanJoinOrCouldInitiatePTProjectId: string = 'pt05';
+  static readonly notConnectedToUserAndCanNotInitiateButCanJoinPTProjectId: string = 'pt06';
   readonly component: ConnectProjectComponent;
   readonly fixture: ComponentFixture<ConnectProjectComponent>;
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
+  readonly incomingPTProjectId?: string;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(hasConnection: boolean = true) {
+  constructor({
+    hasConnection = true,
+    incomingPTProjectId = TestEnvironment.notConnectedToUserButCanInitiatePTProjectId
+  }: {
+    hasConnection?: boolean;
+    incomingPTProjectId?: string | null;
+  }) {
+    this.incomingPTProjectId = incomingPTProjectId ?? undefined;
+    when(mockedRouter.getCurrentNavigation()).thenReturn({
+      extras: { state: { ptProjectId: this.incomingPTProjectId } }
+    } as any);
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
       const newProject: SFProject = createTestProject({
         paratextId: settings.paratextId,
@@ -504,6 +585,10 @@ class TestEnvironment {
     return { projects, resources };
   }
 
+  get messageNoSuchPTProject(): DebugElement {
+    return this.getElement('#message-no-such-pt-proj');
+  }
+
   get resourceLoadingErrorMessage(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-project-select + mat-error'));
   }
@@ -577,45 +662,86 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setupProjectsResources(projects?: ParatextProject[], resources?: SelectableProject[]): void {
+  setupProjectsAndResources(projects?: ParatextProject[], resources?: SelectableProject[]): void {
+    projects?.forEach((paratextProject: ParatextProject) => {
+      when(
+        mockedParatextService.isParatextProjectInSF(objectContaining({ paratextId: paratextProject.paratextId }))
+      ).thenReturn(paratextProject.projectId != null);
+    });
     when(mockedParatextService.getProjects()).thenResolve(projects);
     when(mockedParatextService.getResources()).thenResolve(resources);
   }
 
   setupDefaultProjectData(): void {
-    this.setupProjectsResources(
+    this.setupProjectsAndResources(
       [
         {
-          paratextId: 'pt01',
+          paratextId: TestEnvironment.notConnectedToUserButCanInitiatePTProjectId,
           name: 'English',
           shortName: 'ENG',
           languageTag: 'en',
+          // The user does not have access to a corresponding SF project (whether there is one or not), and has
+          // permission to do an initial connection to the PT project. Because projectId is undefined, we know there is
+          // no SF project.
           isConnectable: true,
           isConnected: false
         },
         {
-          paratextId: 'pt02',
+          paratextId: TestEnvironment.notConnectedToUserButCanJoinOrCouldInitiatePTProjectId,
+          projectId: 'project05',
+          name: 'English2',
+          shortName: 'ENG2',
+          languageTag: 'en',
+          // The user does not have access to a corresponding SF project (whether there is one or not), and has
+          // permission to do an initial connection to the PT project. Because projectId is defined, we know there is a
+          // corresponding SF project.
+          isConnectable: true,
+          isConnected: false
+        },
+        {
+          paratextId: TestEnvironment.connectedToUserButCouldNotInitiatePTProjectId,
           projectId: 'project02',
           name: 'Maori',
           shortName: 'MRI',
           languageTag: 'mri',
+          // The user has access to both the PT project and corresponding SF project. But the user does not have
+          // permission to do an initial connection to the PT project.
           isConnectable: false,
           isConnected: true
         },
         {
-          paratextId: 'pt04',
+          paratextId: TestEnvironment.notConnectedToUserAndCanNotInitiatePTProjectId,
           name: 'Spanish',
           shortName: 'ESP',
           languageTag: 'es',
+          // The project may or may not be on SF yet. The user might not have access to the PT project, or might not
+          // have permission to do an initial connection to the PT project. Because projectId is undefined, we know
+          // there is no SF project.
           isConnectable: false,
           isConnected: false
         },
         {
-          paratextId: 'pt03',
+          paratextId: TestEnvironment.notConnectedToUserAndCanNotInitiateButCanJoinPTProjectId,
+          projectId: 'project06',
+          name: 'Spanish',
+          shortName: 'ESP',
+          languageTag: 'es',
+          // The project may or may not be on SF yet. The user might not have access to the PT project, or might not
+          // have permission to do an initial connection to the PT project. Because projectId is defined, we know there
+          // is a corresponding SF project. An example situation might be that a user is a PT Translator on the PT
+          // project, is not on the corresponding SF project, and can not do an initial PT to SF connection. The user
+          // can still _join_ the project, thus "connecting" it to their user account, even though !isConnectable.
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: TestEnvironment.connectedToUserAndCouldInitiatePTProjectId,
           projectId: 'project03',
           name: 'Thai',
           shortName: 'THA',
           languageTag: 'th',
+          // SF has an initial connection to the PT project, and the user has access to both the SF and PT projects. The
+          // user has permission to do an initial connection to the PT project.
           isConnectable: true,
           isConnected: true
         }
@@ -637,5 +763,9 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
+  }
+
+  private getElement(query: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(query));
   }
 }
