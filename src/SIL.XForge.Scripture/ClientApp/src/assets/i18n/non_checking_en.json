@@ -182,7 +182,7 @@
     "report_problem": "Report problem",
     "sign_up_for_drafting": "Sign up for drafting",
     "suggested_workflow": "A suggested workflow is to draft and edit one book before generating a draft for the next book.",
-    "temporarily_unavailable": "Drafting is temporarily unavailable",
+    "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again."
   },
   "draft_generation_steps": {
