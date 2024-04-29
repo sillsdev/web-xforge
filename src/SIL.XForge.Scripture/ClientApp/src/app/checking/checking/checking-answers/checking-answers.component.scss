@@ -53,16 +53,29 @@
     display: flex;
     justify-content: space-between;
   }
-  .left-side {
+  .attachments {
     display: flex;
     flex-direction: row;
   }
   .form-actions {
     display: flex;
     justify-content: flex-end;
+    button {
+      @include breakpoints.media-breakpoint-down(lg, checking-vars.$grid-breakpoints) {
+        min-width: 48px;
+        padding: 0px;
+        line-height: unset;
+      }
+      span {
+        margin-inline-start: 6px;
+        @include breakpoints.media-breakpoint-down(lg, checking-vars.$grid-breakpoints) {
+          display: none;
+        }
+      }
+    }
   }
   .stop-recording {
-    color: red;
+    color: variables.$red;
   }
 }
 
@@ -172,11 +185,9 @@
 .audio-added {
   display: flex;
   align-items: center;
-  color: checking-vars.$greenDark;
   background: rgba(0, 0, 0, 0.05);
   padding-inline-start: 6px;
   border-radius: 4px;
-  font-size: 0.9em;
 }
 
 .audio-added {
