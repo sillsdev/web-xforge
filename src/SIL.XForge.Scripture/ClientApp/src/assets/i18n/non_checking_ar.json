@@ -5,6 +5,7 @@
     "manage_questions": "إدارة الأسئلة",
     "settings": "الإعدادات",
     "synchronize": "تزامن",
+    "serval_administration": "Serval Administration",
     "system_administration": "إدارة النظام",
     "translate": "الترجمة",
     "edit_review": "Edit & review",
@@ -136,10 +137,10 @@
     "dialog_confirm_draft_cancellation_no": "No",
     "dialog_confirm_draft_cancellation_title": "Cancel draft generation?",
     "dialog_confirm_draft_cancellation_yes": "Yes, cancel draft generation",
-    "dialog_confirm_draft_regeneration_message": "This will re-create any unapplied draft text.",
-    "dialog_confirm_draft_regeneration_no": "No",
-    "dialog_confirm_draft_regeneration_title": "Regenerate draft?",
-    "dialog_confirm_draft_regeneration_yes": "Yes, start generation",
+    "dialog_confirm_draft_regeneration_message": "Creating a new draft will delete the existing draft.",
+    "dialog_confirm_draft_regeneration_no": "إلغاء",
+    "dialog_confirm_draft_regeneration_title": "Are you done with the current draft?",
+    "dialog_confirm_draft_regeneration_yes": "Continue",
     "draft_active_detail": "Generating draft; this can take a few hours.",
     "draft_active_header": "Draft in progress",
     "draft_generation_complete": "Draft generation complete",
@@ -200,7 +201,8 @@
     "next": "التالي",
     "no_available_books": "You have no books available for drafting.",
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
-    "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }})."
+    "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
+    "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
