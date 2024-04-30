@@ -34,7 +34,9 @@ export class CacheService {
           }
 
           const textDocId = new TextDocId(project.id, text.bookNum, chapter.number, 'target');
-          await this.projectService.getText(textDocId);
+          if (await this.permissionsService.canAccessText(textDocId)) {
+            await this.projectService.getText(textDocId);
+          }
 
           if (text.hasSource && sourceId != null) {
             const sourceTextDocId = new TextDocId(sourceId, text.bookNum, chapter.number, 'target');
