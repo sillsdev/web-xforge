@@ -17,6 +17,7 @@
     "module": "es2020",
     "lib": ["es2019", "dom"],
     "suppressImplicitAnyIndexErrors": true,
+    "ignoreDeprecations": "5.0",
     "esModuleInterop": true,
     "typeRoots": ["node_modules/@types"],
     "resolveJsonModule": true,
