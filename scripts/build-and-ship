@@ -25,7 +25,8 @@ cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
   },
   "Serval": {
     "ClientId": "${SERVAL_CLIENT_ID}",
-    "ClientSecret": "${SERVAL_CLIENT_SECRET}"
+    "ClientSecret": "${SERVAL_CLIENT_SECRET}",
+    "WebhookSecret": "${SERVAL_WEBHOOK_SECRET}"
   },
   "Auth": {
     "BackendClientSecret": "${AUTH_BACKEND_SECRET}",
