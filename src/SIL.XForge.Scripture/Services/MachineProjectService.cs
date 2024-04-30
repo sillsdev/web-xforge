@@ -42,7 +42,6 @@ public class MachineProjectService(
     IRepository<SFProjectSecret> projectSecrets,
     IRealtimeService realtimeService,
     IOptions<SiteOptions> siteOptions,
-    ISFTextCorpusFactory textCorpusFactory,
     ITrainingDataService trainingDataService,
     ITranslationEnginesClient translationEnginesClient,
     IRepository<UserSecret> userSecrets
@@ -583,7 +582,7 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Syncs the project corpora from MongoDB to Serval via <see cref="SFTextCorpusFactory"/>
+    /// Syncs the project corpora from the file system to Serval.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="buildConfig">The build configuration.</param>
@@ -642,10 +641,6 @@ public class MachineProjectService(
             )
             .Key;
 
-        // See if we are uploading a Paratext zip file
-        bool useEcho = await featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-        bool uploadParatextZipFile = preTranslate && !useEcho && !project.TranslateConfig.DraftConfig.SendAllSegments;
-
         // See if there is an alternate source to use for drafting
         bool useAlternateSource =
             project.TranslateConfig.DraftConfig.AlternateSourceEnabled
@@ -663,33 +658,9 @@ public class MachineProjectService(
             .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
             .Key;
 
-        // Get the files we have already synced
-        var oldSourceCorpusFiles = new List<ServalCorpusFile>();
-        if (!string.IsNullOrWhiteSpace(corpusId))
-        {
-            oldSourceCorpusFiles = projectSecret.ServalData.Corpora[corpusId].SourceFiles;
-        }
-
-        // Reuse the SFTextCorpusFactory implementation
-        // This is only necessary for SMT suggestions or pre-Paratext zip support NMT projects
-        IList<ISFText> texts = [];
-        if (!uploadParatextZipFile)
-        {
-            texts = await textCorpusFactory.CreateAsync(
-                new[] { project.Id },
-                TextCorpusType.Source,
-                preTranslate,
-                useAlternateSource,
-                useAlternateTrainingSource: false,
-                buildConfig
-            );
-        }
-
-        bool useSourceAsAlternateTrainingSource = false;
-        List<ServalCorpusFile> newSourceCorpusFiles = [];
-        string sourceParatextId = project.TranslateConfig.Source!.ParatextId;
-
         // If we are to use the alternate source, only use it for drafting
+        bool useSourceAsAlternateTrainingSource = false;
+        string sourceParatextId = project.TranslateConfig.Source!.ParatextId;
         if (useAlternateSource)
         {
             sourceParatextId = project.TranslateConfig.DraftConfig.AlternateSource.ParatextId;
@@ -698,50 +669,57 @@ public class MachineProjectService(
             useSourceAsAlternateTrainingSource = !useAlternateTrainingSource;
         }
 
+        // Get the files we have already synced
+        List<ServalCorpusFile> oldSourceCorpusFiles = [];
+        List<ServalCorpusFile> oldTargetCorpusFiles = [];
+        List<ServalCorpusFile> newTargetCorpusFiles = [];
+        List<ServalCorpusFile> newSourceCorpusFiles = [];
+        if (!string.IsNullOrWhiteSpace(corpusId))
+        {
+            oldSourceCorpusFiles = projectSecret.ServalData.Corpora[corpusId].SourceFiles;
+            oldTargetCorpusFiles = projectSecret.ServalData.Corpora[corpusId].TargetFiles;
+        }
+
+        // Upload the translation source
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
             paratextId: sourceParatextId,
-            includeBlankSegments: true,
-            uploadParatextZipFile,
-            texts,
+            uploadParatextZipFile: true,
+            texts: [],
             oldSourceCorpusFiles,
             newSourceCorpusFiles,
             cancellationToken
         );
 
-        // Get the files we have already synced
-        List<ServalCorpusFile> oldTargetCorpusFiles = [];
-        if (!string.IsNullOrWhiteSpace(corpusId))
-        {
-            oldTargetCorpusFiles = projectSecret.ServalData.Corpora[corpusId].TargetFiles;
-        }
-
-        // Only specify the text corpus if we are not uploading to Paratext
-        if (!uploadParatextZipFile)
-        {
-            texts = await textCorpusFactory.CreateAsync(
-                new[] { project.Id },
-                TextCorpusType.Target,
-                preTranslate,
-                useAlternateSource: false,
-                useAlternateTrainingSource: false,
-                buildConfig
-            );
-        }
-
-        List<ServalCorpusFile> newTargetCorpusFiles = [];
+        // Upload the translation target
         corpusUpdated |= await UploadNewCorpusFilesAsync(
             project.Id,
             project.ParatextId,
-            includeBlankSegments: preTranslate,
-            uploadParatextZipFile,
-            texts,
+            uploadParatextZipFile: true,
+            texts: [],
             oldTargetCorpusFiles,
             newTargetCorpusFiles,
             cancellationToken
         );
+
+        // Update the translation corpus
+        corpusUpdated |= await UpdateCorpusConfigAsync(
+            project,
+            translationEngineId,
+            corpusId,
+            preTranslate,
+            additionalTrainingData: false,
+            useAlternateTrainingSource: false,
+            uploadParatextZipFile: true,
+            corpusUpdated,
+            newSourceCorpusFiles,
+            newTargetCorpusFiles,
+            cancellationToken
+        );
+
         // Get the files we have already synced for the alternate training source
         List<ServalCorpusFile> oldAlternateTrainingSourceCorpusFiles = [];
+        List<ServalCorpusFile> newAlternateTrainingSourceCorpusFiles = [];
         if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
         {
             oldAlternateTrainingSourceCorpusFiles = projectSecret
@@ -750,76 +728,43 @@ public class MachineProjectService(
                 .SourceFiles;
         }
 
-        // Upload the alternate training corpus
-        List<ServalCorpusFile> newAlternateTrainingSourceCorpusFiles = [];
-        if (useAlternateTrainingSource)
+        // Upload the training corpus, or remove it if no longer used
+        if (useAlternateTrainingSource || useSourceAsAlternateTrainingSource)
         {
-            // Only specify the text corpus if we are not uploading to Paratext
-            if (!uploadParatextZipFile)
-            {
-                texts = await textCorpusFactory.CreateAsync(
-                    new[] { project.Id },
-                    TextCorpusType.Source,
-                    preTranslate: true,
-                    useAlternateSource: false,
-                    useAlternateTrainingSource: true,
-                    buildConfig
-                );
-            }
-            else
-            {
-                // Ensure that the texts collection is clear
-                texts = Array.Empty<ISFText>();
-            }
+            // Determine which project to use for training
+            string paratextId = useAlternateTrainingSource
+                ? project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
+                : project.TranslateConfig.Source.ParatextId;
 
+            // Upload the training corpus
             corpusUpdated |= await UploadNewCorpusFilesAsync(
                 project.Id,
-                project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId,
-                includeBlankSegments: true,
-                uploadParatextZipFile,
-                texts,
+                paratextId,
+                uploadParatextZipFile: true,
+                texts: [],
                 oldAlternateTrainingSourceCorpusFiles,
                 newAlternateTrainingSourceCorpusFiles,
                 cancellationToken
             );
-        }
-        else if (useSourceAsAlternateTrainingSource)
-        {
-            // If we are to use the reference source as the alternate training source
 
-            // Only specify the text corpus if we are not uploading to Paratext
-            if (!uploadParatextZipFile)
-            {
-                texts = await textCorpusFactory.CreateAsync(
-                    new[] { project.Id },
-                    TextCorpusType.Source,
-                    preTranslate: true,
-                    useAlternateSource: false,
-                    useAlternateTrainingSource: false,
-                    buildConfig
-                );
-            }
-            else
-            {
-                // Ensure that the texts collection is clear
-                texts = Array.Empty<ISFText>();
-            }
-
-            // Use the reference source for the alternate training source
-            corpusUpdated |= await UploadNewCorpusFilesAsync(
-                project.Id,
-                project.TranslateConfig.Source.ParatextId,
-                includeBlankSegments: true,
-                uploadParatextZipFile,
-                texts,
-                oldAlternateTrainingSourceCorpusFiles,
-                newAlternateTrainingSourceCorpusFiles,
+            // Update the training corpus
+            corpusUpdated |= await UpdateCorpusConfigAsync(
+                project,
+                translationEngineId,
+                corpusId: alternateTrainingSourceCorpusId,
+                preTranslate: true,
+                additionalTrainingData: false,
+                useAlternateTrainingSource: true,
+                uploadParatextZipFile: true,
+                corpusUpdated,
+                sourceCorpusFiles: newAlternateTrainingSourceCorpusFiles,
+                targetCorpusFiles: newAlternateTrainingSourceCorpusFiles.Count > 0 ? newTargetCorpusFiles : [],
                 cancellationToken
             );
         }
         else if (preTranslate && !string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
         {
-            // If there is an existing alternate training source
+            // If there is an existing alternate training source, remove it
 
             // Remove the corpus from Serval
             try
@@ -860,40 +805,6 @@ public class MachineProjectService(
             await projectSecrets.UpdateAsync(
                 project.Id,
                 u => u.Unset(p => p.ServalData.Corpora[alternateTrainingSourceCorpusId])
-            );
-        }
-
-        // Update the translation corpus
-        corpusUpdated |= await UpdateCorpusConfigAsync(
-            project,
-            translationEngineId,
-            corpusId,
-            preTranslate,
-            additionalTrainingData: false,
-            useAlternateTrainingSource: false,
-            uploadParatextZipFile,
-            corpusUpdated,
-            newSourceCorpusFiles,
-            newTargetCorpusFiles,
-            cancellationToken
-        );
-
-        // If we have a training corpus, update the record of that locally (pre-translation only)
-        if (useAlternateTrainingSource || useSourceAsAlternateTrainingSource)
-        {
-            // The alternate training source is the training corpus
-            corpusUpdated |= await UpdateCorpusConfigAsync(
-                project,
-                translationEngineId,
-                corpusId: alternateTrainingSourceCorpusId,
-                preTranslate: true,
-                additionalTrainingData: false,
-                useAlternateTrainingSource: true,
-                uploadParatextZipFile,
-                corpusUpdated,
-                sourceCorpusFiles: newAlternateTrainingSourceCorpusFiles,
-                targetCorpusFiles: newAlternateTrainingSourceCorpusFiles.Count > 0 ? newTargetCorpusFiles : [],
-                cancellationToken
             );
         }
 
@@ -942,7 +853,6 @@ public class MachineProjectService(
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
                     project.Id,
                     project.ParatextId,
-                    includeBlankSegments: false,
                     uploadParatextZipFile: false,
                     newTrainingDataSourceTexts,
                     oldTrainingDataSourceCorpusFiles,
@@ -954,7 +864,6 @@ public class MachineProjectService(
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
                     project.Id,
                     project.ParatextId,
-                    includeBlankSegments: false,
                     uploadParatextZipFile: false,
                     newTrainingDataTargetTexts,
                     oldTrainingDataTargetCorpusFiles,
@@ -1123,16 +1032,13 @@ public class MachineProjectService(
     /// Gets the segments from the text with Unix/Linux line endings.
     /// </summary>
     /// <param name="text">The <see cref="ISFText"/>.</param>
-    /// <param name="includeBlankSegments">
-    /// <c>true</c> if we are to include blank segments (usually for a pre-translation target); otherwise <c>false</c>.
-    /// </param>
     /// <returns>The text file data to be uploaded to Serval.</returns>
-    private static string GetTextFileData(ISFText text, bool includeBlankSegments)
+    private static string GetTextFileData(ISFText text)
     {
         var sb = new StringBuilder();
 
         // For pre-translation, we must upload empty lines with segment refs for the correct references to be returned
-        foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty || includeBlankSegments))
+        foreach (SFTextSegment segment in text.Segments.Where(s => !s.IsEmpty))
         {
             sb.Append(segment.SegmentRef);
             sb.Append('\t');
@@ -1619,14 +1525,10 @@ public class MachineProjectService(
     /// </summary>
     /// <param name="projectId">The project identifier.</param>
     /// <param name="paratextId">The Paratext identifier.</param>
-    /// <param name="includeBlankSegments">
-    /// <c>true</c> if we are to include blank segments (usually for a pre-translation target); otherwise <c>false</c>.
-    /// This is not used if <paramref name="uploadParatextZipFile"/> is <c>true</c>.
-    /// </param>
     /// <param name="uploadParatextZipFile">
     /// <c>true</c> if we are uploading a Paratext zip file; otherwise <c>false</c>.
     /// </param>
-    /// <param name="texts">The texts created by <see cref="SFTextCorpusFactory"/>.</param>
+    /// <param name="texts">The texts created by <see cref="TrainingDataService"/>.</param>
     /// <param name="oldCorpusFiles">The existing corpus files (optional).</param>
     /// <param name="newCorpusFiles">The updated list of corpus files.</param>
     /// <param name="cancellationToken"></param>
@@ -1637,7 +1539,6 @@ public class MachineProjectService(
     private async Task<bool> UploadNewCorpusFilesAsync(
         string projectId,
         string paratextId,
-        bool includeBlankSegments,
         bool uploadParatextZipFile,
         IEnumerable<ISFText> texts,
         ICollection<ServalCorpusFile>? oldCorpusFiles,
@@ -1690,7 +1591,7 @@ public class MachineProjectService(
             // Sync each text
             foreach (ISFText text in texts)
             {
-                string textFileData = GetTextFileData(text, includeBlankSegments);
+                string textFileData = GetTextFileData(text);
                 if (!string.IsNullOrWhiteSpace(textFileData))
                 {
                     // Remove the project id from the start of the text id (if present)
