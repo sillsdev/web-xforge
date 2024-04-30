@@ -66,6 +66,28 @@
   }
 }
 
+@media (max-width: map-get(checking-vars.$grid-breakpoints, lg)) {
+  .large-screen {
+    display: none;
+  }
+  .small-screen {
+    display: block;
+  }
+}
+
+@media (min-width: map-get(checking-vars.$grid-breakpoints, lg)) {
+  .large-screen {
+    display: block;
+    line-height: unset;
+    span {
+      margin-inline-start: 6px;
+    }
+  }
+  .small-screen {
+    display: none;
+  }
+}
+
 .answers-container {
   .answer {
     display: flex;
