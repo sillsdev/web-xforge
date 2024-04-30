@@ -85,12 +85,12 @@
               </div>
             </div>
             <div class="form-actions">
-              <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
+              <button mat-icon-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
                 <mat-icon class="material-icons-outlined">cancel</mat-icon>
-                <span class="cancel-text">{{ t("cancel") }}</span>
+                <!-- <span class="cancel-text">{{ t("cancel") }}</span> -->
               </button>
               <button
-                mat-flat-button
+                mat-icon-button
                 color="primary"
                 form="answer-form"
                 id="save-answer"
@@ -99,7 +99,7 @@
                 [disabled]="submittingAnswer"
               >
                 <mat-icon>check_circle</mat-icon>
-                <span class="submit-text">{{ t("save_answer") }}</span>
+                <!-- <span class="submit-text">{{ t("save_answer") }}</span> -->
               </button>
             </div>
           </div>

@@ -60,19 +60,6 @@
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    button {
-      @include breakpoints.media-breakpoint-down(lg, checking-vars.$grid-breakpoints) {
-        min-width: 48px;
-        padding: 0px;
-        line-height: unset;
-      }
-      span {
-        margin-inline-start: 6px;
-        @include breakpoints.media-breakpoint-down(lg, checking-vars.$grid-breakpoints) {
-          display: none;
-        }
-      }
-    }
   }
   .stop-recording {
     color: variables.$red;
