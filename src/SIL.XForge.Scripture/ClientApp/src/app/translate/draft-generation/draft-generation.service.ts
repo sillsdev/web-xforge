@@ -95,7 +95,7 @@ export class DraftGenerationService {
    */
   startBuildOrGetActiveBuild(buildConfig: BuildConfig): Observable<BuildDto | undefined> {
     return this.getBuildProgress(buildConfig.projectId).pipe(
-      switchMap((job?: BuildDto) => {
+      switchMap((job: BuildDto | undefined) => {
         // If existing build is currently active, return polling observable
         if (activeBuildStates.includes(job?.state as BuildStates)) {
           return this.pollBuildProgress(buildConfig.projectId);

@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -19,7 +19,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { CommandError } from 'xforge-common/command.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -30,7 +30,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule, emptyHammerLoader } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -178,7 +178,9 @@ describe('CollaboratorsComponent', () => {
     // Handle that error.
 
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(new CommandError(1, 'error', null));
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
+      new CommandError(CommandErrorCode.Other, 'error', null)
+    );
     env.setupProjectData({
       // No user01
       user02: SFProjectRole.ParatextTranslator,
@@ -194,7 +196,9 @@ describe('CollaboratorsComponent', () => {
 
   it('handle error from invited users query, when user is not an admin', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(new CommandError(1, 'error', null));
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
+      new CommandError(CommandErrorCode.Other, 'error', null)
+    );
     env.setupProjectData({
       // user01 is not an admin
       user01: SFProjectRole.CommunityChecker,
