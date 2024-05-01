@@ -137,12 +137,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
-  get hasBottomContent(): boolean {
-    return (
-      !this.isOnline || this.isGenerationSupported || (!this.isBackTranslationMode && !this.isPreTranslationApproved)
-    );
-  }
-
   /**
    * True if project is a back translation OR if forward translation drafting feature flag is not set.
    * If the forward translation feature flag is not set, forward translation projects are treated as invalid
