@@ -5,8 +5,9 @@
       icon="warning"
       type="warning"
       *ngIf="!userHasProjects && !initialLoadingSFProjects && !loadingPTProjects"
-      >{{ t("no_projects") }} {{ t("access_another_project") }}</app-notice
     >
+      {{ t("no_projects") }} {{ t("access_another_project") }}
+    </app-notice>
     <h2 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
       {{ t("connected_projects") }}
     </h2>
@@ -19,9 +20,9 @@
         <span class="project-name">
           <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
         </span>
-        <span class="helper-text"
-          >{{ t("drafting")
-          }}{{ projectDoc.data?.checkingConfig?.checkingEnabled ? " • " + ("app.community_checking" | transloco) : "" }}
+        <span class="helper-text">
+          {{ t("drafting") }}
+          {{ projectDoc.data?.checkingConfig?.checkingEnabled ? " • " + ("app.community_checking" | transloco) : "" }}
         </span>
       </div>
       <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
@@ -70,13 +71,9 @@
           : t("not_connected")
       }}
     </h2>
-    <app-notice
-      id="message-trouble-getting-pt-project-list"
-      icon="error"
-      type="error"
-      *ngIf="problemGettingPTProjects"
-      >{{ t("problem_getting_pt_list") }}</app-notice
-    >
+    <app-notice id="message-trouble-getting-pt-project-list" icon="error" type="error" *ngIf="problemGettingPTProjects">
+      {{ t("problem_getting_pt_list") }}
+    </app-notice>
 
     <mat-card
       *ngFor="let ptProject of userUnconnectedUserParatextProjects"
