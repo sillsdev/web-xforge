@@ -17,6 +17,7 @@ import { TestOnlineStatusService } from '../../xforge-common/test-online-status.
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
+import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 
 @Component({ template: '' })
@@ -32,6 +33,7 @@ describe('MyProjectsComponent', () => {
     imports: [
       HttpClientTestingModule,
       UICommonModule,
+      SharedModule,
       RouterModule.forRoot([
         { path: 'projects/:projectId', component: EmptyComponent },
         { path: 'connect-project', component: EmptyComponent }
@@ -172,6 +174,26 @@ describe('MyProjectsComponent', () => {
 
     // Big banner guiding user is not shown
     expect(env.messageNoPTOrSFProjects).toBeNull();
+  }));
+
+  it('does not tell the user there are no projects with the list from PT has not yet loaded', fakeAsync(() => {
+    const env = new TestEnvironment({ userHasAnyProjects: false });
+    let didCheckAtLoadingTime: boolean = false;
+
+    // When the component is fetching the list of projects from Paratext, make sure "no projects" is not shown
+    when(mockedParatextService.getProjects()).thenCall(() => {
+      env.fixture.detectChanges();
+      // During this time, we should not be showing the you-have-no-projects message.
+      expect(env.messageNoPTOrSFProjects).toBeNull();
+      didCheckAtLoadingTime = true;
+
+      return of([]);
+    });
+
+    env.waitUntilLoaded();
+
+    // Did the test check what was expected of it?
+    expect(didCheckAtLoadingTime).toBe(true);
   }));
 
   it('trouble fetching the list of PT projects to connect to is gracefully handled', fakeAsync(() => {
