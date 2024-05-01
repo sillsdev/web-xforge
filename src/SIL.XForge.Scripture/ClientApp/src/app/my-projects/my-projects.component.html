@@ -4,7 +4,7 @@
       id="message-no-pt-or-sf-projects"
       icon="warning"
       type="warning"
-      *ngIf="!userHasProjects && !initialLoadingSFProjects"
+      *ngIf="!userHasProjects && !initialLoadingSFProjects && !loadingPTProjects"
       >{{ t("no_projects") }} {{ t("access_another_project") }}</app-notice
     >
     <h3 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
