@@ -219,40 +219,33 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
     }
 
     this.draftSubscription?.unsubscribe();
-    if (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.sendAllSegments) {
-      this.draftSubscription = this.getLegacyGeneratedDraft().subscribe((draftOps: DeltaOperation[]) => {
-        // Set the draft editor with the pre-translation segments
-        this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
-      });
-    } else {
-      this.draftSubscription = this.draftGenerationService
-        .getGeneratedDraftDeltaOperations(this.targetProjectId!, this.currentBook, this.currentChapter)
-        .pipe(
-          take(1),
-          catchError(err => {
-            // If the corpus does not support USFM
-            if (err.status === 405) {
-              // Prompt the user to run a new build to use the new features
-              this.isDraftLegacy = true;
-              return this.getLegacyGeneratedDraft();
-            }
-            return throwError(() => err);
-          })
-        )
-        .subscribe((draftOps: DeltaOperation[]) => {
-          if (draftOps.length > 0) {
-            // For USFM drafts, see if there are changes
-            if (!this.isDraftLegacy) {
-              // Only allow applying of the draft if there is a difference between the target and draft
-              this.hasDraft =
-                this.preDraftTargetDelta
-                  ?.diff(new Delta(draftOps))
-                  ?.ops?.some(op => op.insert != null || op.delete != null) ?? true;
-            }
-            this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
+    this.draftSubscription = this.draftGenerationService
+      .getGeneratedDraftDeltaOperations(this.targetProjectId!, this.currentBook, this.currentChapter)
+      .pipe(
+        take(1),
+        catchError(err => {
+          // If the corpus does not support USFM
+          if (err.status === 405) {
+            // Prompt the user to run a new build to use the new features
+            this.isDraftLegacy = true;
+            return this.getLegacyGeneratedDraft();
           }
-        });
-    }
+          return throwError(() => err);
+        })
+      )
+      .subscribe((draftOps: DeltaOperation[]) => {
+        if (draftOps.length > 0) {
+          // For USFM drafts, see if there are changes
+          if (!this.isDraftLegacy) {
+            // Only allow applying of the draft if there is a difference between the target and draft
+            this.hasDraft =
+              this.preDraftTargetDelta
+                ?.diff(new Delta(draftOps))
+                ?.ops?.some(op => op.insert != null || op.delete != null) ?? true;
+          }
+          this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
+        }
+      });
   }
 
   private getLegacyGeneratedDraft(): Observable<DeltaOperation[]> {

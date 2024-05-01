@@ -18,7 +18,6 @@ public class SFProjectSettings
     public string? AlternateSourceParatextId { get; set; }
     public bool? AlternateTrainingSourceEnabled { get; set; }
     public string? AlternateTrainingSourceParatextId { get; set; }
-    public bool? SendAllSegments { get; set; }
 
     // checking settings
     public bool? CheckingEnabled { get; set; }

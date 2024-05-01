@@ -171,19 +171,6 @@
                 </div>
                 <div class="tool-setting">
                   <div class="tool-setting-field checkbox-field">
-                    <mat-checkbox formControlName="sendAllSegments" id="checkbox-pre-translation-send-all-segments">{{
-                      t("pre_translation_send_all_segments")
-                    }}</mat-checkbox>
-                    <app-info [text]="t('pre_translation_send_all_segments_info')"></app-info>
-                    <app-write-status
-                      [state]="getControlState('sendAllSegments')"
-                      [formGroup]="form"
-                      id="pre-translation-send-all-segments-status"
-                    ></app-write-status>
-                  </div>
-                </div>
-                <div class="tool-setting">
-                  <div class="tool-setting-field checkbox-field">
                     <mat-checkbox
                       formControlName="additionalTrainingData"
                       id="checkbox-pre-translation-additional-training-data"

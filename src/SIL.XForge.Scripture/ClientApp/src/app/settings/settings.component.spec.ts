@@ -202,7 +202,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -237,7 +236,6 @@ describe('SettingsComponent', () => {
             lastSelectedTranslationBooks: [],
             alternateSourceEnabled: true,
             alternateTrainingSourceEnabled: false,
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -272,7 +270,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           }
         });
@@ -294,7 +291,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           projectType: ProjectType.BackTranslation
@@ -315,7 +311,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           }
         });
@@ -345,7 +340,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           projectType: ProjectType.BackTranslation
@@ -374,7 +368,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           }
         });
@@ -394,7 +387,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -429,7 +421,6 @@ describe('SettingsComponent', () => {
             lastSelectedTranslationBooks: [],
             alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: true,
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -466,7 +457,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -498,7 +488,6 @@ describe('SettingsComponent', () => {
             lastSelectedTranslationBooks: [],
             alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: true,
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -521,45 +510,6 @@ describe('SettingsComponent', () => {
         expect(env.alternateTrainingSourceSelectValue).toBe('ParatextP1');
         expect(env.alternateTrainingSourceSelectProjectsResources.length).toEqual(1);
         expect(env.alternateTrainingSourceSelectProjectsResources[0].name).toBe('ParatextP2');
-      }));
-    });
-
-    describe('Send All Segments', () => {
-      it('should update when the send all segments checkbox is ticked', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        expect(env.statusDone(env.sendAllSegmentsStatus)).toBeNull();
-        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(false);
-        env.clickElement(env.inputElement(env.sendAllSegmentsCheckbox));
-        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(true);
-        env.wait();
-
-        expect(env.statusDone(env.sendAllSegmentsStatus)).not.toBeNull();
-      }));
-
-      it('should update when the send all segments checkbox is unticked', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          draftConfig: {
-            alternateSourceEnabled: false,
-            alternateTrainingSourceEnabled: false,
-            lastSelectedTrainingBooks: [],
-            lastSelectedTrainingDataFiles: [],
-            lastSelectedTranslationBooks: [],
-            sendAllSegments: true,
-            additionalTrainingData: false
-          },
-          preTranslate: true
-        });
-        env.wait();
-        expect(env.statusDone(env.sendAllSegmentsStatus)).toBeNull();
-        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(true);
-        env.clickElement(env.inputElement(env.sendAllSegmentsCheckbox));
-        expect(env.inputElement(env.sendAllSegmentsCheckbox).checked).toBe(false);
-        env.wait();
-
-        expect(env.statusDone(env.sendAllSegmentsStatus)).not.toBeNull();
       }));
     });
 
@@ -586,7 +536,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: true
           },
           preTranslate: true
@@ -621,7 +570,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           projectType: ProjectType.BackTranslation
@@ -661,7 +609,6 @@ describe('SettingsComponent', () => {
             lastSelectedTrainingBooks: [],
             lastSelectedTrainingDataFiles: [],
             lastSelectedTranslationBooks: [],
-            sendAllSegments: false,
             additionalTrainingData: false
           }
         });
@@ -703,7 +650,6 @@ describe('SettingsComponent', () => {
             lastSelectedTranslationBooks: [],
             alternateSourceEnabled: false,
             alternateTrainingSourceEnabled: false,
-            sendAllSegments: false,
             additionalTrainingData: false
           },
           preTranslate: true
@@ -1313,14 +1259,6 @@ class TestEnvironment {
     );
   }
 
-  get sendAllSegmentsCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-pre-translation-send-all-segments'));
-  }
-
-  get sendAllSegmentsStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#pre-translation-send-all-segments-status'));
-  }
-
   get additionalTrainingDataCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-pre-translation-additional-training-data'));
   }
@@ -1423,7 +1361,6 @@ class TestEnvironment {
         lastSelectedTranslationBooks: [],
         alternateSourceEnabled: false,
         alternateTrainingSourceEnabled: false,
-        sendAllSegments: false,
         additionalTrainingData: false
       }
     },
