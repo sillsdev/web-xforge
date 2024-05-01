@@ -744,6 +744,23 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
+        // Ensure that there are no errors in the build configuration
+        if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange) && buildConfig.TrainingBooks.Count > 0)
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRange)}"
+                    + $" and {nameof(buildConfig.TrainingBooks)}."
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange) && buildConfig.TranslationBooks.Count > 0)
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRange)}"
+                    + $" and {nameof(buildConfig.TranslationBooks)}."
+            );
+        }
+
         // Load the project from the realtime service
         await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
