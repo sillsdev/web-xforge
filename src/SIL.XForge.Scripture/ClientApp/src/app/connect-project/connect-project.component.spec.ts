@@ -76,16 +76,6 @@ describe('ConnectProjectComponent', () => {
     expect(env.loginButton).toBeNull();
   }));
 
-  it('should display form when PT projects is empty', fakeAsync(() => {
-    const env = new TestEnvironment({});
-    env.setupProjectsAndResources([], []);
-    env.waitForProjectsResponse();
-    expect(env.component.state).toEqual('input');
-    expect(env.connectProjectForm).not.toBeNull();
-    expect(env.projectSelect).toBeNull();
-    expect(env.noProjectsMessage.nativeElement.textContent).toBe('A translated string.');
-  }));
-
   it('should display projects then resources', fakeAsync(() => {
     const env = new TestEnvironment({});
     env.setupDefaultProjectData();
@@ -96,13 +86,11 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
 
-    env.changeSelectValue(env.projectSelect, 'pt01');
-
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
     expect(env.translationSuggestionsCheckbox).toBeNull();
     env.openSourceProjectAutocomplete();
-    // NOTE: The source projects list excludes pt01 (as it is our selected project above)
+    // NOTE: The source projects list excludes the requested target project
     expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(projectCount - 1);
     expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(resourceCount);
     expect(env.selectableSourceProjectsAndResources.projects).toContain('THA - Thai');
@@ -131,8 +119,6 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('loading');
     verify(mockedNoticeService.loadingStarted()).once();
-    expect(env.projectSelect).toBeNull();
-    expect(env.noProjectsMessage).toBeNull();
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
     tick();
@@ -273,10 +259,6 @@ describe('ConnectProjectComponent', () => {
     );
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
     expect(env.nonAdminMessage).toBeNull();
   }));
 
@@ -289,7 +271,6 @@ describe('ConnectProjectComponent', () => {
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('offline');
     expect(env.offlineMessage).not.toBeNull();
-    expect(env.noProjectsMessage).toBeNull();
     expect(env.component.connectProjectForm.disabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
@@ -297,7 +278,6 @@ describe('ConnectProjectComponent', () => {
     env.waitForProjectsResponse();
     expect(env.offlineMessage).toBeNull();
     expect(env.component.state).toEqual('input');
-    // expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
     expect(env.component.connectProjectForm.enabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(false);
     expect(env.nonAdminMessage).not.toBeNull();
@@ -309,13 +289,13 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should create when non-existent project is selected', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanInitiatePTProjectId
+    });
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.translationSuggestionsCheckbox).toBeNull();
-
-    env.changeSelectValue(env.projectSelect, 'pt01');
+    expect(env.translationSuggestionsCheckbox).toBeNull(); //?
 
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
@@ -345,11 +325,12 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should create when no setting is selected', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanInitiatePTProjectId
+    });
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.translationSuggestionsCheckbox).toBeNull();
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
 
@@ -377,11 +358,12 @@ describe('ConnectProjectComponent', () => {
     // that will have mysteriously been ignored. So for the unlikely event that two users connect the same project at
     // the same time, give one user an error and they can try the process again, and probably join the now-connected
     // project the second time they try.
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanInitiatePTProjectId
+    });
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.translationSuggestionsCheckbox).toBeNull();
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
     // Simulate someone else connecting the PT project to SF while we are working on the Connect Project form.
@@ -407,13 +389,14 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('shows error message when resources fail to load, but still allows selecting a based on project', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment({
+      incomingPTProjectId: TestEnvironment.notConnectedToUserButCanInitiatePTProjectId
+    });
     env.setupDefaultProjectData();
     when(mockedParatextService.getResources()).thenReject(new Error('Failed to fetch resources'));
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('input');
-    env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.translationSuggestionsCheckbox).toBeNull();
 
     expect(env.resourceLoadingErrorMessage.nativeElement.textContent).toContain('error fetching');
@@ -517,20 +500,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#paratext-login-button'));
   }
 
-  get projectSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#project-select'));
-  }
-
   get submitButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#connect-submit-button'));
   }
 
   get connectProjectForm(): DebugElement {
     return this.fixture.debugElement.query(By.css('form'));
-  }
-
-  get noProjectsMessage(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#no-projects-msg'));
   }
 
   get nonAdminMessage(): DebugElement {
