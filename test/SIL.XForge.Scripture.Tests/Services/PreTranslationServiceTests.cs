@@ -708,7 +708,13 @@ public class PreTranslationServiceTests
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
-                .GetPretranslatedUsfmAsync(Arg.Any<string>(), Arg.Any<string>(), "MAT", CancellationToken.None)
+                .GetPretranslatedUsfmAsync(
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    "MAT",
+                    PretranslationUsfmTextOrigin.OnlyPretranslated,
+                    CancellationToken.None
+                )
                 .Returns(MatthewBookUsfm);
             Service = new PreTranslationService(projectSecrets, RealtimeService, TranslationEnginesClient);
         }

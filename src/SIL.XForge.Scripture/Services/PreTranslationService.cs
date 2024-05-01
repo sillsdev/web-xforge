@@ -235,6 +235,7 @@ public class PreTranslationService(
             translationEngineId,
             corpusId,
             GetTextId(bookNum),
+            PretranslationUsfmTextOrigin.OnlyPretranslated,
             cancellationToken
         );
 
