@@ -385,14 +385,13 @@ public class MachineProjectService(
         {
             // This will occur if the project is deleted while the job is running
             string message =
-                $"Build DataNotFoundException occurred for project ${buildConfig.ProjectId} running in background job.";
+                $"Build DataNotFoundException occurred for project {buildConfig.ProjectId} running in background job.";
             logger.LogWarning(e, message);
         }
         catch (Exception e)
         {
             // Log the error and report to bugsnag
-            string message =
-                $"Build exception occurred for project ${buildConfig.ProjectId} running in background job.";
+            string message = $"Build exception occurred for project {buildConfig.ProjectId} running in background job.";
             logger.LogError(e, message);
             exceptionHandler.ReportException(e);
 
