@@ -79,6 +79,7 @@
     <mat-card
       *ngFor="let ptProject of userUnconnectedUserParatextProjects"
       id="user-unconnected-project-card-{{ ptProject.paratextId }}"
+      [class.cannot-connect]="!ptProject.isConnectable"
     >
       <div>
         <span class="project-name">
