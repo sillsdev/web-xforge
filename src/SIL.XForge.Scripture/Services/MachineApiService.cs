@@ -570,7 +570,7 @@ public class MachineApiService(
         {
             // Log the error and report to bugsnag
             string message =
-                $"Retrieve pre-translation status exception occurred for project ${sfProjectId} running in background job.";
+                $"Retrieve pre-translation status exception occurred for project {sfProjectId} running in background job.";
             logger.LogError(e, message);
             exceptionHandler.ReportException(e);
 
