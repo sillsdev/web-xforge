@@ -1,5 +1,6 @@
 <ng-container *transloco="let t; read: 'my_projects'">
   <div class="wrapper">
+    <h1>{{ t("my_projects") }}</h1>
     <app-notice
       id="message-no-pt-or-sf-projects"
       icon="warning"
@@ -9,7 +10,7 @@
       {{ t("no_projects") }} {{ t("access_another_project") }}
     </app-notice>
     <h2 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
-      {{ t("connected_projects") }}
+      {{ t("connected") }}
     </h2>
     <mat-card
       *ngFor="let projectDoc of userConnectedProjects"
