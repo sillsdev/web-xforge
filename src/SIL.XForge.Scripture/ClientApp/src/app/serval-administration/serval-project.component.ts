@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { catchError, lastValueFrom, tap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, of, tap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -127,15 +127,25 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     this.loadingStarted();
 
     // Download the zip file as a blob - this ensures we set the authorization header.
-    const blob: Blob = await lastValueFrom(
+    const blob: Blob | undefined = await lastValueFrom(
       this.servalAdministrationService.downloadProject(id).pipe(
         catchError(err => {
           // Stop the loading, and throw the error
           this.loadingFinished();
-          return throwError(() => err);
+          if (err.status === 404) {
+            return of(undefined);
+          } else {
+            return throwError(() => err);
+          }
         })
       )
     );
+
+    // If the blob is undefined, display an error
+    if (blob == null) {
+      this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
+      return;
+    }
 
     // Trigger a click that downloads the blob
     // NOTE: This code should not be unit tested, as it will trigger downloads in the test browser
