@@ -421,6 +421,23 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.alternateSourceEnabled).toBe(true);
     });
   });
+
+  describe('version 19', () => {
+    it('removes sendAllSegments from draftConfig', async () => {
+      const env = new TestEnvironment(18);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { sendAllSegments: false } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.sendAllSegments).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.sendAllSegments).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {

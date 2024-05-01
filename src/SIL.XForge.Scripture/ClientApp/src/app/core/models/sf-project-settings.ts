@@ -14,7 +14,6 @@ export interface SFProjectSettings {
   alternateSourceParatextId?: string | null;
   alternateTrainingSourceEnabled?: boolean | null;
   alternateTrainingSourceParatextId?: string | null;
-  sendAllSegments?: boolean | null;
   servalConfig?: string | null;
 
   checkingEnabled?: boolean | null;

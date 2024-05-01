@@ -3,11 +3,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Delta } from 'rich-text';
 import { of, throwError } from 'rxjs';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -99,29 +96,6 @@ describe('EditorDraftComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-legacy');
-    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
-  }));
-
-  it('should use the legacy method when send all segments is enabled', fakeAsync(() => {
-    when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
-    when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
-    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
-    when(mockActivatedProjectService.projectDoc).thenReturn({
-      data: createTestProject({
-        translateConfig: {
-          draftConfig: {
-            sendAllSegments: true
-          }
-        }
-      }) as SFProjectProfile
-    } as SFProjectProfileDoc);
-
-    fixture.detectChanges();
-    tick(EDITOR_READY_TIMEOUT);
-
-    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).once();
-    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 1)).never();
-    expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 

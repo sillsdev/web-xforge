@@ -24,8 +24,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
         alternateTrainingSourceEnabled: false,
         lastSelectedTrainingBooks: [],
         lastSelectedTrainingDataFiles: [],
-        lastSelectedTranslationBooks: [],
-        sendAllSegments: false
+        lastSelectedTranslationBooks: []
       }
     },
     checkingConfig: {

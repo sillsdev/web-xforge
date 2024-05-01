@@ -337,28 +337,6 @@ describe('DraftViewerComponent', () => {
     expect(env.component.canEdit).toBeFalsy();
   }));
 
-  it('should use the legacy method when send all segments is enabled', fakeAsync(() => {
-    const env = new TestEnvironment(() => {
-      when(mockActivatedProjectService.projectDoc).thenReturn({
-        data: createTestProject({
-          ...cloneDeep(projectProfileDoc.data),
-          translateConfig: {
-            ...cloneDeep(projectProfileDoc.data?.translateConfig),
-            draftConfig: {
-              sendAllSegments: true
-            }
-          }
-        }) as SFProjectProfile
-      } as SFProjectProfileDoc);
-    });
-    env.waitForEditor();
-
-    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).once();
-    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 2)).never();
-    expect(env.component.hasDraft).toBeTruthy();
-    expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_verse_2_suggested);
-  }));
-
   it('should return ops and update the editor', fakeAsync(() => {
     const env = new TestEnvironment(() => {
       when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(

@@ -135,25 +135,13 @@ public class PreTranslationService(
 
                     // Get the reference in the form verse_1_1, if we did not send all segments
                     // This will allow us to combine multiple paragraphs or poetry lines in the same verse
-                    if (!project.TranslateConfig.DraftConfig.SendAllSegments)
-                    {
-                        string verse = referenceParts[2];
-                        VerseRef verseRef = new VerseRefData(bookNum, chapterNum, verse).ToVerseRef();
-                        reference = $"verse_{verseRef.ChapterNum}_{verseRef.Verse}";
-                    }
+                    string verse = referenceParts[2];
+                    VerseRef verseRef = new VerseRefData(bookNum, chapterNum, verse).ToVerseRef();
+                    reference = $"verse_{verseRef.ChapterNum}_{verseRef.Verse}";
                 }
-
-                // Parse the reference for non-verse segments, if we sent them for pre-translation
-                if (project.TranslateConfig.DraftConfig.SendAllSegments)
+                else
                 {
-                    // The reference is in the format abc_001, abc_001_001, etc. Convert it to the format abc_1 or abc_1_1
-                    reference = string.Join(
-                        '_',
-                        referenceParts.Select(part => int.TryParse(part, out int number) ? number.ToString() : part)
-                    );
-                }
-                else if (!reference.StartsWith("verse_"))
-                {
+                    // The verse reference does not begin with "_verse"
                     continue;
                 }
             }
