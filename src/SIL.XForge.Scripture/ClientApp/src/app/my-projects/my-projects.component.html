@@ -86,10 +86,9 @@
         <span class="project-name">
           <span>{{ ptProject.shortName }}</span> - <span>{{ ptProject.name }}</span>
         </span>
-        <span *ngIf="!ptProject.isConnectable" class="helper-text"
-          >{{ t("project_cannot_be_connected") }}
-          {{ "connect_project.only_paratext_admins_can_start" | transloco }}</span
-        >
+        <span *ngIf="!ptProject.isConnectable" class="helper-text">
+          {{ t("not_admin_cannot_connect_project") }}
+        </span>
       </div>
       <a
         *ngIf="ptProject.isConnectable"
