@@ -7,9 +7,9 @@
       *ngIf="!userHasProjects && !initialLoadingSFProjects && !loadingPTProjects"
       >{{ t("no_projects") }} {{ t("access_another_project") }}</app-notice
     >
-    <h3 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
+    <h2 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
       {{ t("connected_projects") }}
-    </h3>
+    </h2>
     <mat-card
       *ngFor="let projectDoc of userConnectedProjects"
       [class.active-project]="isLastSelectedProject(projectDoc)"
@@ -43,7 +43,7 @@
       </p>
     </mat-expansion-panel>
 
-    <h3 *ngIf="userConnectedResources.length > 0">{{ t("dbl_resources") }}</h3>
+    <h2 *ngIf="userConnectedResources.length > 0">{{ t("dbl_resources") }}</h2>
     <mat-card
       *ngFor="let projectDoc of userConnectedResources"
       [class.active-project]="isLastSelectedProject(projectDoc)"
@@ -58,7 +58,7 @@
       <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
     </mat-card>
 
-    <h3
+    <h2
       id="header-not-connected-projects"
       *ngIf="userUnconnectedUserParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
     >
@@ -69,7 +69,7 @@
           ? t("connect_a_project_to_get_started")
           : t("not_connected")
       }}
-    </h3>
+    </h2>
     <app-notice
       id="message-trouble-getting-pt-project-list"
       icon="error"
