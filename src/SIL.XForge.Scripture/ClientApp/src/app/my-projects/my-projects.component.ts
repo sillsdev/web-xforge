@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -30,7 +29,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   constructor(
     private readonly userProjectsService: SFUserProjectsService,
     readonly paratextService: ParatextService,
-    private readonly router: Router,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService
   ) {
