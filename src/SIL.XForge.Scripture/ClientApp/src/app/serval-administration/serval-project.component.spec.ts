@@ -4,8 +4,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
-import { mock, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -19,6 +20,7 @@ import { ServalProjectComponent } from './serval-project.component';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
+const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
 
@@ -34,6 +36,7 @@ describe('ServalProjectComponent', () => {
     ],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: NoticeService, useMock: mockNoticeService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
@@ -41,40 +44,60 @@ describe('ServalProjectComponent', () => {
     ]
   }));
 
-  it('should allow enabling pre-translation drafting', fakeAsync(() => {
-    const env = new TestEnvironment(false);
-    expect(env.preTranslateCheckbox.checked).toBe(false);
-    env.clickElement(env.preTranslateCheckbox);
-    expect(env.preTranslateCheckbox.checked).toBe(true);
-    verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, true)).once();
-  }));
+  describe('pre-translation drafting checkbox', () => {
+    it('should allow enabling pre-translation drafting', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      expect(env.preTranslateCheckbox.checked).toBe(false);
+      env.clickElement(env.preTranslateCheckbox);
+      expect(env.preTranslateCheckbox.checked).toBe(true);
+      verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, true)).once();
+    }));
 
-  it('should allow disabling pre-translation drafting', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    expect(env.preTranslateCheckbox.checked).toBe(true);
-    env.clickElement(env.preTranslateCheckbox);
-    expect(env.preTranslateCheckbox.checked).toBe(false);
-    verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, false)).once();
-  }));
+    it('should allow disabling pre-translation drafting', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      expect(env.preTranslateCheckbox.checked).toBe(true);
+      env.clickElement(env.preTranslateCheckbox);
+      expect(env.preTranslateCheckbox.checked).toBe(false);
+      verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, false)).once();
+    }));
 
-  it('should disable the pre-translation drafting checkbox when offline', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    env.onlineStatus = false;
-    expect(env.preTranslateCheckbox.disabled).toBe(true);
-  }));
+    it('should disable the pre-translation drafting checkbox when offline', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      env.onlineStatus = false;
+      expect(env.preTranslateCheckbox.disabled).toBe(true);
+    }));
+  });
 
-  it('should disable the download button when offline', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    env.onlineStatus = false;
-    expect(env.firstDownloadButton.innerText).toBe('Download');
-    expect(env.firstDownloadButton.disabled).toBe(true);
-  }));
+  describe('run webhook button', () => {
+    it('should disable the run webhook button when offline', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      env.onlineStatus = false;
+      expect(env.runWebhookButton.disabled).toBe(true);
+    }));
 
-  it('should have a download button', fakeAsync(() => {
-    const env = new TestEnvironment(true);
-    expect(env.firstDownloadButton.innerText).toBe('Download');
-    expect(env.firstDownloadButton.disabled).toBe(false);
-  }));
+    it('should allow running the webhook', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      expect(env.runWebhookButton.disabled).toBe(false);
+      env.clickElement(env.runWebhookButton);
+      verify(mockServalAdministrationService.onlineRetrievePreTranslationStatus(env.mockProjectId)).once();
+      verify(mockNoticeService.show(anything())).once();
+    }));
+  });
+
+  describe('download button', () => {
+    it('should disable the download button when offline', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      env.onlineStatus = false;
+      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.disabled).toBe(true);
+    }));
+
+    it('should have a download button', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.disabled).toBe(false);
+    }));
+  });
 
   class TestEnvironment {
     readonly component: ServalProjectComponent;
@@ -131,6 +154,10 @@ describe('ServalProjectComponent', () => {
 
     get preTranslateCheckbox(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('mat-checkbox input');
+    }
+
+    get runWebhookButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('button#run-webhook');
     }
 
     get firstDownloadButton(): HTMLInputElement {

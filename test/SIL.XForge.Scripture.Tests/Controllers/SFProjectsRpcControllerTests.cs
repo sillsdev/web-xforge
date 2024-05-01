@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Defaults;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -19,7 +22,7 @@ public class SFProjectsRpcControllerTests
     private const string Project01 = "project01";
     private const string User01 = "user01";
     private const string User02 = "user02";
-    private static readonly string[] Roles = { SystemRole.User };
+    private static readonly string[] Roles = [SystemRole.User];
 
     [Test]
     public async Task DeleteTrainingData_Success()
@@ -29,6 +32,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.TrainingDataService.Received().DeleteTrainingDataAsync(User01, Project01, User02, Data01);
     }
 
     [Test]
@@ -113,7 +117,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.UpdateRole(Project01, User02, projectRole);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.UpdateRoleAsync(User01, Roles, Project01, User02, projectRole);
+        await env.SFProjectService.Received().UpdateRoleAsync(User01, Roles, Project01, User02, projectRole);
     }
 
     [Test]
@@ -158,6 +162,28 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public void RetrievePreTranslationStatus_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = env.Controller.RetrievePreTranslationStatus(Project01);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public void RetrievePreTranslationStatus_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.Throws<ArgumentNullException>(() => env.Controller.RetrievePreTranslationStatus(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task SetPreTranslate_Success()
     {
         var env = new TestEnvironment();
@@ -166,7 +192,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetPreTranslate(Project01, preTranslate);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.SetPreTranslateAsync(User01, Roles, Project01, preTranslate);
+        await env.SFProjectService.Received().SetPreTranslateAsync(User01, Roles, Project01, preTranslate);
     }
 
     [Test]
@@ -219,7 +245,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetSyncDisabled(Project01, syncDisabled);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
-        await env.SFProjectService.SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled);
+        await env.SFProjectService.Received().SetSyncDisabledAsync(User01, Roles, Project01, syncDisabled);
     }
 
     [Test]
@@ -272,6 +298,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetServalConfig(Project01, servalConfig);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SetServalConfigAsync(User01, Roles, Project01, servalConfig);
     }
 
     [Test]
@@ -285,6 +312,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetServalConfig(Project01, servalConfig);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        await env.SFProjectService.Received().SetServalConfigAsync(User01, Roles, Project01, servalConfig);
     }
 
     [Test]
@@ -324,6 +352,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.UpdateSettings(Project01, settings);
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().UpdateSettingsAsync(User01, Project01, settings);
     }
 
     [Test]
@@ -383,6 +412,7 @@ public class SFProjectsRpcControllerTests
     {
         public TestEnvironment()
         {
+            BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             SFProjectService = Substitute.For<ISFProjectService>();
             TrainingDataService = Substitute.For<ITrainingDataService>();
@@ -390,13 +420,15 @@ public class SFProjectsRpcControllerTests
             userAccessor.UserId.Returns(User01);
             userAccessor.SystemRoles.Returns(Roles);
             Controller = new SFProjectsRpcController(
-                userAccessor,
+                BackgroundJobClient,
+                ExceptionHandler,
                 SFProjectService,
                 TrainingDataService,
-                ExceptionHandler
+                userAccessor
             );
         }
 
+        public IBackgroundJobClient BackgroundJobClient { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public SFProjectsRpcController Controller { get; }
         public ISFProjectService SFProjectService { get; }
