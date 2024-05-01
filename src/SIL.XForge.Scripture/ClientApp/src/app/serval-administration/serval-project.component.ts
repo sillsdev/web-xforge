@@ -10,6 +10,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
+import { SharedModule } from '../shared/shared.module';
 import { ServalAdministrationService } from './serval-administration.service';
 
 interface Row {
@@ -23,7 +24,7 @@ interface Row {
   selector: 'app-serval-project',
   templateUrl: './serval-project.component.html',
   styleUrls: ['./serval-project.component.scss'],
-  imports: [CommonModule, NoticeComponent, UICommonModule],
+  imports: [CommonModule, NoticeComponent, SharedModule, UICommonModule],
   standalone: true
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
@@ -163,5 +164,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   onUpdatePreTranslate(newValue: boolean): Promise<void> {
     return this.projectService.onlineSetPreTranslate(this.activatedProjectService.projectId!, newValue);
+  }
+
+  async retrievePreTranslationStatus(): Promise<void> {
+    await this.servalAdministrationService.onlineRetrievePreTranslationStatus(this.activatedProjectService.projectId!);
+    this.noticeService.show('Webhook job started.');
   }
 }

@@ -1,0 +1,14 @@
+.admin-tool {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+
+  > .admin-tool-control {
+    display: flex;
+    flex-direction: row;
+    &:not(:last-child) {
+      padding-bottom: 16px;
+    }
+    column-gap: 10px;
+  }
+}
