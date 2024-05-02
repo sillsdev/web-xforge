@@ -22,7 +22,7 @@ describe('EditorTabFactoryService', () => {
   it('should create a "draft" tab', () => {
     const tab = service.createTab('draft');
     expect(tab.type).toEqual('draft');
-    expect(tab.icon).toEqual('model_training');
+    expect(tab.icon).toEqual('auto_awesome');
     expect(tab.headerText).toEqual('Auto Draft');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
