@@ -93,7 +93,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   // Whether or not we have the minimum number of segment pairs
   get canTrainSuggestions(): boolean {
     // 9 is the minimum number found in testing, but we will use 10 to be safe
-    return this.segmentPairs >= 10;
+    // We want this to return true if offline, as we do not know whether the user really can train in that instance
+    return !this.isOnline || this.segmentPairs >= 10;
   }
 
   get canEditTexts(): boolean {
@@ -122,16 +123,29 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.loadingStarted();
-      try {
-        this.projectDoc = await this.projectService.getProfile(projectId);
-        if (this.isOnline) {
-          this.setupTranslationEngine();
+      this.projectDoc = await this.projectService.getProfile(projectId);
+
+      // If we are offline, just update the progress with what we have
+      if (!this.isOnline) {
+        try {
+          this.calculateProgress();
+        } finally {
+          this.loadingFinished();
         }
-        await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
-      } finally {
-        this.loadingFinished();
       }
+
+      // Update the overview now if we are online, or when we are next online
+      this.onlineStatusService.online.then(async () => {
+        this.loadingStarted();
+        try {
+          if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+            this.setupTranslationEngine();
+          }
+          await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
+        } finally {
+          this.loadingFinished();
+        }
+      });
 
       if (this.projectDataChangesSub != null) {
         this.projectDataChangesSub.unsubscribe();
