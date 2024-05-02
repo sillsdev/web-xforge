@@ -922,8 +922,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (this.onlineStatusService.isOnline) {
         questionDoc.updateAnswerFileCache();
       }
-
-      this.toggleAudio(true);
+      if (!this.hideChapterText && !(actionSource?.isQuestionListChange ?? false)) {
+        this.toggleAudio(true);
+      }
 
       // Ensure navigation is set to book/chapter of selected question
       if (this.navigateQuestionChapter(questionDoc)) {
@@ -1043,14 +1044,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   toggleAudio(forceStopAndHide: boolean = false): void {
-    this.showScriptureAudioPlayer = this.hideChapterText
-      ? true
-      : forceStopAndHide
-      ? false
-      : !this.showScriptureAudioPlayer;
     this._scriptureAudioPlayer?.isPlaying || forceStopAndHide
       ? this._scriptureAudioPlayer?.stop()
       : this._scriptureAudioPlayer?.play();
+
+    this.showScriptureAudioPlayer =
+      this.hideChapterText || this._scriptureAudioPlayer?.isPlaying
+        ? true
+        : forceStopAndHide
+        ? false
+        : !this.showScriptureAudioPlayer;
   }
 
   /**

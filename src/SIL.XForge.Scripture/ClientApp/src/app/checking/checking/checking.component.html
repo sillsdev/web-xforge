@@ -179,6 +179,7 @@
             >
               <div class="scripture-audio-player-wrapper">
                 <app-checking-scripture-audio-player
+                  *ngIf="showScriptureAudioPlayer"
                   [source]="chapterAudioSource"
                   [timing]="chapterTextAudioTiming"
                   [textDocId]="textDocId"
