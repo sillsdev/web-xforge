@@ -1,3 +1,4 @@
+@use 'src/variables';
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @use '../checking/checking-global-vars' as checking-vars;
 
@@ -60,5 +61,5 @@ mat-form-field {
 }
 
 .stop-recording {
-  color: red;
+  color: variables.$red;
 }

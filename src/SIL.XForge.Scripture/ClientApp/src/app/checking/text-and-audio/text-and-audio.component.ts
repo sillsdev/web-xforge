@@ -72,10 +72,6 @@ export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.audioComponent?.hasAudioAttachment ?? false;
   }
 
-  isAudioPlaying(): boolean {
-    return (this.hasAudio() && this.audioComponent?.audioPlayer?.playing) ?? false;
-  }
-
   hasTextOrAudio(): boolean {
     return this.text.value || this.hasAudio();
   }
