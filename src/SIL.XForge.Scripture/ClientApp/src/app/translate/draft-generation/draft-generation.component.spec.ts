@@ -126,7 +126,7 @@ describe('DraftGenerationComponent', () => {
         { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate'], {
+      mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate', 'interpolate'], {
         locale$: of(locale)
       });
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
