@@ -9,24 +9,37 @@
 
     <section>
       <div *ngIf="isBackTranslationMode">
-        <p class="text-header">{{ t("instructions_scripture_forge_assist_back_translation") }}</p>
-        <p>{{ t("instructions_scripture_forge_assist_back_translation_subtext") }}</p>
+        <p>
+          <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
+          <br />
+          {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
+        </p>
       </div>
       <div *ngIf="!isBackTranslationMode">
-        <p class="text-header">{{ t("instructions_scripture_forge_assist_forward_translation") }}</p>
-        <p>{{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}</p>
+        <p>
+          <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
+          <br />
+          {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
+        </p>
       </div>
 
-      <p class="text-header">{{ t("instructions_keep_in_mind") }}</p>
-      <p>{{ t("instructions_keep_in_mind_subtext") }}</p>
-
-      <p class="text-header">{{ t("instructions_draft_process") }}</p>
-      <p>{{ t("instructions_draft_process_subtext") }}</p>
-
       <p>
-        {{ t("instructions_help") }}
-        <a href="https://help.scriptureforge.org/generating-drafts">{{ t("instructions_help_link") }}</a
-        >.
+        <b>{{ t("instructions_keep_in_mind") }}</b>
+        <br />
+        {{ t("instructions_keep_in_mind_subtext") }}
+      </p>
+      <p>
+        <b>{{ t("instructions_draft_process") }}</b>
+        <br />
+        {{ t("instructions_draft_process_subtext") }}
+      </p>
+      <p>
+        <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
+          <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
+          <a *ngIf="i.id === 1" href="https://help.scriptureforge.org/generating-drafts" target="_blank">{{
+            i.text
+          }}</a>
+        </ng-container>
       </p>
 
       <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="primary" class="requirements">

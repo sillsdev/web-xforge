@@ -110,7 +110,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly draftSourcesService: DraftSourcesService,
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
-    private readonly i18n: I18nService,
+    readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService
   ) {
