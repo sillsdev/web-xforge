@@ -356,8 +356,7 @@ class TestEnvironment {
 
   set isOnline(value: boolean) {
     this.testOnlineStatusService.setIsOnline(value);
-    this.fixture.detectChanges();
-    tick();
+    this.wait();
   }
 
   setCurrentUser(userId: string = 'user01'): void {
