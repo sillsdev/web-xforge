@@ -1,20 +1,20 @@
-<ng-container *transloco="let t">
+<ng-container *transloco="let t; read: 'book_select'">
   <div *ngIf="availableBooks.length > 0 && !readonly">
     <mat-card class="bulk-select">
       <div>
-        <span>{{ t("book_select.select") }}:</span>
+        <span>{{ t("select") }}:</span>
         <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
           <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
-            {{ t("book_select.old_testament") }}
+            {{ t("old_testament") }}
           </mat-button-toggle>
           <mat-button-toggle value="NT" [disabled]="!isNewTestamentAvailable()">
-            {{ t("book_select.new_testament") }}
+            {{ t("new_testament") }}
           </mat-button-toggle>
           <mat-button-toggle value="DC" *ngIf="isDeuterocanonAvailable()">
-            {{ t("book_select.deuterocanon") }}
+            {{ t("deuterocanon") }}
           </mat-button-toggle>
         </mat-button-toggle-group>
-        <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("book_select.clear") }}</button>
+        <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("clear") }}</button>
       </div>
     </mat-card>
   </div>
@@ -26,7 +26,7 @@
     (change)="onChipListChange($event)"
   >
     <mat-chip-option *ngFor="let book of bookOptions" [value]="book" [selected]="book.selected">
-      {{ t("canon.book_names." + book.bookId) }}
+      {{ "canon.book_names." + book.bookId | transloco }}
     </mat-chip-option>
   </mat-chip-listbox>
 </ng-container>
