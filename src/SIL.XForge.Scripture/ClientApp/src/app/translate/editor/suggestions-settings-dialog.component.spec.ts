@@ -279,8 +279,7 @@ class TestEnvironment {
 
   set isOnline(value: boolean) {
     this.testOnlineStatusService.setIsOnline(value);
-    this.fixture.detectChanges();
-    tick();
+    this.wait();
   }
 
   closeDialog(): void {

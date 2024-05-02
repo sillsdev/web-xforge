@@ -109,7 +109,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   get showCannotTrainEngineMessage(): boolean {
-    if (this.projectDoc?.data == null) {
+    if (this.projectDoc?.data == null || !this.isOnline) {
       return false;
     }
     const hasSourceBooks: boolean = this.translationEngineService.checkHasSourceBooks(this.projectDoc.data);
@@ -122,16 +122,30 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.loadingStarted();
-      try {
-        this.projectDoc = await this.projectService.getProfile(projectId);
-        if (this.isOnline) {
-          this.setupTranslationEngine();
+      this.projectDoc = await this.projectService.getProfile(projectId);
+
+      // If we are offline, just update the progress with what we have
+      if (!this.isOnline) {
+        this.loadingStarted();
+        try {
+          this.calculateProgress();
+        } finally {
+          this.loadingFinished();
         }
-        await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
-      } finally {
-        this.loadingFinished();
       }
+
+      // Update the overview now if we are online, or when we are next online
+      this.onlineStatusService.online.then(async () => {
+        this.loadingStarted();
+        try {
+          if (this.translationEngine == null) {
+            this.setupTranslationEngine();
+          }
+          await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
+        } finally {
+          this.loadingFinished();
+        }
+      });
 
       if (this.projectDataChangesSub != null) {
         this.projectDataChangesSub.unsubscribe();
