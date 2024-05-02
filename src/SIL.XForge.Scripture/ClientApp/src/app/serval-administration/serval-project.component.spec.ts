@@ -1,11 +1,13 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject } from 'rxjs';
-import { mock, verify, when } from 'ts-mockito';
+import { BehaviorSubject, throwError } from 'rxjs';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -19,6 +21,7 @@ import { ServalProjectComponent } from './serval-project.component';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
+const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
 
@@ -35,6 +38,7 @@ describe('ServalProjectComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
+      { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: SFProjectService, useMock: mockSFProjectService }
@@ -74,6 +78,17 @@ describe('ServalProjectComponent', () => {
     const env = new TestEnvironment(true);
     expect(env.firstDownloadButton.innerText).toBe('Download');
     expect(env.firstDownloadButton.disabled).toBe(false);
+  }));
+
+  it('should display a notice if the project cannot be downloaded', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    when(mockServalAdministrationService.downloadProject(anything())).thenReturn(
+      throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
+    expect(env.firstDownloadButton.innerText).toBe('Download');
+    expect(env.firstDownloadButton.disabled).toBe(false);
+    env.clickElement(env.firstDownloadButton);
+    verify(mockNoticeService.showError(anything())).once();
   }));
 
   class TestEnvironment {

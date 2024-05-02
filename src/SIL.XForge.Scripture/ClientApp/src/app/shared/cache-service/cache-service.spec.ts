@@ -36,12 +36,24 @@ describe('cache service', () => {
     ]
   }));
   describe('load all texts', () => {
+    it('does not get texts from project service if no permission', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      when(mockedPermissionService.canAccessText(anything())).thenResolve(false);
+      await env.service.cache(env.projectDoc);
+      env.wait();
+
+      verify(mockedProjectService.getText(anything())).times(0);
+
+      flush();
+      expect(true).toBeTruthy();
+    }));
+
     it('gets all texts from project service', fakeAsync(async () => {
       const env = new TestEnvironment();
       await env.service.cache(env.projectDoc);
       env.wait();
 
-      verify(mockedProjectService.getText(anything())).times(200 * 100);
+      verify(mockedProjectService.getText(anything())).times(200 * 100 * 2);
 
       flush();
       expect(true).toBeTruthy();
@@ -74,7 +86,6 @@ describe('cache service', () => {
 
     it('gets the source texts if they are present and the user can access', fakeAsync(async () => {
       const env = new TestEnvironment();
-      when(mockedPermissionService.canAccessText(anything())).thenResolve(true);
       when(mockedPermissionService.canAccessText(deepEqual(new TextDocId('sourceId', 0, 0, 'target')))).thenResolve(
         false
       ); //remove access for one source doc
@@ -109,6 +120,7 @@ class TestEnvironment {
     });
 
     when(mockedProjectDoc.data).thenReturn(data);
+    when(mockedPermissionService.canAccessText(anything())).thenResolve(true);
   }
 
   createTexts(): TextInfo[] {
