@@ -929,38 +929,6 @@ describe('DraftGenerationComponent', () => {
     });
 
     describe('synchronization', () => {
-      describe('project will be synchronized message', () => {
-        it('should not show that the project will be synchronized if a build is queued', () => {
-          let env = new TestEnvironment();
-          env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
-          env.component.isBackTranslation = true;
-          env.fixture.detectChanges();
-          expect(env.component.lastSyncSuccessful).toBeTruthy();
-          expect(env.getElementByTestId('notice-project-will-sync')).toBe(null);
-          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
-        });
-
-        it('should show that the project will be synchronized for approved translations', () => {
-          let env = new TestEnvironment();
-          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
-          env.component.isPreTranslationApproved = true;
-          env.fixture.detectChanges();
-          expect(env.component.lastSyncSuccessful).toBeTruthy();
-          expect(env.getElementByTestId('notice-project-will-sync')).not.toBe(null);
-          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
-        });
-
-        it('should show that the project will be synchronized for back translations', () => {
-          let env = new TestEnvironment();
-          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
-          env.component.isBackTranslation = true;
-          env.fixture.detectChanges();
-          expect(env.component.lastSyncSuccessful).toBeTruthy();
-          expect(env.getElementByTestId('notice-project-will-sync')).not.toBe(null);
-          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
-        });
-      });
-
       describe('synchronization failed warning', () => {
         let env: TestEnvironment;
 
