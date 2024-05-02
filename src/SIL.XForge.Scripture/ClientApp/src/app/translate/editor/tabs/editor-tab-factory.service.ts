@@ -19,7 +19,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
       case 'draft':
         return {
           type: 'draft',
-          icon: 'model_training',
+          icon: 'auto_awesome',
           headerText: 'Auto Draft',
           closeable: true,
           movable: true,
