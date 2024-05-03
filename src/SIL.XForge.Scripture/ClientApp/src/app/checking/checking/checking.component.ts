@@ -16,7 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { asyncScheduler, combineLatest, fromEvent, merge, Subscription } from 'rxjs';
+import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -107,7 +107,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
   totalVisibleQuestionsString: string = '0';
-  visibleQuestions?: QuestionDoc[];
+  visibleQuestions: Readonly<QuestionDoc[] | undefined>;
   showScriptureAudioPlayer: boolean = false;
   hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
@@ -157,7 +157,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
-  private _scriptureAreaMaxSize: number | null = null;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -190,10 +189,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return this.questionFilters.get(this.activeQuestionFilter);
   }
 
-  get bookName(): string {
-    return this.text == null ? '' : this.i18n.localizeBook(this.text.bookNum);
-  }
-
   get chapter(): number | undefined {
     return this._chapter;
   }
@@ -212,10 +207,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.hideChapterAudio();
       }
     }
-  }
-
-  get chapterStrings(): string[] {
-    return this.chapters.map(c => c.toString());
   }
 
   get isQuestionListPermanent(): boolean {
@@ -320,7 +311,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return this._book;
   }
 
-  private set book(book: number | undefined) {
+  set book(book: number | undefined) {
     if (book === this.book) {
       return;
     }
@@ -440,40 +431,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     );
   }
 
-  private get minAnswerPanelPercent(): number {
-    return Math.ceil((this.answerPanelElementMinimumHeight / this.splitContainerElementHeight) * 100);
-  }
-  private get fullyExpandedAnswerPanelPercent(): number {
-    return Math.ceil((this.fullyExpandedAnswerPanelHeight / this.splitContainerElementHeight) * 100);
-  }
-
   private get splitContainerElementHeight(): number {
     return this.splitContainerElement && this.splitComponent
       ? this.splitContainerElement.nativeElement.offsetHeight - this.splitComponent.gutterSize!
       : 0;
   }
 
-  private get contentPanelHeight(): number {
-    return this.scripturePanelContainerElement?.nativeElement.offsetHeight;
-  }
-
   private get scriptureAudioPlayerAreaHeight(): number {
     const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
     return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
-  }
-
-  /** Percentage of the vertical space of the as-splitter, needed by just the Scripture audio player. */
-  private get scriptureAudioPlayerHeightPercent(): number {
-    return (this.scriptureAudioPlayerAreaHeight / this.splitContainerElementHeight) * 100;
-  }
-
-  /** maxSize for as-split-area for the Scripture+audio area. */
-  public get scriptureAreaMaxSize(): number | null {
-    return this._scriptureAreaMaxSize;
-  }
-
-  private set scriptureAreaMaxSize(value: number | null) {
-    this._scriptureAreaMaxSize = value;
   }
 
   ngOnInit(): void {
@@ -760,15 +726,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.isScreenSmall = state.matches;
       }
     );
-
-    this.subscribe(fromEvent(window, 'resize'), () => {
-      if (this.hideChapterText) {
-        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
-        if (this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
-          this.calculateScriptureSliderPosition();
-        }
-      }
-    });
   }
 
   ngOnDestroy(): void {
@@ -926,7 +883,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   checkSliderPosition(event: any): void {
     if (event.hasOwnProperty('sizes')) {
-      if (event.sizes[1] < this.minAnswerPanelPercent) {
+      if (event.sizes[1] < this.answerPanelElementMinimumHeight) {
         this.calculateScriptureSliderPosition();
       }
     }
@@ -964,6 +921,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
       if (this.onlineStatusService.isOnline) {
         questionDoc.updateAnswerFileCache();
+      }
+      if (!this.hideChapterText && !(actionSource?.isQuestionListChange ?? false)) {
+        this.toggleAudio(true);
       }
 
       // Ensure navigation is set to book/chapter of selected question
@@ -1083,9 +1043,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.showScriptureAudioPlayer = this.hideChapterText;
   }
 
-  toggleAudio(): void {
-    this.showScriptureAudioPlayer = true;
-    this._scriptureAudioPlayer?.isPlaying ? this._scriptureAudioPlayer?.pause() : this._scriptureAudioPlayer?.play();
+  toggleAudio(forceStopAndHide: boolean = false): void {
+    this._scriptureAudioPlayer?.isPlaying || forceStopAndHide
+      ? this._scriptureAudioPlayer?.stop()
+      : this._scriptureAudioPlayer?.play();
+
+    this.showScriptureAudioPlayer =
+      this.hideChapterText || this._scriptureAudioPlayer?.isPlaying
+        ? true
+        : forceStopAndHide
+        ? false
+        : !this.showScriptureAudioPlayer;
   }
 
   /**
@@ -1397,27 +1365,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // 100 ms is a speculative value for waiting for elements to be loaded and updated in the DOM.
     const changeUpdateDelayMs: number = 100;
     setTimeout(async () => {
-      if (this.splitComponent == null) {
+      if (this.splitComponent == null || this.hideChapterText) {
         return;
       }
-      if (this.hideChapterText) {
-        const answerPanelHeight = 100 - this.scriptureAudioPlayerHeightPercent;
-        this.splitComponent?.setVisibleAreaSizes([this.scriptureAudioPlayerHeightPercent, answerPanelHeight]);
-        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
+      let answerPanelHeight: number;
+      if (maximizeAnswerPanel) {
+        answerPanelHeight = Math.min(this.splitContainerElementHeight * 0.75, this.fullyExpandedAnswerPanelHeight);
       } else {
-        let answerPanelHeight: number;
-        if (maximizeAnswerPanel) {
-          answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
-        } else {
-          answerPanelHeight = this.minAnswerPanelPercent;
-        }
-
-        answerPanelHeight = Math.min(75, answerPanelHeight);
-        const scripturePanelHeight = 100 - answerPanelHeight;
-
-        this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-        this.scriptureAreaMaxSize = null;
+        answerPanelHeight = this.answerPanelElementMinimumHeight;
       }
+      this.splitComponent.setVisibleAreaSizes([
+        '*',
+        this.showScriptureAudioPlayer ? this.scriptureAudioPlayerAreaHeight : answerPanelHeight
+      ]);
     }, changeUpdateDelayMs);
   }
 
