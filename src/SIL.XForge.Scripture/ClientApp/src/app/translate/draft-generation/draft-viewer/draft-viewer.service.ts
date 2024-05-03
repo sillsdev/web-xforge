@@ -118,4 +118,12 @@ export class DraftViewerService {
       };
     });
   }
+
+  opsHaveContent(existingOps: DeltaOperation[]): boolean {
+    const indexOfFirstText = existingOps.findIndex(op => typeof op.insert === 'string');
+    const onlyTextOpIsTrailingNewline =
+      indexOfFirstText === existingOps.length - 1 && existingOps[indexOfFirstText].insert === '\n';
+    const hasNoExistingText = indexOfFirstText === -1 || onlyTextOpIsTrailingNewline;
+    return !hasNoExistingText;
+  }
 }
