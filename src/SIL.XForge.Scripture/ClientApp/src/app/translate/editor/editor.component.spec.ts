@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DebugElement, EventEmitter, NgZone } from '@angular/core';
+import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MediaObserver } from '@angular/flex-layout';
 import {
@@ -65,7 +65,7 @@ import { anything, capture, deepEqual, instance, mock, reset, resetCalls, spy, v
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -96,7 +96,6 @@ import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/te
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
-import { DraftDiff, DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { HistoryChooserComponent } from './editor-history/history-chooser/history-chooser.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
@@ -119,7 +118,6 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
-const mockedDraftViewerService = mock(DraftViewerService);
 const mockedParatextService = mock(ParatextService);
 
 class MockComponent {}
@@ -178,7 +176,6 @@ describe('EditorComponent', () => {
       { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
-      { provide: DraftViewerService, useMock: mockedDraftViewerService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
       { provide: TabMenuService, useValue: EditorTabMenuService }
@@ -3657,142 +3654,32 @@ describe('EditorComponent', () => {
     }));
   });
 
-  describe('Back translation draft', () => {
-    it('detects available back translation draft', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const targetDelta = new Delta([{ insert: '', attributes: { segment: 'verse_1_1' } }]);
+  it('sets book and chapter according to route', fakeAsync(() => {
+    const navigationParams: Params = { projectId: 'project01', bookId: 'MRK', chapter: '2' };
+    const env = new TestEnvironment();
 
-      // Stop text loading from triggering
-      spyOn(env.component, 'onTextLoaded');
+    env.setProjectUserConfig();
+    env.updateParams(navigationParams);
+    env.wait();
 
-      env.setProjectUserConfig();
-      env.wait();
+    expect(env.bookName).toEqual('Mark');
+    expect(env.component.chapter).toBe(2);
 
-      when(mockedDraftViewerService.hasDraftOps(anything(), anything())).thenReturn(true);
-      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
-        of({
-          verse_3_16: 'For God so loved the world',
-          verse_1_1: 'In the beginning was the Word'
-        })
-      );
+    env.dispose();
+  }));
 
-      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
-      env.component['checkForPreTranslations']();
-      expect(env.component.hasDraft).toBe(true);
-      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
-      env.dispose();
-    }));
+  it('should navigate to "projects" route if url book is not in project', fakeAsync(() => {
+    const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
+    const env = new TestEnvironment();
+    const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
 
-    it('detects when back translation draft is not available', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const targetDelta = new Delta([
-        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
-        { insert: { blank: true }, attributes: { segment: 'verse_1_2' } }
-      ]);
+    when(env.spyActivatedProjectService.projectId).thenReturn('testProjectId');
 
-      // Stop text loading from triggering
-      spyOn(env.component, 'onTextLoaded');
+    env.updateParams(navigationParams);
+    env.wait();
 
-      env.setProjectUserConfig();
-      env.wait();
-
-      when(mockedDraftViewerService.hasDraftOps(anything(), anything())).thenReturn(false);
-      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
-        of({
-          verse_3_16: 'For God so loved the world',
-          verse_1_1: 'In the beginning was the Word'
-        })
-      );
-
-      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
-      env.component['checkForPreTranslations']();
-      expect(env.component.hasDraft).toBe(false);
-      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
-      env.dispose();
-    }));
-
-    it('does not fetch draft if all segments are translated', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const targetDelta = new Delta([
-        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
-        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } },
-        { insert: { 'note-thread-embed': {} }, attributes: { segment: 'verse_1_3' } }
-      ]);
-
-      // Stop text loading from triggering
-      spyOn(env.component, 'onTextLoaded');
-
-      env.setProjectUserConfig();
-      env.wait();
-
-      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
-        of({
-          verse_3_16: 'For God so loved the world',
-          verse_1_1: 'In the beginning was the Word',
-          verse_1_3: 'All things came into being through Him'
-        })
-      );
-
-      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
-      env.component['checkForPreTranslations']();
-      expect(env.component.hasDraft).toBe(false);
-      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).never();
-      env.dispose();
-    }));
-
-    it('updates editor when a draft is applied', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const event = new EventEmitter<DraftDiff>();
-      when(mockedDraftViewerService.draftApplied).thenReturn(event);
-
-      env.setProjectUserConfig();
-      env.wait();
-
-      env.targetEditor.updateContents = jasmine.createSpy();
-      const targetDelta = new Delta([
-        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
-        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } },
-        { insert: { 'note-thread-embed': {} }, attributes: { segment: 'verse_1_3' } }
-      ]);
-
-      event.emit({
-        id: env.component.target?.id!,
-        ops: targetDelta
-      });
-
-      expect(env.component.hasDraft).toBe(false);
-      expect(env.targetEditor.updateContents).toHaveBeenCalledTimes(1);
-      expect(env.targetEditor.updateContents).toHaveBeenCalledWith(targetDelta, 'user');
-      env.dispose();
-    }));
-
-    it('sets book and chapter according to route', fakeAsync(() => {
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK', chapter: '2' };
-      const env = new TestEnvironment();
-
-      env.setProjectUserConfig();
-      env.updateParams(navigationParams);
-      env.wait();
-
-      expect(env.bookName).toEqual('Mark');
-      expect(env.component.chapter).toBe(2);
-
-      env.dispose();
-    }));
-
-    it('should navigate to "projects" route if url book is not in project', fakeAsync(() => {
-      const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
-      const env = new TestEnvironment();
-      const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
-
-      when(env.spyActivatedProjectService.projectId).thenReturn('testProjectId');
-
-      env.updateParams(navigationParams);
-      env.wait();
-
-      expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
-    }));
-  });
+    expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
+  }));
 
   describe('populateEditorTabs', () => {
     it('should add source tab group when sourceLabel is defined', () => {
@@ -4113,7 +4000,6 @@ class TestEnvironment {
       this.openNoteDialogs.forEach(dialog => dialog.close());
       this.openNoteDialogs = [];
     });
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMediaObserver.isActive(anything())).thenReturn(false);
@@ -4121,9 +4007,7 @@ class TestEnvironment {
       const [projectId, threadId] = id.split(':');
       return this.getNoteThreadDoc(projectId, threadId);
     });
-    when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
-    when(mockedDraftViewerService.draftApplied).thenReturn(new EventEmitter<DraftDiff>());
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
     this.spyActivatedProjectService = spy(this.activatedProjectService);

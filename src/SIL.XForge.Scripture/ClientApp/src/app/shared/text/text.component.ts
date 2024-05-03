@@ -83,7 +83,8 @@ export interface EmbedsByVerse {
 @Component({
   selector: 'app-text',
   templateUrl: './text.component.html',
-  styleUrls: ['./text.component.scss']
+  styleUrls: ['./text.component.scss'],
+  providers: [TextViewModel] // New instance for each text component
 })
 export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
@@ -219,7 +220,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _isRightToLeft: boolean = false;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private viewModel = new TextViewModel();
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
@@ -249,7 +249,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly transloco: TranslocoService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly viewModel: TextViewModel
   ) {
     super();
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);

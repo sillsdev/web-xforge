@@ -303,4 +303,37 @@ describe('DraftGenerationService', () => {
       });
     });
   });
+
+  describe('draftExists', () => {
+    it('should return true if draft exists', done => {
+      const preTranslationData = {
+        data: {
+          preTranslations: [
+            { reference: 'verse_3_16', translation: 'For God so loved the world' },
+            { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
+          ]
+        }
+      };
+
+      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
+      service.draftExists(projectId, 43, 3).subscribe(result => {
+        expect(result).toBe(true);
+        done();
+      });
+    });
+
+    it('should return false if draft does not exist', done => {
+      const preTranslationData = {
+        data: {
+          preTranslations: []
+        }
+      };
+
+      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
+      service.draftExists(projectId, 43, 3).subscribe(result => {
+        expect(result).toBe(false);
+        done();
+      });
+    });
+  });
 });
