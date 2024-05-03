@@ -109,7 +109,7 @@
             {{ t("serval_administration") }}
           </button>
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">
-            <mat-icon>home</mat-icon> {{ t("my_projects") }}
+            <mat-icon>home</mat-icon> {{ "my_projects.my_projects" | transloco }}
           </button>
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
             <mat-icon>vpn_key</mat-icon>
