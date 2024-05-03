@@ -299,41 +299,6 @@ const draftDelta = new Delta([
   {
     attributes: {
       segment: 'verse_1_1',
-      'para-contents': true,
-      draft: true
-    },
-    insert: 'Draft verse 1. '
-  },
-  {
-    attributes: {
-      segment: 'verse_1_2',
-      'para-contents': true,
-      draft: true
-    },
-    insert: 'Draft verse 2. '
-  },
-  {
-    attributes: {
-      segment: 'verse_1_3',
-      'para-contents': true,
-      draft: true
-    },
-    insert: 'Draft verse 3. '
-  },
-  {
-    insert: '\n',
-    attributes: {
-      para: {
-        style: 'p'
-      }
-    }
-  }
-]);
-
-const draftCleanedDelta = new Delta([
-  {
-    attributes: {
-      segment: 'verse_1_1',
       'para-contents': true
     },
     insert: 'Draft verse 1. '
