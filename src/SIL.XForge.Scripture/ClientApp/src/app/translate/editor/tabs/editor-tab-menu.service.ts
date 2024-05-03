@@ -1,35 +1,49 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
+import { shareReplay, switchMap, take } from 'rxjs/operators';
 import { TabMenuItem, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabGroupType, EditorTabInfo, EditorTabType, editorTabTypes } from './editor-tabs.types';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> {
+  private readonly menuItems$: Observable<TabMenuItem[]> = this.initMenuItems();
+
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly onlineStatus: OnlineStatusService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly i18n: I18nService
   ) {}
 
   getMenuItems(): Observable<TabMenuItem[]> {
+    // Return the same menu items for all tab groups
+    return this.menuItems$;
+  }
+
+  private initMenuItems(): Observable<TabMenuItem[]> {
     return this.activatedProject.projectDoc$.pipe(
+      takeUntilDestroyed(this.destroyRef),
       filterNullish(),
       switchMap(projectDoc => {
         return combineLatest([
           of(projectDoc),
-          this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
+          this.onlineStatus.onlineStatus$.pipe(
+            switchMap(isOnline =>
+              isOnline ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id) : of(undefined)
+            )
+          ),
           this.tabState.tabs$
         ]);
       }),
@@ -63,7 +77,8 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         }
 
         return items.length > 0 ? forkJoin(items) : of([]);
-      })
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
   }
 
