@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { TextDocId } from 'src/app/core/models/text-doc';
@@ -19,8 +19,6 @@ export interface DraftDiff {
   providedIn: 'root'
 })
 export class DraftViewerService {
-  draftApplied: EventEmitter<DraftDiff> = new EventEmitter();
-
   /**
    * Whether draft has any pretranslation segments that are not already translated in target ops.
    * @param draft dictionary of segment refs to pretranslations

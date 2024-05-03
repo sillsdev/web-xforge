@@ -9,13 +9,13 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import {
+  activeBuildStates,
   BuildConfig,
-  DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
+  DRAFT_GENERATION_SERVICE_OPTIONS,
   PreTranslation,
-  PreTranslationData,
-  activeBuildStates
+  PreTranslationData
 } from './draft-generation';
 
 @Injectable({
@@ -173,6 +173,17 @@ export class DraftGenerationService {
           return throwError(() => err);
         })
       );
+  }
+
+  /**
+   * Determines if a draft exists for the specified book/chapter.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number.
+   * @returns An observable indicating if a draft exists.
+   */
+  draftExists(projectId: string, book: number, chapter: number): Observable<boolean> {
+    return this.getGeneratedDraft(projectId, book, chapter).pipe(map(draft => Object.keys(draft).length > 0));
   }
 
   /**
