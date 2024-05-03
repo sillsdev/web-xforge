@@ -62,7 +62,7 @@
 
     <h2
       id="header-not-connected-projects"
-      *ngIf="userUnconnectedUserParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
+      *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
     >
       {{
         loadingPTProjects
@@ -77,7 +77,7 @@
     </app-notice>
 
     <mat-card
-      *ngFor="let ptProject of userUnconnectedUserParatextProjects"
+      *ngFor="let ptProject of userUnconnectedParatextProjects"
       id="user-unconnected-project-card-{{ ptProject.paratextId }}"
       [class.cannot-connect]="!ptProject.isConnectable"
     >
