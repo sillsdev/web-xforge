@@ -60,6 +60,9 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     if (doc?.data == null) {
       return;
     }
+    if (doc.id !== this._questionDoc?.id) {
+      this.stopAudio();
+    }
     this._questionDoc = doc;
   }
 
