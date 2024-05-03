@@ -26,6 +26,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, MockTranslocoDirective, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { DialogService } from '../../../../xforge-common/dialog.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { isBadDelta } from '../../../shared/utils';
@@ -42,6 +43,7 @@ describe('DraftViewerComponent', () => {
   const mockUserService = mock(UserService);
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockActivatedRoute = mock(ActivatedRoute);
+  const mockDialogService = mock(DialogService);
   const mockRouter = mock(Router);
 
   class TestEnvironment {
@@ -104,6 +106,7 @@ describe('DraftViewerComponent', () => {
           }
         } as ParamMap)
       );
+      when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
     }
 
     init(): void {
@@ -140,7 +143,8 @@ describe('DraftViewerComponent', () => {
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: UserService, useMock: mockUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: Router, useMock: mockRouter }
+      { provide: Router, useMock: mockRouter },
+      { provide: DialogService, useMock: mockDialogService }
     ]
   }));
 
@@ -191,6 +195,7 @@ describe('DraftViewerComponent', () => {
     const draftDiff = delta_no_verse_2.diff(new Delta(cleanedOps));
 
     env.component.applyDraft();
+    tick();
     expect(spyEditorSetContents).toHaveBeenCalledWith(delta_no_verse_2, 'silent');
     expect(spyEditorEnable).toHaveBeenCalledWith(true);
     expect(spyEditorUpdateContents).toHaveBeenCalledWith(draftDiff, 'user');
