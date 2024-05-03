@@ -7,13 +7,13 @@ import { Router, RouterModule } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { mock, objectContaining, verify, when } from 'ts-mockito';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { OnlineStatusService } from '../../xforge-common/online-status.service';
-import { TestOnlineStatusModule } from '../../xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from '../../xforge-common/test-online-status.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -51,7 +51,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('click Open connected project, goes to project', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     const ptProjectId = env.projectProfileDocs[0].data!.paratextId;
     const sfProjectId = env.projectProfileDocs[0].id;
     env.waitUntilLoaded();
@@ -62,7 +62,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('click Connect, passes PT project id', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     env.click(env.goButtonForProject('pt-notConnToSF'));
@@ -73,7 +73,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('lists my connected projects', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     // Cards for this user's connected projects are shown.
@@ -84,7 +84,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('lists my PT projects that are not on SF', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     // These should not show as this-user-connected SF projects.
@@ -97,7 +97,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('lists my PT projects that are on SF but that I am not connected to on SF', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     // These should not show as this-user-connected SF projects.
@@ -108,7 +108,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('lists my connected resources', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     // Card for resource this user is using on SF is shown.
@@ -118,21 +118,21 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('a project that is on SF but not this-user-connected shows Join button', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     expect(env.goButtonForProject('pt-connButNotThisUser').nativeElement.textContent).toContain('Join');
   }));
 
   it('a project that is not on SF shows Connect button', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     expect(env.goButtonForProject('pt-notConnToSF').nativeElement.textContent).toContain('Connect');
   }));
 
   it('a project that is not on SF, and that user is only a Translator for, should show guide message and not Connect button', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.waitUntilLoaded();
 
     // There should not be a connect/join/open button.
@@ -167,7 +167,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('does not guide user with no-projects information if user has projects', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     // Setup: User SF or Paratext projects list has items.
     expect(env.projectProfileDocs.length + env.userParatextProjects.length).toBeGreaterThan(0);
     env.waitUntilLoaded();
@@ -197,7 +197,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('trouble fetching the list of PT projects to connect to is gracefully handled', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.waitUntilLoaded();
 
@@ -212,7 +212,7 @@ describe('MyProjectsComponent', () => {
     // Suppose the user is offline, and they visit this component. They will not be able to receive their PT projects
     // list from the server. But we don't need to show them the generic "There was a problem" message, because the real
     // issue is that they are _offline_.
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.onlineStatus = false;
     env.waitUntilLoaded();
@@ -227,7 +227,7 @@ describe('MyProjectsComponent', () => {
   it('fetches projects list when user comes online', fakeAsync(() => {
     // Suppose the user is offline, and they visit this component. Then they connect to the Internet. Fetch their list
     // of PT projects without them needing to leave and come back to this component.
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.onlineStatus = false;
     env.waitUntilLoaded();
 
@@ -253,7 +253,7 @@ describe('MyProjectsComponent', () => {
     // Suppose the user is online. They visit this component and receive an error when their PT projects are attempted
     // to be fetched. They go offline. They come back online. Fetch their list of PT projects, and clear the error if
     // there is no error at this point.
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.waitUntilLoaded();
 
@@ -273,7 +273,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('shows loading card while waiting for SF projects list', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     let didCheckAtLoadingTime: boolean = false;
     // When the component is fetching the SF project list, check that some UI elements are as desired.
     when(mockedUserProjectsService.projectDocs$).thenCall(() => {
@@ -297,7 +297,7 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('shows loading card while waiting for PT projects list', fakeAsync(() => {
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     let didCheckAtLoadingTime: boolean = false;
     // When the component is fetching the PT project list, check that some UI elements are as desired.
     when(mockedParatextService.getProjects()).thenCall(() => {
@@ -322,7 +322,7 @@ describe('MyProjectsComponent', () => {
     // Paratext (but didn't "Log in with Paratext"), they might be wondering how to open their Paratext projects. But we
     // can't really know which of these situations we are in. If the user is not logged in with Paratext, show a subtle
     // message about how to access more projects.
-    const env = new TestEnvironment({});
+    const env = new TestEnvironment();
     env.simulateNotBeingLoggedIntoParatext();
     // Setup: Only show the subtle message if there are _some_ projects that the user has access to. If the user has no
     // projects at all, then we show a different message.
@@ -349,7 +349,7 @@ class TestEnvironment {
   /** PT projects the user has access to. */
   userParatextProjects: ParatextProject[] = [];
 
-  constructor({ userHasAnyProjects = true }: { userHasAnyProjects?: boolean }) {
+  constructor({ userHasAnyProjects = true }: { userHasAnyProjects?: boolean } = {}) {
     if (userHasAnyProjects) {
       this.projectProfileDocs = [
         {
