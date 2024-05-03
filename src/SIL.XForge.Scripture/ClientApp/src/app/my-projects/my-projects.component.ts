@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
-import { OnlineStatusService } from '../../xforge-common/online-status.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -19,7 +19,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   userConnectedProjects: SFProjectProfileDoc[] = [];
   userConnectedResources: SFProjectProfileDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
-  userUnconnectedUserParatextProjects: ParatextProject[] = [];
+  userUnconnectedParatextProjects: ParatextProject[] = [];
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
   loggedIntoPT: boolean = true;
@@ -40,7 +40,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     return (
       this.userConnectedProjects.length > 0 ||
       this.userConnectedResources.length > 0 ||
-      this.userUnconnectedUserParatextProjects.length > 0
+      this.userUnconnectedParatextProjects.length > 0
     );
   }
 
@@ -48,14 +48,14 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     return this.onlineStatusService.isOnline;
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
       if (projects == null) return;
       this.userConnectedProjects = projects.filter(project => !this.isResource(project));
       this.userConnectedResources = projects.filter(project => this.isResource(project));
       this.initialLoadingSFProjects = false;
     });
-    this.loadUser();
+    await this.loadUser();
     this.subscribe(this.onlineStatusService.onlineStatus$, online => {
       if (online) this.loadParatextProjects();
     });
@@ -81,7 +81,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       } else {
         this.loggedIntoPT = true;
       }
-      this.userUnconnectedUserParatextProjects = userPTProjects.filter(project => !project.isConnected);
+      this.userUnconnectedParatextProjects = userPTProjects.filter(project => !project.isConnected);
     } catch {
       this.problemGettingPTProjects = true;
     } finally {
