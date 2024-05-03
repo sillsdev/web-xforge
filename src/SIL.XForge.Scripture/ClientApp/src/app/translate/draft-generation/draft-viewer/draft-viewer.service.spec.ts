@@ -155,4 +155,24 @@ describe('DraftViewerService', () => {
       expect(service.toDraftOps(draft, targetOps)).toEqual(expectedResult);
     });
   });
+
+  describe('opsHaveContent', () => {
+    it('should return false if all ops are blank', () => {
+      const ops: DeltaOperation[] = [{ insert: {} }, { insert: {} }];
+      expect(service.opsHaveContent(ops)).toBeFalse();
+    });
+
+    it('should return true if any op has content', () => {
+      const ops: DeltaOperation[] = [{ insert: 'content' }];
+      expect(service.opsHaveContent(ops)).toBeTrue();
+    });
+
+    it('should return false if the only op with content is a trailing newline', () => {
+      const newLineNotFinalOp: DeltaOperation[] = [{ insert: '\n' }, { insert: {} }];
+      expect(service.opsHaveContent(newLineNotFinalOp)).toBeTrue();
+
+      const newLineFinalOp: DeltaOperation[] = [{ insert: {} }, { insert: '\n' }];
+      expect(service.opsHaveContent(newLineFinalOp)).toBeFalse();
+    });
+  });
 });

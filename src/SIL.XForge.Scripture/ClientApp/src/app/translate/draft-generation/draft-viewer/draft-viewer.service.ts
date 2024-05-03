@@ -118,4 +118,18 @@ export class DraftViewerService {
       };
     });
   }
+
+  /**
+   * Checks whether the ops have any content (text) in them. This is defined as any op having text content (verse
+   * numbers and other format markers do not count as "content"). If the final op is a newline, it is not counted as
+   * content since it appears most or all documents have a trailing newline at the end.
+   * @param ops The list of delta operations to check for content.
+   * @returns Whether any of the ops contains text content.
+   */
+  opsHaveContent(ops: DeltaOperation[]): boolean {
+    const indexOfFirstText = ops.findIndex(op => typeof op.insert === 'string');
+    const onlyTextOpIsTrailingNewline = indexOfFirstText === ops.length - 1 && ops[indexOfFirstText].insert === '\n';
+    const hasNoExistingText = indexOfFirstText === -1 || onlyTextOpIsTrailingNewline;
+    return !hasNoExistingText;
+  }
 }

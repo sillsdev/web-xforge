@@ -14,6 +14,8 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { DialogService } from '../../../../xforge-common/dialog.service';
+import { I18nService } from '../../../../xforge-common/i18n.service';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -69,7 +71,9 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
     private readonly userService: UserService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedRoute: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly i18nService: I18nService,
+    private readonly dialogService: DialogService
   ) {
     super();
   }
@@ -264,13 +268,25 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
       );
   }
 
-  applyDraft(): void {
+  async confirmOverwrite(): Promise<boolean> {
+    const chapter = `${this.i18nService.localizeBook(this.currentBook!)} ${this.currentChapter}`;
+    return await this.dialogService.confirm(
+      this.i18nService.translate('draft_viewer.overwrite_warning', { chapter }),
+      'draft_viewer.confirm_overwrite'
+    );
+  }
+
+  async applyDraft(): Promise<void> {
     if (this.preDraftTargetDelta?.ops == null) {
       throw new Error(`'applyDraft()' called when 'preDraftTargetDelta' is not set`);
     }
 
     if (this.targetEditor.editor == null) {
       throw new Error(`'applyDraft()' called when 'targetEditor.editor' is not set`);
+    }
+
+    if (this.draftViewerService.opsHaveContent(this.preDraftTargetDelta?.ops) && !(await this.confirmOverwrite())) {
+      return;
     }
 
     const cleanedOps: DeltaOperation[] = this.cleanDraftOps(this.targetEditor.editor.getContents().ops!);
