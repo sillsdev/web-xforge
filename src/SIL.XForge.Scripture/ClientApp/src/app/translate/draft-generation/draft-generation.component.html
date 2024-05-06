@@ -37,7 +37,7 @@
       </ng-container>
     </p>
 
-    <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="primary" class="requirements">
+    <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="warning" class="requirements">
       <p>
         <transloco key="draft_generation.back_translation_requirement" [params]="{ supportedLanguagesUrl }"></transloco>
       </p>
@@ -223,7 +223,7 @@
               <section *ngIf="!isDraftInProgress(draftJob)" class="draft-complete">
                 <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
                   <div>
-                    <mat-card *ngIf="isDraftComplete(draftJob)">
+                    <mat-card *ngIf="isDraftComplete(draftJob)" class="mat-elevation-z2">
                       <h2>{{ t("draft_generation_complete") }}</h2>
                       <p>
                         <transloco
