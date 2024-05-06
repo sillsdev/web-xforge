@@ -169,8 +169,6 @@
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge can assist with drafting a translation.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "Based on your existing translation progress you can use the books you have already translated to generate a draft of the next book you are working on.",
     "offline_message": "Draft generation is not available when offline.",
-    "or": "or",
-
     "preview_draft_button": "Preview draft",
     "preview_last_draft_button": "Preview last draft",
     "preview_last_draft_detail": "The last draft build did not complete, but you can go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the last generated draft to chapters of your choice.",
@@ -179,7 +177,6 @@
     "preview_last_draft_while_active_build": "While the new draft generation is in progress, you can continue working with the previously generated draft.",
     "report_problem": "Report problem",
     "sign_up_for_drafting": "Sign up for drafting",
-    "suggested_workflow": "A suggested workflow is to draft and edit one book before generating a draft for the next book.",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again."
   },
