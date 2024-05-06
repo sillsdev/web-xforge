@@ -13,25 +13,8 @@
           [ngClass]="{
             invalid: text.invalid,
             borderless: hasAudio(),
-            halfHeight: uploadEnabled
           }"
         ></app-checking-audio-recorder>
-        <button
-          *ngIf="uploadEnabled && !hasAudio()"
-          mat-button
-          ngfSelect
-          type="button"
-          [(file)]="uploadAudioFile"
-          (fileChange)="prepareAudioFileUpload()"
-          accept="audio/*"
-          class="border-button"
-          [ngClass]="{ invalid: text.invalid, halfHeight: uploadEnabled }"
-          [(lastInvalids)]="lastInvalids"
-          [matTooltip]="t('upload_audio_file')"
-          matTooltipPosition="before"
-        >
-          <mat-icon>cloud_upload</mat-icon>
-        </button>
       </div>
     </div>
   </form>

@@ -23,7 +23,6 @@ export interface AudioAttachment {
 @Component({
   selector: 'app-checking-audio-recorder',
   templateUrl: './checking-audio-recorder.component.html',
-  styleUrls: ['./checking-audio-recorder.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

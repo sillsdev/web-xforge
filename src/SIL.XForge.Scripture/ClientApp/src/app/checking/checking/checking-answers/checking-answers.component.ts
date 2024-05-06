@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { MediaObserver } from '@angular/flex-layout';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -18,6 +18,10 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import {
+  Breakpoint,
+  MediaBreakpointService
+} from '../../../../xforge-common/media-breakpoints/media-breakpoint.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -81,7 +85,7 @@ enum LikeAnswerResponse {
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss']
 })
-export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
+export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit, AfterViewInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
@@ -112,6 +116,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   private justEditedAnswer: boolean = false;
   private isProjectAdmin: boolean = false;
   private projectProfileDocChangesSubscription?: Subscription;
+  isScreenSmall: boolean = false;
 
   constructor(
     private readonly userService: UserService,
@@ -123,9 +128,19 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     public featureFlags: FeatureFlagService,
-    public media: MediaObserver
+    private readonly breakpointObserver: BreakpointObserver,
+    private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     super();
+  }
+
+  ngAfterViewInit(): void {
+    this.subscribe(
+      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
+      (state: BreakpointState) => {
+        this.isScreenSmall = state.matches;
+      }
+    );
   }
 
   get project(): SFProjectProfile | undefined {
