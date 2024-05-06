@@ -504,6 +504,8 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.numberOfTimesDialogClosed)
       .withContext('saving should not occur and close dialog while offline')
       .toEqual(0);
+
+    flush();
   }));
 
   it('disables save button if offline, shows message', fakeAsync(async () => {
