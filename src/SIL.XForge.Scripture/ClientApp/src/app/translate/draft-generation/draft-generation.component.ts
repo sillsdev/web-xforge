@@ -12,7 +12,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { Subscription, combineLatest, of } from 'rxjs';
+import { combineLatest, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -29,7 +29,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { BuildConfig, activeBuildStates } from './draft-generation';
+import { activeBuildStates, BuildConfig } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult

@@ -9,13 +9,13 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import {
+  activeBuildStates,
   BuildConfig,
-  DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
+  DRAFT_GENERATION_SERVICE_OPTIONS,
   PreTranslation,
-  PreTranslationData,
-  activeBuildStates
+  PreTranslationData
 } from './draft-generation';
 
 @Injectable({
