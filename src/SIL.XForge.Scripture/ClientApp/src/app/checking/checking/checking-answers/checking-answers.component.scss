@@ -60,31 +60,28 @@
   .form-actions {
     display: flex;
     justify-content: flex-end;
+
+    .mat-flat-button,
+    .mat-button {
+      line-height: unset;
+      mat-icon {
+        margin-inline-end: 6px;
+      }
+      span {
+        vertical-align: middle;
+      }
+    }
+    .mat-icon-button {
+      ::ng-deep .mat-button-focus-overlay {
+        display: none;
+      }
+    }
+    mat-icon {
+      vertical-align: middle;
+    }
   }
   .stop-recording {
     color: variables.$red;
-  }
-}
-
-@media (max-width: map-get(checking-vars.$grid-breakpoints, lg)) {
-  .large-screen {
-    display: none;
-  }
-  .small-screen {
-    display: block;
-  }
-}
-
-@media (min-width: map-get(checking-vars.$grid-breakpoints, lg)) {
-  .large-screen {
-    display: block;
-    line-height: unset;
-    span {
-      margin-inline-start: 6px;
-    }
-  }
-  .small-screen {
-    display: none;
   }
 }
 
