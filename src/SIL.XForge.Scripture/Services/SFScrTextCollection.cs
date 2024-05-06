@@ -69,7 +69,4 @@ public class SFScrTextCollection : ScrTextCollection
 
     protected override ScrText CreateResourceProject(ProjectName name) =>
         throw new NotImplementedException("This method should not be used in SF context.");
-
-    protected override ScrText MarbleResourceLookup(string name) =>
-        throw new NotImplementedException("This method should not be used in SF context.");
 }
