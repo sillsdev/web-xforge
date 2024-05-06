@@ -42,7 +42,7 @@
         </ng-container>
       </p>
 
-      <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="primary" class="requirements">
+      <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="warning" class="requirements">
         <p>
           <transloco
             key="draft_generation.back_translation_requirement"
