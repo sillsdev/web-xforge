@@ -12,8 +12,8 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-20.04"]
-        node_version: ["16.15.0"]
-        npm_version: ["8.10.0"]
+        node_version: ["18.20.2"]
+        npm_version: ["10.5.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -56,7 +56,7 @@ jobs:
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook -- --webpack-stats-json
       - id: publish
         name: Publish to Chromatic
-        uses: chromaui/action@v1
+        uses: chromaui/action@v11.3.0
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: src/SIL.XForge.Scripture/ClientApp
