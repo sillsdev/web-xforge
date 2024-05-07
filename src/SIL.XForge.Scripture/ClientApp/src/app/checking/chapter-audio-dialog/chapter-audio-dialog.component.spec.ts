@@ -53,7 +53,12 @@ const mockedSFProjectService = mock(SFProjectService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      DialogTestModule,
+      NoopAnimationsModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
