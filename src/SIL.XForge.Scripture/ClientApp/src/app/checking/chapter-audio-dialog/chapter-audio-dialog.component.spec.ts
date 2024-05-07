@@ -709,6 +709,7 @@ class TestEnvironment {
     this.testOnlineStatusService.setIsOnline(isOnline);
     tick();
     this.fixture.detectChanges();
+    tick();
   }
 
   get fileUploadElement(): HTMLInputElement {
