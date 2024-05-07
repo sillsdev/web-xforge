@@ -1,6 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
-import { mock } from 'ts-mockito';
+import { fakeAsync, TestBed } from '@angular/core/testing';
+import { anything, mock, verify } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequestService } from 'xforge-common/retrying-request.service';
@@ -50,6 +50,16 @@ describe('ServalAdministrationService', () => {
       request.flush(mockBlob);
       env.httpTestingController.verify();
     });
+  });
+
+  describe('onlineRetrievePreTranslationStatus', () => {
+    it('should invoke the command service', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      const id = '1234567890abcdef';
+      await env.service.onlineRetrievePreTranslationStatus(id);
+      verify(mockedCommandService.onlineInvoke(anything(), 'retrievePreTranslationStatus', anything())).once();
+      expect().nothing();
+    }));
   });
 
   class TestEnvironment {
