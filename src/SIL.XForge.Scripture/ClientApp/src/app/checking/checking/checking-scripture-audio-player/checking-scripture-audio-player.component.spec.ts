@@ -77,11 +77,12 @@ describe('ScriptureAudioComponent', () => {
   it('emits verse changed event', fakeAsync(() => {
     const env = new TestEnvironment();
 
-    expect(env.verseChangedSpy).withContext('it already announced where we started').toHaveBeenCalledTimes(1);
+    expect(env.component.audioPlayer.isAudioAvailable).toBe(true);
+    expect(env.verseChangedSpy).withContext('it should not be called on init').toHaveBeenCalledTimes(0);
 
     env.audioPlayer.audio.currentTime = 1.5;
     env.audioPlayer.audio.timeUpdated$.next();
-    expect(env.verseChangedSpy).toHaveBeenCalledTimes(2);
+    expect(env.verseChangedSpy).toHaveBeenCalledTimes(1);
     expect(env.verseChangedSpy).toHaveBeenCalledWith('verse_1_2');
   }));
 
@@ -111,6 +112,8 @@ describe('ScriptureAudioComponent', () => {
         { textRef: '1', from: 2.0, to: 3.0 }
       ]
     });
+
+    env.audioPlayer.audio.timeUpdated$.next();
     expect(env.verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   }));
