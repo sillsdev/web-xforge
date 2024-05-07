@@ -113,12 +113,15 @@ export function submitMigrationOp(version: number, doc: Doc, ops: Op[]): Promise
   });
 }
 
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
+// We merge these two declarations, as we want to extend two classes
 export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBackend {}
 
 /**
  * This class represents the real-time server. It extends ShareDB and adds support for migrations and access control.
  */
 export class RealtimeServer extends ShareDB {
+  /* eslint-enable @typescript-eslint/no-unsafe-declaration-merging */
   private readonly docServices = new Map<string, DocService>();
   private defaultConnection?: Connection;
 

@@ -419,7 +419,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
           this.draftGenerationService
             .getBuildProgress(projectId)
             .pipe(
-              switchMap((job?: BuildDto) =>
+              switchMap((job: BuildDto | undefined) =>
                 this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
               )
             )

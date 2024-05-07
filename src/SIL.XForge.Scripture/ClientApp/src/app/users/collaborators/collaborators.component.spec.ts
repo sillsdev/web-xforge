@@ -19,7 +19,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { CommandError } from 'xforge-common/command.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -178,7 +178,9 @@ describe('CollaboratorsComponent', () => {
     // Handle that error.
 
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(new CommandError(1, 'error', null));
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
+      new CommandError(CommandErrorCode.Other, 'error', null)
+    );
     env.setupProjectData({
       // No user01
       user02: SFProjectRole.ParatextTranslator,
@@ -194,7 +196,9 @@ describe('CollaboratorsComponent', () => {
 
   it('handle error from invited users query, when user is not an admin', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(new CommandError(1, 'error', null));
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
+      new CommandError(CommandErrorCode.Other, 'error', null)
+    );
     env.setupProjectData({
       // user01 is not an admin
       user01: SFProjectRole.CommunityChecker,

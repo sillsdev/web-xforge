@@ -9,13 +9,13 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import {
+  activeBuildStates,
   BuildConfig,
-  DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
+  DRAFT_GENERATION_SERVICE_OPTIONS,
   PreTranslation,
-  PreTranslationData,
-  activeBuildStates
+  PreTranslationData
 } from './draft-generation';
 
 @Injectable({
@@ -95,7 +95,7 @@ export class DraftGenerationService {
    */
   startBuildOrGetActiveBuild(buildConfig: BuildConfig): Observable<BuildDto | undefined> {
     return this.getBuildProgress(buildConfig.projectId).pipe(
-      switchMap((job?: BuildDto) => {
+      switchMap((job: BuildDto | undefined) => {
         // If existing build is currently active, return polling observable
         if (activeBuildStates.includes(job?.state as BuildStates)) {
           return this.pollBuildProgress(buildConfig.projectId);
