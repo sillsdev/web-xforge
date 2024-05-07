@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map, skip } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -204,6 +204,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this.verseChangeSubscription?.unsubscribe();
     this.verseChangeSubscription = this.subscribe(
       audio.timeUpdated$.pipe(
+        skip(1), //suppress on subscribe, as isPlaying == false
         map(() => this.getCurrentIndexInTimings(audio.currentTime)),
         distinctUntilChanged()
       ),
