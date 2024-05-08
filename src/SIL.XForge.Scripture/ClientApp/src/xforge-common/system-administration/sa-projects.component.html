@@ -6,7 +6,7 @@
 </div>
 <ng-container *ngIf="!isLoading">
   <ng-container *ngIf="length > 0">
-    <table mat-table id="projects-table" ngClass.gt-xs="fixed-layout-table" [dataSource]="rows">
+    <table mat-table id="projects-table" [dataSource]="rows">
       <ng-container matColumnDef="name">
         <td mat-cell *matCellDef="let row">
           <a *ngIf="row.isMember; else nonmember" [appRouterLink]="['/projects', row.id]">
