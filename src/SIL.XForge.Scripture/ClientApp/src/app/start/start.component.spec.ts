@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
@@ -22,7 +21,12 @@ const mockedUserService = mock(UserService);
 describe('StartComponent', () => {
   configureTestingModule(() => ({
     declarations: [StartComponent],
-    imports: [UICommonModule, RouterTestingModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      UICommonModule,
+      RouterModule.forRoot([]),
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: Router, useMock: mockedRouter },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },

@@ -3,7 +3,7 @@ import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
@@ -306,7 +306,7 @@ describe('ShareControlComponent', () => {
 });
 
 @NgModule({
-  imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule]
+  imports: [BrowserModule, HttpClientTestingModule, RouterModule.forRoot([]), UICommonModule, TestTranslocoModule]
 })
 class TestModule {}
 

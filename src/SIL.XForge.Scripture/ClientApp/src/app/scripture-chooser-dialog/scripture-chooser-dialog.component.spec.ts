@@ -9,7 +9,7 @@ import {
 } from '@angular/material/legacy-dialog';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -417,7 +417,7 @@ describe('ScriptureChooserDialog', () => {
     imports: [
       BrowserModule,
       HttpClientTestingModule,
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       UICommonModule,
       MatDialogModule,
       TestTranslocoModule,

@@ -2,8 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router, RouterModule } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { User } from 'realtime-server/common/models/user';
@@ -129,7 +128,7 @@ describe('DraftViewerComponent', () => {
       UICommonModule,
       CommonModule,
       SharedModule,
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TranslocoMarkupModule,
       TestTranslocoModule,

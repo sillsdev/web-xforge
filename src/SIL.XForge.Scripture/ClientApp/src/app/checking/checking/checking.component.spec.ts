@@ -9,8 +9,7 @@ import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router, RouterModule } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -158,7 +157,7 @@ describe('CheckingComponent', () => {
       AngularSplitModule,
       ngfModule,
       NoopAnimationsModule,
-      RouterTestingModule.withRoutes(ROUTES),
+      RouterModule.forRoot(ROUTES),
       SharedModule,
       UICommonModule,
       AvatarComponent,
