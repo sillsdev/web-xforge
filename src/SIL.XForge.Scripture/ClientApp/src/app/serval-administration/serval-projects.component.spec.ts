@@ -3,7 +3,7 @@ import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -34,7 +34,7 @@ describe('ServalProjectsComponent', () => {
     imports: [
       ServalProjectsComponent,
       NoopAnimationsModule,
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),

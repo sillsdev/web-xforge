@@ -3,8 +3,7 @@ import { Component, DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Route, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { Route, Router, RouterModule } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -26,7 +25,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PwaService, PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN } from 'xforge-common/pwa.service';
+import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -86,7 +85,7 @@ describe('AppComponent', () => {
     imports: [
       UICommonModule,
       NoopAnimationsModule,
-      RouterTestingModule.withRoutes(ROUTES),
+      RouterModule.forRoot(ROUTES),
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),

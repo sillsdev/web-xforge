@@ -10,8 +10,7 @@ import {
 } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Params, Route, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
 import {
   createRange,
   InteractiveTranslatorFactory,
@@ -152,7 +151,7 @@ describe('EditorComponent', () => {
     imports: [
       AngularSplitModule,
       NoopAnimationsModule,
-      RouterTestingModule.withRoutes(ROUTES),
+      RouterModule.forRoot(ROUTES),
       SharedModule,
       UICommonModule,
       TestTranslocoModule,
