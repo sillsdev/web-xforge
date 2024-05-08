@@ -98,5 +98,6 @@
   "python.formatting.provider": "black",
   "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.preferences.importModuleSpecifier": "relative"
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.unstable.organizeImportsIgnoreCase": true
 }
