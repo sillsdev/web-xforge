@@ -73,6 +73,7 @@ module.exports = function (config) {
       '/assets/audio/': '/base/app/checking/checking/test-audio/',
       '/assets/icons/TagIcons/defaultIcon.png': '',
       '/assets/icons/TagIcons/flag01.png': '',
+      '/assets/icons/TagIcons/flag04.png': '',
       '/assets/icons/TagIcons/flag05.png': ''
     },
     reporters: karmaReporters,
