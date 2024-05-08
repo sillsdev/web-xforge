@@ -1657,6 +1657,76 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_DoNotAllowScriptureRangesWithSendAllSegments()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            p => p.Id == Project01,
+            u => u.Set(s => s.TranslateConfig.DraftConfig, new DraftConfig { SendAllSegments = true })
+        );
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TrainingScriptureRange = "GEN",
+                        TranslationScriptureRange = "GEN",
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangeWithTrainingBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TrainingScriptureRange = "GEN",
+                        TrainingBooks = [1],
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangeWithTranslationBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TranslationScriptureRange = "GEN",
+                        TranslationBooks = [1],
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationBooks()
     {
         // Set up test environment

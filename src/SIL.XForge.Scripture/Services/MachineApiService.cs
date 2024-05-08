@@ -744,6 +744,23 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
+        // Ensure that there are no errors in the build configuration
+        if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange) && buildConfig.TrainingBooks.Count > 0)
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TrainingScriptureRange)}"
+                    + $" and {nameof(buildConfig.TrainingBooks)}."
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange) && buildConfig.TranslationBooks.Count > 0)
+        {
+            throw new DataNotFoundException(
+                $"You cannot specify both {nameof(buildConfig.TranslationScriptureRange)}"
+                    + $" and {nameof(buildConfig.TranslationBooks)}."
+            );
+        }
+
         // Load the project from the realtime service
         await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
@@ -754,6 +771,21 @@ public class MachineApiService(
 
         // Ensure that the user has permission on the project
         MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+
+        // Do not allow using scripture ranges with send all segments, as we must send a Paratext project
+        if (
+            projectDoc.Data.TranslateConfig.DraftConfig.SendAllSegments
+            && (
+                !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
+                || !string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange)
+            )
+        )
+        {
+            throw new DataNotFoundException(
+                $"You may not pre-translate non-Scripture material and specify "
+                    + $"{nameof(buildConfig.TranslationScriptureRange)} or {nameof(buildConfig.TranslationScriptureRange)}"
+            );
+        }
 
         // Save the selected books
         await projectDoc.SubmitJson0OpAsync(op =>
@@ -769,9 +801,17 @@ public class MachineApiService(
                 _listStringComparer
             );
             op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRange,
+                buildConfig.TrainingScriptureRange
+            );
+            op.Set(
                 p => p.TranslateConfig.DraftConfig.LastSelectedTranslationBooks,
                 buildConfig.TranslationBooks.ToList(),
                 _listIntComparer
+            );
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRange,
+                buildConfig.TranslationScriptureRange
             );
         });
 

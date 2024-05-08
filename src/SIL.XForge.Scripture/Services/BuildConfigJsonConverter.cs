@@ -36,10 +36,22 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.TrainingDataFiles);
         }
 
+        if (!string.IsNullOrWhiteSpace(value.TrainingScriptureRange))
+        {
+            writer.WritePropertyName(nameof(value.TrainingScriptureRange));
+            serializer.Serialize(writer, value.TrainingScriptureRange);
+        }
+
         if (value.TranslationBooks.Count > 0)
         {
             writer.WritePropertyName(nameof(value.TranslationBooks));
             serializer.Serialize(writer, value.TranslationBooks);
+        }
+
+        if (!string.IsNullOrWhiteSpace(value.TranslationScriptureRange))
+        {
+            writer.WritePropertyName(nameof(value.TranslationScriptureRange));
+            serializer.Serialize(writer, value.TranslationScriptureRange);
         }
 
         if (value.FastTraining)
