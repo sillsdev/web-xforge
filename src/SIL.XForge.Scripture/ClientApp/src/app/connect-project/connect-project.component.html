@@ -11,8 +11,10 @@
       </button>
     </div>
     <mat-card *ngSwitchCase="'connecting'" class="progress-container card-outline">
-      <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
-      <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
+      <mat-card-content>
+        <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
+        <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
+      </mat-card-content>
     </mat-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
