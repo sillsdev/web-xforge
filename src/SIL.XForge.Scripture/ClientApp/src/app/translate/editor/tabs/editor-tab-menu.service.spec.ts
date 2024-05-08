@@ -2,12 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { invert } from 'lodash-es';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
+import { of, take } from 'rxjs';
 import { SF_TYPE_REGISTRY } from 'src/app/core/models/sf-type-registry';
 import { TabStateService } from 'src/app/shared/sf-tab-group';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
@@ -27,7 +30,7 @@ const mockI18nService = mock(I18nService);
 
 describe('EditorTabsMenuService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot()],
     providers: [
       EditorTabMenuService,
       { provide: UserService, useMock: userServiceMock },
@@ -35,7 +38,8 @@ describe('EditorTabsMenuService', () => {
       { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
-      { provide: I18nService, useMock: mockI18nService }
+      { provide: I18nService, useMock: mockI18nService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -112,6 +116,36 @@ describe('EditorTabsMenuService', () => {
     });
   });
 
+  it('should handle offline', done => {
+    const env = new TestEnvironment();
+    env.setExistingTabs([]);
+    env.setLastCompletedBuildExists(true);
+    service['canShowHistory'] = () => true;
+
+    env.onlineStatus.setIsOnline(false);
+    service
+      .getMenuItems()
+      .pipe(take(1))
+      .subscribe(items => {
+        expect(items.length).toBe(1);
+        expect(items[0].type).toBe('history');
+        expect(items[0].disabled).toBeFalsy();
+      });
+
+    env.onlineStatus.setIsOnline(true);
+    service
+      .getMenuItems()
+      .pipe(take(1))
+      .subscribe(items => {
+        expect(items.length).toBe(2);
+        expect(items[0].type).toBe('history');
+        expect(items[0].disabled).toBeFalsy();
+        expect(items[1].type).toBe('draft');
+        expect(items[1].disabled).toBeFalsy();
+        done();
+      });
+  });
+
   describe('canShowHistory', () => {
     it('should return false if undefined project doc or project data', () => {
       new TestEnvironment();
@@ -145,6 +179,8 @@ describe('EditorTabsMenuService', () => {
 });
 
 class TestEnvironment {
+  readonly onlineStatus: TestOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+
   readonly rolesByUser = {
     user01: SFProjectRole.ParatextConsultant,
     user02: SFProjectRole.ParatextTranslator,
@@ -164,9 +200,9 @@ class TestEnvironment {
   } as SFProjectProfileDoc;
 
   constructor() {
-    service = TestBed.inject(EditorTabMenuService);
     when(activatedProjectMock.projectDoc$).thenReturn(of(this.projectDoc));
     when(mockI18nService.translate(anything())).thenReturn(of(''));
+    service = TestBed.inject(EditorTabMenuService);
   }
 
   setExistingTabs(tabs: EditorTabInfo[]): void {
