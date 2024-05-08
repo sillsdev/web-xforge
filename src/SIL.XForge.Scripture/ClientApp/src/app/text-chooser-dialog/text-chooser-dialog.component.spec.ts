@@ -14,7 +14,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
@@ -464,7 +464,7 @@ class TestEnvironment {
 
     const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;
-    this.resultPromise = dialogRef.afterClosed().toPromise();
+    this.resultPromise = firstValueFrom(dialogRef.afterClosed());
 
     // Set up DialogService mocking after it's already used above in creating the component.
     const dialogSpy = spy(this.component.dialogService);

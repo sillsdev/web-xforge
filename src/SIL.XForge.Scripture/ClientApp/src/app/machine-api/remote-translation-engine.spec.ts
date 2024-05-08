@@ -125,7 +125,7 @@ describe('RemoteTranslationEngine', () => {
     const env = new TestEnvironment();
 
     when(env.mockedHttpClient.get<EngineDto>('translation/engines/project:project01')).thenReturn(
-      throwError(new HttpErrorResponse({ status: 404 }))
+      throwError(() => new HttpErrorResponse({ status: 404 }))
     );
 
     const stats = await env.client.getStats();
@@ -150,7 +150,7 @@ describe('RemoteTranslationEngine', () => {
     env.addCreateBuild();
 
     when(env.mockedHttpClient.post<BuildDto>('translation/builds', JSON.stringify('project01'))).thenReturn(
-      throwError(new HttpErrorResponse({ status: 404 }))
+      throwError(() => new HttpErrorResponse({ status: 404 }))
     );
 
     await env.client.startTraining();
@@ -178,7 +178,7 @@ describe('RemoteTranslationEngine', () => {
   it('train with error while starting build', () => {
     const env = new TestEnvironment();
     when(env.mockedHttpClient.post<BuildDto>('translation/builds', JSON.stringify('engine01'))).thenReturn(
-      throwError(new Error('Error while creating build.'))
+      throwError(() => new Error('Error while creating build.'))
     );
 
     env.client.train().subscribe(
@@ -191,7 +191,7 @@ describe('RemoteTranslationEngine', () => {
     const env = new TestEnvironment();
     env.addCreateBuild();
     when(env.mockedHttpClient.get<BuildDto>('translation/builds/id:build01?minRevision=1')).thenReturn(
-      throwError(new HttpErrorResponse({ status: 404, statusText: 'Not Found' }))
+      throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }))
     );
 
     env.client.train().subscribe(
@@ -393,12 +393,12 @@ describe('RemoteTranslationEngine', () => {
     let errorThrown = false;
     when(env.mockedHttpClient.get<BuildDto>('translation/builds/id:engine01?minRevision=0')).thenCall(() => {
       errorThrown = true;
-      throwError(new HttpErrorResponse({ status: 404 }));
+      throwError(() => new HttpErrorResponse({ status: 404 }));
     });
 
     env.client.listenForTrainingStatus().subscribe(
-      progress => throwError(new Error(`This should not be called. Progress: ${progress}`)),
-      err => throwError(err)
+      progress => throwError(() => new Error(`This should not be called. Progress: ${progress}`)),
+      err => throwError(() => err)
     );
     expect(errorThrown).toBe(true);
   });

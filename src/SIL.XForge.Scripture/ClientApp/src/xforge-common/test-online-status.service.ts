@@ -22,7 +22,7 @@ export class TestOnlineStatusService extends OnlineStatusService {
     if (value) {
       when(httpClientSpy.get('ping', anything())).thenCall(() => of('ok'));
     } else {
-      when(httpClientSpy.get('ping', anything())).thenReturn(throwError('error'));
+      when(httpClientSpy.get('ping', anything())).thenReturn(throwError(() => 'error'));
     }
     window.dispatchEvent(new Event(value ? 'online' : 'offline'));
   }

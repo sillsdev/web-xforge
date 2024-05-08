@@ -1,8 +1,9 @@
-import { HttpClient, HttpErrorResponse, HttpRequest, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { mock, verify, when } from 'ts-mockito';
-import { AuthHttpInterceptor, AUTH_APIS } from 'xforge-common/auth-http-interceptor';
+import { AUTH_APIS, AuthHttpInterceptor } from 'xforge-common/auth-http-interceptor';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandErrorCode, JsonRpcResponse } from 'xforge-common/command.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -28,7 +29,7 @@ describe('AuthHttpInterceptor', () => {
       }))
       .concat(AUTH_APIS.map(url => ({ url, authorizationRequired: true })));
     tests.forEach(test => {
-      env.httpClient.get(test.url).toPromise();
+      firstValueFrom(env.httpClient.get(test.url));
       tick();
       env.httpMock.expectOne((request: HttpRequest<any>) => {
         expect(request.url).toEqual(test.url);
@@ -49,10 +50,7 @@ describe('AuthHttpInterceptor', () => {
     const env = new TestEnvironment({ isAuthenticated: true });
     const apiUrl = COMMAND_API_NAMESPACE;
     let result: any | undefined;
-    env.httpClient
-      .get(apiUrl)
-      .toPromise()
-      .then(r => (result = r));
+    firstValueFrom(env.httpClient.get(apiUrl)).then(r => (result = r));
     tick();
     const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
       expect(request.url).toEqual(apiUrl);
@@ -80,7 +78,7 @@ describe('AuthHttpInterceptor', () => {
   it('Handles a 401 response and redirects to auth0 to login if unable to authenticate silently', fakeAsync(() => {
     const env = new TestEnvironment();
     const apiUrl = COMMAND_API_NAMESPACE;
-    env.httpClient.get(apiUrl).toPromise();
+    firstValueFrom(env.httpClient.get(apiUrl));
     tick();
     verify(mockedAuthService.isAuthenticated()).once();
     // None should be available as it never completes due to isAuthenticated failing and auth0 redirecting
@@ -93,10 +91,7 @@ describe('AuthHttpInterceptor', () => {
     const env = new TestEnvironment({ isAuthenticated: true });
     const apiUrl = COMMAND_API_NAMESPACE;
     let result: HttpErrorResponse | undefined;
-    env.httpClient
-      .get(apiUrl)
-      .toPromise()
-      .catch(r => (result = r));
+    firstValueFrom(env.httpClient.get(apiUrl)).catch(r => (result = r));
     tick();
     const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
       expect(request.url).toEqual(apiUrl);
@@ -114,10 +109,7 @@ describe('AuthHttpInterceptor', () => {
     const env = new TestEnvironment({ isAuthenticated: true });
     const apiUrl = COMMAND_API_NAMESPACE;
     let result: any | undefined;
-    env.httpClient
-      .get(apiUrl)
-      .toPromise()
-      .then(r => (result = r));
+    firstValueFrom(env.httpClient.get(apiUrl)).then(r => (result = r));
     tick();
     const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
       expect(request.url).toEqual(apiUrl);

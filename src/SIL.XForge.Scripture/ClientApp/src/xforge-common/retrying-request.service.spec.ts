@@ -86,7 +86,10 @@ describe('RetryingRequest', () => {
 
   it('handles non-network errors', fakeAsync(() => {
     const online$ = new BehaviorSubject(true);
-    const request = TestingRetryingRequestService.createRequest(throwError(TEST_NON_NETWORK_ERROR), online$);
+    const request = TestingRetryingRequestService.createRequest(
+      throwError(() => TEST_NON_NETWORK_ERROR),
+      online$
+    );
 
     let rejectedWithError: any;
     request.promiseForResult.catch(error => (rejectedWithError = error));
@@ -102,7 +105,11 @@ describe('RetryingRequest', () => {
   it('allows canceling the request', fakeAsync(() => {
     const online$ = new BehaviorSubject(true);
     const cancel$ = new Subject<void>();
-    const request = TestingRetryingRequestService.createRequest(throwError(TEST_NETWORK_ERROR), online$, cancel$);
+    const request = TestingRetryingRequestService.createRequest(
+      throwError(() => TEST_NETWORK_ERROR),
+      online$,
+      cancel$
+    );
 
     let rejectedWithError: any;
     request.promiseForResult.catch(error => (rejectedWithError = error));

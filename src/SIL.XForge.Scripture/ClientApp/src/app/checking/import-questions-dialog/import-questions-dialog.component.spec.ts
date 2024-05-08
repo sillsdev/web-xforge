@@ -730,7 +730,7 @@ class TestEnvironment {
   private setupTransceleratorQuestions(): void {
     if (this.errorOnFetchQuestions) {
       when(mockedProjectService.transceleratorQuestions('project01', anything())).thenCall(() =>
-        TestingRetryingRequestService.createRequest(throwError(new Error('Transcelerator version unsupported')))
+        TestingRetryingRequestService.createRequest(throwError(() => new Error('Transcelerator version unsupported')))
       );
     } else {
       when(mockedProjectService.transceleratorQuestions('project01', anything())).thenCall(() =>
