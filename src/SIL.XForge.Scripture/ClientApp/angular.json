@@ -127,11 +127,11 @@
           "options": {},
           "configurations": {
             "production": {
-              "browserTarget": "SIL.XForge.Scripture:build:production"
+              "buildTarget": "SIL.XForge.Scripture:build:production"
             },
             "development": {
-              "browserTarget": "SIL.XForge.Scripture:build:development",
-              "publicHost": "localhost:4200"
+              "publicHost": "localhost:4200",
+              "buildTarget": "SIL.XForge.Scripture:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -139,7 +139,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "SIL.XForge.Scripture:build"
+            "buildTarget": "SIL.XForge.Scripture:build"
           }
         },
         "test": {
