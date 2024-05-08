@@ -3,8 +3,8 @@
     <div class="mat-headline-4">{{ t("settings") }}</div>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     <div>
-      <mat-card class="card card-outline">
-        <form [formGroup]="form">
+      <form [formGroup]="form">
+        <mat-card class="card card-outline">
           <mat-card-content>
             <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
@@ -99,7 +99,6 @@
               </mat-error>
             </div>
           </mat-card-content>
-          <mat-divider *ngIf="showPreTranslationSettings"></mat-divider>
           <mat-card-content *ngIf="showPreTranslationSettings">
             <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
             <div class="tool-setting">
@@ -221,7 +220,6 @@
               </ng-container>
             </div>
           </mat-card-content>
-          <mat-divider></mat-divider>
           <mat-card-content>
             <mat-card-title>{{ t("community_checking_settings") }}</mat-card-title>
             <div class="tool-setting">
@@ -296,7 +294,6 @@
               </div>
             </ng-container>
           </mat-card-content>
-          <mat-divider></mat-divider>
           <mat-card-content>
             <mat-card-title>{{ t("sharing") }}</mat-card-title>
             <div class="tool-setting">
@@ -334,8 +331,8 @@
               </span>
             </div>
           </mat-card-content>
-        </form>
-      </mat-card>
+        </mat-card>
+      </form>
     </div>
 
     <div id="danger-zone">
