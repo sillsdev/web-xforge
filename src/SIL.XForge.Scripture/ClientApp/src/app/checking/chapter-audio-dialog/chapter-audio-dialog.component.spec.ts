@@ -76,7 +76,7 @@ describe('ChapterAudioDialogComponent', () => {
   });
 
   it('should upload audio and return timing data on save', fakeAsync(async () => {
-    const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
+    const promiseForResult: Promise<ChapterAudioDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
     await env.component.save();

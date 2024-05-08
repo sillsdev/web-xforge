@@ -5,6 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { firstValueFrom } from 'rxjs';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import {
@@ -119,7 +120,7 @@ class TestEnvironment {
   }
 
   get closeValuePromise(): Promise<ImportQuestionsConfirmationDialogResult> {
-    return this.dialogRef.afterClosed().toPromise();
+    return firstValueFrom(this.dialogRef.afterClosed());
   }
 
   click(element: HTMLElement): void {
@@ -137,7 +138,7 @@ class TestEnvironment {
   }
 
   closeDialog(): Promise<ImportQuestionsConfirmationDialogResult> {
-    const promiseForResult = this.dialogRef.afterClosed().toPromise();
+    const promiseForResult = firstValueFrom(this.dialogRef.afterClosed());
     this.click(this.closeButton);
     return promiseForResult;
   }
