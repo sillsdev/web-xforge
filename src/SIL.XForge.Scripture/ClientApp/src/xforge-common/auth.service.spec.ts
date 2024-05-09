@@ -1,6 +1,5 @@
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { Router, RouterModule } from '@angular/router';
 import {
   Auth0Client,
   GenericError,
@@ -19,8 +18,8 @@ import {
   AuthState,
   EXPIRES_AT_SETTING,
   ID_TOKEN_SETTING,
-  ROLES_SETTING,
   ROLE_SETTING,
+  ROLES_SETTING,
   USER_ID_SETTING,
   XF_ROLE_CLAIM,
   XF_USER_ID_CLAIM
@@ -56,7 +55,7 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule],
+    imports: [RouterModule.forRoot([]), TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },

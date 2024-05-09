@@ -4,8 +4,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Params } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -49,7 +48,7 @@ describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
     declarations: [TranslateOverviewComponent, TrainingProgressComponent],
     imports: [
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
       HttpClientTestingModule,

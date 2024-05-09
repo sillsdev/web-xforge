@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
@@ -40,7 +40,7 @@ describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
     imports: [
       NoopAnimationsModule,
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       UICommonModule,
       DialogTestModule,
       TestTranslocoModule,

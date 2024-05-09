@@ -4,7 +4,7 @@ import {
   MatLegacyDialogState as MatDialogState
 } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -89,7 +89,7 @@ describe('DraftGenerationComponent', () => {
       TestBed.configureTestingModule({
         imports: [
           TestOnlineStatusModule.forRoot(),
-          RouterTestingModule,
+          RouterModule.forRoot([]),
           TranslocoMarkupModule,
           TestTranslocoModule,
           NoopAnimationsModule

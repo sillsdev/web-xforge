@@ -10,6 +10,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -382,12 +383,9 @@ class TestEnvironment {
       }
     };
     this.dialogRef = TestBed.inject(MatDialog).open(ShareDialogComponent, config);
-    this.dialogRef
-      .afterClosed()
-      .toPromise()
-      .then(() => {
-        this.isDialogOpen = false;
-      });
+    firstValueFrom(this.dialogRef.afterClosed()).then(() => {
+      this.isDialogOpen = false;
+    });
     this.component = this.dialogRef.componentInstance;
     this.fixture.detectChanges();
     this.wait();

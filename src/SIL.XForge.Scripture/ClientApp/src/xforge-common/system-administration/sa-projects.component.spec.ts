@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatCheckbox } from '@angular/material/checkbox';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
@@ -36,7 +36,7 @@ describe('SaProjectsComponent', () => {
   configureTestingModule(() => ({
     imports: [
       NoopAnimationsModule,
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),

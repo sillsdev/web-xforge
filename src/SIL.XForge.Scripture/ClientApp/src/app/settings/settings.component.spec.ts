@@ -5,8 +5,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatLegacyDialog as MatDialog, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, Route } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Route, RouterModule } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -64,7 +63,7 @@ describe('SettingsComponent', () => {
   configureTestingModule(() => ({
     imports: [
       HttpClientTestingModule,
-      RouterTestingModule.withRoutes(ROUTES),
+      RouterModule.forRoot(ROUTES),
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),

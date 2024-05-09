@@ -1,6 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -27,7 +27,7 @@ const mockedProjectDoc = mock(SFProjectProfileDoc);
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
     imports: [
-      RouterTestingModule,
+      RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
       HttpClientTestingModule,

@@ -37,6 +37,7 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
+import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -1077,10 +1078,7 @@ class TestEnvironment {
     );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
-    this.dialogRef
-      .afterClosed()
-      .toPromise()
-      .then(result => (this.dialogResult = result));
+    firstValueFrom(this.dialogRef.afterClosed()).then(result => (this.dialogResult = result));
 
     when(mockedUserService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
