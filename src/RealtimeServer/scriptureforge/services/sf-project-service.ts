@@ -213,9 +213,6 @@ export class SFProjectService extends ProjectService<SFProject> {
               lastSelectedTranslationScriptureRange: {
                 bsonType: 'string'
               },
-              sendAllSegments: {
-                bsonType: 'bool'
-              },
               servalConfig: {
                 bsonType: 'string'
               }

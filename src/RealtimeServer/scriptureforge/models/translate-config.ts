@@ -37,7 +37,6 @@ export interface DraftConfig {
   lastSelectedTrainingScriptureRange?: string;
   lastSelectedTranslationBooks: number[];
   lastSelectedTranslationScriptureRange?: string;
-  sendAllSegments: boolean;
   servalConfig?: string;
 }
 

@@ -85,70 +85,6 @@ public class PreTranslationServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationsAsync_AllowsSegmentedVersesAndHeadingsWhenSendAllSegmentsTrue()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { SendAllSegments = true });
-        const int bookNum = 64;
-        const int chapterNum = 1;
-        string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
-        env.TranslationEnginesClient.GetAllPretranslationsAsync(
-            TranslationEngine01,
-            Corpus01,
-            textId,
-            CancellationToken.None
-        )
-            .Returns(
-                Task.FromResult<IList<Pretranslation>>(
-                    [
-                        new Pretranslation
-                        {
-                            TextId = "64_1",
-                            Refs = { "64_1:mt1_001" },
-                            Translation = "3 John",
-                        },
-                        new Pretranslation
-                        {
-                            TextId = "64_1",
-                            Refs = { "64_1:verse_001_001" },
-                            Translation = "By the old man,",
-                        },
-                        new Pretranslation
-                        {
-                            TextId = "64_1",
-                            Refs = { "64_1:verse_001_001_001" },
-                            Translation = "To my dear friend Gaius,",
-                        },
-                        new Pretranslation
-                        {
-                            TextId = "64_1",
-                            Refs = { "64_1:verse_001_001_002" },
-                            Translation = "whom I love in the truth:",
-                        },
-                    ]
-                )
-            );
-
-        // SUT
-        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
-            User01,
-            Project01,
-            bookNum,
-            chapterNum,
-            CancellationToken.None
-        );
-        Assert.AreEqual(4, actual.Length);
-        Assert.AreEqual("mt1_1", actual[0].Reference);
-        Assert.AreEqual("3 John ", actual[0].Translation);
-        Assert.AreEqual("verse_1_1", actual[1].Reference);
-        Assert.AreEqual("By the old man, ", actual[1].Translation);
-        Assert.AreEqual("verse_1_1_1", actual[2].Reference);
-        Assert.AreEqual("To my dear friend Gaius, ", actual[2].Translation);
-        Assert.AreEqual("verse_1_1_2", actual[3].Reference);
-        Assert.AreEqual("whom I love in the truth: ", actual[3].Translation);
-    }
-
-    [Test]
     public void GetPreTranslationsAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
@@ -618,7 +554,6 @@ public class PreTranslationServiceTests
 
     private class TestEnvironmentOptions
     {
-        public bool SendAllSegments { get; init; }
         public bool UseParatextZipFile { get; init; }
     }
 
@@ -668,10 +603,6 @@ public class PreTranslationServiceTests
                 new SFProject
                 {
                     Id = Project01,
-                    TranslateConfig = new TranslateConfig
-                    {
-                        DraftConfig = { SendAllSegments = options.SendAllSegments },
-                    },
                     Texts =
                     [
                         new TextInfo
@@ -696,14 +627,7 @@ public class PreTranslationServiceTests
                         },
                     ],
                 },
-                new SFProject
-                {
-                    Id = Project02,
-                    TranslateConfig = new TranslateConfig
-                    {
-                        DraftConfig = { SendAllSegments = options.SendAllSegments },
-                    },
-                },
+                new SFProject { Id = Project02 },
             ];
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();

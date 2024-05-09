@@ -38,7 +38,6 @@
          InternetSettings.xml file. Also update server config scriptureforge.org_v2.yml. -->
     <PackageReference Include="ParatextData" Version="9.5.0.5" />
     <PackageReference Include="Serval.Client" Version="1.4.1" />
-    <PackageReference Include="SIL.Machine" Version="3.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
   </ItemGroup>

@@ -80,32 +80,28 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             return EMPTY;
           }
 
-          if (this.activatedProjectService.projectDoc?.data?.translateConfig.draftConfig.sendAllSegments) {
-            return this.getLegacyGeneratedDraft(targetOps);
-          } else {
-            return this.draftGenerationService
-              .getGeneratedDraftDeltaOperations(this.projectId, this.bookNum, this.chapter)
-              .pipe(
-                take(1),
-                catchError(err => {
-                  // If the corpus does not support USFM
-                  if (err.status === 405) {
-                    // Prompt the user to run a new build to use the new features
-                    this.draftCheckState = 'draft-legacy';
-                    return this.getLegacyGeneratedDraft(targetOps);
-                  }
-                  return throwError(() => err);
-                }),
-                tap((ops: DeltaOperation[]) => {
-                  // Check for empty draft
-                  if (ops.length === 0) {
-                    this.draftCheckState = 'draft-empty';
-                  } else if (this.draftCheckState !== 'draft-legacy') {
-                    this.draftCheckState = 'draft-present';
-                  }
-                })
-              );
-          }
+          return this.draftGenerationService
+            .getGeneratedDraftDeltaOperations(this.projectId, this.bookNum, this.chapter)
+            .pipe(
+              take(1),
+              catchError(err => {
+                // If the corpus does not support USFM
+                if (err.status === 405) {
+                  // Prompt the user to run a new build to use the new features
+                  this.draftCheckState = 'draft-legacy';
+                  return this.getLegacyGeneratedDraft(targetOps);
+                }
+                return throwError(() => err);
+              }),
+              tap((ops: DeltaOperation[]) => {
+                // Check for empty draft
+                if (ops.length === 0) {
+                  this.draftCheckState = 'draft-empty';
+                } else if (this.draftCheckState !== 'draft-legacy') {
+                  this.draftCheckState = 'draft-present';
+                }
+              })
+            );
         })
       )
       .subscribe((draftOps: DeltaOperation[]) => {
