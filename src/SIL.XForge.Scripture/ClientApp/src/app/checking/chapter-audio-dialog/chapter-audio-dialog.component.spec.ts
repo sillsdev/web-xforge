@@ -566,6 +566,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.wait();
 
     expect(result!.timingData.length).toBeGreaterThan(0);
+    console.log(result!.timingData);
     expect(result!.timingData.every(t => t.to > 0)).toBe(true);
   });
 });
