@@ -24,9 +24,7 @@ export interface TabInfo<TType extends string> {
   movable: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class TabStateService<TGroupId extends string, T extends TabInfo<string>> {
   protected readonly groups = new Map<TGroupId, TabGroup<TGroupId, T>>();
   protected tabGroupsSource$ = new BehaviorSubject<Map<TGroupId, TabGroup<TGroupId, T>>>(this.groups);
