@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -11,7 +11,6 @@ import {
   asyncScheduler,
   catchError,
   combineLatest,
-  distinctUntilChanged,
   EMPTY,
   filter,
   from,
@@ -26,13 +25,11 @@ import {
 } from 'rxjs';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { isString } from 'src/type-utils';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -68,7 +65,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private targetDelta?: DeltaStatic;
 
   constructor(
-    private readonly activatedProjectService: ActivatedProjectService,
     private readonly destroyRef: DestroyRef,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftViewerService: DraftViewerService,
@@ -97,7 +93,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   populateDraftTextInit(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
-      this.draftText.editorCreated,
+      this.draftText.editorCreated as EventEmitter<any>,
       this.inputChanged$.pipe(startWith(undefined))
     ])
       .pipe(
@@ -111,18 +107,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             return EMPTY;
           }
 
-          // Check if project specifies legacy draft format
-          return this.activatedProjectService.changes$.pipe(
-            filterNullish(),
-            tap(projectDoc => {
-              this.targetProject = projectDoc.data;
-              this.canApplyDraft = this.canEdit();
-            }),
-            map(this.isDraftLegacy),
-            distinctUntilChanged()
-          );
+          return combineLatest([this.getTargetOps(), this.getDraft({ isDraftLegacy: false })]);
         }),
-        switchMap((isDraftLegacy: boolean) => combineLatest([this.getTargetOps(), this.getDraft({ isDraftLegacy })])),
         map(([targetOps, draft]) => ({
           targetOps,
           // Convert legacy draft to draft ops
@@ -287,10 +273,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         )
       )
     );
-  }
-
-  private isDraftLegacy(projectDoc: SFProjectProfileDoc): boolean {
-    return projectDoc.data?.translateConfig.draftConfig.sendAllSegments ?? false;
   }
 
   private isDraftSegmentMap(draft: DeltaOperation[] | DraftSegmentMap): draft is DraftSegmentMap {
