@@ -216,7 +216,9 @@
     "select_apply_to_project": "Pilih [em]\"{{ draft_viewer.apply_to_project }}\"[/em] untuk setiap pasal yang ingin Anda timpa dengan teks konsep.",
     "select_edit": "Pilih [em]\"{{ draft_viewer.edit }}\"[/em] untuk membuka halaman editor untuk pasal ini.",
     "select_source_text": "Teks sumber belum dipilih untuk proyek ini. Anda dapat memilih teks sumber di [link:projectSettingsUrl] pengaturan proyek [/link].",
-    "source_not_set": "Sumber tidak ditetapkan"
+    "source_not_set": "Sumber tidak ditetapkan",
+    "overwrite_warning": "Adding the draft will overwrite all text in {{ chapter }}. Are you sure you want to continue?",
+    "confirm_overwrite": "Overwrite chapter"
   },
   "editor": {
     "add_comment": "Tambah Komentar",

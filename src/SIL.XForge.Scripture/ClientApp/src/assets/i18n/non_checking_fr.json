@@ -216,7 +216,9 @@
     "select_apply_to_project": "Sélectionnez [em]\"{{ draft_viewer.apply_to_project }}\"[/em] pour chaque chapitre que vous voulez remplacer par le texte ébauché.",
     "select_edit": "Sélectionnez [em]\"{{ draft_viewer.edit }}\"[/em] pour accéder à la page de l'éditeur de ce chapitre.",
     "select_source_text": "Un texte source n'a pas été sélectionné pour ce projet. Vous pouvez sélectionner un texte source dans [link:projectSettingsUrl]paramètres du projet[/link].",
-    "source_not_set": "Source non définie"
+    "source_not_set": "Source non définie",
+    "overwrite_warning": "L'ajout du brouillon écrasera tout le texte de {{ chapter }}. Êtes-vous sûr de vouloir continuer ?",
+    "confirm_overwrite": "Écraser le chapitre"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
