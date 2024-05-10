@@ -12,7 +12,9 @@ describe('TabStateService', () => {
   ];
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [TabStateService]
+    });
     service = TestBed.inject(TabStateService);
   });
 

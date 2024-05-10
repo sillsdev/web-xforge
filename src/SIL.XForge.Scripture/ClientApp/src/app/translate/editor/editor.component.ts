@@ -1189,7 +1189,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   initEditorTabs(): void {
-    const tabStateInitialized$ = new Subject<void>();
+    const tabStateInitialized$ = new BehaviorSubject<boolean>(false);
 
     // Set tab state from persisted tabs plus non-persisted tabs
     this.editorTabPersistenceService.persistedTabs$.pipe(take(1)).subscribe(persistedTabs => {
@@ -1225,15 +1225,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
 
       // Notify to start tab persistence on tab state changes
-      tabStateInitialized$.next();
-      tabStateInitialized$.complete();
+      tabStateInitialized$.next(true);
 
       // View is initialized before the tab state is initialized, so re-run change detection
       this.changeDetector.detectChanges();
     });
 
     // Persist tabs from tab state changes once tab state has been initialized
-    combineLatest([this.tabState.tabs$, tabStateInitialized$])
+    combineLatest([this.tabState.tabs$, tabStateInitialized$.pipe(filter(initialized => initialized))])
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         debounceTime(100),

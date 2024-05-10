@@ -19,7 +19,8 @@ describe('TabGroupComponent', () => {
       declarations: [TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },
-        { provide: TabMenuService, useValue: { getMenuItems: () => of([]) } }
+        { provide: TabMenuService, useValue: { getMenuItems: () => of([]) } },
+        TabStateService
       ]
     }).compileComponents();
   });
