@@ -216,7 +216,9 @@
     "select_apply_to_project": "Seleccione [em]\"{{ draft_viewer.apply_to_project }}\"[/em] para cada capítulo que desee sobrescribir con el texto del borrador.",
     "select_edit": "Seleccione [em]\"{{ draft_viewer.edit }}\"[/em] para ir a la página del editor de este capítulo.",
     "select_source_text": "No se ha seleccionado un texto fuente para este proyecto. Puede seleccionar un texto fuente en [link:projectSettingsUrl]ajustes del proyecto[/link].",
-    "source_not_set": "Fuente no fijada"
+    "source_not_set": "Fuente no fijada",
+    "overwrite_warning": "Añadir el borrador sobrescribirá todo el texto en {{ chapter }}. ¿Está seguro de que desea continuar?",
+    "confirm_overwrite": "Sobrescribir capítulo"
   },
   "editor": {
     "add_comment": "Añadir comentario",

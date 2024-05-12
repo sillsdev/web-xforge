@@ -216,7 +216,9 @@
     "select_apply_to_project": "Select [em]\"{{ draft_viewer.apply_to_project }}\"[/em] for each chapter that you want to overwrite with the draft text.",
     "select_edit": "Select [em]\"{{ draft_viewer.edit }}\"[/em] to go to the editor page for this chapter.",
     "select_source_text": "A source text has not been selected for this project. You can select a source text in [link:projectSettingsUrl]project settings[/link].",
-    "source_not_set": "Source not set"
+    "source_not_set": "Source not set",
+    "overwrite_warning": "Adding the draft will overwrite all text in {{ chapter }}. Are you sure you want to continue?",
+    "confirm_overwrite": "Overwrite chapter"
   },
   "editor": {
     "add_comment": "Add Comment",
