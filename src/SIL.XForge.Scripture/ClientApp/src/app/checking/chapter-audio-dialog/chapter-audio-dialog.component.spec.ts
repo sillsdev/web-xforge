@@ -561,6 +561,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
     expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
 
+    await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
     await env.component.save();
     await env.wait();
