@@ -1,0 +1,11 @@
+.admin-tool {
+  display: flex;
+  flex-direction: column;
+  row-gap: 32px;
+
+  > .admin-tool-control {
+    display: flex;
+    flex-direction: row;
+    column-gap: 10px;
+  }
+}

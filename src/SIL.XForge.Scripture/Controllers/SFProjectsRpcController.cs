@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
+using Hangfire;
 using SIL.XForge.Controllers;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
@@ -17,32 +19,24 @@ namespace SIL.XForge.Scripture.Controllers;
 /// assembly. Unfortunately, the <see cref="EdjCase.JsonRpc.Router"/> library does not support methods defined in
 /// base classes.
 /// </summary>
-public class SFProjectsRpcController : RpcControllerBase
+public class SFProjectsRpcController(
+    IBackgroundJobClient backgroundJobClient,
+    IExceptionHandler exceptionHandler,
+    ISFProjectService projectService,
+    ITrainingDataService trainingDataService,
+    IUserAccessor userAccessor
+) : RpcControllerBase(userAccessor, exceptionHandler)
 {
-    internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
+    private const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
-    private readonly IExceptionHandler _exceptionHandler;
-    private readonly ISFProjectService _projectService;
-    private readonly ITrainingDataService _trainingDataService;
-
-    public SFProjectsRpcController(
-        IUserAccessor userAccessor,
-        ISFProjectService projectService,
-        ITrainingDataService trainingDataService,
-        IExceptionHandler exceptionHandler
-    )
-        : base(userAccessor, exceptionHandler)
-    {
-        _exceptionHandler = exceptionHandler;
-        _projectService = projectService;
-        _trainingDataService = trainingDataService;
-    }
+    // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
+    private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
 
     public async Task<IRpcMethodResult> Create(SFProjectCreateSettings settings)
     {
         try
         {
-            string projectId = await _projectService.CreateProjectAsync(UserId, settings);
+            string projectId = await projectService.CreateProjectAsync(UserId, settings);
             return Ok(projectId);
         }
         catch (ForbiddenException)
@@ -77,7 +71,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.DeleteProjectAsync(UserId, projectId);
+            await projectService.DeleteProjectAsync(UserId, projectId);
             return Ok();
         }
         catch (ForbiddenException)
@@ -101,7 +95,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.UpdateSettingsAsync(UserId, projectId, settings);
+            await projectService.UpdateSettingsAsync(UserId, projectId, settings);
             return Ok();
         }
         catch (ForbiddenException)
@@ -142,7 +136,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.AddUserAsync(UserId, projectId, projectRole);
+            await projectService.AddUserAsync(UserId, projectId, projectRole);
             return Ok();
         }
         catch (ForbiddenException)
@@ -173,7 +167,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.RemoveUserAsync(UserId, projectId, projectUserId);
+            await projectService.RemoveUserAsync(UserId, projectId, projectUserId);
             return Ok();
         }
         catch (ForbiddenException)
@@ -202,7 +196,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            string role = await _projectService.GetProjectRoleAsync(UserId, projectId);
+            string role = await projectService.GetProjectRoleAsync(UserId, projectId);
             return Ok(role);
         }
         catch (DataNotFoundException dnfe)
@@ -222,7 +216,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.UpdateRoleAsync(UserId, SystemRoles, projectId, userId, projectRole);
+            await projectService.UpdateRoleAsync(UserId, SystemRoles, projectId, userId, projectRole);
             return Ok();
         }
         catch (ForbiddenException)
@@ -252,7 +246,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            if (await _projectService.InviteAsync(UserId, projectId, email, locale, role))
+            if (await projectService.InviteAsync(UserId, projectId, email, locale, role))
                 return Ok();
             return Ok(AlreadyProjectMemberResponse);
         }
@@ -284,7 +278,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.UninviteUserAsync(UserId, projectId, emailToUninvite);
+            await projectService.UninviteUserAsync(UserId, projectId, emailToUninvite);
             return Ok();
         }
         catch (ForbiddenException)
@@ -308,7 +302,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            return Ok(await _projectService.IsAlreadyInvitedAsync(UserId, projectId, email));
+            return Ok(await projectService.IsAlreadyInvitedAsync(UserId, projectId, email));
         }
         catch (ForbiddenException)
         {
@@ -331,7 +325,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            return Ok(await _projectService.InvitedUsersAsync(UserId, projectId));
+            return Ok(await projectService.InvitedUsersAsync(UserId, projectId));
         }
         catch (ForbiddenException)
         {
@@ -357,7 +351,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            return Ok(await _projectService.JoinWithShareKeyAsync(UserId, shareKey));
+            return Ok(await projectService.JoinWithShareKeyAsync(UserId, shareKey));
         }
         catch (ForbiddenException)
         {
@@ -380,13 +374,13 @@ public class SFProjectsRpcController : RpcControllerBase
     public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey) =>
         await CheckLinkSharing(shareKey);
 
-    public IRpcMethodResult IsSourceProject(string projectId) => Ok(_projectService.IsSourceProject(projectId));
+    public IRpcMethodResult IsSourceProject(string projectId) => Ok(projectService.IsSourceProject(projectId));
 
     public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role, string shareLinkType)
     {
         try
         {
-            return Ok(await _projectService.GetLinkSharingKeyAsync(UserId, projectId, role, shareLinkType));
+            return Ok(await projectService.GetLinkSharingKeyAsync(UserId, projectId, role, shareLinkType));
         }
         catch (DataNotFoundException dnfe)
         {
@@ -417,7 +411,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey);
+            await projectService.ReserveLinkSharingKeyAsync(UserId, shareKey);
             return Ok();
         }
         catch (DataNotFoundException dnfe)
@@ -437,7 +431,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.AddTranslateMetricsAsync(UserId, projectId, metrics);
+            await projectService.AddTranslateMetricsAsync(UserId, projectId, metrics);
             return Ok();
         }
         catch (ForbiddenException)
@@ -466,7 +460,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SyncAsync(UserId, projectId);
+            await projectService.SyncAsync(UserId, projectId);
             return Ok();
         }
         catch (ForbiddenException)
@@ -490,7 +484,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.CancelSyncAsync(UserId, projectId);
+            await projectService.CancelSyncAsync(UserId, projectId);
             return Ok();
         }
         catch (ForbiddenException)
@@ -514,7 +508,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.DeleteAudioAsync(UserId, projectId, ownerId, dataId);
+            await projectService.DeleteAudioAsync(UserId, projectId, ownerId, dataId);
             return Ok();
         }
         catch (ForbiddenException)
@@ -548,7 +542,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _trainingDataService.DeleteTrainingDataAsync(UserId, projectId, ownerId, dataId);
+            await trainingDataService.DeleteTrainingDataAsync(UserId, projectId, ownerId, dataId);
             return Ok();
         }
         catch (ForbiddenException)
@@ -578,11 +572,34 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
+    public IRpcMethodResult RetrievePreTranslationStatus(string projectId)
+    {
+        try
+        {
+            // Run the background job
+            backgroundJobClient.Enqueue<MachineApiService>(
+                r => r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
+            );
+            return Ok();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "RetrievePreTranslationStatus" },
+                    { "projectId", projectId },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetPreTranslate(string projectId, bool preTranslate)
     {
         try
         {
-            await _projectService.SetPreTranslateAsync(UserId, SystemRoles, projectId, preTranslate);
+            await projectService.SetPreTranslateAsync(UserId, SystemRoles, projectId, preTranslate);
             return Ok();
         }
         catch (ForbiddenException)
@@ -611,7 +628,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SetSyncDisabledAsync(UserId, SystemRoles, projectId, isDisabled);
+            await projectService.SetSyncDisabledAsync(UserId, SystemRoles, projectId, isDisabled);
             return Ok();
         }
         catch (ForbiddenException)
@@ -640,7 +657,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SetServalConfigAsync(UserId, SystemRoles, projectId, servalConfig);
+            await projectService.SetServalConfigAsync(UserId, SystemRoles, projectId, servalConfig);
             return Ok();
         }
         catch (ForbiddenException)
@@ -669,7 +686,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            return Ok(await _projectService.TransceleratorQuestions(UserId, projectId));
+            return Ok(await projectService.TransceleratorQuestions(UserId, projectId));
         }
         catch (ForbiddenException)
         {
@@ -692,7 +709,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.SetUserProjectPermissions(UserId, projectId, userId, permissions);
+            await projectService.SetUserProjectPermissions(UserId, projectId, userId, permissions);
             return Ok();
         }
         catch (ForbiddenException)
@@ -729,7 +746,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.CreateAudioTimingData(UserId, projectId, book, chapter, timingData, audioUrl);
+            await projectService.CreateAudioTimingData(UserId, projectId, book, chapter, timingData, audioUrl);
             return Ok();
         }
         catch (ForbiddenException)
@@ -761,7 +778,7 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            await _projectService.DeleteAudioTimingData(UserId, projectId, book, chapter);
+            await projectService.DeleteAudioTimingData(UserId, projectId, book, chapter);
             return Ok();
         }
         catch (ForbiddenException)
