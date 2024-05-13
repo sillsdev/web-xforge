@@ -124,8 +124,10 @@ section {
   padding: 10px 0;
 }
 
-.small-text {
-  font-size: small;
+.other-actions {
+  display: flex;
+  justify-content: right;
+  margin-top: 4px;
 }
 
 .progress-active {
