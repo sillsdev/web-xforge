@@ -148,7 +148,7 @@
                   (answer.scriptureText || "") +
                   (answer.selectionEndClipped ? "…" : "")
               }}</span>
-              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer.verseRef) }}</span>
+              <span class="answer-scripture-verse">{{ "(" + scriptureTextVerseRef(answer.verseRef) + ")" }}</span>
             </div>
             <app-checking-audio-player *ngIf="answer.audioUrl" [source]="getFileSource(answer.audioUrl)">
             </app-checking-audio-player>
