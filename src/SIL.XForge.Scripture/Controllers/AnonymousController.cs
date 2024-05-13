@@ -155,7 +155,7 @@ public class AnonymousController(
     /// <remarks>Serval requires a Success code, even on failure, so we return </remarks>
     [HttpPost("webhook")]
     public async Task<ActionResult<bool>> Webhook(
-        [FromHeader(Name = "HTTP_X_HUB_SIGNATURE_256")] string signature,
+        [FromHeader(Name = "X-Hub-Signature-256")] string signature,
         [BindNever, FromBody] object? _ = null
     )
     {
