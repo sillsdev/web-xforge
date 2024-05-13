@@ -1325,7 +1325,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.selectVersesButton);
       expect(env.scriptureText).toBe('John 2:2-5');
       env.clickButton(env.saveAnswerButton);
-      expect(env.getAnswerScriptureText(0)).toBe('…The selected textJohn 2:2-5');
+      expect(env.getAnswerScriptureText(0)).toBe('…The selected text(John 2:2-5)');
       flush();
       discardPeriodicTasks();
     }));
@@ -1333,7 +1333,7 @@ describe('CheckingComponent', () => {
     it('can remove scripture from an answer', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(6);
-      expect(env.getAnswerScriptureText(0)).toBe('Quoted scriptureJohn 1:1');
+      expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(John 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
       // env.clickButton(env.selectTextTab);
       env.waitForSliderUpdate();
