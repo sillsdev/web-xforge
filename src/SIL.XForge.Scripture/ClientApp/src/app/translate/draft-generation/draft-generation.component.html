@@ -5,37 +5,41 @@
   </h1>
 
   <section>
-    <div *ngIf="isBackTranslationMode">
-      <p>
-        <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
-        <br />
-        {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
-      </p>
-    </div>
-    <div *ngIf="!isBackTranslationMode">
-      <p>
-        <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
-        <br />
-        {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
-      </p>
-    </div>
+    <div *ngIf="isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
+      <div *ngIf="isBackTranslationMode">
+        <p>
+          <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
+          <br />
+          {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
+        </p>
+      </div>
+      <div *ngIf="!isBackTranslationMode">
+        <p>
+          <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
+          <br />
+          {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
+        </p>
+      </div>
 
-    <p>
-      <b>{{ t("instructions_keep_in_mind") }}</b>
-      <br />
-      {{ t("instructions_keep_in_mind_subtext") }}
-    </p>
-    <p>
-      <b>{{ t("instructions_draft_process") }}</b>
-      <br />
-      {{ t("instructions_draft_process_subtext") }}
-    </p>
-    <p>
-      <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
-        <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
-        <a *ngIf="i.id === 1" href="https://help.scriptureforge.org/generating-drafts" target="_blank">{{ i.text }}</a>
-      </ng-container>
-    </p>
+      <p>
+        <b>{{ t("instructions_keep_in_mind") }}</b>
+        <br />
+        {{ t("instructions_keep_in_mind_subtext") }}
+      </p>
+      <p>
+        <b>{{ t("instructions_draft_process") }}</b>
+        <br />
+        {{ t("instructions_draft_process_subtext") }}
+      </p>
+      <p>
+        <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
+          <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
+          <a *ngIf="i.id === 1" href="https://help.scriptureforge.org/generating-drafts" target="_blank">{{
+            i.text
+          }}</a>
+        </ng-container>
+      </p>
+    </div>
 
     <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="warning" class="requirements">
       <p>
@@ -235,12 +239,17 @@
                         <mat-icon>edit_note</mat-icon>
                         {{ t("preview_draft_button") }}
                       </a>
-                      <p *ngIf="isGenerationSupported" class="small-text">
-                        {{ t("generate_new_draft_question") }}
-                        <a [routerLink]="[]" (click)="generateDraft({ withConfirm: true })">{{
-                          t("generate_new_draft")
-                        }}</a>
-                      </p>
+                      <div class="other-actions">
+                        <button
+                          *ngIf="isGenerationSupported"
+                          mat-button
+                          type="button"
+                          (click)="generateDraft({ withConfirm: true })"
+                        >
+                          <mat-icon>add</mat-icon>
+                          <span>{{ t("generate_new_draft") }}</span>
+                        </button>
+                      </div>
                     </mat-card>
 
                     <ng-container *ngIf="!isDraftComplete(draftJob)">
