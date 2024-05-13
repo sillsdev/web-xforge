@@ -222,7 +222,7 @@ class TestEnvironment {
   }
 
   get nextPageButton(): DebugElement {
-    return this.paginator.query(By.css('.mat-paginator-navigation-next'));
+    return this.paginator.query(By.css('.mat-mdc-paginator-navigation-next'));
   }
 
   cell(row: number, column: number): DebugElement {

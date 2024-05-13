@@ -509,22 +509,6 @@ class TestEnvironment {
     return this.filterInput.nativeElement.disabled;
   }
 
-  get paginator(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mat-paginator'));
-  }
-
-  get paginatorLabel(): DebugElement {
-    return this.paginator.query(By.css('.mat-paginator-range-label'));
-  }
-
-  get nextPageButton(): DebugElement {
-    return this.paginator.query(By.css('.mat-paginator-navigation-next'));
-  }
-
-  get prevPageButton(): DebugElement {
-    return this.paginator.query(By.css('.mat-paginator-navigation-previous'));
-  }
-
   set onlineStatus(hasConnection: boolean) {
     this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();

@@ -129,7 +129,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.input-theme($material-app-theme);
 @include mat.legacy-list-theme($material-app-theme);
 @include mat.legacy-menu-theme($material-app-theme);
-@include mat.legacy-paginator-theme($material-app-theme);
+@include mat.paginator-theme($material-app-theme);
 @include mat.progress-bar-theme($material-app-theme);
 @include mat.legacy-progress-spinner-theme($material-app-theme);
 @include mat.radio-theme($material-app-theme);

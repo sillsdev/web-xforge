@@ -504,6 +504,8 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
     if (this.parameters.$skip != null || this.parameters.$limit != null) {
       const unpagedCountParameters = cloneDeep(this.parameters) as any;
       unpagedCountParameters.$count = { applySkipLimit: false };
+      unpagedCountParameters.$limit = undefined;
+      unpagedCountParameters.$skip = undefined;
       const unpagedCountQueryPromise = new Promise<void>((resolve, reject) => {
         this.unpagedCountQuery = this.conn.createFetchQuery(this.collection, unpagedCountParameters, {}, err => {
           if (err != null) {
