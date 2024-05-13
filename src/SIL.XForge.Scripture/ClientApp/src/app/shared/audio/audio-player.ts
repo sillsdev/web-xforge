@@ -1,5 +1,5 @@
 import { EventEmitter } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -23,7 +23,7 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Initializing);
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
-  readonly timeUpdated$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
+  readonly timeUpdated$: Subject<void> = new Subject<void>();
 
   constructor(source: string, private readonly onlineStatusService: OnlineStatusService) {
     super();
