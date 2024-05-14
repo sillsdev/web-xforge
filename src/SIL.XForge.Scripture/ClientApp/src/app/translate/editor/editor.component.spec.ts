@@ -2814,7 +2814,7 @@ describe('EditorComponent', () => {
 
       const iconElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_2', 0)!;
       iconElement.click();
-      const editedContent = 'edited content <xml> tags';
+      const editedContent = 'edited content & <xml> tags';
       env.mockNoteDialogRef.close({ noteDataId: noteThread.notes[0].dataId, noteContent: editedContent });
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
