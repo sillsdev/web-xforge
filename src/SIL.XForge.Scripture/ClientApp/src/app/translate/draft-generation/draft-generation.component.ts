@@ -7,6 +7,7 @@ import {
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { isEmpty } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
@@ -61,6 +62,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   draftJob?: BuildDto;
 
   draftViewerUrl?: string;
+  previewDraftUrl?: string;
   projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
@@ -94,6 +96,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    * from that build can still be retrieved.
    */
   hasAnyCompletedBuild = false;
+  completedDraftBooks: number[] = [];
 
   isPreTranslationApproved = false;
   signupFormUrl?: string;
@@ -110,7 +113,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly draftSourcesService: DraftSourcesService,
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
-    private readonly i18n: I18nService,
+    readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService
   ) {
@@ -191,6 +194,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+            this.completedDraftBooks = translateConfig?.draftConfig.lastSelectedTranslationBooks ?? [];
 
             // The alternate training source and source languages must match
             if (
@@ -219,6 +223,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
+            this.previewDraftUrl = `/projects/${projectDoc.id}/translate/`;
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
           })
         ),
@@ -410,6 +415,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       ),
       (job?: BuildDto) => (this.draftJob = job)
     );
+  }
+
+  getDraftPreviewUrl(bookNumber: number): string {
+    return `${this.previewDraftUrl}/${Canon.bookNumberToId(bookNumber)}`;
   }
 
   private getTargetLanguageDisplayName(): string | undefined {
