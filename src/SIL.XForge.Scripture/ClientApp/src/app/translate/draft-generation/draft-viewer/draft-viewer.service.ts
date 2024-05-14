@@ -1,12 +1,18 @@
 import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import { DeltaOperation } from 'quill';
+import { DeltaOperation, DeltaStatic } from 'quill';
 import { isString } from '../../../../type-utils';
+import { TextDocId } from '../../../core/models/text-doc';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
 
 export interface DraftMappingOptions {
   overwrite?: boolean;
+}
+
+export interface DraftDiff {
+  id: TextDocId;
+  ops: DeltaStatic;
 }
 
 @Injectable({

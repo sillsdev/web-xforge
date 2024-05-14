@@ -494,16 +494,36 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
   }));
 
-  it('will not try to save dialog if offline', fakeAsync(async () => {
+  it('will not try to save dialog if offline', fakeAsync(() => {
     env.onlineStatus = false;
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    env.component.audioUpdate(env.audioFile);
+    tick();
+    env.component.prepareTimingFileUpload(anything());
+    tick();
+
     // SUT
-    await env.component.save();
-    await env.wait();
+    env.component.save();
+    tick();
+    env.fixture.detectChanges();
+    flush();
     expect(env.numberOfTimesDialogClosed)
       .withContext('saving should not occur and close dialog while offline')
       .toEqual(0);
+  }));
+
+  it('will try to save and close dialog if online', fakeAsync(() => {
+    env.onlineStatus = true;
+    env.component.audioUpdate(env.audioFile);
+    tick();
+    env.component.prepareTimingFileUpload(anything());
+    tick();
+
+    // SUT
+    env.component.save();
+    tick();
+    env.fixture.detectChanges();
+    flush();
+    expect(env.numberOfTimesDialogClosed).withContext('saving should occur and close dialog when online').toEqual(1);
   }));
 
   it('disables save button if offline, shows message', fakeAsync(async () => {

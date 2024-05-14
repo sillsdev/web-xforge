@@ -45,7 +45,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -53,36 +53,14 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
-import {
-  asyncScheduler,
-  BehaviorSubject,
-  combineLatest,
-  fromEvent,
-  merge,
-  of,
-  Subject,
-  Subscription,
-  timer
-} from 'rxjs';
-import {
-  debounceTime,
-  delayWhen,
-  filter,
-  first,
-  repeat,
-  retryWhen,
-  switchMap,
-  take,
-  tap,
-  throttleTime
-} from 'rxjs/operators';
+import { asyncScheduler, BehaviorSubject, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, delayWhen, filter, first, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
 import { TabFactoryService, TabInfo, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -93,7 +71,6 @@ import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
-import { isString } from '../../../type-utils';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -117,12 +94,9 @@ import {
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
-  verseRefFromMouseEvent,
-  VERSE_REGEX
+  VERSE_REGEX,
+  verseRefFromMouseEvent
 } from '../../shared/utils';
-import { DraftSegmentMap } from '../draft-generation/draft-generation';
-import { DraftGenerationService } from '../draft-generation/draft-generation.service';
-import { DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -184,7 +158,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   sourceSplitHeight: string = '';
   targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
-  hasDraft = false;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
@@ -250,11 +223,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly translationEngineService: TranslationEngineService,
     readonly i18n: I18nService,
     readonly fontService: FontService,
-    readonly featureFlags: FeatureFlagService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProject: ActivatedProjectService,
-    private readonly draftGenerationService: DraftGenerationService,
-    private readonly draftViewerService: DraftViewerService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
     private bottomSheet: MatBottomSheet,
@@ -400,6 +370,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /**
    * Determines whether the user has the right to edit texts generally, without considering permissions on this chapter.
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
    */
   get userHasGeneralEditRight(): boolean {
     const project = this.projectDoc?.data;
@@ -412,6 +383,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /**
    * Determines whether the user has permission to edit the currently active chapter.
    * Returns undefined if the necessary data is not yet available.
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
    */
   get hasChapterEditPermission(): boolean | undefined {
     const chapter = this.text?.chapters.find(c => c.number === this._chapter);
@@ -451,6 +423,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
+  /**
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
+   */
   get canEdit(): boolean {
     return (
       this.isUsfmValid &&
@@ -508,6 +483,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
+  /**
+   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
+   */
   get isUsfmValid(): boolean {
     if (this.text == null) {
       return true;
@@ -527,10 +505,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get showMultiViewers(): boolean {
     return this.onlineStatusService.isOnline && this.multiCursorViewers.length > 0;
-  }
-
-  get showPreviewDraft(): boolean {
-    return this.onlineStatusService.isOnline && this.featureFlags.showNmtDrafting.enabled && this.hasDraft;
   }
 
   /**
@@ -762,21 +736,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     );
-    // On every target editor load, check for pre-translations the first time both
-    // online status and nmt drafting are emitted as enabled.
-    this.subscribe(
-      this.targetEditorLoaded$.pipe(
-        switchMap(() =>
-          combineLatest([this.onlineStatusService.onlineStatus$, this.featureFlags.showNmtDrafting.enabled$]).pipe(
-            filter(([online, nmtDraftingEnabled]) => online && nmtDraftingEnabled),
-            take(1)
-          )
-        )
-      ),
-      () => {
-        this.checkForPreTranslations();
-      }
-    );
 
     // Throttle bursts of sync scroll requests
     this.syncScrollRequested$
@@ -944,7 +903,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.observeResize(this.targetScrollContainer);
           this.subscribeScroll(this.targetScrollContainer);
           this.targetEditorLoaded$.next();
-          this.checkForPreTranslations();
         }
         break;
     }
@@ -1137,11 +1095,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
-  }
-
-  goToDraftPreview(): void {
-    const book = Canon.bookNumberToId(this.bookNum!);
-    this.router.navigateByUrl(`/projects/${this.activatedProject.projectId}/draft-preview/${book}/${this.chapter}`);
   }
 
   showCopyrightNotice(textType: TextType): void {
@@ -2270,52 +2223,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const minAdjustment: number = Math.max(fabBottom - bounds.height, 0);
 
     this.insertNoteFab.nativeElement.style.marginTop = `-${Math.max(fabTopAdjustment, minAdjustment)}px`;
-  }
-
-  private checkForPreTranslations(): void {
-    // Check for the feature flag
-    if (!this.featureFlags.showNmtDrafting.enabled) return;
-
-    // Set false until service can check actual draft status for chapter
-    this.hasDraft = false;
-
-    // Ensure we are online
-    if (!this.onlineStatusService.isOnline) return;
-
-    // Ensure we have the target editor
-    if (this.target?.editor == null) return;
-
-    // Check to see if the user has edit rights
-    if (!this.userHasGeneralEditRight) return;
-
-    // Check to see if chapter is complete
-    const targetOps: DeltaOperation[] = this.target.editor.getContents().ops!;
-    const isChapterComplete: boolean = targetOps.every(op => {
-      // If segment is a verse, check if it has a translation
-      if (VERSE_REGEX.test(op.attributes?.segment)) {
-        // Check if insert is non-blank string
-        if (isString(op.insert)) {
-          return op.insert.trim().length > 0;
-        }
-
-        // Check if insert is object that doesn't have 'blank: true' property (e.g. 'note-thread-embed')
-        return op.insert?.blank !== true;
-      }
-
-      return true;
-    });
-
-    // Don't fetch draft if all editor verse segments have existing translations
-    if (isChapterComplete) {
-      return;
-    }
-
-    // If build progress is 'completed', get pre-translations for current chapter
-    this.draftGenerationService
-      .getGeneratedDraft(this.activatedProject.projectId!, this.bookNum!, this.chapter!)
-      .subscribe((draft: DraftSegmentMap) => {
-        this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
-      });
   }
 
   private populateEditorTabs(): void {
