@@ -443,35 +443,51 @@ describe('DraftGenerationService', () => {
   });
 
   describe('draftExists', () => {
-    it('should return true if draft exists', done => {
+    it('should return true if draft exists', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
       const preTranslationData = {
-        data: {
-          preTranslations: [
-            { reference: 'verse_3_16', translation: 'For God so loved the world' },
-            { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
-          ]
-        }
+        preTranslations: [
+          { reference: 'verse_3_16', translation: 'For God so loved the world' },
+          { reference: 'verse_1_1', translation: 'In the beginning was the Word' }
+        ]
       };
 
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
-      service.draftExists(projectId, 43, 3).subscribe(result => {
+      // SUT
+      service.draftExists(projectId, book, chapter).subscribe(result => {
         expect(result).toBe(true);
-        done();
       });
-    });
+      tick();
 
-    it('should return false if draft does not exist', done => {
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationData);
+      tick();
+    }));
+
+    it('should return false if draft does not exist', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
       const preTranslationData = {
-        data: {
-          preTranslations: []
-        }
+        preTranslations: []
       };
 
-      httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
-      service.draftExists(projectId, 43, 3).subscribe(result => {
+      // SUT
+      service.draftExists(projectId, book, chapter).subscribe(result => {
         expect(result).toBe(false);
-        done();
       });
-    });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(preTranslationData);
+      tick();
+    }));
   });
 });
