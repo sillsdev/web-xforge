@@ -2778,7 +2778,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.setCommenterUser();
-      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
       // Allow check for mobile viewports to return TRUE
@@ -2815,7 +2815,7 @@ describe('EditorComponent', () => {
 
       const iconElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_2', 0)!;
       iconElement.click();
-      const editedContent = 'edited content <xml> tags';
+      const editedContent = 'edited content & <xml> tags';
       env.mockNoteDialogRef.close({ noteDataId: noteThread.notes[0].dataId, noteContent: editedContent });
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
