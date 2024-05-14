@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
-import { TextDocId } from 'src/app/core/models/text-doc';
 import { isString } from '../../../../type-utils';
+import { TextDocId } from '../../../core/models/text-doc';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
 

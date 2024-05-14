@@ -45,7 +45,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -61,7 +61,6 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -95,8 +94,8 @@ import {
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
-  verseRefFromMouseEvent,
-  VERSE_REGEX
+  VERSE_REGEX,
+  verseRefFromMouseEvent
 } from '../../shared/utils';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
@@ -224,7 +223,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly translationEngineService: TranslationEngineService,
     readonly i18n: I18nService,
     readonly fontService: FontService,
-    readonly featureFlags: FeatureFlagService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProject: ActivatedProjectService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,

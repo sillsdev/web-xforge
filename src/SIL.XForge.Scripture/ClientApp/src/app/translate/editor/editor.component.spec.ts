@@ -64,7 +64,6 @@ import { anything, capture, deepEqual, instance, mock, reset, resetCalls, spy, v
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -113,7 +112,6 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
@@ -171,7 +169,6 @@ describe('EditorComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
