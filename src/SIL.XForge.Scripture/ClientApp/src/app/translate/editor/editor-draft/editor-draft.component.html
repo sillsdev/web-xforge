@@ -39,6 +39,7 @@
   [isRightToLeft]="isRightToLeft"
   [fontSize]="fontSize"
   [ngClass]="draftCheckState"
+  [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
 ></app-text>
 
 <ng-template #offline>

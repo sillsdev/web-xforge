@@ -859,7 +859,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.focused.emit(focus);
   }
 
-  private applyEditorStyles(): void {
+  applyEditorStyles(): void {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
       for (const style in this.editorStyles) {
