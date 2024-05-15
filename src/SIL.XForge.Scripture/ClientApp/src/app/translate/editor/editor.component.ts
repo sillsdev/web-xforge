@@ -102,6 +102,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
@@ -258,6 +259,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorHistoryService: EditorHistoryService,
     private readonly editorTabFactory: EditorTabFactoryService,
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
+    private readonly textDocService: TextDocService,
     private readonly destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -395,29 +397,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === true;
   }
 
-  /**
-   * Determines whether the user has the right to edit texts generally, without considering permissions on this chapter.
-   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
-   */
   get userHasGeneralEditRight(): boolean {
-    const project = this.projectDoc?.data;
-    if (project == null) {
-      return false;
-    }
-    return SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit);
+    return this.textDocService.userHasGeneralEditRight(this.projectDoc?.data);
   }
 
   /**
    * Determines whether the user has permission to edit the currently active chapter.
    * Returns undefined if the necessary data is not yet available.
-   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
    */
   get hasChapterEditPermission(): boolean | undefined {
-    const chapter = this.text?.chapters.find(c => c.number === this._chapter);
-    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
-    // is accessed after migration
-    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
-    return permission == null ? undefined : permission === TextInfoPermission.Write;
+    return this.textDocService.hasChapterEditPermissionForText(this.text, this.chapter);
   }
 
   get showNoEditPermissionMessage(): boolean {
@@ -450,16 +439,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
-  /**
-   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
-   */
   get canEdit(): boolean {
     return (
-      this.isUsfmValid &&
-      this.hasEditRight &&
-      this.dataInSync &&
-      !this.target?.areOpsCorrupted &&
-      !this.projectTextNotEditable
+      this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter) && !this.target?.areOpsCorrupted
     );
   }
 
@@ -493,7 +475,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get projectTextNotEditable(): boolean {
-    return this.projectDoc?.data?.editable === false;
+    return this.textDocService.isEditingDisabled(this.projectDoc?.data);
   }
 
   get isSourceRightToLeft(): boolean {
@@ -510,20 +492,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return false;
   }
 
-  /**
-   * This code has been duplicated or reimplemented in other places. If changing, please update those, as well.
-   */
   get isUsfmValid(): boolean {
-    if (this.text == null) {
-      return true;
-    }
-
-    const chapter = this.text.chapters.find(c => c.number === this._chapter);
-    return chapter != null && chapter.isValid;
+    return this.textDocService.isUsfmValidForText(this.text, this.chapter);
   }
 
   get dataInSync(): boolean {
-    return this.projectDoc?.data?.sync?.dataInSync !== false;
+    return this.textDocService.isDataInSync(this.projectDoc?.data);
   }
 
   get issueEmailLink(): string {

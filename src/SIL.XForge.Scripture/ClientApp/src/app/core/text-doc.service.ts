@@ -1,8 +1,14 @@
 import { Injectable } from '@angular/core';
 import { DeltaStatic } from 'quill';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Delta } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
+import { UserService } from 'xforge-common/user.service';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
 
@@ -12,7 +18,7 @@ import { SFProjectService } from './sf-project.service';
 export class TextDocService {
   private localSystemTextDocChangesMap = new Map<string, Subject<TextData>>();
 
-  constructor(private readonly projectService: SFProjectService) {}
+  constructor(private readonly projectService: SFProjectService, private readonly userService: UserService) {}
 
   /**
    * Overwrites the specified text doc with the specified delta and then notifies listeners of the changes.
@@ -34,6 +40,124 @@ export class TextDocService {
 
     // Notify so that TextViewModels can update
     this.getLocalSystemChangesInternal$(textDocId).next(diff);
+  }
+
+  /**
+   * Determines if the current user can edit the specified chapter.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @param {number | undefined} bookNum The book number.
+   * @param {number | undefined} chapterNum The chapter number.
+   * @returns {boolean} A value indicating whether the chapter can be edited by the current  user.
+   */
+  canEdit(project: SFProjectProfile | undefined, bookNum: number | undefined, chapterNum: number | undefined): boolean {
+    return (
+      this.isUsfmValid(project, bookNum, chapterNum) &&
+      this.userHasGeneralEditRight(project) &&
+      this.hasChapterEditPermission(project, bookNum, chapterNum) &&
+      this.isDataInSync(project) &&
+      !this.isEditingDisabled(project)
+    );
+  }
+
+  /**
+   * Determines if the data is in sync for the project.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @returns {boolean} A value indicating whether the project data is in sync.
+   */
+  isDataInSync(project: SFProjectProfile | undefined): boolean {
+    return project?.sync?.dataInSync !== false;
+  }
+
+  /**
+   * Determines if editing is disabled for a project.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @returns {boolean} A value indicating whether editing is disabled for the project.
+   */
+  isEditingDisabled(project: SFProjectProfile | undefined): boolean {
+    return project?.editable === false;
+  }
+
+  /**
+   * Determines if the USFM is valid for the specified chapter in the project.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @param {number | undefined} bookNum The book number.
+   * @param {number | undefined} chapterNum The chapter number.
+   * @returns {boolean} A value indicating whether the USFM is valid.
+   *                    If the project or book do not exist, true is returned.
+   */
+  isUsfmValid(
+    project: SFProjectProfile | undefined,
+    bookNum: number | undefined,
+    chapterNum: number | undefined
+  ): boolean {
+    let text: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
+    if (text == null) {
+      return true;
+    }
+
+    return this.isUsfmValidForText(text, chapterNum);
+  }
+
+  /**
+   * Determines if the USFM is valid for the specified chapter in the text.
+   *
+   * @param {TextInfo | undefined} text The text representing the book.
+   * @param {number | undefined} chapterNum The chapter number.
+   * @returns {boolean} A value indicating whether the USFM is valid.
+   */
+  isUsfmValidForText(text: TextInfo | undefined, chapterNum: number | undefined): boolean {
+    const chapter: Chapter | undefined = text?.chapters.find(c => c.number === chapterNum);
+    return chapter?.isValid ?? false;
+  }
+
+  /**
+   * Determines if the current user has permission to edit texts in the project in general.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @returns {boolean} A value indicating whether the user can edit the project's texts.
+   */
+  userHasGeneralEditRight(project: SFProjectProfile | undefined): boolean {
+    if (project == null) {
+      return false;
+    }
+    return SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit);
+  }
+
+  /**
+   * Determines if the current user has permission to edit the specified chapter in the project.
+   *
+   * @param {SFProjectProfile | undefined} project The project.
+   * @param {number | undefined} bookNum The book number.
+   * @param {number | undefined} chapterNum The chapter number.
+   * @returns {boolean} A value indicating whether the user can edit the chapter.
+   */
+  hasChapterEditPermission(
+    project: SFProjectProfile | undefined,
+    bookNum: number | undefined,
+    chapterNum: number | undefined
+  ): boolean {
+    const text: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
+    return this.hasChapterEditPermissionForText(text, chapterNum) ?? false;
+  }
+
+  /**
+   * Determines if the current user has permission to edit the specified chapter in the text.
+   *
+   * @param {TextInfo | undefined} text  The text representing the book.
+   * @param {number | undefined} chapterNum The chapter number.
+   * @returns {boolean | undefined} A value indicating whether the user can edit the chapter.
+   *                                An undefined value means that the chapter is not in IndexedDB yet.
+   */
+  hasChapterEditPermissionForText(text: TextInfo | undefined, chapterNum: number | undefined): boolean | undefined {
+    const chapter: Chapter | undefined = text?.chapters.find(c => c.number === chapterNum);
+    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
+    // is accessed after migration
+    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
+    return permission == null ? undefined : permission === TextInfoPermission.Write;
   }
 
   /**
