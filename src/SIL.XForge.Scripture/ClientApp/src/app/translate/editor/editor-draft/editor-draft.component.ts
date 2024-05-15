@@ -22,9 +22,9 @@ import {
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
@@ -53,26 +53,26 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
   bookChapterName = '';
   generateDraftUrl?: string;
+  targetProject?: SFProjectProfile;
   textDocId?: TextDocId;
   isDraftReady = false;
   isDraftApplied = false;
   canApplyDraft = false;
 
-  private targetProject?: SFProjectProfile;
   private draftDelta?: DeltaStatic;
   private targetDelta?: DeltaStatic;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly destroyRef: DestroyRef,
+    private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftViewerService: DraftViewerService,
+    readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
-    private readonly userService: UserService,
-    private readonly textDocService: TextDocService,
-    private readonly dialogService: DialogService
+    private readonly textDocService: TextDocService
   ) {}
 
   ngOnChanges(): void {
@@ -131,6 +131,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
         // Set the draft editor with the pre-translation segments
         this.draftText.editor?.setContents(this.draftDelta, 'api');
+        this.draftText.applyEditorStyles();
 
         this.isDraftApplied = this.draftDelta.diff(this.targetDelta).length() === 0;
 

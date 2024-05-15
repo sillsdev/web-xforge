@@ -3,7 +3,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import Quill from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Subject } from 'rxjs';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { anything, mock, when } from 'ts-mockito';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -12,6 +11,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { Delta, TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryComponent } from './editor-history.component';
@@ -80,7 +80,10 @@ describe('EditorHistoryComponent', () => {
     };
 
     const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-    const mockTextComponent = jasmine.createSpyObj<TextComponent>([], { id: {} as TextDocId, editor: mockEditor });
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles'], {
+      id: {} as TextDocId,
+      editor: mockEditor
+    });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
     when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
@@ -110,7 +113,10 @@ describe('EditorHistoryComponent', () => {
     };
 
     const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-    const mockTextComponent = jasmine.createSpyObj<TextComponent>([], { id: {} as TextDocId, editor: mockEditor });
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles'], {
+      id: {} as TextDocId,
+      editor: mockEditor
+    });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
     when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
