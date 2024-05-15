@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'history_chooser'">
-  <ng-container *ngIf="historyRevisions.length > 0">
+  <div id="toolbar" *ngIf="historyRevisions.length > 0">
     <mat-form-field id="history-select" appearance="outline">
       <mat-select
         [value]="selectedRevision"
@@ -22,5 +22,17 @@
       <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
       {{ showDiff ? t("hide_changes") : t("show_changes") }}
     </button>
-  </ng-container>
+
+    <button
+      id="revert-history"
+      mat-button
+      type="button"
+      (click)="this.revertToSnapshot()"
+      [disabled]="!this.canRestoreSnapshot"
+      matTooltip="{{ t('revert_details') }}"
+    >
+      <mat-icon class="material-icons-outlined">restore_page</mat-icon>
+      {{ t("revert") }}
+    </button>
+  </div>
 </ng-container>

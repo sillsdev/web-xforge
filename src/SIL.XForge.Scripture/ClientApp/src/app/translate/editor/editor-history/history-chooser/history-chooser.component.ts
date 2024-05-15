@@ -1,6 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
+import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { DeltaStatic } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import {
   asyncScheduler,
@@ -13,9 +15,13 @@ import {
   Subject,
   tap
 } from 'rxjs';
+import { DialogService } from 'xforge-common/dialog.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { Delta, TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
+import { TextDocService } from '../../../../core/text-doc.service';
 
 export interface RevisionSelectEvent {
   revision: Revision;
@@ -35,8 +41,9 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   @Output() showDiffChange = new EventEmitter<boolean>();
   @Output() revisionSelect = new EventEmitter<RevisionSelectEvent>();
 
-  selectedRevision?: Revision;
   historyRevisions: Revision[] = [];
+  selectedRevision: Revision | undefined;
+  selectedSnapshot: Snapshot<TextData> | undefined;
 
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
@@ -50,7 +57,17 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   private inputChanged$ = new Subject<void>();
   private bookId = '';
 
-  constructor(readonly onlineStatusService: OnlineStatusService, private readonly paratextService: ParatextService) {}
+  constructor(
+    private readonly dialogService: DialogService,
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly noticeService: NoticeService,
+    private readonly paratextService: ParatextService,
+    private readonly textDocService: TextDocService
+  ) {}
+
+  get canRestoreSnapshot(): boolean {
+    return this.selectedSnapshot != null;
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.bookNum) {
@@ -105,6 +122,35 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     }
   }
 
+  async revertToSnapshot(): Promise<void> {
+    // Ensure the user wants to proceed
+    const confirmation: boolean = await this.dialogService.confirm(
+      'history_chooser.confirm_revert',
+      'history_chooser.confirm_yes'
+    );
+    if (!confirmation) return;
+
+    // Ensure we have everything we need
+    if (
+      this.selectedRevision == null ||
+      this.selectedSnapshot?.data.ops == null ||
+      this.projectId == null ||
+      this.bookNum == null ||
+      this.chapter == null
+    ) {
+      this.noticeService.showError(translate('history_chooser.error'));
+      return;
+    }
+
+    // Revert to the snapshot
+    const delta: DeltaStatic = new Delta(this.selectedSnapshot.data.ops);
+    const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
+    await this.textDocService.overwrite(textDocId, delta);
+
+    // Force the history editor to reload
+    this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
+  }
+
   toggleDiff(): void {
     this.showDiff = !this.showDiff;
     this.showDiffChange.emit(this.showDiff);
@@ -115,11 +161,14 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       return;
     }
 
-    // Set the revision
+    // Set the revision and clear the snapshot
     this.selectedRevision = revision;
+    this.selectedSnapshot = undefined;
 
     // Get the snapshot from the paratext service
     await this.paratextService.getSnapshot(this.projectId, this.bookId, this.chapter, revision.key).then(snapshot => {
+      // Remember the snapshot so we can apply it
+      this.selectedSnapshot = snapshot;
       this.revisionSelect.emit({ revision, snapshot });
     });
   }
