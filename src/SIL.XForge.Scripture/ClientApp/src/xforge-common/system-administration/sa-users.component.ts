@@ -83,6 +83,12 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
         }
         this.userRows = userRows;
         this.totalRecordCount = searchResults.unpagedCount;
+
+        // We have moved beyond the last user (i.e. because of deletion), move to the previous page
+        if (this.pageIndex * this.pageSize >= Math.max(this.totalRecordCount, this.pageSize)) {
+          this.updatePage(this.pageIndex - 1, this.pageSize);
+        }
+
         this.loadingFinished();
       }
     );
