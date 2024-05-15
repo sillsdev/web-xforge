@@ -11,7 +11,6 @@ import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-au
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
-import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
@@ -42,7 +41,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    private readonly fileService: FileService,
     private readonly locationService: LocationService,
     protected readonly retryingRequestService: RetryingRequestService
   ) {
@@ -51,6 +49,47 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
     return (await this.onlineInvoke<string>('create', { settings }))!;
+  }
+
+  /**
+   * Creates an SF project/resource with the given paratext id.
+   * @param paratextId The paratext id of the project or resource.
+   * @returns The SF project id.
+   */
+  async onlineCreateResourceProject(paratextId: string): Promise<string | undefined> {
+    return this.onlineInvoke<string>('createResourceProject', { paratextId });
+  }
+
+  async getRealtimeProject(paratextId: string): Promise<SFProjectDoc | undefined> {
+    const query: RealtimeQuery<SFProjectDoc> = await this.realtimeService.onlineQuery<SFProjectDoc>(this.collection, {
+      paratextId
+    });
+    return query.docs[0];
+  }
+
+  /**
+   * Gets the SF project Id for the project/resource with the given paratext id.  Creates the project if needed.
+   * @param paratextId The paratext id of the project or resource.
+   * @returns The SF project id.
+   */
+  async getOrCreateRealtimeProject(paratextId: string, role?: string): Promise<string | undefined> {
+    // First check if project exists
+    const project: SFProjectDoc | undefined = await this.getRealtimeProject(paratextId);
+
+    // If SF project exists, return its id
+    if (project != null) {
+      return Promise.resolve(project.id);
+    }
+
+    // Otherwise, create realtime project
+    const projectId: string | undefined = await this.onlineCreateResourceProject(paratextId);
+
+    // Add current user to project
+    if (projectId != null) {
+      await this.onlineAddCurrentUser(projectId, role);
+    }
+
+    return projectId;
   }
 
   /**
@@ -159,7 +198,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   onlineSetPreTranslate(projectId: string, preTranslate: boolean): Promise<void> {
-    return this.onlineInvoke<void>('setPreTranslate', { projectId, preTranslate });
+    return this.onlineInvoke<void>('setPreTranslate', {
+      projectId,
+      preTranslate
+    });
   }
 
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
@@ -167,13 +209,18 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('isAlreadyInvited', { projectId: id, email }))!;
+    return (await this.onlineInvoke<boolean>('isAlreadyInvited', {
+      projectId: id,
+      email
+    }))!;
   }
 
   /** Get list of email addresses that have outstanding invitations on project.
    * Caller must be an admin on the project. */
   async onlineInvitedUsers(projectId: string): Promise<InviteeStatus[]> {
-    return (await this.onlineInvoke<InviteeStatus[]>('invitedUsers', { projectId }))!;
+    return (await this.onlineInvoke<InviteeStatus[]>('invitedUsers', {
+      projectId
+    }))!;
   }
 
   /** Get added into project with specified shareKey code. */
@@ -186,11 +233,16 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
-    return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
+    return (await this.onlineInvoke<string>('uninviteUser', {
+      projectId,
+      emailToUninvite
+    }))!;
   }
 
   async onlineIsSourceProject(projectId: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('isSourceProject', { projectId }))!;
+    return (await this.onlineInvoke<boolean>('isSourceProject', {
+      projectId
+    }))!;
   }
 
   async onlineGetLinkSharingKey(projectId: string, role: SFProjectRole, shareLinkType: ShareLinkType): Promise<string> {
@@ -212,7 +264,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
-    return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
+    return (await this.onlineInvoke<void>('setUserProjectPermissions', {
+      projectId,
+      userId,
+      permissions
+    }))!;
   }
 
   async onlineCreateAudioTimingData(
@@ -222,14 +278,27 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     timingData: AudioTiming[],
     audioUrl: string
   ): Promise<void> {
-    return await this.onlineInvoke('createAudioTimingData', { projectId, book, chapter, timingData, audioUrl });
+    return await this.onlineInvoke('createAudioTimingData', {
+      projectId,
+      book,
+      chapter,
+      timingData,
+      audioUrl
+    });
   }
 
   async onlineDeleteAudioTimingData(projectId: string, book: number, chapter: number): Promise<void> {
-    return await this.onlineInvoke('deleteAudioTimingData', { projectId, book, chapter });
+    return await this.onlineInvoke('deleteAudioTimingData', {
+      projectId,
+      book,
+      chapter
+    });
   }
 
   async onlineSetServalConfig(projectId: string, servalConfig: string | null | undefined): Promise<void> {
-    return await this.onlineInvoke<void>('setServalConfig', { projectId, servalConfig });
+    return await this.onlineInvoke<void>('setServalConfig', {
+      projectId,
+      servalConfig
+    });
   }
 }

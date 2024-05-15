@@ -54,7 +54,7 @@
             placeholder="{{ t('source_text_placeholder') }}"
             [projects]="projects"
             [resources]="resources"
-            [hideProjectId]="paratextIdControl.value"
+            [hiddenParatextIds]="[paratextIdControl.value]"
           ></app-project-select>
           <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
           <ng-container *ngIf="isBasedOnProjectSet">

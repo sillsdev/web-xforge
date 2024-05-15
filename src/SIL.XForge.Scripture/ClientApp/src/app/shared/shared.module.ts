@@ -11,6 +11,7 @@ import { NoticeComponent } from './notice/notice.component';
 import { ShareButtonComponent } from './share/share-button.component';
 import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
+import { TextDocIdPipe } from './text/text-doc-id.pipe';
 import { TextComponent } from './text/text.component';
 
 const componentExports = [
@@ -21,7 +22,8 @@ const componentExports = [
   ShareDialogComponent,
   TextComponent,
   CheckingQuestionComponent,
-  SingleButtonAudioPlayerComponent
+  SingleButtonAudioPlayerComponent,
+  TextDocIdPipe
 ];
 
 @NgModule({
