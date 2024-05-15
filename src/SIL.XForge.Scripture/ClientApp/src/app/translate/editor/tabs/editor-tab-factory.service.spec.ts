@@ -17,6 +17,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.headerText).toEqual('History');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
+    expect(tab.unique).toBeFalsy();
   });
 
   it('should create a "draft" tab', () => {
@@ -29,9 +30,10 @@ describe('EditorTabFactoryService', () => {
     expect(tab.unique).toEqual(true);
   });
 
-  it('should create a "project" tab', () => {
-    const tab = service.createTab('project', { headerText: 'Project 1' });
-    expect(tab.type).toEqual('project');
+  it('should create a "project-target" tab', () => {
+    const tab = service.createTab('project-target', { projectId: 'project1', headerText: 'Project 1' });
+    expect(tab.projectId).toEqual('project1');
+    expect(tab.type).toEqual('project-target');
     expect(tab.icon).toEqual('book');
     expect(tab.headerText).toEqual('Project 1');
     expect(tab.closeable).toEqual(false);
@@ -40,7 +42,8 @@ describe('EditorTabFactoryService', () => {
   });
 
   it('should create a "project-source" tab', () => {
-    const tab = service.createTab('project-source', { headerText: 'Project 1' });
+    const tab = service.createTab('project-source', { projectId: 'project1', headerText: 'Project 1' });
+    expect(tab.projectId).toEqual('project1');
     expect(tab.type).toEqual('project-source');
     expect(tab.icon).toEqual('book');
     expect(tab.headerText).toEqual('Project 1');
@@ -49,15 +52,30 @@ describe('EditorTabFactoryService', () => {
     expect(tab.unique).toEqual(true);
   });
 
+  it('should create a "project-resource" tab', () => {
+    const tab = service.createTab('project-resource', { projectId: 'project1', headerText: 'Project 1' });
+    expect(tab.projectId).toEqual('project1');
+    expect(tab.type).toEqual('project-resource');
+    expect(tab.icon).toEqual('library_books');
+    expect(tab.headerText).toEqual('Project 1');
+    expect(tab.closeable).toEqual(true);
+    expect(tab.movable).toEqual(true);
+    expect(tab.unique).toBeFalsy();
+  });
+
   it('should throw error for unknown tab type', () => {
     expect(() => service.createTab('unknown' as EditorTabType)).toThrowError('Unknown TabType: unknown');
   });
 
-  it('should throw error for "project" tab without headerText', () => {
-    expect(() => service.createTab('project')).toThrowError("'tabOptions' must include 'headerText'");
+  it('should throw error for "project-target" tab without projectId', () => {
+    expect(() => service.createTab('project-target')).toThrowError("'tabOptions' must include 'projectId'");
   });
 
-  it('should throw error for "project-source" tab without headerText', () => {
-    expect(() => service.createTab('project-source')).toThrowError("'tabOptions' must include 'headerText'");
+  it('should throw error for "project-source" tab without projectId', () => {
+    expect(() => service.createTab('project-source')).toThrowError("'tabOptions' must include 'projectId'");
+  });
+
+  it('should throw error for "project-resource" tab without projectId', () => {
+    expect(() => service.createTab('project-resource')).toThrowError("'tabOptions' must include 'projectId'");
   });
 });

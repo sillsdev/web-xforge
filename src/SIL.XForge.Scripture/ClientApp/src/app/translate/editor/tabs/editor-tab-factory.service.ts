@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { isUndefined, omitBy } from 'lodash-es';
 import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { TabFactoryService } from '../../../shared/sf-tab-group';
 import { EditorTabInfo } from './editor-tabs.types';
@@ -8,6 +9,9 @@ import { EditorTabInfo } from './editor-tabs.types';
 })
 export class EditorTabFactoryService implements TabFactoryService<EditorTabType, EditorTabInfo> {
   createTab(tabType: EditorTabType, tabOptions?: Partial<EditorTabInfo>): EditorTabInfo {
+    // Remove undefined options
+    tabOptions = omitBy(tabOptions, isUndefined);
+
     switch (tabType) {
       case 'history':
         return Object.assign(
@@ -34,19 +38,37 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           tabOptions
         );
       case 'project-source':
-      case 'project':
-        if (!tabOptions?.headerText) {
-          throw new Error(`'tabOptions' must include 'headerText'`);
+      case 'project-target':
+        if (!tabOptions?.projectId) {
+          throw new Error(`'tabOptions' must include 'projectId'`);
         }
 
         return Object.assign(
           {
             type: tabType,
             icon: 'book',
-            headerText: tabOptions.headerText,
+            headerText: tabOptions?.headerText ?? 'Project',
             closeable: false,
             movable: false,
             unique: true
+          },
+          tabOptions
+        );
+      case 'project-resource':
+        if (!tabOptions?.projectId) {
+          throw new Error(`'tabOptions' must include 'projectId'`);
+        }
+
+        return Object.assign(
+          {
+            type: tabType,
+            icon: 'library_books',
+            headerText: tabOptions?.headerText ?? 'Resource',
+            closeable: true,
+            movable: true,
+            unique: false,
+            persist: true,
+            projectId: tabOptions.projectId
           },
           tabOptions
         );

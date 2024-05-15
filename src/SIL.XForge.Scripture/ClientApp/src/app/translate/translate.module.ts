@@ -16,11 +16,13 @@ import { EditorDraftComponent } from './editor/editor-draft/editor-draft.compone
 import { EditorHistoryComponent } from './editor/editor-history/editor-history.component';
 import { HistoryChooserComponent } from './editor/editor-history/history-chooser/history-chooser.component';
 import { HistoryRevisionFormatPipe } from './editor/editor-history/history-chooser/history-revision-format.pipe';
+import { EditorResourceComponent } from './editor/editor-resource/editor-resource.component';
 import { EditorComponent } from './editor/editor.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
 import { SuggestionsComponent } from './editor/suggestions.component';
+import { EditorTabAddResourceDialogComponent } from './editor/tabs/editor-tab-add-resource-dialog/editor-tab-add-resource-dialog.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
@@ -40,7 +42,9 @@ import { TranslateRoutingModule } from './translate-routing.module';
     HistoryChooserComponent,
     EditorHistoryComponent,
     EditorDraftComponent,
-    HistoryRevisionFormatPipe
+    HistoryRevisionFormatPipe,
+    EditorTabAddResourceDialogComponent,
+    EditorResourceComponent
   ],
   imports: [
     AngularSplitModule,

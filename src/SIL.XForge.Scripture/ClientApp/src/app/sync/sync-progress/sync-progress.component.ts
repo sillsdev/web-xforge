@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { merge, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map, merge } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -21,9 +21,23 @@ export class ProgressState {
 export class SyncProgressComponent extends SubscriptionDisposable {
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
+  private progressPercent$ = new BehaviorSubject<number>(0);
+
+  /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
+  syncProgressPercent$: Observable<number> = this.progressPercent$.pipe(map(p => p * 100));
+  syncProgressMode$: Observable<ProgressBarMode> = this.progressPercent$.pipe(
+    map(percent => {
+      if (this.featureFlags.stillness.enabled) {
+        return 'determinate';
+      }
+
+      // Show indeterminate only at the beginning, as the sync has not yet started
+      return percent > 0 ? 'determinate' : 'indeterminate';
+    })
+  );
+
   private sourceProjectDoc?: SFProjectDoc;
   private _projectDoc?: SFProjectDoc;
-  private progressPercent: number = 0;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -33,9 +47,9 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   ) {
     super();
 
-    this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) =>
-      this.updateProgressState(projectId, progressState)
-    );
+    this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
+      this.updateProgressState(projectId, progressState);
+    });
   }
 
   @Input() set projectDoc(doc: SFProjectDoc | undefined) {
@@ -44,17 +58,6 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     }
     this._projectDoc = doc;
     this.initialize();
-  }
-
-  /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
-  get syncProgressPercent(): number {
-    return this.progressPercent * 100;
-  }
-
-  get mode(): ProgressBarMode {
-    if (this.featureFlags.stillness.enabled) return 'determinate';
-    // Show indeterminate only at the beginning, as the sync has not yet started
-    return this.syncProgressPercent > 0 ? 'determinate' : 'indeterminate';
   }
 
   async initialize(): Promise<void> {
@@ -104,9 +107,11 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   public updateProgressState(projectId: string, progressState: ProgressState): void {
     const hasSourceProject = this.sourceProjectDoc?.data != null;
     if (projectId === this._projectDoc?.id) {
-      this.progressPercent = hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue;
+      this.progressPercent$.next(
+        hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue
+      );
     } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
-      this.progressPercent = progressState.progressValue * 0.5;
+      this.progressPercent$.next(progressState.progressValue * 0.5);
     }
   }
 
