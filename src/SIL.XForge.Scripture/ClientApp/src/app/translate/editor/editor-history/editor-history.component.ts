@@ -3,6 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { FontService } from '../../../../xforge-common/font.service';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { Delta, TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -29,11 +31,13 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
 
   loadedRevision?: Revision;
   isViewInitialized = false;
+  projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly editorHistoryService: EditorHistoryService,
+    readonly fontService: FontService,
     readonly onlineStatusService: OnlineStatusService
   ) {}
 
@@ -78,6 +82,7 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
           const diff = this.editorHistoryService.processDiff(snapshotContents, targetContents);
 
           this.snapshotText?.editor?.updateContents(diff, 'api');
+          this.snapshotText?.applyEditorStyles();
         }
       });
   }
