@@ -8,6 +8,8 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
+import { take } from 'rxjs';
+import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
 import { TabHeaderPointerEvent, TabMoveEvent } from './sf-tabs.types';
 import { TabStateService } from './tab-state/tab-state.service';
@@ -25,12 +27,14 @@ export class TabGroupComponent implements OnChanges {
   @Input() allowDragDrop = true;
   @Input() connectedTo: string[] = [];
 
-  @ViewChild(TabBodyComponent, { read: ElementRef }) scrollContainer?: ElementRef<HTMLElement>;
+  @ViewChild(TabBodyComponent, { read: ElementRef })
+  scrollContainer?: ElementRef<HTMLElement>;
   @ContentChildren(TabComponent) tabs!: QueryList<TabComponent>;
 
   constructor(
     private readonly tabState: TabStateService<string, any>,
-    private readonly tabFactory: TabFactoryService<string, any>
+    private readonly tabFactory: TabFactoryService<string, any>,
+    private readonly tabAddRequestService: TabAddRequestService<string, any>
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -58,8 +62,18 @@ export class TabGroupComponent implements OnChanges {
     }
   }
 
-  addTab(newTabType: string): void {
-    const tab = this.tabFactory.createTab(newTabType);
+  onTabAddRequest(newTabType: string): void {
+    // Some tabs types may need further processing before they can be added (e.g. 'project-resource')
+    this.tabAddRequestService
+      .handleTabAddRequest(newTabType)
+      .pipe(take(1))
+      .subscribe(tabOptions => {
+        this.addTab(newTabType, tabOptions);
+      });
+  }
+
+  async addTab(newTabType: string, tabOptions: any = {}): Promise<void> {
+    const tab = await this.tabFactory.createTab(newTabType, tabOptions);
     this.tabState.addTab(this.groupId, tab);
   }
 

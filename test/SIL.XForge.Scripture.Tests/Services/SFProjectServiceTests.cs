@@ -2787,7 +2787,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_AdministratorsCanSync()
+    public void SyncAsync_AdministratorsCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2797,7 +2797,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_TranslatorsCanSync()
+    public void SyncAsync_TranslatorsCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2807,7 +2807,37 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_ObserversCannotSync()
+    public void SyncAsync_AdministratorsCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User01, Resource01));
+    }
+
+    [Test]
+    public void SyncAsync_TranslatorsCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User05, Resource01));
+    }
+
+    [Test]
+    public void SyncAsync_ObserversCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User02, Resource01));
+    }
+
+    [Test]
+    public void SyncAsync_ObserversCannotSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -3577,6 +3607,12 @@ public class SFProjectServiceTests
                                         }
                                     }
                                 }
+                            },
+                            UserRoles =
+                            {
+                                { User01, SFProjectRole.Administrator },
+                                { User05, SFProjectRole.Translator },
+                                { User02, SFProjectRole.PTObserver },
                             }
                         },
                         new SFProject

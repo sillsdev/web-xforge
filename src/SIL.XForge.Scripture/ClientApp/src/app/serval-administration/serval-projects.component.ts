@@ -10,13 +10,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { ParatextService } from '../core/paratext.service';
 import { ServalAdministrationService } from './serval-administration.service';
 
 class Row {
-  constructor(
-    public readonly projectDoc: SFProjectProfileDoc,
-    private readonly servalAdministrationService: ServalAdministrationService
-  ) {}
+  constructor(public readonly projectDoc: SFProjectProfileDoc, private readonly paratextService: ParatextService) {}
 
   get alternateSource(): string {
     return this.projectDoc.data?.translateConfig.draftConfig.alternateSource == null
@@ -27,11 +25,10 @@ class Row {
   }
 
   get alternateSourceId(): string | undefined {
-    if (
-      !this.servalAdministrationService.isResource(
-        this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId
-      )
-    ) {
+    const paratextId: string | undefined =
+      this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId;
+
+    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
     } else {
       return undefined;
@@ -47,11 +44,10 @@ class Row {
   }
 
   get alternateTrainingSourceId(): string | undefined {
-    if (
-      !this.servalAdministrationService.isResource(
-        this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId
-      )
-    ) {
+    const paratextId: string | undefined =
+      this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId;
+
+    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
     } else {
       return undefined;
@@ -79,7 +75,9 @@ class Row {
   }
 
   get sourceId(): string | undefined {
-    if (!this.servalAdministrationService.isResource(this.projectDoc.data?.translateConfig.source?.paratextId)) {
+    const paratextId: string | undefined = this.projectDoc.data?.translateConfig.source?.paratextId;
+
+    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.source?.projectRef;
     } else {
       return undefined;
@@ -110,7 +108,8 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly servalAdministrationService: ServalAdministrationService
+    private readonly servalAdministrationService: ServalAdministrationService,
+    private readonly paratextService: ParatextService
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
@@ -157,7 +156,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
 
     const rows: Row[] = [];
     for (const projectDoc of this.projectDocs) {
-      rows.push(new Row(projectDoc, this.servalAdministrationService));
+      rows.push(new Row(projectDoc, this.paratextService));
     }
     this.rows = rows;
   }

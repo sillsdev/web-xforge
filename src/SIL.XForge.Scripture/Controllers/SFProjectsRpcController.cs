@@ -67,6 +67,34 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> CreateResourceProject(string paratextId)
+    {
+        try
+        {
+            string projectId = await projectService.CreateResourceProjectAsync(UserId, paratextId);
+            return Ok(projectId);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "CreateResourceProject" }, { "ParatextId", paratextId }, }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> Delete(string projectId)
     {
         try

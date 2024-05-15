@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { isEqual } from 'lodash-es';
+import { isEqual, isUndefined, omitBy } from 'lodash-es';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { combineLatest, firstValueFrom, Observable, of, startWith, Subject, Subscription, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged, finalize, shareReplay } from 'rxjs/operators';
@@ -35,6 +35,9 @@ export class EditorTabPersistenceService {
   async persistTabsOpen(tabs: EditorTabPersistData[]): Promise<void> {
     const pucDoc = await firstValueFrom(this.projectUserConfigDoc$);
     const existingTabs = pucDoc.data?.editorTabsOpen;
+
+    // Undefined properties are not persisted and should be ignored in the comparison
+    tabs = tabs.map(tab => omitBy(tab, isUndefined) as EditorTabPersistData);
 
     if (existingTabs != null && !isEqual(existingTabs, tabs)) {
       await pucDoc.updateEditorOpenTabs(tabs);
