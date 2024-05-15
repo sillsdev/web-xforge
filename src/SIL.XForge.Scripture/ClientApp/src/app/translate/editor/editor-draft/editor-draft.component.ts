@@ -1,11 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { Chapter, TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
@@ -210,60 +206,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return hasContent ?? false;
   }
 
-  /**
-   * This code is reimplemented from editor.component.ts
-   */
   private canEdit(): boolean {
     return (
-      this.isUsfmValid() &&
-      this.userHasGeneralEditRight() &&
-      this.hasChapterEditPermission() &&
-      this.targetProject?.sync?.dataInSync !== false &&
-      !this.draftText?.areOpsCorrupted &&
-      this.targetProject?.editable === true
+      this.textDocService.canEdit(this.targetProject, this.bookNum, this.chapter) && !this.draftText?.areOpsCorrupted
     );
-  }
-
-  /**
-   * This function is duplicated from editor.component.ts
-   */
-  private isUsfmValid(): boolean {
-    let text: TextInfo | undefined = this.targetProject?.texts.find(t => t.bookNum === this.bookNum);
-    if (text == null) {
-      return true;
-    }
-
-    const chapter: Chapter | undefined = text.chapters.find(c => c.number === this.chapter);
-    return chapter?.isValid ?? false;
-  }
-
-  /**
-   * This function is duplicated from editor.component.ts.
-   */
-  private userHasGeneralEditRight(): boolean {
-    if (this.targetProject == null) {
-      return false;
-    }
-
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.targetProject,
-      this.userService.currentUserId,
-      SFProjectDomain.Texts,
-      Operation.Edit
-    );
-  }
-
-  /**
-   * This function is duplicated from editor.component.ts.
-   */
-  private hasChapterEditPermission(): boolean {
-    const chapter: Chapter | undefined = this.targetProject?.texts
-      .find(t => t.bookNum === this.bookNum)
-      ?.chapters.find(c => c.number === this.chapter);
-    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
-    // is accessed after migration
-    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
-    return permission == null ? false : permission === TextInfoPermission.Write;
   }
 
   private getLocalizedBookChapter(): string {

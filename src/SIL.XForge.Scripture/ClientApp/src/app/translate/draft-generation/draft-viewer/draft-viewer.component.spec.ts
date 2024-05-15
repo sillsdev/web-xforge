@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router, RouterModule } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
-import { User } from 'realtime-server/common/models/user';
+import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -13,9 +13,9 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { of, throwError } from 'rxjs';
-import { SharedModule } from 'src/app/shared/shared.module';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -25,8 +25,9 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, MockTranslocoDirective, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { DialogService } from '../../../../xforge-common/dialog.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { TextDocService } from '../../../core/text-doc.service';
+import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { isBadDelta } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
@@ -43,6 +44,7 @@ describe('DraftViewerComponent', () => {
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockActivatedRoute = mock(ActivatedRoute);
   const mockDialogService = mock(DialogService);
+  const mockTextDocService = mock(TextDocService);
   const mockRouter = mock(Router);
 
   class TestEnvironment {
@@ -106,6 +108,7 @@ describe('DraftViewerComponent', () => {
         } as ParamMap)
       );
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      when(mockTextDocService.canEdit(anything(), anything(), anything())).thenReturn(true);
     }
 
     init(): void {
@@ -139,6 +142,7 @@ describe('DraftViewerComponent', () => {
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: SFProjectService, useMock: mockProjectService },
+      { provide: TextDocService, useMock: mockTextDocService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: UserService, useMock: mockUserService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
@@ -299,46 +303,16 @@ describe('DraftViewerComponent', () => {
     const env = new TestEnvironment();
     env.component.currentBook = 1;
     env.component.currentChapter = 1;
-    expect(env.component.canEdit).toBeTruthy();
-  }));
-
-  it('should not show the apply to project button if the usfm is invalid', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.component.currentBook = 1;
-    env.component.currentChapter = 2;
-    expect(env.component.canEdit).toBeFalsy();
-  }));
-
-  it('should not show the apply to project button if the user does not have project edit rights', fakeAsync(() => {
-    const env = new TestEnvironment(() => {
-      when(mockUserService.currentUserId).thenReturn('user02');
-    });
-    env.component.currentBook = 1;
-    env.component.currentChapter = 1;
-    expect(env.component.canEdit).toBeFalsy();
+    expect(env.component.canEdit).toBe(true);
   }));
 
   it('should not show the apply to project button if the user cannot edit the chapter', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(() => {
+      when(mockTextDocService.canEdit(anything(), anything(), anything())).thenReturn(false);
+    });
     env.component.currentBook = 2;
     env.component.currentChapter = 1;
-    expect(env.component.canEdit).toBeFalsy();
-  }));
-
-  it('should not show the apply to project button if the project is not editable', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.component.targetProject!.sync.dataInSync = false;
-    env.component.currentBook = 1;
-    env.component.currentChapter = 1;
-    expect(env.component.canEdit).toBeFalsy();
-  }));
-
-  it('should not show the apply to project button if the project is not in sync', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.component.targetProject!.editable = false;
-    env.component.currentBook = 1;
-    env.component.currentChapter = 1;
-    expect(env.component.canEdit).toBeFalsy();
+    expect(env.component.canEdit).toBe(false);
   }));
 
   it('should return ops and update the editor', fakeAsync(() => {
