@@ -11,7 +11,7 @@ import { ProjectSelectComponent } from './project-select.component';
 
 describe('ProjectSelectComponent', () => {
   it('should list projects and resources', fakeAsync(() => {
-    const env = new TestEnvironment('p02');
+    const env = new TestEnvironment(['p02']);
     env.clickInput();
     // Expect two projects and two resources (one of the projects should be hidden)
     expect(env.groupLabels.length).toBe(2);
@@ -71,13 +71,20 @@ describe('ProjectSelectComponent', () => {
     expect(env.component.sourceParatextId.value).toBe('r02');
   }));
 
+  it("doesn't list multiple hidden projects", fakeAsync(() => {
+    const env = new TestEnvironment(['p01', 'p03', 'r02']);
+    env.clickInput();
+    expect(env.optionsText(0)).toEqual(['P2 - Project 2']);
+    expect(env.optionsText(1)).toEqual(['R1 - Resource 1']);
+  }));
+
   it('adds list items as the user scrolls the list', fakeAsync(() => {
     const resources = [...Array(100).keys()].map(key => ({
       paratextId: 'r' + key,
       name: 'Resource ' + (key + 1),
       shortName: 'R' + key
     }));
-    const env = new TestEnvironment('p03', undefined, resources);
+    const env = new TestEnvironment(['p03'], undefined, resources);
     env.clickInput();
     expect(env.optGroups.length).toBe(2);
     expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P2 - Project 2']);
@@ -117,7 +124,7 @@ describe('ProjectSelectComponent', () => {
       placeholder="Based on"
       [projects]="projects"
       [resources]="resources"
-      [hideProjectId]="hideProjectId"
+      [hiddenParatextIds]="hiddenParatextIds"
       [nonSelectableProjects]="nonSelectableProjects"
       [isDisabled]="isDisabled"
     ></app-project-select>
@@ -140,7 +147,7 @@ class HostComponent {
     { name: 'Resource 2', paratextId: 'r02', shortName: 'R2' }
   ];
   nonSelectableProjects: SelectableProject[] = [{ name: 'Project 1', paratextId: 'p01', shortName: 'P1' }];
-  hideProjectId: string = '';
+  hiddenParatextIds: string[] = [];
 }
 
 class TestEnvironment {
@@ -148,7 +155,7 @@ class TestEnvironment {
   component: HostComponent;
 
   constructor(
-    hideProjectId?: string,
+    hiddenParatextIds?: string[],
     projects?: SelectableProject[],
     resources?: SelectableProject[],
     nonSelectableProjects?: SelectableProject[]
@@ -164,7 +171,7 @@ class TestEnvironment {
     this.component.projects = projects || this.component.projects;
     this.component.resources = resources || this.component.resources;
     this.component.nonSelectableProjects = nonSelectableProjects || this.component.nonSelectableProjects;
-    this.component.hideProjectId = hideProjectId || this.component.hideProjectId;
+    this.component.hiddenParatextIds = hiddenParatextIds || this.component.hiddenParatextIds;
 
     this.fixture.detectChanges();
     tick();

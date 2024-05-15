@@ -237,8 +237,9 @@
     "offline_notice": "Editor history is not available offline."
   },
   "editor_tabs_menu": {
-    "history_tab_header": "History",
-    "draft_tab_header": "Auto Draft"
+    "history_menu_item": "History",
+    "draft_menu_item": "Auto Draft",
+    "project_resource_menu_item": "Resource..."
   },
   "history_chooser": {
     "hide_changes": "Hide changes",
@@ -430,6 +431,18 @@
     "hide_community_checking_text": "Hide Scripture text",
     "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
+  },
+  "editor_add_tab_resource_dialog": {
+    "dialog_title": "Open Resource Tab",
+    "error_fetching_projects_resources": "There was an error fetching projects and resources.",
+    "error_fetching_projects": "There was an error fetching projects. You will only be able to select resources from Digital Bible Library.",
+    "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
+    "error_loading_resource": "There was an error loading the selected resource.",
+    "loading": "Loading",
+    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
+    "placeholder_ready": "Select paratext project or DBL resource",
+    "cancel": "Cancel",
+    "select": "Select"
   },
   "suggestions_settings_dialog": {
     "better": "Better",
