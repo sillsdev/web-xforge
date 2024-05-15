@@ -19,8 +19,10 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { Delta, TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';
+import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
 
 export interface RevisionSelectEvent {
@@ -56,17 +58,23 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
 
   private inputChanged$ = new Subject<void>();
   private bookId = '';
+  private projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
     private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
     private readonly paratextService: ParatextService,
+    private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService
   ) {}
 
   get canRestoreSnapshot(): boolean {
     return this.selectedSnapshot != null;
+  }
+
+  get showRestoreSnapshot(): boolean {
+    return this.canRestoreSnapshot && this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -97,6 +105,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       if (isOnline && this.projectId != null && this.bookNum != null && this.chapter != null) {
         this.loading$.next(true);
         try {
+          this.projectDoc = await this.projectService.getProfile(this.projectId);
           if (this.historyRevisions.length === 0) {
             this.historyRevisions =
               (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];
@@ -136,7 +145,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.selectedSnapshot?.data.ops == null ||
       this.projectId == null ||
       this.bookNum == null ||
-      this.chapter == null
+      this.chapter == null ||
+      !this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter)
     ) {
       this.noticeService.showError(translate('history_chooser.error'));
       return;
