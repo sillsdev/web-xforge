@@ -4204,6 +4204,9 @@ class TestEnvironment {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;
     }
+    if (data.translateConfig?.preTranslate != null) {
+      projectProfileData.translateConfig.preTranslate = data.translateConfig.preTranslate;
+    }
     if (data.translateConfig?.source !== undefined) {
       projectProfileData.translateConfig.source = merge(
         projectProfileData.translateConfig.source,
