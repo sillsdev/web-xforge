@@ -14,6 +14,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { PermissionsService } from '../../../core/permissions.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabInfo } from './editor-tabs.types';
@@ -29,6 +30,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly draftGenerationService: DraftGenerationService,
     private readonly onlineStatus: OnlineStatusService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
+    private readonly permissionsService: PermissionsService,
     private readonly i18n: I18nService
   ) {}
 
@@ -38,23 +40,20 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   }
 
   private initMenuItems(): Observable<TabMenuItem[]> {
-    return this.activatedProject.projectDoc$.pipe(
+    return combineLatest([
+      this.activatedProject.projectDoc$.pipe(filterNullish()),
+      this.onlineStatus.onlineStatus$
+    ]).pipe(
       takeUntilDestroyed(this.destroyRef),
-      filterNullish(),
-      switchMap(projectDoc => {
+      switchMap(([projectDoc, isOnline]) => {
         return combineLatest([
           of(projectDoc),
-          this.onlineStatus.onlineStatus$.pipe(
-            switchMap(isOnline =>
-              isOnline && (projectDoc.data?.translateConfig.preTranslate ?? false)
-                ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id)
-                : of(undefined)
-            )
-          ),
+          of(isOnline),
+          isOnline ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id) : of(undefined),
           this.tabState.tabs$
         ]);
       }),
-      switchMap(([projectDoc, buildDto, existingTabs]) => {
+      switchMap(([projectDoc, isOnline, buildDto, existingTabs]) => {
         const showDraft = buildDto != null;
         const items: Observable<TabMenuItem>[] = [];
 
@@ -70,9 +69,13 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
                 continue;
               }
               break;
-            // TODO: Add support for project-source tabs
+            case 'project-resource':
+              if (!isOnline || !this.canShowResource(projectDoc)) {
+                continue;
+              }
+              break;
             case 'project-source':
-            case 'project':
+            case 'project-target':
             default:
               continue;
           }
@@ -92,34 +95,46 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   private createMenuItem(tabType: EditorTabType): Observable<TabMenuItem> {
     switch (tabType) {
       case 'history':
-        return this.i18n.translate('editor_tabs_menu.history_tab_header').pipe(
+        return this.i18n.translate('editor_tabs_menu.history_menu_item').pipe(
           take(1),
-          map(localizedHeaderText => ({
+          map(localizedMenuItemText => ({
             type: 'history',
             icon: 'history',
-            text: localizedHeaderText
+            text: localizedMenuItemText
           }))
         );
       case 'draft':
-        return this.i18n.translate('editor_tabs_menu.draft_tab_header').pipe(
+        return this.i18n.translate('editor_tabs_menu.draft_menu_item').pipe(
           take(1),
-          map(localizedHeaderText => ({
+          map(localizedMenuItemText => ({
             type: 'draft',
             icon: 'auto_awesome',
-            text: localizedHeaderText
+            text: localizedMenuItemText
           }))
         );
-      // TODO: Add support for project-source tabs
+      case 'project-resource':
+        return this.i18n.translate('editor_tabs_menu.project_resource_menu_item').pipe(
+          take(1),
+          map(localizedMenuItemText => ({
+            type: 'project-resource',
+            icon: 'library_books',
+            text: localizedMenuItemText
+          }))
+        );
       case 'project-source':
-      case 'project':
+      case 'project-target':
         throw new Error(`'createMenuItem(EditorTabType)' does not support '${tabType}'`);
       default:
         throw new Error(`Unknown TabType: ${tabType}`);
     }
   }
 
-  private canShowHistory(projectDoc: SFProjectProfileDoc | undefined): boolean {
+  private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {
     // The user must be a Paratext user. No specific edit permission for the chapter is required.
-    return isParatextRole(projectDoc?.data?.userRoles[this.userService.currentUserId]);
+    return isParatextRole(projectDoc.data?.userRoles[this.userService.currentUserId]);
+  }
+
+  private canShowResource(projectDoc: SFProjectProfileDoc): boolean {
+    return this.permissionsService.canSync(projectDoc, this.userService.currentUserId);
   }
 }

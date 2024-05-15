@@ -3,7 +3,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@an
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
-import { filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SelectableProject } from '../core/paratext.service';
 import { SFValidators } from '../shared/sfvalidators';
@@ -25,11 +25,13 @@ export const PROJECT_SELECT_VALUE_ACCESSOR: any = {
 })
 export class ProjectSelectComponent extends SubscriptionDisposable implements ControlValueAccessor {
   @Output() valueChange: EventEmitter<string> = new EventEmitter<string>(true);
+  @Output() projectSelect = new EventEmitter<SelectableProject>();
 
   @Input() placeholder = '';
 
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
-  @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
+  @ViewChild(MatAutocompleteTrigger)
+  autocompleteTrigger!: MatAutocompleteTrigger;
 
   readonly paratextIdControl = new UntypedFormControl('', [SFValidators.selectableProject(true)]);
   @Input() projects?: SelectableProject[];
@@ -38,28 +40,32 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @Input() nonSelectableProjects?: SelectableProject[];
   readonly matcher = new ShowOnDirtyErrorStateMatcher();
 
-  hideProjectId$ = new BehaviorSubject<string>('');
+  hiddenParatextIds$ = new BehaviorSubject<string[]>([]);
 
   resourceCountLimit$ = new BehaviorSubject<number>(25);
 
   projects$: Observable<SelectableProject[]> = combineLatest([
     this.paratextIdControl.valueChanges.pipe(startWith('')),
-    this.hideProjectId$
+    this.hiddenParatextIds$
   ]).pipe(map(value => this.filterGroup(value[0], this.projects || [])));
 
   resources$: Observable<SelectableProject[]> = combineLatest([
     this.paratextIdControl.valueChanges.pipe(startWith('')),
     this.resourceCountLimit$,
-    this.hideProjectId$
+    this.hiddenParatextIds$
   ]).pipe(map(value => this.filterGroup(value[0], this.resources || [], value[1])));
 
   projectLabel = projectLabel;
 
   constructor() {
     super();
-    this.subscribe(this.paratextIdControl.valueChanges, (value: SelectableProject) =>
-      this.valueChange.next(value.paratextId)
-    );
+    this.subscribe(this.paratextIdControl.valueChanges.pipe(distinctUntilChanged()), (value: SelectableProject) => {
+      this.valueChange.next(value.paratextId);
+
+      if (value instanceof Object) {
+        this.projectSelect.emit(value);
+      }
+    });
 
     this.subscribe(
       this.projects$.pipe(
@@ -108,17 +114,17 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     return this.paratextIdControl.disabled;
   }
 
-  @Input() set hideProjectId(value: string | undefined) {
+  @Input() set hiddenParatextIds(value: string[]) {
     if (value == null) {
       return;
     }
-    if (this.paratextIdControl.value?.paratextId === value) {
+    if (value.includes(this.paratextIdControl.value?.paratextId)) {
       this.paratextIdControl.setValue('');
     }
-    this.hideProjectId$.next(value);
+    this.hiddenParatextIds$.next(value);
   }
-  get hideProjectId(): string | undefined {
-    return this.hideProjectId$.getValue();
+  get hiddenParatextIds(): string[] {
+    return this.hiddenParatextIds$.getValue();
   }
 
   writeValue(value: any): void {
@@ -170,7 +176,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   ): SelectableProject[] {
     const valueLower = typeof value === 'string' ? value.trim().toLowerCase() : '';
     return collection
-      .filter(p => p.paratextId !== this.hideProjectId && this.projectIndexOf(p, valueLower) < Infinity)
+      .filter(p => !this.hiddenParatextIds.includes(p.paratextId) && this.projectIndexOf(p, valueLower) < Infinity)
       .sort((a, b) => this.projectIndexOf(a, valueLower) - this.projectIndexOf(b, valueLower))
       .slice(0, limit);
   }

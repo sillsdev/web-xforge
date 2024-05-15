@@ -1,0 +1,9 @@
+<app-text
+  *ngIf="projectId"
+  [id]="projectId | textDocId : bookNum : chapter"
+  [isReadOnly]="true"
+  [subscribeToUpdates]="false"
+  [isRightToLeft]="isRightToLeft"
+  [fontSize]="fontSize"
+  [style.--project-font]="font"
+></app-text>

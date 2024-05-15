@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslocoModule } from '@ngneat/transloco';
+import { NoopTabAddRequestService, TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabGroupHeaderComponent } from './tab-group-header/tab-group-header.component';
 import { TabScrollButtonComponent } from './tab-group-header/tab-scroll-button/tab-scroll-button.component';
 import { TabGroupComponent } from './tab-group.component';
@@ -33,6 +34,7 @@ import { TabComponent } from './tab/tab.component';
     DragDropModule,
     TranslocoModule
   ],
-  exports: [TabGroupComponent, TabComponent, TabHeaderDirective]
+  exports: [TabGroupComponent, TabComponent, TabHeaderDirective],
+  providers: [{ provide: TabAddRequestService, useClass: NoopTabAddRequestService }]
 })
 export class SFTabsModule {}

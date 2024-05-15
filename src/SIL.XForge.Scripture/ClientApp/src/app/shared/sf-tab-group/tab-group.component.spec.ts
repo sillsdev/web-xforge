@@ -1,8 +1,8 @@
 import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { TabMenuService } from '../../shared/sf-tab-group';
+import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
 import { SFTabsModule } from './sf-tabs.module';
 import { TabGroupComponent } from './tab-group.component';
@@ -12,14 +12,16 @@ import { TabComponent } from './tab/tab.component';
 describe('TabGroupComponent', () => {
   let component: TabGroupComponent;
   let fixture: ComponentFixture<TabGroupComponent>;
+  let tabAddRequestService: TabAddRequestService<string, any>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SFTabsModule, TestTranslocoModule],
+      imports: [SFTabsModule],
       declarations: [TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },
         { provide: TabMenuService, useValue: { getMenuItems: () => of([]) } },
+        { provide: TabAddRequestService, useValue: { handleTabAddRequest: () => of({}) } },
         TabStateService
       ]
     }).compileComponents();
@@ -28,6 +30,7 @@ describe('TabGroupComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(TabGroupComponent);
     component = fixture.componentInstance;
+    tabAddRequestService = TestBed.inject(TabAddRequestService);
 
     fixture.detectChanges();
 
@@ -40,7 +43,20 @@ describe('TabGroupComponent', () => {
     component.tabs.reset([tab1, tab2]);
   });
 
-  it('should add tab using TabFactory and TabStateService when addTab is called', () => {
+  it('should call handleTabAddRequest and addTab when onTabAddRequest is called', () => {
+    const newTabType = 'project-resource';
+    const tabOptions = { projectId: 'projectId', headerText: 'Tab Header' };
+
+    spyOn(tabAddRequestService, 'handleTabAddRequest').and.returnValue(of(tabOptions));
+    spyOn(component, 'addTab');
+
+    component.onTabAddRequest(newTabType);
+
+    expect(tabAddRequestService.handleTabAddRequest).toHaveBeenCalledWith(newTabType);
+    expect(component.addTab).toHaveBeenCalledWith(newTabType, tabOptions);
+  });
+
+  it('should add tab using TabFactory and TabStateService when addTab is called', async () => {
     const newTabType = 'test';
     const tab = {
       type: 'test',
@@ -52,12 +68,12 @@ describe('TabGroupComponent', () => {
     const tabFactory = TestBed.inject(TabFactoryService);
     const tabStateService = TestBed.inject(TabStateService);
 
-    spyOn(tabFactory, 'createTab').and.returnValue(tab);
+    spyOn(tabFactory, 'createTab').and.returnValue(Promise.resolve(tab));
     spyOn(tabStateService, 'addTab');
 
-    component.addTab(newTabType);
+    await component.addTab(newTabType);
 
-    expect(tabFactory.createTab).toHaveBeenCalledWith(newTabType);
+    expect(tabFactory.createTab).toHaveBeenCalledWith(newTabType, {});
     expect(tabStateService.addTab).toHaveBeenCalledWith(component.groupId, tab);
   });
 

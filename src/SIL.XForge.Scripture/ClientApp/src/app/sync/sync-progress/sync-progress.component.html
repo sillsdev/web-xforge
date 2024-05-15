@@ -1,7 +1,7 @@
 <mat-progress-bar
   class="progress-bar"
-  [mode]="mode"
-  [value]="syncProgressPercent"
+  [mode]="(syncProgressMode$ | async) ?? 'indeterminate'"
+  [value]="syncProgressPercent$ | async"
   [bufferValue]="1"
   color="accent"
 ></mat-progress-bar>

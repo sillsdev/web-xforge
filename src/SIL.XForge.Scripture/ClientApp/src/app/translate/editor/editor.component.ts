@@ -50,6 +50,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
 import {
@@ -105,6 +106,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
+import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -130,6 +132,7 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
+import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabPersistenceService } from './tabs/editor-tab-persistence.service';
@@ -169,7 +172,8 @@ const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
   providers: [
     TabStateService<EditorTabGroupType, EditorTabInfo>,
     { provide: TabFactoryService, useClass: EditorTabFactoryService },
-    { provide: TabMenuService, useClass: EditorTabMenuService }
+    { provide: TabMenuService, useClass: EditorTabMenuService },
+    { provide: TabAddRequestService, useClass: EditorTabAddRequestService }
   ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
@@ -208,8 +212,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
-  private sourceLabel?: string;
-  private targetLabel?: string;
   private text?: TextInfo;
   private sourceText?: TextInfo;
   sourceProjectDoc?: SFProjectProfileDoc;
@@ -598,6 +600,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.copyrightBanner ?? '';
   }
 
+  get sourceLabel(): string | undefined {
+    return this.projectDoc?.data?.translateConfig.source?.shortName;
+  }
+  get targetLabel(): string | undefined {
+    return this.projectDoc?.data?.shortName;
+  }
+
   /**
    * Set the visibility of the add comment button. The button will be the FAB or the bottom sheet button
    * depending on the user's edit permissions and screen size.
@@ -626,11 +635,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         filterNullish(),
-        tap(doc => {
-          this.sourceLabel = doc?.data?.translateConfig.source?.shortName ?? '';
-          this.targetLabel = doc?.data?.shortName ?? '';
-        }),
-        switchMap(() => this.initEditorTabs())
+        switchMap(doc => this.initEditorTabs(doc))
       )
       .subscribe();
   }
@@ -660,6 +665,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
+
           const userRole: string | undefined = this.projectDoc?.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
@@ -1173,33 +1179,46 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * Returns an observable that can be piped from projectDoc changes, allowing a single call to `subscribe`,
    * avoiding potential NG0911 error 'View has already been destroyed'.
    */
-  initEditorTabs(): Observable<any> {
+  initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
     const tabStateInitialized$ = new BehaviorSubject<boolean>(false);
 
     // Set tab state from persisted tabs plus non-persisted tabs
     const storeToState$: Observable<any> = this.editorTabPersistenceService.persistedTabs$.pipe(
       take(1),
-      tap((persistedTabs: EditorTabPersistData[]) => {
+      // Include the project doc for tabs that contain a project id
+      switchMap(persistedTabs => {
+        return Promise.all(
+          persistedTabs.map(async tabData => ({
+            ...tabData,
+            projectDoc: tabData.projectId != null ? await this.projectService.getProfile(tabData.projectId) : undefined
+          }))
+        );
+      }),
+      tap(async (persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
         const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
         const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
+        const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
 
-        if (this.sourceLabel) {
+        if (projectSource != null) {
           sourceTabGroup.addTab(
-            this.editorTabFactory.createTab('project-source', {
-              headerText: this.sourceLabel
+            await this.editorTabFactory.createTab('project-source', {
+              projectId: projectSource.projectRef,
+              headerText: projectSource.shortName
             })
           );
         }
 
         targetTabGroup.addTab(
-          this.editorTabFactory.createTab('project', {
-            headerText: this.targetLabel
+          await this.editorTabFactory.createTab('project-target', {
+            projectId: projectDoc.id,
+            headerText: projectDoc.data?.shortName
           })
         );
 
         for (const tabData of persistedTabs) {
-          const tab: EditorTabInfo = this.editorTabFactory.createTab(tabData.tabType, {
-            projectId: tabData.projectId
+          const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
+            projectId: tabData.projectId,
+            headerText: tabData.projectDoc?.data?.shortName
           });
 
           if (tabData.groupId === 'source') {
@@ -1322,7 +1341,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateAutoDraftTabVisibility(): void {
+  private async updateAutoDraftTabVisibility(): Promise<void> {
     const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this._chapter);
     const hasDraft: boolean = chapter?.hasDraft ?? false;
     const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
@@ -1334,7 +1353,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
       // Add to 'source' tab group if no draft tab
       if (existingDraftTab == null) {
-        this.tabState.addTab('source', this.editorTabFactory.createTab('draft'), urlDraftActive);
+        this.tabState.addTab('source', await this.editorTabFactory.createTab('draft'), urlDraftActive);
       }
 
       if (urlDraftActive) {
@@ -1761,7 +1780,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             const threadDataId: string | undefined = threadIdFromMouseEvent(event);
             if (threadDataId != null) {
               this.showNoteThread(threadDataId);
-              this.target?.formatEmbed(threadDataId, 'note-thread-embed', { ['highlight']: false });
+              this.target?.formatEmbed(threadDataId, 'note-thread-embed', {
+                ['highlight']: false
+              });
               this.updateReadNotes(threadDataId);
             }
             // stops the event from causing the segment to be selected
@@ -1966,7 +1987,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           continue;
         }
 
-        const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? { start: 0, length: 0 };
+        const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? {
+          start: 0,
+          length: 0
+        };
         const newTextAnchor: TextAnchor | undefined = this.getUpdatedTextAnchor(
           oldNotePosition,
           affected.embeds,
@@ -2119,7 +2143,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return { start: 0, length: 0 };
     }
 
-    return { start: oldTextAnchor.start + startChange, length: oldTextAnchor.length + lengthChange };
+    return {
+      start: oldTextAnchor.start + startChange,
+      length: oldTextAnchor.length + lengthChange
+    };
   }
 
   private getAnchorChanges(
@@ -2263,7 +2290,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const format = { iconsrc: featured.icon.cssVar, preview: featured.preview, threadid: featured.id };
+    const format = {
+      iconsrc: featured.icon.cssVar,
+      preview: featured.preview,
+      threadid: featured.id
+    };
     if (featured.highlight) {
       format['highlight'] = featured.highlight;
     }

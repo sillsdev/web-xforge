@@ -32,6 +32,20 @@ describe('EditorTabPersistenceService', () => {
     tick();
     expect(env.pucDoc.updateEditorOpenTabs).not.toHaveBeenCalled();
   }));
+
+  it('should ignore undefined properties', fakeAsync(() => {
+    const tabs = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4, c: undefined }
+    ] as unknown as EditorTabPersistData[];
+    const env = new TestEnvironment([]);
+    env.service.persistTabsOpen(tabs);
+    tick();
+    expect(env.pucDoc.updateEditorOpenTabs).toHaveBeenCalledWith([
+      { a: 1, b: 2 },
+      { a: 3, b: 4 }
+    ] as any);
+  }));
 });
 
 class TestEnvironment {
