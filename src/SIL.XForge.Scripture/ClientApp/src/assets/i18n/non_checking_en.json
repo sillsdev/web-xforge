@@ -258,8 +258,13 @@
     "draft_tab_header": "Auto Draft"
   },
   "history_chooser": {
+    "confirm_revert": "Are you sure you want to restore this chapter to the selected revision?",
+    "confirm_yes": "Restore",
+    "error": "There was an error restoring the chapter. No changes were made.",
     "hide_changes": "Hide changes",
     "hide_diff": "Hide differences from the latest version",
+    "revert": "Restore this version",
+    "revert_details": "Restore this previous version of the chapter",
     "show_changes": "Show changes",
     "show_diff": "Show differences from the latest version"
   },
