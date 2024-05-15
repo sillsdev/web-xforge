@@ -1130,19 +1130,27 @@ public class MachineProjectService(
                     ? buildConfig.TranslationScriptureRange
                     : string.Join(';', buildConfig.TranslationBooks.Select(Canon.BookNumberToId));
 
+                // Ensure that the pre-translate scripture range is null if it is blank
+                if (string.IsNullOrWhiteSpace(preTranslateCorpusConfig.ScriptureRange))
+                {
+                    preTranslateCorpusConfig.ScriptureRange = null;
+                }
+
                 if (!useAlternateTrainingCorpus)
                 {
+                    string? scriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
+                        ? buildConfig.TrainingScriptureRange
+                        : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
+
+                    // Ensure that the trainOn scripture range is null if it is blank
+                    if (string.IsNullOrWhiteSpace(scriptureRange))
+                    {
+                        scriptureRange = null;
+                    }
+
                     // As we do not have an alternate train on source specified, use the source texts to train on
                     trainOn ??= [];
-                    trainOn.Add(
-                        new TrainingCorpusConfig
-                        {
-                            CorpusId = corpus.Key,
-                            ScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
-                                ? buildConfig.TrainingScriptureRange
-                                : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId)),
-                        }
-                    );
+                    trainOn.Add(new TrainingCorpusConfig { CorpusId = corpus.Key, ScriptureRange = scriptureRange });
                 }
             }
 
