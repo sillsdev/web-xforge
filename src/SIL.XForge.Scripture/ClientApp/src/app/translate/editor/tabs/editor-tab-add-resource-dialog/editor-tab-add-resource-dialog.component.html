@@ -1,0 +1,57 @@
+<mat-progress-bar *ngIf="isLoading && !isSyncActive" mode="indeterminate" color="accent"></mat-progress-bar>
+<app-sync-progress
+  *ngIf="isSyncActive"
+  [projectDoc]="selectedProjectDoc"
+  (inProgress)="onSyncProgress($event)"
+></app-sync-progress>
+
+<ng-container *transloco="let t; read: 'editor_add_tab_resource_dialog'">
+  <h1 mat-dialog-title>{{ t("dialog_title") }}</h1>
+  <mat-dialog-content>
+    <div [formGroup]="form">
+      <app-project-select
+        formControlName="sourceParatextId"
+        [placeholder]="isLoading ? t('placeholder_loading') : t('placeholder_ready')"
+        [projects]="projects"
+        [resources]="resources"
+        [hiddenParatextIds]="dialogData.excludedParatextIds"
+        [isDisabled]="
+          (onlineStatus.onlineStatus$ | async) === false ||
+          isLoading ||
+          isSyncActive ||
+          (projectLoadingFailed && resourceLoadingFailed)
+        "
+        (projectSelect)="onProjectSelected($event)"
+      ></app-project-select>
+    </div>
+
+    <div *ngIf="isSyncActive" class="loading-message">
+      {{ t("loading") }} {{ selectedProjectDoc?.data?.shortName }}{{ animatedEllipsis$ | async }}
+    </div>
+
+    <mat-error *ngIf="projectLoadingFailed && resourceLoadingFailed">
+      {{ t("error_fetching_projects_resources") }}
+    </mat-error>
+    <mat-error *ngIf="projectLoadingFailed && !resourceLoadingFailed">
+      {{ t("error_fetching_projects") }}
+    </mat-error>
+    <mat-error *ngIf="resourceLoadingFailed && !projectLoadingFailed">
+      {{ t("error_fetching_resources") }}
+    </mat-error>
+    <mat-error *ngIf="projectFetchFailed || syncFailed">
+      {{ t("error_loading_resource") }}
+    </mat-error>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button mat-button (click)="onCancel()">{{ t("cancel") }}</button>
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!form.valid || isLoading || isSyncActive || projectFetchFailed || syncFailed"
+      (click)="confirmSelection()"
+    >
+      {{ t("select") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>
