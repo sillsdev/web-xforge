@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { DOCUMENT } from './browser-globals';
 import { isGecko } from './utils';
 
@@ -100,8 +101,11 @@ export class FontService {
 
   constructor(@Inject(DOCUMENT) private readonly document: Document) {}
 
-  getFontFamilyFromProject(projectDoc: SFProjectProfileDoc | undefined): string {
-    return this.getCSSFontName(projectDoc?.data?.defaultFont);
+  getFontFamilyFromProject(projectDoc: SFProjectProfileDoc | SFProjectProfile | undefined): string {
+    if (projectDoc != null && 'data' in projectDoc) {
+      projectDoc = projectDoc.data;
+    }
+    return this.getCSSFontName(projectDoc?.defaultFont);
   }
 
   /**

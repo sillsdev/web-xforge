@@ -2,10 +2,12 @@ import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, O
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { FontService } from '../../../../xforge-common/font.service';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { Delta, TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { EditorHistoryService } from './editor-history.service';
 import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/history-chooser.component';
@@ -29,11 +31,13 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
 
   loadedRevision?: Revision;
   isViewInitialized = false;
+  projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly projectService: SFProjectService,
     private readonly editorHistoryService: EditorHistoryService,
+    readonly fontService: FontService,
     readonly onlineStatusService: OnlineStatusService
   ) {}
 
@@ -78,6 +82,7 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
           const diff = this.editorHistoryService.processDiff(snapshotContents, targetContents);
 
           this.snapshotText?.editor?.updateContents(diff, 'api');
+          this.snapshotText?.applyEditorStyles();
         }
       });
   }
