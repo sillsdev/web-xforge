@@ -80,7 +80,10 @@ describe('EditorHistoryComponent', () => {
     };
 
     const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-    const mockTextComponent = jasmine.createSpyObj<TextComponent>([], { id: {} as TextDocId, editor: mockEditor });
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles'], {
+      id: {} as TextDocId,
+      editor: mockEditor
+    });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
     when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
@@ -110,7 +113,10 @@ describe('EditorHistoryComponent', () => {
     };
 
     const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-    const mockTextComponent = jasmine.createSpyObj<TextComponent>([], { id: {} as TextDocId, editor: mockEditor });
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles'], {
+      id: {} as TextDocId,
+      editor: mockEditor
+    });
 
     when(mockSFProjectService.getText(anything())).thenReturn(Promise.resolve(textDoc));
     when(mockEditorHistoryService.processDiff(anything(), anything())).thenReturn(diff);
