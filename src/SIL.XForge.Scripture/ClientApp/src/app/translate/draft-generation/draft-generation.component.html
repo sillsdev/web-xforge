@@ -227,18 +227,33 @@
               <section *ngIf="!isDraftInProgress(draftJob)" class="draft-complete">
                 <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
                   <div>
-                    <mat-card *ngIf="isDraftComplete(draftJob)" class="mat-elevation-z2">
-                      <h2>{{ t("draft_generation_complete") }}</h2>
-                      <p>
-                        <transloco
-                          key="draft_generation.go_to_draft_viewer"
-                          [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                        ></transloco>
-                      </p>
-                      <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                        <mat-icon>edit_note</mat-icon>
-                        {{ t("preview_draft_button") }}
-                      </a>
+                    <mat-card class="mat-elevation-z2">
+                      <ng-container *ngIf="isDraftComplete(draftJob)">
+                        <h2>{{ t("draft_generation_complete") }}</h2>
+                        <p>
+                          <transloco
+                            key="draft_generation.go_to_draft_viewer"
+                            [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                          ></transloco>
+                        </p>
+                        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                          <mat-icon>edit_note</mat-icon>
+                          {{ t("preview_draft_button") }}
+                        </a>
+                      </ng-container>
+                      <ng-container *ngIf="!isDraftComplete(draftJob)">
+                        <h3>{{ t("preview_last_draft_header") }}</h3>
+                        <p>
+                          <transloco
+                            key="draft_generation.preview_last_draft_detail"
+                            [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                          ></transloco>
+                        </p>
+                        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                          <mat-icon>edit_note</mat-icon>
+                          {{ t("preview_last_draft_button") }}
+                        </a>
+                      </ng-container>
                       <div class="other-actions">
                         <button
                           *ngIf="isGenerationSupported"
@@ -251,20 +266,6 @@
                         </button>
                       </div>
                     </mat-card>
-
-                    <ng-container *ngIf="!isDraftComplete(draftJob)">
-                      <h3>{{ t("preview_last_draft_header") }}</h3>
-                      <p>
-                        <transloco
-                          key="draft_generation.preview_last_draft_detail"
-                          [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                        ></transloco>
-                      </p>
-                      <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                        <mat-icon>edit_note</mat-icon>
-                        {{ t("preview_last_draft_button") }}
-                      </a>
-                    </ng-container>
                   </div>
                 </ng-container>
               </section>
