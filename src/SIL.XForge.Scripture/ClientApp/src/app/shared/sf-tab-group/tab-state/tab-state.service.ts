@@ -1,8 +1,14 @@
-import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { isEqual } from 'lodash-es';
+import { BehaviorSubject, distinctUntilChanged, map, Observable } from 'rxjs';
+import { moveItemInReadonlyArray, transferItemAcrossReadonlyArrays } from 'xforge-common/util/array-util';
 import { TabLocation } from '../sf-tabs.types';
 import { TabGroup } from './tab-group';
+
+export type FlatTabInfo<TGroupId extends string, T extends TabInfo<string>> = T & {
+  groupId: TGroupId;
+  isSelected: boolean;
+};
 
 export interface TabInfo<TType extends string> {
   type: TType;
@@ -18,37 +24,39 @@ export interface TabInfo<TType extends string> {
   movable: boolean;
 }
 
-interface TabState<TGroupId extends string, T> {
-  tabGroups$: Observable<Map<TGroupId, TabGroup<TGroupId, T>>>;
-
-  addTabGroup(groupId: TGroupId, tabs: Iterable<T>): void;
-  getTabGroup(groupId: TGroupId): TabGroup<TGroupId, T> | undefined;
-  removeTabGroup(groupId: TGroupId): boolean;
-  clearAllTabGroups(): void;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
-export class TabStateService<TGroupId extends string, T extends TabInfo<string>> implements TabState<TGroupId, T> {
+@Injectable()
+export class TabStateService<TGroupId extends string, T extends TabInfo<string>> {
   protected readonly groups = new Map<TGroupId, TabGroup<TGroupId, T>>();
-
   protected tabGroupsSource$ = new BehaviorSubject<Map<TGroupId, TabGroup<TGroupId, T>>>(this.groups);
+
   tabGroups$: Observable<Map<TGroupId, TabGroup<TGroupId, T>>> = this.tabGroupsSource$.asObservable();
 
-  tabs$: Observable<T[]> = this.tabGroupsSource$.pipe(
+  tabs$: Observable<FlatTabInfo<TGroupId, T>[]> = this.tabGroupsSource$.pipe(
     map(tabGroups => {
-      const tabs: T[] = [];
+      const tabs: FlatTabInfo<TGroupId, T>[] = [];
       tabGroups.forEach(group => {
-        tabs.push(...group.tabs);
+        group.tabs.forEach((tab, index) => {
+          tabs.push({
+            ...tab,
+            groupId: group.groupId,
+            isSelected: group.selectedIndex === index
+          });
+        });
       });
       return tabs;
-    })
+    }),
+    distinctUntilChanged(isEqual)
   );
 
   groupIds$: Observable<TGroupId[]> = this.tabGroupsSource$.pipe(map(groups => Array.from(groups.keys())));
 
   constructor() {}
+
+  setTabGroups(tabGroups: TabGroup<TGroupId, T>[]): void {
+    this.groups.clear();
+    tabGroups.forEach(group => this.groups.set(group.groupId, group));
+    this.tabGroupsSource$.next(this.groups);
+  }
 
   addTabGroup(groupId: TGroupId, tabs: T[]): void;
   addTabGroup(tabGroup: TabGroup<TGroupId, T>): void;
@@ -112,7 +120,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
         // Add bounds in case tab is dropped after 'add tab'
         to.index = Math.min(fromGroup.tabs.length - 1, to.index);
 
-        moveItemInArray(fromGroup.tabs, from.index, to.index);
+        fromGroup.tabs = moveItemInReadonlyArray(fromGroup.tabs, from.index, to.index);
 
         // Update selected tab index if necessary
         if (from.index === fromGroup.selectedIndex) {
@@ -130,7 +138,12 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
         const toGroup: TabGroup<TGroupId, T> | undefined = this.groups.get(to.groupId);
 
         if (toGroup) {
-          transferArrayItem(fromGroup.tabs, toGroup.tabs, from.index, to.index);
+          // 'to.index' can be out of bounds if dropped after 'add tab'
+          const toIndex: number = Math.min(to.index, toGroup.tabs.length);
+
+          const [fromArr, toArr] = transferItemAcrossReadonlyArrays(fromGroup.tabs, toGroup.tabs, from.index, toIndex);
+          fromGroup.tabs = fromArr;
+          toGroup.tabs = toArr;
 
           // Update 'from group' selected tab index if necessary
           if (from.index <= fromGroup.selectedIndex) {
@@ -138,11 +151,9 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
           }
 
           // 'to group' selected tab is the newly added tab
-          toGroup.selectedIndex = to.index;
+          toGroup.selectedIndex = toIndex;
         }
       }
     }
-
-    this.tabGroupsSource$.next(this.groups);
   }
 }

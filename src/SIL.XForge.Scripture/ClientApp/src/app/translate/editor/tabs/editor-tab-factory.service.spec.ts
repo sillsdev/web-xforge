@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { EditorTabFactoryService } from './editor-tab-factory.service';
-import { EditorTabType } from './editor-tabs.types';
 
 describe('EditorTabFactoryService', () => {
   let service: EditorTabFactoryService;
