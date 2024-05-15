@@ -2,7 +2,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { cloneDeep } from 'lodash-es';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
@@ -31,6 +31,20 @@ describe('EditorTabPersistenceService', () => {
     env.service.persistTabsOpen(tabs);
     tick();
     expect(env.pucDoc.updateEditorOpenTabs).not.toHaveBeenCalled();
+  }));
+
+  it('should ignore undefined properties', fakeAsync(() => {
+    const tabs = [
+      { a: 1, b: 2 },
+      { a: 3, b: 4, c: undefined }
+    ] as unknown as EditorTabPersistData[];
+    const env = new TestEnvironment([]);
+    env.service.persistTabsOpen(tabs);
+    tick();
+    expect(env.pucDoc.updateEditorOpenTabs).toHaveBeenCalledWith([
+      { a: 1, b: 2 },
+      { a: 3, b: 4 }
+    ] as any);
   }));
 });
 

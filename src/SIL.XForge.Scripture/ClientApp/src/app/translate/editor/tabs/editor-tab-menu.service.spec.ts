@@ -43,44 +43,52 @@ describe('EditorTabsMenuService', () => {
     ]
   }));
 
-  it('should get "history" and "draft" menu items', done => {
+  it('should get "history", "draft", and "project-resource" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
+
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(3);
+      expect(items[0].type).toBe('history');
+      expect(items[0].disabled).toBeFalsy();
+      expect(items[1].type).toBe('draft');
+      expect(items[1].disabled).toBeFalsy();
+      expect(items[2].type).toBe('project-resource');
+      expect(items[2].disabled).toBeFalsy();
+      done();
+    });
+  });
+
+  it('should get "history", "project-resource", and not "draft" (tab already exists) menu items', done => {
+    const env = new TestEnvironment();
+    env.setExistingTabs([
+      { type: 'history', headerText: 'History', closeable: true, movable: true },
+      { type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true },
+      { type: 'project-resource', headerText: 'ABC', closeable: true, movable: true }
+    ]);
+    env.setLastCompletedBuildExists(true);
+    service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
       expect(items[0].disabled).toBeFalsy();
-      expect(items[1].type).toBe('draft');
+      expect(items[1].type).toBe('project-resource');
       expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
 
-  it('should get "history" and not "draft" (tab already exists) menu items', done => {
-    const env = new TestEnvironment();
-    env.setExistingTabs([
-      { type: 'history', headerText: 'History', closeable: true, movable: true },
-      { type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true }
-    ]);
-    env.setLastCompletedBuildExists(true);
-    service['canShowHistory'] = () => true;
-
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(1);
-      expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
-      done();
-    });
-  });
-
-  it('should get "history" (enabled) and not "draft" (no draft build) menu items', done => {
+  it('should get "history" (enabled), not "draft" (no draft build), and not "project-resource" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
     env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
@@ -90,16 +98,19 @@ describe('EditorTabsMenuService', () => {
     });
   });
 
-  it('should get "draft" and not "history" menu items', done => {
+  it('should get "draft", "project-resource", and not "history" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => false;
+    service['canShowResource'] = () => true;
 
     service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(1);
+      expect(items.length).toBe(2);
       expect(items[0].type).toBe('draft');
       expect(items[0].disabled).toBeFalsy();
+      expect(items[1].type).toBe('project-resource');
+      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -109,6 +120,7 @@ describe('EditorTabsMenuService', () => {
     env.setExistingTabs([]);
     env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => false;
+    service['canShowResource'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(0);
@@ -121,6 +133,7 @@ describe('EditorTabsMenuService', () => {
     env.setExistingTabs([]);
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
 
     env.onlineStatus.setIsOnline(false);
     service
@@ -137,11 +150,13 @@ describe('EditorTabsMenuService', () => {
       .getMenuItems()
       .pipe(take(1))
       .subscribe(items => {
-        expect(items.length).toBe(2);
+        expect(items.length).toBe(3);
         expect(items[0].type).toBe('history');
         expect(items[0].disabled).toBeFalsy();
         expect(items[1].type).toBe('draft');
         expect(items[1].disabled).toBeFalsy();
+        expect(items[2].type).toBe('project-resource');
+        expect(items[2].disabled).toBeFalsy();
         done();
       });
   });

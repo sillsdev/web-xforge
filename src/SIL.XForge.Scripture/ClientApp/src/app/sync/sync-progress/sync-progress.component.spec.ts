@@ -4,6 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -40,36 +41,36 @@ describe('SyncProgressComponent', () => {
     ]
   }));
 
-  it('does not initialize if projectDoc is undefined', fakeAsync(() => {
+  it('does not initialize if projectDoc is undefined', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
     expect(env.host.projectDoc).toBeUndefined();
     verify(mockedProjectService.get('sourceProject02')).never();
-    expect(env.host.syncProgress!.mode).toBe('indeterminate');
+    expect(await env.getMode()).toBe('indeterminate');
   }));
 
-  it('ignores source if source project is invalid', fakeAsync(() => {
+  it('ignores source if source project is invalid', fakeAsync(async () => {
     when(mockedProjectService.onlineGetProjectRole('invalid_source')).thenResolve(SFProjectRole.None);
     const env = new TestEnvironment({ userId: 'user01', sourceProject: 'invalid_source' });
     env.setupProjectDoc();
     verify(mockedProjectService.onlineGetProjectRole('invalid_source')).once();
     env.updateSyncProgress(0.5, 'testProject01');
     expect(env.host.inProgress).toBe(true);
-    expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
+    expect(await env.getPercent()).toEqual(50);
     env.emitSyncComplete(true, 'testProject01');
     expect(env.host.inProgress).toBe(false);
   }));
 
-  it('should show progress when sync is active', fakeAsync(() => {
+  it('should show progress when sync is active', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
     env.setupProjectDoc();
     // Simulate sync starting
     env.updateSyncProgress(0, 'testProject01');
     expect(env.progressBar).not.toBeNull();
-    expect(env.host.syncProgress.mode).toBe('indeterminate');
+    expect(await env.getMode()).toBe('indeterminate');
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).never();
     // Simulate sync in progress
     env.updateSyncProgress(0.5, 'testProject01');
-    expect(env.host.syncProgress.mode).toBe('determinate');
+    expect(await env.getMode()).toBe('determinate');
     // Simulate sync completed
     env.emitSyncComplete(true, 'testProject01');
     tick();
@@ -83,6 +84,7 @@ describe('SyncProgressComponent', () => {
     });
     env.setupProjectDoc();
     env.checkCombinedProgress();
+    tick();
   }));
 
   it('show source and target progress combined when translation suggestions disabled', fakeAsync(() => {
@@ -93,9 +95,10 @@ describe('SyncProgressComponent', () => {
     });
     env.setupProjectDoc();
     env.checkCombinedProgress();
+    tick();
   }));
 
-  it('does not access source project if user does not have a paratext role', fakeAsync(() => {
+  it('does not access source project if user does not have a paratext role', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user02', sourceProject: 'sourceProject02' });
     env.setupProjectDoc();
     env.updateSyncProgress(0, 'testProject01');
@@ -103,7 +106,7 @@ describe('SyncProgressComponent', () => {
     verify(mockedProjectService.get('sourceProject02')).never();
     env.emitSyncComplete(true, 'sourceProject02');
     env.updateSyncProgress(0.5, 'testProject01');
-    expect(env.host.syncProgress.syncProgressPercent).toEqual(50);
+    expect(await env.getPercent()).toEqual(50);
     env.emitSyncComplete(true, 'testProject01');
   }));
 
@@ -239,21 +242,30 @@ class TestEnvironment {
     tick();
   }
 
-  checkCombinedProgress(): void {
+  async checkCombinedProgress(): Promise<void> {
     this.updateSyncProgress(0, 'testProject01');
     this.updateSyncProgress(0, 'sourceProject02');
     verify(mockedProjectService.onlineGetProjectRole('sourceProject02')).once();
     verify(mockedProjectService.get('sourceProject02')).once();
     expect(this.progressBar).not.toBeNull();
-    expect(this.host.syncProgress.mode).toBe('indeterminate');
+
+    expect(await this.getMode()).toBe('indeterminate');
     this.updateSyncProgress(0.8, 'sourceProject02');
-    expect(this.host.syncProgress.syncProgressPercent).toEqual(40);
-    expect(this.host.syncProgress.mode).toBe('determinate');
+    expect(await this.getPercent()).toEqual(40);
+    expect(await this.getMode()).toBe('determinate');
     this.emitSyncComplete(true, 'sourceProject02');
-    expect(this.host.syncProgress.syncProgressPercent).toEqual(50);
-    expect(this.host.syncProgress.mode).toBe('determinate');
+    expect(await this.getPercent()).toEqual(50);
+    expect(await this.getMode()).toBe('determinate');
     this.updateSyncProgress(0.8, 'testProject01');
-    expect(this.host.syncProgress.syncProgressPercent).toEqual(90);
+    expect(await this.getPercent()).toEqual(90);
     this.emitSyncComplete(true, 'testProject01');
+  }
+
+  async getMode(): Promise<string> {
+    return firstValueFrom(this.host.syncProgress.syncProgressMode$);
+  }
+
+  async getPercent(): Promise<number> {
+    return firstValueFrom(this.host.syncProgress.syncProgressPercent$);
   }
 }

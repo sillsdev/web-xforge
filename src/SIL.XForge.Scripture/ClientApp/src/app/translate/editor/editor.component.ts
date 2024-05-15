@@ -53,6 +53,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
 import {
@@ -69,11 +70,13 @@ import {
 import {
   debounceTime,
   delayWhen,
+  distinctUntilKeyChanged,
   filter,
   first,
   map,
   repeat,
   retryWhen,
+  switchMap,
   take,
   tap,
   throttleTime
@@ -105,6 +108,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
+import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -130,6 +134,7 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
+import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabPersistenceService } from './tabs/editor-tab-persistence.service';
@@ -169,7 +174,8 @@ const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
   providers: [
     TabStateService<EditorTabGroupType, EditorTabInfo>,
     { provide: TabFactoryService, useClass: EditorTabFactoryService },
-    { provide: TabMenuService, useClass: EditorTabMenuService }
+    { provide: TabMenuService, useClass: EditorTabMenuService },
+    { provide: TabAddRequestService, useClass: EditorTabAddRequestService }
   ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
@@ -208,8 +214,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private paratextUsers: ParatextUserProfile[] = [];
   private projectUserConfigChangesSub?: Subscription;
-  private sourceLabel?: string;
-  private targetLabel?: string;
   private text?: TextInfo;
   private sourceText?: TextInfo;
   sourceProjectDoc?: SFProjectProfileDoc;
@@ -598,6 +602,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.copyrightBanner ?? '';
   }
 
+  get sourceLabel(): string | undefined {
+    return this.projectDoc?.data?.translateConfig.source?.shortName;
+  }
+  get targetLabel(): string | undefined {
+    return this.projectDoc?.data?.shortName;
+  }
+
   /**
    * Set the visibility of the add comment button. The button will be the FAB or the bottom sheet button
    * depending on the user's edit permissions and screen size.
@@ -622,12 +633,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   ngOnInit(): void {
-    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef), filterNullish()).subscribe(doc => {
-      this.sourceLabel = doc?.data?.translateConfig.source?.shortName ?? '';
-      this.targetLabel = doc?.data?.shortName ?? '';
-
-      this.initEditorTabs();
-    });
+    this.activatedProject.projectDoc$
+      .pipe(takeUntilDestroyed(this.destroyRef), filterNullish(), distinctUntilKeyChanged('id'))
+      .subscribe(doc => this.initEditorTabs(doc));
   }
 
   ngAfterViewInit(): void {
@@ -655,6 +663,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
           this.projectDoc = await this.projectService.getProfile(projectId);
+
           const userRole: string | undefined = this.projectDoc?.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
             const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(projectId, userRole);
@@ -1162,48 +1171,66 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // TODO: Respond to locale changes
   }
 
-  initEditorTabs(): void {
+  initEditorTabs(projectDoc: SFProjectProfileDoc): void {
     const tabStateInitialized$ = new BehaviorSubject<boolean>(false);
 
     // Set tab state from persisted tabs plus non-persisted tabs
-    this.editorTabPersistenceService.persistedTabs$.pipe(take(1)).subscribe(persistedTabs => {
-      const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
-      const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
+    this.editorTabPersistenceService.persistedTabs$
+      .pipe(
+        // Include the project doc for tabs that contain a project id
+        switchMap(persistedTabs => {
+          return Promise.all(
+            persistedTabs.map(async tabData => ({
+              ...tabData,
+              projectDoc: tabData.projectId ? await this.projectService.getProfile(tabData.projectId) : undefined
+            }))
+          );
+        }),
+        tap((persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
+          const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
+          const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
+          const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
 
-      if (this.sourceLabel) {
-        sourceTabGroup.addTab(
-          this.editorTabFactory.createTab('project-source', {
-            headerText: this.sourceLabel
-          })
-        );
-      }
+          if (projectSource != null) {
+            sourceTabGroup.addTab(
+              this.editorTabFactory.createTab('project-source', {
+                projectId: projectSource.projectRef,
+                headerText: projectSource.shortName
+              })
+            );
+          }
 
-      targetTabGroup.addTab(
-        this.editorTabFactory.createTab('project', {
-          headerText: this.targetLabel
-        })
-      );
+          targetTabGroup.addTab(
+            this.editorTabFactory.createTab('project-target', {
+              projectId: projectDoc.id,
+              headerText: projectDoc.data?.shortName
+            })
+          );
 
-      persistedTabs.forEach((tabData: EditorTabPersistData) => {
-        const tab = this.editorTabFactory.createTab(tabData.tabType, {
-          projectId: tabData.projectId
-        });
+          persistedTabs.forEach(tabData => {
+            const tab = this.editorTabFactory.createTab(tabData.tabType, {
+              projectId: tabData.projectId,
+              headerText: tabData.projectDoc?.data?.shortName
+            });
 
-        if (tabData.groupId === 'source') {
-          sourceTabGroup.addTab(tab, tabData.isSelected);
-        } else {
-          targetTabGroup.addTab(tab, tabData.isSelected);
-        }
-      });
+            if (tabData.groupId === 'source') {
+              sourceTabGroup.addTab(tab, tabData.isSelected);
+            } else {
+              targetTabGroup.addTab(tab, tabData.isSelected);
+            }
+          });
 
-      this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
+          this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
 
-      // Notify to start tab persistence on tab state changes
-      tabStateInitialized$.next(true);
+          // Notify to start tab persistence on tab state changes
+          tabStateInitialized$.next(true);
 
-      // View is initialized before the tab state is initialized, so re-run change detection
-      this.changeDetector.detectChanges();
-    });
+          // View is initialized before the tab state is initialized, so re-run change detection
+          this.changeDetector.detectChanges();
+        }),
+        take(1)
+      )
+      .subscribe();
 
     // Persist tabs from tab state changes once tab state has been initialized
     combineLatest([this.tabState.tabs$, tabStateInitialized$.pipe(filter(initialized => initialized))])
@@ -1744,7 +1771,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             const threadDataId: string | undefined = threadIdFromMouseEvent(event);
             if (threadDataId != null) {
               this.showNoteThread(threadDataId);
-              this.target?.formatEmbed(threadDataId, 'note-thread-embed', { ['highlight']: false });
+              this.target?.formatEmbed(threadDataId, 'note-thread-embed', {
+                ['highlight']: false
+              });
               this.updateReadNotes(threadDataId);
             }
             // stops the event from causing the segment to be selected
@@ -1949,7 +1978,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           continue;
         }
 
-        const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? { start: 0, length: 0 };
+        const oldNotePosition: TextAnchor = noteThreadDoc.data.position ?? {
+          start: 0,
+          length: 0
+        };
         const newTextAnchor: TextAnchor | undefined = this.getUpdatedTextAnchor(
           oldNotePosition,
           affected.embeds,
@@ -2102,7 +2134,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return { start: 0, length: 0 };
     }
 
-    return { start: oldTextAnchor.start + startChange, length: oldTextAnchor.length + lengthChange };
+    return {
+      start: oldTextAnchor.start + startChange,
+      length: oldTextAnchor.length + lengthChange
+    };
   }
 
   private getAnchorChanges(
@@ -2246,7 +2281,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const format = { iconsrc: featured.icon.cssVar, preview: featured.preview, threadid: featured.id };
+    const format = {
+      iconsrc: featured.icon.cssVar,
+      preview: featured.preview,
+      threadid: featured.id
+    };
     if (featured.highlight) {
       format['highlight'] = featured.highlight;
     }
