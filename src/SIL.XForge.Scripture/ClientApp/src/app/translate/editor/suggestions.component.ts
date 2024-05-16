@@ -1,8 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import {
-  MatLegacyListOption as MatListOption,
-  MatLegacySelectionList as MatSelectionList
-} from '@angular/material/legacy-list';
+import { MatListOption, MatSelectionList } from '@angular/material/list';
 import isEqual from 'lodash-es/isEqual';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
