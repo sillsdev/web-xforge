@@ -12,6 +12,7 @@ import { isEmpty } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
@@ -25,6 +26,9 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
+import { UserService } from '../../../xforge-common/user.service';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
@@ -103,6 +107,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   cancelDialogRef?: MatDialogRef<any>;
 
+  private sfProjectUserConfigDoc?: SFProjectUserConfigDoc;
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -115,7 +121,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly nllbService: NllbLanguageService,
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService
+    private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
+    private readonly sfProjectService: SFProjectService,
+    private readonly userService: UserService
   ) {
     super();
   }
@@ -187,7 +195,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       combineLatest([
         this.activatedProject.projectDoc$.pipe(
           filterNullish(),
-          tap(projectDoc => {
+          tap(async projectDoc => {
             const translateConfig = projectDoc.data?.translateConfig;
 
             this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
@@ -195,6 +203,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
             this.completedDraftBooks = translateConfig?.draftConfig.lastSelectedTranslationBooks ?? [];
+            this.sfProjectUserConfigDoc = await this.sfProjectService.getUserConfig(
+              projectDoc.id,
+              this.userService.currentUserId
+            );
 
             // The alternate training source and source languages must match
             if (
@@ -417,8 +429,21 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
-  getDraftPreviewUrl(bookNumber: number): string {
-    return `${this.previewDraftUrl}/${Canon.bookNumberToId(bookNumber)}`;
+  async navigateToDraftPreview(bookNumber: number): Promise<void> {
+    await this.createAutoDraftTab();
+    this.router.navigate(['projects', this.activatedProject.projectId!, 'translate', Canon.bookNumberToId(bookNumber)]);
+  }
+
+  private async createAutoDraftTab(): Promise<void> {
+    if (this.sfProjectUserConfigDoc == null) return;
+
+    const tab: EditorTabPersistData = {
+      groupId: 'target',
+      tabType: 'draft',
+      isSelected: true
+    };
+
+    await this.sfProjectUserConfigDoc.addTab(tab);
   }
 
   private getTargetLanguageDisplayName(): string | undefined {
