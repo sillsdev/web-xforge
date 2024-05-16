@@ -48,12 +48,17 @@ mat-card {
       }
       .mat-icon {
         color: rgba(0, 0, 0, 0.6);
+        margin-block: 0;
+        margin-inline: 16px;
+        align-self: center;
       }
     }
   }
 }
 
 .progress {
+  display: flex !important;
+  align-self: center !important;
   width: 32px;
   height: 32px;
 }

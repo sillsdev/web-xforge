@@ -1,6 +1,6 @@
 @use 'src/variables';
 
-mat-nav-list .mat-list-item {
+mat-nav-list .mdc-list-item {
   height: 48px;
   font-weight: 500;
   font-size: 14px;
@@ -17,16 +17,16 @@ mat-nav-list .mat-list-item {
     }
   }
 
-  mat-icon:last-child {
-    margin-left: auto;
-  }
-
-  ::ng-deep .mat-list-item-content {
-    padding-inline: 12px;
+  ::ng-deep .mat-mdc-list-item-unscoped-content {
+    display: flex;
+    align-items: center;
     column-gap: 12px;
+    font-size: unset;
+    font-weight: unset;
+    letter-spacing: unset;
   }
 
-  &.navigation-header ::ng-deep .mat-list-item-content {
+  &.navigation-header ::ng-deep .mdc-list-item__content {
     font-size: 0.95em;
     color: #777;
     padding-inline-start: 18px;
@@ -82,7 +82,7 @@ mat-nav-list .mat-list-item {
   margin-top: 2em;
 }
 
-.mat-nav-list.disabled-offline .mat-list-item {
+.mat-nav-list.disabled-offline .mdc-list-item {
   &,
   mat-icon {
     color: variables.$disabled-text-color;
