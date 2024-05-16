@@ -1418,16 +1418,16 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('canShowAdditionalInfo', () => {
-    it('should return true if the user is system admin, and build has additional info', () => {
+    it('should return true if the user is serval admin, and build has additional info', () => {
       let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.SystemAdmin] });
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.ServalAdmin] });
       });
       expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(true);
     });
 
     it('should return false if the draft build has no additional info', () => {
       let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.SystemAdmin] });
+        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.ServalAdmin] });
       });
       expect(env.component.canShowAdditionalInfo({} as BuildDto)).toBe(false);
     });

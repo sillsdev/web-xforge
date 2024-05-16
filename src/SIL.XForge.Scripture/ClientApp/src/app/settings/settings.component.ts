@@ -135,7 +135,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     const translateConfig = this.projectDoc?.data?.translateConfig;
     if (translateConfig == null || !this.featureFlags.showNmtDrafting.enabled) {
       return false;
-    } else if (this.authService.currentUserRoles.includes(SystemRole.SystemAdmin)) {
+    } else if (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin)) {
       return true;
     } else {
       return translateConfig.preTranslate === true && translateConfig.projectType !== ProjectType.BackTranslation;
@@ -168,7 +168,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get canUpdateServalConfig(): boolean {
-    return this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
+    return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
   }
 
   ngOnInit(): void {
