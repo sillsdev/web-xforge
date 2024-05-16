@@ -280,7 +280,7 @@ describe('SettingsComponent', () => {
         expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
       }));
 
-      it('should display for back translations for system administrators', fakeAsync(() => {
+      it('should display for back translations for serval administrators', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           preTranslate: false,
@@ -294,7 +294,7 @@ describe('SettingsComponent', () => {
           },
           projectType: ProjectType.BackTranslation
         });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.alternateSourceSelect).not.toBeNull();
@@ -551,7 +551,7 @@ describe('SettingsComponent', () => {
     });
 
     describe('Serval Config TextArea', () => {
-      it('should not display for non-system administrators', fakeAsync(() => {
+      it('should not display for non-serval administrators', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         env.wait();
@@ -559,7 +559,7 @@ describe('SettingsComponent', () => {
         expect(env.servalConfigTextArea).toBeNull();
       }));
 
-      it('should display for system administrators on back translations', fakeAsync(() => {
+      it('should display for serval administrators on back translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           preTranslate: false,
@@ -573,32 +573,32 @@ describe('SettingsComponent', () => {
           },
           projectType: ProjectType.BackTranslation
         });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
       }));
 
-      it('should display for system administrators on forward translations', fakeAsync(() => {
+      it('should display for serval administrators on forward translations', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
       }));
 
-      it('should not display for system administrators when the feature flag is disabled', fakeAsync(() => {
+      it('should not display for serval administrators when the feature flag is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).toBeNull();
       }));
 
-      it('should display for system administrators on forward translations when not approved', fakeAsync(() => {
+      it('should display for serval administrators on forward translations when not approved', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           preTranslate: false,
@@ -611,7 +611,7 @@ describe('SettingsComponent', () => {
             additionalTrainingData: false
           }
         });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
@@ -620,7 +620,7 @@ describe('SettingsComponent', () => {
       it('should change serval config value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
@@ -653,7 +653,7 @@ describe('SettingsComponent', () => {
           },
           preTranslate: true
         });
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
@@ -675,7 +675,7 @@ describe('SettingsComponent', () => {
       it('should not update an unchanged serval config value', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+        when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
         env.wait();
         env.wait();
         expect(env.servalConfigTextArea).not.toBeNull();
