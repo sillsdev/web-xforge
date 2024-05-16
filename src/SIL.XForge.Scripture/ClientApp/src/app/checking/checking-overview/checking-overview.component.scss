@@ -33,7 +33,7 @@
   }
 }
 
-.mat-list-base {
+.mat-mdc-list-base {
   padding-block-start: 0;
 }
 
@@ -42,7 +42,8 @@ app-donut-chart {
   height: 36px;
 }
 
-.mat-list-item {
+.mat-mdc-list-item {
+  cursor: auto;
   .audio-icon {
     margin-right: 5px;
   }
@@ -53,9 +54,14 @@ app-donut-chart {
 }
 
 #reviewer-questions-list {
-  .mat-list-item {
+  .mat-mdc-list-item {
     cursor: pointer;
+    height: 50px;
     margin-inline-start: 16px;
+  }
+  .mat-mdc-list-item:hover {
+    background: var(--mat-expansion-header-hover-state-layer-color);
+    border-radius: 4px;
   }
 }
 
@@ -65,9 +71,13 @@ app-donut-chart {
   overflow: hidden;
 }
 
+.mat-expansion-panel-header {
+  --mat-expansion-header-expanded-state-height: var(--mat-expansion-header-collapsed-state-height);
+}
+
 .book-expander ::ng-deep .mat-expansion-panel-content .mat-expansion-panel-body {
   padding-inline-end: 0 !important;
-  padding-block-start: 0 !important;
+  padding-block: 0 !important;
 }
 
 #no-questions-label,

@@ -154,6 +154,7 @@
                   <mat-selection-list [multiple]="false">
                     <mat-list-item
                       *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
+                      disableRipple
                     >
                       <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                         <button mat-icon-button (click)="questionDialog(questionDoc)" class="edit-btn">
@@ -330,6 +331,7 @@
                 <mat-selection-list [multiple]="false">
                   <mat-list-item
                     *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true)"
+                    disableRipple
                   >
                     <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                       v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;

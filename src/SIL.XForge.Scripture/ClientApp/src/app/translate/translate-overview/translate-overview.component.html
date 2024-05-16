@@ -23,9 +23,9 @@
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
           [appRouterLink]="['./', getBookId(textProgress.text)]"
         >
-          <mat-icon matListIcon class="mirror-rtl">book</mat-icon>
-          <span matLine>{{ getBookName(textProgress.text) }}</span>
-          <span matLine>{{
+          <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
+          <span matListItemTitle>{{ getBookName(textProgress.text) }}</span>
+          <span matListItemLine>{{
             t("translated_segments", { translatedSegments: textProgress.translated, total: textProgress.total })
           }}</span>
           <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
