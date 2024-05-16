@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { NgModule } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -8,6 +8,7 @@ import {
   MatLegacyDialogConfig as MatDialogConfig,
   MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
@@ -101,37 +102,46 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.saveButton);
     flush();
     expect(env.afterCloseCallback).not.toHaveBeenCalled();
+  }));
+
+  it('should show error text for required fields', fakeAsync(() => {
+    env = new TestEnvironment();
+    expect(env.errorText[0].classes['visible']).not.toBeDefined();
+
+    env.component.scriptureStart.markAsTouched();
+    env.clickElement(env.saveButton);
+    flush();
+
     expect(env.scriptureStartValidationMsg.textContent).toContain('Required');
-    // expect(getComputedStyle(env.scriptureStartValidationMsg).opacity).toEqual('0');
     expect(env.scriptureStartValidationMsg.textContent).not.toContain('e.g.');
     expect(env.scriptureStartValidationMsg.textContent).not.toContain('range');
+    expect(env.errorText[0].classes['visible']).toBe(true);
   }));
 
   it('does not accept just whitespace for a question', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
 
-    env.inputValue(env.questionInput, 'Hello?');
-    expect(env.component.questionText.valid).toBe(true);
-    expect(env.component.questionText.errors).toBeNull();
-
     env.inputValue(env.questionInput, '');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).toBeDefined();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
 
     env.inputValue(env.questionInput, ' ');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.someNonWhitespace).toBeDefined();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
 
     env.inputValue(env.questionInput, '\n');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.someNonWhitespace).toBeDefined();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).toBeDefined();
   }));
 
   it('should validate verse fields', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
-    expect(env.component.questionForm.valid).toBe(false);
+    expect(env.component.versesForm.valid).toBe(false);
     expect(env.component.scriptureStart.valid).toBe(false);
     // scriptureEnd starts disabled, and therefore invalid
     expect(env.component.scriptureEnd.valid).toBe(false);
@@ -212,15 +222,15 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('LUK 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.component.scriptureEnd.setValue('MAT 2:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:2');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors).toBeNull();
+    expect(env.component.versesForm.errors).toBeNull();
   }));
 
   it('should validate start verse is before or same as end verse', fakeAsync(() => {
@@ -232,15 +242,15 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('MAT 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors!.verseBeforeStart).toBe(true);
+    expect(env.component.versesForm.errors!.verseBeforeStart).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:2');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors).toBeNull();
+    expect(env.component.versesForm.errors).toBeNull();
     env.component.scriptureEnd.setValue('MAT 1:3');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors).toBeNull();
+    expect(env.component.versesForm.errors).toBeNull();
   }));
 
   it('opens reference chooser, uses result', fakeAsync(() => {
@@ -349,28 +359,31 @@ describe('QuestionDialogComponent', () => {
     env = new TestEnvironment();
     flush();
     env.inputValue(env.questionInput, '');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
     // Test that audio recorded results in a valid questionText control
     env.setAudioStatus('processed');
-    expect(env.component.questionText.valid).toBe(true);
-    expect(env.component.questionText.errors).toBeNull();
+    expect(env.component.textAndAudio?.text.valid).toBe(true);
+    expect(env.component.textAndAudio?.text.errors).toBeNull();
     // Removing the audio sets the validators on questionText
     env.setAudioStatus('reset');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
   }));
 
   it('should not save with no text and audio permission is denied', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
     env.inputValue(env.questionInput, '');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    env.clickElement(env.saveButton);
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
     // Test that audio permission was blocked and validation is still invalid
     env.setAudioStatus('denied');
-    expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors!.required).not.toBeNull();
+    expect(env.component.textAndAudio?.text.valid).toBe(false);
+    expect(env.component.textAndAudio?.text.errors!.invalid).not.toBeNull();
   }));
 
   it('display quill editor', fakeAsync(() => {
@@ -409,7 +422,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
-    expect(env.component.audioSource).toBeDefined();
+    expect(env.component.textAndAudio?.audioAttachment.url).toBeDefined();
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
@@ -429,7 +442,7 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.markAsTouched();
     expect(env.component.scriptureEnd.errors).toBeNull();
     expect(env.component.scriptureEnd.valid).toBe(true);
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mat-form-field-invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
@@ -449,7 +462,7 @@ describe('QuestionDialogComponent', () => {
     flush();
     env.component.scriptureStart.setValue('MAT 1:2');
     env.component.scriptureStart.markAsTouched();
-    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mat-form-field-invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
@@ -662,7 +675,9 @@ class TestEnvironment {
   }
 
   get questionInput(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#question-text') as HTMLTextAreaElement;
+    return this.overlayContainerElement
+      .querySelector('app-text-and-audio')
+      ?.querySelector('mat-form-field') as HTMLTextAreaElement;
   }
 
   get quillEditor(): HTMLElement {
@@ -697,10 +712,15 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text') as HTMLElement;
   }
 
+  get errorText(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('.form-helper-text'));
+  }
+
   inputValue(element: HTMLElement, value: string): void {
     const inputElem = element.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
+    inputElem.dispatchEvent(new Event('change'));
     this.fixture.detectChanges();
     tick();
   }
@@ -720,7 +740,10 @@ class TestEnvironment {
 
   setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded'): void {
     const audio: AudioAttachment = { status: status };
-    this.component.processAudio(audio);
+    if (status === 'uploaded' || status === 'processed') {
+      audio.url = 'some/url';
+    }
+    this.component.textAndAudio?.audio.setValue(audio);
   }
 
   private addTextDoc(id: TextDocId): void {
