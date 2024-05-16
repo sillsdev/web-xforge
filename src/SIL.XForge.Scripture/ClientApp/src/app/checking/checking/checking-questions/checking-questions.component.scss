@@ -50,13 +50,13 @@ mat-icon {
   font-style: italic;
 }
 
-.mat-list {
+.mat-mdc-list {
   width: 100%;
   display: flex;
   flex-direction: column;
   padding: 0;
 
-  .mat-list-item {
+  .mat-mdc-list-item {
     cursor: pointer;
     height: auto;
 
@@ -99,6 +99,10 @@ mat-icon {
     &.selected {
       background-color: vars.$questionSelectedColor;
       color: #fff;
+
+      ::ng-deep .mdc-list-item__primary-text {
+        color: unset;
+      }
 
       .view-answers {
         mat-icon {
