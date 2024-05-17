@@ -1,0 +1,5 @@
+<ng-container>
+  <a mat-raised-button *ngFor="let i of booksWithDrafts$ | async" (click)="navigateToDraftPreview(i)">
+    {{ i18n.localizeBook(i) }}
+  </a>
+</ng-container>

@@ -233,16 +233,7 @@
                     <div>
                       <ng-container *ngIf="isDraftComplete(draftJob)">
                         <h3>{{ t("draft_generation_complete") }}</h3>
-                        <p>
-                          <transloco
-                            key="draft_generation.go_to_draft_viewer"
-                            [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                          ></transloco>
-                        </p>
-                        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                          <mat-icon>edit_note</mat-icon>
-                          {{ t("preview_draft_button") }}
-                        </a>
+                        <app-draft-preview></app-draft-preview>
                       </ng-container>
 
                       <ng-container *ngIf="!isDraftComplete(draftJob)">

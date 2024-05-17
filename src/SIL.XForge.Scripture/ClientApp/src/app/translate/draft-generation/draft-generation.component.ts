@@ -7,12 +7,10 @@ import {
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
-import { Canon } from '@sillsdev/scripture';
 import { isEmpty } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
@@ -27,7 +25,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
 import { UserService } from '../../../xforge-common/user.service';
-import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -40,6 +37,7 @@ import {
   DraftGenerationStepsResult
 } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftPreviewComponent } from './draft-preview/draft-preview.component';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
@@ -58,6 +56,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     SharedModule,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
+    DraftPreviewComponent,
     SupportedBackTranslationLanguagesDialogComponent
   ]
 })
@@ -106,8 +105,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   signupFormUrl?: string;
 
   cancelDialogRef?: MatDialogRef<any>;
-
-  private sfProjectUserConfigDoc?: SFProjectUserConfigDoc;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -203,10 +200,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
             this.completedDraftBooks = translateConfig?.draftConfig.lastSelectedTranslationBooks ?? [];
-            this.sfProjectUserConfigDoc = await this.sfProjectService.getUserConfig(
-              projectDoc.id,
-              this.userService.currentUserId
-            );
 
             // The alternate training source and source languages must match
             if (
@@ -427,23 +420,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       ),
       (job?: BuildDto) => (this.draftJob = job)
     );
-  }
-
-  async navigateToDraftPreview(bookNumber: number): Promise<void> {
-    await this.createAutoDraftTab();
-    this.router.navigate(['projects', this.activatedProject.projectId!, 'translate', Canon.bookNumberToId(bookNumber)]);
-  }
-
-  private async createAutoDraftTab(): Promise<void> {
-    if (this.sfProjectUserConfigDoc == null) return;
-
-    const tab: EditorTabPersistData = {
-      groupId: 'target',
-      tabType: 'draft',
-      isSelected: true
-    };
-
-    await this.sfProjectUserConfigDoc.addTab(tab);
   }
 
   private getTargetLanguageDisplayName(): string | undefined {
