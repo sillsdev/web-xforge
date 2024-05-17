@@ -182,6 +182,7 @@
     "report_problem": "Laporkan masalah",
     "sign_up_for_drafting": "Mendaftar untuk penyusunan konsep",
     "suggested_workflow": "Alur kerja yang disarankan adalah membuat konsep dan menyunting satu kitab sebelum membuat konsep untuk kitab berikutnya.",
+    "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Upaya membuat terakhir gagal. Klik [em] \"{{ generateButtonText }}\"[/em] di bawah ini untuk mencoba lagi."
   },
   "draft_generation_steps": {
@@ -231,7 +232,6 @@
     "more_notes": "--- {{ count }} catatan lebih lanjut ---",
     "navigate_to_a_valid_text": "Arahkan ke teks yang benar untuk menyisipkan catatan",
     "no_permission_edit_chapter": "Anda tidak memiliki izin untuk menyunting pasal ini, meskipun Anda memiliki peran {{ userRole }} . Izin hanya dapat diubah di Paratext.",
-    "preview_draft_button": "Pratinjau konsep",
     "project_data_out_of_sync": "Data proyek Anda tidak selaras. Harap selaraskan proyek Anda untuk menyunting teks ini.",
     "project_text_not_editable": "Teks dalam proyek ini tidak dapat disunting. Pengaturan ini dapat diubah di Paratetx.",
     "save": "Simpan",
@@ -243,8 +243,12 @@
     "your_comment": "Komentar Anda"
   },
   "editor_draft_tab": {
+    "apply_to_project": "Add to project",
+    "draft_indicator_applied": "Added",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
-    "offline_notice": "Auto draft is not available offline."
+    "offline_notice": "Auto draft is not available offline.",
+    "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "yes": "Overwrite chapter"
   },
   "editor_history_tab": {
     "offline_notice": "Editor history is not available offline."
@@ -515,6 +519,7 @@
     "suggestion_engine": "Mesin Saran",
     "trained_segments": "segmen terlatih",
     "training": "Pelatihan...",
+    "training_unavailable": "Training is temporary unavailable",
     "translate_overview": "Gambaran Terjemahan",
     "translated_segments": "{{ translatedSegments }} dari {{ total }} bagian"
   },

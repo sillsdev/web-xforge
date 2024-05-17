@@ -182,6 +182,7 @@
     "report_problem": "Reportar problema",
     "sign_up_for_drafting": "Inscríbase para redactar",
     "suggested_workflow": "Un flujo de trabajo sugerido es redactar y editar un libro antes de generar un borrador para el siguiente.",
+    "temporarily_unavailable": "La generación de borradores está temporalmente no disponible.",
     "warning_generation_faulted": "El último intento de generación ha fallado. Haga clic en [em]\"{{ generateButtonText }}\"[/em] a continuación para volver a intentarlo."
   },
   "draft_generation_steps": {
@@ -231,7 +232,6 @@
     "more_notes": "--- {{ count }} nota(s) más ---",
     "navigate_to_a_valid_text": "Navegue hasta un texto válido para insertar una nota",
     "no_permission_edit_chapter": "Aunque tiene el rol de {{ userRole }}, usted no tiene permiso para editar este capítulo. Los permisos sólo se pueden cambiar en Paratext.",
-    "preview_draft_button": "Vista previa del borrador",
     "project_data_out_of_sync": "Los datos de su proyecto no están sincronizados. Por favor, sincronice su proyecto para editar este texto.",
     "project_text_not_editable": "El texto de este proyecto no es editable. Esta configuración se puede cambiar en Paratext.",
     "save": "Guardar",
@@ -243,8 +243,12 @@
     "your_comment": "Su comentario"
   },
   "editor_draft_tab": {
+    "apply_to_project": "Añadir al proyecto",
+    "draft_indicator_applied": "Añadido",
     "no_draft_notice": "{{ bookChapterName }} no tiene borrador.",
-    "offline_notice": "El borrador automático no está disponible fuera de línea."
+    "offline_notice": "El borrador automático no está disponible fuera de línea.",
+    "overwrite": "Añadir el borrador sobrescribirá el capítulo actual. ¿Está seguro de que desea continuar?",
+    "yes": "Sobrescribir capítulo"
   },
   "editor_history_tab": {
     "offline_notice": "El historial del editor no está disponible sin conexión."
@@ -515,6 +519,7 @@
     "suggestion_engine": "Motor de sugerencias",
     "trained_segments": "segmentos entrenados",
     "training": "Entrenamiento...",
+    "training_unavailable": "La formación no está disponible temporalmente",
     "translate_overview": "Resumen de la traducción",
     "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos"
   },
