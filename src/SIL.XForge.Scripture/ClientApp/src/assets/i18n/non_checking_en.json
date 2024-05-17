@@ -519,7 +519,7 @@
     "suggestion_engine": "Suggestion Engine",
     "trained_segments": "trained segments",
     "training": "Training...",
-    "training_unavailable": "Training is temporary unavailable",
+    "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Translate Overview",
     "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
   },
