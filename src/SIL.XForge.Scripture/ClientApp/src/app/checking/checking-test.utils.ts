@@ -5,7 +5,7 @@ import { AudioPlayer } from '../shared/audio/audio-player';
 
 export function getAudioTimings(): AudioTiming[] {
   return [
-    { textRef: '1', from: 0.0, to: 1.0 },
+    { textRef: '1', from: 0.7, to: 1.0 },
     { textRef: '2', from: 1.0, to: 2.0 },
     { textRef: '3-4', from: 2.0, to: 3.0 }
   ];
