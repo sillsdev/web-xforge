@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Filter questions",
+    "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "ꤠꤢ꤭",
     "next": "ꤘꤣꤋꤛꤢꤩ꤭ꤕꤟꤥ",
@@ -182,12 +183,11 @@
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Filter questions",
     "unknown_author": "Unknown author",
+    "upload_audio_file": "Upload Audio",
     "view_questions": "ꤗꤛꤢ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭"
   },
   "checking_answers": {
     "add_answer": "ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬",
-    "answer_required_before_saving": "ꤙꤤ ꤔꤟꤢꤧ꤬ ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤛꤢ꤬ꤟꤤꤒꤥ꤬ ꤢ꤬ꤋꤢꤧ꤭ꤔꤌꤣ꤬ ꤔꤟꤢꤧ꤬ ꤙꤢꤧ꤬ ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤚꤟꤢꤩ ꤔꤟꤢꤧ꤬ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ꤒꤥ꤬ꤗꤢ꤬ ꤔꤢ ꤔꤟꤢꤧ꤬ ꤙꤢꤧ꤬ ꤟꤢꤩꤙꤢꤧ꤬ ꤔꤟꤌꤣ꤭ ꤚꤟꤢꤩ ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬",
-    "answer": "ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬",
     "answers": "{{ count }} ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬",
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
     "cannot_like_own_answer": "ꤔꤟꤢꤧ꤬ ꤞꤢꤧꤕꤜꤢꤪ꤬ꤒꤥ꤭ ꤔꤟꤤꤘꤢꤦ꤬ ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤꤒꤥ꤬꤯",
@@ -197,14 +197,11 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤟꤤ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ ꤒꤣ꤬ꤖꤥ꤬꤮ ꤒꤥ꤬꤯",
-    "record": "ꤕꤟꤢꤦꤍꤟꤥ",
     "recording_automatically_stopped": "ꤜꤟꤢꤩꤕꤟꤢꤦ ꤔꤟꤢꤧ꤬ꤍꤟꤥ ꤔꤌꤣ꤬ ꤢ꤬ ꤥ꤬ꤊꤟꤌꤣꤊꤛꤢ꤭ ꤔꤟꤤꤘꤢꤦ꤬ ꤢ꤬ꤒꤢꤧ꤭꤯",
     "resolve": "Resolve",
     "resolved": "Resolved",
     "save_answer": "ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
-    "select_text": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤜꤤ꤬ꤕꤜꤢꤪ꤬",
     "select_verses": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤜꤤ꤬ꤏꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭",
-    "select": "ꤗꤟꤢꤩ꤬ꤗꤢ",
     "show_more_unread": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭  {{ count }} ꤕꤟꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ꤘꤣ ꤟꤣꤟꤤꤒꤥ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
@@ -235,11 +232,6 @@
     "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
-  "checking_audio_combined": {
-    "remove_audio_file": "ꤖꤛꤢꤩꤓꤢꤩ꤬ꤊꤛꤢ꤭ ꤍꤟꤥ file",
-    "upload_audio_file": "ꤙꤢꤩ꤬ꤓꤛꤢ꤬ ꤍꤟꤥ file",
-    "upload": "ꤙꤢꤩ꤬ꤓꤛꤢ꤬"
-  },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
     "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
@@ -247,12 +239,12 @@
     "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "delete": "Delete Recording",
     "mic_access_denied": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩꤔꤟꤤꤘꤢ꤭ ꤔꤢ microphone ꤔꤌꤣ꤬ ꤢ꤬ꤙꤤ ꤕꤢ꤭꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ ꤊꤟꤢꤦꤚꤟꤢꤩ enable the microphone ꤘꤣ ꤔꤟꤢꤧ꤬ browser ꤊꤢꤨ꤭ ꤔꤌꤣ꤬꤯ ",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
     "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
-    "record": "ꤕꤟꤢꤦꤍꤟꤥ",
-    "stop_recording": "ꤥ꤬ꤊꤟꤌꤣ ꤊꤛꤢ꤭ ꤕꤟꤢꤦꤍꤟꤥ",
-    "try_again": "ꤗꤟꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤦ꤬ "
+    "record_audio": "Record Audio",
+    "stop_recording": "ꤥ꤬ꤊꤟꤌꤣ ꤊꤛꤢ꤭ ꤕꤟꤢꤦꤍꤟꤥ"
   },
   "checking_comment_form": {
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",

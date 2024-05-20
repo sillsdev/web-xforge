@@ -182,6 +182,7 @@
     "report_problem": "Signaler un problème",
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
     "suggested_workflow": "Il est suggéré de faire une ébauche et d'apporter des corrections au livre avant de générer un projet pour le livre suivant.",
+    "temporarily_unavailable": "La génération de brouillons est temporairement indisponible.",
     "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"\"[/em] ci-dessous pour réessayer.{{ generateButtonText }}\"[/em] ci-dessous pour réessayer."
   },
   "draft_generation_steps": {
@@ -231,7 +232,6 @@
     "more_notes": "--- {{ count }} plus de remarque(s) ---",
     "navigate_to_a_valid_text": "Naviguez vers un texte valide pour insérer une note",
     "no_permission_edit_chapter": "Vous n'avez pas la permission de modifier ce chapitre, même si vous avez le rôle de {{ userRole }}. Les permissions ne peuvent être modifiées que dans Paratext.",
-    "preview_draft_button": "Prévisualiser le brouillon",
     "project_data_out_of_sync": "Les données de votre projet ne sont pas synchronisées. Veuillez synchroniser votre projet pour modifier ce texte.",
     "project_text_not_editable": "Le texte de ce projet n'est pas modifiable. Ce paramètre peut être modifié dans Paratext.",
     "save": "Enregistrer",
@@ -243,8 +243,12 @@
     "your_comment": "Votre commentaire"
   },
   "editor_draft_tab": {
+    "apply_to_project": "Ajouter au Projet",
+    "draft_indicator_applied": "Ajouté",
     "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
-    "offline_notice": "Le brouillon automatique n'est pas disponible hors ligne."
+    "offline_notice": "Le brouillon automatique n'est pas disponible hors ligne.",
+    "overwrite": "L'ajout du brouillon écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
+    "yes": "Écraser le chapitre"
   },
   "editor_history_tab": {
     "offline_notice": "L'historique de l'éditeur n'est pas disponible hors ligne."
@@ -515,6 +519,7 @@
     "suggestion_engine": "Moteur de suggestions",
     "trained_segments": "segments formés",
     "training": "Formation...",
+    "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Vue d'ensemble de la traduction",
     "translated_segments": "{{ translatedSegments }} segments sur {{ total }}"
   },

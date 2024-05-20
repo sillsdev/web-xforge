@@ -182,6 +182,7 @@
     "report_problem": "Report problem",
     "sign_up_for_drafting": "Sign up for drafting",
     "suggested_workflow": "A suggested workflow is to draft and edit one book before generating a draft for the next book.",
+    "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
     "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again."
   },
   "draft_generation_steps": {
@@ -231,7 +232,6 @@
     "more_notes": "--- {{ count }} mais nota(s) ---",
     "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
-    "preview_draft_button": "Preview draft",
     "project_data_out_of_sync": "Os dados do seu projeto não estão sincronizados. Por favor, sincronize seu projeto para editar este texto.",
     "project_text_not_editable": "O texto deste projeto não é editável. Esta configuração pode ser alterada no Paratext.",
     "save": "Salvar",
@@ -243,8 +243,12 @@
     "your_comment": "Seu comentário"
   },
   "editor_draft_tab": {
+    "apply_to_project": "Add to project",
+    "draft_indicator_applied": "Added",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
-    "offline_notice": "Auto draft is not available offline."
+    "offline_notice": "Auto draft is not available offline.",
+    "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "yes": "Overwrite chapter"
   },
   "editor_history_tab": {
     "offline_notice": "Editor history is not available offline."
@@ -515,6 +519,7 @@
     "suggestion_engine": "Mecanismo de Sugestão",
     "trained_segments": "segmentos treinados",
     "training": "Treinando...",
+    "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Traduzir Visão Geral",
     "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos"
   },
