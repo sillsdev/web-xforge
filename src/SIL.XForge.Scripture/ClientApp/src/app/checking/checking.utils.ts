@@ -104,10 +104,10 @@ export class CheckingUtils {
   /**
    * Finds the current audio text reference based on the current time.
    * @returns The audio text reference with the verse string, phrase, and word if available.
-   * Undefined if the current text reference is for a heading.
+   * Undefined if the current text reference is for a heading or if there is no match for the given time.
    */
   static parseAudioRefByTime(timingData: AudioTiming[], currentTime: number): AudioTextRef | undefined {
-    let indexInTimings: number = timingData.findIndex(t => t.to > currentTime);
+    let indexInTimings: number = timingData.findIndex(t => t.to > currentTime && t.from <= currentTime);
     for (indexInTimings; indexInTimings >= 0; indexInTimings--) {
       // find the first non-empty textRef because phrase level timings can have entries with empty textRefs
       if (timingData[indexInTimings].textRef !== '') {
@@ -127,10 +127,10 @@ export class CheckingUtils {
   /**
    * Finds the current audio heading reference based on the current time.
    * @returns The audio heading reference with the label and iteration if available.
-   * Undefined if the current audio timing entry is not a heading.
+   * Undefined if the current audio timing entry is not a heading or if there is no match for the given time.
    */
   static parseAudioHeadingRefByTime(timingData: AudioTiming[], currentTime: number): AudioHeadingRef | undefined {
-    const indexInTimings: number = timingData.findIndex(t => t.to > currentTime);
+    const indexInTimings: number = timingData.findIndex(t => t.to > currentTime && t.from <= currentTime);
     if (indexInTimings < 0) return;
     const currentAudioTiming: AudioTiming | undefined = timingData[indexInTimings];
     const match: RegExpExecArray | null = AUDIO_HEADING_REF_REGEX.exec(currentAudioTiming.textRef);

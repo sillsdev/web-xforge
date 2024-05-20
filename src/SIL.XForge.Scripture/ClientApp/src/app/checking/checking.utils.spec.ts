@@ -16,6 +16,7 @@ describe('CheckingUtils', () => {
   });
 
   it('can parse audio text ref', () => {
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 0)).toEqual(undefined);
     expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 0.9)).toEqual({ verseStr: '1' });
     expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 1.9)).toEqual({ verseStr: '2' });
     expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 2.9)).toEqual({ verseStr: '3-4' });
@@ -57,10 +58,7 @@ describe('CheckingUtils', () => {
 
   it('can parse audio heading ref', () => {
     // audio timing files should only ever have 1 chapter
-    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 0.0)).toEqual({
-      label: 'c',
-      iteration: 1
-    });
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 0.0)).toEqual(undefined);
     expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 0.1)).toEqual({
       label: 'c',
       iteration: 1

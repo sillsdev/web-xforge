@@ -1,5 +1,5 @@
 import { Component, DebugElement, Input, NgZone, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { BehaviorSubject } from 'rxjs';
@@ -10,7 +10,7 @@ import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { AudioPlayerStub, getAudioTimings, getAudioTimingWithHeadings } from '../../checking-test.utils';
+import { AudioPlayerStub, getAudioTimingWithHeadings, getAudioTimings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -36,16 +36,21 @@ describe('ScriptureAudioComponent', () => {
 
   it('can skip to next and previous verse', fakeAsync(() => {
     const env = new TestEnvironment();
+    const timings = getAudioTimings();
 
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
 
     env.clickNextRef();
     env.wait();
-    expect(env.audioPlayer.audio.currentTime).toBe(1);
+    expect(env.audioPlayer.audio.currentTime).toBe(timings[0].from);
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
+    env.clickNextRef();
+    env.wait();
+    expect(env.audioPlayer.audio.currentTime).toBe(timings[1].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     env.clickPreviousRef();
     env.wait();
-    expect(env.audioPlayer.audio.currentTime).toBe(0);
+    expect(env.audioPlayer.audio.currentTime).toBe(timings[0].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.clickPreviousRef();
     env.wait();
@@ -114,7 +119,7 @@ describe('ScriptureAudioComponent', () => {
     });
 
     env.audioPlayer.audio.timeUpdated$.next();
-    expect(env.verseChangedSpy).toHaveBeenCalledWith('s_1');
+    expect(env.verseChangedSpy).toHaveBeenCalledWith(undefined);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   }));
 
