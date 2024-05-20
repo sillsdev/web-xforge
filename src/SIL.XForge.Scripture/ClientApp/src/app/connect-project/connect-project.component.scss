@@ -38,13 +38,14 @@
   }
 
   .progress-container {
-    display: flex;
-    flex-direction: column;
     padding: 32px;
-
-    > .progress-label {
-      margin-bottom: 19px;
-      align-self: center;
+    mat-card-content {
+      display: flex;
+      flex-direction: column;
+      .progress-label {
+        margin-bottom: 19px;
+        align-self: center;
+      }
     }
   }
 
@@ -58,6 +59,15 @@
 
     mat-card {
       margin-top: 32px;
+
+      mat-card-title {
+        padding-top: 16px;
+      }
+
+      mat-card-title,
+      mat-card-subtitle {
+        padding-inline: 16px;
+      }
 
       mat-divider + .card-content {
         padding-top: 16px;
