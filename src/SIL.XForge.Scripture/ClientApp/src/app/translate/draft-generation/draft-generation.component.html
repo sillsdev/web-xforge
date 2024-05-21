@@ -1,352 +1,340 @@
-<mat-card *transloco="let t; read: 'draft_generation'">
-  <mat-card-content>
-    <h1 *ngIf="isBackTranslationMode" class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
-    <h1 *ngIf="!isBackTranslationMode" class="mat-headline-4">
-      {{ t("generate_forward_translation_drafts_header") }}
-    </h1>
+<ng-container *transloco="let t; read: 'draft_generation'">
+  <h1 *ngIf="isBackTranslationMode" class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
+  <h1 *ngIf="!isBackTranslationMode" class="mat-headline-4">
+    {{ t("generate_forward_translation_drafts_header") }}
+  </h1>
 
-    <section>
-      <div *ngIf="isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
-        <div *ngIf="isBackTranslationMode">
-          <p>
-            <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
-            <br />
-            {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
-          </p>
-        </div>
-        <div *ngIf="!isBackTranslationMode">
-          <p>
-            <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
-            <br />
-            {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
-          </p>
-        </div>
-
+  <section>
+    <div *ngIf="isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
+      <div *ngIf="isBackTranslationMode">
         <p>
-          <b>{{ t("instructions_keep_in_mind") }}</b>
+          <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
           <br />
-          {{ t("instructions_keep_in_mind_subtext") }}
+          {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
         </p>
+      </div>
+      <div *ngIf="!isBackTranslationMode">
         <p>
-          <b>{{ t("instructions_draft_process") }}</b>
+          <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
           <br />
-          {{ t("instructions_draft_process_subtext") }}
-        </p>
-        <p>
-          <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
-            <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
-            <a *ngIf="i.id === 1" [href]="urlService.autoDrafts" target="_blank">{{ i.text }}</a>
-          </ng-container>
+          {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
         </p>
       </div>
 
-      <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="warning" class="requirements">
-        <p>
-          <transloco
-            key="draft_generation.back_translation_requirement"
-            [params]="{ supportedLanguagesUrl }"
-          ></transloco>
-        </p>
-        <ul>
-          <li>
-            <mat-icon class="criteria-not-met">clear</mat-icon>
-            <p>
-              <transloco
-                key="draft_generation.criteria_project_language_not_in_nllb_with_language"
-                [params]="{ targetLanguageDisplayName }"
-              ></transloco>
-            </p>
-          </li>
-        </ul>
+      <p>
+        <b>{{ t("instructions_keep_in_mind") }}</b>
+        <br />
+        {{ t("instructions_keep_in_mind_subtext") }}
+      </p>
+      <p>
+        <b>{{ t("instructions_draft_process") }}</b>
+        <br />
+        {{ t("instructions_draft_process_subtext") }}
+      </p>
+      <p>
+        <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
+          <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
+          <a *ngIf="i.id === 1" [href]="urlService.autoDrafts" target="_blank">{{ i.text }}</a>
+        </ng-container>
+      </p>
+    </div>
+
+    <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="warning" class="requirements">
+      <p>
+        <transloco key="draft_generation.back_translation_requirement" [params]="{ supportedLanguagesUrl }"></transloco>
+      </p>
+      <ul>
+        <li>
+          <mat-icon class="criteria-not-met">clear</mat-icon>
+          <p>
+            <transloco
+              key="draft_generation.criteria_project_language_not_in_nllb_with_language"
+              [params]="{ targetLanguageDisplayName }"
+            ></transloco>
+          </p>
+        </li>
+      </ul>
+    </app-notice>
+
+    <!-- Only show warnings if target language is supported -->
+    <ng-container *ngIf="isTargetLanguageSupported">
+      <app-notice *ngIf="!isSourceProjectSet" type="warning" icon="warning" data-test-id="warning-source-text-missing">
+        <transloco
+          key="draft_generation.info_alert_source_text_not_selected"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
       </app-notice>
 
-      <!-- Only show warnings if target language is supported -->
-      <ng-container *ngIf="isTargetLanguageSupported">
-        <app-notice
-          *ngIf="!isSourceProjectSet"
-          type="warning"
-          icon="warning"
-          data-test-id="warning-source-text-missing"
-        >
-          <transloco
-            key="draft_generation.info_alert_source_text_not_selected"
-            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-          ></transloco>
-        </app-notice>
+      <app-notice
+        *ngIf="isSourceProjectSet && !isSourceAndTargetDifferent"
+        type="warning"
+        icon="warning"
+        data-test-id="warning-source-target-same"
+      >
+        <transloco
+          key="draft_generation.info_alert_same_source_and_target_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
 
-        <app-notice
-          *ngIf="isSourceProjectSet && !isSourceAndTargetDifferent"
-          type="warning"
-          icon="warning"
-          data-test-id="warning-source-target-same"
-        >
-          <transloco
-            key="draft_generation.info_alert_same_source_and_target_language"
-            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-          ></transloco>
-        </app-notice>
+      <app-notice
+        *ngIf="isSourceProjectSet && isSourceAndTargetDifferent && !isSourceAndTrainingSourceLanguageIdentical"
+        type="warning"
+        icon="warning"
+        data-test-id="warning-source-training-different"
+      >
+        <transloco
+          key="draft_generation.info_alert_different_training_and_source_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
 
-        <app-notice
-          *ngIf="isSourceProjectSet && isSourceAndTargetDifferent && !isSourceAndTrainingSourceLanguageIdentical"
-          type="warning"
-          icon="warning"
-          data-test-id="warning-source-training-different"
-        >
-          <transloco
-            key="draft_generation.info_alert_different_training_and_source_language"
-            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-          ></transloco>
-        </app-notice>
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          !canAccessDraftSourceIfAvailable(source)
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_source_access"
+          [params]="{
+            connectProjectUrl: { route: '/connect-project' },
+            name: source?.name
+          }"
+        ></transloco>
+      </app-notice>
 
-        <app-notice
-          *ngIf="
-            isSourceProjectSet &&
-            isSourceAndTargetDifferent &&
-            isSourceAndTrainingSourceLanguageIdentical &&
-            !canAccessDraftSourceIfAvailable(source)
-          "
-          type="warning"
-          icon="warning"
-          data-test-id="warning-source-no-access"
-        >
-          <transloco
-            key="draft_generation.info_alert_no_source_access"
-            [params]="{
-              connectProjectUrl: { route: '/connect-project' },
-              name: source?.name
-            }"
-          ></transloco>
-        </app-notice>
-
-        <app-notice
-          *ngIf="
-            isSourceProjectSet &&
-            isSourceAndTargetDifferent &&
-            isSourceAndTrainingSourceLanguageIdentical &&
-            canAccessDraftSourceIfAvailable(source) &&
-            !canAccessDraftSourceIfAvailable(alternateSource)
-          "
-          type="warning"
-          icon="warning"
-          data-test-id="warning-alternate-source-no-access"
-        >
-          <transloco
-            key="draft_generation.info_alert_no_alternate_source_access"
-            [params]="{
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          canAccessDraftSourceIfAvailable(source) &&
+          !canAccessDraftSourceIfAvailable(alternateSource)
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-alternate-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_alternate_source_access"
+          [params]="{
             connectProjectUrl: { route: '/connect-project' },
             name: alternateSource?.name,
           }"
-          ></transloco>
-        </app-notice>
+        ></transloco>
+      </app-notice>
 
-        <app-notice
-          *ngIf="
-            isSourceProjectSet &&
-            isSourceAndTargetDifferent &&
-            isSourceAndTrainingSourceLanguageIdentical &&
-            canAccessDraftSourceIfAvailable(source) &&
-            canAccessDraftSourceIfAvailable(alternateSource) &&
-            !canAccessDraftSourceIfAvailable(alternateTrainingSource)
-          "
-          type="warning"
-          icon="warning"
-          data-test-id="warning-alternate-training-source-no-access"
-        >
-          <transloco
-            key="draft_generation.info_alert_no_alternate_training_source_access"
-            [params]="{
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          canAccessDraftSourceIfAvailable(source) &&
+          canAccessDraftSourceIfAvailable(alternateSource) &&
+          !canAccessDraftSourceIfAvailable(alternateTrainingSource)
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-alternate-training-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_alternate_training_source_access"
+          [params]="{
             connectProjectUrl: { route: '/connect-project' },
             name: alternateTrainingSource?.name,
           }"
-          ></transloco>
-        </app-notice>
-      </ng-container>
-
-      <!-- Only show sync related messages if approved or a back translation and a build is not underway -->
-      <ng-container
-        *ngIf="(this.isBackTranslationMode || this.isPreTranslationApproved) && !isDraftInProgress(draftJob)"
-      >
-        <app-notice *ngIf="!lastSyncSuccessful" type="warning" icon="warning" data-test-id="warning-last-sync-failed">
-          <transloco key="draft_generation.info_alert_last_sync_failed"></transloco>
-        </app-notice>
-      </ng-container>
-    </section>
-
-    <ng-container *ngIf="!isOnline">
-      <section>
-        <p class="offline-text">{{ t("offline_message") }}</p>
-      </section>
+        ></transloco>
+      </app-notice>
     </ng-container>
 
-    <ng-container *ngIf="isOnline">
-      <mat-tab-group>
-        <mat-tab>
-          <section *ngIf="!this.isBackTranslationMode && !this.isPreTranslationApproved" data-test-id="approval-needed">
-            <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
-              {{ t("sign_up_for_drafting") }}
-            </a>
-          </section>
+    <!-- Only show sync related messages if approved or a back translation and a build is not underway -->
+    <ng-container *ngIf="(this.isBackTranslationMode || this.isPreTranslationApproved) && !isDraftInProgress(draftJob)">
+      <app-notice *ngIf="!lastSyncSuccessful" type="warning" icon="warning" data-test-id="warning-last-sync-failed">
+        <transloco key="draft_generation.info_alert_last_sync_failed"></transloco>
+      </app-notice>
+    </ng-container>
+  </section>
 
-          <div *ngIf="isDraftJobFetched">
-            <ng-container *ngIf="isGenerationSupported">
-              <ng-container *ngIf="isDraftFaulted(draftJob)">
-                <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
-                  <div class="draft-generation-failed-message">
-                    <span
-                      ><transloco
-                        key="draft_generation.warning_generation_faulted"
-                        [params]="{
-                          generateButtonText: t('generate_draft_button')
-                        }"
-                      ></transloco
-                    ></span>
-                    <a mat-button target="_blank" [href]="issueMailTo">
-                      {{ t("report_problem") }}
-                    </a>
-                  </div>
-                </app-notice>
-                <section data-test-id="technical-details">
+  <ng-container *ngIf="!isOnline">
+    <section>
+      <p class="offline-text">{{ t("offline_message") }}</p>
+    </section>
+  </ng-container>
+
+  <ng-container *ngIf="isOnline">
+    <mat-tab-group>
+      <mat-tab>
+        <section *ngIf="!this.isBackTranslationMode && !this.isPreTranslationApproved" data-test-id="approval-needed">
+          <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
+            {{ t("sign_up_for_drafting") }}
+          </a>
+        </section>
+
+        <div *ngIf="isDraftJobFetched">
+          <ng-container *ngIf="isGenerationSupported">
+            <ng-container *ngIf="isDraftFaulted(draftJob)">
+              <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
+                <div class="draft-generation-failed-message">
+                  <span
+                    ><transloco
+                      key="draft_generation.warning_generation_faulted"
+                      [params]="{
+                        generateButtonText: t('generate_draft_button')
+                      }"
+                    ></transloco
+                  ></span>
+                  <a mat-button target="_blank" [href]="issueMailTo">
+                    {{ t("report_problem") }}
+                  </a>
+                </div>
+              </app-notice>
+              <section data-test-id="technical-details">
+                <div>
+                  <p class="error-text">Technical details:</p>
                   <div>
-                    <p class="error-text">Technical details:</p>
+                    <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
                     <div>
-                      <div><strong>Message:</strong> {{ draftJob?.message ?? "unknown" }}</div>
-                      <div>
-                        <strong>Translation Engine Id:</strong>
-                        {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
-                      </div>
-                      <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
-                      <div>
-                        <strong>Corpora Ids:</strong>
-                        {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
-                      </div>
+                      <strong>Translation Engine Id:</strong>
+                      {{ draftJob?.additionalInfo?.translationEngineId ?? "unknown" }}
+                    </div>
+                    <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId ?? "unknown" }}</div>
+                    <div>
+                      <strong>Corpora Ids:</strong>
+                      {{ draftJob?.additionalInfo?.corporaIds?.join(", ") ?? "unknown" }}
                     </div>
                   </div>
-                </section>
-              </ng-container>
-
-              <section *ngIf="!isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
-                <button mat-flat-button color="primary" (click)="generateDraft()">
-                  <mat-icon>auto_awesome</mat-icon>
-                  {{ t("generate_draft_button") }}
-                </button>
+                </div>
               </section>
             </ng-container>
 
-            <ng-container *ngIf="isPreviewSupported">
-              <ng-container *ngIf="draftJob != null">
-                <section *ngIf="!isDraftInProgress(draftJob)" class="draft-complete">
-                  <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
-                    <div>
-                      <mat-card class="mat-elevation-z2">
-                        <mat-card-content>
-                          <ng-container *ngIf="isDraftComplete(draftJob)">
-                            <h2>{{ t("draft_generation_complete") }}</h2>
-                            <p>
-                              <transloco
-                                key="draft_generation.go_to_draft_viewer"
-                                [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                              ></transloco>
-                            </p>
-                            <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                              <mat-icon>edit_note</mat-icon>
-                              {{ t("preview_draft_button") }}
-                            </a>
-                          </ng-container>
-                          <ng-container *ngIf="!isDraftComplete(draftJob)">
-                            <h3>{{ t("preview_last_draft_header") }}</h3>
-                            <p>
-                              <transloco
-                                key="draft_generation.preview_last_draft_detail"
-                                [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                              ></transloco>
-                            </p>
-                            <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                              <mat-icon>edit_note</mat-icon>
-                              {{ t("preview_last_draft_button") }}
-                            </a>
-                          </ng-container>
-                          <div class="other-actions">
-                            <button
-                              *ngIf="isGenerationSupported"
-                              mat-button
-                              type="button"
-                              (click)="generateDraft({ withConfirm: true })"
-                            >
-                              <mat-icon>add</mat-icon>
-                              <span>{{ t("generate_new_draft") }}</span>
-                            </button>
-                          </div>
-                        </mat-card-content>
-                      </mat-card>
-                    </div>
-                  </ng-container>
-                </section>
+            <section *ngIf="!isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
+              <button mat-flat-button color="primary" (click)="generateDraft()">
+                <mat-icon>auto_awesome</mat-icon>
+                {{ t("generate_draft_button") }}
+              </button>
+            </section>
+          </ng-container>
 
-                <section *ngIf="isDraftQueued(draftJob)">
-                  <h3>{{ t("draft_queued_header") }}</h3>
+          <ng-container *ngIf="isPreviewSupported">
+            <ng-container *ngIf="draftJob != null">
+              <section *ngIf="!isDraftInProgress(draftJob)" class="draft-complete">
+                <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
+                  <div>
+                    <mat-card class="mat-elevation-z2">
+                      <mat-card-content>
+                        <ng-container *ngIf="isDraftComplete(draftJob)">
+                          <h2>{{ t("draft_generation_complete") }}</h2>
+                          <p>
+                            <transloco
+                              key="draft_generation.go_to_draft_viewer"
+                              [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                            ></transloco>
+                          </p>
+                          <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                            <mat-icon>edit_note</mat-icon>
+                            {{ t("preview_draft_button") }}
+                          </a>
+                        </ng-container>
+                        <ng-container *ngIf="!isDraftComplete(draftJob)">
+                          <h3>{{ t("preview_last_draft_header") }}</h3>
+                          <p>
+                            <transloco
+                              key="draft_generation.preview_last_draft_detail"
+                              [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                            ></transloco>
+                          </p>
+                          <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                            <mat-icon>edit_note</mat-icon>
+                            {{ t("preview_last_draft_button") }}
+                          </a>
+                        </ng-container>
+                        <div class="other-actions">
+                          <button
+                            *ngIf="isGenerationSupported"
+                            mat-button
+                            type="button"
+                            (click)="generateDraft({ withConfirm: true })"
+                          >
+                            <mat-icon>add</mat-icon>
+                            <span>{{ t("generate_new_draft") }}</span>
+                          </button>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+                  </div>
+                </ng-container>
+              </section>
 
-                  <p *ngIf="!hasDraftQueueDepth(draftJob)">{{ t("draft_queued_detail") }}</p>
-                  <p *ngIf="hasDraftQueueDepth(draftJob)">
-                    {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
-                  </p>
+              <section *ngIf="isDraftQueued(draftJob)">
+                <h3>{{ t("draft_queued_header") }}</h3>
+
+                <p *ngIf="!hasDraftQueueDepth(draftJob)">{{ t("draft_queued_detail") }}</p>
+                <p *ngIf="hasDraftQueueDepth(draftJob)">
+                  {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
+                </p>
+                <p *ngIf="hasAnyCompletedBuild">
+                  {{ t("preview_last_draft_while_active_build") }}
+                </p>
+                <app-working-animated-indicator></app-working-animated-indicator>
+
+                <div class="button-strip">
+                  <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+                    <mat-icon>highlight_off</mat-icon>
+                    {{ t("cancel_generation_button") }}
+                  </button>
+                  <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                    <mat-icon>edit_note</mat-icon>
+                    {{ t("preview_last_draft_while_active_build_button") }}
+                  </a>
+                </div>
+              </section>
+
+              <section *ngIf="isDraftActive(draftJob)" class="progress-active">
+                <h3>{{ t("draft_active_header") }}</h3>
+
+                <div class="progress-text">
+                  <p>{{ t("draft_active_detail") }}</p>
                   <p *ngIf="hasAnyCompletedBuild">
                     {{ t("preview_last_draft_while_active_build") }}
                   </p>
-                  <app-working-animated-indicator></app-working-animated-indicator>
+                </div>
+                <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
 
-                  <div class="button-strip">
-                    <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-                      <mat-icon>highlight_off</mat-icon>
-                      {{ t("cancel_generation_button") }}
-                    </button>
-                    <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                      <mat-icon>edit_note</mat-icon>
-                      {{ t("preview_last_draft_while_active_build_button") }}
-                    </a>
-                  </div>
-                </section>
-
-                <section *ngIf="isDraftActive(draftJob)" class="progress-active">
-                  <h3>{{ t("draft_active_header") }}</h3>
-
-                  <div class="progress-text">
-                    <p>{{ t("draft_active_detail") }}</p>
-                    <p *ngIf="hasAnyCompletedBuild">
-                      {{ t("preview_last_draft_while_active_build") }}
-                    </p>
-                  </div>
-                  <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
-
-                  <div class="button-strip">
-                    <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-                      <mat-icon>highlight_off</mat-icon>
-                      {{ t("cancel_generation_button") }}
-                    </button>
-                    <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                      <mat-icon>edit_note</mat-icon>
-                      {{ t("preview_last_draft_while_active_build_button") }}
-                    </a>
-                  </div>
-                </section>
-              </ng-container>
+                <div class="button-strip">
+                  <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+                    <mat-icon>highlight_off</mat-icon>
+                    {{ t("cancel_generation_button") }}
+                  </button>
+                  <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                    <mat-icon>edit_note</mat-icon>
+                    {{ t("preview_last_draft_while_active_build_button") }}
+                  </a>
+                </div>
+              </section>
             </ng-container>
-          </div>
-        </mat-tab>
+          </ng-container>
+        </div>
+      </mat-tab>
 
-        <mat-tab>
-          <!-- Lazy load tab content -->
-          <ng-template matTabContent>
-            <button mat-stroked-button class="backout-button" (click)="navigateToTab('initial')">
-              <mat-icon class="mirror-rtl">navigate_before</mat-icon>
-              {{ t("back_from_stepper_button") }}
-            </button>
-            <app-draft-generation-steps (done)="onPreGenerationStepsComplete($event)"></app-draft-generation-steps>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
-    </ng-container>
-  </mat-card-content>
-</mat-card>
+      <mat-tab>
+        <!-- Lazy load tab content -->
+        <ng-template matTabContent>
+          <button mat-stroked-button class="backout-button" (click)="navigateToTab('initial')">
+            <mat-icon class="mirror-rtl">navigate_before</mat-icon>
+            {{ t("back_from_stepper_button") }}
+          </button>
+          <app-draft-generation-steps (done)="onPreGenerationStepsComplete($event)"></app-draft-generation-steps>
+        </ng-template>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-container>
+</ng-container>
 
 <section *ngIf="this.canShowAdditionalInfo(draftJob)">
   <mat-expansion-panel class="diagnostic-info">
