@@ -44,12 +44,17 @@
   }
 }
 
-.mat-card {
+.mat-mdc-card {
   display: flex;
   flex-direction: column;
 
+  mat-card-title {
+    padding: 16px 16px 0 16px;
+  }
+
   mat-card-content {
     flex-grow: 1;
+    margin-block-end: 16px;
   }
 
   ol {

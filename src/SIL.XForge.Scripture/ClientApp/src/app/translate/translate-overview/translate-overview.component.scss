@@ -29,11 +29,12 @@ mat-card {
   width: 18rem;
 
   .books-card-title ::ng-deep {
-    margin-top: 8px;
-    > .mat-card-header-text {
+    margin-top: 4px;
+    padding: 0 16px;
+    > .mat-mdc-card-header-text {
       width: 100%;
       mat-card-title {
-        margin-bottom: 8px;
+        margin-block: 8px;
       }
     }
   }
@@ -61,8 +62,12 @@ mat-card {
   width: 16rem;
   overflow: hidden;
 
+  mat-card-header {
+    padding: 0 16px;
+  }
+
   .engine-card-title {
-    margin-top: 8px;
+    margin-block: 8px;
   }
 
   .engine-card-content {
