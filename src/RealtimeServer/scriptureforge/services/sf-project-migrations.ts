@@ -324,7 +324,6 @@ class SFProjectMigration19 extends DocMigration {
         p: ['translateConfig', 'draftConfig', 'sendAllSegments'],
         od: doc.data.translateConfig.draftConfig.sendAllSegments
       });
-      console.log(ops);
     }
 
     await submitMigrationOp(SFProjectMigration19.VERSION, doc, ops);
