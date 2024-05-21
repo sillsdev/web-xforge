@@ -13,7 +13,6 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { of, throwError } from 'rxjs';
-import { SharedModule } from 'src/app/shared/shared.module';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -27,6 +26,7 @@ import { configureTestingModule, MockTranslocoDirective, TestTranslocoModule } f
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { isBadDelta } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';

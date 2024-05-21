@@ -78,7 +78,6 @@ import {
   tap,
   throttleTime
 } from 'rxjs/operators';
-import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -105,6 +104,7 @@ import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,

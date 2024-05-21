@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { DOCUMENT } from './browser-globals';
 import { isGecko } from './utils';
 

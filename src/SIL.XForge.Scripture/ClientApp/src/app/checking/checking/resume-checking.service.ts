@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { from, merge, Observable, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, shareReplay, switchMap, tap } from 'rxjs/operators';
-import { QuestionDoc } from 'src/app/core/models/question-doc';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { areStringArraysEqual } from 'xforge-common/util/string-util';
+import { QuestionDoc } from '../../core/models/question-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { CheckingQuestionsService } from './checking-questions.service';
 
 /**

@@ -23,7 +23,6 @@ import {
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
-import { NoticeComponent } from 'src/app/shared/notice/notice.component';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -42,6 +41,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoticeComponent } from '../../shared/notice/notice.component';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { RolesAndPermissionsDialogComponent, UserData } from './roles-and-permissions-dialog.component';
 

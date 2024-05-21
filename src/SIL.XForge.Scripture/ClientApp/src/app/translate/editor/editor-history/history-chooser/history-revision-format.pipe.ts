@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Revision } from 'src/app/core/paratext.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Revision } from '../../../../core/paratext.service';
 
 @Pipe({
   name: 'revisionFormat'

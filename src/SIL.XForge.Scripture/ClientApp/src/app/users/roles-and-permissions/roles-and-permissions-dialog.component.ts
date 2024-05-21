@@ -6,11 +6,11 @@ import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 
 export interface UserData {
   projectId: string;

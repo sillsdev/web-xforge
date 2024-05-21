@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
-import { TabFactoryService } from 'src/app/shared/sf-tab-group';
+import { TabFactoryService } from '../../../shared/sf-tab-group';
 import { EditorTabInfo } from './editor-tabs.types';
 
 @Injectable({
