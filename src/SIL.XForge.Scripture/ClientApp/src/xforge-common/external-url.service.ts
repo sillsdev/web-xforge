@@ -22,6 +22,10 @@ export class ExternalUrlService {
     return this.helps + '/manual';
   }
 
+  get autoDrafts(): string {
+    return this.helps + '/generating-drafts';
+  }
+
   get rolesHelpPage(): string {
     return this.manual + '/#t=concepts%2Froles.htm';
   }

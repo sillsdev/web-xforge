@@ -35,9 +35,7 @@
         <p>
           <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
             <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
-            <a *ngIf="i.id === 1" href="https://help.scriptureforge.org/generating-drafts" target="_blank">{{
-              i.text
-            }}</a>
+            <a *ngIf="i.id === 1" [href]="urlService.autoDrafts" target="_blank">{{ i.text }}</a>
           </ng-container>
         </p>
       </div>

@@ -25,6 +25,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
+import { ExternalUrlService } from '../../../xforge-common/external-url.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
@@ -114,7 +115,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
-    protected readonly noticeService: NoticeService
+    protected readonly noticeService: NoticeService,
+    protected readonly urlService: ExternalUrlService
   ) {
     super(noticeService);
   }
