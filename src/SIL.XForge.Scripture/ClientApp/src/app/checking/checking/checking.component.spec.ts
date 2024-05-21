@@ -5,7 +5,7 @@ import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
-import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
+import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -2446,13 +2446,13 @@ class TestEnvironment {
   async getDecreaseFontSizeButton(): Promise<MatButtonHarness> {
     const menu = await this.getFontSizeMenu();
     await menu.open();
-    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(1)' }));
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group button:nth-of-type(1)' }));
   }
 
   async getIncreaseFontSizeButton(): Promise<MatButtonHarness> {
     const menu = await this.getFontSizeMenu();
     await menu.open();
-    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(2)' }));
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group button:nth-of-type(2)' }));
   }
 
   get editQuestionButton(): DebugElement {

@@ -130,3 +130,9 @@ app-donut-chart {
 #warning-some-actions-unavailable-offline {
   margin-top: 16px;
 }
+
+::ng-deep {
+  .checking-overview-chapter-menu {
+    max-width: none;
+  }
+}

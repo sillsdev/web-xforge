@@ -111,6 +111,7 @@
                   mat-menu-item
                   (click)="openRolesDialog(userRow)"
                   [disabled]="isAdmin(userRow.role) || userRow.inviteeStatus"
+                  data-test-id="edit-roles-and-permissions"
                 >
                   {{ t("edit_roles_and_permissions") }}
                 </button>
