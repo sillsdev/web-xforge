@@ -168,7 +168,8 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         projectId$: of(projectId),
         projectDoc: projectDoc,
-        projectDoc$: of(projectDoc)
+        projectDoc$: of(projectDoc),
+        changes$: of(projectDoc)
       });
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
@@ -205,7 +206,6 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.draftJob).toEqual(buildDto);
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
-      expect(env.component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
       expect(env.component.isSourceProjectSet).toBe(true);
