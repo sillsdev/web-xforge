@@ -229,30 +229,15 @@
                     <mat-card class="mat-elevation-z2">
                       <mat-card-content>
                         <ng-container *ngIf="isDraftComplete(draftJob)">
-                          <h2>{{ t("draft_generation_complete") }}</h2>
-                          <p>
-                            <transloco
-                              key="draft_generation.go_to_draft_viewer"
-                              [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                            ></transloco>
-                          </p>
-                          <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                            <mat-icon>edit_note</mat-icon>
-                            {{ t("preview_draft_button") }}
-                          </a>
+                          <h2>{{ t("draft_is_ready") }}</h2>
+                          <p>{{ t("click_book_to_preview") }}</p>
+                          <app-draft-preview-books></app-draft-preview-books>
                         </ng-container>
                         <ng-container *ngIf="!isDraftComplete(draftJob)">
                           <h3>{{ t("preview_last_draft_header") }}</h3>
-                          <p>
-                            <transloco
-                              key="draft_generation.preview_last_draft_detail"
-                              [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                            ></transloco>
-                          </p>
-                          <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                            <mat-icon>edit_note</mat-icon>
-                            {{ t("preview_last_draft_button") }}
-                          </a>
+                          <p>{{ t("preview_last_draft_detail") }}</p>
+                          <p>{{ t("click_book_to_preview") }}</p>
+                          <app-draft-preview-books></app-draft-preview-books>
                         </ng-container>
                         <div class="other-actions">
                           <button
@@ -278,9 +263,6 @@
                 <p *ngIf="hasDraftQueueDepth(draftJob)">
                   {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
                 </p>
-                <p *ngIf="hasAnyCompletedBuild">
-                  {{ t("preview_last_draft_while_active_build") }}
-                </p>
                 <app-working-animated-indicator></app-working-animated-indicator>
 
                 <div class="button-strip">
@@ -288,10 +270,6 @@
                     <mat-icon>highlight_off</mat-icon>
                     {{ t("cancel_generation_button") }}
                   </button>
-                  <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                    <mat-icon>edit_note</mat-icon>
-                    {{ t("preview_last_draft_while_active_build_button") }}
-                  </a>
                 </div>
               </section>
 
@@ -300,9 +278,6 @@
 
                 <div class="progress-text">
                   <p>{{ t("draft_active_detail") }}</p>
-                  <p *ngIf="hasAnyCompletedBuild">
-                    {{ t("preview_last_draft_while_active_build") }}
-                  </p>
                 </div>
                 <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
 
@@ -311,10 +286,6 @@
                     <mat-icon>highlight_off</mat-icon>
                     {{ t("cancel_generation_button") }}
                   </button>
-                  <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                    <mat-icon>edit_note</mat-icon>
-                    {{ t("preview_last_draft_while_active_build_button") }}
-                  </a>
                 </div>
               </section>
             </ng-container>

@@ -37,6 +37,7 @@ import {
   DraftGenerationStepsResult
 } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
@@ -55,14 +56,14 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     SharedModule,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
-    SupportedBackTranslationLanguagesDialogComponent
+    SupportedBackTranslationLanguagesDialogComponent,
+    DraftPreviewBooksComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   draftJob?: BuildDto;
 
-  draftViewerUrl?: string;
   projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
@@ -218,7 +219,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
-            this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
           })
         ),
