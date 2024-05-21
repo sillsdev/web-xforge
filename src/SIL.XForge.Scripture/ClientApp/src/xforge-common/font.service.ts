@@ -103,11 +103,17 @@ export class FontService {
 
   constructor(@Inject(DOCUMENT) private readonly document: Document) {}
 
-  getFontFamilyFromProject(projectDoc: SFProjectProfileDoc | SFProjectProfile | undefined): string {
-    if (projectDoc != null && 'data' in projectDoc) {
-      projectDoc = projectDoc.data;
+  /**
+   * Gets a CSS font family name for a given project or project document.
+   *
+   * @param {SFProjectProfileDoc | SFProjectProfile | undefined} project The project.
+   * @returns The CSS font family name.
+   */
+  getFontFamilyFromProject(project: SFProjectProfileDoc | SFProjectProfile | undefined): string {
+    if (project != null && 'data' in project) {
+      project = project.data;
     }
-    return this.getCSSFontName(projectDoc?.defaultFont);
+    return this.getCSSFontName(project?.defaultFont);
   }
 
   /**
