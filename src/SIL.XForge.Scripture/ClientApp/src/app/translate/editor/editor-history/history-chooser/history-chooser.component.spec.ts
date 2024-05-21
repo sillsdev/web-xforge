@@ -79,7 +79,7 @@ describe('HistoryChooserComponent', () => {
     env.triggerNgOnChanges();
     env.wait();
     expect(env.component.selectedRevision).toBeUndefined();
-    expect(env.historySelect).toBeUndefined();
+    expect(env.historySelect).toBeNull();
   }));
 
   it('should fetch revisions when coming online', fakeAsync(() => {
@@ -108,7 +108,7 @@ describe('HistoryChooserComponent', () => {
     when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve(undefined);
     env.triggerNgOnChanges();
     env.wait();
-    expect(env.historySelect).toBeUndefined();
+    expect(env.historySelect).toBeNull();
     expect(env.component.selectedRevision).toBeUndefined();
   }));
 
@@ -146,7 +146,7 @@ describe('HistoryChooserComponent', () => {
     when(mockedTextDocService.canEdit(anything(), 40, 1)).thenReturn(false);
     env.triggerNgOnChanges();
     env.wait();
-    expect(env.revertHistoryButton).toBeUndefined();
+    expect(env.revertHistoryButton).toBeNull();
   }));
 
   it('should revert to the snapshot', fakeAsync(() => {
@@ -206,15 +206,15 @@ describe('HistoryChooserComponent', () => {
     }
 
     get historySelect(): HTMLElement {
-      return this.fixture.nativeElement.querySelectorAll('#history-select')[0] as HTMLElement;
+      return this.fixture.nativeElement.querySelector('#history-select') as HTMLElement;
     }
 
     get revertHistoryButton(): HTMLElement {
-      return this.fixture.nativeElement.querySelectorAll('#revert-history')[0] as HTMLElement;
+      return this.fixture.nativeElement.querySelector('#revert-history') as HTMLElement;
     }
 
     get showDiffButton(): HTMLElement {
-      return this.fixture.nativeElement.querySelectorAll('#show-diff')[0] as HTMLElement;
+      return this.fixture.nativeElement.querySelector('#show-diff') as HTMLElement;
     }
 
     clickRevertHistoryButton(): void {
