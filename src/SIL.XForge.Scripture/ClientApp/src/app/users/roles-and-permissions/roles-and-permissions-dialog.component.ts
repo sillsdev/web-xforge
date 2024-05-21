@@ -1,10 +1,10 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA } from '@angular/material/legacy-dialog';
-import { UserProfile } from 'realtime-server/common/models/user';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';

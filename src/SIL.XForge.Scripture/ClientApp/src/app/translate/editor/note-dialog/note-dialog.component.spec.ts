@@ -9,7 +9,7 @@ import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
-import { UserProfile } from 'realtime-server/common/models/user';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';

@@ -9,10 +9,10 @@ import {
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { forEach } from 'lodash-es';
-import { UserProfile } from 'realtime-server/common/models/user';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   createTestProject,

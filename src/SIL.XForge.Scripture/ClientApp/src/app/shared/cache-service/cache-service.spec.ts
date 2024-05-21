@@ -2,7 +2,7 @@ import { NgZone } from '@angular/core';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { AppComponent } from 'src/app/app.component';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from 'src/app/core/models/sf-type-registry';

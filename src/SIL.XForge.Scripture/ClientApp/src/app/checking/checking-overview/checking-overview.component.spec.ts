@@ -25,7 +25,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
-import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
