@@ -1,17 +1,46 @@
 <mat-card *transloco="let t; read: 'draft_generation'">
   <mat-card-content>
-    <h1 *ngIf="isBackTranslationMode" mat-card-title>{{ t("generate_back_translation_drafts_header") }}</h1>
-    <h1 *ngIf="!isBackTranslationMode" mat-card-title>{{ t("generate_forward_translation_drafts_header") }}</h1>
-
-    <mat-divider inset></mat-divider>
+    <h1 *ngIf="isBackTranslationMode" class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
+    <h1 *ngIf="!isBackTranslationMode" class="mat-headline-4">
+      {{ t("generate_forward_translation_drafts_header") }}
+    </h1>
 
     <section>
-      <p *ngIf="isBackTranslationMode">{{ t("instructions_scripture_forge_assist_back_translation") }}</p>
-      <p *ngIf="!isBackTranslationMode">{{ t("instructions_scripture_forge_assist_forward_translation") }}</p>
-      <p><transloco key="draft_generation.instructions_keep_in_mind"></transloco></p>
-      <p>{{ t("instructions_draft_process") }}</p>
+      <div *ngIf="isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
+        <div *ngIf="isBackTranslationMode">
+          <p>
+            <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
+            <br />
+            {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
+          </p>
+        </div>
+        <div *ngIf="!isBackTranslationMode">
+          <p>
+            <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
+            <br />
+            {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
+          </p>
+        </div>
 
-      <app-notice *ngIf="isBackTranslationMode" type="primary" class="requirements">
+        <p>
+          <b>{{ t("instructions_keep_in_mind") }}</b>
+          <br />
+          {{ t("instructions_keep_in_mind_subtext") }}
+        </p>
+        <p>
+          <b>{{ t("instructions_draft_process") }}</b>
+          <br />
+          {{ t("instructions_draft_process_subtext") }}
+        </p>
+        <p>
+          <ng-container *ngFor="let i of i18n.interpolate('draft_generation.instructions_help')">
+            <ng-container *ngIf="i.id == null">{{ i.text }}</ng-container>
+            <a *ngIf="i.id === 1" [href]="urlService.autoDrafts" target="_blank">{{ i.text }}</a>
+          </ng-container>
+        </p>
+      </div>
+
+      <app-notice *ngIf="isBackTranslationMode && !isTargetLanguageSupported" type="warning" class="requirements">
         <p>
           <transloco
             key="draft_generation.back_translation_requirement"
@@ -20,17 +49,10 @@
         </p>
         <ul>
           <li>
-            <mat-icon *ngIf="isTargetLanguageSupported" class="criteria-met">check</mat-icon>
-            <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
+            <mat-icon class="criteria-not-met">clear</mat-icon>
             <p>
               <transloco
-                *ngIf="!isTargetLanguageSupported"
                 key="draft_generation.criteria_project_language_not_in_nllb_with_language"
-                [params]="{ targetLanguageDisplayName }"
-              ></transloco>
-              <transloco
-                *ngIf="isTargetLanguageSupported"
-                key="draft_generation.criteria_project_language_in_nllb_with_language"
                 [params]="{ targetLanguageDisplayName }"
               ></transloco>
             </p>
@@ -147,13 +169,8 @@
         <app-notice *ngIf="!lastSyncSuccessful" type="warning" icon="warning" data-test-id="warning-last-sync-failed">
           <transloco key="draft_generation.info_alert_last_sync_failed"></transloco>
         </app-notice>
-        <app-notice *ngIf="lastSyncSuccessful" type="primary" icon="info" data-test-id="notice-project-will-sync">
-          <transloco key="draft_generation.info_alert_project_will_sync"></transloco>
-        </app-notice>
       </ng-container>
     </section>
-
-    <mat-divider *ngIf="hasBottomContent" inset></mat-divider>
 
     <ng-container *ngIf="!isOnline">
       <section>
@@ -165,9 +182,6 @@
       <mat-tab-group>
         <mat-tab>
           <section *ngIf="!this.isBackTranslationMode && !this.isPreTranslationApproved" data-test-id="approval-needed">
-            <h3>{{ t("info_alert_approval_needed_header") }}</h3>
-            <p>{{ t("info_alert_approval_needed_detail") }}</p>
-            <p><transloco key="draft_generation.info_alert_approval_needed_detail_p2"></transloco></p>
             <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
               {{ t("sign_up_for_drafting") }}
             </a>
@@ -182,9 +196,7 @@
                       ><transloco
                         key="draft_generation.warning_generation_faulted"
                         [params]="{
-                          generateButtonText: hasAnyCompletedBuild
-                            ? t('generate_new_draft_button')
-                            : t('generate_draft_button')
+                          generateButtonText: t('generate_draft_button')
                         }"
                       ></transloco
                     ></span>
@@ -211,16 +223,10 @@
                   </div>
                 </section>
               </ng-container>
-              <mat-divider inset></mat-divider>
 
               <section *ngIf="!isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
-                <h3>{{ t("generate_draft_header") }}</h3>
-                <p>
-                  <transloco key="draft_generation.generate_draft_detail"></transloco>
-                </p>
-
                 <button mat-flat-button color="primary" (click)="generateDraft()">
-                  <mat-icon>model_training</mat-icon>
+                  <mat-icon>auto_awesome</mat-icon>
                   {{ t("generate_draft_button") }}
                 </button>
               </section>
@@ -228,58 +234,52 @@
 
             <ng-container *ngIf="isPreviewSupported">
               <ng-container *ngIf="draftJob != null">
-                <section *ngIf="!isDraftInProgress(draftJob)" class="view-or-create-options">
+                <section *ngIf="!isDraftInProgress(draftJob)" class="draft-complete">
                   <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
                     <div>
-                      <ng-container *ngIf="isDraftComplete(draftJob)">
-                        <h3>{{ t("draft_generation_complete") }}</h3>
-                        <p>
-                          <transloco
-                            key="draft_generation.go_to_draft_viewer"
-                            [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                          ></transloco>
-                        </p>
-                        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                          <mat-icon>edit_note</mat-icon>
-                          {{ t("preview_draft_button") }}
-                        </a>
-                      </ng-container>
-
-                      <ng-container *ngIf="!isDraftComplete(draftJob)">
-                        <h3>{{ t("preview_last_draft_header") }}</h3>
-                        <p>
-                          <transloco
-                            key="draft_generation.preview_last_draft_detail"
-                            [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
-                          ></transloco>
-                        </p>
-                        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
-                          <mat-icon>edit_note</mat-icon>
-                          {{ t("preview_last_draft_button") }}
-                        </a>
-                      </ng-container>
+                      <mat-card class="mat-elevation-z2">
+                        <mat-card-content>
+                          <ng-container *ngIf="isDraftComplete(draftJob)">
+                            <h2>{{ t("draft_generation_complete") }}</h2>
+                            <p>
+                              <transloco
+                                key="draft_generation.go_to_draft_viewer"
+                                [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                              ></transloco>
+                            </p>
+                            <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                              <mat-icon>edit_note</mat-icon>
+                              {{ t("preview_draft_button") }}
+                            </a>
+                          </ng-container>
+                          <ng-container *ngIf="!isDraftComplete(draftJob)">
+                            <h3>{{ t("preview_last_draft_header") }}</h3>
+                            <p>
+                              <transloco
+                                key="draft_generation.preview_last_draft_detail"
+                                [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                              ></transloco>
+                            </p>
+                            <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                              <mat-icon>edit_note</mat-icon>
+                              {{ t("preview_last_draft_button") }}
+                            </a>
+                          </ng-container>
+                          <div class="other-actions">
+                            <button
+                              *ngIf="isGenerationSupported"
+                              mat-button
+                              type="button"
+                              (click)="generateDraft({ withConfirm: true })"
+                            >
+                              <mat-icon>add</mat-icon>
+                              <span>{{ t("generate_new_draft") }}</span>
+                            </button>
+                          </div>
+                        </mat-card-content>
+                      </mat-card>
                     </div>
-
-                    <mat-divider
-                      *ngIf="hasAnyCompletedBuild && isGenerationSupported"
-                      inset
-                      vertical
-                      data-text="or"
-                    ></mat-divider>
                   </ng-container>
-
-                  <div *ngIf="hasAnyCompletedBuild && isGenerationSupported">
-                    <h3>{{ t("generate_new_draft_header") }}</h3>
-                    <p><transloco key="draft_generation.generate_new_draft_detail"></transloco></p>
-
-                    <!-- TODO: (not needed yet) Add logic to not offer regeneration until some determined unit of work is complete -->
-                    <p>{{ t("suggested_workflow") }}</p>
-
-                    <button mat-flat-button color="primary" (click)="generateDraft({ withConfirm: true })">
-                      <mat-icon>model_training</mat-icon>
-                      {{ t("generate_new_draft_button") }}
-                    </button>
-                  </div>
                 </section>
 
                 <section *ngIf="isDraftQueued(draftJob)">

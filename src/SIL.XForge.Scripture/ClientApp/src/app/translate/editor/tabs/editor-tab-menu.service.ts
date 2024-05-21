@@ -105,7 +105,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           take(1),
           map(localizedHeaderText => ({
             type: 'draft',
-            icon: 'model_training',
+            icon: 'auto_awesome',
             text: localizedHeaderText
           }))
         );

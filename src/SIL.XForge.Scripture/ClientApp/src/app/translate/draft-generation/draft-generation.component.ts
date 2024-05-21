@@ -16,14 +16,16 @@ import { combineLatest, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
+import { ExternalUrlService } from '../../../xforge-common/external-url.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
@@ -56,7 +58,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     SupportedBackTranslationLanguagesDialogComponent
   ]
 })
-export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
+export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   draftJob?: BuildDto;
 
@@ -110,11 +112,13 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly draftSourcesService: DraftSourcesService,
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
-    private readonly i18n: I18nService,
+    protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService
+    private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService,
+    protected readonly noticeService: NoticeService,
+    protected readonly urlService: ExternalUrlService
   ) {
-    super();
+    super(noticeService);
   }
 
   get isGenerationSupported(): boolean {
@@ -134,12 +138,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.isSourceAndTrainingSourceLanguageIdentical &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
-    );
-  }
-
-  get hasBottomContent(): boolean {
-    return (
-      !this.isOnline || this.isGenerationSupported || (!this.isBackTranslationMode && !this.isPreTranslationApproved)
     );
   }
 
@@ -168,6 +166,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
+    this.loadingStarted();
+
     // Display dialog for supported languages when route fragment is 'supported-languages'
     this.subscribe(
       this.route.fragment.pipe(filter(fragment => fragment === this.supportedLanguagesUrl.fragment)),
@@ -263,6 +263,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       // Start polling when app goes online
       if (isOnline) {
         this.pollBuild();
+      } else {
+        this.loadingFinished();
       }
     });
 
@@ -438,6 +440,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       (job?: BuildDto) => {
         this.draftJob = job;
         this.isDraftJobFetched = true;
+        this.loadingFinished();
 
         // Ensure flag is set for case where first completed build happens while component is loaded
         if (this.isDraftComplete(job)) {
