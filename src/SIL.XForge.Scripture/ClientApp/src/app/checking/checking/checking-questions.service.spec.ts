@@ -7,7 +7,7 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { TypeRegistry } from '../../../xforge-common/type-registry';
+import { TypeRegistry } from 'xforge-common/type-registry';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { CheckingQuestionsService, QuestionFilter } from './checking-questions.service';
 
