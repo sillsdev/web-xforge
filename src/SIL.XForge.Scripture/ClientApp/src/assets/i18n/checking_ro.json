@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Filtrează întrebările",
+    "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "Eu",
     "next": "Următor",
@@ -182,12 +183,11 @@
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Filtrează întrebările",
     "unknown_author": "Autor necunoscut",
+    "upload_audio_file": "Upload Audio",
     "view_questions": "Vezi întrebările"
   },
   "checking_answers": {
     "add_answer": "Adaugă un răspuns",
-    "answer_required_before_saving": "Introduceți un răspuns sau să înregistrați răspunsul (audio), înainte de a putea salva",
-    "answer": "Răspuns",
     "answers": "{{ count }} răspunsuri",
     "cancel": "Renunță",
     "cannot_like_own_answer": "Nu puteți da Like pe propriul răspuns.",
@@ -197,14 +197,11 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "Încă nu a fost selectat niciun text biblic.",
-    "record": "Înregistrare audio",
     "recording_automatically_stopped": "Înregistrarea răspunsului dvs. a fost oprită automat.",
     "resolve": "Resolve",
     "resolved": "Resolved",
     "save_answer": "Salvează răspunsul",
-    "select_text": "Selectare text",
     "select_verses": "Selectare versete",
-    "select": "Selectare",
     "show_more_unread": "Arată încă {{ count }} răspuns(uri) necitit(e)",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
@@ -235,11 +232,6 @@
     "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
-  "checking_audio_combined": {
-    "remove_audio_file": "Elimină fișierul audio",
-    "upload_audio_file": "Încarcă fișierul audio",
-    "upload": "Încarcă"
-  },
   "checking_audio_player": {
     "audio_unavailable": "Audio indisponibil.",
     "audio_cannot_be_accessed": "A apărut o eroare la accesarea fișierului audio. Dacă problema persistă, vă rugăm să încărcați un fișier nou.",
@@ -247,12 +239,12 @@
     "audio_cannot_be_previewed": "Sunetul este într-un format care nu poate fi previzualizat. Salvați orice modificări și conectați-vă la internet pentru a-l reda."
   },
   "checking_audio_recorder": {
+    "delete": "Delete Recording",
     "mic_access_denied": "Accesul la microfonul dvs. a fost refuzat. Vă rugăm, activați microfonul din browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
     "not_available": "În prezent, browserul dvs. nu acceptă înregistrarea audio. Vă rugăm, încercați să utilizați un alt browser acceptat.",
-    "record": "Înregistrare audio",
-    "stop_recording": "Oprește înregistrarea",
-    "try_again": "Încearcă din nou"
+    "record_audio": "Record Audio",
+    "stop_recording": "Oprește înregistrarea"
   },
   "checking_comment_form": {
     "cancel": "Renunță",
