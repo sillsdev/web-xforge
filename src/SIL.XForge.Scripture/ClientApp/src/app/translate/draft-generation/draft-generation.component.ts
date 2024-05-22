@@ -385,7 +385,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   canShowAdditionalInfo(job?: BuildDto): boolean {
-    return job?.additionalInfo != null && this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
+    return (
+      job?.additionalInfo != null &&
+      [SystemRole.SystemAdmin, SystemRole.ServalAdmin].some(role => this.authService.currentUserRoles.includes(role))
+    );
   }
 
   canCancel(job?: BuildDto): boolean {
