@@ -32,7 +32,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
-fdescribe('SaProjectsComponent', () => {
+describe('SaProjectsComponent', () => {
   configureTestingModule(() => ({
     imports: [
       NoopAnimationsModule,
