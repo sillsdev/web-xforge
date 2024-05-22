@@ -69,6 +69,10 @@
         padding-inline: 16px;
       }
 
+      .card-content + mat-divider {
+        margin-top: 16px;
+      }
+
       mat-divider + .card-content {
         padding-top: 16px;
       }
