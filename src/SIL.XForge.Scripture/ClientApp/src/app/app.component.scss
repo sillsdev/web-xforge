@@ -94,16 +94,12 @@ header {
   }
 }
 
-::ng-deep .mat-menu-panel {
+::ng-deep .mat-mdc-menu-panel {
   // For menu items that should be mostly styled like the others, but cannot be clicked
   .pseudo-menu-item {
     padding: 0 16px;
     line-height: 36px;
-    font-size: 14px;
     color: rgba(0, 0, 0, 0.87);
-    mat-icon {
-      margin: initial;
-    }
   }
 
   &.help-menu {
@@ -144,14 +140,14 @@ header {
     }
 
     .active-locale {
-      font-weight: bold;
+      --mat-menu-item-label-text-weight: 700;
     }
 
-    .mat-menu-item:not(.active-locale) mat-icon {
+    .mat-mdc-menu-item:not(.active-locale) mat-icon {
       visibility: hidden;
     }
 
-    .mat-menu-item {
+    .mat-mdc-menu-item {
       font-family: variables.$languageFonts;
     }
   }
@@ -202,12 +198,6 @@ header {
   direction: inherit; // needed to override direction: rtl from .material-icons
   font-size: 12px;
   color: white;
-}
-
-::ng-deep .mat-menu-item.report-issue {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.6;
 }
 
 .online-status {

@@ -3,7 +3,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
+import { MatMenuHarness } from '@angular/material/menu/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -515,6 +515,10 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  getElementByTestId(testId: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(`[data-test-id="${testId}"]`));
+  }
+
   cell(row: number, column: number): DebugElement {
     return this.userRows[row].children[column];
   }
@@ -536,8 +540,7 @@ class TestEnvironment {
   }
 
   rolesAndPermissionsItem(): DebugElement {
-    const buttons = this.fixture.debugElement.queryAll(By.css('button.mat-menu-item'));
-    return buttons.find(b => b.nativeElement.textContent.includes('roles and permissions'))!;
+    return this.getElementByTestId('edit-roles-and-permissions');
   }
 
   userPermissionIcon(row: number): HTMLElement {
