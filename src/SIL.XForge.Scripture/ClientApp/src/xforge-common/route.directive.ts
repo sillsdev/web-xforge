@@ -29,7 +29,7 @@ export class RouterDirective {
   @HostBinding('class.activated-nav-item')
   get active(): boolean {
     return (
-      (this.element.nativeElement as HTMLElement).classList.contains('mat-list-item') && this.router.url === this.url
+      (this.element.nativeElement as HTMLElement).classList.contains('mdc-list-item') && this.router.url === this.url
     );
   }
 
