@@ -19,6 +19,7 @@ import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -45,6 +46,7 @@ describe('DraftGenerationComponent', () => {
   let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockUserService: jasmine.SpyObj<UserService>;
   let mockI18nService: jasmine.SpyObj<I18nService>;
+  let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
@@ -104,6 +106,7 @@ describe('DraftGenerationComponent', () => {
           { provide: UserService, useValue: mockUserService },
           { provide: DialogService, useValue: mockDialogService },
           { provide: I18nService, useValue: mockI18nService },
+          { provide: NoticeService, useValue: mockNoticeService },
           { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: NllbLanguageService, useValue: mockNllbLanguageService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
@@ -126,9 +129,10 @@ describe('DraftGenerationComponent', () => {
         { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate'], {
+      mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate', 'interpolate'], {
         locale$: of(locale)
       });
+      mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished']);
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
@@ -930,38 +934,6 @@ describe('DraftGenerationComponent', () => {
     });
 
     describe('synchronization', () => {
-      describe('project will be synchronized message', () => {
-        it('should not show that the project will be synchronized if a build is queued', () => {
-          let env = new TestEnvironment();
-          env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
-          env.component.isBackTranslation = true;
-          env.fixture.detectChanges();
-          expect(env.component.lastSyncSuccessful).toBeTruthy();
-          expect(env.getElementByTestId('notice-project-will-sync')).toBe(null);
-          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
-        });
-
-        it('should show that the project will be synchronized for approved translations', () => {
-          let env = new TestEnvironment();
-          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
-          env.component.isPreTranslationApproved = true;
-          env.fixture.detectChanges();
-          expect(env.component.lastSyncSuccessful).toBeTruthy();
-          expect(env.getElementByTestId('notice-project-will-sync')).not.toBe(null);
-          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
-        });
-
-        it('should show that the project will be synchronized for back translations', () => {
-          let env = new TestEnvironment();
-          env.component.draftJob = { ...buildDto, state: BuildStates.Completed };
-          env.component.isBackTranslation = true;
-          env.fixture.detectChanges();
-          expect(env.component.lastSyncSuccessful).toBeTruthy();
-          expect(env.getElementByTestId('notice-project-will-sync')).not.toBe(null);
-          expect(env.getElementByTestId('warning-last-sync-failed')).toBe(null);
-        });
-      });
-
       describe('synchronization failed warning', () => {
         let env: TestEnvironment;
 

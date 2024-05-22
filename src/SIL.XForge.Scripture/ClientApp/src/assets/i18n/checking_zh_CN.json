@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Filter questions",
+    "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "我",
     "next": "下一个",
@@ -182,12 +183,11 @@
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Filter questions",
     "unknown_author": "Unknown author",
+    "upload_audio_file": "Upload Audio",
     "view_questions": "显示问题"
   },
   "checking_answers": {
     "add_answer": "添加用户",
-    "answer_required_before_saving": "保存之前，您需要输入答案或记录答案",
-    "answer": "解答",
     "answers": "{{ count }} 个答案",
     "cancel": "取消",
     "cannot_like_own_answer": "您不能喜欢自己的答案。",
@@ -197,14 +197,11 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "尚未选择经文。",
-    "record": "录制音频",
     "recording_automatically_stopped": "您答案的录音已自动停止。",
     "resolve": "Resolve",
     "resolved": "Resolved",
     "save_answer": "保存答案",
-    "select_text": "选择文本",
     "select_verses": "选择文本",
-    "select": "选择",
     "show_more_unread": "显示{{ count }} 个未读答案",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
@@ -235,11 +232,6 @@
     "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
-  "checking_audio_combined": {
-    "remove_audio_file": "删除音频文件",
-    "upload_audio_file": "上传音频文件",
-    "upload": "上载"
-  },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
     "audio_cannot_be_accessed": "There was an error trying to access the audio file. If this persists, please upload a new file.",
@@ -247,12 +239,12 @@
     "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
+    "delete": "Delete Recording",
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
     "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
-    "record": "录制音频",
-    "stop_recording": "停止录音",
-    "try_again": "再试一次"
+    "record_audio": "Record Audio",
+    "stop_recording": "停止录音"
   },
   "checking_comment_form": {
     "cancel": "取消",

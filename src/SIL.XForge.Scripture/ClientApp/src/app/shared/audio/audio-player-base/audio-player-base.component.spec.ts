@@ -1,14 +1,14 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { AudioPlayerStub } from 'src/app/checking/checking-test.utils';
-import { CheckingScriptureAudioPlayerComponent } from 'src/app/checking/checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { instance, mock } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { AudioPlayerStub } from '../../../checking/checking-test.utils';
+import { CheckingScriptureAudioPlayerComponent } from '../../../checking/checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer, AudioStatus } from '../audio-player';
 import { AudioTimePipe } from '../audio-time-pipe';
 import { AudioPlayerBaseComponent } from './audio-player-base.component';

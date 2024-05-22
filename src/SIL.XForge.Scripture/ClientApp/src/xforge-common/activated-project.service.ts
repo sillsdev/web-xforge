@@ -4,10 +4,10 @@ import { ActivationEnd, Router } from '@angular/router';
 import ObjectID from 'bson-objectid';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { filter, map, startWith, switchMap } from 'rxjs/operators';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
-import { PermissionsService } from 'src/app/core/permissions.service';
-import { SFProjectService } from 'src/app/core/sf-project.service';
-import { CacheService } from 'src/app/shared/cache-service/cache-service';
+import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
+import { PermissionsService } from '../app/core/permissions.service';
+import { SFProjectService } from '../app/core/sf-project.service';
+import { CacheService } from '../app/shared/cache-service/cache-service';
 import { SubscriptionDisposable } from './subscription-disposable';
 
 interface IActiveProjectIdService {

@@ -24,7 +24,7 @@ import {
   Observable,
   Subscription
 } from 'rxjs';
-import { TabMenuItem, TabMenuService } from 'src/app/shared/sf-tab-group';
+import { TabMenuItem, TabMenuService } from '../../sf-tab-group';
 import { TabHeaderPointerEvent, TabLocation, TabMoveEvent } from '../sf-tabs.types';
 import { TabHeaderComponent } from '../tab-header/tab-header.component';
 import { TabComponent } from '../tab/tab.component';

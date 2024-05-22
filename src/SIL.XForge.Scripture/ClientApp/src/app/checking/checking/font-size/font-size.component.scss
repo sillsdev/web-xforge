@@ -12,7 +12,7 @@
 
 // Menu exists in overlay, so ::ng-deep cannot be nested under :host
 ::ng-deep {
-  .mat-menu-panel.font-size-menu {
+  .mat-mdc-menu-panel.font-size-menu {
     min-height: 0;
     min-width: 0;
 
@@ -29,8 +29,12 @@
     }
 
     // Trims the top and bottom off the default mat menu
-    > .mat-menu-content {
+    > .mat-mdc-menu-content {
       padding: 0;
+    }
+
+    .mat-mdc-menu-item {
+      min-height: auto;
     }
 
     // Make ripple more visible (otherwise it uses the light green from button hover text color)

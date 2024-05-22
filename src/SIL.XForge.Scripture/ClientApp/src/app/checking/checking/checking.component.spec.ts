@@ -5,7 +5,7 @@ import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
 import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
-import { MatLegacyMenuHarness as MatMenuHarness } from '@angular/material/legacy-menu/testing';
+import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -76,10 +76,10 @@ import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio
 import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
   AudioAttachment,
@@ -141,7 +141,6 @@ describe('CheckingComponent', () => {
       AudioTimePipe,
       AudioPlayerComponent,
       CheckingAnswersComponent,
-      CheckingAudioCombinedComponent,
       CheckingAudioPlayerComponent,
       CheckingAudioRecorderComponent,
       CheckingCommentFormComponent,
@@ -151,6 +150,7 @@ describe('CheckingComponent', () => {
       OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
+      TextAndAudioComponent,
       FontSizeComponent
     ],
     imports: [
@@ -992,23 +992,13 @@ describe('CheckingComponent', () => {
       flush();
     }));
 
-    it('can change answering tabs', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CHECKER_USER });
-      env.selectQuestion(2);
-      env.clickButton(env.addAnswerButton);
-      env.waitForSliderUpdate();
-      env.clickButton(env.audioTab);
-      env.waitForSliderUpdate();
-      expect(env.recordButton).not.toBeNull();
-    }));
-
     it('check answering validation', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.yourAnswerContainer.classes['mat-form-field-invalid']).toBe(true);
+      expect(env.answerFormErrors[0].classes['visible']).toBe(true);
       flush();
     }));
 
@@ -1130,8 +1120,6 @@ describe('CheckingComponent', () => {
       when(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', 'a6Id', '/audio.mp3')).thenResolve(data);
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
-      env.waitForSliderUpdate();
-      env.clickButton(env.audioTab);
       env.waitForSliderUpdate();
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
@@ -1332,11 +1320,10 @@ describe('CheckingComponent', () => {
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-      env.clickButton(env.selectTextTab);
       expect(env.scriptureText).toBeFalsy();
       // Add scripture
       env.clickButton(env.selectVersesButton);
-      expect(env.scriptureText).toBe('…The selected text (John 2:2-5)');
+      expect(env.scriptureText).toBe('John 2:2-5');
       env.clickButton(env.saveAnswerButton);
       expect(env.getAnswerScriptureText(0)).toBe('…The selected text(John 2:2-5)');
       flush();
@@ -1348,7 +1335,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(John 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
-      env.clickButton(env.selectTextTab);
+      // env.clickButton(env.selectTextTab);
       env.waitForSliderUpdate();
       env.clickButton(env.clearScriptureButton);
       env.clickButton(env.saveAnswerButton);
@@ -1378,18 +1365,16 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       // Have not given any answer yet, so clicking Save should show a validation error.
-      expect(env.component.answersPanel!.answerForm.invalid).withContext('setup').toBe(true);
+      expect(env.component.answersPanel!.textAndAudio?.form.invalid).withContext('setup').toBe(true);
       expect(env.answerFormErrors.length).withContext('setup').toEqual(1);
-      expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('record');
-      env.clickButton(env.audioTab);
+      expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('before saving');
       env.waitForSliderUpdate();
 
       // SUT
-      env.clickButton(env.recordButton);
       env.simulateAudioRecordingFinishedProcessing();
 
       // We made a recording, so we should not be showing a validation error.
-      expect(env.component.answersPanel!.answerForm.valid).toBe(true);
+      expect(env.component.answersPanel!.textAndAudio?.form.valid).toBe(true);
     }));
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
@@ -2461,13 +2446,13 @@ class TestEnvironment {
   async getDecreaseFontSizeButton(): Promise<MatButtonHarness> {
     const menu = await this.getFontSizeMenu();
     await menu.open();
-    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(1)' }));
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group button:nth-of-type(1)' }));
   }
 
   async getIncreaseFontSizeButton(): Promise<MatButtonHarness> {
     const menu = await this.getFontSizeMenu();
     await menu.open();
-    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(2)' }));
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group button:nth-of-type(2)' }));
   }
 
   get editQuestionButton(): DebugElement {
@@ -2520,10 +2505,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#answer-form button.record'));
   }
 
-  get audioTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.mat-mdc-tab:nth-child(2)'));
-  }
-
   get removeAudioButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.remove-audio-file'));
   }
@@ -2537,7 +2518,7 @@ class TestEnvironment {
   }
 
   get yourAnswerField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('textarea[formControlName="answerText"]'));
+    return this.fixture.debugElement.query(By.css('textarea[formControlName="text"]'));
   }
 
   get answerFormErrors(): DebugElement[] {
@@ -2545,16 +2526,12 @@ class TestEnvironment {
   }
 
   get scriptureText(): string | null {
-    const scriptureText = document.querySelector('.scripture-text');
+    const scriptureText = document.querySelector('.answer-scripture-verse');
     return scriptureText == null ? null : scriptureText.textContent!.trim();
   }
 
   get clearScriptureButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.clear-selection'));
-  }
-
-  get selectTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.mat-mdc-tab:nth-child(3)'));
+    return this.fixture.debugElement.query(By.css('.answer-scripture-clear'));
   }
 
   get selectVersesButton(): DebugElement {
@@ -2684,7 +2661,7 @@ class TestEnvironment {
     this.setTextFieldValue(this.yourAnswerField, answer);
     if (audioFilename != null) {
       const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
-      this.component.answersPanel?.processAudio(audio);
+      this.component.answersPanel?.textAndAudio?.audio.setValue(audio);
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
@@ -2890,10 +2867,10 @@ class TestEnvironment {
 
   /** To use if the Stop Recording button isn't showing up in the test DOM. */
   simulateAudioRecordingFinishedProcessing(): void {
-    this.component.answersPanel!.audioCombinedComponent!.audioRecorderComponent!.status.emit({
+    this.component.answersPanel!.textAndAudio!.audioComponent!.audio = {
       status: 'processed',
       url: 'example.com/foo.mp3'
-    });
+    };
     flush();
     this.fixture.detectChanges();
   }

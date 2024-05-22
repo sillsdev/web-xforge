@@ -8,9 +8,8 @@
   padding-block-end: 10px;
 }
 
-.mat-card {
-  box-shadow: unset;
-  padding: 24px;
+.mat-mdc-card {
+  padding: 8px 4px;
 }
 
 .tool-setting {
@@ -128,26 +127,34 @@ mat-radio-group.tool-setting {
   }
 }
 
-.mat-card-content {
+.mat-mdc-card-content {
   display: flex;
   flex-direction: column;
   row-gap: 16px;
   margin: 0;
 }
 
-.mat-card-title {
+.mat-mdc-card-title {
   margin: 0;
 }
 
-.mat-card-content:not(:first-child) {
+.mat-mdc-card-content:not(:first-child) {
   padding-top: 32px;
 }
 
-.mat-card-content:not(:last-child) {
+.mat-mdc-card-content:not(:last-child) {
   padding-bottom: 32px;
 }
 
 .sharing-heading {
   font-weight: 500;
   margin-bottom: 0;
+}
+
+.card-content {
+  padding: 24px;
+  h4,
+  p {
+    margin-block-start: 0;
+  }
 }

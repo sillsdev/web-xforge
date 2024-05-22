@@ -2,9 +2,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, Subscription, timer } from 'rxjs';
 import { map, takeWhile } from 'rxjs/operators';
-import { BuildDto } from 'src/app/machine-api/build-dto';
-import { BuildStates } from 'src/app/machine-api/build-states';
-import { HttpResponse } from 'src/app/machine-api/http-client';
+import { BuildDto } from '../../machine-api/build-dto';
+import { BuildStates } from '../../machine-api/build-states';
+import { HttpResponse } from '../../machine-api/http-client';
 import { activeBuildStates, PreTranslation, PreTranslationData } from './draft-generation';
 
 /**

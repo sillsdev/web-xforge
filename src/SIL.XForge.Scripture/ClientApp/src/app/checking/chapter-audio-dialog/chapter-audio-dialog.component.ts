@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import {
-  MatLegacyDialogRef as MatDialogRef,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
+  MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
@@ -10,7 +10,6 @@ import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/model
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { filter } from 'rxjs/operators';
-import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService, formatFileSource } from 'xforge-common/file.service';
@@ -21,6 +20,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
+import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';

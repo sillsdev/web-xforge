@@ -14,7 +14,6 @@
 }
 
 .answers-component-scrollable-content {
-  overflow-y: auto;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -44,61 +43,45 @@
 }
 
 #answer-form {
-  .answer-tab {
-    margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  row-gap: 2px;
+  .attach-icon {
+    rotate: 45deg;
+  }
+  .bottom-row {
     display: flex;
-    align-items: center;
-    &.answer-record-upload {
-      app-checking-audio-combined {
-        flex: 1;
-      }
-    }
-    &.answer-select-text {
-      color: variables.$theme-primary;
-      justify-content: center;
-      column-gap: 12px;
-      min-height: 75px;
-      &.text-selected {
-        flex-direction: column;
-      }
-      .scripture-text-blank,
-      .scripture-text {
-        margin: 0;
-      }
-      .scripture-text {
-        align-self: flex-start;
-      }
-      .scripture-text-blank {
-        font-style: italic;
-      }
-    }
+    justify-content: space-between;
   }
-  mat-form-field {
-    width: 100%;
-    mat-text-field {
-      width: 100%;
-    }
-  }
-  .form-helper-text {
-    color: variables.$errorColor;
-    font-size: 0.75em;
-    padding-left: 15px;
-    margin-bottom: 1em;
-    font-weight: 400;
-    text-align: center;
-    &:not(.visible) {
-      display: none;
-    }
+  .attachments {
+    display: flex;
+    flex-direction: row;
   }
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    column-gap: checking-vars.$button-spacing;
+
+    .mat-flat-button,
+    .mat-button {
+      line-height: unset;
+      mat-icon {
+        margin-inline-end: 6px;
+      }
+      span {
+        vertical-align: middle;
+      }
+    }
+    .mat-icon-button {
+      ::ng-deep .mat-button-focus-overlay {
+        display: none;
+      }
+    }
+    mat-icon {
+      vertical-align: middle;
+    }
   }
-  .tab-label {
-    display: flex;
-    column-gap: 8px;
-    align-items: center;
+  .stop-recording {
+    color: variables.$red;
   }
 }
 
@@ -185,15 +168,16 @@
         }
       }
 
-      .answer-text {
-        & + .answer-scripture,
-        & + app-checking-audio-player {
-          margin-top: 10px;
-        }
-      }
-
       app-checking-audio-player {
         display: block;
+        margin-top: 4px;
+      }
+
+      .answer-scripture {
+        display: block;
+        font-size: 0.9em;
+        padding: 6px;
+        margin-top: 4px;
       }
 
       .answer-footer {
@@ -211,23 +195,34 @@
 }
 
 .answer-scripture,
-.scripture-text {
-  color: checking-vars.$greenDark;
+.scripture-text,
+.audio-added {
+  display: flex;
+  align-items: center;
   background: rgba(0, 0, 0, 0.05);
-  padding: 6px;
+  padding-inline-start: 6px;
   border-radius: 4px;
-  font-size: 0.9em;
+}
 
-  & + app-checking-audio-player {
-    margin-top: 10px;
-  }
+.audio-added {
+  margin-inline-end: 2px;
+}
+
+.answer-scripture-text {
+  padding-block: 6px;
+}
+
+.answer-scripture-clear,
+.clear {
+  width: 36px;
+  height: 36px;
+  line-height: 24px;
 }
 
 .answer-scripture-verse {
-  font-size: 0.8em;
-  padding-inline-start: 5px;
-  display: inline-block;
+  font-size: 0.75em;
   font-style: italic;
+  padding-inline: 6px;
 }
 
 .answers-component-footer {
