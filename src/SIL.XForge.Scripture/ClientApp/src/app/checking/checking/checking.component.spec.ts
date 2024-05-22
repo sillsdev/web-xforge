@@ -2501,7 +2501,7 @@ class TestEnvironment {
   }
 
   get questions(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('app-checking-questions .mat-list-item'));
+    return this.fixture.debugElement.queryAll(By.css('app-checking-questions .mdc-list-item'));
   }
 
   get quillEditor(): HTMLElement {
@@ -2805,7 +2805,7 @@ class TestEnvironment {
 
   selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {
     const question = this.fixture.debugElement.query(
-      By.css('app-checking-questions .mat-list-item:nth-child(' + questionNumber + ')')
+      By.css('app-checking-questions .mdc-list-item:nth-child(' + questionNumber + ')')
     );
     question.nativeElement.click();
     tick(1);
