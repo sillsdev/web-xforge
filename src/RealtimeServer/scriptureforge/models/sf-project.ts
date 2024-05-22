@@ -1,5 +1,6 @@
 import { Project } from '../../common/models/project';
 import { WritingSystem } from '../../common/models/writing-system';
+import { obj } from '../../common/utils/obj-path';
 import { BiblicalTermsConfig } from './biblical-terms-config';
 import { CheckingConfig } from './checking-config';
 import { NoteTag } from './note-tag';
@@ -12,7 +13,7 @@ export const SF_PROJECT_PROFILES_COLLECTION = 'sf_projects_profile';
 export const SF_PROJECT_PROFILES_INDEX_PATHS: string[] = [];
 
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
-export const SF_PROJECT_INDEX_PATHS: string[] = [];
+export const SF_PROJECT_INDEX_PATHS: string[] = [obj<SFProject>().pathStr(q => q.name)];
 
 export interface SFProjectProfile extends Project {
   paratextId: string;
