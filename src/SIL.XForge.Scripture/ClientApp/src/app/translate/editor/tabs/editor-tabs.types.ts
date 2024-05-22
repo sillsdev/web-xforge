@@ -1,5 +1,5 @@
 import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
-import { TabInfo } from 'src/app/shared/sf-tab-group';
+import { TabInfo } from '../../../shared/sf-tab-group';
 
 export interface EditorTabInfo extends TabInfo<EditorTabType> {
   /**

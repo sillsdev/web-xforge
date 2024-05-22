@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
-import { TabFactoryService } from 'src/app/shared/sf-tab-group';
+import { TabFactoryService } from '../../../shared/sf-tab-group';
 import { EditorTabInfo } from './editor-tabs.types';
 
 @Injectable({
@@ -25,7 +25,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
         return Object.assign(
           {
             type: 'draft',
-            icon: 'model_training',
+            icon: 'auto_awesome',
             headerText: 'Auto Draft',
             closeable: true,
             movable: true,

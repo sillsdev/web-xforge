@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Saring pertanyaan",
+    "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Mengelola audio",
     "me": "Saya",
     "next": "Berikutnya",
@@ -182,12 +183,11 @@
     "questions_range": "Rentang pertanyaan",
     "tooltip_questions_filter": "Saring pertanyaan",
     "unknown_author": "Penulis tidak diketahui",
+    "upload_audio_file": "Upload Audio",
     "view_questions": "Tampilkan Pertanyaan"
   },
   "checking_answers": {
     "add_answer": "Tambah jawaban",
-    "answer_required_before_saving": "Anda perlu memasukkan jawaban atau merekam jawaban sebelum menyimpan",
-    "answer": "Jawaban",
     "answers": "{{ count }} Jawaban",
     "cancel": "Batal",
     "cannot_like_own_answer": "Anda tidak dapat menyukai jawaban Anda sendiri.",
@@ -197,14 +197,11 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "Belum ada Alkitab yang dipilih.",
-    "record": "Rekam",
     "recording_automatically_stopped": "Perekaman jawaban Anda dihentikan otomatis.",
     "resolve": "Menyelesaikan",
     "resolved": "Terselesaikan",
     "save_answer": "Simpan Jawaban",
-    "select_text": "Pilih Teks",
     "select_verses": "Pilih ayat-ayat",
-    "select": "Pilih",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
     "tooltip_status_export": "Ekspor ke Paratext jika dikonfigurasi di Pengaturan",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
@@ -235,11 +232,6 @@
     "uploading": "Mengunggah...",
     "zero_segments": "Nol segmen ditemukan."
   },
-  "checking_audio_combined": {
-    "remove_audio_file": "Hapus File Suara",
-    "upload_audio_file": "Unggah File Suara",
-    "upload": "Unggah"
-  },
   "checking_audio_player": {
     "audio_unavailable": "Audio tidak tersedia.",
     "audio_cannot_be_accessed": "Terjadi kesalahan saat mencoba mengakses file audio. Jika hal ini terus berlanjut, silakan unggah file baru.",
@@ -247,12 +239,12 @@
     "audio_cannot_be_previewed": "Audio dalam format yang tidak dapat dipratinjau. Simpan perubahan apa pun dan sambungkan ke internet untuk memainkannya."
   },
   "checking_audio_recorder": {
+    "delete": "Delete Recording",
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
     "not_available": "Browser/Peramban Anda saat ini tidak mendukung perekaman audio. Coba gunakan browser/peramban lain yang mendukung.",
-    "record": "Rekam",
-    "stop_recording": "Hentikan Perekaman",
-    "try_again": "Coba Lagi"
+    "record_audio": "Record Audio",
+    "stop_recording": "Hentikan Perekaman"
   },
   "checking_comment_form": {
     "cancel": "Batal",

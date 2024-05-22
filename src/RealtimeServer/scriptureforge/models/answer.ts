@@ -14,6 +14,7 @@ export interface Answer extends Comment {
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
   audioUrl?: string;
+  text?: string;
   likes: Like[];
   comments: Comment[];
   status?: AnswerStatus;

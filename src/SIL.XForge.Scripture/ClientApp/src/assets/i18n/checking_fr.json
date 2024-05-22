@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Filtrer les questions",
+    "input_required_before_saving": "Fournir du texte ou de l'audio avant d'enregistrer",
     "manage_audio": "Gérer l'audio",
     "me": "Moi",
     "next": "Suivant",
@@ -182,12 +183,11 @@
     "questions_range": "Étendue des questions",
     "tooltip_questions_filter": "Filtrer les questions",
     "unknown_author": "Auteur inconnu",
+    "upload_audio_file": "Téléverser Fichier audio",
     "view_questions": "Afficher les questions"
   },
   "checking_answers": {
     "add_answer": "Ajouter une réponse",
-    "answer_required_before_saving": "Vous devez saisir ou enregistrer votre réponse en audio avant de sauvegarder",
-    "answer": "Réponse",
     "answers": "{{ count }} Réponses",
     "cancel": "Annuler",
     "cannot_like_own_answer": "Vous ne pouvez pas mettre un J'aime sur votre propre réponse.",
@@ -197,14 +197,11 @@
     "marked_for_export": "Marqué pour vérification",
     "mark_for_export": "Signaler pour vérification",
     "no_scripture_selected": "Aucun texte sélectionné pour l'instant.",
-    "record": "Enregistrer",
     "recording_automatically_stopped": "L'enregistrement de votre réponse a été arrêté automatiquement.",
     "resolve": "Résoudre",
     "resolved": "Résolue",
     "save_answer": "Envoyer la réponse",
-    "select_text": "Sélectionner le texte",
     "select_verses": "Sélectionner des versets",
-    "select": "Sélectionner",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
     "tooltip_status_export": "Exporter vers Paratext si configuré dans les paramètres",
     "tooltip_status_resolve": "Marquer la réponse comme résolue",
@@ -235,11 +232,6 @@
     "uploading": "Téléversement...",
     "zero_segments": "Zéro segment trouvé."
   },
-  "checking_audio_combined": {
-    "remove_audio_file": "Supprimer le fichier audio",
-    "upload_audio_file": "Télétransmettre un fichier audio",
-    "upload": "Télétransmettre"
-  },
   "checking_audio_player": {
     "audio_unavailable": "Audio non disponible.",
     "audio_cannot_be_accessed": "Une erreur s'est produite lors de la tentative d'accès au fichier audio. Si ce problème persiste, veuillez télétransmettre un nouveau fichier.",
@@ -247,12 +239,12 @@
     "audio_cannot_be_previewed": "L'audio est dans un format pour lequel on ne peut avoir d'aperçu. Enregistrez les modifications et connectez-vous à Internet pour le lire."
   },
   "checking_audio_recorder": {
+    "delete": "Supprimer l'enregistrement",
     "mic_access_denied": "L'accès à votre microphone a été refusé. Veuillez activer le microphone depuis votre navigateur.",
     "mic_not_found": "Aucun microphone n'a été trouvé. Veuillez connecter un microphone à votre appareil.",
     "not_available": "Pour l'instant, votre navigateur ne prend pas en charge l'enregistrement audio. Veuillez essayer en utilisant un autre navigateur pris en charge.",
-    "record": "Enregistrer",
-    "stop_recording": "Arrêter l'enregistrement",
-    "try_again": "Essayez à nouveau"
+    "record_audio": "Enregistrer l'Audio",
+    "stop_recording": "Arrêter l'enregistrement"
   },
   "checking_comment_form": {
     "cancel": "Annuler",

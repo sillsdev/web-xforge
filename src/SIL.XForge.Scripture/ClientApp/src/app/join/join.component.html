@@ -13,6 +13,6 @@
       </button>
     </form>
     <a (click)="logIn()" [innerHtml]="i18nService.translateAndInsertTags('join.login_existing_account')"></a>
-    <mat-spinner [diameter]="50" color="#fff" [fxHide]="!isJoining"></mat-spinner>
+    <mat-spinner diameter="50" color="#fff" [fxHide]="!isJoining"></mat-spinner>
   </ng-container>
 </ng-container>

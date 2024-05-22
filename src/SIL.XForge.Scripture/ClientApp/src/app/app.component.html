@@ -43,8 +43,8 @@
           <a mat-menu-item target="_blank" [href]="urls.communityAnnouncementPage">{{ t("announcements") }}</a>
           <a mat-menu-item target="_blank" [href]="urls.communitySupport">{{ t("community_support") }}</a>
           <a mat-menu-item target="_blank" [href]="issueMailTo" class="report-issue">
-            {{ t("report_issue") }}
-            <span class="mat-hint">{{ t("report_issue_email", { email: issueEmail }) }}</span>
+            <div>{{ t("report_issue") }}</div>
+            <div class="mat-hint">{{ t("report_issue_email", { email: issueEmail }) }}</div>
           </a>
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">{{ t("open_source_licenses") }}</a>
           <button
@@ -109,9 +109,11 @@
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
             {{ t("change_password") }}
           </button>
-          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()" class="install-button">
-            {{ t("install_on_device") }}
-            <mat-icon>install_mobile</mat-icon>
+          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()">
+            <div class="install-button">
+              {{ t("install_on_device") }}
+              <mat-icon>install_mobile</mat-icon>
+            </div>
           </button>
           <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
           <mat-divider></mat-divider>

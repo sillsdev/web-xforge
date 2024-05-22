@@ -78,7 +78,6 @@ import {
   tap,
   throttleTime
 } from 'rxjs/operators';
-import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from 'src/app/shared/sf-tab-group';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -105,6 +104,7 @@ import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -119,7 +119,8 @@ import {
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
   VERSE_REGEX,
-  verseRefFromMouseEvent
+  verseRefFromMouseEvent,
+  XmlUtils
 } from '../../shared/utils';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
@@ -1242,6 +1243,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // only set the tag id if it is the first note in the thread
     const tagId: number | undefined =
       params.threadDataId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
+    const noteContent: string | undefined = params.content == null ? undefined : XmlUtils.encodeForXml(params.content);
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -1250,7 +1252,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       dataId: params.dataId ?? objectId(),
       tagId,
       ownerRef: this.userService.currentUserId,
-      content: params.content,
+      content: noteContent,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
       status: params.status ?? NoteStatus.Todo,
@@ -1285,7 +1287,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         // updated the existing note
         if (threadDoc.data?.notes[noteIndex].editable === true) {
           await threadDoc!.submitJson0Op(op => {
-            op.set(t => t.notes[noteIndex].content, params.content);
+            op.set(t => t.notes[noteIndex].content, noteContent);
             op.set(t => t.notes[noteIndex].dateModified, currentDate);
           });
         } else {

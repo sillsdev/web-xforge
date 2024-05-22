@@ -284,7 +284,7 @@ export const ICONS_TO_MIRROR_RTL = new Set<string | undefined>([
   'library_books',
   'list',
   'live_help',
-  'model_training',
+  'auto_awesome',
   'people',
   'person_add',
   'post_add',

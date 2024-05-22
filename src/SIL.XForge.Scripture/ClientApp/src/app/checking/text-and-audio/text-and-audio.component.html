@@ -1,0 +1,25 @@
+<div class="root" *transloco="let t; read: 'checking'">
+  <form [formGroup]="form" autocomplete="off">
+    <div class="form-container">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ textLabel }}</mat-label>
+        <textarea matInput formControlName="text" id="textarea" (change)="trim($event)"></textarea>
+      </mat-form-field>
+      <div class="audio-container">
+        <app-checking-audio-recorder
+          (status)="updateFormValidity()"
+          formControlName="audio"
+          class="border-button"
+          [ngClass]="{
+            invalid: text.invalid,
+            borderless: hasAudio(),
+          }"
+        ></app-checking-audio-recorder>
+      </div>
+    </div>
+  </form>
+
+  <div class="form-helper-text" [ngClass]="{ visible: !suppressErrors && text.invalid }">
+    {{ t("input_required_before_saving") }}
+  </div>
+</div>

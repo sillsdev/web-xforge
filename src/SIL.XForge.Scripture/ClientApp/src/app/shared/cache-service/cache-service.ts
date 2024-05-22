@@ -1,8 +1,8 @@
 import { EventEmitter, Injectable } from '@angular/core';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
-import { TextDocId } from 'src/app/core/models/text-doc';
-import { PermissionsService } from 'src/app/core/permissions.service';
-import { SFProjectService } from 'src/app/core/sf-project.service';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { TextDocId } from '../../core/models/text-doc';
+import { PermissionsService } from '../../core/permissions.service';
+import { SFProjectService } from '../../core/sf-project.service';
 
 @Injectable({
   providedIn: 'root'

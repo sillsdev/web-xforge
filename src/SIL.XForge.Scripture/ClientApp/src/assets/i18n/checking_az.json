@@ -160,6 +160,7 @@
   },
   "checking": {
     "filter_questions": "Sualları süzgəcdən keçirmək",
+    "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "Mən",
     "next": "Növbəti",
@@ -182,12 +183,11 @@
     "questions_range": "Questions range",
     "tooltip_questions_filter": "Sualları süzgəcdən keçirmək",
     "unknown_author": "Naməlum müəllif",
+    "upload_audio_file": "Upload Audio",
     "view_questions": "Suallara baxmaq"
   },
   "checking_answers": {
     "add_answer": "Cavabı əlavə etmək",
-    "answer_required_before_saving": "Siz kompüterin yaddaşında saxlamazdan əvvəl cavabınızı daxil etməlisiniz və ya səsinizi yazmalısınız.",
-    "answer": "Cavab",
     "answers": "{{ count }} Cavablar",
     "cancel": "Ləğv etmək",
     "cannot_like_own_answer": "Siz öz cavabınız üçün \"bəyən\" işarəsini seçə bilməzsiniz.",
@@ -197,14 +197,11 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "Hələ Kəlam seçilməyib. ",
-    "record": "Səs yazın",
     "recording_automatically_stopped": "Sizin cavabınız səslə yazılarkən öz-özünə dayandı.",
     "resolve": "Resolve",
     "resolved": "Resolved",
     "save_answer": "Cavabınızı saxlamaq",
-    "select_text": "Mətni seçmək",
     "select_verses": "Ayələri seçmək",
-    "select": "Seçmək",
     "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
@@ -235,11 +232,6 @@
     "uploading": "Uploading...",
     "zero_segments": "Zero segments found."
   },
-  "checking_audio_combined": {
-    "remove_audio_file": "Audio Faylı çıxarmaq",
-    "upload_audio_file": "Audio Faylı yükləmək",
-    "upload": "Yükləmək"
-  },
   "checking_audio_player": {
     "audio_unavailable": "Səs faylı mövcud deyil.",
     "audio_cannot_be_accessed": "Səs faylına daxil olmaq istəyərkən xəta oldu. Bu davam edərsə, xahiş edirik yeni fayl yükləyin.",
@@ -247,12 +239,12 @@
     "audio_cannot_be_previewed": "Səs faylı önbaxış edilə bilməyən formatdadır. Hər hansı bir dəyişikliyi saxlayın və səsi çalmaq üçün internetə qoşulun."
   },
   "checking_audio_recorder": {
+    "delete": "Delete Recording",
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
     "not_available": "Hal-hazırda brauzeriniz səs yazıları dəstəkləmir. Zəhmət olmasa, digər dəstəklənən brauzerdən istifadə etməyə çalışın.",
-    "record": "Səs yazmaq",
-    "stop_recording": "Səs yazmanı dayandırmaq",
-    "try_again": "Yenidən çalışın"
+    "record_audio": "Record Audio",
+    "stop_recording": "Səs yazmanı dayandırmaq"
   },
   "checking_comment_form": {
     "cancel": "Ləğv etmək",

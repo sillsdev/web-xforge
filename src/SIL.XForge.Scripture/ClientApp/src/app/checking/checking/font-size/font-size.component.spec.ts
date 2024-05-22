@@ -2,10 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
-import {
-  MatLegacyMenuHarness as MatMenuHarness,
-  MatLegacyMenuItemHarness as MatMenuItemHarness
-} from '@angular/material/legacy-menu/testing';
+import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -25,11 +22,11 @@ describe('FontSizeComponent', () => {
   };
 
   const getDecreaseButton = function (menu: MatMenuHarness): Promise<MatButtonHarness> {
-    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(1)' }));
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group button:nth-of-type(1)' }));
   };
 
   const getIncreaseButton = function (menu: MatMenuHarness): Promise<MatButtonHarness> {
-    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(2)' }));
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group button:nth-of-type(2)' }));
   };
 
   beforeEach(waitForAsync(() => {

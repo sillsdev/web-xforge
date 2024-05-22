@@ -8,10 +8,10 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { UserProfileDoc } from '../../../../../xforge-common/models/user-profile-doc';
 import { CheckingCommentFormComponent } from './checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-comments.component';
 
