@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
 import { delay, map, startWith, switchMap } from 'rxjs/operators';
@@ -143,7 +143,7 @@ export class NavigationComponent extends SubscriptionDisposable {
   clickWithinNavList($event: MouseEvent): void {
     let element = $event.target as HTMLElement;
     while (element != null) {
-      if (element.tagName === 'A' && element.classList.contains('mat-list-item')) {
+      if (element.tagName === 'A' && element.classList.contains('mdc-list-item')) {
         this.menuItemClicked.emit();
         return;
       } else if (element.parentElement != null) {
