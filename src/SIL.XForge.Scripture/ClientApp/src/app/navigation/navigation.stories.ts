@@ -81,18 +81,18 @@ function setUpMocks(args: StoryState): void {
 }
 
 function textFromMenuElement(element: Element): string | undefined {
-  const nodes = Array.from(element.querySelector('.mat-list-item-content')?.childNodes ?? []);
+  const nodes = Array.from(element.querySelector('.mat-mdc-list-item-unscoped-content')?.childNodes ?? []);
   return nodes.find(node => node.nodeType === Node.TEXT_NODE)?.textContent?.trim();
 }
 
 function activeMenuItemText(element: HTMLElement): string | undefined {
-  const menuItems = element.querySelectorAll('.mat-list-item.active, .mat-list-item.activated-nav-item');
+  const menuItems = element.querySelectorAll('.mdc-list-item.active, .mdc-list-item.activated-nav-item');
   expect(menuItems.length).toBe(1);
   return textFromMenuElement(menuItems[0]!);
 }
 
 function menuItems(element: HTMLElement): string[] {
-  const menuItems = element.querySelectorAll('.mat-list-item:not(.navigation-header)');
+  const menuItems = element.querySelectorAll('.mdc-list-item:not(.navigation-header)');
   return Array.from(menuItems).map(item => textFromMenuElement(item as Element)) as string[];
 }
 
