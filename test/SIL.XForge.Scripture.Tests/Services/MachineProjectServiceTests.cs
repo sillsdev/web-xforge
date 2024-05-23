@@ -836,6 +836,53 @@ public class MachineProjectServiceTests
             );
     }
 
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase(" ")]
+    public async Task BuildProjectAsync_SpecifiesNullScriptureRangeForAlternateTrainingSource(string? scriptureRange)
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                AlternateTrainingSourceEnabled = true,
+                AlternateTrainingSourceConfigured = true,
+            }
+        );
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            uploadParatextZipFile: true,
+            alternateTrainingSource: true
+        );
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig
+            {
+                ProjectId = Project02,
+                TrainingScriptureRange = scriptureRange,
+                TranslationScriptureRange = scriptureRange,
+            },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine02,
+                Arg.Is<TranslationBuildConfig>(
+                    b =>
+                        b.Pretranslate.Count == 1
+                        && b.Pretranslate.First().ScriptureRange == null
+                        && b.TrainOn.Count == 1
+                        && b.TrainOn.First().ScriptureRange == null
+                ),
+                CancellationToken.None
+            );
+    }
+
     [Test]
     public async Task BuildProjectForBackgroundJobAsync_BuildsPreTranslationProjects()
     {
