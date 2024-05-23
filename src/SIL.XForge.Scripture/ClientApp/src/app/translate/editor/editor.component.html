@@ -85,7 +85,12 @@
                   ></app-text>
                 </div>
               </as-split-area>
-              <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForSource" [dir]="i18n.direction">
+              <as-split-area
+                [size]="25"
+                *ngIf="biblicalTermsEnabledForSource"
+                [dir]="i18n.direction"
+                class="biblical-terms"
+              >
                 <app-biblical-terms
                   id="source-biblical-terms"
                   [bookNum]="bookNum"
@@ -215,7 +220,12 @@
                   </button>
                 </div>
               </as-split-area>
-              <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget" [dir]="i18n.direction">
+              <as-split-area
+                [size]="25"
+                *ngIf="biblicalTermsEnabledForTarget"
+                [dir]="i18n.direction"
+                class="biblical-terms"
+              >
                 <app-biblical-terms
                   id="target-biblical-terms"
                   [bookNum]="bookNum"

@@ -168,6 +168,10 @@ app-text {
 
 as-split-area {
   overflow: hidden !important;
+
+  &.biblical-terms {
+    overflow-y: auto !important;
+  }
 }
 
 .text-container {
