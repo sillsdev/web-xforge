@@ -91,7 +91,7 @@ $colors: (
   }
 
   // Style buttons inside notices
-  ::ng-deep .mat-button-base {
+  ::ng-deep .mat-mdc-button-base {
     flex-shrink: 0;
     background-color: var(--notice-color-button-bg);
     color: var(--notice-color-button-text);

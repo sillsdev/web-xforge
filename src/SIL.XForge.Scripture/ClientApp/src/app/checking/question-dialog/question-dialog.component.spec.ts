@@ -296,13 +296,12 @@ describe('QuestionDialogComponent', () => {
   it('passes start reference to end-reference chooser', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
-    expect(env.scriptureEndInputIcon.classList).toContain('mat-button-disabled');
+    expect(env.component.scriptureEnd.enabled).toBe(false);
     env.component.scriptureStart.setValue('LUK 1:1');
     env.component.scriptureEnd.setValue('GEN 5:6');
     tick();
     env.fixture.detectChanges();
     expect(env.component.scriptureEnd.enabled).toBe(true);
-    expect(env.scriptureEndInputIcon.classList).not.toContain('mat-button-disabled');
 
     env.clickElement(env.scriptureEndInputIcon);
     // Dialog receives unhelpful input value that can be ignored.
