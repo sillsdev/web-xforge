@@ -119,6 +119,9 @@
     <None Update="usfm_mod.sty">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="usfm_sb.sty">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="changedChapter.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
