@@ -166,11 +166,13 @@ header {
   flex: 1 1 auto;
 }
 
-.mat-toolbar .mat-icon-button {
+.mat-toolbar .mat-mdc-icon-button {
   width: 50px;
   height: 50px;
 
   &.user-menu-btn {
+    padding: 8px;
+
     .install-badge {
       position: absolute;
       left: 3px;
@@ -193,7 +195,7 @@ header {
 
 .offline-indicator {
   position: absolute;
-  bottom: 0;
+  bottom: -6px;
   inset-inline-end: 0;
   direction: inherit; // needed to override direction: rtl from .material-icons
   font-size: 12px;

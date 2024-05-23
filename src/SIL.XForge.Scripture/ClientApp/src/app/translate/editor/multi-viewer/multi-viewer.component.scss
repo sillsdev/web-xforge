@@ -12,12 +12,8 @@
   width: 32px;
 }
 
-.mat-mini-fab {
+.mat-mdc-mini-fab {
   background-color: #eaeaea;
-}
-
-::ng-deep .mat-mini-fab span.mat-button-wrapper {
-  padding: 0;
 }
 
 app-avatar {

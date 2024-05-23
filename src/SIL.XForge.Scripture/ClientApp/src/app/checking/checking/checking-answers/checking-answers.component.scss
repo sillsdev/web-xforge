@@ -56,24 +56,21 @@
   .attachments {
     display: flex;
     flex-direction: row;
+    .clear,
+    .answer-scripture-clear {
+      padding: 6px;
+    }
   }
   .form-actions {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
 
-    .mat-flat-button,
-    .mat-button {
-      line-height: unset;
-      mat-icon {
-        margin-inline-end: 6px;
-      }
+    .mat-mdc-unelevated-button,
+    .mat-mdc-button {
+      padding: 16px;
+      margin-inline-end: 6px;
       span {
         vertical-align: middle;
-      }
-    }
-    .mat-icon-button {
-      ::ng-deep .mat-button-focus-overlay {
-        display: none;
       }
     }
     mat-icon {
