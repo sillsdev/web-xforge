@@ -87,7 +87,7 @@
             <div class="form-actions">
               <button
                 mat-button
-                [class]="isScreenSmall ? 'mat-icon-button' : 'mat-button'"
+                [class]="isScreenSmall ? 'mdc-icon-button' : 'mdc-button'"
                 type="button"
                 (click)="hideAnswerForm()"
                 id="cancel-answer"
@@ -101,7 +101,9 @@
                 </ng-container>
               </button>
               <button
-                [class]="isScreenSmall ? 'mat-icon-button mat-primary' : 'mat-flat-button mat-primary'"
+                [class]="
+                  isScreenSmall ? 'mdc-icon-button mat-primary' : 'mdc-button mat-mdc-unelevated-button mat-primary'
+                "
                 form="answer-form"
                 id="save-answer"
                 type="submit"

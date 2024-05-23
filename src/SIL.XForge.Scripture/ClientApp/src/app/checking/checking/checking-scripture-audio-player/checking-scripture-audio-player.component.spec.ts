@@ -222,9 +222,9 @@ describe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.source = undefined;
     env.wait();
 
-    expect(env.playButton.classes['mat-button-disabled']).toBe(true);
-    expect(env.previousRefButton.classes['mat-button-disabled']).toBe(true);
-    expect(env.nextRefButton.classes['mat-button-disabled']).toBe(true);
+    expect(env.playButton.attributes['disabled']).toBe('true');
+    expect(env.previousRefButton.attributes['disabled']).toBe('true');
+    expect(env.nextRefButton.attributes['disabled']).toBe('true');
   }));
 });
 
