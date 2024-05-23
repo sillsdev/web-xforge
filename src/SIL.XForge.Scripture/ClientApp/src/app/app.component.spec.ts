@@ -582,7 +582,7 @@ class TestEnvironment {
   }
 
   get refreshButton(): DebugElement {
-    return this.navBar.query(By.css('.update-banner .mat-raised-button'));
+    return this.navBar.query(By.css('.update-banner .mat-mdc-raised-button'));
   }
 
   get selectedProjectId(): string {

@@ -46,12 +46,20 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   --mdc-snackbar-container-color: #{variables.$errorColor};
 }
 
-.mat-flat-button,
+.mat-mdc-unelevated-button,
 .mat-button-toggle-button {
   transition: background-color 0.15s, color 0.15s;
   &:not(:disabled):hover {
     background-color: variables.$greenLight;
     color: variables.$sf_grey;
+  }
+}
+
+button.mdc-icon-button {
+  transition: color 0.15s;
+
+  &:not([disabled]):hover {
+    color: $greenLight !important;
   }
 }
 

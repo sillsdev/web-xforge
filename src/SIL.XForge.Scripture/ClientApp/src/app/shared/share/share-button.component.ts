@@ -7,8 +7,7 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
 
 @Component({
   selector: 'app-share-button',
-  templateUrl: './share-button.component.html',
-  styleUrls: ['./share-button.component.scss']
+  templateUrl: './share-button.component.html'
 })
 export class ShareButtonComponent implements OnInit {
   @Input() defaultRole?: SFProjectRole;
