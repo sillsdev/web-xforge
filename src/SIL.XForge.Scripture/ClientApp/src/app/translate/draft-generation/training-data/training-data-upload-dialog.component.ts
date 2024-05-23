@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MatCheckbox, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { MatButtonModule } from '@angular/material/button';
 import {
   MatLegacyDialogModule as MatDialogModule,
   MatLegacyDialogRef as MatDialogRef,
