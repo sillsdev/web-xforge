@@ -1175,6 +1175,12 @@ public class MachineProjectService(
                     trainingCorpusConfig.ScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
                         ? buildConfig.TrainingScriptureRange
                         : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
+
+                    // Ensure that the alternate training corpus scripture range is null if it is blank
+                    if (string.IsNullOrWhiteSpace(trainingCorpusConfig.ScriptureRange))
+                    {
+                        trainingCorpusConfig.ScriptureRange = null;
+                    }
                 }
 
                 trainOn.Add(trainingCorpusConfig);
