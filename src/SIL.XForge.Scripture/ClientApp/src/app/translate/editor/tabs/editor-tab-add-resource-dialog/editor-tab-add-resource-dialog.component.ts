@@ -61,29 +61,6 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     await this.getProjectsAndResources();
   }
 
-  async getProjectsAndResources(): Promise<void> {
-    this.isLoading = true;
-
-    await Promise.all([
-      this.paratextService
-        .getProjects()
-        .then(projects => {
-          this.projectLoadingFailed = false;
-          this.projects = projects;
-        })
-        .catch(() => (this.projectLoadingFailed = true)),
-      this.paratextService
-        .getResources()
-        .then(resources => {
-          this.resourceLoadingFailed = false;
-          this.resources = resources;
-        })
-        .catch(() => (this.resourceLoadingFailed = true))
-    ]).then(() => {
-      this.isLoading = false;
-    });
-  }
-
   onProjectSelected(_selectableProject: SelectableProject): void {
     this.resetErrors();
   }
@@ -136,7 +113,30 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     }
   }
 
-  cancelSync(): void {
+  private async getProjectsAndResources(): Promise<void> {
+    this.isLoading = true;
+
+    await Promise.all([
+      this.paratextService
+        .getProjects()
+        .then(projects => {
+          this.projectLoadingFailed = false;
+          this.projects = projects;
+        })
+        .catch(() => (this.projectLoadingFailed = true)),
+      this.paratextService
+        .getResources()
+        .then(resources => {
+          this.resourceLoadingFailed = false;
+          this.resources = resources;
+        })
+        .catch(() => (this.resourceLoadingFailed = true))
+    ]).then(() => {
+      this.isLoading = false;
+    });
+  }
+
+  private cancelSync(): void {
     if (this.selectedProjectDoc?.id != null && this.isSyncActive) {
       this.projectService.onlineCancelSync(this.selectedProjectDoc.id);
     }
@@ -144,7 +144,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.isSyncActive = false;
   }
 
-  resetErrors(): void {
+  private resetErrors(): void {
     this.projectLoadingFailed = false;
     this.resourceLoadingFailed = false;
     this.projectFetchFailed = false;
@@ -154,7 +154,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   /**
    * Gets the project/resource with the selected paratext id, creating an SF project for it if needed.
    */
-  async fetchProject(paratextId: string): Promise<SFProjectDoc | undefined> {
+  private async fetchProject(paratextId: string): Promise<SFProjectDoc | undefined> {
     const selectedProjectId: string | undefined = await this.projectService.getOrCreateRealtimeProject(
       paratextId,
       SFProjectRole.ParatextAdministrator // TODO: what role should be used?
@@ -162,7 +162,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     return selectedProjectId != null ? this.projectService.get(selectedProjectId) : undefined;
   }
 
-  async syncProject(projectId: string): Promise<void> {
+  private async syncProject(projectId: string): Promise<void> {
     await this.projectService.onlineSync(projectId);
   }
 }
