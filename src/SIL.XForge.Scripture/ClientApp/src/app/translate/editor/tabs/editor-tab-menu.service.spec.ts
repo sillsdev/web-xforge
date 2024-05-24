@@ -1,19 +1,20 @@
 import { TestBed } from '@angular/core/testing';
+import { expect } from '@storybook/jest';
 import { invert } from 'lodash-es';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of, take } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { PermissionsService } from '../../../core/permissions.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -26,11 +27,11 @@ const activatedProjectMock = mock(ActivatedProjectService);
 const draftGenerationServiceMock = mock(DraftGenerationService);
 const tabStateMock = mock(TabStateService);
 const mockUserService = mock(UserService);
-const mockI18nService = mock(I18nService);
+const mockPermissionsService = mock(PermissionsService);
 
 describe('EditorTabsMenuService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot()],
+    imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
       EditorTabMenuService,
       { provide: UserService, useMock: userServiceMock },
@@ -38,7 +39,7 @@ describe('EditorTabsMenuService', () => {
       { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
-      { provide: I18nService, useMock: mockI18nService },
+      { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -165,30 +166,34 @@ describe('EditorTabsMenuService', () => {
     it('should return false if undefined project doc or project data', () => {
       new TestEnvironment();
       const projectDoc = { id: 'project1', data: null } as unknown as SFProjectProfileDoc;
-      expect(service['canShowHistory'](undefined)).toBe(false);
       expect(service['canShowHistory'](projectDoc)).toBe(false);
+    });
+
+    it('should return true only if the user is a paratext user', () => {
+      const env = new TestEnvironment();
+
+      Object.values(SFProjectRole).forEach(role => {
+        env.setUserByRole(role);
+        expect(service['canShowHistory'](env.projectDoc)).toBe(isParatextRole(role));
+      });
+    });
+  });
+
+  describe('canShowResource', () => {
+    it('should return false if undefined project doc or project data', () => {
+      new TestEnvironment();
+      const projectDoc = { id: 'project1', data: null } as unknown as SFProjectProfileDoc;
+      expect(service['canShowResource'](projectDoc)).toBe(false);
     });
 
     it('should return true only if the user is an administrator or translator', () => {
       const env = new TestEnvironment();
 
-      env.setUserByRole(SFProjectRole.ParatextConsultant);
-      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
-
-      env.setUserByRole(SFProjectRole.ParatextTranslator);
-      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
-
-      env.setUserByRole(SFProjectRole.ParatextAdministrator);
-      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
-
-      env.setUserByRole(SFProjectRole.Commenter);
-      expect(service['canShowHistory'](env.projectDoc)).toBe(false);
-
-      env.setUserByRole(SFProjectRole.ParatextObserver);
-      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
-
-      env.setUserByRole(SFProjectRole.Viewer);
-      expect(service['canShowHistory'](env.projectDoc)).toBe(false);
+      Object.values(SFProjectRole).forEach(role => {
+        const expected = role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
+        env.setUserByRole(role);
+        expect(service['canShowHistory'](env.projectDoc)).toBe(expected);
+      });
     });
   });
 });
@@ -219,7 +224,6 @@ class TestEnvironment {
 
   constructor() {
     when(activatedProjectMock.projectDoc$).thenReturn(of(this.projectDoc));
-    when(mockI18nService.translate(anything())).thenReturn(of(''));
     service = TestBed.inject(EditorTabMenuService);
   }
 

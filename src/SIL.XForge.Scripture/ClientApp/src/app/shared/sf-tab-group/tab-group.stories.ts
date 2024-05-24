@@ -83,7 +83,7 @@ export default {
         {
           provide: TabFactoryService,
           useValue: {
-            createTab(tabType: string): TabInfo<string> {
+            createTab(tabType: string): Promise<TabInfo<string>> {
               let tab: TabInfo<string>;
 
               switch (tabType) {
@@ -114,7 +114,7 @@ export default {
                   break;
               }
 
-              return tab;
+              return Promise.resolve(tab);
             }
           }
         }

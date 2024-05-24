@@ -9,8 +9,7 @@ import { formatFontSizeToRems } from '../../../shared/utils';
 
 @Component({
   selector: 'app-editor-resource',
-  templateUrl: './editor-resource.component.html',
-  styleUrls: ['./editor-resource.component.scss']
+  templateUrl: './editor-resource.component.html'
 })
 export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;
@@ -39,7 +38,7 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
     this.initProjectDetails();
   }
 
-  initProjectDetails(): void {
+  private initProjectDetails(): void {
     combineLatest([this.resourceText.editorCreated, this.inputChanged$.pipe(startWith(undefined))])
       .pipe(
         takeUntilDestroyed(this.destroyRef),

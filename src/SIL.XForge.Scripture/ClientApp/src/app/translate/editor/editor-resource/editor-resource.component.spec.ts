@@ -39,7 +39,7 @@ describe('EditorResourceComponent', () => {
     component.projectId = undefined;
     component.bookNum = 1;
     component.chapter = 1;
-    component.initProjectDetails();
+    component['initProjectDetails']();
 
     component.resourceText.editorCreated.next();
     verify(mockSFProjectService.getProfile(anything())).never();
@@ -61,7 +61,7 @@ describe('EditorResourceComponent', () => {
     component.bookNum = 1;
     component.chapter = 1;
     when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(projectDoc));
-    component.initProjectDetails();
+    component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
     verify(mockSFProjectService.getProfile(projectId)).once();
