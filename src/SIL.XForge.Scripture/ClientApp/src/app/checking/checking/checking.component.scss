@@ -312,10 +312,10 @@ header {
 
 .active-question-scope-button {
   font-size: 13px;
-  color: vars.$blueMedium;
+  color: vars.$blueMedium !important;
   font-weight: 400;
   align-self: flex-start;
-  line-height: 1;
+  height: 26px;
   display: flex;
   align-items: center;
   margin-inline-start: -($questionsHeaderInlineStartPadding - 2px);
