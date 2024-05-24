@@ -66,6 +66,40 @@ describe('TabStateService', () => {
     });
   });
 
+  describe('getFirstTabOfTypeIndex', () => {
+    it('should return the group and index of the first tab of the given type', () => {
+      const groupId1: string = 'group1';
+      const groupId2: string = 'group2';
+      const tabs1: TabInfo<string>[] = [
+        { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+        { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+      ];
+      const tabs2: TabInfo<string>[] = [
+        { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true },
+        { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true }
+      ];
+      service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs1));
+      service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs2));
+
+      expect(service.getFirstTabOfTypeIndex('type-a')).toEqual({ groupId: groupId1, index: 0 });
+      expect(service.getFirstTabOfTypeIndex('type-a', groupId2)).toEqual({ groupId: groupId2, index: 1 });
+    });
+
+    it('should return undefined if no tab of the given type is found', () => {
+      const groupId1: string = 'group1';
+      const groupId2: string = 'group2';
+      const tabs: TabInfo<string>[] = [
+        { type: 'type-a', headerText: 'Header 1', closeable: true, movable: true },
+        { type: 'type-b', headerText: 'Header 2', closeable: true, movable: true }
+      ];
+      service['groups'].set(groupId1, new TabGroup<string, any>(groupId1, tabs));
+      service['groups'].set(groupId2, new TabGroup<string, any>(groupId2, tabs));
+
+      const result = service.getFirstTabOfTypeIndex('type-c');
+      expect(result).toEqual(undefined);
+    });
+  });
+
   describe('tab actions', () => {
     it('should add a tab', () => {
       const groupId: string = 'source';

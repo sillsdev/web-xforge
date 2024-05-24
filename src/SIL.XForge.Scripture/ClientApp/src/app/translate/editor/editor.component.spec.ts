@@ -27,6 +27,7 @@ import { AngularSplitModule } from 'angular-split';
 import { merge } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -59,7 +60,7 @@ import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-dat
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
+import { BehaviorSubject, defer, Observable, of, Subject, take } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -76,7 +77,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -97,6 +97,7 @@ import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
+import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { HistoryChooserComponent } from './editor-history/history-chooser/history-chooser.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -104,7 +105,6 @@ import { SuggestionsComponent } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
-import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -3767,7 +3767,10 @@ describe('EditorComponent', () => {
       tick(100);
       expect(spyCreateTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
     }));
+  });
 
+  describe('updateAutoDraftTabVisibility', () => {
+    beforeEach(() => {});
     it('should add auto draft tab when available', fakeAsync(() => {
       const env = new TestEnvironment();
       env.wait();
@@ -3796,6 +3799,46 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(2);
 
       env.dispose();
+    }));
+
+    it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+
+      env.component.tabState.addTab('target', env.tabFactory.createTab('draft'));
+      const addTab = spyOn(env.component.tabState, 'addTab');
+
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+      env.wait();
+
+      expect(addTab).not.toHaveBeenCalled();
+      env.dispose();
+    }));
+
+    it('should select the draft tab if url query param is set', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
+      env.wait();
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+      env.wait();
+
+      env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
+        expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(true);
+        env.dispose();
+      });
+    }));
+
+    it('should not select the draft tab if url query param is not set', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
+      env.wait();
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+      env.wait();
+
+      env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
+        expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
+        env.dispose();
+      });
     }));
   });
 });
@@ -3998,6 +4041,7 @@ class TestEnvironment {
     this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
+    when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
     this.setupUsers();
     this.setCurrentUser('user01');
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
