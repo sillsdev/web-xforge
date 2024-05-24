@@ -3823,7 +3823,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
-        expect(tabs.filter(tab => tab.type === 'draft')[0]?.isSelected).toBe(true);
+        expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(true);
         env.dispose();
       });
     }));
@@ -3836,7 +3836,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
-        expect(tabs.filter(tab => tab.type === 'draft')[0]?.isSelected).toBe(false);
+        expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
         env.dispose();
       });
     }));
