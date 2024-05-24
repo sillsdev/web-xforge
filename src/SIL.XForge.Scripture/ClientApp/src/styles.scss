@@ -59,7 +59,7 @@ button.mdc-icon-button {
   transition: color 0.15s;
 
   &:not([disabled]):hover {
-    color: $greenLight !important;
+    color: variables.$greenLight;
   }
 }
 
