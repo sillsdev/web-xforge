@@ -1306,8 +1306,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  /** Insert or remove note thread embeds into the quill editor. */
-  private toggleAutoDraftTab(): void {
+  private updateAutoDraftTabVisibility(): void {
     const sourceTabGroup = this.tabState.getTabGroup('source');
     if (sourceTabGroup == null) {
       return;
@@ -1320,10 +1319,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (hasDraft && !hasDraftTab) {
       sourceTabGroup.addTab(this.editorTabFactory.createTab('draft'), false);
     } else if (!hasDraft && hasDraftTab) {
-      sourceTabGroup.removeTab(this.tabState.getTabIndex('source', 'draft')!);
+      sourceTabGroup.removeTab(this.tabState.getFirstTabOfTypeIndex('source', 'draft')!);
     }
   }
 
+  /** Insert or remove note thread embeds into the quill editor. */
   private toggleNoteThreadVerses(toggleOn: boolean): void {
     if (
       this.target?.editor == null ||
@@ -1793,7 +1793,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
-    this.toggleAutoDraftTab();
+    this.updateAutoDraftTabVisibility();
   }
 
   private loadTranslateSuggesterConfidence(): void {

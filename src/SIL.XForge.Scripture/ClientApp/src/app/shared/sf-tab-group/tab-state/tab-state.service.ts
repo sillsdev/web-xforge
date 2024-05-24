@@ -101,15 +101,13 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
     this.tabGroupsSource$.next(this.groups);
   }
 
-  getTabIndex(groupId: TGroupId, type: string): number | undefined {
+  getFirstTabOfTypeIndex(groupId: TGroupId, type: string): number | undefined {
     return this.groups.get(groupId)?.tabs?.findIndex(t => t.type === type);
   }
 
   hasTab(groupId: TGroupId, type: string): boolean {
-    if (!this.groups.has(groupId)) {
-      return false;
-    }
-    return (this.groups.get(groupId)?.tabs?.filter(t => t.type === type) ?? []).length > 0;
+    const group = this.groups.get(groupId);
+    return group != null && group.tabs.some(t => t.type === type);
   }
 
   removeTab(groupId: TGroupId, index: number): void {
