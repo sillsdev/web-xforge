@@ -28,6 +28,7 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
+import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -55,7 +56,8 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     SharedModule,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
-    SupportedBackTranslationLanguagesDialogComponent
+    SupportedBackTranslationLanguagesDialogComponent,
+    ServalProjectComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
@@ -384,8 +386,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return (job?.state as BuildStates) === BuildStates.Faulted;
   }
 
+  isServalAdmin(): boolean {
+    return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
+  }
+
   canShowAdditionalInfo(job?: BuildDto): boolean {
-    return job?.additionalInfo != null && this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
+    return job?.additionalInfo != null && this.isServalAdmin();
   }
 
   canCancel(job?: BuildDto): boolean {
