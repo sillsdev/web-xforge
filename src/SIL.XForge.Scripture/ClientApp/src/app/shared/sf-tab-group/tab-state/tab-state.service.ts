@@ -92,13 +92,22 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
     this.tabGroupsSource$.next(this.groups);
   }
 
-  addTab(groupId: TGroupId, tab: T): void {
+  addTab(groupId: TGroupId, tab: T, selectTab: boolean = true): void {
     if (!this.groups.has(groupId)) {
       this.groups.set(groupId, new TabGroup<TGroupId, T>(groupId, []));
     }
 
-    this.groups.get(groupId)!.addTab(tab, true);
+    this.groups.get(groupId)!.addTab(tab, selectTab);
     this.tabGroupsSource$.next(this.groups);
+  }
+
+  getFirstTabOfTypeIndex(groupId: TGroupId, type: string): number | undefined {
+    return this.groups.get(groupId)?.tabs?.findIndex(t => t.type === type);
+  }
+
+  hasTab(groupId: TGroupId, type: string): boolean {
+    const group = this.groups.get(groupId);
+    return group != null && group.tabs.some(t => t.type === type);
   }
 
   removeTab(groupId: TGroupId, index: number): void {
