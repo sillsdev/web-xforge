@@ -51,7 +51,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
@@ -93,7 +93,6 @@ import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { environment } from '../../../environments/environment';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -1307,19 +1306,39 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private updateAutoDraftTabVisibility(): void {
-    const sourceTabGroup = this.tabState.getTabGroup('source');
-    if (sourceTabGroup == null) {
-      return;
-    }
-
     const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this._chapter);
     const hasDraft: boolean = chapter?.hasDraft ?? false;
-    const hasDraftTab: boolean = this.tabState.hasTab('source', 'draft');
+    const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
+      this.tabState.getFirstTabOfTypeIndex('draft');
 
-    if (hasDraft && !hasDraftTab) {
-      sourceTabGroup.addTab(this.editorTabFactory.createTab('draft'), false);
-    } else if (!hasDraft && hasDraftTab) {
-      sourceTabGroup.removeTab(this.tabState.getFirstTabOfTypeIndex('source', 'draft')!);
+    if (hasDraft) {
+      // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
+      const paramKey = 'draft-active';
+      const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams[paramKey] === 'true';
+
+      // Add to 'source' tab group if no draft tab
+      if (existingDraftTab == null) {
+        this.tabState.addTab('source', this.editorTabFactory.createTab('draft'), urlDraftActive);
+      }
+
+      if (urlDraftActive) {
+        // Remove 'draft-active' query string from url when another tab from 'source' is selected
+        this.tabState.tabs$
+          .pipe(
+            filter(tabs => tabs.some(tab => tab.groupId === 'source' && tab.type !== 'draft' && tab.isSelected)),
+            take(1)
+          )
+          .subscribe(() => {
+            this.router.navigate([], {
+              queryParams: { paramKey: null },
+              queryParamsHandling: 'merge',
+              replaceUrl: true
+            });
+          });
+      }
+    } else if (existingDraftTab != null) {
+      // No draft for chapter, so remove the draft tab
+      this.tabState.removeTab(existingDraftTab.groupId, existingDraftTab.index);
     }
   }
 
