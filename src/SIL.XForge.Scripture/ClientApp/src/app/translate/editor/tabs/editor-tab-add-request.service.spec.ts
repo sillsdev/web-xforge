@@ -61,8 +61,8 @@ describe('EditorTabAddRequestService', () => {
     const projectDoc2 = createTestProjectDoc(2);
 
     when(tabStateService.tabs$).thenReturn(of([{ projectId: projectDoc1.id }, {}, { projectId: projectDoc2.id }]));
-    when(projectService.get(projectDoc1.id)).thenReturn(Promise.resolve(projectDoc1));
-    when(projectService.get(projectDoc2.id)).thenReturn(Promise.resolve(projectDoc2));
+    when(projectService.get(projectDoc1.id)).thenResolve(projectDoc1);
+    when(projectService.get(projectDoc2.id)).thenResolve(projectDoc2);
 
     service['getParatextIdsForOpenTabs']().subscribe(result => {
       expect(result).toEqual([projectDoc1.data!.paratextId, projectDoc2.data!.paratextId]);

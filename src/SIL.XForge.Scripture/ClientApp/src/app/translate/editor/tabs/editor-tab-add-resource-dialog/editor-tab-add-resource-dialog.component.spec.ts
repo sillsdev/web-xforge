@@ -38,16 +38,16 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
   it('should call getProjectsAndResources when ngOnInit is called', fakeAsync(() => {
     const env = new TestEnvironment();
-    spyOn(env.component, 'getProjectsAndResources');
+    spyOn<any>(env.component, 'getProjectsAndResources');
     env.component.ngOnInit();
     tick();
-    expect(env.component.getProjectsAndResources).toHaveBeenCalled();
+    expect(env.component['getProjectsAndResources']).toHaveBeenCalled();
   }));
 
   describe('getProjectsAndResources', () => {
     it('should set projects and resources and clear error flags', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.component.getProjectsAndResources();
+      env.component['getProjectsAndResources']();
       env.component.projectLoadingFailed = true;
       env.component.resourceLoadingFailed = true;
       tick();
@@ -63,7 +63,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
       const env = new TestEnvironment();
       when(mockParatextService.getProjects()).thenReject(new Error());
       when(mockParatextService.getResources()).thenReject(new Error());
-      env.component.getProjectsAndResources();
+      env.component['getProjectsAndResources']();
       tick();
       expect(env.component.projectLoadingFailed).toBe(true);
       expect(env.component.resourceLoadingFailed).toBe(true);
@@ -111,11 +111,11 @@ describe('EditorTabAddResourceDialogComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({ texts: [] });
       when(mockSFProjectService.onlineSync(anything())).thenReject(new Error());
-      spyOn(env.component, 'cancelSync');
+      spyOn<any>(env.component, 'cancelSync');
       env.component.confirmSelection();
       tick();
       expect(env.component.syncFailed).toBe(true);
-      expect(env.component.cancelSync).toHaveBeenCalled();
+      expect(env.component['cancelSync']).toHaveBeenCalled();
     }));
   });
 
