@@ -10,6 +10,7 @@ import { SFTabsModule } from '../shared/sf-tab-group';
 import { SharedModule } from '../shared/shared.module';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
+import { DraftPreviewBooksComponent } from './draft-generation/draft-preview-books/draft-preview-books.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { EditorDraftComponent } from './editor/editor-draft/editor-draft.component';
 import { EditorHistoryComponent } from './editor/editor-history/editor-history.component';
@@ -51,7 +52,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TranslocoModule,
     TranslocoMarkupModule,
     AvatarComponent,
-    SFTabsModule
+    SFTabsModule,
+    DraftPreviewBooksComponent
   ]
 })
 export class TranslateModule {}
