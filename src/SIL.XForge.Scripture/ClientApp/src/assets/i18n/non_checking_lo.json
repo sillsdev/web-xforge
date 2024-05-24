@@ -142,7 +142,7 @@
     "dialog_confirm_draft_regeneration_yes": "Continue",
     "draft_active_detail": "Generating draft; this can take a few hours.",
     "draft_active_header": "Draft in progress",
-    "draft_generation_complete": "Draft generation complete",
+    "draft_is_ready": "Your draft is ready",
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
     "draft_queued_detail": "Generation of the translation draft has been queued, and will begin once the server is finished with another project. Please check back later.",
     "draft_queued_header": "Draft queued",
@@ -170,14 +170,13 @@
     "offline_message": "Draft generation is not available when offline.",
     "preview_draft_button": "Preview draft",
     "preview_last_draft_button": "Preview last draft",
-    "preview_last_draft_detail": "The last draft build did not complete, but you can go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the last generated draft to chapters of your choice.",
+    "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Preview last draft",
-    "preview_last_draft_while_active_build_button": "Preview last draft",
-    "preview_last_draft_while_active_build": "While the new draft generation is in progress, you can continue working with the previously generated draft.",
     "report_problem": "Report problem",
     "sign_up_for_drafting": "Sign up for drafting",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
-    "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again."
+    "warning_generation_faulted": "Last generation attempt failed. Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
   "draft_generation_steps": {
     "back": "Back",
@@ -198,6 +197,9 @@
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
+  },
+  "draft_preview_books": {
+    "no_books_have_drafts": " No books have any drafts."
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
@@ -238,6 +240,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Added",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Auto draft is not available offline.",
