@@ -142,7 +142,7 @@
     "dialog_confirm_draft_regeneration_yes": "Continuer",
     "draft_active_detail": "Génération de l'ébauche ; cela peut prendre quelques heures.",
     "draft_active_header": "L'ébauche en cours",
-    "draft_generation_complete": "Génération de l'ébauche terminée",
+    "draft_is_ready": "Votre brouillon est prêt",
     "draft_queued_detail_multiple": "La génération de la traduction de l'ébauche est numéro {{ count }} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_detail": "La génération de la traduction de l'ébauche est numéro {} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_header": "Brouillon en attente",
@@ -170,14 +170,13 @@
     "offline_message": "La génération de brouillon n'est pas disponible hors connexion.",
     "preview_draft_button": "Prévisualiser le brouillon",
     "preview_last_draft_button": "Prévisualiser le dernier brouillon",
-    "preview_last_draft_detail": "La dernière construction du brouillon n'a pas été achevée, mais vous pouvez aller sur [link:draftViewerUrl]l'aperçu du brouillon[/link] pour prévisualiser et appliquer le dernier brouillon généré aux chapitres de votre choix.",
+    "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Prévisualiser le dernier brouillon",
-    "preview_last_draft_while_active_build_button": "Prévisualiser le dernier brouillon",
-    "preview_last_draft_while_active_build": "Pendant que la nouvelle génération de brouillon est en cours, vous pouvez continuer à travailler avec le brouillon précédemment généré.",
     "report_problem": "Signaler un problème",
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
     "temporarily_unavailable": "La génération de brouillons est temporairement indisponible.",
-    "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"\"[/em] ci-dessous pour réessayer.{{ generateButtonText }}\"[/em] ci-dessous pour réessayer."
+    "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"{{ generateButtonText }}\"[/em] ci-dessous pour réessayer.",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
   "draft_generation_steps": {
     "back": "Retour",
@@ -198,6 +197,9 @@
     "these_source_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne sont pas dans le texte source ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
+  },
+  "draft_preview_books": {
+    "no_books_have_drafts": " No books have any drafts."
   },
   "draft_viewer": {
     "apply_to_project": "Appliquer au projet",
@@ -238,6 +240,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Ajouter au Projet",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Ajouté",
     "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
     "offline_notice": "Le brouillon automatique n'est pas disponible hors ligne.",

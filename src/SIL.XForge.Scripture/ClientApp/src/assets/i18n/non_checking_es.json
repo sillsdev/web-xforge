@@ -142,7 +142,7 @@
     "dialog_confirm_draft_regeneration_yes": "Continuar",
     "draft_active_detail": "Generar el borrador; esto puede llevar unas horas.",
     "draft_active_header": "Borrador en proceso",
-    "draft_generation_complete": "Generación de borradores finalizada",
+    "draft_is_ready": "Your draft is ready",
     "draft_queued_detail_multiple": "La generación del borrador de traducción es el número {{ count }} en la cola, y comenzará una vez que el servidor haya terminado con otros proyectos. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_detail": "La generación del borrador de traducción se ha puesto en cola y comenzará una vez que el servidor haya terminado con otro proyecto. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_header": "Borrador en cola",
@@ -170,14 +170,13 @@
     "offline_message": "La generación de borradores no está disponible cuando se está desconectado.",
     "preview_draft_button": "Vista previa del borrador",
     "preview_last_draft_button": "Vista previa del último borrador",
-    "preview_last_draft_detail": "El último borrador generado no se ha completado, pero puede ir a [link:draftViewerUrl]visor de borradores[/link] para previsualizar y aplicar el último borrador generado a los capítulos que desee.",
+    "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Vista previa del último borrador",
-    "preview_last_draft_while_active_build_button": "Vista previa del último borrador",
-    "preview_last_draft_while_active_build": "Mientras se genera el nuevo borrador, puede seguir trabajando con el borrador generado anteriormente.",
     "report_problem": "Reportar problema",
     "sign_up_for_drafting": "Inscríbase para redactar",
     "temporarily_unavailable": "La generación de borradores está temporalmente no disponible.",
-    "warning_generation_faulted": "El último intento de generación ha fallado. Haga clic en [em]\"{{ generateButtonText }}\"[/em] a continuación para volver a intentarlo."
+    "warning_generation_faulted": "El último intento de generación ha fallado. Haga clic en [em]\"{{ generateButtonText }}\"[/em] a continuación para volver a intentarlo.",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
   "draft_generation_steps": {
     "back": "Atrás",
@@ -198,6 +197,9 @@
     "these_source_books_cannot_be_used_for_training": "Los siguientes libros no pueden utilizarse para la formación, ya que no se encuentran en el texto fuente de formación ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "Los siguientes libros no pueden traducirse porque no se encuentran en el texto fuente de redacción ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto."
+  },
+  "draft_preview_books": {
+    "no_books_have_drafts": " No books have any drafts."
   },
   "draft_viewer": {
     "apply_to_project": "Aplicar al proyecto",
@@ -238,6 +240,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Añadir al proyecto",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Añadido",
     "no_draft_notice": "{{ bookChapterName }} no tiene borrador.",
     "offline_notice": "El borrador automático no está disponible fuera de línea.",

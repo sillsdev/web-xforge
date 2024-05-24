@@ -203,7 +203,7 @@
     "save_answer": "Envoyer la réponse",
     "select_verses": "Sélectionner des versets",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
-    "tooltip_status_export": "Exporter vers Paratext si configuré dans les paramètres",
+    "tooltip_status_export": "Exporter vers Paratext si les paramètre sont configurés",
     "tooltip_status_resolve": "Marquer la réponse comme résolue",
     "your_answer": "Votre réponse"
   },
@@ -219,7 +219,7 @@
     "from_timing_past_to_timing": "Une ou plusieurs valeurs de fin se terminent avant leurs valeurs de début.",
     "no_audio_file_uploaded": "Pas de fichier audio téléversé",
     "no_timing_data_uploaded": "Pas de données de synchronisation téléversées",
-    "not_upload_audio_offline": "Les fichiers audio ne peuvent pas être téléversés sans connexion Internet.",
+    "not_upload_audio_offline": "Les fichiers audio ne peuvent être téléversés sans connexion Internet.",
     "save": "Enregistrer",
     "segments_found": "{{ segments }} segments trouvés",
     "timing": "Minutage",
@@ -241,7 +241,7 @@
   "checking_audio_recorder": {
     "delete": "Supprimer l'enregistrement",
     "mic_access_denied": "L'accès à votre microphone a été refusé. Veuillez activer le microphone depuis votre navigateur.",
-    "mic_not_found": "Aucun microphone n'a été trouvé. Veuillez connecter un microphone à votre appareil.",
+    "mic_not_found": "Aucun microphone n'a été détecté. Veuillez connecter un microphone à votre appareil.",
     "not_available": "Pour l'instant, votre navigateur ne prend pas en charge l'enregistrement audio. Veuillez essayer en utilisant un autre navigateur pris en charge.",
     "record_audio": "Enregistrer l'Audio",
     "stop_recording": "Arrêter l'enregistrement"
@@ -326,7 +326,7 @@
     "text_size": "Taille du texte"
   },
   "issue_email": {
-    "body": "Merci d'avoir signalé le problème !\nCela nous aiderait si vous remplissiez certaines des informations ci-dessous, mais veuillez le soumettre même si vous ne pouvez pas en remplir beaucoup.\nSi vous demandez une fonctionnalité, plusieurs champs risques de ne pas être applicables.\nSachez que votre rapport de bogue sera disponible publiquement. Ne soumettez jamais de mots de passe ou d'autres informations confidentielles.\n\nRapport de bogue\nUne description claire et concise du bogue.\n\nÉtapes pour le reproduire\nPar exemple :\n1. Aller à ...\n2. Cliquez sur ...\n3. Faites défiler jusqu'à ...\n4. Voir erreur\n\nComportement réel\nVeuillez décrire le comportement réel du problème que vous observez.\n\nComportement attendu\nUne description claire et concise de ce qui aurait dû se produire selon vous.\n\nCaptures d'écran\nLe cas échéant, ajoutez des captures d'écran pour aider à expliquer le problème.\n\nAutre information contextuelle\nAjoutez ici toute autre information contextuelle liée au problème.\n\nSolution possible\nAjoutez ici toute solution possible au problème.\n\nVotre environnement :\nLogiciel                Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL : {{ url }}\nID d'erreur {{ errorId }}",
+    "body": "Merci d'avoir signalé le problème !\nNous serions heureux que vous remplissiez certaines des informations ci-dessous, mais n'hésitez pas à soumettre votre demande même si vous ne pouvez pas en remplir beaucoup.\nSi vous demandez une fonctionnalité, de nombreux champs peuvent ne pas être applicables.\n\nRapport de bogue\nUne description claire et concise du bogue.\n\nÉtapes pour le reproduire\nPar exemple :\n1. Aller à ...\n2. Cliquez sur ...\n3. Faites défiler jusqu'à ...\n4. Voir erreur\n\nComportement réel\nVeuillez décrire le comportement réel du problème que vous observez.\n\nComportement attendu\nUne description claire et concise de ce qui aurait dû se produire selon vous.\n\nCaptures d'écran\nLe cas échéant, ajoutez des captures d'écran pour aider à expliquer le problème.\n\nAutre information contextuelle\nAjoutez ici toute autre information contextuelle liée au problème.\n\nSolution possible\nAjoutez ici toute solution possible au problème.\n\nVotre environnement :\nLogiciel                Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL : {{ url }}\nID d'erreur {{ errorId }}",
     "not_applicable": "non applicable",
     "subject": "problème {{ siteName }}",
     "unknown": "inconnu"

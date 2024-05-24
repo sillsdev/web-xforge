@@ -142,7 +142,7 @@
     "dialog_confirm_draft_regeneration_yes": "Continue",
     "draft_active_detail": "Membuat konsep; ini bisa memakan waktu beberapa jam.",
     "draft_active_header": "Konsep sedang dibuat",
-    "draft_generation_complete": "Pembuatan konsep selesai",
+    "draft_is_ready": "Your draft is ready",
     "draft_queued_detail_multiple": "Pembuatan konsep terjemahan berada di nomor antrian {{ count }} , dan akan dimulai setelah server selesai mengerjakan proyek lain. Silakan periksa kembali nanti.",
     "draft_queued_detail": "Pembuatan konsep terjemahan telah dimasukkan antrian, dan akan dimulai setelah server selesai mengerjakan proyek lain. Silakan periksa kembali nanti.",
     "draft_queued_header": "Konsep masuk antrian",
@@ -170,14 +170,13 @@
     "offline_message": "Pembuatan konsep tidak tersedia saat luring.",
     "preview_draft_button": "Pratinjau konsep",
     "preview_last_draft_button": "Pratinjau konsep terakhir",
-    "preview_last_draft_detail": "Konsep terakhir yang dibuat tidak selesai, tetapi Anda dapat membuka [link:draftViewerUrl]draft viewer[/link] untuk melihat pratinjau dan menerapkan konsep terakhir yang dibuat ke pasal yang Anda pilih.",
+    "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Pratinjau konsep terakhir",
-    "preview_last_draft_while_active_build_button": "Pratinjau konsep terakhir",
-    "preview_last_draft_while_active_build": "Sementara pembuatan konsep baru sedang berlangsung, Anda dapat terus bekerja dengan konsep yang dibuat sebelumnya.",
     "report_problem": "Laporkan masalah",
     "sign_up_for_drafting": "Mendaftar untuk penyusunan konsep",
     "temporarily_unavailable": "Generating drafts is temporarily unavailable.",
-    "warning_generation_faulted": "Upaya membuat terakhir gagal. Klik [em] \"{{ generateButtonText }}\"[/em] di bawah ini untuk mencoba lagi."
+    "warning_generation_faulted": "Upaya membuat terakhir gagal. Klik [em] \"{{ generateButtonText }}\"[/em] di bawah ini untuk mencoba lagi.",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
   },
   "draft_generation_steps": {
     "back": "Kembali",
@@ -198,6 +197,9 @@
     "these_source_books_cannot_be_used_for_training": "The following books cannot be used for training as they are not in the training source text ({{ trainingSourceProjectName }}).",
     "these_source_books_cannot_be_used_for_translating": "The following books cannot be translated as they are not in the drafting source text ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
+  },
+  "draft_preview_books": {
+    "no_books_have_drafts": " No books have any drafts."
   },
   "draft_viewer": {
     "apply_to_project": "Terapkan ke proyek",
@@ -238,6 +240,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Added",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Auto draft is not available offline.",
