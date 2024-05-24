@@ -70,7 +70,6 @@ import {
 import {
   debounceTime,
   delayWhen,
-  distinctUntilKeyChanged,
   filter,
   first,
   map,
@@ -634,7 +633,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngOnInit(): void {
     this.activatedProject.projectDoc$
-      .pipe(takeUntilDestroyed(this.destroyRef), filterNullish(), distinctUntilKeyChanged('id'))
+      .pipe(takeUntilDestroyed(this.destroyRef), filterNullish())
       .subscribe(doc => this.initEditorTabs(doc));
   }
 
@@ -1182,55 +1181,55 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           return Promise.all(
             persistedTabs.map(async tabData => ({
               ...tabData,
-              projectDoc: tabData.projectId ? await this.projectService.getProfile(tabData.projectId) : undefined
+              projectDoc:
+                tabData.projectId != null ? await this.projectService.getProfile(tabData.projectId) : undefined
             }))
           );
         }),
-        tap((persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
-          const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
-          const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
-          const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
-
-          if (projectSource != null) {
-            sourceTabGroup.addTab(
-              this.editorTabFactory.createTab('project-source', {
-                projectId: projectSource.projectRef,
-                headerText: projectSource.shortName
-              })
-            );
-          }
-
-          targetTabGroup.addTab(
-            this.editorTabFactory.createTab('project-target', {
-              projectId: projectDoc.id,
-              headerText: projectDoc.data?.shortName
-            })
-          );
-
-          persistedTabs.forEach(tabData => {
-            const tab = this.editorTabFactory.createTab(tabData.tabType, {
-              projectId: tabData.projectId,
-              headerText: tabData.projectDoc?.data?.shortName
-            });
-
-            if (tabData.groupId === 'source') {
-              sourceTabGroup.addTab(tab, tabData.isSelected);
-            } else {
-              targetTabGroup.addTab(tab, tabData.isSelected);
-            }
-          });
-
-          this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
-
-          // Notify to start tab persistence on tab state changes
-          tabStateInitialized$.next(true);
-
-          // View is initialized before the tab state is initialized, so re-run change detection
-          this.changeDetector.detectChanges();
-        }),
         take(1)
       )
-      .subscribe();
+      .subscribe(async (persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
+        const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
+        const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
+        const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
+
+        if (projectSource != null) {
+          sourceTabGroup.addTab(
+            await this.editorTabFactory.createTab('project-source', {
+              projectId: projectSource.projectRef,
+              headerText: projectSource.shortName
+            })
+          );
+        }
+
+        targetTabGroup.addTab(
+          await this.editorTabFactory.createTab('project-target', {
+            projectId: projectDoc.id,
+            headerText: projectDoc.data?.shortName
+          })
+        );
+
+        persistedTabs.forEach(async tabData => {
+          const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
+            projectId: tabData.projectId,
+            headerText: tabData.projectDoc?.data?.shortName
+          });
+
+          if (tabData.groupId === 'source') {
+            sourceTabGroup.addTab(tab, tabData.isSelected);
+          } else {
+            targetTabGroup.addTab(tab, tabData.isSelected);
+          }
+        });
+
+        this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
+
+        // Notify to start tab persistence on tab state changes
+        tabStateInitialized$.next(true);
+
+        // View is initialized before the tab state is initialized, so re-run change detection
+        this.changeDetector.detectChanges();
+      });
 
     // Persist tabs from tab state changes once tab state has been initialized
     combineLatest([this.tabState.tabs$, tabStateInitialized$.pipe(filter(initialized => initialized))])
@@ -1332,7 +1331,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateAutoDraftTabVisibility(): void {
+  private async updateAutoDraftTabVisibility(): Promise<void> {
     const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this._chapter);
     const hasDraft: boolean = chapter?.hasDraft ?? false;
     const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
@@ -1344,7 +1343,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
       // Add to 'source' tab group if no draft tab
       if (existingDraftTab == null) {
-        this.tabState.addTab('source', this.editorTabFactory.createTab('draft'), urlDraftActive);
+        this.tabState.addTab('source', await this.editorTabFactory.createTab('draft'), urlDraftActive);
       }
 
       if (urlDraftActive) {

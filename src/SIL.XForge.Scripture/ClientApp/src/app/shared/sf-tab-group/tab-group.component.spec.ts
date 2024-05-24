@@ -69,7 +69,7 @@ describe('TabGroupComponent', () => {
     const tabFactory = TestBed.inject(TabFactoryService);
     const tabStateService = TestBed.inject(TabStateService);
 
-    spyOn(tabFactory, 'createTab').and.returnValue(tab);
+    spyOn(tabFactory, 'createTab').and.returnValue(Promise.resolve(tab));
     spyOn(tabStateService, 'addTab');
 
     component.addTab(newTabType);

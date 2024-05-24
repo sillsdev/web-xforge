@@ -63,6 +63,7 @@ export class TabGroupComponent implements OnChanges {
   }
 
   onTabAddRequest(newTabType: string): void {
+    // Some tabs types may need further processing before they can be added (e.g. 'project-resource')
     this.tabAddRequestService
       .handleTabAddRequest(newTabType)
       .pipe(take(1))
@@ -71,8 +72,8 @@ export class TabGroupComponent implements OnChanges {
       });
   }
 
-  addTab(newTabType: string, tabOptions: any = {}): void {
-    const tab = this.tabFactory.createTab(newTabType, tabOptions);
+  async addTab(newTabType: string, tabOptions: any = {}): Promise<void> {
+    const tab = await this.tabFactory.createTab(newTabType, tabOptions);
     this.tabState.addTab(this.groupId, tab);
   }
 
