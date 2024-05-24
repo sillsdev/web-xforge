@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { BehaviorSubject, distinctUntilChanged, map, Observable } from 'rxjs';
 import { moveItemInReadonlyArray, transferItemAcrossReadonlyArrays } from 'xforge-common/util/array-util';
-import { EditorTabType } from '../../../translate/editor/tabs/editor-tabs.types';
 import { TabLocation } from '../sf-tabs.types';
 import { TabGroup } from './tab-group';
 
@@ -102,11 +101,11 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
     this.tabGroupsSource$.next(this.groups);
   }
 
-  getTab(groupId: TKey, type: EditorTabType): number | undefined {
+  getTabIndex(groupId: TGroupId, type: string): number | undefined {
     return this.groups.get(groupId)?.tabs?.findIndex(t => t.type === type);
   }
 
-  hasTab(groupId: TKey, type: EditorTabType): boolean {
+  hasTab(groupId: TGroupId, type: string): boolean {
     if (!this.groups.has(groupId)) {
       return false;
     }

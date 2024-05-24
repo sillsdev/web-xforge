@@ -76,7 +76,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -158,6 +158,7 @@ describe('EditorComponent', () => {
       SharedModule,
       UICommonModule,
       TestTranslocoModule,
+      TranslocoMarkupModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       SFTabsModule
@@ -2142,6 +2143,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(verse2_3Range.index + verse2_3Range.length);
       env.wait();
       env.typeCharacters('T');
+      env.wait();
       textAnchor = thread06Doc.data!.position;
       expect(textAnchor).toEqual({ start: origThread06Pos.start + 1, length: origThread06Pos.length });
       env.dispose();
@@ -3768,11 +3770,8 @@ describe('EditorComponent', () => {
 
     it('should add auto draft tab when available', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
-        of({
-          verse_1_2: 'Abraham was the father of Isaac'
-        })
-      );
+      env.wait();
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
       env.wait();
 
       const tabGroup = env.component.tabState.getTabGroup('source');
@@ -3783,18 +3782,14 @@ describe('EditorComponent', () => {
 
     it('should hide auto draft tab when switching to chapter with no draft', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
-        of({
-          verse_1_2: 'Abraham was the father of Isaac'
-        })
-      );
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
       env.wait();
 
       const tabGroup = env.component.tabState.getTabGroup('source');
       expect(tabGroup?.tabs[1].type).toEqual('draft');
       expect(env.component.chapter).toBe(1);
 
-      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
       env.wait();
 
       expect(tabGroup?.tabs[1]).toBeUndefined();
@@ -3867,9 +3862,6 @@ class TestEnvironment {
     translateConfig: {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
-      draftConfig: {
-        sendAllSegments: true
-      },
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
@@ -3924,7 +3916,8 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasDraft: true
           },
           {
             number: 2,
@@ -3934,13 +3927,15 @@ class TestEnvironment {
               user01: TextInfoPermission.Write,
               user02: TextInfoPermission.None,
               user03: TextInfoPermission.Write
-            }
+            },
+            hasDraft: false
           },
           {
             number: 3,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasDraft: false
           }
         ],
         hasSource: false,
@@ -4103,17 +4098,13 @@ class TestEnvironment {
       return this.getNoteThreadDoc(projectId, threadId);
     });
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as any));
+    when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
+    when(mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
+      of([])
+    );
+    when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
-    this.spyActivatedProjectService = spy(this.activatedProjectService);
-    when(this.spyActivatedProjectService.projectDoc$).thenCall(() =>
-      of(this.getProjectDoc(this.params$.getValue().projectId))
-    );
-    when(this.spyActivatedProjectService.projectDoc).thenCall(() =>
-      this.getProjectDoc(this.params$.getValue().projectId)
-    );
-    when(this.spyActivatedProjectService.projectId).thenCall(() => this.params$.getValue().projectId);
-
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
     this.ngZone = TestBed.inject(NgZone);

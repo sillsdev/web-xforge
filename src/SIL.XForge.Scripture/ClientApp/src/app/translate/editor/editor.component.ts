@@ -93,6 +93,7 @@ import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { environment } from '../../../environments/environment';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -1306,6 +1307,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /** Insert or remove note thread embeds into the quill editor. */
+  private toggleAutoDraftTab(): void {
+    const sourceTabGroup = this.tabState.getTabGroup('source');
+    if (sourceTabGroup == null) {
+      return;
+    }
+
+    const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this._chapter);
+    const hasDraft: boolean = chapter?.hasDraft ?? false;
+    const hasDraftTab: boolean = this.tabState.hasTab('source', 'draft');
+
+    if (hasDraft && !hasDraftTab) {
+      sourceTabGroup.addTab(this.editorTabFactory.createTab('draft'), false);
+    } else if (!hasDraft && hasDraftTab) {
+      sourceTabGroup.removeTab(this.tabState.getTabIndex('source', 'draft')!);
+    }
+  }
+
   private toggleNoteThreadVerses(toggleOn: boolean): void {
     if (
       this.target?.editor == null ||
@@ -1775,6 +1793,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
+    this.toggleAutoDraftTab();
   }
 
   private loadTranslateSuggesterConfidence(): void {
