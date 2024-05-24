@@ -101,8 +101,31 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
     this.tabGroupsSource$.next(this.groups);
   }
 
-  getFirstTabOfTypeIndex(groupId: TGroupId, type: string): number | undefined {
-    return this.groups.get(groupId)?.tabs?.findIndex(t => t.type === type);
+  /**
+   * Returns the group and index of the first tab of the given type. If no tab is found, returns undefined.
+   * @param type The type of the tab to find.
+   * @param groupId The group to search in. If not provided, searches all groups.
+   */
+  getFirstTabOfTypeIndex(type: string, groupId?: TGroupId): { groupId: TGroupId; index: number } | undefined {
+    if (groupId == null) {
+      for (const [groupId, group] of this.groups) {
+        const index = group.tabs.findIndex(tab => tab.type === type);
+
+        if (index !== -1) {
+          return { groupId, index };
+        }
+      }
+
+      return undefined;
+    }
+
+    const index: number | undefined = this.groups.get(groupId)?.tabs?.findIndex(t => t.type === type);
+
+    if (index == null || index === -1) {
+      return undefined;
+    }
+
+    return { groupId, index };
   }
 
   hasTab(groupId: TGroupId, type: string): boolean {

@@ -1,6 +1,10 @@
 <ng-container *transloco="let t; read: 'draft_preview_books'">
   @for (book of booksWithDrafts$ | async; track book.bookNumber) {
-  <a mat-stroked-button [routerLink]="linkForBookAndChapter(book.bookNumber, book.firstChapterWithDraft)">
+  <a
+    mat-stroked-button
+    [routerLink]="linkForBookAndChapter(book.bookNumber, book.firstChapterWithDraft)"
+    [queryParams]="{ 'draft-active': true }"
+  >
     {{ bookNumberToName(book.bookNumber) }}
   </a>
   } @empty { <strong>{{ t("no_books_have_drafts") }}</strong> }
