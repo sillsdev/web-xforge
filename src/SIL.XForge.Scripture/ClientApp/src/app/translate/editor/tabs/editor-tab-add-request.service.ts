@@ -26,31 +26,9 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
   handleTabAddRequest(tabType: EditorTabType): Observable<Partial<EditorTabInfo> | never> {
     switch (tabType) {
       case 'project-resource':
+        // Exclude any resources that are already open in a tab
         return this.getParatextIdsForOpenTabs().pipe(
-          switchMap(paratextIds => {
-            return this.dialogService
-              .openMatDialog<EditorTabAddResourceDialogComponent, EditorTabAddResourceDialogData>(
-                EditorTabAddResourceDialogComponent,
-                {
-                  panelClass: 'editor-tab-add-resource-dialog',
-                  width: '700px',
-                  data: {
-                    // Don't show projects/resources that are already open in a tab
-                    excludedParatextIds: paratextIds
-                  }
-                }
-              )
-              .afterClosed()
-              .pipe(
-                filterNullish(),
-                map((projectDoc: SFProjectDoc) => {
-                  return {
-                    projectId: projectDoc.id,
-                    headerText: projectDoc.data?.shortName
-                  };
-                })
-              );
-          })
+          switchMap(paratextIds => this.promptUserResourceSelection(paratextIds))
         );
       default:
         // No extra tab info
@@ -69,5 +47,38 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
       ),
       map(projectDocs => projectDocs.map(doc => doc?.data?.paratextId).filter(id => id) as string[])
     );
+  }
+
+  /**
+   * Opens a dialog that prompts the user to select a paratext project or DBL resource, excluding any
+   * resources that are already open in a tab.
+   * @param excludedParatextIds List of paratext ids for resources that should not be listed as options for selection.
+   * @returns An observable containing data for the selected resource.
+   * The returned observable will not emit if no resource was selected.
+   */
+  private promptUserResourceSelection(excludedParatextIds: string[]): Observable<Partial<EditorTabInfo> | never> {
+    return this.dialogService
+      .openMatDialog<EditorTabAddResourceDialogComponent, EditorTabAddResourceDialogData>(
+        EditorTabAddResourceDialogComponent,
+        {
+          panelClass: 'editor-tab-add-resource-dialog',
+          disableClose: true, // Ensure explicit cancellation by user
+          width: '700px',
+          data: {
+            // Don't show projects/resources that are already open in a tab
+            excludedParatextIds
+          }
+        }
+      )
+      .afterClosed()
+      .pipe(
+        filterNullish(),
+        map((projectDoc: SFProjectDoc) => {
+          return {
+            projectId: projectDoc.id,
+            headerText: projectDoc.data?.shortName
+          };
+        })
+      );
   }
 }

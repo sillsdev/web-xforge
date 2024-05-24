@@ -41,60 +41,60 @@ describe('PermissionsService', () => {
 
   it('allows commenters to access Translate', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedUserService.currentUserId).thenReturn('commenter');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.Commenter);
 
     expect(env.service.canAccessTranslate(env.projectDoc)).toBe(true);
-    expect(env.service.canAccessTranslate(env.projectDoc, 'commenter')).toBe(true);
+    expect(env.service.canAccessTranslate(env.projectDoc, SFProjectRole.Commenter)).toBe(true);
   }));
 
   it('allows checkers to access Community Checking if enabled', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedUserService.currentUserId).thenReturn('checker');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.CommunityChecker);
 
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(true);
-    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'checker')).toBe(true);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.CommunityChecker)).toBe(true);
   }));
 
   it('allows admins to access both', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedUserService.currentUserId).thenReturn('projectAdmin');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.ParatextAdministrator);
 
     expect(env.service.canAccessTranslate(env.projectDoc)).toBe(true);
-    expect(env.service.canAccessTranslate(env.projectDoc, 'projectAdmin')).toBe(true);
+    expect(env.service.canAccessTranslate(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(true);
-    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'projectAdmin')).toBe(true);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
   }));
 
-  it('doesnt allow checkers to access Translate', fakeAsync(() => {
+  it('does not allow checkers to access Translate', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedUserService.currentUserId).thenReturn('checker');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.CommunityChecker);
 
     expect(env.service.canAccessTranslate(env.projectDoc)).toBe(false);
-    expect(env.service.canAccessTranslate(env.projectDoc, 'checker')).toBe(false);
+    expect(env.service.canAccessTranslate(env.projectDoc, SFProjectRole.CommunityChecker)).toBe(false);
   }));
 
-  it('doesnt allow commenters to access Community Checking', fakeAsync(() => {
+  it('does not allow commenters to access Community Checking', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedUserService.currentUserId).thenReturn('commenter');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.Commenter);
 
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(false);
-    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'commenter')).toBe(false);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.Commenter)).toBe(false);
   }));
 
-  it('doesnt allow checkers to access Community Checking if not enabled', fakeAsync(() => {
+  it('does not allow checkers to access Community Checking if not enabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
-    when(mockedUserService.currentUserId).thenReturn('checker');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.CommunityChecker);
 
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(false);
-    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'checker')).toBe(false);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.CommunityChecker)).toBe(false);
   }));
 
-  it('doesnt allow admins to access Community Checking if not enabled', fakeAsync(() => {
+  it('does not allow admins to access Community Checking if not enabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
-    when(mockedUserService.currentUserId).thenReturn('projectAdmin');
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.ParatextAdministrator);
 
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(false);
-    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'projectAdmin')).toBe(false);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(false);
   }));
 
   it('allows access to text if user is on project and has permission', fakeAsync(async () => {
@@ -105,7 +105,7 @@ describe('PermissionsService', () => {
     expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(true);
   }));
 
-  it('doesnt allow access to text if user is not on project', fakeAsync(async () => {
+  it('does not allow access to text if user is not on project', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setCurrentUser('other');
 
@@ -114,7 +114,7 @@ describe('PermissionsService', () => {
     expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(false);
   }));
 
-  it('doesnt allow access to text if user has no access', fakeAsync(async () => {
+  it('does not allow access to text if user has no access', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData(TextInfoPermission.None);
 
@@ -122,6 +122,35 @@ describe('PermissionsService', () => {
 
     expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(false);
   }));
+
+  describe('canSync', () => {
+    it('returns false when projectDoc.data is undefined', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedProjectDoc.data).thenReturn(undefined);
+      expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(false);
+    }));
+
+    it('allows users with PT admin role to sync', () => {
+      const env = new TestEnvironment();
+      expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
+    });
+
+    it('allows users with PT translator role to sync', () => {
+      const env = new TestEnvironment();
+      expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextTranslator)).toBe(true);
+    });
+
+    it('disallows non- PT admin/translator roles to sync', () => {
+      const env = new TestEnvironment();
+      Object.values(SFProjectRole).forEach(role => {
+        if (role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator) {
+          return;
+        }
+
+        expect(env.service.canSync(env.projectDoc, role)).toBe(false);
+      });
+    });
+  });
 });
 class TestEnvironment {
   readonly service: PermissionsService;
@@ -130,12 +159,10 @@ class TestEnvironment {
 
   constructor(checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
+    let userRoles = Object.values(SFProjectRole).reduce((roles, role) => ({ ...roles, [role]: role }), {});
+
     const data = createTestProjectProfile({
-      userRoles: {
-        projectAdmin: SFProjectRole.ParatextAdministrator,
-        checker: SFProjectRole.CommunityChecker,
-        commenter: SFProjectRole.Commenter
-      },
+      userRoles,
       checkingConfig: {
         checkingEnabled: checkingEnabled
       }

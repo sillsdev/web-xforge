@@ -14,6 +14,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { PermissionsService } from '../../../core/permissions.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabInfo } from './editor-tabs.types';
@@ -29,6 +30,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly draftGenerationService: DraftGenerationService,
     private readonly onlineStatus: OnlineStatusService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
+    private readonly permissionsService: PermissionsService,
     private readonly i18n: I18nService
   ) {}
 
@@ -127,13 +129,12 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     }
   }
 
-  private canShowHistory(projectDoc: SFProjectProfileDoc | undefined): boolean {
+  private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {
     // The user must be a Paratext user. No specific edit permission for the chapter is required.
-    return isParatextRole(projectDoc?.data?.userRoles[this.userService.currentUserId]);
+    return isParatextRole(projectDoc.data?.userRoles[this.userService.currentUserId]);
   }
 
-  private canShowResource(_projectDoc: SFProjectProfileDoc | undefined): boolean {
-    // TODO: what role check is needed here?
-    return true;
+  private canShowResource(projectDoc: SFProjectProfileDoc): boolean {
+    return this.permissionsService.canSync(projectDoc, this.userService.currentUserId);
   }
 }
