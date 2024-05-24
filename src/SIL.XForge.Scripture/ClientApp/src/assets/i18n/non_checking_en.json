@@ -240,6 +240,7 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Add to project",
+    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
     "draft_indicator_applied": "Added",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Auto draft is not available offline.",

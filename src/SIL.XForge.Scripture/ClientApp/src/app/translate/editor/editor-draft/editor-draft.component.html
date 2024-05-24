@@ -1,10 +1,12 @@
 <ng-container *ngIf="onlineStatusService.onlineStatus$ | async; else offline">
   <mat-progress-bar *ngIf="draftCheckState === 'draft-unknown'" mode="indeterminate" color="accent"></mat-progress-bar>
 
-  <!-- TODO: Add more functionality when no draft for chapter (such as list of drafted chapters) -->
-  <app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary">
+  <app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary" mode="outline">
     {{ "editor_draft_tab.no_draft_notice" | transloco : { bookChapterName } }}
+    <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
+    <app-draft-preview-books></app-draft-preview-books>
   </app-notice>
+
   <app-notice *ngIf="draftCheckState === 'draft-legacy'" type="warning" icon="warning">
     <transloco
       key="draft_viewer.draft_legacy_warning"
@@ -13,7 +15,7 @@
   </app-notice>
 </ng-container>
 
-<div class="toolbar">
+<div class="toolbar" *ngIf="isDraftReady">
   <div class="apply-draft-button-container">
     <span *ngIf="isDraftApplied && isDraftReady" class="draft-indicator">
       <mat-icon class="check-icon">check</mat-icon>
