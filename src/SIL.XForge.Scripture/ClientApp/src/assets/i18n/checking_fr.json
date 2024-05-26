@@ -383,7 +383,7 @@
     "share_a_link": "Partager un lien",
     "share_title": "Vous avez été invité dans le projet {{ projectName }} sur {{ siteName }}",
     "send": "Envoyer",
-    "share_not_available_offline": "L'invitation n'est pas disponible hors ligne."
+    "share_not_available_offline": "L'invitation n'est pas disponible hors connexion."
   },
   "share_dialog": {
     "anyone": "Tous ceux qui ont le lien",

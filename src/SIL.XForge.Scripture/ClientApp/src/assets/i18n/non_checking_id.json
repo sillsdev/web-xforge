@@ -201,22 +201,6 @@
   "draft_preview_books": {
     "no_books_have_drafts": " No books have any drafts."
   },
-  "draft_viewer": {
-    "apply_to_project": "Terapkan ke proyek",
-    "draft_indicator_applied": "KONSEP DITERAPKAN",
-    "draft_indicator_not_applied": "KONSEP",
-    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
-    "draft_preview_and_apply": "Pratinjau konsep dan terapkan",
-    "edit": "Sunting",
-    "loading": "Memuat...",
-    "offline_message": "Pembuatan konsep tidak tersedia saat luring.",
-    "select_apply_to_project": "Pilih [em]\"{{ draft_viewer.apply_to_project }}\"[/em] untuk setiap pasal yang ingin Anda timpa dengan teks konsep.",
-    "select_edit": "Pilih [em]\"{{ draft_viewer.edit }}\"[/em] untuk membuka halaman editor untuk pasal ini.",
-    "select_source_text": "Teks sumber belum dipilih untuk proyek ini. Anda dapat memilih teks sumber di [link:projectSettingsUrl] pengaturan proyek [/link].",
-    "source_not_set": "Sumber tidak ditetapkan",
-    "overwrite_warning": "Adding the draft will overwrite all text in {{ chapter }}. Are you sure you want to continue?",
-    "confirm_overwrite": "Overwrite chapter"
-  },
   "editor": {
     "add_comment": "Tambah Komentar",
     "anonymous": "Anonim",

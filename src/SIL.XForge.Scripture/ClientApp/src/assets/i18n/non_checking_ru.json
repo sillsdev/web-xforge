@@ -201,22 +201,6 @@
   "draft_preview_books": {
     "no_books_have_drafts": " No books have any drafts."
   },
-  "draft_viewer": {
-    "apply_to_project": "Apply to project",
-    "draft_indicator_applied": "DRAFT APPLIED",
-    "draft_indicator_not_applied": "DRAFT",
-    "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
-    "draft_preview_and_apply": "Draft preview and apply",
-    "edit": "Редактировать",
-    "loading": "Загрузка...",
-    "offline_message": "Draft preview is not available while offline.",
-    "select_apply_to_project": "Select [em]\"{{ draft_viewer.apply_to_project }}\"[/em] for each chapter that you want to overwrite with the draft text.",
-    "select_edit": "Select [em]\"{{ draft_viewer.edit }}\"[/em] to go to the editor page for this chapter.",
-    "select_source_text": "A source text has not been selected for this project. You can select a source text in [link:projectSettingsUrl]project settings[/link].",
-    "source_not_set": "Source not set",
-    "overwrite_warning": "Adding the draft will overwrite all text in {{ chapter }}. Are you sure you want to continue?",
-    "confirm_overwrite": "Overwrite chapter"
-  },
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
