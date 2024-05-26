@@ -324,3 +324,12 @@
     </ng-template>
   </mat-expansion-panel>
 </section>
+
+<section *ngIf="this.isServalAdmin()">
+  <mat-expansion-panel class="serval-administration">
+    <mat-expansion-panel-header><h3>Serval Administration</h3></mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <app-serval-project></app-serval-project>
+    </ng-template>
+  </mat-expansion-panel>
+</section>
