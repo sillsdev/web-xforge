@@ -1,79 +1,82 @@
 <ng-container *transloco="let t; read: 'note_dialog'">
-  <h1 mat-dialog-title>
-    <img [src]="flagIcon" class="note-thread-icon" alt="" /> <span class="verse-reference">{{ verseRefDisplay }}</span>
-    <div *ngIf="canViewAssignedUser" id="assignedUser" class="assigned-user">
-      >{{ getAssignedUserString(noteThreadAssignedUserRef) }}
-    </div>
-  </h1>
-  <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
-    <div class="text-row">
-      <div class="text">
-        <div *ngIf="!isNewNote || isBiblicalTermNote" class="note-text" [innerHTML]="getNoteContextText()"></div>
-        <div *ngIf="isNewNote && !isBiblicalTermNote" class="note-text" [innerHTML]="segmentText"></div>
-        <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
+  <div class="dialog-container">
+    <h1 mat-dialog-title class="dialog-icon-title">
+      <img [src]="flagIcon" class="note-thread-icon" alt="" />
+      <span class="verse-reference">{{ verseRefDisplay }}</span>
+      <div *ngIf="canViewAssignedUser" id="assignedUser" class="assigned-user">
+        >{{ getAssignedUserString(noteThreadAssignedUserRef) }}
       </div>
-      <button
-        *ngIf="!isNewNote && !isBiblicalTermNote && isSegmentDifferentFromContext"
-        id="text-menu-button"
-        mat-icon-button
-        [matMenuTriggerFor]="menu"
-      >
-        <mat-icon>more_vert</mat-icon>
-      </button>
-      <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="toggleSegmentText()">
-          <mat-icon>compare</mat-icon>
-          <span>{{ showSegmentText ? t("hide_changes") : t("show_changes") }}</span>
+    </h1>
+    <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
+      <div class="text-row">
+        <div class="text">
+          <div *ngIf="!isNewNote || isBiblicalTermNote" class="note-text" [innerHTML]="getNoteContextText()"></div>
+          <div *ngIf="isNewNote && !isBiblicalTermNote" class="note-text" [innerHTML]="segmentText"></div>
+          <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
+        </div>
+        <button
+          *ngIf="!isNewNote && !isBiblicalTermNote && isSegmentDifferentFromContext"
+          id="text-menu-button"
+          mat-icon-button
+          [matMenuTriggerFor]="menu"
+        >
+          <mat-icon>more_vert</mat-icon>
         </button>
-      </mat-menu>
-    </div>
-    <div class="notes">
-      <div *ngFor="let noteInfo of notesToDisplay" class="note">
-        <div class="content">
-          <div *ngIf="noteInfo.assignment != null" class="assigned-user">>{{ noteInfo.assignment }}</div>
-          <div *ngIf="noteInfo.reattachedVerse != null" class="verse-reattached">{{ noteInfo.reattachedVerse }}</div>
-          <div *ngIf="noteInfo.reattachedText != null" class="text" [innerHTML]="noteInfo.reattachedText"></div>
-          <div class="note-content-and-actions">
-            <div class="note-content" [innerHTML]="noteInfo.content" [ngStyle]="{ fontSize }"></div>
-            <div *ngIf="noteInfo.editable" class="edit-actions">
-              <button mat-icon-button class="edit-button" (click)="editNote(noteInfo.note)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button class="delete-button" (click)="deleteNote(noteInfo.note)">
-                <mat-icon>delete</mat-icon>
-              </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="toggleSegmentText()">
+            <mat-icon>compare</mat-icon>
+            <span>{{ showSegmentText ? t("hide_changes") : t("show_changes") }}</span>
+          </button>
+        </mat-menu>
+      </div>
+      <div class="notes">
+        <div *ngFor="let noteInfo of notesToDisplay" class="note">
+          <div class="content">
+            <div *ngIf="noteInfo.assignment != null" class="assigned-user">>{{ noteInfo.assignment }}</div>
+            <div *ngIf="noteInfo.reattachedVerse != null" class="verse-reattached">{{ noteInfo.reattachedVerse }}</div>
+            <div *ngIf="noteInfo.reattachedText != null" class="text" [innerHTML]="noteInfo.reattachedText"></div>
+            <div class="note-content-and-actions">
+              <div class="note-content" [innerHTML]="noteInfo.content" [ngStyle]="{ fontSize }"></div>
+              <div *ngIf="noteInfo.editable" class="edit-actions">
+                <button mat-icon-button class="edit-button" (click)="editNote(noteInfo.note)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button class="delete-button" (click)="deleteNote(noteInfo.note)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-        <img [src]="noteInfo.icon" alt="" [title]="noteInfo.title" />
-        <div class="note-user">
-          <div class="user-name">{{ noteInfo.userName }}</div>
-          <small class="date-created">{{ noteInfo.dateCreated }}</small>
+          <img [src]="noteInfo.icon" alt="" [title]="noteInfo.title" />
+          <div class="note-user">
+            <div class="user-name">{{ noteInfo.userName }}</div>
+            <small class="date-created">{{ noteInfo.dateCreated }}</small>
+          </div>
         </div>
       </div>
-    </div>
-    <mat-form-field *ngIf="canInsertNote" class="full-width" appearance="outline">
-      <mat-label>{{ t("your_comment") }}</mat-label>
-      <textarea matInput [(ngModel)]="currentNoteContent"></textarea>
-    </mat-form-field>
-  </mat-dialog-content>
-  <mat-dialog-actions fxLayoutAlign="end">
-    <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
-    <mat-button-toggle-group *ngIf="canInsertNote">
-      <mat-button-toggle class="save-button save-options" (click)="submit()">{{
-        t(saveOption === "save" ? "save" : "resolve")
-      }}</mat-button-toggle>
-      <mat-button-toggle *ngIf="canResolve" class="save-options-trigger save-options" [matMenuTriggerFor]="saveMenu">
-        <mat-icon>expand_less</mat-icon>
-      </mat-button-toggle>
-      <mat-menu #saveMenu="matMenu" class="save-options-menu" yPosition="above" xPosition="before">
-        <button *ngIf="saveOption === 'resolve'" mat-menu-item (click)="saveOption = 'save'">
-          <span>{{ t("save") }}</span>
-        </button>
-        <button *ngIf="saveOption === 'save'" mat-menu-item (click)="saveOption = 'resolve'">
-          <span>{{ t("resolve") }}</span>
-        </button>
-      </mat-menu>
-    </mat-button-toggle-group>
-  </mat-dialog-actions>
+      <mat-form-field *ngIf="canInsertNote" class="full-width" appearance="outline">
+        <mat-label>{{ t("your_comment") }}</mat-label>
+        <textarea matInput [(ngModel)]="currentNoteContent"></textarea>
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions fxLayoutAlign="end">
+      <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
+      <mat-button-toggle-group *ngIf="canInsertNote">
+        <mat-button-toggle class="save-button save-options" (click)="submit()">{{
+          t(saveOption === "save" ? "save" : "resolve")
+        }}</mat-button-toggle>
+        <mat-button-toggle *ngIf="canResolve" class="save-options-trigger save-options" [matMenuTriggerFor]="saveMenu">
+          <mat-icon>expand_less</mat-icon>
+        </mat-button-toggle>
+        <mat-menu #saveMenu="matMenu" class="save-options-menu" yPosition="above" xPosition="before">
+          <button *ngIf="saveOption === 'resolve'" mat-menu-item (click)="saveOption = 'save'">
+            <span>{{ t("save") }}</span>
+          </button>
+          <button *ngIf="saveOption === 'save'" mat-menu-item (click)="saveOption = 'resolve'">
+            <span>{{ t("resolve") }}</span>
+          </button>
+        </mat-menu>
+      </mat-button-toggle-group>
+    </mat-dialog-actions>
+  </div>
 </ng-container>

@@ -3,14 +3,14 @@
 
 // Section: General dialog styles
 
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   margin-bottom: 0.25em;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   display: flex;
   flex-direction: column;
 }
