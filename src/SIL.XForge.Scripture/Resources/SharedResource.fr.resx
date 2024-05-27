@@ -126,7 +126,7 @@
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
   <data name="CommunitySupport" xml:space="preserve">
-    <value>Support de la communauté</value>
+    <value>Soutien Communautaire</value>
   </data>
   <data name="EmailBad" xml:space="preserve">
     <value>Entrez une adresse e-mail valide</value>
@@ -144,13 +144,13 @@
     <value>Cliquez sur {0}Inscription via Google{1} et suivez les instructions pour accéder à {2} en utilisant un compte Google existant (comme Gmail), ou</value>
   </data>
   <data name="InviteGreeting" xml:space="preserve">
-    <value>Bonjour,{0}{1} vous invite à rejoindre le projet {2} sur {3}.{0}Cliquez simplement sur le lien ci-dessous, choisissez comment vous connecter, et vous serez prêt à commencer.{0}{0}Pour vous inscrire, allez sur {4}</value>
+    <value>Bonjour,{0}{1} vous invite à rejoindre le projet {2} sur {3}.{0}Cliquez simplement sur le lien ci-dessous, choisissez comment vous connecter, et vous serez prêt à commencer.{0}{0}Pour rejoindre, allez sur {4}</value>
   </data>
   <data name="InviteInstructions" xml:space="preserve">
     <value>Si vous n'êtes pas déjà un utilisateur {0}, alors après avoir cliqué sur le lien, cliquez sur {1}Inscrivez-vous{2} et faites l'une des choses suivantes :</value>
   </data>
   <data name="InviteLinkExpires" xml:space="preserve">
-    <value>Le lien d'invitation pour participer au projet expire dans 14 jours.</value>
+    <value>Le lien d'invitation au projet expire dans 14 jours.</value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
     <value>Cliquez sur {0}Inscription via Paratext{1} et suivez les instructions pour accéder à {2} en utilisant un compte Paratext existant, ou</value>

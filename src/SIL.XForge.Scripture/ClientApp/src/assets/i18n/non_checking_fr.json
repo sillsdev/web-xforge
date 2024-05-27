@@ -92,7 +92,7 @@
     "remove_from_project": "Supprimer du projet",
     "remove_user": "Supprimer l'utilisateur",
     "share_with_others": "Partager avec d'autres",
-    "uses_roles_to_access_project": "Scripture Forge utilise Rôles et autorisations pour accéder à votre projet."
+    "uses_roles_to_access_project": "Scripture Forge utilise les droits et autorisations pour accéder à votre projet"
   },
   "connect_project": {
     "already_connected": "(déjà connecté)",
@@ -161,22 +161,22 @@
     "instructions_draft_process": "La génération d'une ébauche prend généralement au moins 8 heures.",
     "instructions_draft_process_subtext": "Cela peut prendre beaucoup plus de temps lorsque le système est occupé.",
     "instructions_help": "Pour plus d'informations, { 1 } consultez le site d'aide{ 2 }.",
-    "instructions_keep_in_mind": "L'ébauche peut contenir des erreurs.",
+    "instructions_keep_in_mind": "L'ébauche va contenir des erreurs.",
     "instructions_keep_in_mind_subtext": "Vous devrez modifier le brouillon qui est généré après l'avoir ajouté à votre projet.",
     "instructions_scripture_forge_assist_back_translation": "Scripture Forge peut vous aider à rédiger une rétro-traduction.",
     "instructions_scripture_forge_assist_back_translation_subtext": "Si votre équipe a déjà rédigé un ou plusieurs livres et retraduit un ou plusieurs d'entre eux, Scripture Forge peut utiliser les livres retraduits pour générer un brouillon du prochain livre sur lequel vous travaillez.",
-    "instructions_scripture_forge_assist_forward_translation": "Scripture Forge peut vous aider à rédiger une traduction.",
+    "instructions_scripture_forge_assist_forward_translation": "Scripture Forge peut vous aider à ébaucher une traduction.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "En fonction de votre progression de traduction existante, vous pouvez utiliser les livres que vous avez déjà traduits pour générer un brouillon du prochain livre sur lequel vous travaillez.",
     "offline_message": "La génération de brouillon n'est pas disponible hors connexion.",
     "preview_draft_button": "Prévisualiser le brouillon",
     "preview_last_draft_button": "Prévisualiser le dernier brouillon",
-    "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
+    "preview_last_draft_detail": "Le dernier brouillon n'a pas été finalisé, mais vous pouvez toujours consulter le brouillon le plus récent qui a réussi.",
     "preview_last_draft_header": "Prévisualiser le dernier brouillon",
     "report_problem": "Signaler un problème",
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
     "temporarily_unavailable": "La génération de brouillons est temporairement indisponible.",
     "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"{{ generateButtonText }}\"[/em] ci-dessous pour réessayer.",
-    "click_book_to_preview": "Click a book below to preview the draft and add it to your project."
+    "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser le brouillon et l'ajouter à votre projet."
   },
   "draft_generation_steps": {
     "back": "Retour",
@@ -188,8 +188,8 @@
     "choose_books_to_translate_error": "Aucun livre sélectionné. Sélectionnez les livres pour continuer à traduire.",
     "choose_books_to_translate": "Choisir les livres à traduire",
     "configure_advanced_settings": "Configurer les paramètres avancés",
-    "fast_training_warning": "Activer ceci permettra de gagner du temps mais réduira considérablement la précision.",
-    "fast_training": "Permettre une formation rapide",
+    "fast_training_warning": "L'activation de ceci permettra de gagner du temps mais réduira considérablement la précision.",
+    "fast_training": "Activer un apprentissage rapide",
     "generate_draft": "Générer un brouillon",
     "loading": "Chargement...",
     "next": "Suivant",
@@ -199,23 +199,7 @@
     "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
   },
   "draft_preview_books": {
-    "no_books_have_drafts": " No books have any drafts."
-  },
-  "draft_viewer": {
-    "apply_to_project": "Appliquer au projet",
-    "draft_indicator_applied": "EBAUCHE APPLIQUE",
-    "draft_indicator_not_applied": "EBAUCHE",
-    "draft_legacy_warning": "Nous avons mis à jour notre fonctionnalité de rédaction. Vous pouvez en profiter en [link:generateDraftUrl]générant un nouveau brouillon[/link].",
-    "draft_preview_and_apply": "Prévisualisation l'ébauche et appliquer",
-    "edit": "Modifier",
-    "loading": "Chargement...",
-    "offline_message": "L'aperçu de l'ébauche n'est pas disponible en mode hors connexion.",
-    "select_apply_to_project": "Sélectionnez [em]\"{{ draft_viewer.apply_to_project }}\"[/em] pour chaque chapitre que vous voulez remplacer par le texte ébauché.",
-    "select_edit": "Sélectionnez [em]\"{{ draft_viewer.edit }}\"[/em] pour accéder à la page de l'éditeur de ce chapitre.",
-    "select_source_text": "Un texte source n'a pas été sélectionné pour ce projet. Vous pouvez sélectionner un texte source dans [link:projectSettingsUrl]paramètres du projet[/link].",
-    "source_not_set": "Source non définie",
-    "overwrite_warning": "L'ajout du brouillon écrasera tout le texte de {{ chapter }}. Êtes-vous sûr de vouloir continuer ?",
-    "confirm_overwrite": "Écraser le chapitre"
+    "no_books_have_drafts": " Aucun livre n'a de brouillons."
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -240,10 +224,10 @@
   },
   "editor_draft_tab": {
     "apply_to_project": "Ajouter au Projet",
-    "click_book_to_preview": "Click a book below to preview the draft and add it to your project.",
+    "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser le brouillon et l'ajouter à votre projet.",
     "draft_indicator_applied": "Ajouté",
     "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
-    "offline_notice": "Le brouillon automatique n'est pas disponible hors ligne.",
+    "offline_notice": "Le brouillon automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout du brouillon écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
     "yes": "Écraser le chapitre"
   },
@@ -296,7 +280,7 @@
     "question_for_verse": "Question pour le verset {{ number }}",
     "question": "Question",
     "reference_from": "Début de référence",
-    "reference_to": "Fin de référence",
+    "reference_to": "Référence à",
     "reference": "Référence",
     "row": "Ligne",
     "select_all": "Tout sélectionner",
@@ -341,8 +325,8 @@
   },
   "question_answered_dialog": {
     "cancel": "Annuler",
-    "edit_anyway": "Modifier quand même",
-    "question_has_answer": "La question a déjà une réponse"
+    "edit_anyway": "Modifier malgré tout",
+    "question_has_answer": "La question a déjà une réponse. Envisagez plutôt de créer une nouvelle question."
   },
   "question_dialog": {
     "add_question_denied": "Autorisation refusée : seul l'administrateur du projet peut ajouter et modifier des questions.",
@@ -389,7 +373,7 @@
     "pt_translator": "Modifier les traductions - voir les questions - ajouter des réponses - ajouter des notes - synchroniser avec Paratext",
     "sf_community_checker": "Répondre aux questions, Commenter les réponses",
     "sf_commenter": "Afficher la traduction, Ajouter des commentaires",
-    "sf_observer": "Afficher la traduction"
+    "sf_observer": "Afficher la traduction - afficher les notes"
   },
   "settings": {
     "anyone_with_a_link": "Toute personne ayant le lien",
@@ -401,7 +385,7 @@
     "delete_project_cannot_be_undone": "Une fois que vous avez supprimé un projet, il est impossible de revenir en arrière. Soyez sûr de vous.",
     "delete_this_project": "Supprimer ce projet",
     "email_invitations_only": "Envoyer les invitations par e-mail uniquement",
-    "enable_alternate_source": "Utilisez une autre source pour le brouillon.",
+    "enable_alternate_source": "Utilisez une autre source pour le brouillon",
     "enable_alternate_training_source": "Utilisez une source différente pour l'entraînement.",
     "enable_community_checking": "Activer la vérification par la communauté",
     "enable_translation_suggestions": "pour activer {{ boldStart }}Suggestions de traduction{{ boldEnd }} et voir plus d'options",
@@ -419,7 +403,7 @@
     "pre_translation_drafting": "Génération de l'ébauche",
     "pre_translation_additional_training_data": "Autoriser des données de formation supplémentaires",
     "pre_translation_additional_training_data_info": "Ces fichiers CSV à deux colonnes sont spécialement conçus pour fournir des paires de données de formation.",
-    "pre_translation_alternate_source_info": "Sélectionnez une autre source pour la rédaction, si la source actuellement sélectionnée ne doit pas être utilisée pour le pré-traduction.\n",
+    "pre_translation_alternate_source_info": "Sélectionnez une autre source pour la rédaction, si la source actuellement sélectionnée ne doit pas être utilisée pour la pré-traduction.",
     "pre_translation_alternate_training_source_info": "Sélectionner une traduction séparée à des fins d'entraînement, telle qu'une retraduction, peut améliorer la qualité de la rédaction.",
     "pre_translation_alternate_training_source_text_placeholder": "Texte source d'entraînement alternatif (optionnel)",
     "pre_translation_drafting_description": "Configurer les options de génération de brouillons.",
