@@ -1,8 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import {
-  MatLegacyDialogRef as MatDialogRef,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
-} from '@angular/material/legacy-dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
