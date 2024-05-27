@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Inject, InjectionToken, OnInit, Provider } from '@angular/core';
-import {
-  MatLegacyDialog as MatDialog,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
-} from '@angular/material/legacy-dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { StoryFn } from '@storybook/angular';
 import { hasProp } from '../../src/type-utils';
 import { UICommonModule } from '../../src/xforge-common/ui-common.module';

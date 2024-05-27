@@ -1,9 +1,9 @@
-<h2 mat-dialog-title><mat-icon>science</mat-icon> Developer settings</h2>
-<app-notice type="warning" icon="warning">
-  These settings are for developers and testers of Scripture Forge. Do not use them for real projects. Doing so will
-  cause unexpected problems and errors.
-</app-notice>
+<h2 mat-dialog-title class="dialog-icon-title"><mat-icon>science</mat-icon> Developer settings</h2>
 <mat-dialog-content class="mat-typography">
+  <app-notice type="warning" icon="warning">
+    These settings are for developers and testers of Scripture Forge. Do not use them for real projects. Doing so will
+    cause unexpected problems and errors.
+  </app-notice>
   <mat-checkbox *ngFor="let flag of featureFlags.featureFlags" [(ngModel)]="flag.enabled" [disabled]="flag.readonly">
     {{ flag.description }}
   </mat-checkbox>

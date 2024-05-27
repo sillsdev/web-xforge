@@ -1,9 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import {
-  MatLegacyDialogRef as MatDialogRef,
-  MatLegacyDialogState as MatDialogState
-} from '@angular/material/legacy-dialog';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';

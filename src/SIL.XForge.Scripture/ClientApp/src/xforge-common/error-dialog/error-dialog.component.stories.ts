@@ -1,9 +1,5 @@
 import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
-import {
-  MatLegacyDialog as MatDialog,
-  MatLegacyDialogConfig as MatDialogConfig,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
-} from '@angular/material/legacy-dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogConfig } from '@angular/material/dialog';
 
 import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';

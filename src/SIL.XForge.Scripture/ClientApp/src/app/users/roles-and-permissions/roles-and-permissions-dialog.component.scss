@@ -1,8 +1,7 @@
 @use 'src/variables';
 
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   display: flex;
-  flex-direction: row;
   align-items: center;
   column-gap: 16px;
 }
@@ -32,9 +31,7 @@ span {
   height: 18px;
 }
 
-.mat-dialog-content {
-  margin: unset;
-  padding: unset;
+.mat-mdc-dialog-content {
   max-height: unset;
   overflow: unset;
 }
