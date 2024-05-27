@@ -16,8 +16,11 @@ button {
 
 mat-card {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
-  align-items: flex-end;
+  column-gap: 1em;
+  align-items: center;
+  padding: 1em;
 
   > div {
     display: flex;
