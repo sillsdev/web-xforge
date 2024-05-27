@@ -12,7 +12,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, Subject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
@@ -25,7 +25,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
+import { PwaService, PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN } from 'xforge-common/pwa.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -33,13 +33,11 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { filter } from 'rxjs/operators';
-import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
+import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
-import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 import { NavigationComponent } from './navigation/navigation.component';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
@@ -90,7 +88,6 @@ describe('AppComponent', () => {
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NavigationProjectSelectorComponent,
       AvatarComponent
     ],
     providers: [
@@ -143,32 +140,6 @@ describe('AppComponent', () => {
     verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
   }));
 
-  it('change project', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project01');
-    env.selectProject('project02');
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project02');
-    expect(env.location.path()).toEqual('/projects/project02');
-    verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
-  }));
-
-  it('connect project', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project01');
-    env.selectProject(CONNECT_PROJECT_OPTION);
-    expect(env.isDrawerVisible).toEqual(false);
-    expect(env.location.path()).toEqual('/connect-project');
-  }));
-
   it('close menu when navigating to a non-project route', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/my-account']);
@@ -198,13 +169,16 @@ describe('AppComponent', () => {
   }));
 
   it('response to remote project deletion when no project selected', fakeAsync(() => {
+    // If we are at the My Projects list at /projects, and a project is deleted, we should still be at the /projects
+    // page. Note that one difference between some other project being deleted, vs the _current_ project being deleted,
+    // is that AppComponent listens to the current project for its deletion.
     const env = new TestEnvironment();
-    env.deleteProject('project01', false);
-    env.navigate(['/projects', 'project01']);
+    env.navigate(['/projects']);
     env.init();
 
+    env.deleteProject('project01', false);
+    // The drawer is not visible because we will be showing the project list.
     expect(env.isDrawerVisible).toEqual(false);
-    verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -269,18 +243,6 @@ describe('AppComponent', () => {
     expect(env.installBadge).not.toBeNull();
 
     env.showHideUserMenu();
-  }));
-
-  it('user added to project after init', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects']);
-    env.init();
-
-    env.addUserToProject('project04');
-    env.navigate(['/projects', 'project04']);
-    env.wait();
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project04');
   }));
 
   it('user data is set for Bugsnag', fakeAsync(() => {
@@ -502,7 +464,7 @@ class TestEnvironment {
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedIn).thenCall(() =>
-      firstValueFrom(this.loggedInState$.pipe(filter(state => state.loggedIn)))
+      firstValueFrom(this.loggedInState$.pipe(filter((state: any) => state.loggedIn)))
     );
     when(mockedAuthService.loggedInState$).thenReturn(this.loggedInState$);
     if (isLoggedIn) {
@@ -637,13 +599,6 @@ class TestEnvironment {
 
   navigate(commands: any[]): void {
     this.ngZone.run(() => this.router.navigate(commands)).then();
-  }
-
-  selectProject(projectId: string): void {
-    this.ngZone.run(() => {
-      this.component.projectChanged(projectId);
-    });
-    this.wait();
   }
 
   clickEditDisplayName(): void {
