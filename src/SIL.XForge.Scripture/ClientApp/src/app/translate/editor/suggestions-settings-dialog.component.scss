@@ -56,9 +56,6 @@ span {
 }
 
 mat-dialog-actions {
-  place-content: stretch flex-end;
-  align-items: stretch;
-  flex-direction: row;
+  place-content: flex-end;
   box-sizing: border-box;
-  display: flex;
 }

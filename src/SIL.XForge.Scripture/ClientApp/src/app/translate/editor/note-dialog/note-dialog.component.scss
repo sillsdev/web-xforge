@@ -1,6 +1,11 @@
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+}
+
 h1 {
   display: flex;
   align-items: center;
@@ -16,7 +21,7 @@ h1 {
     margin-right: -15px;
   }
 }
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   min-height: 300px;
   @include media-breakpoint-down(sm) {
     min-height: 200px;

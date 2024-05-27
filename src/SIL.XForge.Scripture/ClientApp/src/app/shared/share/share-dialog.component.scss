@@ -1,6 +1,6 @@
 @import 'src/variables';
 
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   margin-bottom: 0.25em;
   display: flex;
   align-items: center;
@@ -40,8 +40,7 @@
 }
 div[mat-dialog-actions] {
   display: flex;
-  flex-direction: row-reverse; /* This was done so the share button would receive the focus */
-  justify-items: flex-end;
+  place-content: flex-end;
   column-gap: 10px;
 
   button {

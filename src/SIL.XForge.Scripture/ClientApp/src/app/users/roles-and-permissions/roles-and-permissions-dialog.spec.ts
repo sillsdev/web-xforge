@@ -2,10 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHandler } from '@angular/common/http';
 import { Component, DebugElement, Input, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import {
-  MatLegacyDialog as MatDialog,
-  MatLegacyDialogConfig as MatDialogConfig
-} from '@angular/material/legacy-dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { forEach } from 'lodash-es';
