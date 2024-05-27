@@ -19,12 +19,11 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PwaService, PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN } from 'xforge-common/pwa.service';
+import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
@@ -75,7 +74,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly reportingService: ErrorReportingService,
     private readonly userProjectsService: SFUserProjectsService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly localSettings: LocalSettingsService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -224,9 +222,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     await this.authService.loggedIn;
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser();
-    const userData = cloneDeep(this.currentUserDoc.data);
+    const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
     if (userData != null) {
-      this.reportingService.addMeta(userData, 'user');
+      const userDataWithId = { ...userData, id: this.currentUserDoc.id };
+      this.reportingService.addMeta(userDataWithId, 'user');
     }
 
     const languageTag = this.currentUserDoc.data!.interfaceLanguage;
