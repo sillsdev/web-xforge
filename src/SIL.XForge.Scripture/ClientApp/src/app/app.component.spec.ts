@@ -13,7 +13,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -287,7 +287,9 @@ describe('AppComponent', () => {
     env.init();
 
     verify(mockedErrorReportingService.addMeta(anything(), 'user')).once();
-    expect().nothing();
+    // The first call sets the locale, the second sets the user
+    const [metadata] = capture(mockedErrorReportingService.addMeta).second();
+    expect(metadata['id']).toEqual('user01');
   }));
 
   it('checks online auth status when browser comes online but app is not fully online', fakeAsync(() => {
