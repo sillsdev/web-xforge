@@ -3,11 +3,7 @@ import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angula
 import { MatCheckbox, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
-import {
-  MatLegacyDialogModule as MatDialogModule,
-  MatLegacyDialogRef as MatDialogRef,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
-} from '@angular/material/legacy-dialog';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';

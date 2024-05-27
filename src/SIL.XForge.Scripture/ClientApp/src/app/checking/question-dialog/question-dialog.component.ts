@@ -1,10 +1,6 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import {
-  MatLegacyDialogConfig as MatDialogConfig,
-  MatLegacyDialogRef as MatDialogRef,
-  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
-} from '@angular/material/legacy-dialog';
+import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';

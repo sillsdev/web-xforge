@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
-import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { Breadcrumb, NotifiableError } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';

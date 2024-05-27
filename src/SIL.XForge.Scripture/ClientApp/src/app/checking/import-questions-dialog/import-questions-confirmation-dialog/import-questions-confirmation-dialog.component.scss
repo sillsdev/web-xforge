@@ -1,4 +1,4 @@
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   max-width: 560px;
   display: flex;
   gap: 20px;
@@ -13,6 +13,6 @@
   background-color: darken(#fff, 10%);
 }
 
-.mat-dialog-actions {
+.mat-mdc-dialog-actions {
   justify-content: end;
 }

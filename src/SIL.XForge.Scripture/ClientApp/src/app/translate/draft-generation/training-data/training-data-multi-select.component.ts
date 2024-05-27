@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
-import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
+import { MatDialogConfig } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
