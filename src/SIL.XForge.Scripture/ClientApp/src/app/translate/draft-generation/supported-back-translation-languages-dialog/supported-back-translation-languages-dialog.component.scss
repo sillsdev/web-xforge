@@ -1,11 +1,11 @@
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
 }
 
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   display: grid;
   width: 70vw;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

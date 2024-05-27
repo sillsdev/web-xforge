@@ -10,9 +10,12 @@
 //  If you specify typography styles for the components you use elsewhere, you should delete this line.
 //  If you don't need the default component typographies but still want the hierarchy styles,
 //  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
+//    `@include mat.legacy-typography-hierarchy(mat.define-typography-config());`
+// Remove all-legacy-component-typographies once all legacy components are migrated
 @include mat.all-legacy-component-typographies();
 @include mat.all-component-typographies();
+@include mat.all-component-typographies();
+// Remove legacy-core once all legacy components are migrated
 @include mat.legacy-core();
 @include mat.core();
 
@@ -121,7 +124,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.card-theme($material-app-theme);
 @include mat.checkbox-theme($material-app-theme);
 @include mat.chips-theme($material-app-theme);
-@include mat.legacy-dialog-theme($material-app-theme);
+@include mat.dialog-theme($material-app-theme);
 @include mat.divider-theme($material-app-theme);
 @include mat.expansion-theme($material-app-theme);
 @include mat.form-field-theme($material-theme-accent-error);
