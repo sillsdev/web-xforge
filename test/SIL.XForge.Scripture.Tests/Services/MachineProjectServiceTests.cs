@@ -1289,6 +1289,7 @@ public class MachineProjectServiceTests
                             {
                                 FileChecksum = "old_checksum",
                                 FileId = File01,
+                                ProjectId = Project03,
                                 TextId = Project02,
                             },
                         ],
@@ -1298,6 +1299,7 @@ public class MachineProjectServiceTests
                             {
                                 FileChecksum = "old_checksum",
                                 FileId = File02,
+                                ProjectId = Project02,
                                 TextId = Project02,
                             },
                         ],
@@ -1348,6 +1350,7 @@ public class MachineProjectServiceTests
                         {
                             FileChecksum = "a_previous_checksum",
                             FileId = "File03",
+                            ProjectId = Project03,
                             TextId = "textId1",
                         }
                     )
@@ -1357,6 +1360,7 @@ public class MachineProjectServiceTests
                         {
                             FileChecksum = "another_previous_checksum",
                             FileId = "File04",
+                            ProjectId = Project01,
                             TextId = "textId2",
                         }
                     )
@@ -1395,6 +1399,7 @@ public class MachineProjectServiceTests
                     {
                         FileChecksum = "a_previous_checksum",
                         FileId = "File03",
+                        ProjectId = Project03,
                         TextId = "textId1",
                     }
                 )
@@ -1575,6 +1580,64 @@ public class MachineProjectServiceTests
         env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext02)));
         env.FileSystemService.Received(1).EnumerateFiles(Arg.Is<string>(path => path.Contains(Paratext03)));
         env.FileSystemService.Received(2).EnumerateFiles(Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheAdditionalTrainingSourceCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AdditionalTrainingSourceConfigured = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the upload of the source, target, source duplicated as training source, and mixed source
+        await env.DataFilesClient.Received(4)
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheAdditionalTrainingSourceIntoTheAlternateTrainingSourceCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                AlternateTrainingSourceConfigured = true,
+                AlternateTrainingSourceEnabled = true,
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                AdditionalTrainingSourceConfigured = true,
+            }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, uploadParatextZipFile: true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+
+        // Check for the upload of the source, target, alternate training source, and mixed source
+        await env.DataFilesClient.Received(4)
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
     }
 
     [Test]
@@ -1963,6 +2026,34 @@ public class MachineProjectServiceTests
         );
     }
 
+    [Test]
+    public async Task UpdateTranslationSourcesAsync_UpdatesAdditionalTrainingSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            p => p.Id == Project01,
+            u =>
+                u.Set(
+                    s => s.TranslateConfig.DraftConfig,
+                    new DraftConfig
+                    {
+                        AdditionalTrainingSourceEnabled = true,
+                        AdditionalTrainingSource = new TranslateSource { ParatextId = Paratext01 },
+                    }
+                )
+        );
+
+        // SUT
+        await env.Service.UpdateTranslationSourcesAsync(User01, Project01);
+        env.ParatextService.Received(1).GetParatextSettings(Arg.Any<UserSecret>(), Paratext01);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.AdditionalTrainingSource!.IsRightToLeft);
+        Assert.AreEqual(
+            LanguageTag,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.AdditionalTrainingSource!.WritingSystem.Tag
+        );
+    }
+
     private class TestEnvironmentOptions
     {
         public bool AlternateSourceEnabled { get; init; }
@@ -1974,6 +2065,7 @@ public class MachineProjectServiceTests
         public bool UseEchoForPreTranslation { get; init; }
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
+        public bool AdditionalTrainingSourceConfigured { get; init; }
         public string? ServalConfig { get; init; }
     }
 
@@ -2123,9 +2215,14 @@ public class MachineProjectServiceTests
                                     {
                                         PreTranslate = false,
                                         AlternateTrainingSource = false,
-                                        SourceFiles = [new ServalCorpusFile { FileId = File01 }],
-                                        TargetFiles = [new ServalCorpusFile { FileId = File02 }],
-                                        UploadParatextZipFile = true,
+                                        SourceFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File01, ProjectId = Project03 },
+                                        ],
+                                        TargetFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File02, ProjectId = Project01 },
+                                        ],
                                     }
                                 },
                                 {
@@ -2134,9 +2231,14 @@ public class MachineProjectServiceTests
                                     {
                                         PreTranslate = true,
                                         AlternateTrainingSource = false,
-                                        SourceFiles = [new ServalCorpusFile { FileId = File01 }],
-                                        TargetFiles = [new ServalCorpusFile { FileId = File02 }],
-                                        UploadParatextZipFile = true,
+                                        SourceFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File01, ProjectId = Project03 },
+                                        ],
+                                        TargetFiles =
+                                        [
+                                            new ServalCorpusFile { FileId = File02, ProjectId = Project01 },
+                                        ],
                                     }
                                 },
                             },
@@ -2201,6 +2303,10 @@ public class MachineProjectServiceTests
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
                                     : null,
+                                AdditionalTrainingSourceEnabled = options.AdditionalTrainingSourceConfigured,
+                                AdditionalTrainingSource = options.AdditionalTrainingSourceConfigured
+                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
+                                    : null
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
@@ -2277,6 +2383,7 @@ public class MachineProjectServiceTests
                                 {
                                     FileChecksum = "old_checksum",
                                     FileId = File01,
+                                    ProjectId = Project03,
                                     TextId = "textId",
                                 },
                             ],
@@ -2286,6 +2393,7 @@ public class MachineProjectServiceTests
                                 {
                                     FileChecksum = "old_checksum",
                                     FileId = File02,
+                                    ProjectId = projectId,
                                     TextId = "textId",
                                 },
                             ],
@@ -2306,6 +2414,7 @@ public class MachineProjectServiceTests
                                     {
                                         FileChecksum = "old_checksum",
                                         FileId = File01,
+                                        ProjectId = Project01,
                                         TextId = "textId",
                                     },
                                 ],
@@ -2315,6 +2424,7 @@ public class MachineProjectServiceTests
                                     {
                                         FileChecksum = "old_checksum",
                                         FileId = File02,
+                                        ProjectId = projectId,
                                         TextId = "textId",
                                     },
                                 ],

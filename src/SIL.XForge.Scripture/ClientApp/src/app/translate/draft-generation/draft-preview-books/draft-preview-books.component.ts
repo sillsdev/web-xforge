@@ -5,8 +5,8 @@ import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { map, Observable } from 'rxjs';
-import { ActivatedProjectService } from '../../../../xforge-common/activated-project.service';
-import { I18nService } from '../../../../xforge-common/i18n.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { I18nService } from 'xforge-common/i18n.service';
 
 interface BookWithDraft {
   bookNumber: number;
