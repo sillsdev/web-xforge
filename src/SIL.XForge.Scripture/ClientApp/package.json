@@ -43,7 +43,7 @@
     "@angular/router": "^17.3.7",
     "@angular/service-worker": "^17.3.7",
     "@auth0/auth0-spa-js": "^2.0.4",
-    "@bugsnag/js": "^7.21.0",
+    "@bugsnag/js": "^7.23.0",
     "@microsoft/signalr": "^7.0.0",
     "@ngneat/transloco": "^4.3.0",
     "@ngneat/transloco-locale": "^4.1.0",
