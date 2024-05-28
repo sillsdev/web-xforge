@@ -336,7 +336,7 @@ describe('MyProjectsComponent', () => {
   }));
 });
 
-class TestEnvironment {
+export class TestEnvironment {
   readonly component: MyProjectsComponent;
   readonly fixture: ComponentFixture<MyProjectsComponent>;
   readonly router: Router;
