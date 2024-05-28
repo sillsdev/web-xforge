@@ -5,6 +5,7 @@ import {
 } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
+import FileSaver from 'file-saver';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -24,6 +25,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -94,7 +96,8 @@ describe('DraftGenerationComponent', () => {
           RouterModule.forRoot([]),
           TranslocoMarkupModule,
           TestTranslocoModule,
-          NoopAnimationsModule
+          NoopAnimationsModule,
+          UICommonModule.forRoot()
         ],
         providers: [
           { provide: AuthService, useValue: mockAuthService },
@@ -132,12 +135,13 @@ describe('DraftGenerationComponent', () => {
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate', 'interpolate'], {
         locale$: of(locale)
       });
-      mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished']);
+      mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished', 'showError']);
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
         'getBuildProgress',
         'pollBuildProgress',
+        'getGeneratedDraftUsfm',
         'getLastCompletedBuild'
       ]);
       const projectDoc = {
@@ -180,10 +184,15 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
+      mockDraftGenerationService.getGeneratedDraftUsfm.and.returnValue(of('\\id Test USFM \\c 1 \\v 1 Test'));
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
+
+      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
+      // eslint-disable-next-line deprecation/deprecation
+      spyOn(FileSaver, 'saveAs').and.stub();
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -1435,6 +1444,148 @@ describe('DraftGenerationComponent', () => {
     it('should return false if the user is not system admin', () => {
       let env = new TestEnvironment();
       expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(false);
+    });
+  });
+
+  describe('downloadProgress', () => {
+    it('should show number between 0 and 100', () => {
+      const env = new TestEnvironment();
+      env.component.downloadBooksProgress = 4;
+      env.component.downloadBooksTotal = 8;
+      expect(env.component.downloadProgress).toBe(50);
+    });
+
+    it('should not divide by zero', () => {
+      const env = new TestEnvironment();
+      env.component.downloadBooksProgress = 4;
+      env.component.downloadBooksTotal = 0;
+      expect(env.component.downloadProgress).toBe(0);
+    });
+  });
+
+  describe('download draft button', () => {
+    it('button should display if there are draft books available', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      expect(env.getElementByTestId('download-button')).not.toBe(null);
+    });
+
+    it('button should start the download', () => {
+      const env = new TestEnvironment();
+      spyOn(env.component, 'downloadDraft').and.stub();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      env.getElementByTestId('download-button')!.click();
+      expect(env.component.downloadDraft).toHaveBeenCalled();
+    });
+
+    it('button should not display if there are no draft books available', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = false;
+      env.fixture.detectChanges();
+
+      expect(env.getElementByTestId('download-button')).toBe(null);
+    });
+
+    it('spinner should display while the download is in progress', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.component.downloadBooksProgress = 2;
+      env.component.downloadBooksTotal = 4;
+      env.fixture.detectChanges();
+
+      expect(env.getElementByTestId('download-spinner')).not.toBe(null);
+    });
+
+    it('spinner should not display while no download is in progress', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.component.downloadBooksProgress = 0;
+      env.component.downloadBooksTotal = 0;
+      env.fixture.detectChanges();
+
+      expect(env.getElementByTestId('download-spinner')).toBe(null);
+    });
+  });
+
+  describe('downloadDraft', () => {
+    it('should display an error if no chapters have drafts', done => {
+      const env = new TestEnvironment(() => {
+        const projectDoc = {
+          data: createTestProjectProfile({
+            texts: []
+          })
+        };
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc)
+        });
+      });
+
+      env.component.downloadDraft().then(() => {
+        expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
+        done();
+      });
+    });
+
+    it('should display an error if the project has no data', done => {
+      const env = new TestEnvironment(() => {
+        const projectDoc = {
+          data: null
+        };
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc)
+        });
+      });
+
+      env.component.downloadDraft().then(() => {
+        expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
+        done();
+      });
+    });
+
+    it('should create a zip file containing all of the books with drafts', done => {
+      const env = new TestEnvironment(() => {
+        const projectDoc = {
+          data: createTestProjectProfile({
+            texts: [
+              {
+                bookNum: 62,
+                chapters: [
+                  { number: 1, hasDraft: false },
+                  { number: 2, hasDraft: true }
+                ]
+              },
+              { bookNum: 63, chapters: [{ number: 1, hasDraft: true }] },
+              { bookNum: 64, chapters: [{ number: 1, hasDraft: false }] }
+            ]
+          })
+        };
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc)
+        });
+      });
+
+      env.component.downloadDraft().then(() => {
+        // Ensure drafts were generated for 1 and 2 John, but not 3 John
+        expect(mockDraftGenerationService.getGeneratedDraftUsfm).toHaveBeenCalledTimes(2);
+
+        // NOTE: The FileSaver namespace shares a signature with the FileSaver function, which has a deprecation warning
+        // eslint-disable-next-line deprecation/deprecation
+        expect(FileSaver.saveAs).toHaveBeenCalled();
+
+        done();
+      });
     });
   });
 });

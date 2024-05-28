@@ -237,6 +237,27 @@
                   </mat-card-content>
                   <mat-card-actions>
                     <button
+                      *ngIf="hasDraftBooksAvailable"
+                      mat-button
+                      type="button"
+                      (click)="downloadDraft()"
+                      [disabled]="downloadProgress > 0"
+                      data-test-id="download-button"
+                    >
+                      <mat-icon>
+                        {{ downloadProgress === 0 ? "cloud_download" : "" }}
+                        <mat-spinner
+                          *ngIf="downloadProgress > 0"
+                          diameter="20"
+                          [value]="downloadProgress"
+                          mode="determinate"
+                          color="accent"
+                          data-test-id="download-spinner"
+                        ></mat-spinner>
+                      </mat-icon>
+                      <span>{{ t("download_draft") }}</span>
+                    </button>
+                    <button
                       *ngIf="isGenerationSupported"
                       mat-button
                       type="button"

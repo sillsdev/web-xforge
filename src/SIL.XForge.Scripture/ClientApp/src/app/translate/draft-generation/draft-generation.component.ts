@@ -6,13 +6,16 @@ import {
 } from '@angular/material/legacy-dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 import { isEmpty } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
+import { combineLatest, firstValueFrom, of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -100,6 +103,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
    */
   hasAnyCompletedBuild = false;
 
+  /**
+   * Determines if there are draft books available for download.
+   */
+  hasDraftBooksAvailable = false;
+
+  /**
+   * Tracks how many books have been downloaded for the zip file.
+   */
+  downloadBooksProgress: number = 0;
+  downloadBooksTotal: number = 0;
+
   isPreTranslationApproved = false;
   signupFormUrl?: string;
 
@@ -122,6 +136,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService
   ) {
     super(noticeService);
+  }
+
+  get downloadProgress(): number {
+    if (this.downloadBooksTotal === 0) return 0;
+    return (this.downloadBooksProgress / this.downloadBooksTotal) * 100;
   }
 
   get isGenerationSupported(): boolean {
@@ -222,6 +241,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
+
+            this.hasDraftBooksAvailable =
+              projectDoc?.data?.texts?.some(t => t.chapters?.some(c => c.hasDraft)) ?? false;
           })
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
@@ -297,6 +319,60 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     // Display pre-generation steps
     this.navigateToTab('pre-generate-steps');
+  }
+
+  async downloadDraft(): Promise<void> {
+    const projectDoc = this.activatedProject.projectDoc;
+    if (projectDoc?.data == null) {
+      this.noticeService.showError(translate('draft_generation.info_alert_no_books_to_download'));
+      return;
+    }
+
+    const zip = new JSZip();
+    const projectShortName: string = projectDoc.data.shortName;
+    const usfmFiles: Promise<void>[] = [];
+
+    // Build the list of book numbers
+    const books: number[] = projectDoc.data.texts.reduce<number[]>((acc, text) => {
+      if (text.chapters.some(c => c.hasDraft)) {
+        acc.push(text.bookNum);
+      }
+      return acc;
+    }, []);
+    this.downloadBooksProgress = 0;
+    this.downloadBooksTotal = books.length;
+
+    // Create the promises to download each book's USFM
+    for (const bookNum of books) {
+      const usfmFile = firstValueFrom(
+        this.draftGenerationService.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0)
+      ).then(usfm => {
+        if (usfm != null) {
+          const fileName: string =
+            bookNum.toString().padStart(2, '0') + Canon.bookNumberToId(bookNum) + projectShortName + '.sfm';
+          zip.file(fileName, usfm);
+          this.downloadBooksProgress++;
+        }
+      });
+      usfmFiles.push(usfmFile);
+    }
+
+    await Promise.all(usfmFiles);
+
+    if (Object.keys(zip.files).length === 0) {
+      this.downloadBooksTotal = 0;
+      this.downloadBooksProgress = 0;
+      this.noticeService.showError(translate('draft_generation.info_alert_no_books_to_download'));
+      return;
+    }
+
+    // Download the zip file
+    const filename: string = projectDoc.data.shortName + '.zip';
+    return zip.generateAsync({ type: 'blob' }).then(blob => {
+      this.downloadBooksTotal = 0;
+      this.downloadBooksProgress = 0;
+      saveAs(blob, filename);
+    });
   }
 
   async cancel(): Promise<void> {
