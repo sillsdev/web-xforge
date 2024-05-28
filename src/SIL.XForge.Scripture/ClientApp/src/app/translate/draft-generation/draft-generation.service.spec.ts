@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { mock } from 'ts-mockito';
+import { anything, mock, verify } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -19,9 +19,10 @@ import { BuildConfig } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationService', () => {
+  const mockNoticeService = mock(NoticeService);
+
   let service: DraftGenerationService;
   let httpTestingController: HttpTestingController;
-  let mockNoticeService: NoticeService;
   let testOnlineStatusService: TestOnlineStatusService;
 
   configureTestingModule(() => ({
@@ -63,15 +64,12 @@ describe('DraftGenerationService', () => {
 
   beforeEach(() => {
     service = TestBed.inject(DraftGenerationService);
-    mockNoticeService = mock(NoticeService);
     httpTestingController = TestBed.inject(HttpTestingController);
     testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
   });
 
   afterEach(() => {
     testOnlineStatusService.setIsOnline(true);
-    httpTestingController.expectOne('anonymous/featureFlags');
-    httpTestingController.verify();
   });
 
   describe('pollBuildProgress', () => {
@@ -304,6 +302,18 @@ describe('DraftGenerationService', () => {
       req.flush(preTranslationData);
       tick();
     }));
+
+    it('should return an empty value if offline', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual({});
+      });
+      tick();
+    }));
   });
 
   describe('getGeneratedDraftDeltaOperations', () => {
@@ -417,18 +427,6 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
-    it('should return an empty value if offline', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      testOnlineStatusService.setIsOnline(false);
-
-      // SUT
-      service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
-        expect(result).toEqual({});
-      });
-      tick();
-    }));
-
     it('should return an empty array for a delta if offline', fakeAsync(() => {
       const book = 43;
       const chapter = 3;
@@ -437,6 +435,79 @@ describe('DraftGenerationService', () => {
       // SUT
       service.getGeneratedDraftDeltaOperations(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual([]);
+      });
+      tick();
+    }));
+  });
+
+  describe('getGeneratedDraftUsfm', () => {
+    it('should get the pre-translation USFM for the specified book/chapter and return an observable', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
+
+      // SUT
+      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+        expect(result).toEqual(usfm);
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(usfm);
+      tick();
+    }));
+
+    it('should return undefined for a 404 error', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+
+      // SUT
+      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+        expect(result).toBeUndefined();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
+      tick();
+    }));
+
+    it('should return undefined and display a notice for a 503 error', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+
+      // SUT
+      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+        expect(result).toBeUndefined();
+        verify(mockNoticeService.showError(anything())).once();
+      });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush(null, { status: HttpStatusCode.ServiceUnavailable, statusText: 'Machine API is unavailable' });
+      tick();
+    }));
+
+    it('should return undefined if offline', fakeAsync(() => {
+      const book = 43;
+      const chapter = 3;
+      testOnlineStatusService.setIsOnline(false);
+
+      // SUT
+      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
+        expect(result).toBeUndefined();
       });
       tick();
     }));
