@@ -136,7 +136,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         // Otherwise, add to unusable books.
         // Ensure books are displayed in ascending canonical order.
         const targetBooks = new Set<number>();
-        for (const text of target.texts.sort((a, b) => a.bookNum - b.bookNum)) {
+        for (const text of target.texts.slice().sort((a, b) => a.bookNum - b.bookNum)) {
           const bookNum = text.bookNum;
           targetBooks.add(bookNum);
 
