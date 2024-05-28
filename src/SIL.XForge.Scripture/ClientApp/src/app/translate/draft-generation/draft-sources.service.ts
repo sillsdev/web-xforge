@@ -132,7 +132,7 @@ export class DraftSourcesService {
         data: {
           name: translateSource.name,
           shortName: translateSource.shortName,
-          texts: texts ?? [],
+          texts: texts?.slice() ?? [],
           writingSystem: translateSource.writingSystem,
           noAccess: true
         }
