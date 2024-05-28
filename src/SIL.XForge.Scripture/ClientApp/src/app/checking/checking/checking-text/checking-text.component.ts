@@ -43,6 +43,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   @Input() set activeVerse(verseRef: VerseRef | undefined) {
+    if (this._activeVerse?.toString() === verseRef?.toString()) {
+      return;
+    }
     this._activeVerse = verseRef;
     this.highlightActiveVerse();
     this.scrollToVerse(this.activeVerse);

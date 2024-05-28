@@ -159,6 +159,26 @@ describe('CheckingTextComponent', () => {
 
     expect(env.component.textComponent.enablePresence).toBe(false);
   }));
+
+  it('does not highlight verse if already set', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.id = new TextDocId('project01', 40, 1);
+    const spyHighlight = spyOn(env.component.textComponent, 'highlight').and.callThrough();
+    const activeVerse = new VerseRef(40, 1, 4);
+    env.component.questionVerses = [activeVerse];
+    env.component.activeVerse = activeVerse;
+    env.wait();
+
+    expect(env.isSegmentHighlighted('verse_1_4')).toBe(true);
+    expect(spyHighlight).toHaveBeenCalledTimes(1);
+
+    // SUT
+    env.component.activeVerse = activeVerse;
+
+    env.wait();
+    expect(env.isSegmentHighlighted('verse_1_4')).toBe(true);
+    expect(spyHighlight).toHaveBeenCalledTimes(1);
+  }));
 });
 
 class TestEnvironment {
