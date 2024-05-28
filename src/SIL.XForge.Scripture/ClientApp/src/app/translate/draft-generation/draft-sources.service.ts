@@ -28,6 +28,7 @@ export interface DraftSources {
   source?: Readonly<DraftSource>;
   alternateSource?: Readonly<DraftSource>;
   alternateTrainingSource?: Readonly<DraftSource>;
+  additionalTrainingSource?: Readonly<DraftSource>;
 }
 
 @Injectable({
@@ -81,7 +82,19 @@ export class DraftSourcesService {
           targetDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource
         );
 
-        // Include alternate training source project if it exists
+        // If the user cannot access the additional training source project,
+        // populate using the target's additional training source information, if enabled
+        let additionalTrainingSourceProjectId: string | undefined = translateConfig?.draftConfig
+          .additionalTrainingSourceEnabled
+          ? translateConfig.draftConfig.additionalTrainingSource?.projectRef
+          : undefined;
+        let additionalTrainingSourceProject = this.getDraftSource(
+          additionalTrainingSourceProjectId,
+          currentUser,
+          targetDoc?.data?.translateConfig?.draftConfig?.additionalTrainingSource
+        );
+
+        // Include the source projects, if they exist
         return from(
           Promise.all([
             sourceProjectId
@@ -92,15 +105,19 @@ export class DraftSourcesService {
               : Promise.resolve(undefined),
             alternateTrainingSourceProjectId
               ? alternateTrainingSourceProject ?? this.projectService.getProfile(alternateTrainingSourceProjectId)
+              : Promise.resolve(undefined),
+            additionalTrainingSourceProjectId
+              ? additionalTrainingSourceProject ?? this.projectService.getProfile(additionalTrainingSourceProjectId)
               : Promise.resolve(undefined)
           ])
         ).pipe(
-          map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc]) => {
+          map(([sourceDoc, alternateSourceDoc, alternateTrainingSourceDoc, additionalTrainingSourceProjectDoc]) => {
             return {
               target: targetDoc?.data,
               source: sourceDoc?.data,
               alternateSource: alternateSourceDoc?.data,
-              alternateTrainingSource: alternateTrainingSourceDoc?.data
+              alternateTrainingSource: alternateTrainingSourceDoc?.data,
+              additionalTrainingSource: additionalTrainingSourceProjectDoc?.data
             };
           })
         );

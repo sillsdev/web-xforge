@@ -595,6 +595,7 @@ public class MachineProjectService(
     ///  - If the corpus was updated, then you should start the Build with <see cref="BuildProjectAsync"/>.
     ///  - If the Serval feature flag is disabled, false is returned and an information message logged.
     ///  - If a corpus is not configured on Serval, one is created and recorded in the project secret.
+    ///  - Any corpus files without project ids will be deleted and recreated with project ids.
     /// </remarks>
     public async Task<bool> SyncProjectCorporaAsync(
         string curUserId,
@@ -653,6 +654,12 @@ public class MachineProjectService(
             && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
             && preTranslate;
 
+        // See if there is an additional training source
+        bool useAdditionalTrainingSource =
+            project.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled
+            && project.TranslateConfig.DraftConfig.AdditionalTrainingSource is not null
+            && preTranslate;
+
         // Get the alternate training source corpus id, if present
         string? alternateTrainingSourceCorpusId = projectSecret
             .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
@@ -660,9 +667,11 @@ public class MachineProjectService(
 
         // If we are to use the alternate source, only use it for drafting
         bool useSourceAsAlternateTrainingSource = false;
+        string sourceProjectId = project.TranslateConfig.Source!.ProjectRef;
         string sourceParatextId = project.TranslateConfig.Source!.ParatextId;
         if (useAlternateSource)
         {
+            sourceProjectId = project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef;
             sourceParatextId = project.TranslateConfig.DraftConfig.AlternateSource.ParatextId;
 
             // If we do not have an alternate training source, use the reference source for training
@@ -682,7 +691,8 @@ public class MachineProjectService(
 
         // Upload the translation source
         corpusUpdated |= await UploadNewCorpusFilesAsync(
-            project.Id,
+            targetProjectId: project.Id,
+            sourceProjectId,
             paratextId: sourceParatextId,
             uploadParatextZipFile: true,
             texts: [],
@@ -693,7 +703,8 @@ public class MachineProjectService(
 
         // Upload the translation target
         corpusUpdated |= await UploadNewCorpusFilesAsync(
-            project.Id,
+            targetProjectId: project.Id,
+            sourceProjectId: project.Id,
             project.ParatextId,
             uploadParatextZipFile: true,
             texts: [],
@@ -729,16 +740,20 @@ public class MachineProjectService(
         }
 
         // Upload the training corpus, or remove it if no longer used
-        if (useAlternateTrainingSource || useSourceAsAlternateTrainingSource)
+        if (useAlternateTrainingSource || useSourceAsAlternateTrainingSource || useAdditionalTrainingSource)
         {
             // Determine which project to use for training
             string paratextId = useAlternateTrainingSource
                 ? project.TranslateConfig.DraftConfig.AlternateTrainingSource.ParatextId
                 : project.TranslateConfig.Source.ParatextId;
+            string projectId = useAlternateTrainingSource
+                ? project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef
+                : project.TranslateConfig.Source.ProjectRef;
 
             // Upload the training corpus
             corpusUpdated |= await UploadNewCorpusFilesAsync(
-                project.Id,
+                targetProjectId: project.Id,
+                sourceProjectId: projectId,
                 paratextId,
                 uploadParatextZipFile: true,
                 texts: [],
@@ -746,6 +761,21 @@ public class MachineProjectService(
                 newAlternateTrainingSourceCorpusFiles,
                 cancellationToken
             );
+
+            // Upload the additional training source
+            if (useAdditionalTrainingSource)
+            {
+                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                    targetProjectId: project.Id,
+                    sourceProjectId: project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef,
+                    paratextId: project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ParatextId,
+                    uploadParatextZipFile: true,
+                    texts: [],
+                    oldAlternateTrainingSourceCorpusFiles,
+                    newAlternateTrainingSourceCorpusFiles,
+                    cancellationToken
+                );
+            }
 
             // Update the training corpus
             corpusUpdated |= await UpdateCorpusConfigAsync(
@@ -849,9 +879,10 @@ public class MachineProjectService(
                         .TargetFiles;
                 }
 
-                // Upload the source files
+                // Upload the source files for the training data
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
-                    project.Id,
+                    targetProjectId: project.Id,
+                    sourceProjectId: project.Id,
                     project.ParatextId,
                     uploadParatextZipFile: false,
                     newTrainingDataSourceTexts,
@@ -860,9 +891,10 @@ public class MachineProjectService(
                     cancellationToken
                 );
 
-                // Upload the target files
+                // Upload the target files for the training data
                 corpusUpdated |= await UploadNewCorpusFilesAsync(
-                    project.Id,
+                    targetProjectId: project.Id,
+                    sourceProjectId: project.Id,
                     project.ParatextId,
                     uploadParatextZipFile: false,
                     newTrainingDataTargetTexts,
@@ -994,6 +1026,30 @@ public class MachineProjectService(
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag,
                             alternateSourceSettings.LanguageTag
+                        );
+                });
+            }
+        }
+
+        // If there is an additional training source, ensure that writing system and RTL is correct
+        if (projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource is not null)
+        {
+            ParatextSettings? additionalTrainingSourceSettings = paratextService.GetParatextSettings(
+                userSecret,
+                projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource.ParatextId
+            );
+            if (additionalTrainingSourceSettings is not null)
+            {
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(
+                        pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.IsRightToLeft,
+                        additionalTrainingSourceSettings.IsRightToLeft
+                    );
+                    if (additionalTrainingSourceSettings.LanguageTag is not null)
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.WritingSystem.Tag,
+                            additionalTrainingSourceSettings.LanguageTag
                         );
                 });
             }
@@ -1291,6 +1347,7 @@ public class MachineProjectService(
 
     private async Task<bool> UploadFileAsync(
         string textId,
+        string projectId,
         string textFileData,
         FileFormat fileFormat,
         ICollection<ServalCorpusFile>? oldCorpusFiles,
@@ -1300,11 +1357,20 @@ public class MachineProjectService(
     {
         byte[] buffer = Encoding.UTF8.GetBytes(textFileData);
         await using Stream stream = new MemoryStream(buffer, false);
-        return await UploadFileAsync(textId, stream, fileFormat, oldCorpusFiles, newCorpusFiles, cancellationToken);
+        return await UploadFileAsync(
+            textId,
+            projectId,
+            stream,
+            fileFormat,
+            oldCorpusFiles,
+            newCorpusFiles,
+            cancellationToken
+        );
     }
 
     private async Task<bool> UploadFileAsync(
         string textId,
+        string projectId,
         Stream stream,
         FileFormat fileFormat,
         ICollection<ServalCorpusFile>? oldCorpusFiles,
@@ -1328,7 +1394,9 @@ public class MachineProjectService(
 
         // Upload the file if it is not there or has changed
         string checksum = sb.ToString();
-        ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(c => c.TextId == textId);
+        ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(
+            c => c.TextId == textId && c.ProjectId == projectId
+        );
         if (previousCorpusFile is null || previousCorpusFile.FileChecksum != checksum)
         {
             uploadText = true;
@@ -1385,6 +1453,7 @@ public class MachineProjectService(
             {
                 FileChecksum = checksum,
                 FileId = dataFile.Id,
+                ProjectId = projectId,
                 TextId = textId,
             }
         );
@@ -1545,7 +1614,8 @@ public class MachineProjectService(
     /// <summary>
     /// Syncs a collection of <see cref="ISFText"/> to Serval, creating files on Serval as necessary.
     /// </summary>
-    /// <param name="projectId">The project identifier.</param>
+    /// <param name="targetProjectId">The target project identifier.</param>
+    /// <param name="sourceProjectId">The source project identifier (this may be a training source).</param>
     /// <param name="paratextId">The Paratext identifier.</param>
     /// <param name="uploadParatextZipFile">
     /// <c>true</c> if we are uploading a Paratext zip file; otherwise <c>false</c>.
@@ -1559,7 +1629,8 @@ public class MachineProjectService(
     /// The project secret is updated with the corpus file details added to or removed from Serval.
     /// </remarks>
     private async Task<bool> UploadNewCorpusFilesAsync(
-        string projectId,
+        string targetProjectId,
+        string sourceProjectId,
         string paratextId,
         bool uploadParatextZipFile,
         IEnumerable<ISFText> texts,
@@ -1600,7 +1671,8 @@ public class MachineProjectService(
 
             // Upload the zip file
             corpusUpdated = await UploadFileAsync(
-                projectId,
+                textId: targetProjectId,
+                projectId: sourceProjectId,
                 memoryStream,
                 FileFormat.Paratext,
                 oldCorpusFiles,
@@ -1616,12 +1688,18 @@ public class MachineProjectService(
                 string textFileData = GetTextFileData(text);
                 if (!string.IsNullOrWhiteSpace(textFileData))
                 {
-                    // Remove the project id from the start of the text id (if present)
-                    string textId = text.Id.StartsWith($"{projectId}_") ? text.Id[(projectId.Length + 1)..] : text.Id;
+                    // Remove the target project id from the start of the text id (if present)
+                    string textId = text.Id.StartsWith($"{targetProjectId}_")
+                        ? text.Id[(targetProjectId.Length + 1)..]
+                        : text.Id;
+
+                    // Remove the source project id from the start of the text id (if present)
+                    textId = textId.StartsWith($"{sourceProjectId}_") ? textId[(sourceProjectId.Length + 1)..] : textId;
 
                     // Upload the text file
                     corpusUpdated |= await UploadFileAsync(
                         textId,
+                        sourceProjectId,
                         textFileData,
                         FileFormat.Text,
                         oldCorpusFiles,
@@ -1645,7 +1723,7 @@ public class MachineProjectService(
                 {
                     // If the file was already deleted, just log a message
                     string message =
-                        $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {projectId}"
+                        $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {targetProjectId}"
                         + " was missing or already deleted.";
                     logger.LogInformation(e, message);
                 }
