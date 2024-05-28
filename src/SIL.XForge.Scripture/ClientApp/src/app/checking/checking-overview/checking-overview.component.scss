@@ -16,11 +16,6 @@
   @include breakpoints.media-breakpoint-only(xs, variables.$grid-breakpoints) {
     min-width: 48px;
   }
-  mat-icon {
-    font-size: 24px;
-    height: 24px;
-    width: 24px;
-  }
 }
 
 .mat-expansion-panel-header {
