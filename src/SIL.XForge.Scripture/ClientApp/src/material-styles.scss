@@ -14,7 +14,6 @@
 // Remove all-legacy-component-typographies once all legacy components are migrated
 @include mat.all-legacy-component-typographies();
 @include mat.all-component-typographies();
-@include mat.all-component-typographies();
 // Remove legacy-core once all legacy components are migrated
 @include mat.legacy-core();
 @include mat.core();
@@ -188,6 +187,10 @@ button.mat-icon-button {
 
 mat-card-title {
   --mat-card-title-text-size: 24px;
+}
+
+.mat-mdc-dialog-actions {
+  padding: 16px 24px !important;
 }
 
 @mixin dense_mat_select() {
