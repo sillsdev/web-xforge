@@ -1,7 +1,7 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
+import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
