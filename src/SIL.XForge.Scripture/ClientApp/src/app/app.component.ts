@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { NavigationEnd, Router } from '@angular/router';
+import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -226,6 +227,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (userData != null) {
       const userDataWithId = { ...userData, id: this.currentUserDoc.id };
       this.reportingService.addMeta(userDataWithId, 'user');
+      Bugsnag.setUser(this.currentUserDoc.id);
     }
 
     const languageTag = this.currentUserDoc.data!.interfaceLanguage;
