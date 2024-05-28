@@ -126,6 +126,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.autocomplete-theme($material-app-theme);
 @include mat.badge-theme($material-app-theme);
 @include mat.bottom-sheet-theme($material-app-theme);
+@include mat.icon-button-theme($material-app-theme);
 @include mat.button-theme($material-app-theme);
 @include mat.button-toggle-theme($material-app-theme);
 @include mat.card-theme($material-app-theme);
