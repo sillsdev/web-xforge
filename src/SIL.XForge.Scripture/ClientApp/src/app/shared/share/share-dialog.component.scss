@@ -43,13 +43,6 @@ div[mat-dialog-actions] {
   flex-direction: row-reverse; /* This was done so the share button would receive the focus */
   justify-items: flex-end;
   column-gap: 10px;
-
-  button {
-    mat-icon {
-      margin-inline-end: 10px;
-      direction: inherit;
-    }
-  }
 }
 
 ::ng-deep .share-selection-role.mat-list-base {
