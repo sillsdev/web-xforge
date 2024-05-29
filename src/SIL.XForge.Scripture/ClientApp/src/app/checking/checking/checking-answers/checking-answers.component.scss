@@ -64,18 +64,7 @@
   .form-actions {
     display: flex;
     align-items: center;
-
-    .mat-mdc-unelevated-button,
-    .mat-mdc-button {
-      padding: 16px;
-      margin-inline-end: 6px;
-      span {
-        vertical-align: middle;
-      }
-    }
-    mat-icon {
-      vertical-align: middle;
-    }
+    column-gap: 8px;
   }
   .stop-recording {
     color: variables.$red;
