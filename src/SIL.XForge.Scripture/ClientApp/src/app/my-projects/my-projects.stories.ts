@@ -131,6 +131,7 @@ const projectScenarios: readonly ProjectScenario[] = [
 type StoryAppState = {
   online: boolean;
   isKnownPTUser: boolean;
+  lastSelectedProject: number;
   delayFetchingPTProjectList: boolean;
   delayFetchingSFProjectList: boolean;
 } & {
@@ -140,6 +141,7 @@ type StoryAppState = {
 const defaultArgs: StoryAppState = {
   online: true,
   isKnownPTUser: false,
+  lastSelectedProject: -1,
   delayFetchingPTProjectList: false,
   delayFetchingSFProjectList: false,
   userSFProjectNotPTRoleCount: 0,
@@ -259,6 +261,13 @@ const meta: Meta = {
         }
       }
 
+      // Set the user's current project, if requested.
+      const lastSelectedProject: number = context.args.lastSelectedProject;
+      if (lastSelectedProject >= 0 && lastSelectedProject < projectProfileDocs.length) {
+        const lastSelectedProjectId: string = projectProfileDocs[lastSelectedProject].id;
+        user.sites.sf.currentProjectId = lastSelectedProjectId;
+      }
+
       when(mockedParatextService.getProjects()).thenCall(async () => {
         if (context.args.delayFetchingPTProjectList) await new Promise(resolve => setTimeout(resolve, 5000));
         return userParatextProjects;
@@ -355,6 +364,18 @@ export const AllProjectScenarios: Story = {
     userPTTranslatorNotSFConnectedAtAllCount: 1,
     userPTAdministratorNotConnectedToSFProjectCount: 1,
     userPTTranslatorNotConnectedToSFProjectCount: 1
+  }
+};
+
+// User was last working with a particular project. That project is highlighted in the list.
+export const LastSelectedProject: Story = {
+  args: {
+    isKnownPTUser: true,
+    lastSelectedProject: 1,
+    userSFProjectPTAdministratorCount: 2,
+    userSFResourceCount: 2,
+    userPTAdministratorNotSFConnectedAtAllCount: 1,
+    userPTAdministratorNotConnectedToSFProjectCount: 1
   }
 };
 
