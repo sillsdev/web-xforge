@@ -3,6 +3,8 @@ import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
@@ -11,6 +13,7 @@ import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
+import { UserDoc } from '../../xforge-common/models/user-doc';
 import { OnlineStatusService } from '../../xforge-common/online-status.service';
 import { TestOnlineStatusModule } from '../../xforge-common/test-online-status.module';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -125,12 +128,14 @@ const projectScenarios: readonly ProjectScenario[] = [
 ];
 
 // App data states
-type StoryAppState = { online: boolean } & {
+type StoryAppState = { online: boolean; isKnownPTUser: boolean; delayFetchingPTProjectList: boolean } & {
   [K in ProjectScenario['code'] as `${K}Count`]: number;
 };
 
 const defaultArgs: StoryAppState = {
   online: true,
+  isKnownPTUser: false,
+  delayFetchingPTProjectList: false,
   userSFProjectNotPTRoleCount: 0,
   userSFProjectPTAdministratorCount: 0,
   userSFProjectPTTranslatorCount: 0,
@@ -177,6 +182,18 @@ const meta: Meta = {
       let projectProfileDocs: SFProjectProfileDoc[] = [];
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
+
+      // Create the user who is viewing the page.
+      const user: User = createTestUser({
+        paratextId: context.args.isKnownPTUser ? 'pt-user-id' : undefined,
+        sites: {
+          sf: {
+            projects: []
+          }
+        }
+      });
+      const userDoc = { id: 'sf-user-id', data: user };
+      when(mockedUserService.getCurrentUser()).thenResolve(userDoc as UserDoc);
 
       // For every kind of project scenario,
       for (const scenario of projectScenarios) {
@@ -236,7 +253,10 @@ const meta: Meta = {
         }
       }
 
-      when(mockedParatextService.getProjects()).thenResolve(userParatextProjects);
+      when(mockedParatextService.getProjects()).thenCall(async () => {
+        if (context.args.delayFetchingPTProjectList) await new Promise(resolve => setTimeout(resolve, 5000));
+        return userParatextProjects;
+      });
       when(mockedUserProjectsService.projectDocs$).thenReturn(of(projectProfileDocs));
       when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(context.args.online));
       when(mockedOnlineStatusService.isOnline).thenReturn(context.args.online);
@@ -256,37 +276,46 @@ export default meta;
 
 type Story = StoryObj<StoryAppState>;
 
-// Someone registers at SF but has no PT projects.
+// Someone registers at SF but is not a PT user.
 export const NoProjects: Story = {};
 
-// Someone registers at SF, has no PT projects, and is offline.
+// Someone registers at SF, is not a PT user, and is offline.
 export const NoProjectsOffline: Story = {
   args: { online: false }
 };
 
-// A user with no PT projects is working as a Community Checker.
+// A non-PT user is working as a Community Checker.
 export const SimpleChecker: Story = {
   args: { userSFProjectNotPTRoleCount: 1 }
 };
 
-// A user with no PT projects is working as an SF translator.
+// A non-PT user is working as an SF translator.
 export const SimpleSFTranslator: Story = {
   args: { userSFProjectNotPTRoleCount: 1, userSFResourceCount: 1 }
 };
 
 // Someone registers at SF and has PT projects they administer.
 export const NewAndPTAdmin: Story = {
-  args: { userPTAdministratorNotSFConnectedAtAllCount: 2, userPTAdministratorNotConnectedToSFProjectCount: 1 }
+  args: {
+    isKnownPTUser: true,
+    userPTAdministratorNotSFConnectedAtAllCount: 2,
+    userPTAdministratorNotConnectedToSFProjectCount: 1
+  }
 };
 
 // Someone registers at SF. They are a PT translator.
 export const NewAndPTTranslator: Story = {
-  args: { userPTTranslatorNotSFConnectedAtAllCount: 2, userPTTranslatorNotConnectedToSFProjectCount: 1 }
+  args: {
+    isKnownPTUser: true,
+    userPTTranslatorNotSFConnectedAtAllCount: 2,
+    userPTTranslatorNotConnectedToSFProjectCount: 1
+  }
 };
 
 // User with PT projects they administer has connected some of them.
 export const PTAdmin: Story = {
   args: {
+    isKnownPTUser: true,
     userSFProjectPTAdministratorCount: 2,
     userSFResourceCount: 2,
     userPTAdministratorNotSFConnectedAtAllCount: 1,
@@ -297,6 +326,7 @@ export const PTAdmin: Story = {
 // User with PT projects that they are a PT translator for is connected to some of them.
 export const PTTranslator: Story = {
   args: {
+    isKnownPTUser: true,
     userSFProjectPTTranslatorCount: 2,
     userSFResourceCount: 2,
     userPTTranslatorNotSFConnectedAtAllCount: 1,
@@ -305,9 +335,9 @@ export const PTTranslator: Story = {
 };
 
 // User has a project in every kind of scenario.
-export const Everything: Story = {
-  ...NoProjects,
+export const AllProjectScenarios: Story = {
   args: {
+    isKnownPTUser: true,
     userSFProjectNotPTRoleCount: 1,
     userSFProjectPTAdministratorCount: 1,
     userSFProjectPTTranslatorCount: 1,
@@ -316,5 +346,18 @@ export const Everything: Story = {
     userPTTranslatorNotSFConnectedAtAllCount: 1,
     userPTAdministratorNotConnectedToSFProjectCount: 1,
     userPTTranslatorNotConnectedToSFProjectCount: 1
+  }
+};
+
+// User with PT projects comes to page, and experiences delay in waiting for the PT project list to come back from the
+// server.
+export const PTLoading: Story = {
+  args: {
+    isKnownPTUser: true,
+    delayFetchingPTProjectList: true,
+    userSFProjectPTAdministratorCount: 2,
+    userSFResourceCount: 2,
+    userPTAdministratorNotSFConnectedAtAllCount: 1,
+    userPTAdministratorNotConnectedToSFProjectCount: 1
   }
 };
