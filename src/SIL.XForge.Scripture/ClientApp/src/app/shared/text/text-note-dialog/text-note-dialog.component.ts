@@ -1,6 +1,7 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA } from '@angular/material/legacy-dialog';
 import { TranslocoService } from '@ngneat/transloco';
+import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 
 export enum TextNoteType {
   Footnote = 'f',
@@ -24,7 +25,7 @@ export class TextNoteDialogComponent {
     private readonly translocoService: TranslocoService
   ) {}
 
-  get direction(): 'ltr' | 'rtl' {
+  get direction(): LocaleDirection {
     return this.data.isRightToLeft ? 'rtl' : 'ltr';
   }
 

@@ -23,6 +23,7 @@ import { takeUntil } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
 import { DialogService } from 'xforge-common/dialog.service';
+import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -404,7 +405,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this._isReadOnly || this.viewModel.isEmpty;
   }
 
-  get textDirection(): 'ltr' | 'rtl' | 'auto' {
+  get textDirection(): LocaleDirection | 'auto' {
     if (this.contentShowing) {
       return this.isRtl ? 'rtl' : 'ltr';
     }
