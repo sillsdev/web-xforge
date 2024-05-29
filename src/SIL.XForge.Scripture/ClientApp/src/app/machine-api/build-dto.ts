@@ -13,7 +13,7 @@ export interface BuildDto extends ResourceDto {
 export interface ServalBuildAdditionalInfo {
   buildId: string;
   corporaIds?: string[];
-  dateFinished?: Date;
+  dateFinished?: string;
   step: number;
   translationEngineId: string;
 }

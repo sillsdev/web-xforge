@@ -244,17 +244,15 @@
                       [disabled]="downloadProgress > 0"
                       data-test-id="download-button"
                     >
-                      <mat-icon>
-                        {{ downloadProgress === 0 ? "cloud_download" : "" }}
-                        <mat-spinner
-                          *ngIf="downloadProgress > 0"
-                          diameter="20"
-                          [value]="downloadProgress"
-                          mode="determinate"
-                          color="accent"
-                          data-test-id="download-spinner"
-                        ></mat-spinner>
-                      </mat-icon>
+                      <mat-icon *ngIf="downloadProgress === 0" class="material-icons-outlined">cloud_download</mat-icon>
+                      <mat-spinner
+                        *ngIf="downloadProgress > 0"
+                        diameter="20"
+                        [value]="downloadProgress"
+                        mode="determinate"
+                        color="accent"
+                        data-test-id="download-spinner"
+                      ></mat-spinner>
                       <span>{{ t("download_draft") }}</span>
                     </button>
                     <button

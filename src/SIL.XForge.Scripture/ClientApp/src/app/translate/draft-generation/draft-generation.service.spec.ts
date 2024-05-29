@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { anything, mock, verify } from 'ts-mockito';
+import { mock } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -477,26 +477,6 @@ describe('DraftGenerationService', () => {
       );
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
-      tick();
-    }));
-
-    it('should return undefined and display a notice for a 503 error', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-
-      // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter).subscribe(result => {
-        expect(result).toBeUndefined();
-        verify(mockNoticeService.showError(anything())).once();
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(null, { status: HttpStatusCode.ServiceUnavailable, statusText: 'Machine API is unavailable' });
       tick();
     }));
 

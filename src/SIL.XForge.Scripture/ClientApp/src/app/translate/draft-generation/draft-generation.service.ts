@@ -184,7 +184,7 @@ export class DraftGenerationService {
       .pipe(
         map(res => res.data?.data.ops ?? []),
         catchError(err => {
-          // If no pre-translations exist, return empty dictionary
+          // If no pre-translations exist, return empty array
           if (err.status === 403 || err.status === 404 || err.status === 409) {
             return of([]);
           } else if (err.status === 405) {
@@ -202,7 +202,7 @@ export class DraftGenerationService {
    * Gets the pre-translation USFM for the specified book/chapter using the last completed build.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
-   * @param chapter The chapter number.
+   * @param chapter The chapter number. Specify 0 to return all chapters in the book.
    * @returns An observable string of USFM data, or undefined if no pre-translations exist.
    */
   getGeneratedDraftUsfm(projectId: string, book: number, chapter: number): Observable<string | undefined> {
@@ -213,13 +213,8 @@ export class DraftGenerationService {
       .get<string>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`)
       .pipe(
         map(res => res.data),
-        catchError(err => {
-          // If no pre-translations exist, return empty dictionary
-          if (err.status === 403 || err.status === 404 || err.status === 409) {
-            return of(undefined);
-          }
-
-          this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
+        catchError(() => {
+          // If no USFM could be retrieved, return undefined
           return of(undefined);
         })
       );
