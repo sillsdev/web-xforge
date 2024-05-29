@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { ProjectService } from 'xforge-common/project.service';
@@ -42,7 +42,7 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
    * @returns True if the Paratext identifier is a resource identifier.
    */
   isResource(paratextId?: string): boolean {
-    return (paratextId?.length ?? 0) === 16;
+    return (paratextId?.length ?? 0) === DBL_RESOURCE_ID_LENGTH;
   }
 
   /**

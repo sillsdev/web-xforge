@@ -5,7 +5,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { delay, of } from 'rxjs';
 import { instance, mock, objectContaining, when } from 'ts-mockito';
@@ -221,7 +221,7 @@ const meta: Meta = {
               paratextId: ptProjectId
             });
             if (scenario.isResource) {
-              const resourceIdLength: number = 16;
+              const resourceIdLength: number = DBL_RESOURCE_ID_LENGTH;
               sfProjectProfile.paratextId = `resource-${i}-resource`.substring(0, resourceIdLength);
               sfProjectProfile.resourceConfig = {
                 createdTimestamp: new Date(),
