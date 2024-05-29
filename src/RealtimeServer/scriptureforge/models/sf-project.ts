@@ -15,6 +15,10 @@ export const SF_PROJECT_PROFILES_INDEX_PATHS: string[] = [];
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
 export const SF_PROJECT_INDEX_PATHS: string[] = [obj<SFProject>().pathStr(q => q.name)];
 
+/** Length of id for a DBL resource. */
+export const DBL_RESOURCE_ID_LENGTH: number = 16;
+
+/** See documentation in SFProject.cs. */
 export interface SFProjectProfile extends Project {
   paratextId: string;
   shortName: string;
@@ -44,4 +48,10 @@ export interface ResourceConfig {
   manifestChecksum: string;
   permissionsChecksum: string;
   revision: number;
+}
+
+/** Is the SF project that of a DBL resource, rather than a typical PT project? */
+export function isResource(project: SFProjectProfile): boolean {
+  const resourceIdLength: number = DBL_RESOURCE_ID_LENGTH;
+  return project.paratextId.length === resourceIdLength;
 }
