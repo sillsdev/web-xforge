@@ -48,9 +48,9 @@ public static class MachineApi
 
     public static string GetBuildHref(string sfProjectId, string buildId)
     {
-        // The {locatorType} parameter is required to maintain compatibility with the v1 machine-api and machine.js
+        // If there is no build id, the href will end in a dot, which we must remove to have a valid URL
         string buildHref = GetBuild.Replace("{sfProjectId}", sfProjectId).Replace("{buildId?}", buildId);
-        return $"{Namespace}/{buildHref}";
+        return $"{Namespace}/{buildHref}".TrimEnd('.');
     }
 
     public static string GetEngineHref(string sfProjectId) =>

@@ -38,9 +38,10 @@ public interface IMachineApiService
         int chapterNum,
         CancellationToken cancellationToken
     );
-    Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
+    Task<ServalBuildDto?> GetQueuedStateAsync(
         string curUserId,
         string sfProjectId,
+        bool preTranslate,
         CancellationToken cancellationToken
     );
     Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
@@ -65,7 +66,7 @@ public interface IMachineApiService
     );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
     Task RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
-    Task<ServalBuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(
         string curUserId,
