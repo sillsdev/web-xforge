@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
+import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -52,8 +53,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   async ngOnInit(): Promise<void> {
     this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
       if (projects == null) return;
-      this.userConnectedProjects = projects.filter(project => !this.isResource(project));
-      this.userConnectedResources = projects.filter(project => this.isResource(project));
+      this.userConnectedProjects = projects.filter(project => project.data != null && !isResource(project.data));
+      this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
     await this.loadUser();
@@ -87,10 +88,5 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     } finally {
       this.loadingPTProjects = false;
     }
-  }
-
-  private isResource(project: SFProjectProfileDoc): boolean {
-    const resourceIdLength: number = 16;
-    return project.data?.paratextId.length === resourceIdLength;
   }
 }
