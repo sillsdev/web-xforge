@@ -4,8 +4,9 @@ import { RouterModule } from '@angular/router';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -19,6 +20,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
 import { TextDocId } from './models/text-doc';
 import { PermissionsService } from './permissions.service';
+import { RESOURCE_IDENTIFIER_LENGTH } from './sf-project-util.service';
 import { SFProjectService } from './sf-project.service';
 
 const mockedUserService = mock(UserService);
@@ -130,18 +132,35 @@ describe('PermissionsService', () => {
       expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(false);
     }));
 
-    it('allows users with PT admin role to sync', () => {
+    it('allows PT admin role to sync projects', () => {
       const env = new TestEnvironment();
+      env.setProjectType('project');
       expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
     });
 
-    it('allows users with PT translator role to sync', () => {
+    it('allows PT translator role to sync projects', () => {
       const env = new TestEnvironment();
+      env.setProjectType('project');
       expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextTranslator)).toBe(true);
     });
 
-    it('disallows non- PT admin/translator roles to sync', () => {
+    it('allows any PT role to sync resources', () => {
       const env = new TestEnvironment();
+      env.setProjectType('resource');
+
+      Object.values(SFProjectRole).forEach(role => {
+        if (!isParatextRole(role)) {
+          return;
+        }
+
+        expect(env.service.canSync(env.projectDoc, role)).toBe(true);
+      });
+    });
+
+    it('disallows non- PT admin/translator roles to sync projects', () => {
+      const env = new TestEnvironment();
+      env.setProjectType('project');
+
       Object.values(SFProjectRole).forEach(role => {
         if (role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator) {
           return;
@@ -157,20 +176,14 @@ class TestEnvironment {
   readonly projectDoc: SFProjectProfileDoc = instance(mockedProjectDoc);
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(checkingEnabled = true) {
+  constructor(readonly checkingEnabled = true) {
     this.service = TestBed.inject(PermissionsService);
-    let userRoles = Object.values(SFProjectRole).reduce((roles, role) => ({ ...roles, [role]: role }), {});
 
-    const data = createTestProjectProfile({
-      userRoles,
-      checkingConfig: {
-        checkingEnabled: checkingEnabled
-      }
-    });
-    when(mockedProjectDoc.data).thenReturn(data);
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
+
+    this.setProjectProfile();
     this.setupProjectData();
     this.setCurrentUser();
     this.setupUserData();
@@ -229,5 +242,31 @@ class TestEnvironment {
         }
       })
     });
+  }
+
+  setProjectProfile(overrides?: RecursivePartial<SFProjectProfile>): void {
+    const userRoles = Object.values(SFProjectRole).reduce((roles, role) => ({ ...roles, [role]: role }), {});
+    const config = {
+      userRoles,
+      checkingConfig: {
+        checkingEnabled: this.checkingEnabled
+      },
+      ...overrides
+    };
+    const data = createTestProjectProfile(config);
+    when(mockedProjectDoc.data).thenReturn(data);
+  }
+
+  setProjectType(projectType: 'resource' | 'project'): string {
+    // DBL resources can be identified by length of paratext id
+    const paratextId = Array(projectType === 'resource' ? RESOURCE_IDENTIFIER_LENGTH : 40)
+      .fill('a')
+      .join('');
+
+    this.setProjectProfile({
+      paratextId: paratextId
+    });
+
+    return paratextId;
   }
 }
