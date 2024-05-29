@@ -376,6 +376,20 @@ export const AllProjectScenarios: Story = {
 // User was last working with a particular project. That project is highlighted in the list.
 export const LastSelectedProject: Story = { args: { ...PTAdmin.args, lastSelectedProject: 1 } };
 
+// PT user is offline.
+export const PTUserOffline: Story = { args: { ...PTAdmin.args, online: false } };
+
+// A non-PT user is working as an SF translator. The user is offline. We know the user account doesn't have any PT
+// projects that it can connect to. But the user might be looking for a recent project invitation and not see it because
+// they are offline. So show a message about needing to be online to get started with a project. Or, suppose the user is
+// added to a project as a community checker, and goes to the My projects page to open the project. Then they go
+// offline. But they can't "start using the project", even though their offline app knows about the project, because the
+// app has not fetched the necessary data for it. So show a message about needing to be online to get started with a
+// project.
+export const SimpleSFTranslatorOffline: Story = {
+  args: { ...SimpleSFTranslator.args, online: false }
+};
+
 // User with PT projects comes to page, and experiences delay in waiting for the PT project list to come back from the
 // server.
 export const PTLoading: Story = {
