@@ -190,8 +190,8 @@ describe('MyProjectsComponent', () => {
       // During this time, we should not be showing the you-have-no-projects message.
       expect(env.messageNoPTOrSFProjects).toBeNull();
       didCheckAtLoadingTime = true;
-
-      return of([]);
+      // Return the usual data.
+      return env.userParatextProjects;
     });
 
     env.waitUntilLoaded();
