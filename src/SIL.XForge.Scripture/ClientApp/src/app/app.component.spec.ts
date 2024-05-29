@@ -12,7 +12,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
@@ -33,6 +33,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { filter } from 'rxjs/operators';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
@@ -305,6 +306,22 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
+  it('hide avatar if not logged in', fakeAsync(() => {
+    const env = new TestEnvironment('online', false);
+    env.init();
+
+    expect(env.avatarIcon).toBeNull();
+  }));
+
+  it('show avatar after user logs in', fakeAsync(() => {
+    const env = new TestEnvironment('online', false);
+    env.init();
+
+    expect(env.avatarIcon).toBeNull();
+    env.triggerLogin();
+    expect(env.avatarIcon).not.toBeNull();
+  }));
+
   describe('Community Checking', () => {
     it('ensure local storage is cleared when removed from project', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -484,8 +501,13 @@ class TestEnvironment {
     );
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
+    when(mockedAuthService.loggedIn).thenCall(() =>
+      firstValueFrom(this.loggedInState$.pipe(filter(state => state.loggedIn)))
+    );
     when(mockedAuthService.loggedInState$).thenReturn(this.loggedInState$);
-    this.setCurrentUser('user01');
+    if (isLoggedIn) {
+      this.setCurrentUser('user01');
+    }
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
@@ -585,6 +607,7 @@ class TestEnvironment {
   }
 
   triggerLogin(): void {
+    this.setCurrentUser('user01');
     this.loggedInState$.next({ loggedIn: true, newlyLoggedIn: false, anonymousUser: false });
     this.wait();
   }
