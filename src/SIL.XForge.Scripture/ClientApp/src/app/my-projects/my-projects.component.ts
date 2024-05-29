@@ -23,9 +23,9 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   userUnconnectedParatextProjects: ParatextProject[] = [];
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
-  loggedIntoPT: boolean = true;
   loadingPTProjects: boolean = false;
   initialLoadingSFProjects: boolean = true;
+  userIsPTUser: boolean = false;
 
   constructor(
     private readonly userProjectsService: SFUserProjectsService,
@@ -58,8 +58,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     });
     await this.loadUser();
     this.subscribe(this.onlineStatusService.onlineStatus$, online => {
-      const userIsPTUser: boolean = this.user?.data != null ? isPTUser(this.user.data) : false;
-      if (userIsPTUser && online) this.loadParatextProjects();
+      this.userIsPTUser = this.user?.data != null ? isPTUser(this.user.data) : false;
+      if (this.userIsPTUser && online) this.loadParatextProjects();
     });
   }
 
@@ -78,10 +78,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     try {
       const userPTProjects = await this.paratextService.getProjects();
       if (userPTProjects == null) {
-        this.loggedIntoPT = false;
+        this.problemGettingPTProjects = true;
         return;
-      } else {
-        this.loggedIntoPT = true;
       }
       this.userUnconnectedParatextProjects = userPTProjects.filter(project => !project.isConnected);
     } catch {

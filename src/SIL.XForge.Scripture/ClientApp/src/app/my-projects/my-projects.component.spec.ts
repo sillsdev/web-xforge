@@ -146,15 +146,16 @@ describe('MyProjectsComponent', () => {
       .nativeElement.textContent.includes('only_paratext_admins_can_start');
   }));
 
-  it('guides user when user has no known SF or PT projects, when not logged into PT', fakeAsync(() => {
-    const env = new TestEnvironment({ userHasAnyProjects: false });
-    env.simulateNotBeingLoggedIntoParatext();
+  it('guides user when user has no known SF projects, and not a PT user', fakeAsync(() => {
+    const env = new TestEnvironment({ userHasAnyProjects: false, isKnownPTUser: false });
     env.waitUntilLoaded();
 
     // Big banner guiding user is shown
     expect(env.messageNoPTOrSFProjects).not.toBeNull();
     // The subtle message about accessing another project should not be shown
     expect(env.messageLookingForAnotherProject).toBeNull();
+    // We won't expect getProjects() to have been called.
+    verify(mockedParatextService.getProjects()).never();
   }));
 
   it('guides user when user has no known SF or PT projects, when is logged into PT', fakeAsync(() => {
@@ -202,6 +203,19 @@ describe('MyProjectsComponent', () => {
   it('trouble fetching the list of PT projects to connect to is gracefully handled', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
+    env.waitUntilLoaded();
+
+    // Trouble message is shown.
+    expect(env.messageTroubleGettingPTProjectList).not.toBeNull();
+    // Show the header above it as well to make the context clear.
+    expect(env.headerNotConnectedProjects).not.toBeNull();
+    // Not throwing an exception.
+  }));
+
+  it('null result when fetching the list of PT projects to connect to is gracefully handled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    // getProjects() may return undefined such as if the user is not logged into Paratext.
+    when(mockedParatextService.getProjects()).thenResolve(undefined);
     env.waitUntilLoaded();
 
     // Trouble message is shown.
@@ -324,8 +338,8 @@ describe('MyProjectsComponent', () => {
   }));
 
   it('does not query PT projects list or show loading card for PT projects list, if is not a PT user', fakeAsync(() => {
-    // Suppose a user views the page and we don't think this user is a PT user. We should not make API calls to query PT
-    // projects, and we should not show a loading card for the PT projects list.
+    // Suppose a user views the page and is not a PT user. We should not make API calls to query PT projects, and we
+    // should not show a loading card for the PT projects list.
     const env = new TestEnvironment({ isKnownPTUser: false });
     env.waitUntilLoaded();
 
@@ -343,8 +357,7 @@ describe('MyProjectsComponent', () => {
     // Paratext (but didn't "Log in with Paratext"), they might be wondering how to open their Paratext projects. But we
     // can't really know which of these situations we are in. If the user is not logged in with Paratext, show a subtle
     // message about how to access more projects.
-    const env = new TestEnvironment();
-    env.simulateNotBeingLoggedIntoParatext();
+    const env = new TestEnvironment({ isKnownPTUser: false });
     // Setup: Only show the subtle message if there are _some_ projects that the user has access to. If the user has no
     // projects at all, then we show a different message.
     expect(env.projectProfileDocs.length).toBeGreaterThan(0);
@@ -354,6 +367,8 @@ describe('MyProjectsComponent', () => {
     expect(env.messageLookingForAnotherProject).not.toBeNull();
     // The unconnected projects area shouldn't be shown.
     expect(env.headerNotConnectedProjects).toBeNull();
+    // We won't expect getProjects() to have been called.
+    verify(mockedParatextService.getProjects()).never();
   }));
 });
 
@@ -530,10 +545,6 @@ export class TestEnvironment {
 
   cardForUserUnconnectedProject(ptProjectId: string): DebugElement {
     return this.getElement(`#user-unconnected-project-card-${ptProjectId}`);
-  }
-
-  simulateNotBeingLoggedIntoParatext(): void {
-    when(mockedParatextService.getProjects()).thenResolve(undefined);
   }
 
   waitUntilLoaded(): void {
