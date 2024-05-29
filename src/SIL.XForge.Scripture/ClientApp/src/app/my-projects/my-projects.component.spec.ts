@@ -244,7 +244,7 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // The message is shown that tells the user about needing to be online.
-    expect(env.messageLookingForAnotherProject).not.toBeNull();
+    expect(env.messageOffline).not.toBeNull();
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
     // Not throwing an exception.
@@ -260,7 +260,7 @@ describe('MyProjectsComponent', () => {
     // We are offline and don't even call getProjects yet.
     verify(mockedParatextService.getProjects()).never();
     // The message is shown that tells the user about needing to be online.
-    expect(env.messageLookingForAnotherProject).not.toBeNull();
+    expect(env.messageOffline).not.toBeNull();
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
     // Unconnected project cards are not shown
@@ -273,6 +273,8 @@ describe('MyProjectsComponent', () => {
     verify(mockedParatextService.getProjects()).once();
     // Unconnected project cards are now shown
     expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).not.toBeNull();
+    // We are no longer showing a message about needing to be online.
+    expect(env.messageOffline).toBeNull();
   }));
 
   it('clears trouble message when user comes online after a prior failed attempt to fetch PT projects', fakeAsync(() => {
@@ -525,6 +527,10 @@ export class TestEnvironment {
 
   get messageLookingForAnotherProject(): DebugElement {
     return this.getElement('#message-looking-for-another-project');
+  }
+
+  get messageOffline(): DebugElement {
+    return this.getElement('#message-offline');
   }
 
   set onlineStatus(isOnline: boolean) {
