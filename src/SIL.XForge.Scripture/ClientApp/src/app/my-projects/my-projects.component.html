@@ -105,5 +105,9 @@
         <span class="helper-text">&nbsp;</span>
       </div>
     </mat-card>
+
+    <app-notice id="message-offline" icon="cloud_off" type="info" *ngIf="!isOnline">
+      You will need to connect to the internet to get started with a project.
+    </app-notice>
   </div>
 </ng-container>
