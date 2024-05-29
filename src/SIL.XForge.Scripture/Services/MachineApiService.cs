@@ -401,65 +401,89 @@ public class MachineApiService(
         }
     }
 
-    public async Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
+    public async Task<ServalBuildDto?> GetQueuedStateAsync(
         string curUserId,
         string sfProjectId,
+        bool preTranslate,
         CancellationToken cancellationToken
     )
     {
+        ServalBuildDto? buildDto = null;
+
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
-        // If there is a pre-translation queued, return a build dto with a status showing it is queued
-        if ((await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        // If there is a job queued, return a build dto with a status showing it is queued
+        if (
+            (await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
+            && projectSecret.ServalData is not null
+        )
         {
+            // Get the values to use depending on whether this is a pre-translation job or not
+            string? engineId = preTranslate
+                ? projectSecret.ServalData.PreTranslationEngineId
+                : projectSecret.ServalData.TranslationEngineId;
+            string? errorMessage = preTranslate
+                ? projectSecret.ServalData.PreTranslationErrorMessage
+                : projectSecret.ServalData.TranslationErrorMessage;
+            DateTime? queuedAt = preTranslate
+                ? projectSecret.ServalData.PreTranslationQueuedAt
+                : projectSecret.ServalData.TranslationQueuedAt;
+
             // If we have an error message, report that to the user
-            if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.PreTranslationErrorMessage))
+            if (!string.IsNullOrWhiteSpace(errorMessage))
             {
-                return new ServalBuildDto
+                buildDto = new ServalBuildDto
                 {
                     State = BuildStateFaulted,
-                    Message = projectSecret.ServalData.PreTranslationErrorMessage,
-                    AdditionalInfo = new ServalBuildAdditionalInfo
-                    {
-                        TranslationEngineId = projectSecret.ServalData.PreTranslationEngineId ?? string.Empty,
-                    },
+                    Message = errorMessage,
+                    AdditionalInfo = new ServalBuildAdditionalInfo { TranslationEngineId = engineId ?? string.Empty, },
                 };
             }
-
-            // If we do not have build queued, do not return a build dto
-            if (projectSecret.ServalData?.PreTranslationQueuedAt is null)
+            else
             {
-                return null;
-            }
-
-            // If the build was queued 6 hours or more ago, it will have failed to upload
-            if (projectSecret.ServalData?.PreTranslationQueuedAt <= DateTime.UtcNow.AddHours(-6))
-            {
-                return new ServalBuildDto
+                // If we do not have build queued, do not return a build dto
+                if (queuedAt is null)
                 {
-                    State = BuildStateFaulted,
-                    Message = "The build failed to upload to the server.",
-                    AdditionalInfo = new ServalBuildAdditionalInfo
+                    return null;
+                }
+
+                // If the build was queued 6 hours or more ago, it will have failed to upload
+                if (queuedAt <= DateTime.UtcNow.AddHours(-6))
+                {
+                    buildDto = new ServalBuildDto
                     {
-                        TranslationEngineId = projectSecret.ServalData.PreTranslationEngineId ?? string.Empty,
-                    },
-                };
-            }
-
-            // The build is queued and uploading is occurring in the background
-            return new ServalBuildDto
-            {
-                State = BuildStateQueued,
-                Message = "The build is being uploaded to the server.",
-                AdditionalInfo = new ServalBuildAdditionalInfo
+                        State = BuildStateFaulted,
+                        Message = "The build failed to upload to the server.",
+                        AdditionalInfo = new ServalBuildAdditionalInfo
+                        {
+                            TranslationEngineId = engineId ?? string.Empty,
+                        },
+                    };
+                }
+                else
                 {
-                    TranslationEngineId = projectSecret.ServalData?.PreTranslationEngineId ?? string.Empty,
-                },
-            };
+                    // The build is queued and uploading is occurring in the background
+                    buildDto = new ServalBuildDto
+                    {
+                        State = BuildStateQueued,
+                        Message = "The build is being uploaded to the server.",
+                        AdditionalInfo = new ServalBuildAdditionalInfo
+                        {
+                            TranslationEngineId = engineId ?? string.Empty,
+                        },
+                    };
+                }
+            }
         }
 
-        return null;
+        // Make sure the DTO conforms to the machine-api V2 URLs
+        if (buildDto is not null)
+        {
+            UpdateDto(buildDto, sfProjectId);
+        }
+
+        return buildDto;
     }
 
     public async Task<string> GetPreTranslationUsfmAsync(
@@ -579,163 +603,44 @@ public class MachineApiService(
         }
     }
 
-    public async Task<ServalBuildDto> StartBuildAsync(
-        string curUserId,
-        string sfProjectId,
-        CancellationToken cancellationToken
-    )
+    public async Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
     {
-        ServalBuildDto? buildDto = null;
-
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
-
-        string? translationEngineId = await GetTranslationIdAsync(
-            sfProjectId,
-            preTranslate: false,
-            returnEmptyStringIfMissing: true
-        );
-        try
+        // Load the project from the realtime service
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        if (!projectDoc.IsLoaded)
         {
-            // If the translation engine is missing or does not exist, recreate it
-            if (
-                !await machineProjectService.TranslationEngineExistsAsync(
-                    sfProjectId,
-                    translationEngineId,
-                    preTranslate: false,
-                    cancellationToken
-                )
-            )
-            {
-                // Clear the existing translation engine id and corpora
-                // AddProjectAsync() requires the id to be not defined to create the new translation engine.
-                // We also load the project secret, so we can get the corpora ID to delete
-                if (
-                    !string.IsNullOrWhiteSpace(translationEngineId)
-                    && (await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
-                )
-                {
-                    string? corporaId = projectSecret
-                        .ServalData?.Corpora
-                        .FirstOrDefault(c => !c.Value.PreTranslate)
-                        .Key;
-                    await projectSecrets.UpdateAsync(
-                        sfProjectId,
-                        u =>
-                        {
-                            u.Unset(p => p.ServalData.TranslationEngineId);
-                            if (!string.IsNullOrWhiteSpace(corporaId))
-                            {
-                                u.Unset(p => p.ServalData.Corpora[corporaId]);
-                            }
-                        }
-                    );
-                }
-
-                translationEngineId = await machineProjectService.AddProjectAsync(
-                    curUserId,
-                    sfProjectId,
-                    preTranslate: false,
-                    cancellationToken
-                );
-            }
-            else
-            {
-                // Ensure that the source and target language have not changed
-                bool recreateTranslationEngine = false;
-
-                // Load the project from the realtime service
-                await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
-                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
-                if (!projectDoc.IsLoaded)
-                {
-                    throw new DataNotFoundException("The project does not exist.");
-                }
-
-                // Get the translation engine
-                TranslationEngine translationEngine = await translationEnginesClient.GetAsync(
-                    translationEngineId,
-                    cancellationToken
-                );
-
-                // See if the target language has changed
-                string projectTargetLanguage = projectDoc.Data.WritingSystem.Tag;
-                if (translationEngine.TargetLanguage != projectTargetLanguage)
-                {
-                    string message =
-                        $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
-                    logger.LogInformation(message);
-                    recreateTranslationEngine = true;
-                }
-
-                // See if the source language has changed
-                string projectSourceLanguage = projectDoc.Data.TranslateConfig.Source?.WritingSystem.Tag;
-                if (translationEngine.SourceLanguage != projectSourceLanguage)
-                {
-                    string message =
-                        $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
-                    logger.LogInformation(message);
-                    recreateTranslationEngine = true;
-                }
-
-                // Delete then recreate the translation engine if they have changed
-                if (recreateTranslationEngine)
-                {
-                    // Removal can be a slow process
-                    await machineProjectService.RemoveProjectAsync(
-                        curUserId,
-                        sfProjectId,
-                        preTranslate: false,
-                        cancellationToken
-                    );
-                    translationEngineId = await machineProjectService.AddProjectAsync(
-                        curUserId,
-                        sfProjectId,
-                        preTranslate: false,
-                        cancellationToken
-                    );
-                }
-            }
-        }
-        catch (ServalApiException e)
-        {
-            ProcessServalApiException(e);
-
-            // Ensure that the translation engine id is null so a Serval build isn't started
-            translationEngineId = null;
+            throw new DataNotFoundException("The project does not exist.");
         }
 
-        if (!string.IsNullOrWhiteSpace(translationEngineId))
-        {
-            try
-            {
-                // We do not need the success boolean result, as we will still rebuild if no files have changed
-                await machineProjectService.SyncProjectCorporaAsync(
+        // Ensure that the user has permission on the project
+        MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
+
+        // Sync the source and target before running the build
+        string jobId = await syncService.SyncAsync(new SyncConfig { ProjectId = sfProjectId, UserId = curUserId });
+
+        // Run the training after the sync has completed
+        jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
+            jobId,
+            r =>
+                r.BuildProjectForBackgroundJobAsync(
                     curUserId,
                     new BuildConfig { ProjectId = sfProjectId },
-                    preTranslate: false,
-                    cancellationToken
-                );
-                TranslationBuild translationBuild = await translationEnginesClient.StartBuildAsync(
-                    translationEngineId,
-                    new TranslationBuildConfig(),
-                    cancellationToken
-                );
-                buildDto = CreateDto(translationBuild);
-            }
-            catch (ServalApiException e)
+                    false,
+                    CancellationToken.None
+                )
+        );
+
+        // Set the translation queued date and time, and hang fire job id
+        await projectSecrets.UpdateAsync(
+            sfProjectId,
+            u =>
             {
-                ProcessServalApiException(e);
+                u.Set(p => p.ServalData.TranslationJobId, jobId);
+                u.Set(p => p.ServalData.TranslationQueuedAt, DateTime.UtcNow);
+                u.Unset(p => p.ServalData.TranslationErrorMessage);
             }
-        }
-
-        // This will be null if Serval is down
-        if (buildDto is null)
-        {
-            throw new DataNotFoundException("No translation engine could be retrieved - Is Serval Down?");
-        }
-
-        return UpdateDto(buildDto, sfProjectId);
+        );
     }
 
     public async Task StartPreTranslationBuildAsync(
@@ -1015,7 +920,7 @@ public class MachineApiService(
         buildDto.Engine = new ServalResourceDto { Id = sfProjectId, Href = MachineApi.GetEngineHref(sfProjectId) };
 
         // We use this special ID format so that the DTO ID can be an optional URL parameter
-        buildDto.Id = $"{sfProjectId}.{buildDto.Id}";
+        buildDto.Id = $"{sfProjectId}.{buildDto.Id}".TrimEnd('.');
         return buildDto;
     }
 

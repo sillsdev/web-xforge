@@ -95,7 +95,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueuePreTranslationBuildAsync();
+        await env.QueueBuildAsync(preTranslate: true);
 
         // SUT
         await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
@@ -1150,17 +1150,18 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationQueuedStateAsync_BuildCrashed()
+    public async Task GetQueuedStateAsync_BuildCrashed()
     {
         // Set up test environment
         var env = new TestEnvironment();
         const string errorMessage = "This is an error message from Serval";
-        await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6), errorMessage);
+        await env.QueueBuildAsync(preTranslate: false, DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
-        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
+            preTranslate: false,
             CancellationToken.None
         );
         Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
@@ -1168,47 +1169,120 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetPreTranslationQueuedStateAsync_BuildRunTooLong()
+    public async Task GetQueuedStateAsync_BuildRunTooLong()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6));
+        await env.QueueBuildAsync(preTranslate: false, DateTime.UtcNow.AddHours(-6));
 
         // SUT
-        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
+            preTranslate: false,
             CancellationToken.None
         );
         Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
     }
 
     [Test]
-    public async Task GetPreTranslationQueuedStateAsync_BuildQueued()
+    public async Task GetQueuedStateAsync_BuildQueued()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueuePreTranslationBuildAsync();
+        await env.QueueBuildAsync(preTranslate: false);
 
         // SUT
-        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateQueued, build?.State);
+        Assert.AreEqual(Project01, build?.Id);
+    }
+
+    [Test]
+    public async Task GetQueuedStateAsync_NoBuildQueued()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
+            User01,
+            Project01,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsNull(build);
+    }
+
+    [Test]
+    public async Task GetQueuedStateAsync_PreTranslationBuildCrashed()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string errorMessage = "This is an error message from Serval";
+        await env.QueueBuildAsync(preTranslate: true, DateTime.UtcNow.AddHours(-6), errorMessage);
+
+        // SUT
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
+            User01,
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
+        Assert.AreEqual(errorMessage, build?.Message);
+    }
+
+    [Test]
+    public async Task GetQueuedStateAsync_PreTranslationBuildRunTooLong()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(preTranslate: true, DateTime.UtcNow.AddHours(-6));
+
+        // SUT
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
+            User01,
+            Project01,
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
+    }
+
+    [Test]
+    public async Task GetQueuedStateAsync_PreTranslationBuildQueued()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(preTranslate: true);
+
+        // SUT
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
+            User01,
+            Project01,
+            preTranslate: true,
             CancellationToken.None
         );
         Assert.AreEqual(MachineApiService.BuildStateQueued, build?.State);
     }
 
     [Test]
-    public async Task GetPreTranslationQueuedStateAsync_NoBuildQueued()
+    public async Task GetQueuedStateAsync_NoPreTranslationBuildQueued()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
+            preTranslate: true,
             CancellationToken.None
         );
         Assert.IsNull(build);
@@ -1362,206 +1436,20 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartBuildAsync_ServalCreatesRemovedTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
-            .Returns(Task.FromResult(TranslationEngine01));
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Returns(
-                Task.FromResult(
-                    new TranslationBuild
-                    {
-                        Url = "https://example.com",
-                        Id = Build01,
-                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                        State = JobState.Active,
-                    }
-                )
-            );
-
-        // The following substitution is Serval stating that a translation engine SF expects to exist has been removed
-        env.MachineProjectService.TranslationEngineExistsAsync(
-            Project01,
-            TranslationEngine01,
-            preTranslate: false,
-            CancellationToken.None
-        )
-            .Returns(Task.FromResult(false));
-
-        // SUT
-        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        await env.MachineProjectService.Received(1)
-            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-    }
-
-    [Test]
-    public void StartBuildAsync_ThrowsOtherErrors()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService.TranslationEngineExistsAsync(
-            Project01,
-            TranslationEngine01,
-            preTranslate: false,
-            CancellationToken.None
-        )
-            .Throws(ServalApiExceptions.InternalServerError);
-
-        // SUT
-        Assert.ThrowsAsync<ServalApiException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task StartBuildAsync_ServalCreatesMissingTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService.AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None)
-            .Returns(Task.FromResult(TranslationEngine01));
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Returns(
-                Task.FromResult(
-                    new TranslationBuild
-                    {
-                        Url = "https://example.com",
-                        Id = Build01,
-                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                        State = JobState.Active,
-                    }
-                )
-            );
-
-        // SUT
-        await env.Service.StartBuildAsync(User01, Project03, CancellationToken.None);
-
-        await env.MachineProjectService.Received(1)
-            .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
-    }
-
-    [Test]
-    public void StartBuildAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartBuildAsync(User01, Project03, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void StartBuildAsync_ServalOutage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task StartBuildAsync_ServalRecreatesWhenLanguageChanges()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
-            .Returns(Task.FromResult(TranslationEngine01));
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationEngine { SourceLanguage = "fr", TargetLanguage = "de" }));
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Returns(Task.FromResult(new TranslationBuild()));
-
-        // SUT
-        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        Assert.IsNotNull(actual);
-        await env.MachineProjectService.Received(1)
-            .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.MachineProjectService.Received(1)
-            .RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.MachineProjectService.Received(1)
-            .SyncProjectCorporaAsync(
-                User01,
-                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
-                preTranslate: false,
-                CancellationToken.None
-            );
-    }
-
-    [Test]
     public async Task StartBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string buildDtoId = $"{Project01}.{Build01}";
-        const string message = "Training language model";
-        const double percentCompleted = 0.01;
-        const int revision = 2;
-        const JobState state = JobState.Active;
-        env.TranslationEnginesClient.StartBuildAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
-            .Returns(
-                Task.FromResult(
-                    new TranslationBuild
-                    {
-                        Url = "https://example.com",
-                        Id = Build01,
-                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                        Message = message,
-                        PercentCompleted = percentCompleted,
-                        Revision = revision,
-                        State = state,
-                    }
-                )
-            );
 
         // SUT
-        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
-        await env.MachineProjectService.Received(1)
-            .SyncProjectCorporaAsync(
-                User01,
-                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
-                preTranslate: false,
-                CancellationToken.None
-            );
-        Assert.AreEqual(message, actual.Message);
-        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
-        Assert.AreEqual(revision, actual.Revision);
-        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
-        Assert.AreEqual(buildDtoId, actual.Id);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
-        Assert.AreEqual(Project01, actual.Engine.Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        await env.SyncService.Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.TranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.TranslationErrorMessage);
     }
 
     [Test]
@@ -2151,7 +2039,7 @@ public class MachineApiServiceTests
 
             var servalOptions = Options.Create(new ServalOptions { WebhookSecret = "this_is_a_secret" });
             SyncService = Substitute.For<ISyncService>();
-            SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
+            SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult(JobId));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
                 .GetAsync(TranslationEngine01, CancellationToken.None)
@@ -2187,20 +2075,36 @@ public class MachineApiServiceTests
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public ITranslationEngineTypesClient TranslationEngineTypesClient { get; }
 
-        public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null, string? errorMessage = null) =>
+        public async Task QueueBuildAsync(bool preTranslate, DateTime? dateTime = null, string? errorMessage = null) =>
             await ProjectSecrets.UpdateAsync(
                 Project01,
                 u =>
                 {
-                    u.Set(p => p.ServalData.PreTranslationJobId, JobId);
-                    u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow);
-                    if (string.IsNullOrWhiteSpace(errorMessage))
+                    if (preTranslate)
                     {
-                        u.Unset(p => p.ServalData.PreTranslationErrorMessage);
+                        u.Set(p => p.ServalData.PreTranslationJobId, JobId);
+                        u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                        if (string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            u.Unset(p => p.ServalData.PreTranslationErrorMessage);
+                        }
+                        else
+                        {
+                            u.Set(p => p.ServalData.PreTranslationErrorMessage, errorMessage);
+                        }
                     }
                     else
                     {
-                        u.Set(p => p.ServalData.PreTranslationErrorMessage, errorMessage);
+                        u.Set(p => p.ServalData.TranslationJobId, JobId);
+                        u.Set(p => p.ServalData.TranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                        if (string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            u.Unset(p => p.ServalData.TranslationErrorMessage);
+                        }
+                        else
+                        {
+                            u.Set(p => p.ServalData.TranslationErrorMessage, errorMessage);
+                        }
                     }
                 }
             );
