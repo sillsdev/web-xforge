@@ -50,9 +50,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           {
             type: tabType,
             icon: 'book',
-            headerText:
-              tabOptions?.headerText ??
-              (await firstValueFrom(this.i18n.translate('editor_tab_factory.default_project_tab_header'))),
+            headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.default_project_tab_header')),
             closeable: false,
             movable: false,
             unique: true
@@ -68,14 +66,11 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
           {
             type: tabType,
             icon: 'library_books',
-            headerText:
-              tabOptions?.headerText ??
-              (await firstValueFrom(this.i18n.translate('editor_tab_factory.default_resource_tab_header'))),
+            headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.default_resource_tab_header')),
             closeable: true,
             movable: true,
             unique: false,
-            persist: true,
-            projectId: tabOptions.projectId
+            persist: true
           },
           tabOptions
         );
