@@ -84,34 +84,22 @@
                 </button>
               </div>
             </div>
-            <div class="form-actions">
-              <button
-                mat-button
-                [class]="isScreenSmall ? 'mdc-icon-button' : 'mdc-button'"
-                type="button"
-                (click)="hideAnswerForm()"
-                id="cancel-answer"
-              >
-                <ng-container *ngIf="isScreenSmall">
-                  <mat-icon class="material-icons-outlined">cancel</mat-icon>
-                </ng-container>
-                <ng-container *ngIf="!isScreenSmall">
-                  <mat-icon>close</mat-icon>
-                  <span class="cancel-text">{{ t("cancel") }}</span>
-                </ng-container>
+            <div class="form-actions" *ngIf="isScreenSmall">
+              <button mat-icon-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
+                <mat-icon class="material-icons-outlined">cancel</mat-icon>
               </button>
-              <button
-                [class]="
-                  isScreenSmall ? 'mdc-icon-button mat-primary' : 'mdc-button mat-mdc-unelevated-button mat-primary'
-                "
-                form="answer-form"
-                id="save-answer"
-                type="submit"
-                (click)="submit()"
-                [disabled]="submittingAnswer"
-              >
-                <mat-icon>{{ isScreenSmall ? "check_circle" : "check" }} </mat-icon>
-                <span class="submit-text" *ngIf="!isScreenSmall">{{ t("save_answer") }}</span>
+              <button mat-icon-button color="primary" id="save-answer" (click)="submit()" [disabled]="submittingAnswer">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            </div>
+            <div class="form-actions" *ngIf="!isScreenSmall">
+              <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
+                <mat-icon>close</mat-icon>
+                {{ t("cancel") }}
+              </button>
+              <button mat-flat-button color="primary" id="save-answer" (click)="submit()" [disabled]="submittingAnswer">
+                <mat-icon>check</mat-icon>
+                {{ t("save_answer") }}
               </button>
             </div>
           </div>

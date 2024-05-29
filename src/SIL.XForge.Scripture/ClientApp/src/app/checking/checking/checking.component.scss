@@ -15,7 +15,7 @@ $questionsHeaderInlineStartPadding: 8px;
 
 header {
   display: flex;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .panel-content {
@@ -310,7 +310,7 @@ header {
   display: none;
 }
 
-.active-question-scope-button {
+.active-question-scope-button ::ng-deep {
   font-size: 13px;
   color: vars.$blueMedium !important;
   font-weight: 400;
@@ -335,5 +335,10 @@ header {
   .divider {
     font-size: 18px;
     margin: 0 5px;
+  }
+
+  span.mdc-button__label {
+    display: flex;
+    align-items: center;
   }
 }
