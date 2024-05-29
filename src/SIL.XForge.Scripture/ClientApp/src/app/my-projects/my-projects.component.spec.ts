@@ -310,6 +310,8 @@ describe('MyProjectsComponent', () => {
       // Show the header above it as well to make it clear what is loading.
       expect(env.headerNotConnectedProjects).not.toBeNull();
       didCheckAtLoadingTime = true;
+      // Return the usual data.
+      return env.userParatextProjects;
     });
     env.waitUntilLoaded();
 
