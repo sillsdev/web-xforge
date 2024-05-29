@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -57,7 +58,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     });
     await this.loadUser();
     this.subscribe(this.onlineStatusService.onlineStatus$, online => {
-      if (online) this.loadParatextProjects();
+      const userIsPTUser: boolean = this.user?.data != null ? isPTUser(this.user.data) : false;
+      if (userIsPTUser && online) this.loadParatextProjects();
     });
   }
 
