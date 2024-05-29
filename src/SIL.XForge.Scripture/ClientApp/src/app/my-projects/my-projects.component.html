@@ -37,7 +37,7 @@
     <mat-expansion-panel
       id="message-looking-for-another-project"
       hideToggle
-      *ngIf="userHasProjects && (!loggedIntoPT || !isOnline)"
+      *ngIf="userHasProjects && (!userIsPTUser || !isOnline)"
     >
       <mat-expansion-panel-header>Looking for another project?</mat-expansion-panel-header>
       <p>
@@ -60,54 +60,61 @@
       <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
     </mat-card>
 
-    <h2
-      id="header-not-connected-projects"
-      *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
-    >
-      {{
-        loadingPTProjects
-          ? t("loading_more_pt_projects")
-          : userConnectedProjects.length === 0
-          ? t("connect_a_project_to_get_started")
-          : t("not_connected")
-      }}
-    </h2>
-    <app-notice id="message-trouble-getting-pt-project-list" icon="error" type="error" *ngIf="problemGettingPTProjects">
-      {{ t("problem_getting_pt_list") }}
-    </app-notice>
-
-    <mat-card
-      *ngFor="let ptProject of userUnconnectedParatextProjects"
-      id="user-unconnected-project-card-{{ ptProject.paratextId }}"
-      [class.cannot-connect]="!ptProject.isConnectable"
-    >
-      <div>
-        <span class="project-name">
-          <span>{{ ptProject.shortName }}</span> - <span>{{ ptProject.name }}</span>
-        </span>
-        <span *ngIf="!ptProject.isConnectable" class="helper-text">
-          {{ t("not_admin_cannot_connect_project") }}
-        </span>
-      </div>
-      <a
-        *ngIf="ptProject.isConnectable"
-        appRouterLink="/connect-project"
-        [state]="{ ptProjectId: ptProject.paratextId }"
-        mat-flat-button
-        color="primary"
+    <div *ngIf="userIsPTUser">
+      <h2
+        id="header-not-connected-projects"
+        *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
       >
-        {{ paratextService.isParatextProjectInSF(ptProject) ? t("join") : ("connect_project.connect" | transloco) }}
-      </a>
-    </mat-card>
-    <mat-card id="pt-loading-card" *ngIf="loadingPTProjects" class="loading-card">
-      <div>
-        <span class="project-name">&nbsp;</span>
-        <span class="helper-text">&nbsp;</span>
-      </div>
-    </mat-card>
+        {{
+          loadingPTProjects
+            ? t("loading_more_pt_projects")
+            : userConnectedProjects.length === 0
+            ? t("connect_a_project_to_get_started")
+            : t("not_connected")
+        }}
+      </h2>
+      <app-notice
+        id="message-trouble-getting-pt-project-list"
+        icon="error"
+        type="error"
+        *ngIf="problemGettingPTProjects"
+      >
+        {{ t("problem_getting_pt_list") }}
+      </app-notice>
 
-    <app-notice id="message-offline" icon="cloud_off" type="info" *ngIf="!isOnline">
-      You will need to connect to the internet to get started with a project.
-    </app-notice>
+      <mat-card
+        *ngFor="let ptProject of userUnconnectedParatextProjects"
+        id="user-unconnected-project-card-{{ ptProject.paratextId }}"
+        [class.cannot-connect]="!ptProject.isConnectable"
+      >
+        <div>
+          <span class="project-name">
+            <span>{{ ptProject.shortName }}</span> - <span>{{ ptProject.name }}</span>
+          </span>
+          <span *ngIf="!ptProject.isConnectable" class="helper-text">
+            {{ t("not_admin_cannot_connect_project") }}
+          </span>
+        </div>
+        <a
+          *ngIf="ptProject.isConnectable"
+          appRouterLink="/connect-project"
+          [state]="{ ptProjectId: ptProject.paratextId }"
+          mat-flat-button
+          color="primary"
+        >
+          {{ paratextService.isParatextProjectInSF(ptProject) ? t("join") : ("connect_project.connect" | transloco) }}
+        </a>
+      </mat-card>
+      <mat-card id="pt-loading-card" *ngIf="loadingPTProjects" class="loading-card">
+        <div>
+          <span class="project-name">&nbsp;</span>
+          <span class="helper-text">&nbsp;</span>
+        </div>
+      </mat-card>
+
+      <app-notice id="message-offline" icon="cloud_off" type="info" *ngIf="!isOnline">
+        You will need to connect to the internet to get started with a project.
+      </app-notice>
+    </div>
   </div>
 </ng-container>
