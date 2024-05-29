@@ -3801,11 +3801,11 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(() => {
+    it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(async () => {
       const env = new TestEnvironment();
       env.wait();
 
-      env.component.tabState.addTab('target', env.tabFactory.createTab('draft'));
+      env.component.tabState.addTab('target', await env.tabFactory.createTab('draft'));
       const addTab = spyOn(env.component.tabState, 'addTab');
 
       env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });

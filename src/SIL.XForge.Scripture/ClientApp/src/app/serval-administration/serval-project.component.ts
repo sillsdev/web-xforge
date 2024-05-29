@@ -8,6 +8,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { SFProjectUtilService } from '../core/sf-project-util.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
@@ -40,6 +41,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
+    private readonly projectUtil: SFProjectUtilService,
     private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
@@ -73,7 +75,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the source
           if (
             project.translateConfig.source != null &&
-            !this.servalAdministrationService.isResource(project.translateConfig.source.paratextId)
+            !this.projectUtil.isResource(project.translateConfig.source.paratextId)
           ) {
             rows.push({
               id: project.translateConfig.source.projectRef,
@@ -86,7 +88,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the alternate source
           if (
             project.translateConfig.draftConfig.alternateSource != null &&
-            !this.servalAdministrationService.isResource(project.translateConfig.draftConfig.alternateSource.paratextId)
+            !this.projectUtil.isResource(project.translateConfig.draftConfig.alternateSource.paratextId)
           ) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateSource.projectRef,
@@ -102,9 +104,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the alternate training source
           if (
             project.translateConfig.draftConfig.alternateTrainingSource != null &&
-            !this.servalAdministrationService.isResource(
-              project.translateConfig.draftConfig.alternateTrainingSource.paratextId
-            )
+            !this.projectUtil.isResource(project.translateConfig.draftConfig.alternateTrainingSource.paratextId)
           ) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateTrainingSource.projectRef,
