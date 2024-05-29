@@ -1,7 +1,6 @@
 import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { TabMenuService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
@@ -17,7 +16,7 @@ describe('TabGroupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SFTabsModule, TestTranslocoModule],
+      imports: [SFTabsModule],
       declarations: [TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },
@@ -57,7 +56,7 @@ describe('TabGroupComponent', () => {
     expect(component.addTab).toHaveBeenCalledWith(newTabType, tabOptions);
   });
 
-  it('should add tab using TabFactory and TabStateService when addTab is called', () => {
+  it('should add tab using TabFactory and TabStateService when addTab is called', async () => {
     const newTabType = 'test';
     const tab = {
       type: 'test',
@@ -72,7 +71,7 @@ describe('TabGroupComponent', () => {
     spyOn(tabFactory, 'createTab').and.returnValue(Promise.resolve(tab));
     spyOn(tabStateService, 'addTab');
 
-    component.addTab(newTabType);
+    await component.addTab(newTabType);
 
     expect(tabFactory.createTab).toHaveBeenCalledWith(newTabType, {});
     expect(tabStateService.addTab).toHaveBeenCalledWith(component.groupId, tab);

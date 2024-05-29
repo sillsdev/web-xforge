@@ -5,7 +5,6 @@ import {
   MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
   MatLegacyDialogRef as MatDialogRef
 } from '@angular/material/legacy-dialog';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
@@ -155,10 +154,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
    * Gets the project/resource with the selected paratext id, creating an SF project for it if needed.
    */
   private async fetchProject(paratextId: string): Promise<SFProjectDoc | undefined> {
-    const selectedProjectId: string | undefined = await this.projectService.getOrCreateRealtimeProject(
-      paratextId,
-      SFProjectRole.ParatextAdministrator // TODO: what role should be used?
-    );
+    const selectedProjectId: string | undefined = await this.projectService.getOrCreateRealtimeProject(paratextId);
     return selectedProjectId != null ? this.projectService.get(selectedProjectId) : undefined;
   }
 
