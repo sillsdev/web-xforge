@@ -11,7 +11,6 @@
   display: flex;
   flex-direction: column;
   row-gap: 16px;
-  margin: 16px 24px;
   .configuration-option {
     display: flex;
     column-gap: 10px;
@@ -28,7 +27,6 @@
     }
     div {
       padding-top: 3px;
-      font-size: 0.9em;
       a {
         color: $purpleLight;
         cursor: pointer;
