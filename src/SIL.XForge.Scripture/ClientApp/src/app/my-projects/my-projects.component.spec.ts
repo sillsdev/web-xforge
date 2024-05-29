@@ -4,6 +4,8 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { mock, objectContaining, verify, when } from 'ts-mockito';
@@ -14,6 +16,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
+import { UserDoc } from '../../xforge-common/models/user-doc';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -296,8 +299,8 @@ describe('MyProjectsComponent', () => {
     expect(didCheckAtLoadingTime).toBe(true);
   }));
 
-  it('shows loading card while waiting for PT projects list', fakeAsync(() => {
-    const env = new TestEnvironment();
+  it('shows loading card while waiting for PT projects list, if is PT user', fakeAsync(() => {
+    const env = new TestEnvironment({ isKnownPTUser: true });
     let didCheckAtLoadingTime: boolean = false;
     // When the component is fetching the PT project list, check that some UI elements are as desired.
     when(mockedParatextService.getProjects()).thenCall(() => {
@@ -314,6 +317,22 @@ describe('MyProjectsComponent', () => {
     expect(env.ptLoadingCard).toBeNull();
     // Did the test check what was expected of it?
     expect(didCheckAtLoadingTime).toBe(true);
+    // And of course, getProjects() was called.
+    verify(mockedParatextService.getProjects()).once();
+  }));
+
+  it('does not query PT projects list or show loading card for PT projects list, if is not a PT user', fakeAsync(() => {
+    // Suppose a user views the page and we don't think this user is a PT user. We should not make API calls to query PT
+    // projects, and we should not show a loading card for the PT projects list.
+    const env = new TestEnvironment({ isKnownPTUser: false });
+    env.waitUntilLoaded();
+
+    // The loading card for PT projects list should not be showing.
+    expect(env.ptLoadingCard).toBeNull();
+    // We won't have the not-connected-projects header.
+    expect(env.headerNotConnectedProjects).toBeNull();
+    // getProjects() should not have been called.
+    verify(mockedParatextService.getProjects()).never();
   }));
 
   it('subtle message about accessing more projects', fakeAsync(() => {
@@ -349,7 +368,10 @@ export class TestEnvironment {
   /** PT projects the user has access to. */
   userParatextProjects: ParatextProject[] = [];
 
-  constructor({ userHasAnyProjects = true }: { userHasAnyProjects?: boolean } = {}) {
+  constructor({
+    userHasAnyProjects = true,
+    isKnownPTUser = true
+  }: { userHasAnyProjects?: boolean; isKnownPTUser?: boolean } = {}) {
     if (userHasAnyProjects) {
       this.projectProfileDocs = [
         {
@@ -434,6 +456,17 @@ export class TestEnvironment {
 
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
+
+    const user: User = createTestUser({
+      paratextId: isKnownPTUser ? 'pt-user-id' : undefined,
+      sites: {
+        sf: {
+          projects: []
+        }
+      }
+    });
+    const userDoc = { id: 'sf-user-id', data: user };
+    when(mockedUserService.getCurrentUser()).thenResolve(userDoc as UserDoc);
 
     this.router = TestBed.inject(Router);
     this.fixture = TestBed.createComponent(MyProjectsComponent);
