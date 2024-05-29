@@ -3,7 +3,7 @@
     <span>{{ t("share_project", { project: projectName }) }}</span>
     <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
   </h1>
-  <div class="configurations">
+  <div mat-dialog-content class="configurations">
     <div class="configuration-option configuration-invitation-role">
       <mat-icon>public</mat-icon>
       <div>
@@ -74,7 +74,7 @@
   <div mat-dialog-actions>
     <button
       id="copy-btn"
-      mat-button
+      mat-flat-button
       (click)="copyLink()"
       [disabled]="!isLinkReady"
       color="{{ !supportsShareAPI ? 'primary' : '' }}"
