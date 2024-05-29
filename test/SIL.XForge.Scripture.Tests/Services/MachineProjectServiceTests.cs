@@ -743,11 +743,13 @@ public class MachineProjectServiceTests
                 Arg.Is<TranslationBuildConfig>(
                     b =>
                         b.TrainOn.Count == 1
-                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
                         && b.TrainOn.First().CorpusId == Corpus01
+                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
+                        && b.TrainOn.First().TextIds == null
                         && b.Pretranslate.Count == 1
                         && b.Pretranslate.First().CorpusId == Corpus01
                         && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
+                        && b.Pretranslate.First().TextIds == null
                 ),
                 CancellationToken.None
             );
@@ -791,11 +793,13 @@ public class MachineProjectServiceTests
                 Arg.Is<TranslationBuildConfig>(
                     b =>
                         b.TrainOn.Count == 1
-                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
                         && b.TrainOn.First().CorpusId == Corpus02
+                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
+                        && b.TrainOn.First().TextIds == null
                         && b.Pretranslate.Count == 1
                         && b.Pretranslate.First().CorpusId == Corpus01
                         && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
+                        && b.Pretranslate.First().TextIds == null
                 ),
                 CancellationToken.None
             );
@@ -829,8 +833,10 @@ public class MachineProjectServiceTests
                     b =>
                         b.Pretranslate.Count == 1
                         && b.Pretranslate.First().ScriptureRange == null
+                        && b.Pretranslate.First().TextIds == null
                         && b.TrainOn.Count == 1
                         && b.TrainOn.First().ScriptureRange == null
+                        && b.TrainOn.First().TextIds!.Count == 0
                 ),
                 CancellationToken.None
             );
@@ -876,8 +882,10 @@ public class MachineProjectServiceTests
                     b =>
                         b.Pretranslate.Count == 1
                         && b.Pretranslate.First().ScriptureRange == null
+                        && b.Pretranslate.First().TextIds == null
                         && b.TrainOn.Count == 1
                         && b.TrainOn.First().ScriptureRange == null
+                        && b.TrainOn.First().TextIds!.Count == 0
                 ),
                 CancellationToken.None
             );
