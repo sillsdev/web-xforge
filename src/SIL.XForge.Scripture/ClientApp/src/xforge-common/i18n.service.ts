@@ -15,9 +15,9 @@ import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { LocationService } from './location.service';
-import { Locale } from './models/i18n-locale';
+import { Locale, LocaleDirection } from './models/i18n-locale';
 import { PseudoLocalization } from './pseudo-localization';
-import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
+import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
 export type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 
@@ -135,7 +135,7 @@ export class I18nService {
     return this.currentLocale$.value.canonicalTag;
   }
 
-  get direction(): 'ltr' | 'rtl' {
+  get direction(): LocaleDirection {
     return this.currentLocale$.value.direction;
   }
 
