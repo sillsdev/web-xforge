@@ -7,7 +7,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
+import { delay, of } from 'rxjs';
 import { instance, mock, objectContaining, when } from 'ts-mockito';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -128,7 +128,12 @@ const projectScenarios: readonly ProjectScenario[] = [
 ];
 
 // App data states
-type StoryAppState = { online: boolean; isKnownPTUser: boolean; delayFetchingPTProjectList: boolean } & {
+type StoryAppState = {
+  online: boolean;
+  isKnownPTUser: boolean;
+  delayFetchingPTProjectList: boolean;
+  delayFetchingSFProjectList: boolean;
+} & {
   [K in ProjectScenario['code'] as `${K}Count`]: number;
 };
 
@@ -136,6 +141,7 @@ const defaultArgs: StoryAppState = {
   online: true,
   isKnownPTUser: false,
   delayFetchingPTProjectList: false,
+  delayFetchingSFProjectList: false,
   userSFProjectNotPTRoleCount: 0,
   userSFProjectPTAdministratorCount: 0,
   userSFProjectPTTranslatorCount: 0,
@@ -257,7 +263,10 @@ const meta: Meta = {
         if (context.args.delayFetchingPTProjectList) await new Promise(resolve => setTimeout(resolve, 5000));
         return userParatextProjects;
       });
-      when(mockedUserProjectsService.projectDocs$).thenReturn(of(projectProfileDocs));
+      when(mockedUserProjectsService.projectDocs$).thenCall(() => {
+        if (context.args.delayFetchingSFProjectList) return of(projectProfileDocs).pipe(delay(5000));
+        else return of(projectProfileDocs);
+      });
       when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(context.args.online));
       when(mockedOnlineStatusService.isOnline).thenReturn(context.args.online);
       return story();
@@ -355,6 +364,20 @@ export const PTLoading: Story = {
   args: {
     isKnownPTUser: true,
     delayFetchingPTProjectList: true,
+    userSFProjectPTAdministratorCount: 2,
+    userSFResourceCount: 2,
+    userPTAdministratorNotSFConnectedAtAllCount: 1,
+    userPTAdministratorNotConnectedToSFProjectCount: 1
+  }
+};
+
+// User with PT projects comes to page. They experience delay loading up the list of SF projects in addition to PT
+// projects.
+export const SFLoading: Story = {
+  args: {
+    isKnownPTUser: true,
+    delayFetchingPTProjectList: true,
+    delayFetchingSFProjectList: true,
     userSFProjectPTAdministratorCount: 2,
     userSFResourceCount: 2,
     userPTAdministratorNotSFConnectedAtAllCount: 1,
