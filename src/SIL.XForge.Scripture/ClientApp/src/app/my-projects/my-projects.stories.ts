@@ -134,6 +134,8 @@ type StoryAppState = {
   lastSelectedProject: number;
   delayFetchingPTProjectList: boolean;
   delayFetchingSFProjectList: boolean;
+  errorFetchingPTProjectList: boolean;
+  errorFetchingPTProjectListUndefined: boolean;
 } & {
   [K in ProjectScenario['code'] as `${K}Count`]: number;
 };
@@ -144,6 +146,8 @@ const defaultArgs: StoryAppState = {
   lastSelectedProject: -1,
   delayFetchingPTProjectList: false,
   delayFetchingSFProjectList: false,
+  errorFetchingPTProjectList: false,
+  errorFetchingPTProjectListUndefined: false,
   userSFProjectNotPTRoleCount: 0,
   userSFProjectPTAdministratorCount: 0,
   userSFProjectPTTranslatorCount: 0,
@@ -270,6 +274,8 @@ const meta: Meta = {
 
       when(mockedParatextService.getProjects()).thenCall(async () => {
         if (context.args.delayFetchingPTProjectList) await new Promise(resolve => setTimeout(resolve, 5000));
+        if (context.args.errorFetchingPTProjectList) throw new Error('Error fetching PT projects');
+        if (context.args.errorFetchingPTProjectListUndefined) return undefined;
         return userParatextProjects;
       });
       when(mockedUserProjectsService.projectDocs$).thenCall(() => {
@@ -368,27 +374,14 @@ export const AllProjectScenarios: Story = {
 };
 
 // User was last working with a particular project. That project is highlighted in the list.
-export const LastSelectedProject: Story = {
-  args: {
-    isKnownPTUser: true,
-    lastSelectedProject: 1,
-    userSFProjectPTAdministratorCount: 2,
-    userSFResourceCount: 2,
-    userPTAdministratorNotSFConnectedAtAllCount: 1,
-    userPTAdministratorNotConnectedToSFProjectCount: 1
-  }
-};
+export const LastSelectedProject: Story = { args: { ...PTAdmin.args, lastSelectedProject: 1 } };
 
 // User with PT projects comes to page, and experiences delay in waiting for the PT project list to come back from the
 // server.
 export const PTLoading: Story = {
   args: {
-    isKnownPTUser: true,
-    delayFetchingPTProjectList: true,
-    userSFProjectPTAdministratorCount: 2,
-    userSFResourceCount: 2,
-    userPTAdministratorNotSFConnectedAtAllCount: 1,
-    userPTAdministratorNotConnectedToSFProjectCount: 1
+    ...PTAdmin.args,
+    delayFetchingPTProjectList: true
   }
 };
 
@@ -396,12 +389,24 @@ export const PTLoading: Story = {
 // projects.
 export const SFLoading: Story = {
   args: {
-    isKnownPTUser: true,
+    ...PTAdmin.args,
     delayFetchingPTProjectList: true,
-    delayFetchingSFProjectList: true,
-    userSFProjectPTAdministratorCount: 2,
-    userSFResourceCount: 2,
-    userPTAdministratorNotSFConnectedAtAllCount: 1,
-    userPTAdministratorNotConnectedToSFProjectCount: 1
+    delayFetchingSFProjectList: true
+  }
+};
+
+// An error occurs while the user is fetching the PT projects list from the server.
+export const PTLoadError: Story = {
+  args: {
+    ...PTAdmin.args,
+    errorFetchingPTProjectList: true
+  }
+};
+
+// Another problem happens (undefined is returned) when the user is fetching the PT projects list from the server.
+export const PTLoadUndefined: Story = {
+  args: {
+    ...PTAdmin.args,
+    errorFetchingPTProjectListUndefined: true
   }
 };
