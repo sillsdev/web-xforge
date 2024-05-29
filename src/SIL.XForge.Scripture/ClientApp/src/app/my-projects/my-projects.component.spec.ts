@@ -55,8 +55,9 @@ describe('MyProjectsComponent', () => {
 
   it('click Open connected project, goes to project', fakeAsync(() => {
     const env = new TestEnvironment();
-    const ptProjectId = env.projectProfileDocs[0].data!.paratextId;
-    const sfProjectId = env.projectProfileDocs[0].id;
+    const sfProjectId = 'testProject1';
+    const ptProjectId = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!
+      .paratextId;
     env.waitUntilLoaded();
 
     env.click(env.goButtonForProject(ptProjectId));
@@ -80,8 +81,16 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // Cards for this user's connected projects are shown.
-    expect(env.cardForUserConnectedProject(env.projectProfileDocs[0].data!.paratextId)).not.toBeNull();
-    expect(env.cardForUserConnectedProject(env.projectProfileDocs[1].data!.paratextId)).not.toBeNull();
+    expect(
+      env.cardForUserConnectedProject(
+        env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject1')!.data!.paratextId
+      )
+    ).not.toBeNull();
+    expect(
+      env.cardForUserConnectedProject(
+        env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject2')!.data!.paratextId
+      )
+    ).not.toBeNull();
     // Show whether the test works, too.
     expect(env.cardForUserConnectedProject('unknown-pt-id')).toBeNull();
   }));
