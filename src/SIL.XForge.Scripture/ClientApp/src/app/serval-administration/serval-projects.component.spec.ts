@@ -22,12 +22,14 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectUtilService } from '../core/sf-project-util.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedServalAdministrationService = mock(ServalAdministrationService);
 const mockedUserService = mock(UserService);
+const mockedSFProjectUtil = mock(SFProjectUtilService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -43,7 +45,8 @@ describe('ServalProjectsComponent', () => {
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: SFProjectUtilService, useMock: mockedSFProjectUtil }
     ]
   }));
 
@@ -145,7 +148,7 @@ class TestEnvironment {
           })
         )
     );
-    when(mockedServalAdministrationService.isResource(anything())).thenCall((paratextId: string) => {
+    when(mockedSFProjectUtil.isResource(anything())).thenCall((paratextId: string) => {
       return paratextId?.startsWith('ptresource') ?? false;
     });
 

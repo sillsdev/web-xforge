@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { UserService } from 'xforge-common/user.service';
@@ -9,11 +9,16 @@ import { environment } from '../../environments/environment';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './models/sf-project-role-info';
 import { TextDocId } from './models/text-doc';
+import { SFProjectUtilService } from './sf-project-util.service';
 import { SFProjectService } from './sf-project.service';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
-  constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly projectService: SFProjectService,
+    private readonly projectUtil: SFProjectUtilService
+  ) {}
 
   canAccessCommunityChecking(project: SFProjectProfileDoc, userId?: string): boolean {
     if (project.data == null) return false;
@@ -66,6 +71,13 @@ export class PermissionsService {
     }
 
     const role: string = projectDoc.data.userRoles[userId];
+
+    // Any paratext user role can sync DBL resources
+    if (this.projectUtil.isResource(projectDoc.data.paratextId)) {
+      return isParatextRole(role);
+    }
+
+    // Only PT admin and PT translator can sync non-resource projects
     return role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
   }
 }

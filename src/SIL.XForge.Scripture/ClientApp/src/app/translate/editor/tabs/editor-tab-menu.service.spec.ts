@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { expect } from '@storybook/jest';
 import { invert } from 'lodash-es';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -14,7 +13,6 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { PermissionsService } from '../../../core/permissions.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -27,9 +25,8 @@ const activatedProjectMock = mock(ActivatedProjectService);
 const draftGenerationServiceMock = mock(DraftGenerationService);
 const tabStateMock = mock(TabStateService);
 const mockUserService = mock(UserService);
-const mockPermissionsService = mock(PermissionsService);
 
-describe('EditorTabsMenuService', () => {
+describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
@@ -39,7 +36,6 @@ describe('EditorTabsMenuService', () => {
       { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
-      { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -180,20 +176,11 @@ describe('EditorTabsMenuService', () => {
   });
 
   describe('canShowResource', () => {
-    it('should return false if undefined project doc or project data', () => {
-      new TestEnvironment();
-      const projectDoc = { id: 'project1', data: null } as unknown as SFProjectProfileDoc;
-      expect(service['canShowResource'](projectDoc)).toBe(false);
-    });
-
-    it('should return true only if the user is an administrator or translator', () => {
+    it('should call permissions service canSync', () => {
       const env = new TestEnvironment();
-
-      Object.values(SFProjectRole).forEach(role => {
-        const expected = role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
-        env.setUserByRole(role);
-        expect(service['canShowHistory'](env.projectDoc)).toBe(expected);
-      });
+      const spy = spyOn(service['permissionsService'], 'canSync');
+      service['canShowResource'](env.projectDoc);
+      expect(spy).toHaveBeenCalledTimes(1);
     });
   });
 });

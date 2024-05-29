@@ -22,20 +22,6 @@ describe('ServalAdministrationService', () => {
     ]
   }));
 
-  describe('isResource', () => {
-    it('should return true for a resource id', () => {
-      const env = new TestEnvironment();
-      const id = '1234567890abcdef';
-      expect(env.service.isResource(id)).toBe(true);
-    });
-
-    it('should return false for a project id', () => {
-      const env = new TestEnvironment();
-      const id = '123456781234567890abcdef1234567890abcdef1234567890abcdef';
-      expect(env.service.isResource(id)).toBe(false);
-    });
-  });
-
   describe('downloadProject', () => {
     it('should return a blob', () => {
       const env = new TestEnvironment();
