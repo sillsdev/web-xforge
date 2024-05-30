@@ -30,9 +30,17 @@
     </mat-card>
     <mat-card id="sf-loading-card" *ngIf="initialLoadingSFProjects" class="loading-card">
       <div>
-        <span class="project-name">&nbsp;</span>
-        <span class="helper-text">&nbsp;</span>
+        <div class="loading-project-name"></div>
+        <div class="loading-helper-text"></div>
       </div>
+      <div class="loading-action"></div>
+    </mat-card>
+    <mat-card class="loading-card" *ngIf="initialLoadingSFProjects">
+      <div>
+        <div class="loading-project-name"></div>
+        <div class="loading-helper-text"></div>
+      </div>
+      <div class="loading-action"></div>
     </mat-card>
     <mat-expansion-panel id="message-looking-for-another-project" hideToggle *ngIf="userHasProjects && !userIsPTUser">
       <mat-expansion-panel-header>Looking for another project?</mat-expansion-panel-header>
@@ -56,7 +64,7 @@
       <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
     </mat-card>
 
-    <div *ngIf="userIsPTUser">
+    <div class="pt-content" *ngIf="userIsPTUser">
       <h2
         id="header-not-connected-projects"
         *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
@@ -103,9 +111,17 @@
       </mat-card>
       <mat-card id="pt-loading-card" *ngIf="loadingPTProjects" class="loading-card">
         <div>
-          <span class="project-name">&nbsp;</span>
-          <span class="helper-text">&nbsp;</span>
+          <div class="loading-project-name"></div>
+          <div class="loading-helper-text"></div>
         </div>
+        <div class="loading-action"></div>
+      </mat-card>
+      <mat-card class="loading-card" *ngIf="loadingPTProjects">
+        <div>
+          <div class="loading-project-name"></div>
+          <div class="loading-helper-text"></div>
+        </div>
+        <div class="loading-action"></div>
       </mat-card>
     </div>
 
