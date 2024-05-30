@@ -48,9 +48,15 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 
 .mat-mdc-unelevated-button,
 .mat-button-toggle-button {
-  &:not(:disabled):hover {
+  &:not(:disabled) {
     transition: color 0.15s;
     transition: background-color 0.15s;
+  }
+}
+
+.mat-mdc-unelevated-button,
+.mat-button-toggle-button {
+  &:not(:disabled):hover {
     background-color: variables.$greenLight;
     color: variables.$sf_grey;
   }
