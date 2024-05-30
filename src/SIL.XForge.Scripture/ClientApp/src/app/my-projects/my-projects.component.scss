@@ -32,6 +32,9 @@ mat-card {
     display: flex;
     flex-direction: column;
     row-gap: 8px;
+    // Help button fit when text is long and wraps, with both overflow and flex-shrink.
+    overflow: hidden;
+    flex-shrink: 100;
   }
 }
 
