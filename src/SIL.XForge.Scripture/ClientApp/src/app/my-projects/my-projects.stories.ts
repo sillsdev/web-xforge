@@ -358,6 +358,9 @@ export const PTTranslator: Story = {
   }
 };
 
+// A user has access to a resource, but no projects.
+export const OnlyResource: Story = { args: { userSFResourceCount: 1 } };
+
 // User has a project in every kind of scenario.
 export const AllProjectScenarios: Story = {
   args: {
