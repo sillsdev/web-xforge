@@ -31,7 +31,7 @@ const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 
-type ProjectScenario = {
+interface ProjectScenario {
   code: string;
   shortNameBase: string;
   nameBase: string;
@@ -40,7 +40,7 @@ type ProjectScenario = {
   projIsOnSF: boolean;
   userOnSFProject: boolean;
   isResource: boolean;
-};
+}
 
 const projectScenarios: readonly ProjectScenario[] = [
   {
