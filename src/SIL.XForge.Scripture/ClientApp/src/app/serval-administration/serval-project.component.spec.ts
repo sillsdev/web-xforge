@@ -3,8 +3,9 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import FileSaver from 'file-saver';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -30,14 +31,12 @@ describe('ServalProjectComponent', () => {
     imports: [
       HttpClientTestingModule,
       NoopAnimationsModule,
-      ServalProjectComponent,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule
     ],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
-      { provide: NoticeService, useMock: mockNoticeService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
@@ -110,6 +109,17 @@ describe('ServalProjectComponent', () => {
       expect(env.firstDownloadButton.innerText).toBe('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
     }));
+
+    it('should allow clicking of the button to download', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.disabled).toBe(false);
+      env.clickElement(env.firstDownloadButton);
+
+      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
+      // eslint-disable-next-line deprecation/deprecation
+      expect(FileSaver.saveAs).toHaveBeenCalled();
+    }));
   });
 
   class TestEnvironment {
@@ -159,6 +169,12 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectId$).thenReturn(mockProjectId$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
+
+      when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
+
+      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
+      // eslint-disable-next-line deprecation/deprecation
+      spyOn(FileSaver, 'saveAs').and.stub();
 
       this.fixture = TestBed.createComponent(ServalProjectComponent);
       this.component = this.fixture.componentInstance;

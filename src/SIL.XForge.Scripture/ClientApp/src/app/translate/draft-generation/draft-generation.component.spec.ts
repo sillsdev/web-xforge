@@ -5,12 +5,13 @@ import {
 } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
+import FileSaver from 'file-saver';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { EMPTY, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -24,6 +25,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -94,7 +96,8 @@ describe('DraftGenerationComponent', () => {
           RouterModule.forRoot([]),
           TranslocoMarkupModule,
           TestTranslocoModule,
-          NoopAnimationsModule
+          NoopAnimationsModule,
+          UICommonModule.forRoot()
         ],
         providers: [
           { provide: AuthService, useValue: mockAuthService },
@@ -129,15 +132,19 @@ describe('DraftGenerationComponent', () => {
         { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName', 'translate', 'interpolate'], {
-        locale$: of(locale)
-      });
-      mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished']);
+      mockI18nService = jasmine.createSpyObj<I18nService>(
+        ['getLanguageDisplayName', 'translate', 'interpolate', 'localizeBook'],
+        {
+          locale$: of(locale)
+        }
+      );
+      mockNoticeService = jasmine.createSpyObj<NoticeService>(['loadingStarted', 'loadingFinished', 'showError']);
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
         'getBuildProgress',
         'pollBuildProgress',
+        'getGeneratedDraftUsfm',
         'getLastCompletedBuild'
       ]);
       const projectDoc = {
@@ -147,9 +154,6 @@ describe('DraftGenerationComponent', () => {
             tag: 'en'
           },
           translateConfig: {
-            draftConfig: {
-              alternateTrainingSourceEnabled: false
-            },
             preTranslate: true,
             projectType: ProjectType.BackTranslation,
             source: {
@@ -180,10 +184,23 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
+      mockDraftGenerationService.getGeneratedDraftUsfm.and.returnValue(of('\\id Test USFM \\c 1 \\v 1 Test'));
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
+
+      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
+      // eslint-disable-next-line deprecation/deprecation
+      spyOn(FileSaver, 'saveAs').and.stub();
+    }
+
+    get downloadButton(): HTMLElement | null {
+      return this.getElementByTestId('download-button');
+    }
+
+    get downloadSpinner(): HTMLElement | null {
+      return this.getElementByTestId('download-spinner');
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -215,20 +232,23 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should detect project requirements', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            projectType: ProjectType.Standard
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: createTestProjectProfile({
-              writingSystem: {
-                tag: 'xyz'
-              },
-              translateConfig: {
-                projectType: ProjectType.Standard
-              }
-            })
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       env.fixture.detectChanges();
@@ -240,29 +260,32 @@ describe('DraftGenerationComponent', () => {
     }));
 
     it('should detect source language same as target language', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: false
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'xyz'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: createTestProjectProfile({
-              writingSystem: {
-                tag: 'xyz'
-              },
-              translateConfig: {
-                draftConfig: {
-                  alternateTrainingSourceEnabled: false
-                },
-                projectType: ProjectType.BackTranslation,
-                source: {
-                  projectRef: 'testSourceProjectId',
-                  writingSystem: {
-                    tag: 'xyz'
-                  }
-                }
-              }
-            })
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       env.fixture.detectChanges();
@@ -276,42 +299,45 @@ describe('DraftGenerationComponent', () => {
     }));
 
     it('should detect alternate training source language when different to alternate source language', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'abc'
+          },
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: true,
+              alternateTrainingSource: {
+                projectRef: 'alternateTrainingSourceProjectId',
+                writingSystem: {
+                  tag: 'def'
+                }
+              },
+              alternateSourceEnabled: true,
+              alternateSource: {
+                projectRef: 'alternateSourceProjectId',
+                writingSystem: {
+                  tag: 'ghi'
+                }
+              }
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'def'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: {
-              writingSystem: {
-                tag: 'abc'
-              },
-              translateConfig: {
-                draftConfig: {
-                  alternateTrainingSourceEnabled: true,
-                  alternateTrainingSource: {
-                    projectRef: 'alternateTrainingSourceProjectId',
-                    writingSystem: {
-                      tag: 'def'
-                    }
-                  },
-                  alternateSourceEnabled: true,
-                  alternateSource: {
-                    projectRef: 'alternateSourceProjectId',
-                    writingSystem: {
-                      tag: 'ghi'
-                    }
-                  }
-                },
-                projectType: ProjectType.BackTranslation,
-                source: {
-                  projectRef: 'testSourceProjectId',
-                  writingSystem: {
-                    tag: 'def'
-                  }
-                }
-              }
-            }
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       env.fixture.detectChanges();
@@ -325,35 +351,38 @@ describe('DraftGenerationComponent', () => {
     }));
 
     it('should detect alternate training source language when different to source language', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'abc'
+          },
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: true,
+              alternateTrainingSource: {
+                projectRef: 'alternateTrainingSourceProjectId',
+                writingSystem: {
+                  tag: 'def'
+                }
+              }
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'xyz'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: {
-              writingSystem: {
-                tag: 'abc'
-              },
-              translateConfig: {
-                draftConfig: {
-                  alternateTrainingSourceEnabled: true,
-                  alternateTrainingSource: {
-                    projectRef: 'alternateTrainingSourceProjectId',
-                    writingSystem: {
-                      tag: 'def'
-                    }
-                  }
-                },
-                projectType: ProjectType.BackTranslation,
-                source: {
-                  projectRef: 'testSourceProjectId',
-                  writingSystem: {
-                    tag: 'xyz'
-                  }
-                }
-              }
-            }
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       env.fixture.detectChanges();
@@ -367,29 +396,32 @@ describe('DraftGenerationComponent', () => {
     }));
 
     it('should not detect alternate training source language as different when enabled but null', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'abc'
+          },
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'xyz'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: {
-              writingSystem: {
-                tag: 'abc'
-              },
-              translateConfig: {
-                draftConfig: {
-                  alternateTrainingSourceEnabled: true
-                },
-                projectType: ProjectType.BackTranslation,
-                source: {
-                  projectRef: 'testSourceProjectId',
-                  writingSystem: {
-                    tag: 'xyz'
-                  }
-                }
-              }
-            }
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       env.fixture.detectChanges();
@@ -947,7 +979,9 @@ describe('DraftGenerationComponent', () => {
             mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
               projectId: projectId,
               projectId$: of(projectId),
-              projectDoc$: of(projectDoc)
+              projectDoc: projectDoc,
+              projectDoc$: of(projectDoc),
+              changes$: of(projectDoc)
             });
           });
         });
@@ -1040,6 +1074,22 @@ describe('DraftGenerationComponent', () => {
 
   describe('requirements', () => {
     it('should have `isTargetLanguageSupported == true` when project is forward translation', () => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            projectType: ProjectType.Standard,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'zyx'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
@@ -1050,22 +1100,9 @@ describe('DraftGenerationComponent', () => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: createTestProjectProfile({
-              writingSystem: {
-                tag: 'xyz'
-              },
-              translateConfig: {
-                projectType: ProjectType.Standard,
-                source: {
-                  projectRef: 'testSourceProjectId',
-                  writingSystem: {
-                    tag: 'zyx'
-                  }
-                }
-              }
-            })
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       expect(env.component.isForwardTranslationEnabled).toBe(true);
@@ -1073,6 +1110,22 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should enforce supported language for back translations even when forward translation feature flag is set', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'xyz'
+          },
+          translateConfig: {
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'zyx'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
       let env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
@@ -1083,22 +1136,9 @@ describe('DraftGenerationComponent', () => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
           projectId: projectId,
           projectId$: of(projectId),
-          projectDoc$: of({
-            data: createTestProjectProfile({
-              writingSystem: {
-                tag: 'xyz'
-              },
-              translateConfig: {
-                projectType: ProjectType.BackTranslation,
-                source: {
-                  projectRef: 'testSourceProjectId',
-                  writingSystem: {
-                    tag: 'zyx'
-                  }
-                }
-              }
-            })
-          })
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
         });
       });
       env.fixture.detectChanges();
@@ -1435,6 +1475,200 @@ describe('DraftGenerationComponent', () => {
     it('should return false if the user is not system admin', () => {
       let env = new TestEnvironment();
       expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(false);
+    });
+  });
+
+  describe('downloadProgress', () => {
+    it('should show number between 0 and 100', () => {
+      const env = new TestEnvironment();
+      env.component.downloadBooksProgress = 4;
+      env.component.downloadBooksTotal = 8;
+      expect(env.component.downloadProgress).toBe(50);
+    });
+
+    it('should not divide by zero', () => {
+      const env = new TestEnvironment();
+      env.component.downloadBooksProgress = 4;
+      env.component.downloadBooksTotal = 0;
+      expect(env.component.downloadProgress).toBe(0);
+    });
+  });
+
+  describe('download draft button', () => {
+    it('button should display if there are draft books available', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      expect(env.downloadButton).not.toBe(null);
+    });
+
+    it('button should display if the project updates the hasDraft field', () => {
+      // Setup the project and subject
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          translateConfig: {
+            preTranslate: true,
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'es'
+              }
+            }
+          },
+          texts: [{ bookNum: 1, chapters: [{ number: 1, hasDraft: false }] }]
+        })
+      } as SFProjectProfileDoc;
+      const projectSubject = new BehaviorSubject<SFProjectProfileDoc>(projectDoc);
+      const projectObservable = projectSubject.asObservable();
+      const buildSubject = new BehaviorSubject<BuildDto>(buildDto);
+      const buildObservable = buildSubject.asObservable();
+
+      // Setup the initial environment
+      const env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: projectObservable
+        });
+        mockDraftGenerationService.getBuildProgress.and.returnValue(buildObservable);
+        mockDraftGenerationService.pollBuildProgress.and.returnValue(buildObservable);
+        mockDraftGenerationService.getLastCompletedBuild.and.returnValue(buildObservable);
+      });
+      env.fixture.detectChanges();
+
+      // Verify the button is not visible
+      expect(env.downloadButton).toBe(null);
+
+      // Update the has draft flag for the project
+      projectDoc.data!.texts[0].chapters[0].hasDraft = true;
+      projectSubject.next(projectDoc);
+      buildSubject.next({ ...buildDto, state: BuildStates.Completed });
+
+      env.fixture.detectChanges();
+
+      // Verify the button is visible
+      expect(env.downloadButton).not.toBe(null);
+    });
+
+    it('button should start the download', () => {
+      const env = new TestEnvironment();
+      spyOn(env.component, 'downloadDraft').and.stub();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      env.downloadButton!.click();
+      expect(env.component.downloadDraft).toHaveBeenCalled();
+    });
+
+    it('button should not display if there are no draft books available', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = false;
+      env.fixture.detectChanges();
+
+      expect(env.downloadButton).toBe(null);
+    });
+
+    it('spinner should display while the download is in progress', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.component.downloadBooksProgress = 2;
+      env.component.downloadBooksTotal = 4;
+      env.fixture.detectChanges();
+
+      expect(env.downloadSpinner).not.toBe(null);
+    });
+
+    it('spinner should not display while no download is in progress', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.hasDraftBooksAvailable = true;
+      env.component.downloadBooksProgress = 0;
+      env.component.downloadBooksTotal = 0;
+      env.fixture.detectChanges();
+
+      expect(env.downloadSpinner).toBe(null);
+    });
+  });
+
+  describe('downloadDraft', () => {
+    it('should display an error if no chapters have drafts', done => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: []
+        })
+      } as SFProjectProfileDoc;
+      const env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+
+      env.component.downloadDraft().then(() => {
+        expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
+        done();
+      });
+    });
+
+    it('should display an error if the project has no data', done => {
+      const projectDoc = {
+        data: null
+      };
+      const env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+
+      env.component.downloadDraft().then(() => {
+        expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
+        done();
+      });
+    });
+
+    it('should create a zip file containing all of the books with drafts', done => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 62,
+              chapters: [
+                { number: 1, hasDraft: false },
+                { number: 2, hasDraft: true }
+              ]
+            },
+            { bookNum: 63, chapters: [{ number: 1, hasDraft: true }] },
+            { bookNum: 64, chapters: [{ number: 1, hasDraft: false }] }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      const env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+
+      env.component.downloadDraft().then(() => {
+        // Ensure drafts were generated for 1 and 2 John, but not 3 John
+        expect(mockDraftGenerationService.getGeneratedDraftUsfm).toHaveBeenCalledTimes(2);
+
+        // NOTE: The FileSaver namespace shares a signature with the FileSaver function, which has a deprecation warning
+        // eslint-disable-next-line deprecation/deprecation
+        expect(FileSaver.saveAs).toHaveBeenCalled();
+
+        done();
+      });
     });
   });
 });

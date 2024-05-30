@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { catchError, lastValueFrom, of, tap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -148,16 +149,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
       return;
     }
 
-    // Trigger a click that downloads the blob
-    // NOTE: This code should not be unit tested, as it will trigger downloads in the test browser
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
+    // Use the FileSaver API to download the file
+    saveAs(blob, fileName);
 
     this.loadingFinished();
   }

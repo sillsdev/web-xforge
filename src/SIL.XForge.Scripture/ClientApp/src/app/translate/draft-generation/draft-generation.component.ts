@@ -6,14 +6,16 @@ import {
 } from '@angular/material/legacy-dialog';
 import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
-import { isEmpty } from 'lodash-es';
+import { translate, TranslocoModule } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, firstValueFrom, of, Subscription } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -93,12 +95,23 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   isDraftJobFetched = false;
 
   /**
-   * Whether any completed draft build exists for this project.
+   * The completed draft build, if it exists for this project.
    * This is useful for when the last build did not complete successfully or was canceled,
    * in which case a 'Preview draft' button can still be shown, as the pre-translations
    * from that build can still be retrieved.
    */
-  hasAnyCompletedBuild = false;
+  lastCompletedBuild: BuildDto | undefined;
+
+  /**
+   * Determines if there are draft books available for download.
+   */
+  hasDraftBooksAvailable = false;
+
+  /**
+   * Tracks how many books have been downloaded for the zip file.
+   */
+  downloadBooksProgress: number = 0;
+  downloadBooksTotal: number = 0;
 
   isPreTranslationApproved = false;
   signupFormUrl?: string;
@@ -122,6 +135,15 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService
   ) {
     super(noticeService);
+  }
+
+  get downloadProgress(): number {
+    if (this.downloadBooksTotal === 0) return 0;
+    return (this.downloadBooksProgress / this.downloadBooksTotal) * 100;
+  }
+
+  get hasAnyCompletedBuild(): boolean {
+    return this.lastCompletedBuild != null;
   }
 
   get isGenerationSupported(): boolean {
@@ -185,7 +207,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     this.subscribe(
       combineLatest([
-        this.activatedProject.projectDoc$.pipe(
+        this.activatedProject.changes$.pipe(
           filterNullish(),
           tap(projectDoc => {
             const translateConfig = projectDoc.data?.translateConfig;
@@ -222,6 +244,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
+
+            this.hasDraftBooksAvailable =
+              projectDoc?.data?.texts?.some(t => t.chapters?.some(c => c.hasDraft)) ?? false;
           })
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
@@ -249,13 +274,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
           if (!(projectDoc.data?.translateConfig.preTranslate ?? false)) {
-            return of(false);
+            return of(undefined);
           }
-          return this.draftGenerationService.getLastCompletedBuild(projectDoc.id).pipe(map(build => !isEmpty(build)));
+          return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
         })
       ),
-      (hasAnyCompletedBuild: boolean) => {
-        this.hasAnyCompletedBuild = hasAnyCompletedBuild;
+      (build: BuildDto | undefined) => {
+        this.lastCompletedBuild = build;
       }
     );
 
@@ -297,6 +322,71 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     // Display pre-generation steps
     this.navigateToTab('pre-generate-steps');
+  }
+
+  async downloadDraft(): Promise<void> {
+    const projectDoc = this.activatedProject.projectDoc;
+    if (projectDoc?.data == null) {
+      this.noticeService.showError(translate('draft_generation.info_alert_download_error'));
+      return;
+    }
+
+    const zip = new JSZip();
+    const projectShortName: string = projectDoc.data.shortName;
+    const usfmFiles: Promise<void>[] = [];
+
+    // Build the list of book numbers
+    const books: number[] = projectDoc.data.texts.reduce<number[]>((acc, text) => {
+      if (text.chapters.some(c => c.hasDraft)) {
+        acc.push(text.bookNum);
+      }
+      return acc;
+    }, []);
+    this.downloadBooksProgress = 0;
+    this.downloadBooksTotal = books.length;
+
+    // Create the promises to download each book's USFM
+    for (const bookNum of books) {
+      const usfmFile = firstValueFrom(
+        this.draftGenerationService.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0)
+      ).then(usfm => {
+        if (usfm != null) {
+          const fileName: string =
+            bookNum.toString().padStart(2, '0') + Canon.bookNumberToId(bookNum) + projectShortName + '.sfm';
+          zip.file(fileName, usfm);
+          this.downloadBooksProgress++;
+        }
+      });
+      usfmFiles.push(usfmFile);
+    }
+
+    await Promise.all(usfmFiles);
+
+    if (Object.keys(zip.files).length === 0) {
+      this.downloadBooksTotal = 0;
+      this.downloadBooksProgress = 0;
+      this.noticeService.showError(translate('draft_generation.info_alert_download_error'));
+      return;
+    }
+
+    // Download the zip file
+    let filename: string = projectDoc.data.shortName + ' Draft';
+    if (this.lastCompletedBuild?.additionalInfo?.dateFinished != null) {
+      const date: Date = new Date(this.lastCompletedBuild.additionalInfo.dateFinished);
+      const year: string = date.getFullYear().toString();
+      const month: string = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day: string = date.getDate().toString().padStart(2, '0');
+      const hours: string = date.getHours().toString().padStart(2, '0');
+      const minutes: string = date.getMinutes().toString().padStart(2, '0');
+      filename += ` ${year}-${month}-${day}_${hours}${minutes}`;
+    }
+
+    filename += '.zip';
+    return zip.generateAsync({ type: 'blob' }).then(blob => {
+      this.downloadBooksTotal = 0;
+      this.downloadBooksProgress = 0;
+      saveAs(blob, filename);
+    });
   }
 
   async cancel(): Promise<void> {
@@ -412,7 +502,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
           // Ensure flag is set for case where first completed build happens while component is loaded
           if (this.isDraftComplete(job)) {
-            this.hasAnyCompletedBuild = true;
+            this.lastCompletedBuild = job;
           }
         })
       ),
@@ -450,7 +540,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
         // Ensure flag is set for case where first completed build happens while component is loaded
         if (this.isDraftComplete(job)) {
-          this.hasAnyCompletedBuild = true;
+          this.lastCompletedBuild = job;
         }
       }
     );

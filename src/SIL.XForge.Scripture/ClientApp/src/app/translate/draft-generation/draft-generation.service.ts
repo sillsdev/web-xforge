@@ -13,9 +13,9 @@ import { HttpClient } from '../../machine-api/http-client';
 import {
   activeBuildStates,
   BuildConfig,
+  DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
-  DRAFT_GENERATION_SERVICE_OPTIONS,
   PreTranslation,
   PreTranslationData
 } from './draft-generation';
@@ -184,7 +184,7 @@ export class DraftGenerationService {
       .pipe(
         map(res => res.data?.data.ops ?? []),
         catchError(err => {
-          // If no pre-translations exist, return empty dictionary
+          // If no pre-translations exist, return empty array
           if (err.status === 403 || err.status === 404 || err.status === 409) {
             return of([]);
           } else if (err.status === 405) {
@@ -194,6 +194,28 @@ export class DraftGenerationService {
 
           this.noticeService.showError(translate('draft_generation.temporarily_unavailable'));
           return of([]);
+        })
+      );
+  }
+
+  /**
+   * Gets the pre-translation USFM for the specified book/chapter using the last completed build.
+   * @param projectId The SF project id for the target translation.
+   * @param book The book number.
+   * @param chapter The chapter number. Specify 0 to return all chapters in the book.
+   * @returns An observable string of USFM data, or undefined if no pre-translations exist.
+   */
+  getGeneratedDraftUsfm(projectId: string, book: number, chapter: number): Observable<string | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
+    return this.httpClient
+      .get<string>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`)
+      .pipe(
+        map(res => res.data),
+        catchError(() => {
+          // If no USFM could be retrieved, return undefined
+          return of(undefined);
         })
       );
   }
