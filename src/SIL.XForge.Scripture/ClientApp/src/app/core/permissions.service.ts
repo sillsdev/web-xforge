@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './models/sf-project-role-info';
 import { TextDocId } from './models/text-doc';
-import { SFProjectUtilService } from './sf-project-util.service';
+import { ParatextService } from './paratext.service';
 import { SFProjectService } from './sf-project.service';
 
 @Injectable({ providedIn: 'root' })
@@ -17,7 +17,7 @@ export class PermissionsService {
   constructor(
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly projectUtil: SFProjectUtilService
+    private readonly paratextService: ParatextService
   ) {}
 
   canAccessCommunityChecking(project: SFProjectProfileDoc, userId?: string): boolean {
@@ -73,7 +73,7 @@ export class PermissionsService {
     const role: string = projectDoc.data.userRoles[userId];
 
     // Any paratext user role can sync DBL resources
-    if (this.projectUtil.isResource(projectDoc.data.paratextId)) {
+    if (this.paratextService.isResource(projectDoc.data.paratextId)) {
       return isParatextRole(role);
     }
 

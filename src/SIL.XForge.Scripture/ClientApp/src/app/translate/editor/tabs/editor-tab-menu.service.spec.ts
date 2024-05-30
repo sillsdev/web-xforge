@@ -5,6 +5,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { of, take } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -25,6 +26,7 @@ const activatedProjectMock = mock(ActivatedProjectService);
 const draftGenerationServiceMock = mock(DraftGenerationService);
 const tabStateMock = mock(TabStateService);
 const mockUserService = mock(UserService);
+const mockAuthService = mock(AuthService);
 
 describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
@@ -36,6 +38,7 @@ describe('EditorTabMenuService', () => {
       { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
+      { provide: AuthService, useMock: mockAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));

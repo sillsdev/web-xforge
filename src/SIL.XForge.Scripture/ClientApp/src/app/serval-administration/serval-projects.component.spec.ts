@@ -12,6 +12,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -22,14 +23,15 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectUtilService } from '../core/sf-project-util.service';
+import { ParatextService } from '../core/paratext.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedServalAdministrationService = mock(ServalAdministrationService);
 const mockedUserService = mock(UserService);
-const mockedSFProjectUtil = mock(SFProjectUtilService);
+const mockedParatextService = mock(ParatextService);
+const mockAuthService = mock(AuthService);
 
 describe('ServalProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -46,7 +48,8 @@ describe('ServalProjectsComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: SFProjectUtilService, useMock: mockedSFProjectUtil }
+      { provide: AuthService, useMock: mockAuthService },
+      { provide: ParatextService, useMock: mockedParatextService }
     ]
   }));
 
@@ -148,7 +151,7 @@ class TestEnvironment {
           })
         )
     );
-    when(mockedSFProjectUtil.isResource(anything())).thenCall((paratextId: string) => {
+    when(mockedParatextService.isResource(anything())).thenCall((paratextId: string) => {
       return paratextId?.startsWith('ptresource') ?? false;
     });
 
