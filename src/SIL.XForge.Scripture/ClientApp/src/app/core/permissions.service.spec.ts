@@ -19,8 +19,8 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
 import { TextDocId } from './models/text-doc';
+import { RESOURCE_IDENTIFIER_LENGTH } from './paratext.service';
 import { PermissionsService } from './permissions.service';
-import { RESOURCE_IDENTIFIER_LENGTH } from './sf-project-util.service';
 import { SFProjectService } from './sf-project.service';
 
 const mockedUserService = mock(UserService);
