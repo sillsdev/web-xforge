@@ -593,7 +593,6 @@ public class MachineProjectService(
     /// <remarks>
     /// Notes:
     ///  - If the corpus was updated, then you should start the Build with <see cref="BuildProjectAsync"/>.
-    ///  - If the Serval feature flag is disabled, false is returned and an information message logged.
     ///  - If a corpus is not configured on Serval, one is created and recorded in the project secret.
     /// </remarks>
     public async Task<bool> SyncProjectCorporaAsync(
@@ -1120,7 +1119,7 @@ public class MachineProjectService(
         {
             var preTranslateCorpusConfig = new PretranslateCorpusConfig { CorpusId = corpus.Key };
 
-            // If this is a Paratext zip file corpus, and the feature flag is enabled
+            // If this is a Paratext zip file corpus
             if (corpus.Value.UploadParatextZipFile)
             {
                 // Since all books are uploaded via the zip file, we need to specify the target books to translate
@@ -1141,16 +1140,26 @@ public class MachineProjectService(
                     string? scriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
                         ? buildConfig.TrainingScriptureRange
                         : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
+                    string[]? textIds = null;
 
-                    // Ensure that the trainOn scripture range is null if it is blank
+                    // Ensure that the trainOn scripture range is null if it is blank,
+                    // and that the textIds array is empty so no books are trained on.
                     if (string.IsNullOrWhiteSpace(scriptureRange))
                     {
                         scriptureRange = null;
+                        textIds = [];
                     }
 
                     // As we do not have an alternate train on source specified, use the source texts to train on
                     trainOn ??= [];
-                    trainOn.Add(new TrainingCorpusConfig { CorpusId = corpus.Key, ScriptureRange = scriptureRange });
+                    trainOn.Add(
+                        new TrainingCorpusConfig
+                        {
+                            CorpusId = corpus.Key,
+                            ScriptureRange = scriptureRange,
+                            TextIds = textIds
+                        }
+                    );
                 }
             }
 
@@ -1176,10 +1185,12 @@ public class MachineProjectService(
                         ? buildConfig.TrainingScriptureRange
                         : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
 
-                    // Ensure that the alternate training corpus scripture range is null if it is blank
+                    // Ensure that the alternate training corpus scripture range is null if it is blank,
+                    // and that the textIds array is empty so no books are trained on.
                     if (string.IsNullOrWhiteSpace(trainingCorpusConfig.ScriptureRange))
                     {
                         trainingCorpusConfig.ScriptureRange = null;
+                        trainingCorpusConfig.TextIds = [];
                     }
                 }
 
