@@ -98,8 +98,8 @@ $colors: (
     --mdc-filled-button-label-text-color: var(--notice-color-button-text);
 
     &:hover {
-      background-color: var(--notice-color-button-hover-bg);
-      color: var(--notice-color-button-hover-text);
+      background-color: var(--notice-color-button-hover-bg) !important;
+      color: var(--notice-color-button-hover-text) !important;
     }
   }
 }
