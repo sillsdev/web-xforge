@@ -13,12 +13,14 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
+import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { EditorTabAddResourceDialogComponent } from './editor-tab-add-resource-dialog.component';
 
 const mockSFProjectService = mock(SFProjectService);
 const mockParatextService = mock(ParatextService);
 const mockMatDialogRef = mock(MatDialogRef);
+const mockPermissionsService = mock(PermissionsService);
 
 describe('EditorTabAddResourceDialogComponent', () => {
   configureTestingModule(() => ({
@@ -26,6 +28,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
     providers: [
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: ParatextService, useMock: mockParatextService },
+      { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockMatDialogRef },
       { provide: MAT_DIALOG_DATA, useValue: {} }
@@ -59,6 +62,24 @@ describe('EditorTabAddResourceDialogComponent', () => {
       expect(env.component.resourceLoadingFailed).toBe(false);
     }));
 
+    it('should filter projects that already have a corresponding SF project OR are connectable', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const expectedResult = [
+        env.createTestParatextProject(1, { projectId: 'p1', isConnectable: true }),
+        env.createTestParatextProject(2, { projectId: 'p2', isConnectable: false }),
+        env.createTestParatextProject(3, { projectId: undefined, isConnectable: true })
+      ];
+      const projects = [
+        ...expectedResult,
+        env.createTestParatextProject(4, { projectId: undefined, isConnectable: false }),
+        env.createTestParatextProject(5, { projectId: undefined, isConnectable: false })
+      ];
+      when(mockParatextService.getProjects()).thenReturn(Promise.resolve(projects));
+      env.component['getProjectsAndResources']();
+      tick();
+      expect(env.component.projects).toEqual(expectedResult);
+    }));
+
     it('should set error flags when getProjects or getResources throw an error', fakeAsync(() => {
       const env = new TestEnvironment();
       when(mockParatextService.getProjects()).thenReject(new Error());
@@ -80,6 +101,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
     it('should call syncProject and not close dialog if fetched project has no texts when confirmSelection is called', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockPermissionsService.canSync(anything())).thenReturn(true);
       env.setupProject({ texts: [] });
       env.component.confirmSelection();
       tick();
@@ -89,10 +111,21 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
     it('should call syncProject and close dialog if fetched project has texts when confirmSelection is called', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockPermissionsService.canSync(anything())).thenReturn(true);
       env.setupProject({ texts: [{} as any] });
       env.component.confirmSelection();
       tick();
       verify(mockSFProjectService.onlineSync(env.projectId)).once();
+      verify(mockMatDialogRef.close(anything())).once();
+    }));
+
+    it('should not call syncProject and close dialog if user does not have sync permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockPermissionsService.canSync(anything())).thenReturn(false);
+      env.setupProject({ texts: [{} as any] });
+      env.component.confirmSelection();
+      tick();
+      verify(mockSFProjectService.onlineSync(env.projectId)).never();
       verify(mockMatDialogRef.close(anything())).once();
     }));
 
@@ -107,6 +140,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
     it('should set syncFailed to true and call cancelSync when syncProject throws an error', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockPermissionsService.canSync(anything())).thenReturn(true);
       env.setupProject({ texts: [] });
       when(mockSFProjectService.onlineSync(anything())).thenReject(new Error());
       spyOn<any>(env.component, 'cancelSync');
@@ -166,7 +200,7 @@ class TestEnvironment {
     } as SFProjectDoc;
   }
 
-  private createTestParatextProject(index: number): ParatextProject {
+  createTestParatextProject(index: number, overrides?: Partial<ParatextProject>): ParatextProject {
     return {
       paratextId: `ptId${index}`,
       name: `Paratext Project ${index}`,
@@ -174,7 +208,8 @@ class TestEnvironment {
       languageTag: 'en',
       projectId: `projectId${index}`,
       isConnectable: true,
-      isConnected: false
+      isConnected: false,
+      ...overrides
     };
   }
 }

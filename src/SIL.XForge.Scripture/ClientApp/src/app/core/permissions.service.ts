@@ -65,12 +65,12 @@ export class PermissionsService {
     return false;
   }
 
-  canSync(projectDoc: SFProjectProfileDoc, userId: string): boolean {
+  canSync(projectDoc: SFProjectProfileDoc, userId?: string): boolean {
     if (projectDoc.data == null) {
       return false;
     }
 
-    const role: string = projectDoc.data.userRoles[userId];
+    const role: string = projectDoc.data.userRoles[userId ?? this.userService.currentUserId];
 
     // Any paratext user role can sync DBL resources
     if (this.paratextService.isResource(projectDoc.data.paratextId)) {

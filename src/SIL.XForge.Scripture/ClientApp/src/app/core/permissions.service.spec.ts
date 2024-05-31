@@ -9,7 +9,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -131,6 +131,18 @@ describe('PermissionsService', () => {
       when(mockedProjectDoc.data).thenReturn(undefined);
       expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(false);
     }));
+
+    it('uses current user id if userId is not provided', () => {
+      const env = new TestEnvironment();
+      env.service.canSync(env.projectDoc);
+      verify(mockedUserService.currentUserId).once();
+    });
+
+    it('does not use current user id if userId is provided', () => {
+      const env = new TestEnvironment();
+      env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator);
+      verify(mockedUserService.currentUserId).never();
+    });
 
     it('allows PT admin role to sync projects', () => {
       const env = new TestEnvironment();

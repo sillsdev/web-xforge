@@ -10,6 +10,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
+import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 
 export interface EditorTabAddResourceDialogData {
@@ -52,6 +53,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     readonly onlineStatus: OnlineStatusService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
+    private readonly permissionsService: PermissionsService,
     private readonly dialogRef: MatDialogRef<EditorTabAddResourceDialogComponent, SFProjectDoc>,
     @Inject(MAT_DIALOG_DATA) readonly dialogData: EditorTabAddResourceDialogData
   ) {}
@@ -73,13 +75,17 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         this.selectedProjectDoc = await this.fetchProject(paratextId);
 
         if (this.selectedProjectDoc != null) {
-          // Wait for sync if no texts
-          if (!this.selectedProjectDoc.data?.texts.length) {
-            this.isSyncActive = true;
-            await this.syncProject(this.selectedProjectDoc.id);
+          if (this.permissionsService.canSync(this.selectedProjectDoc)) {
+            // Wait for sync if no texts
+            if (!this.selectedProjectDoc.data?.texts.length) {
+              this.isSyncActive = true;
+              await this.syncProject(this.selectedProjectDoc.id);
+            } else {
+              // Otherwise, start a sync in the background and close dialog
+              this.syncProject(this.selectedProjectDoc.id);
+              this.dialogRef.close(this.selectedProjectDoc);
+            }
           } else {
-            // Otherwise, start a sync in the background and close dialog
-            this.syncProject(this.selectedProjectDoc.id);
             this.dialogRef.close(this.selectedProjectDoc);
           }
         } else {
@@ -120,7 +126,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         .getProjects()
         .then(projects => {
           this.projectLoadingFailed = false;
-          this.projects = projects;
+          this.projects = this.filterConnectable(projects);
         })
         .catch(() => (this.projectLoadingFailed = true)),
       this.paratextService
@@ -160,5 +166,14 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
   private async syncProject(projectId: string): Promise<void> {
     await this.projectService.onlineSync(projectId);
+  }
+
+  /**
+   * From the given paratext projects, returns those that either:
+   * - already have a corresponding SF project
+   * - or have current user as admin on the PT project
+   */
+  private filterConnectable(projects: ParatextProject[] | undefined): ParatextProject[] | undefined {
+    return projects?.filter(project => project.projectId != null || project.isConnectable);
   }
 }
