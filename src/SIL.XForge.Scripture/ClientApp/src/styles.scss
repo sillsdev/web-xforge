@@ -46,16 +46,10 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   --mdc-snackbar-container-color: #{variables.$errorColor};
 }
 
-.mat-mdc-unelevated-button,
-.mat-button-toggle-button {
-  &:not(:disabled) {
-    transition: color 0.15s;
-    transition: background-color 0.15s;
-  }
-}
+.mdc-button.mat-mdc-unelevated-button,
+.mdc-button.mat-button-toggle-button {
+  transition: color 0.15s, background-color 0.15s;
 
-.mat-mdc-unelevated-button,
-.mat-button-toggle-button {
   &:not(:disabled):hover {
     background-color: variables.$greenLight;
     color: variables.$sf_grey;
@@ -63,8 +57,9 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 button.mdc-icon-button {
+  transition: color 0.15s;
+
   &:not([disabled]):hover {
-    transition: color 0.15s;
     color: variables.$greenLight;
   }
 }
