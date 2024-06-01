@@ -350,7 +350,7 @@
     "close": "Fermer"
   },
   "navigation-project_selector": {
-    "connect_project": "Connecter le projet"
+    "connect_project": "Connecter un projet"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choisissez le livre",
@@ -405,7 +405,7 @@
   },
   "start": {
     "connect_project": "Connecter un projet",
-    "not_connected_to_any_projects": "Il semble que vous n'êtes encore connecté à aucun projet."
+    "not_connected_to_any_projects": "Il semble que vous ne soyez encore connecté à aucun projet."
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "L'enregistrement audio n'est pas pris en charge dans ce navigateur.",
