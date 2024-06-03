@@ -14,6 +14,9 @@ export interface TabInfo<TType extends string> {
   type: TType;
   headerText: string;
 
+  /** Optional text to display on hover of the tab header. */
+  tooltip?: string;
+
   /** Optional material icon to place alongside tab header text. */
   icon?: string;
 
