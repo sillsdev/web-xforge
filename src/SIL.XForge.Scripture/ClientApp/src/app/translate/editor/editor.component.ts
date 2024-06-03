@@ -1177,7 +1177,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           sourceTabGroup.addTab(
             await this.editorTabFactory.createTab('project-source', {
               projectId: projectSource.projectRef,
-              headerText: projectSource.shortName
+              headerText: projectSource.shortName,
+              tooltip: projectSource.name
             })
           );
         }
@@ -1185,14 +1186,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         targetTabGroup.addTab(
           await this.editorTabFactory.createTab('project-target', {
             projectId: projectDoc.id,
-            headerText: projectDoc.data?.shortName
+            headerText: projectDoc.data?.shortName,
+            tooltip: projectDoc?.data?.name
           })
         );
 
         for (const tabData of persistedTabs) {
           const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
             projectId: tabData.projectId,
-            headerText: tabData.projectDoc?.data?.shortName
+            headerText: tabData.projectDoc?.data?.shortName,
+            tooltip: tabData.projectDoc?.data?.name
           });
 
           if (tabData.groupId === 'source') {

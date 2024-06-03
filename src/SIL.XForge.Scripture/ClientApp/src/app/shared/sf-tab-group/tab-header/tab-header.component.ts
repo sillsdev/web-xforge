@@ -1,4 +1,5 @@
-import { Component, EventEmitter, HostBinding, HostListener, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, HostListener, Inject, Input, Output } from '@angular/core';
+import { SF_TABS_CONFIG, SFTabsConfig } from '../sf-tabs-config';
 
 @Component({
   selector: 'app-tab-header',
@@ -18,9 +19,13 @@ export class TabHeaderComponent {
   @Input()
   active = false;
 
+  @Input() tooltip?: string;
+
   @Output() tabPress = new EventEmitter<MouseEvent | TouchEvent>();
   @Output() tabClick = new EventEmitter<MouseEvent | TouchEvent>();
   @Output() closeClick = new EventEmitter<void>();
+
+  constructor(@Inject(SF_TABS_CONFIG) readonly config: SFTabsConfig) {}
 
   @HostListener('mousedown', ['$event'])
   @HostListener('touchstart', ['$event'])

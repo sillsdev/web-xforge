@@ -20,6 +20,7 @@
     *ngFor="let tab of tabs; let i = index"
     [closeable]="tab.closeable"
     [movable]="tab.movable"
+    [tooltip]="tab.tooltip"
     [active]="i === selectedIndex"
     (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
     (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"

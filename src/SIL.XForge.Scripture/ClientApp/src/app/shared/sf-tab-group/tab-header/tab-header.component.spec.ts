@@ -1,10 +1,14 @@
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { SFTabsModule } from '../sf-tabs.module';
 import { TabHeaderComponent } from './tab-header.component';
 
 describe('TabHeaderComponent', () => {
   let component: TabHeaderComponent;
   let fixture: ComponentFixture<TabHeaderComponent>;
+  let harnessLoader: HarnessLoader;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -12,6 +16,7 @@ describe('TabHeaderComponent', () => {
       declarations: [TabHeaderComponent]
     });
     fixture = TestBed.createComponent(TabHeaderComponent);
+    harnessLoader = TestbedHarnessEnvironment.loader(fixture);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -61,6 +66,17 @@ describe('TabHeaderComponent', () => {
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
       expect(el.classList.contains('active')).toBe(false);
+    });
+  });
+
+  describe('tooltip', () => {
+    it('should set the tooltip', async () => {
+      component.tooltip = 'tooltip';
+      fixture.detectChanges();
+
+      const tooltipHarness: MatTooltipHarness = await harnessLoader.getHarness(MatTooltipHarness);
+      await tooltipHarness.show();
+      expect(await tooltipHarness.getTooltipText()).toEqual('tooltip');
     });
   });
 
