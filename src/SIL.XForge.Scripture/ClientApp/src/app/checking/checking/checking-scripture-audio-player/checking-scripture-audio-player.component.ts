@@ -220,7 +220,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
             this._timing,
             audio.currentTime
           );
-          if (audioHeadingRef == null) return;
+          if (audioHeadingRef == null) {
+            this.currentVerseChanged.emit(undefined);
+            return;
+          }
           const segmentRef: string = `${audioHeadingRef.label}_${audioHeadingRef.iteration}`;
           this.currentVerseChanged.emit(segmentRef);
           return;
