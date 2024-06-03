@@ -16,6 +16,8 @@
       *ngFor="let projectDoc of userConnectedProjects"
       [class.active-project]="isLastSelectedProject(projectDoc)"
       id="user-connected-project-card-{{ projectDoc.data?.paratextId }}"
+      attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
+      data-card-type="user-connected-project"
     >
       <div>
         <span class="project-name">
@@ -53,7 +55,8 @@
     <mat-card
       *ngFor="let projectDoc of userConnectedResources"
       [class.active-project]="isLastSelectedProject(projectDoc)"
-      id="user-connected-resource-card-{{ projectDoc.data?.paratextId }}"
+      attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
+      data-card-type="user-connected-resource"
     >
       <div>
         <span class="project-name">
@@ -88,7 +91,8 @@
 
       <mat-card
         *ngFor="let ptProject of userUnconnectedParatextProjects"
-        id="user-unconnected-project-card-{{ ptProject.paratextId }}"
+        attr.data-pt-project-id="{{ ptProject.paratextId }}"
+        data-card-type="user-unconnected-project"
         [class.cannot-connect]="!ptProject.isConnectable"
       >
         <div>
