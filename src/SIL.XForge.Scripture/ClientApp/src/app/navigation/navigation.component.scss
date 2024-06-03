@@ -28,8 +28,8 @@ mat-nav-list .mdc-list-item {
 
   &.navigation-header ::ng-deep .mdc-list-item__content {
     font-size: 0.95em;
-    color: #777;
-    padding-inline-start: 18px;
+    --mdc-list-list-item-label-text-color: #777;
+    padding-inline-start: 2px;
   }
 
   &.activated-nav-item,
