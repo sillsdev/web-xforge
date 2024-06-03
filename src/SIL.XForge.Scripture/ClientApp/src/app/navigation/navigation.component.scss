@@ -1,7 +1,6 @@
 @use 'src/variables';
 
 mat-nav-list .mdc-list-item {
-  height: 48px;
   font-weight: 500;
   font-size: 14px;
 
@@ -9,6 +8,9 @@ mat-nav-list .mdc-list-item {
     color: variables.$purpleMedium;
     fill: variables.$purpleMedium;
     transition: color 0.15s;
+    padding: 4px;
+    height: unset;
+    width: unset;
   }
   &:hover {
     mat-icon {
@@ -18,6 +20,7 @@ mat-nav-list .mdc-list-item {
   }
 
   ::ng-deep .mat-mdc-list-item-unscoped-content {
+    height: 48px;
     display: flex;
     align-items: center;
     column-gap: 12px;
@@ -47,7 +50,7 @@ mat-nav-list .mdc-list-item {
 
 #tools-menu-list,
 #admin-pages-menu-list {
-  padding-top: 0;
+  padding-block: 0;
 }
 
 #tools-menu-list {
