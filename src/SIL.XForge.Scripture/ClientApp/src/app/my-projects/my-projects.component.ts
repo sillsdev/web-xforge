@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -66,6 +67,14 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
   isLastSelectedProject(project: SFProjectProfileDoc): boolean {
     return project.id === this.user?.data?.sites[environment.siteId].currentProjectId;
+  }
+
+  /** Get descriptive text to show on a project card regarding what the project is used for, such as
+   *  Community Checking. */
+  projectTypeDescription(sfProject: SFProjectProfileDoc): string {
+    const drafting = translate('my_projects.drafting');
+    const checking = sfProject.data?.checkingConfig?.checkingEnabled ? ' • ' + translate('app.community_checking') : '';
+    return `${drafting}${checking}`;
   }
 
   private async loadUser(): Promise<void> {
