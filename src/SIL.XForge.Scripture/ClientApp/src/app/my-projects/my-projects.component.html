@@ -128,8 +128,8 @@
       </mat-card>
     </div>
 
-    <app-notice id="message-offline" icon="cloud_off" type="info" *ngIf="!isOnline">
-      You will need to connect to the internet to get started with a project.
+    <app-notice id="message-offline" icon="cloud_off" type="error" *ngIf="!isOnline">
+      {{ t("offline") }}
     </app-notice>
   </div>
 </ng-container>
