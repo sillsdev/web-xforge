@@ -44,7 +44,7 @@
       <div class="loading-action"></div>
     </mat-card>
     <mat-expansion-panel id="message-looking-for-another-project" hideToggle *ngIf="userHasProjects && !userIsPTUser">
-      <mat-expansion-panel-header>Looking for another project?</mat-expansion-panel-header>
+      <mat-expansion-panel-header>{{ t("looking_for_another_project") }}</mat-expansion-panel-header>
       <p>
         {{ t("access_another_project") }}
       </p>
