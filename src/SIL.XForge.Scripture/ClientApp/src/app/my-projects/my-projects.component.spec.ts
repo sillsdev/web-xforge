@@ -547,19 +547,19 @@ export class TestEnvironment {
 
   /** Main button on card, like Open, Connect, or Join. */
   goButtonForProject(ptProjectId: string): DebugElement {
-    return this.getElement(`[id*="-card-${ptProjectId}"] a`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}] > a`);
   }
 
   cardForUserConnectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`#user-connected-project-card-${ptProjectId}`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-card-type="user-connected-project"]`);
   }
 
   cardForUserConnectedResource(ptProjectId: string): DebugElement {
-    return this.getElement(`#user-connected-resource-card-${ptProjectId}`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-card-type="user-connected-resource"]`);
   }
 
   cardForUserUnconnectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`#user-unconnected-project-card-${ptProjectId}`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-card-type="user-unconnected-project"]`);
   }
 
   waitUntilLoaded(): void {
