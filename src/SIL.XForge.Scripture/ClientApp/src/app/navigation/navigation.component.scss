@@ -29,9 +29,9 @@ mat-nav-list .mdc-list-item {
     letter-spacing: unset;
   }
 
-  &.navigation-header ::ng-deep .mdc-list-item__content {
+  &.navigation-header ::ng-deep .mat-mdc-list-item-unscoped-content {
     font-size: 0.95em;
-    --mdc-list-list-item-label-text-color: #777;
+    color: #777;
     padding-inline-start: 2px;
   }
 
