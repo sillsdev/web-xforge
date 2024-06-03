@@ -140,6 +140,7 @@
     "dialog_confirm_draft_regeneration_no": "Annuler",
     "dialog_confirm_draft_regeneration_title": "Est-ce que vous avez terminé avec le projet actuel?",
     "dialog_confirm_draft_regeneration_yes": "Continuer",
+    "download_draft": "Télécharger le brouillon",
     "draft_active_detail": "Génération de l'ébauche ; cela peut prendre quelques heures.",
     "draft_active_header": "L'ébauche en cours",
     "draft_is_ready": "Votre brouillon est prêt",
@@ -156,6 +157,7 @@
     "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_no_alternate_source_access": "Vous n'avez pas accès au projet source {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_no_alternate_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
+    "info_alert_download_error": "Un problème est survenu lors du téléchargement de votre brouillon. Veuillez vérifier votre connexion Internet et réessayer dans quelques minutes.",
     "info_alert_same_source_and_target_language": "La langue de votre texte source doit être différente de la langue cible. Sélectionnez un texte source différent sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est nécessaire pour produire une ébauche. Sélectionnez un texte source sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "instructions_draft_process": "La génération d'une ébauche prend généralement au moins 8 heures.",
@@ -195,7 +197,7 @@
     "next": "Suivant",
     "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage.",
     "these_source_books_cannot_be_used_for_training": "Les livres suivants ne peuvent pas être utilisés pour la formation car ils ne sont pas dans le texte source de la formation ({{ trainingSourceProjectName }}).",
-    "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne sont pas dans le texte source ({{ draftingSourceProjectName }}).",
+    "these_source_books_cannot_be_used_for_translating": "Les livres suivants ne peuvent pas être traduits car ils ne figurent pas dans le texte source de la rédaction ({{ draftingSourceProjectName }}).",
     "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
   },
   "draft_preview_books": {
@@ -226,13 +228,14 @@
     "apply_to_project": "Ajouter au Projet",
     "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser le brouillon et l'ajouter à votre projet.",
     "draft_indicator_applied": "Ajouté",
+    "draft_legacy_warning": "Nous avons mis à jour notre fonctionnalité de rédaction d'ébauche. Vous pouvez en profiter en [link:generateDraftUrl]générant un nouveau brouillon[/link].",
     "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
     "offline_notice": "Le brouillon automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout du brouillon écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
     "yes": "Écraser le chapitre"
   },
   "editor_history_tab": {
-    "offline_notice": "L'historique de l'éditeur n'est pas disponible hors ligne."
+    "offline_notice": "L'historique de l'éditeur n'est pas disponible hors connexion."
   },
   "editor_tabs_menu": {
     "history_tab_header": "Historique",
@@ -254,7 +257,7 @@
   },
   "import_questions_dialog": {
     "cancel": "Annuler",
-    "canceling_import_not_remove_questions": "Note : Annuler ne supprimera pas les questions qui sont déjà importées.",
+    "canceling_import_not_remove_questions": "Remarque : L'annulation ne supprimera pas les questions qui sont déjà importées.",
     "canceling_import": "Annulation de l'importation...",
     "close": "Fermer",
     "continue_import": "Continuer l'importation",
@@ -276,7 +279,7 @@
     "must_be_valid_reference": "Doit être une référence valide",
     "network_error_transcelerator": "Erreur réseau lors de la récupération des questions de Transcelerator. Nouvelle tentative ({{ count }}).",
     "no_questions_available": "Il n'y a pas de questions pour les livres dans ce projet.",
-    "no_transcelerator_offline": "L'importation depuis Transcelerator n'est pas disponible hors ligne.",
+    "no_transcelerator_offline": "L'importation depuis Transcelerator n'est pas disponible hors connexion.",
     "question_for_verse": "Question pour le verset {{ number }}",
     "question": "Question",
     "reference_from": "Début de référence",
