@@ -23,9 +23,8 @@
         <span class="project-name">
           <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
         </span>
-        <span class="helper-text">
-          {{ t("drafting") }}
-          {{ projectDoc.data?.checkingConfig?.checkingEnabled ? " • " + ("app.community_checking" | transloco) : "" }}
+        <span class="project-description">
+          {{ projectTypeDescription(projectDoc) }}
         </span>
       </div>
       <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
@@ -33,14 +32,14 @@
     <mat-card id="sf-loading-card" *ngIf="initialLoadingSFProjects" class="loading-card">
       <div>
         <div class="loading-project-name"></div>
-        <div class="loading-helper-text"></div>
+        <div class="loading-project-description"></div>
       </div>
       <div class="loading-action"></div>
     </mat-card>
     <mat-card class="loading-card" *ngIf="initialLoadingSFProjects">
       <div>
         <div class="loading-project-name"></div>
-        <div class="loading-helper-text"></div>
+        <div class="loading-project-description"></div>
       </div>
       <div class="loading-action"></div>
     </mat-card>
@@ -62,7 +61,7 @@
         <span class="project-name">
           <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
         </span>
-        <span class="helper-text">{{ t("dbl_resource") }}</span>
+        <span class="project-description">{{ t("dbl_resource") }}</span>
       </div>
       <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
     </mat-card>
@@ -99,7 +98,7 @@
           <span class="project-name">
             <span>{{ ptProject.shortName }}</span> - <span>{{ ptProject.name }}</span>
           </span>
-          <span *ngIf="!ptProject.isConnectable" class="helper-text">
+          <span *ngIf="!ptProject.isConnectable" class="project-description">
             {{ t("not_admin_cannot_connect_project") }}
           </span>
         </div>
@@ -116,14 +115,14 @@
       <mat-card id="pt-loading-card" *ngIf="loadingPTProjects" class="loading-card">
         <div>
           <div class="loading-project-name"></div>
-          <div class="loading-helper-text"></div>
+          <div class="loading-project-description"></div>
         </div>
         <div class="loading-action"></div>
       </mat-card>
       <mat-card class="loading-card" *ngIf="loadingPTProjects">
         <div>
           <div class="loading-project-name"></div>
-          <div class="loading-helper-text"></div>
+          <div class="loading-project-description"></div>
         </div>
         <div class="loading-action"></div>
       </mat-card>
