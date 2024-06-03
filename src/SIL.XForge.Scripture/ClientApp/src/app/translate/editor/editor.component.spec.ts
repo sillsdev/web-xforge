@@ -3734,38 +3734,37 @@ describe('EditorComponent', () => {
   }));
 
   describe('initEditorTabs', () => {
-    it('should add source tab group when sourceLabel is defined', fakeAsync(() => {
+    it('should add source tab group when source is defined', fakeAsync(() => {
       const env = new TestEnvironment();
-      flush();
+      const projectDoc = env.getProjectDoc('project01');
       const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
-      const sourceLabel = 'source label';
-      env.component['sourceLabel'] = sourceLabel;
-      env.component['targetLabel'] = 'target label';
-      env.component.initEditorTabs();
-      tick(100);
-      expect(spyCreateTab).toHaveBeenCalledWith('project-source', { headerText: sourceLabel });
+      env.wait();
+
+      expect(spyCreateTab).toHaveBeenCalledWith('project-source', {
+        headerText: projectDoc.data?.translateConfig.source?.shortName
+      });
+      discardPeriodicTasks();
     }));
 
-    it('should not add source tab group when sourceLabel is undefined', fakeAsync(() => {
+    it('should not add source tab group when source is undefined', fakeAsync(() => {
       const env = new TestEnvironment();
-      flush();
       const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
-      env.component['sourceLabel'] = undefined;
-      env.component['targetLabel'] = 'target label';
-      env.component.initEditorTabs();
-      tick(100);
+      delete env.testProjectProfile.translateConfig.source;
+      env.setupProject();
+      env.wait();
       expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
+      discardPeriodicTasks();
     }));
 
     it('should add target tab group', fakeAsync(() => {
       const env = new TestEnvironment();
-      flush();
+      const projectDoc = env.getProjectDoc('project01');
       const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
-      const targetLabel = 'target label';
-      env.component['targetLabel'] = targetLabel;
-      env.component.initEditorTabs();
-      tick(100);
-      expect(spyCreateTab).toHaveBeenCalledWith('project', { headerText: targetLabel });
+      env.wait();
+      expect(spyCreateTab).toHaveBeenCalledWith('project', {
+        headerText: projectDoc.data?.shortName
+      });
+      discardPeriodicTasks();
     }));
   });
 
@@ -3898,7 +3897,7 @@ class TestEnvironment {
     { tagId: 3, name: 'SF Note Tag', icon: SF_TAG_ICON, creatorResolve: false }
   ];
 
-  private testProjectProfile: SFProjectProfile = createTestProjectProfile({
+  testProjectProfile: SFProjectProfile = createTestProjectProfile({
     shortName: 'TRG',
     isRightToLeft: false,
     userRoles: this.userRolesOnProject,
