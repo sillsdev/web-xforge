@@ -61,6 +61,7 @@ import {
   combineLatest,
   fromEvent,
   merge,
+  Observable,
   of,
   Subject,
   Subscription,
@@ -74,6 +75,7 @@ import {
   map,
   repeat,
   retryWhen,
+  switchMap,
   take,
   tap,
   throttleTime
@@ -623,12 +625,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   ngOnInit(): void {
-    this.activatedProject.projectDoc$.pipe(takeUntilDestroyed(this.destroyRef), filterNullish()).subscribe(doc => {
-      this.sourceLabel = doc?.data?.translateConfig.source?.shortName ?? '';
-      this.targetLabel = doc?.data?.shortName ?? '';
-
-      this.initEditorTabs();
-    });
+    this.activatedProject.projectDoc$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filterNullish(),
+        tap(doc => {
+          this.sourceLabel = doc?.data?.translateConfig.source?.shortName ?? '';
+          this.targetLabel = doc?.data?.shortName ?? '';
+        }),
+        switchMap(() => this.initEditorTabs())
+      )
+      .subscribe();
   }
 
   ngAfterViewInit(): void {
@@ -1163,75 +1170,87 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // TODO: Respond to locale changes
   }
 
-  initEditorTabs(): void {
+  /**
+   * Initializes the tab state from persisted tabs plus non-persisted tabs (source and target projects),
+   * then listens for tab state changes to update the persisted tabs.
+   * Returns an observable that can be piped from projectDoc changes, allowing a single call to `subscribe`,
+   * avoiding potential NG0911 error 'View has already been destroyed'.
+   */
+  initEditorTabs(): Observable<any> {
     const tabStateInitialized$ = new BehaviorSubject<boolean>(false);
 
     // Set tab state from persisted tabs plus non-persisted tabs
-    this.editorTabPersistenceService.persistedTabs$.pipe(take(1)).subscribe(persistedTabs => {
-      const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
-      const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
+    const storeToState$: Observable<any> = this.editorTabPersistenceService.persistedTabs$.pipe(
+      take(1),
+      tap((persistedTabs: EditorTabPersistData[]) => {
+        const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
+        const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
 
-      if (this.sourceLabel) {
-        sourceTabGroup.addTab(
-          this.editorTabFactory.createTab('project-source', {
-            headerText: this.sourceLabel
+        if (this.sourceLabel) {
+          sourceTabGroup.addTab(
+            this.editorTabFactory.createTab('project-source', {
+              headerText: this.sourceLabel
+            })
+          );
+        }
+
+        targetTabGroup.addTab(
+          this.editorTabFactory.createTab('project', {
+            headerText: this.targetLabel
           })
         );
-      }
 
-      targetTabGroup.addTab(
-        this.editorTabFactory.createTab('project', {
-          headerText: this.targetLabel
-        })
-      );
-
-      persistedTabs.forEach((tabData: EditorTabPersistData) => {
-        const tab = this.editorTabFactory.createTab(tabData.tabType, {
-          projectId: tabData.projectId
-        });
-
-        if (tabData.groupId === 'source') {
-          sourceTabGroup.addTab(tab, tabData.isSelected);
-        } else {
-          targetTabGroup.addTab(tab, tabData.isSelected);
-        }
-      });
-
-      this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
-
-      // Notify to start tab persistence on tab state changes
-      tabStateInitialized$.next(true);
-
-      // View is initialized before the tab state is initialized, so re-run change detection
-      this.changeDetector.detectChanges();
-    });
-
-    // Persist tabs from tab state changes once tab state has been initialized
-    combineLatest([this.tabState.tabs$, tabStateInitialized$.pipe(filter(initialized => initialized))])
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        debounceTime(100),
-        map(([tabs]) => {
-          const tabsToPersist: EditorTabPersistData[] = [];
-
-          tabs.forEach(tab => {
-            // Only persist tabs flagged as persistable
-            if (tab.persist) {
-              tabsToPersist.push({
-                tabType: tab.type,
-                groupId: tab.groupId,
-                isSelected: tab.isSelected,
-                projectId: tab.projectId
-              });
-            }
+        for (const tabData of persistedTabs) {
+          const tab: EditorTabInfo = this.editorTabFactory.createTab(tabData.tabType, {
+            projectId: tabData.projectId
           });
 
-          return tabsToPersist;
-        })
-      )
-      .subscribe((tabs: EditorTabPersistData[]) => {
+          if (tabData.groupId === 'source') {
+            sourceTabGroup.addTab(tab, tabData.isSelected);
+          } else {
+            targetTabGroup.addTab(tab, tabData.isSelected);
+          }
+        }
+
+        this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
+
+        // Notify to start tab persistence on tab state changes
+        tabStateInitialized$.next(true);
+
+        // View is initialized before the tab state is initialized, so re-run change detection
+        this.changeDetector.detectChanges();
+      })
+    );
+
+    // Persist tabs from tab state changes once tab state has been initialized
+    const stateToStore$: Observable<any> = combineLatest([
+      this.tabState.tabs$,
+      tabStateInitialized$.pipe(filter(initialized => initialized))
+    ]).pipe(
+      map(([tabs]) => {
+        const tabsToPersist: EditorTabPersistData[] = [];
+
+        tabs.forEach(tab => {
+          // Only persist tabs flagged as persistable
+          if (tab.persist) {
+            tabsToPersist.push({
+              tabType: tab.type,
+              groupId: tab.groupId,
+              isSelected: tab.isSelected,
+              projectId: tab.projectId
+            });
+          }
+        });
+
+        return tabsToPersist;
+      }),
+      tap((tabs: EditorTabPersistData[]) => {
         this.editorTabPersistenceService.persistTabsOpen(tabs);
-      });
+      })
+    );
+
+    // Combine so both observables are triggered with single subscription
+    return merge(storeToState$, stateToStore$);
   }
 
   private async saveNote(params: SaveNoteParameters): Promise<void> {
