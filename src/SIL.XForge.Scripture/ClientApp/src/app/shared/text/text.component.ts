@@ -222,6 +222,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
   private _segment?: Segment;
+  private contentSet: boolean = false;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
@@ -433,7 +434,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get contentShowing(): boolean {
-    return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
+    return (this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty) || this.contentSet;
   }
 
   /**
@@ -858,6 +859,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   // until an (onBlur) event is triggered.
   toggleFocus(focus: boolean): void {
     this.focused.emit(focus);
+  }
+
+  setContents(delta: DeltaStatic, source?: Sources): void {
+    this?.editor?.setContents(delta, source);
+    this.contentSet = true;
   }
 
   applyEditorStyles(): void {
