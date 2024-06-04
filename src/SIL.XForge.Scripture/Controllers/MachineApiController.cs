@@ -119,7 +119,7 @@ public class MachineApiController : ControllerBase
                     cancellationToken
                 );
 
-                // If a build is still being uploaded, we need to wait to Serval to report the first revision
+                // If a build is still being uploaded, we need to wait for Serval to report the first revision
                 if (build?.State == MachineApiService.BuildStateQueued && minRevision > 0)
                 {
                     build = null;

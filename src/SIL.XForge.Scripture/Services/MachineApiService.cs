@@ -401,6 +401,16 @@ public class MachineApiService(
         }
     }
 
+    /// <summary>
+    /// Retrieves the state of an NMT or SMT build before the build is started on Serval.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="preTranslate">If <c>true</c>, check the status of the NMT/Pre-Translation build.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// A <see cref="ServalBuildDto"/> if the build is being uploaded to Serval; otherwise, <c>null</c>.
+    /// </returns>
     public async Task<ServalBuildDto?> GetQueuedStateAsync(
         string curUserId,
         string sfProjectId,
@@ -617,11 +627,11 @@ public class MachineApiService(
         MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
 
         // Sync the source and target before running the build
-        string jobId = await syncService.SyncAsync(new SyncConfig { ProjectId = sfProjectId, UserId = curUserId });
+        string syncJobId = await syncService.SyncAsync(new SyncConfig { ProjectId = sfProjectId, UserId = curUserId });
 
         // Run the training after the sync has completed
-        jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
-            jobId,
+        string buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
+            syncJobId,
             r =>
                 r.BuildProjectForBackgroundJobAsync(
                     curUserId,
@@ -636,7 +646,7 @@ public class MachineApiService(
             sfProjectId,
             u =>
             {
-                u.Set(p => p.ServalData.TranslationJobId, jobId);
+                u.Set(p => p.ServalData.TranslationJobId, buildJobId);
                 u.Set(p => p.ServalData.TranslationQueuedAt, DateTime.UtcNow);
                 u.Unset(p => p.ServalData.TranslationErrorMessage);
             }

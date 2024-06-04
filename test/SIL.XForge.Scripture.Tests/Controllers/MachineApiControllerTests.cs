@@ -223,7 +223,14 @@ public class MachineApiControllerTests
         await env.MachineApiService.Received(1)
             .GetCurrentBuildAsync(User01, Project01, minRevision: 1, preTranslate: false, CancellationToken.None);
         await env.MachineApiService.DidNotReceiveWithAnyArgs()
-            .GetBuildAsync(User01, Project01, Build01, minRevision: null, preTranslate: false, CancellationToken.None);
+            .GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: default,
+                preTranslate: default,
+                CancellationToken.None
+            );
     }
 
     [Test]

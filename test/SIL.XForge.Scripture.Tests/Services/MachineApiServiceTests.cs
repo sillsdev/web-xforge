@@ -1183,6 +1183,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(build?.Message));
     }
 
     [Test]
@@ -1253,6 +1254,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(build?.Message));
     }
 
     [Test]
