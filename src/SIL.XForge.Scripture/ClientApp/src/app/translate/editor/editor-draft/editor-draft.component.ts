@@ -130,7 +130,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         this.targetDelta = new Delta(targetOps);
 
         // Set the draft editor with the pre-translation segments
-        this.draftText.editor?.setContents(this.draftDelta, 'api');
+        this.draftText.setContents(this.draftDelta, 'api');
         this.draftText.applyEditorStyles();
 
         this.isDraftApplied = this.draftDelta.diff(this.targetDelta).length() === 0;

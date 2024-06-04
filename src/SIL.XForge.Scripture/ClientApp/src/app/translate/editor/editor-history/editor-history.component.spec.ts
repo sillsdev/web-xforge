@@ -79,8 +79,8 @@ describe('EditorHistoryComponent', () => {
       type: ''
     };
 
-    const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles'], {
+    const mockEditor = jasmine.createSpyObj<Quill>(['updateContents']);
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles', 'setContents'], {
       id: {} as TextDocId,
       editor: mockEditor
     });
@@ -97,7 +97,7 @@ describe('EditorHistoryComponent', () => {
     showDiffChange$.next(false);
     tick();
 
-    expect(mockTextComponent.editor!.setContents).toHaveBeenCalledTimes(2);
+    expect(mockTextComponent.setContents).toHaveBeenCalledTimes(2);
     expect(mockTextComponent.editor!.updateContents).toHaveBeenCalledTimes(1); // Test if diff set
   }));
 
@@ -112,8 +112,8 @@ describe('EditorHistoryComponent', () => {
       type: ''
     };
 
-    const mockEditor = jasmine.createSpyObj<Quill>(['setContents', 'updateContents']);
-    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles'], {
+    const mockEditor = jasmine.createSpyObj<Quill>(['updateContents']);
+    const mockTextComponent = jasmine.createSpyObj<TextComponent>(['applyEditorStyles', 'setContents'], {
       id: {} as TextDocId,
       editor: mockEditor
     });
@@ -129,19 +129,19 @@ describe('EditorHistoryComponent', () => {
     revisionSelect$.next({ revision, snapshot });
     showDiffChange$.next(false);
     tick();
-    expect(mockTextComponent.editor!.setContents).toHaveBeenCalled();
+    expect(mockTextComponent.setContents).toHaveBeenCalled();
 
     // Clear call count
-    (mockTextComponent.editor! as jasmine.SpyObj<Quill>).setContents.calls.reset();
+    mockTextComponent.setContents.calls.reset();
 
     // Go offline
     onlineStatusService.setIsOnline(false);
     tick();
-    expect(mockTextComponent.editor!.setContents).not.toHaveBeenCalled();
+    expect(mockTextComponent.setContents).not.toHaveBeenCalled();
 
     // Go back online
     onlineStatusService.setIsOnline(true);
     tick();
-    expect(mockTextComponent.editor!.setContents).not.toHaveBeenCalled();
+    expect(mockTextComponent.setContents).not.toHaveBeenCalled();
   }));
 });

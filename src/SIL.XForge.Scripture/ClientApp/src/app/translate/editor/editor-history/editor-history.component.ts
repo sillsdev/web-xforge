@@ -72,7 +72,7 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(async ([e, showDiff]: [RevisionSelectEvent, boolean]) => {
         let snapshotContents: DeltaStatic = new Delta(e.snapshot?.data.ops);
-        this.snapshotText?.editor?.setContents(snapshotContents, 'api');
+        this.snapshotText?.setContents(snapshotContents, 'api');
         this.loadedRevision = e.revision;
 
         // Show the diff, if requested
