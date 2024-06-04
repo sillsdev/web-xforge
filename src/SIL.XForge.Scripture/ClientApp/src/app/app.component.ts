@@ -227,7 +227,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (userData != null) {
       const userDataWithId = { ...userData, id: this.currentUserDoc.id };
       this.reportingService.addMeta(userDataWithId, 'user');
-      Bugsnag.setUser(this.currentUserDoc.id);
+      if (Bugsnag.isStarted()) Bugsnag.setUser(this.currentUserDoc.id);
     }
 
     const languageTag = this.currentUserDoc.data!.interfaceLanguage;
