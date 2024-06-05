@@ -201,11 +201,44 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetBuildAsync_MinRevisionForQueuedBuildQueriesServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetQueuedStateAsync(User01, Project01, preTranslate: false, CancellationToken.None)
+            .Returns(Task.FromResult(new ServalBuildDto { State = MachineApiService.BuildStateQueued }));
+
+        // SUT
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
+            Project01,
+            buildId: null,
+            minRevision: 1,
+            preTranslate: false,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+        await env.MachineApiService.Received(1)
+            .GetQueuedStateAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineApiService.Received(1)
+            .GetCurrentBuildAsync(User01, Project01, minRevision: 1, preTranslate: false, CancellationToken.None);
+        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+            .GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: default,
+                preTranslate: default,
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task GetBuildAsync_PreTranslationQueued()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineApiService.GetPreTranslationQueuedStateAsync(User01, Project01, CancellationToken.None)
+        env.MachineApiService.GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None)
             .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
@@ -219,7 +252,7 @@ public class MachineApiControllerTests
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         await env.MachineApiService.Received(1)
-            .GetPreTranslationQueuedStateAsync(User01, Project01, CancellationToken.None);
+            .GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None);
         await env.MachineApiService.DidNotReceiveWithAnyArgs()
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None);
         await env.MachineApiService.DidNotReceiveWithAnyArgs()
@@ -245,7 +278,7 @@ public class MachineApiControllerTests
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         await env.MachineApiService.Received(1)
-            .GetPreTranslationQueuedStateAsync(User01, Project01, CancellationToken.None);
+            .GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None);
         await env.MachineApiService.Received(1)
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None);
         await env.MachineApiService.DidNotReceiveWithAnyArgs()
@@ -271,7 +304,7 @@ public class MachineApiControllerTests
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         await env.MachineApiService.DidNotReceiveWithAnyArgs()
-            .GetPreTranslationQueuedStateAsync(User01, Project01, CancellationToken.None);
+            .GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None);
         await env.MachineApiService.DidNotReceiveWithAnyArgs()
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None);
         await env.MachineApiService.Received(1)

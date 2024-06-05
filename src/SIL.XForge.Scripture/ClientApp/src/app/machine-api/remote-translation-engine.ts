@@ -159,7 +159,13 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
       }),
       filter(buildDto => buildDto != null),
       map(buildDto => buildDto as BuildDto),
-      takeWhile(buildDto => buildDto.state === BuildStates.Pending || buildDto.state === BuildStates.Active, true)
+      takeWhile(
+        buildDto =>
+          buildDto.state === BuildStates.Queued ||
+          buildDto.state === BuildStates.Pending ||
+          buildDto.state === BuildStates.Active,
+        true
+      )
     );
   }
 

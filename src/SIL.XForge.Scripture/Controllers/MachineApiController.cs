@@ -108,14 +108,22 @@ public class MachineApiController : ControllerBase
     {
         try
         {
+            // First, check for a queued build
             ServalBuildDto? build = null;
-            if (preTranslate && buildId is null)
+            if (buildId is null)
             {
-                build = await _machineApiService.GetPreTranslationQueuedStateAsync(
+                build = await _machineApiService.GetQueuedStateAsync(
                     _userAccessor.UserId,
                     sfProjectId,
+                    preTranslate,
                     cancellationToken
                 );
+
+                // If a build is still being uploaded, we need to wait for Serval to report the first revision
+                if (build?.State == MachineApiService.BuildStateQueued && minRevision > 0)
+                {
+                    build = null;
+                }
             }
 
             // If a build identifier is not specified, get the current build
@@ -496,9 +504,11 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            ServalBuildDto build = await _machineApiService.StartBuildAsync(
+            await _machineApiService.StartBuildAsync(_userAccessor.UserId, sfProjectId, cancellationToken);
+            ServalBuildDto? build = await _machineApiService.GetQueuedStateAsync(
                 _userAccessor.UserId,
                 sfProjectId,
+                preTranslate: false,
                 cancellationToken
             );
             return Ok(build);
