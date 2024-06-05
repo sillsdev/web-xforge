@@ -47,7 +47,7 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
         FileResponse file = await dataFilesClient.DownloadAsync(sourceFile.File.Id);
 
         // Write the file
-        string path = Path.Combine(sourcePath, (sourceFile.TextId ?? sourceFile.File.Id) + extension);
+        string path = Path.Combine(sourcePath, $"{sourceFile.TextId}_({sourceFile.File.Id}){extension}");
         Console.WriteLine($"Writing {path}...");
         await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         file.Stream.CopyTo(fileStream);
@@ -66,7 +66,7 @@ foreach (TranslationCorpus corpus in await translationEnginesClient.GetAllCorpor
         FileResponse file = await dataFilesClient.DownloadAsync(targetFile.File.Id);
 
         // Write the file
-        string path = Path.Combine(targetPath, (targetFile.TextId ?? targetFile.File.Id) + extension);
+        string path = Path.Combine(targetPath, $"{targetFile.TextId}_({targetFile.File.Id}){extension}");
         Console.WriteLine($"Writing {path}...");
         await using FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write);
         file.Stream.CopyTo(fileStream);

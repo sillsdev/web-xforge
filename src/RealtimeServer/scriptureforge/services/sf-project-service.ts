@@ -8,12 +8,12 @@ import { RealtimeServer } from '../../common/realtime-server';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ProjectService } from '../../common/services/project-service';
 import {
-  SFProject,
-  SF_PROJECTS_COLLECTION,
   SF_PROJECT_INDEX_PATHS,
-  SF_PROJECT_PROFILES_COLLECTION
+  SF_PROJECT_PROFILES_COLLECTION,
+  SF_PROJECTS_COLLECTION,
+  SFProject
 } from '../models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
 
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
@@ -120,6 +120,40 @@ export class SFProjectService extends ProjectService<SFProject> {
             properties: {
               additionalTrainingData: {
                 bsonType: 'bool'
+              },
+              additionalTrainingSourceEnabled: {
+                bsonType: 'bool'
+              },
+              additionalTrainingSource: {
+                bsonType: 'object',
+                properties: {
+                  paratextId: {
+                    bsonType: 'string'
+                  },
+                  projectRef: {
+                    bsonType: 'string',
+                    pattern: '^[0-9a-f]+$'
+                  },
+                  name: {
+                    bsonType: 'string'
+                  },
+                  shortName: {
+                    bsonType: 'string'
+                  },
+                  writingSystem: {
+                    bsonType: 'object',
+                    properties: {
+                      tag: {
+                        bsonType: 'string'
+                      }
+                    },
+                    additionalProperties: false
+                  },
+                  isRightToLeft: {
+                    bsonType: 'bool'
+                  }
+                },
+                additionalProperties: false
               },
               alternateSourceEnabled: {
                 bsonType: 'bool'

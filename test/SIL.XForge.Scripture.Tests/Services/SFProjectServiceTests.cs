@@ -2086,7 +2086,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task IsSourceProject_TrueWhenProjectIsAAlternateTrainingSource()
+    public async Task IsSourceProject_TrueWhenProjectIsAnAlternateTrainingSource()
     {
         var env = new TestEnvironment();
         const string paratextId = "paratext_" + Project01;
@@ -2096,6 +2096,23 @@ public class SFProjectServiceTests
             User01,
             Project03,
             new SFProjectSettings { AlternateTrainingSourceParatextId = paratextId }
+        );
+
+        // SUT
+        Assert.That(env.Service.IsSourceProject(Project01), Is.True);
+    }
+
+    [Test]
+    public async Task IsSourceProject_TrueWhenProjectIsAnAdditionalTrainingSourceProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { AdditionalTrainingSourceParatextId = paratextId }
         );
 
         // SUT
@@ -2247,6 +2264,97 @@ public class SFProjectServiceTests
             env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
             Is.True
         );
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAdditionalTrainingSource_CannotUseTargetProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AdditionalTrainingSourceParatextId = paratextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource, Is.Null);
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAdditionalTrainingSource_CreatesProject()
+    {
+        var env = new TestEnvironment();
+        const string newProjectParatextId = "changedId";
+
+        // Ensure that the new project does not exist
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.False
+        );
+
+        // SUT
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AdditionalTrainingSourceParatextId = newProjectParatextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource!.ProjectRef, Is.Not.Null);
+        Assert.That(
+            project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ParatextId,
+            Is.EqualTo(newProjectParatextId)
+        );
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSource.Name, Is.EqualTo("NewSource"));
+
+        SFProject additionalTrainingSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef
+        );
+        Assert.That(additionalTrainingSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
+        Assert.That(additionalTrainingSourceProject.Name, Is.EqualTo("NewSource"));
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        // Check that the project was created
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
+            Is.True
+        );
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_EnableAdditionalTrainingSource_NoSync()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AdditionalTrainingSourceEnabled = true }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled, Is.True);
+
+        await env.MachineProjectService.DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService.DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
