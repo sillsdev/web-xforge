@@ -52,6 +52,10 @@ mat-list-option {
   --mdc-list-list-item-selected-container-color: rgba(0, 0, 0, 0.12);
 }
 
+::ng-deep .mdc-list-item__content {
+  overflow: visible;
+}
+
 .suggestion-confidence {
   font-size: smaller;
   color: $lighterTextColor;
