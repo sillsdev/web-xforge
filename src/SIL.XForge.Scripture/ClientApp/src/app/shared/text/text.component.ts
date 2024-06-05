@@ -862,8 +862,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   setContents(delta: DeltaStatic, source?: Sources): void {
-    this?.editor?.setContents(delta, source);
-    this.contentSet = true;
+    if (this._editor != null) {
+      this._editor.setContents(delta, source);
+      this.contentSet = true;
+    }
   }
 
   applyEditorStyles(): void {

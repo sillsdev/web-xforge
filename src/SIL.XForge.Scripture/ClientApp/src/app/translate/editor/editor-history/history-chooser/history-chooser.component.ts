@@ -70,11 +70,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   ) {}
 
   get canRestoreSnapshot(): boolean {
-    return this.selectedSnapshot != null;
-  }
-
-  get showRestoreSnapshot(): boolean {
-    return this.canRestoreSnapshot && this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter);
+    return (
+      this.selectedSnapshot?.data.ops != null &&
+      this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter)
+    );
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -146,7 +145,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
       this.projectId == null ||
       this.bookNum == null ||
       this.chapter == null ||
-      !this.textDocService.canEdit(this.projectDoc?.data, this.bookNum, this.chapter)
+      !this.canRestoreSnapshot
     ) {
       this.noticeService.showError(translate('history_chooser.error'));
       return;

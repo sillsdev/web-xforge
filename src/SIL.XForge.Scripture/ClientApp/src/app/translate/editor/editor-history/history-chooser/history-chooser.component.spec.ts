@@ -125,20 +125,18 @@ describe('HistoryChooserComponent', () => {
 
   it('should not revert if the snapshot is missing', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getSnapshot('project01', 'MAT', 1, 'date_here')).thenResolve({
-      data: {},
-      id: 'id',
-      type: '',
-      v: 1
+    when(mockedDialogService.confirm(anything(), anything())).thenCall(() => {
+      // Simulate an out of order event altering the selected snapshot
+      env.component.selectedSnapshot = undefined;
+      return Promise.resolve(true);
     });
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     env.triggerNgOnChanges();
     env.wait();
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     verify(mockedNoticeService.showError(anything())).once();
     verify(mockedTextDocService.overwrite(anything(), anything())).never();
-    expect(env.component.selectedSnapshot?.data.ops).toBeUndefined();
+    expect(env.component.selectedSnapshot).toBeUndefined();
   }));
 
   it('should not display the revert history button if the user cannot edit', fakeAsync(() => {

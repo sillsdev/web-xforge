@@ -2,8 +2,8 @@ import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, O
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
+import { FontService } from 'xforge-common/font.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { FontService } from '../../../../xforge-common/font.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { Delta, TextDoc } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
