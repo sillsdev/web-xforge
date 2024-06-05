@@ -68,7 +68,7 @@ export const FONT_FACE_DEFINITIONS: { [key: string]: string } = {
     'https://fonts.languagetechnology.org/fonts/sil/gentiumbookplus/web/GentiumBookPlus-Regular.woff2',
   'Gentium Plus': 'https://fonts.languagetechnology.org/fonts/sil/gentiumplus/web/GentiumPlus-Regular.woff2',
   Harmattan: 'https://fonts.languagetechnology.org/fonts/sil/harmattan/web/Harmattan-Regular.woff2',
-  'Japa Sans Oriya': 'https://fonts.languagetechnology.org/fonts/sil/japasansoriya/woff/JapaSansOriya-Regular.woff2',
+  'Japa Sans Oriya': 'https://fonts.languagetechnology.org/fonts/sil/japasansoriya/web/JapaSansOriya-Regular.woff2',
   Kanchenjunga: 'https://fonts.languagetechnology.org/fonts/sil/kanchenjunga/web/Kanchenjunga-Regular.woff2',
   'Kay Pho Du': 'https://fonts.languagetechnology.org/fonts/sil/kayphodu/web/KayPhoDu-Regular.woff2',
   Lateef: 'https://fonts.languagetechnology.org/fonts/sil/lateef/web/Lateef-Regular.woff2',
@@ -86,6 +86,8 @@ export const FONT_FACE_DEFINITIONS: { [key: string]: string } = {
   'Scheherazade New':
     'https://fonts.languagetechnology.org/fonts/sil/scheherazadenew/web/ScheherazadeNew-Regular.woff2',
   Surma: 'https://fonts.languagetechnology.org/fonts/other/surma/Surma-Regular.woff2',
+  SymChar: 'https://fonts.languagetechnology.org/fonts/sil/symchar/web/SymChar-Regular.woff2',
+  SymCharK: 'https://fonts.languagetechnology.org/fonts/sil/symchark/web/SymCharK-Regular.woff2',
   Tagmukay: 'https://fonts.languagetechnology.org/fonts/sil/tagmukay/web/Tagmukay-Regular.woff',
   'Tai Heritage Pro': 'https://fonts.languagetechnology.org/fonts/sil/taiheritagepro/web/TaiHeritagePro-Regular.woff',
   ThiruValluvar: 'https://fonts.languagetechnology.org/fonts/other/thiruvalluvar/woff/ThiruValluvar-Regular.woff2'
