@@ -110,6 +110,10 @@ public class ParatextController : ControllerBase
         {
             return NoContent();
         }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
     }
 
     /// <summary>
@@ -215,6 +219,10 @@ public class ParatextController : ControllerBase
         catch (SecurityException)
         {
             return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
         }
     }
 

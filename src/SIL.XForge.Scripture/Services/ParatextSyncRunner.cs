@@ -1667,7 +1667,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
             catch (Exception ex)
             {
-                if (ex is HttpRequestException || ex is OperationCanceledException)
+                if (ex is HttpRequestException or OperationCanceledException or UnauthorizedAccessException)
                 {
                     Log(
                         $"CompleteSync: Problem fetching project roles. Maybe the user does not have access to the project or cancelled the sync. ({ex})"
