@@ -73,7 +73,7 @@
       >
         <transloco
           key="draft_generation.info_alert_same_source_and_target_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
         ></transloco>
       </app-notice>
 
@@ -85,7 +85,11 @@
       >
         <transloco
           key="draft_generation.info_alert_different_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          [params]="{
+            alternateTrainingSourceLanguageDisplayName,
+            sourceLanguage,
+            projectSettingsUrl: { route: projectSettingsUrl }
+          }"
         ></transloco>
       </app-notice>
 
@@ -102,7 +106,11 @@
       >
         <transloco
           key="draft_generation.info_alert_different_additional_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          [params]="{
+            additionalTrainingSourceLanguageDisplayName,
+            alternateTrainingSourceLanguage,
+            projectSettingsUrl: { route: projectSettingsUrl }
+          }"
         ></transloco>
       </app-notice>
 
