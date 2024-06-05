@@ -50,6 +50,13 @@ export function isIosDevice(): boolean {
   return BROWSER.getOSName(true) === 'ios';
 }
 
+export function isBrave(): boolean {
+  // The officially supported way of detecting Brave is to call navigator.brave.isBrave(), which returns
+  // Promise<boolean>. See https://github.com/brave/brave-browser/wiki/Detecting-Brave-(for-Websites)
+  // Just checking for the presence of this property works fine though and doesn't require awaiting a promise.
+  return 'brave' in window.navigator;
+}
+
 export function getBrowserEngine(): string {
   const engine = BROWSER.getEngine().name;
   return engine == null ? '' : engine.toLowerCase();
@@ -61,19 +68,26 @@ export function isGecko(): boolean {
 
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
-  const subject: string = translate('issue_email.subject', { siteName: environment.siteName });
-  const body: string = translate('issue_email.body', {
-    siteName: environment.siteName,
-    siteVersion: versionData.version,
-    browserName: bowser.getBrowserName(),
-    browserVersion: bowser.getBrowserVersion(),
-    operatingSystem: bowser.getOSName(),
-    operatingSystemVersion: bowser.getOSVersion() || translate('issue_email.unknown'),
-    url: location.href,
-    errorId: errorId || translate('issue_email.not_applicable')
-  });
 
-  return `mailto:${environment.issueEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const technicalDetails = Object.entries({
+    [environment.siteName]: versionData.version,
+    [bowser.getBrowserName()]: bowser.getBrowserVersion(),
+    ...(isBrave() ? { Brave: 'Yes' } : {}),
+    [bowser.getOSName()]: bowser.getOSVersion() ?? translate('issue_email.unknown'),
+    URL: location.href,
+    ...(errorId ? { 'Error ID': errorId } : {})
+  })
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n');
+
+  const body: string =
+    translate('issue_email.heading') +
+    '\n\n\n\n\n' +
+    `--- ${translate('issue_email.technical_details')} ---` +
+    '\n' +
+    technicalDetails;
+
+  return `mailto:${environment.issueEmail}?&body=${encodeURIComponent(body)}`;
 }
 
 export function parseJSON(str: string): any | undefined {
