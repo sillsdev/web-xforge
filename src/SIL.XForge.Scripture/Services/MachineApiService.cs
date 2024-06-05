@@ -778,6 +778,29 @@ public class MachineApiService(
             );
         }
 
+        // If we have an additional training source, sync that next
+        string additionalTrainingSourceProjectId = projectDoc
+            .Data
+            .TranslateConfig
+            .DraftConfig
+            .AdditionalTrainingSource
+            ?.ProjectRef;
+        if (
+            projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled
+            && !string.IsNullOrWhiteSpace(additionalTrainingSourceProjectId)
+        )
+        {
+            jobId = await syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ParentJobId = jobId,
+                    ProjectId = additionalTrainingSourceProjectId,
+                    TargetOnly = true,
+                    UserId = curUserId,
+                }
+            );
+        }
+
         // Run the training after the sync has completed
         jobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             jobId,

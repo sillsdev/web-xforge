@@ -438,6 +438,23 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.sendAllSegments).toBeUndefined();
     });
   });
+
+  describe('version 20', () => {
+    it('adds additionalTrainingSourceEnabled to draftConfig', async () => {
+      const env = new TestEnvironment(19);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: {} }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBe(false);
+    });
+  });
 });
 
 class TestEnvironment {

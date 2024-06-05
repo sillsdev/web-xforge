@@ -39,6 +39,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   alternateSourceParatextId = new FormControl<string | undefined>(undefined);
   alternateTrainingSourceEnabled = new FormControl(false);
   alternateTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
+  additionalTrainingSourceEnabled = new FormControl(false);
+  additionalTrainingSourceParatextId = new FormControl<string | undefined>(undefined);
   additionalTrainingData = new FormControl(false);
   servalConfig = new FormControl<string | undefined>(undefined);
   translateShareEnabled = new FormControl(false);
@@ -58,6 +60,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     alternateSourceParatextId: this.alternateSourceParatextId,
     alternateTrainingSourceEnabled: this.alternateTrainingSourceEnabled,
     alternateTrainingSourceParatextId: this.alternateTrainingSourceParatextId,
+    additionalTrainingSourceEnabled: this.additionalTrainingSourceEnabled,
+    additionalTrainingSourceParatextId: this.additionalTrainingSourceParatextId,
     additionalTrainingData: this.additionalTrainingData,
     servalConfig: this.servalConfig,
     translateShareEnabled: this.translateShareEnabled,
@@ -131,6 +135,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isAlternateTrainingSourceEnabled(): boolean {
     return this.alternateTrainingSourceEnabled.value ?? false;
+  }
+
+  get isAdditionalTrainingSourceEnabled(): boolean {
+    return this.additionalTrainingSourceEnabled.value ?? false;
   }
 
   get showPreTranslationSettings(): boolean {
@@ -390,11 +398,31 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    if (this.settingChanged(newValue, 'additionalTrainingSourceEnabled', false)) {
+      this.updateSetting(newValue, 'additionalTrainingSourceEnabled');
+    }
+
+    // Check if the pre-translation additional training sources project needs to be updated
+    if (this.settingChanged(newValue, 'additionalTrainingSourceParatextId')) {
+      const settings: SFProjectSettings = {
+        additionalTrainingSourceParatextId:
+          newValue.additionalTrainingSourceParatextId ?? SettingsComponent.projectSettingValueUnset
+      };
+      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
+      this.checkUpdateStatus('additionalTrainingSourceParatextId', updateTaskPromise);
+      this.previousFormValues = newValue;
+      return;
+    }
+
     this.updateCheckingConfig(newValue);
   }
 
-  private settingChanged(newValue: SFProjectSettings, setting: keyof SFProjectSettings): boolean {
-    return (newValue[setting] ?? null) !== (this.previousFormValues[setting] ?? null);
+  private settingChanged(
+    newValue: SFProjectSettings,
+    setting: keyof SFProjectSettings,
+    undefinedValue: null | boolean = null
+  ): boolean {
+    return (newValue[setting] ?? undefinedValue) !== (this.previousFormValues[setting] ?? undefinedValue);
   }
 
   private updateSetting(newValue: SFProjectSettings, setting: keyof SFProjectSettings): void {
@@ -453,6 +481,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       alternateTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled,
       alternateTrainingSourceParatextId:
         this.projectDoc.data.translateConfig.draftConfig?.alternateTrainingSource?.paratextId,
+      additionalTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled,
+      additionalTrainingSourceParatextId:
+        this.projectDoc.data.translateConfig.draftConfig?.additionalTrainingSource?.paratextId,
       additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
@@ -475,7 +506,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc?.data?.biblicalTermsConfig.errorMessage == null) {
       this.biblicalTermsEnabled.enable({ onlySelf: true });
     } else {
-      this.biblicalTermsEnabled.disable();
+      this.biblicalTermsEnabled.disable({ onlySelf: true });
     }
   }
 
@@ -487,6 +518,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
     this.controlStates.set('alternateTrainingSourceEnabled', ElementState.InSync);
     this.controlStates.set('alternateTrainingSourceParatextId', ElementState.InSync);
+    this.controlStates.set('additionalTrainingSourceEnabled', ElementState.InSync);
+    this.controlStates.set('additionalTrainingSourceParatextId', ElementState.InSync);
     this.controlStates.set('additionalTrainingData', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
@@ -502,6 +535,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.source);
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource);
     this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource);
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.additionalTrainingSource);
   }
 
   private addNonSelectableProject(project?: TranslateSource): void {
