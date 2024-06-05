@@ -9,8 +9,7 @@ mat-nav-list .mdc-list-item {
     fill: variables.$purpleMedium;
     transition: color 0.15s;
     padding: 4px;
-    height: unset;
-    width: unset;
+    box-sizing: content-box;
   }
   &:hover {
     mat-icon {
