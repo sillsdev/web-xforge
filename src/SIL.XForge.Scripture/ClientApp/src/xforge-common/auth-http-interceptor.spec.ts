@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClient, HttpErrorResponse, HttpRequest } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, HttpErrorResponse, HttpRequest, HttpStatusCode } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
@@ -102,6 +102,90 @@ describe('AuthHttpInterceptor', () => {
     request.error(mockError);
     tick();
     expect(result!.error).toBe(mockError);
+    env.httpMock.verify();
+  }));
+
+  it('Sets the correct status text for errors when it is OK', fakeAsync(() => {
+    const env = new TestEnvironment({ isAuthenticated: true });
+    const apiUrl = COMMAND_API_NAMESPACE;
+    let result: HttpErrorResponse | undefined;
+    firstValueFrom(env.httpClient.get(apiUrl)).catch(r => (result = r));
+    tick();
+    const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
+      expect(request.url).toEqual(apiUrl);
+      expect(request.headers.get('authorization')).toEqual(`Bearer ${TestEnvironment.accessToken}`);
+      return true;
+    });
+    const mockError = new ProgressEvent('An error occurred');
+    request.error(mockError, { status: HttpStatusCode.Gone, statusText: 'OK' });
+    tick();
+    expect(result!.error).toBe(mockError);
+    expect(result!.status).toBe(410);
+    expect(result!.statusText).toBe('Gone');
+    expect(result!.message.endsWith(' Gone')).toBe(true);
+    env.httpMock.verify();
+  }));
+
+  it('Sets the correct status text for multiple word errors when it is OK', fakeAsync(() => {
+    const env = new TestEnvironment({ isAuthenticated: true });
+    const apiUrl = COMMAND_API_NAMESPACE;
+    let result: HttpErrorResponse | undefined;
+    firstValueFrom(env.httpClient.get(apiUrl)).catch(r => (result = r));
+    tick();
+    const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
+      expect(request.url).toEqual(apiUrl);
+      expect(request.headers.get('authorization')).toEqual(`Bearer ${TestEnvironment.accessToken}`);
+      return true;
+    });
+    const mockError = new ProgressEvent('An error occurred');
+    request.error(mockError, { status: HttpStatusCode.HttpVersionNotSupported, statusText: 'OK' });
+    tick();
+    expect(result!.error).toBe(mockError);
+    expect(result!.status).toBe(505);
+    expect(result!.statusText).toBe('Http Version Not Supported');
+    expect(result!.message.endsWith(' Http Version Not Supported')).toBe(true);
+    env.httpMock.verify();
+  }));
+
+  it('Sets Unknown Error for the status text of unknown error codes when it is OK', fakeAsync(() => {
+    const env = new TestEnvironment({ isAuthenticated: true });
+    const apiUrl = COMMAND_API_NAMESPACE;
+    let result: HttpErrorResponse | undefined;
+    firstValueFrom(env.httpClient.get(apiUrl)).catch(r => (result = r));
+    tick();
+    const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
+      expect(request.url).toEqual(apiUrl);
+      expect(request.headers.get('authorization')).toEqual(`Bearer ${TestEnvironment.accessToken}`);
+      return true;
+    });
+    const mockError = new ProgressEvent('An error occurred');
+    request.error(mockError, { status: 599, statusText: 'OK' });
+    tick();
+    expect(result!.error).toBe(mockError);
+    expect(result!.status).toBe(599);
+    expect(result!.statusText).toBe('Unknown Error');
+    expect(result!.message.endsWith(' Unknown Error')).toBe(true);
+    env.httpMock.verify();
+  }));
+
+  it('Does not modify the status text of non-error status codes when it is OK', fakeAsync(() => {
+    const env = new TestEnvironment({ isAuthenticated: true });
+    const apiUrl = COMMAND_API_NAMESPACE;
+    let result: HttpErrorResponse | undefined;
+    firstValueFrom(env.httpClient.get(apiUrl)).catch(r => (result = r));
+    tick();
+    const request = env.httpMock.expectOne((request: HttpRequest<any>) => {
+      expect(request.url).toEqual(apiUrl);
+      expect(request.headers.get('authorization')).toEqual(`Bearer ${TestEnvironment.accessToken}`);
+      return true;
+    });
+    const mockError = new ProgressEvent('An redirect occurred');
+    request.error(mockError, { status: HttpStatusCode.PermanentRedirect, statusText: 'OK' });
+    tick();
+    expect(result!.error).toBe(mockError);
+    expect(result!.status).toBe(308);
+    expect(result!.statusText).toBe('OK');
+    expect(result!.message.endsWith(' OK')).toBe(true);
     env.httpMock.verify();
   }));
 
