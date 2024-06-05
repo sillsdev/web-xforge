@@ -553,9 +553,9 @@ public class ParatextService : DisposableBase, IParatextService
                 _dblServerUri
             );
         }
-        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.BadRequest)
+        catch (UnauthorizedAccessException)
         {
-            // We only trap 400 bad requests, as other exceptions will be connection related
+            // This will usually be caused by refresh token expiration
             canRead = false;
         }
 

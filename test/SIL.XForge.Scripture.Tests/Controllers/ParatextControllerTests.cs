@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -91,6 +93,58 @@ public class ParatextControllerTests
         ActionResult actual = await env.Controller.DownloadProjectAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<FileStreamResult>(actual);
+    }
+
+    [Test]
+    public async Task GetAsync_InvalidUser()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.UserAccessor.UserId.Returns("invalid_user");
+
+        // SUT
+        ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetAsync_SecurityException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Throws<SecurityException>();
+
+        // SUT
+        ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
+
+        var projects = (IEnumerable<ParatextProject>)((OkObjectResult)actual.Result!).Value!;
+        Assert.AreEqual(env.TestParatextProjects, projects);
+    }
+
+    [Test]
+    public async Task GetAsync_UnauthorizedAccessException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Throws<UnauthorizedAccessException>();
+
+        // SUT
+        ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
+
+        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
     }
 
     [Test]
@@ -236,8 +290,72 @@ public class ParatextControllerTests
         Assert.AreEqual(env.TestSnapshot.Version, snapshot.Version);
     }
 
+    [Test]
+    public async Task ResourcesAsync_DataNotFoundException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcesAsync(User01).Throws(new DataNotFoundException("Not found"));
+
+        // SUT
+        ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task ResourcesAsync_SecurityException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcesAsync(User01).Throws<SecurityException>();
+
+        // SUT
+        ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task ResourcesAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
+
+        var resources = (Dictionary<string, string[]>)((OkObjectResult)actual.Result!).Value!;
+        Assert.AreEqual(env.TestParatextResources[0].ParatextId, resources.Keys.First());
+        Assert.AreEqual(env.TestParatextResources[0].ShortName, resources.Values.First().First());
+        Assert.AreEqual(env.TestParatextResources[0].Name, resources.Values.First().Last());
+    }
+
+    [Test]
+    public async Task ResourcesAsync_UnauthorizedAccessException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcesAsync(User01).Throws<UnauthorizedAccessException>();
+
+        // SUT
+        ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
+
+        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+    }
+
     private class TestEnvironment
     {
+        public readonly IReadOnlyList<ParatextProject> TestParatextProjects = [new ParatextProject()];
+        public readonly IReadOnlyList<ParatextResource> TestParatextResources =
+        [
+            new ParatextResource
+            {
+                Name = "Resource 01",
+                ParatextId = "res01",
+                ShortName = "res"
+            }
+        ];
         public readonly KeyValuePair<DateTime, string> TestRevision = new KeyValuePair<DateTime, string>(
             Timestamp,
             "Test Data"
@@ -277,6 +395,8 @@ public class ParatextControllerTests
                 });
 
             ParatextService = Substitute.For<IParatextService>();
+            ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(TestParatextProjects));
+            ParatextService.GetResourcesAsync(User01).Returns(Task.FromResult(TestParatextResources));
             ParatextService
                 .GetRevisionHistoryAsync(Arg.Any<UserSecret>(), Project01, Book, Chapter)
                 .Returns(RevisionHistory());

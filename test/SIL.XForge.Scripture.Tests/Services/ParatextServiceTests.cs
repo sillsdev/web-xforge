@@ -382,7 +382,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetResourcePermissionAsync_UserNoResourcePermissionOn400BadRequest()
+    public async Task GetResourcePermissionAsync_UserNoResourcePermissionWhenUnauthorized()
     {
         // Set up environment
         var env = new TestEnvironment();
@@ -392,7 +392,7 @@ public class ParatextServiceTests
             Arg.Any<HttpClient>(),
             CancellationToken.None
         )
-            .Throws(new HttpRequestException("Bad Request", null, HttpStatusCode.BadRequest));
+            .Throws(new UnauthorizedAccessException());
 
         // SUT
         var paratextId = env.Resource2Id;
