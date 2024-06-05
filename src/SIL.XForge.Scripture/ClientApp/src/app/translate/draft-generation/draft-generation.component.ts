@@ -80,10 +80,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
   isSourceAndTrainingSourceLanguageIdentical = true;
+  isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
 
   source?: DraftSource;
   alternateSource?: DraftSource;
   alternateTrainingSource?: DraftSource;
+  additionalTrainingSource?: DraftSource;
 
   jobSubscription?: Subscription;
   isOnline = true;
@@ -161,6 +163,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
       this.isSourceAndTrainingSourceLanguageIdentical &&
+      this.isSourceAndAdditionalTrainingSourceLanguageIdentical &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
@@ -241,6 +244,38 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               this.isSourceAndTrainingSourceLanguageIdentical = true;
             }
 
+            // The additional training source and source languages must match
+            if (
+              (translateConfig?.draftConfig.additionalTrainingSourceEnabled ?? false) &&
+              translateConfig?.draftConfig.additionalTrainingSource != null
+            ) {
+              if (
+                (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
+                translateConfig?.draftConfig.alternateTrainingSource != null
+              ) {
+                // Compare the additional training source with the alternate training source
+                this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
+                  translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag ===
+                  translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
+              } else if (
+                (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
+                translateConfig?.draftConfig.alternateSource != null
+              ) {
+                // Compare the additional training source with the alternate source
+                this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
+                  translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag ===
+                  translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
+              } else {
+                // Compare the additional training source with the source
+                this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
+                  translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag ===
+                  translateConfig?.source?.writingSystem.tag;
+              }
+            } else {
+              // There is no additional training source specified
+              this.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+            }
+
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
@@ -251,10 +286,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
         this.draftSourcesService.getDraftProjectSources().pipe(
-          tap(({ source, alternateSource, alternateTrainingSource }) => {
+          tap(({ source, alternateSource, alternateTrainingSource, additionalTrainingSource }) => {
             this.source = source;
             this.alternateSource = alternateSource;
             this.alternateTrainingSource = alternateTrainingSource;
+            this.additionalTrainingSource = additionalTrainingSource;
           })
         )
       ]),
