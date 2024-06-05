@@ -5,15 +5,15 @@
         {{ t("translate") }}
       </mat-list-item>
       <a mat-list-item [appRouterLink]="getProjectLink('translate')">
-        <mat-icon mat-list-icon>apps</mat-icon>
+        <mat-icon>apps</mat-icon>
         {{ t("overview") }}
       </a>
       <a mat-list-item [appRouterLink]="(translateLink$ | async) || ['']" [class.active]="draftReviewActive">
-        <mat-icon mat-list-icon>edit_note</mat-icon>
+        <mat-icon>edit_note</mat-icon>
         {{ t("edit_review") }}
       </a>
       <a *ngIf="canGenerateDraft$ | async" mat-list-item [appRouterLink]="draftGenerationLink">
-        <mat-icon mat-list-icon class="mirror-rtl">auto_awesome</mat-icon>
+        <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
         {{ t("generate_draft") }} <span class="nav-label">{{ t("beta") }}</span>
       </a>
     </ng-container>
@@ -22,15 +22,15 @@
         {{ t("community_checking") }}
       </mat-list-item>
       <a *ngIf="canManageQuestions" mat-list-item [appRouterLink]="getProjectLink('checking')">
-        <mat-icon mat-list-icon class="mirror-rtl">list</mat-icon>
+        <mat-icon class="mirror-rtl">list</mat-icon>
         {{ t("manage_questions") }}
       </a>
       <a *ngIf="!canManageQuestions" mat-list-item [appRouterLink]="getProjectLink('checking')">
-        <mat-icon mat-list-icon class="mirror-rtl">bar_chart</mat-icon>
+        <mat-icon class="mirror-rtl">bar_chart</mat-icon>
         {{ t("my_progress") }}
       </a>
       <a mat-list-item [appRouterLink]="(answerQuestionsLink$ | async) ?? ['']" [class.active]="answerQuestionsActive">
-        <mat-icon mat-list-icon class="mirror-rtl">question_answer</mat-icon>
+        <mat-icon class="mirror-rtl">question_answer</mat-icon>
         {{ t("questions_answers") }}
       </a>
     </ng-container>
@@ -45,7 +45,6 @@
     <a *ngIf="canSync$ | async" mat-list-item [appRouterLink]="getProjectLink('sync')">
       <mat-icon
         aria-hidden="false"
-        mat-list-icon
         matBadge="error"
         [matBadgeHidden]="!lastSyncFailed || syncInProgress"
         [class.sync-in-progress]="syncInProgress && !featureFlags.stillness.enabled"
@@ -55,11 +54,11 @@
       {{ t("synchronize") }}
     </a>
     <a *ngIf="canSeeUsers$ | async" mat-list-item [appRouterLink]="getProjectLink('users')">
-      <mat-icon mat-list-icon class="mirror-rtl">people</mat-icon>
+      <mat-icon class="mirror-rtl">people</mat-icon>
       {{ t("users") }}
     </a>
     <a *ngIf="canSeeSettings$ | async" mat-list-item [appRouterLink]="getProjectLink('settings')">
-      <mat-icon mat-list-icon>settings</mat-icon>
+      <mat-icon>settings</mat-icon>
       {{ t("settings") }}
     </a>
   </mat-nav-list>
