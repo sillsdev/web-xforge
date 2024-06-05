@@ -9,13 +9,13 @@ import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/es
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { delay, of } from 'rxjs';
 import { instance, mock, objectContaining, when } from 'ts-mockito';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { UserDoc } from '../../xforge-common/models/user-doc';
-import { OnlineStatusService } from '../../xforge-common/online-status.service';
-import { TestOnlineStatusModule } from '../../xforge-common/test-online-status.module';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
