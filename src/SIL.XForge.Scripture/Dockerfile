@@ -59,6 +59,7 @@ RUN npm ci
 # Build the Angular Frontend
 COPY ../SIL.XForge.Scripture/locales.json /src/SIL.XForge.Scripture/locales.json
 COPY ../SIL.XForge.Scripture/version.json /src/SIL.XForge.Scripture/version.json
+COPY ../SIL.XForge.Scripture/fonts.json /src/SIL.XForge.Scripture/fonts.json
 COPY ../SIL.XForge.Scripture/ClientApp/ /src/SIL.XForge.Scripture/ClientApp/
 WORKDIR /src/SIL.XForge.Scripture/ClientApp
 RUN npm ci

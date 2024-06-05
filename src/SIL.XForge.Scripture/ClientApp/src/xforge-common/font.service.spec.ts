@@ -1,4 +1,5 @@
-import { FontService, FONT_FACE_DEFINITIONS, FONT_FACE_FALLBACKS } from './font.service';
+import FONT_FACE_DEFINITIONS from '../../../fonts.json';
+import { FONT_FACE_FALLBACKS, FontService } from './font.service';
 import { MockConsole } from './mock-console';
 
 // Mocking the document with ts-mockito does not work because the type definitions for document.fonts does not include
