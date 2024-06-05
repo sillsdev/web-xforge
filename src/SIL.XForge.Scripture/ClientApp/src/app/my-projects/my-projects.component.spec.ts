@@ -221,7 +221,7 @@ describe('MyProjectsComponent', () => {
     // Not throwing an exception.
   }));
 
-  it('null result when fetching the list of PT projects to connect to is gracefully handled', fakeAsync(() => {
+  it('undefined result when fetching the list of PT projects to connect to is gracefully handled', fakeAsync(() => {
     const env = new TestEnvironment();
     // getProjects() may return undefined such as if the user is not logged into Paratext.
     when(mockedParatextService.getProjects()).thenResolve(undefined);
@@ -383,7 +383,7 @@ describe('MyProjectsComponent', () => {
   }));
 });
 
-export class TestEnvironment {
+class TestEnvironment {
   readonly component: MyProjectsComponent;
   readonly fixture: ComponentFixture<MyProjectsComponent>;
   readonly router: Router;
