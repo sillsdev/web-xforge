@@ -19,7 +19,9 @@ import { ParatextService } from '../core/paratext.service';
   styleUrls: ['./my-projects.component.scss']
 })
 export class MyProjectsComponent extends SubscriptionDisposable implements OnInit {
+  /** SF projects that the current user is on at SF. */
   userConnectedProjects: SFProjectProfileDoc[] = [];
+  /** Resources on SF that the current user is on at SF. */
   userConnectedResources: SFProjectProfileDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
   userUnconnectedParatextProjects: ParatextProject[] = [];

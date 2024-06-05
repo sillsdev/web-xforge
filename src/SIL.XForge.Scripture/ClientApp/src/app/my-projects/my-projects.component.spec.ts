@@ -551,15 +551,15 @@ export class TestEnvironment {
   }
 
   cardForUserConnectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-card-type="user-connected-project"]`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-project"]`);
   }
 
   cardForUserConnectedResource(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-card-type="user-connected-resource"]`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-resource"]`);
   }
 
   cardForUserUnconnectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-card-type="user-unconnected-project"]`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-unconnected-project"]`);
   }
 
   waitUntilLoaded(): void {

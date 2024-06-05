@@ -26,7 +26,7 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     this.setup();
   }
 
-  /** List of SF project docs the user has. Or undefined if the information is not yet available. */
+  /** List of SF project docs the user is on. Or undefined if the information is not yet available. */
   get projectDocs$(): Observable<SFProjectProfileDoc[] | undefined> {
     return this._projectDocs$;
   }
