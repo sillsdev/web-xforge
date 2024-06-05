@@ -32,9 +32,13 @@ mat-card {
     display: flex;
     flex-direction: column;
     row-gap: 8px;
-    // Help button fit when text is long and wraps, with both overflow and flex-shrink.
+    // Keep project name text within boundary, to not push action button to the right.
     overflow: hidden;
-    flex-shrink: 100;
+  }
+
+  > a {
+    // Keep the button wide enough when project name is long.
+    flex-shrink: 0;
   }
 }
 

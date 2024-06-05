@@ -136,6 +136,7 @@ type StoryAppState = {
   delayFetchingSFProjectList: boolean;
   errorFetchingPTProjectList: boolean;
   errorFetchingPTProjectListUndefined: boolean;
+  projectNameLengthCheck: boolean;
 } & {
   [K in ProjectScenario['code'] as `${K}Count`]: number;
 };
@@ -148,6 +149,7 @@ const defaultArgs: StoryAppState = {
   delayFetchingSFProjectList: false,
   errorFetchingPTProjectList: false,
   errorFetchingPTProjectListUndefined: false,
+  projectNameLengthCheck: false,
   userSFProjectNotPTRoleCount: 0,
   userSFProjectPTAdministratorCount: 0,
   userSFProjectPTTranslatorCount: 0,
@@ -212,55 +214,80 @@ const meta: Meta = {
         const requestedNumberOfProjectsForScenario: number = context.args[`${scenario.code}Count`];
         // For each requested project to create for that scenario,
         for (let i = 0; i < requestedNumberOfProjectsForScenario; i++) {
-          const shortName: string = scenario.shortNameBase + i;
-          const ptProjectId: string = `pt-id-${shortName}`;
-          const sfProjectId: string | undefined = scenario.projIsOnSF ? `sf-id-${shortName}` : undefined;
-          const projectName: string = `${scenario.nameBase} ${i}`;
+          let shortName: string = scenario.shortNameBase + i;
+          let projectName: string = `${scenario.nameBase} ${i}`;
 
-          // Add to list of user's SF projects that they are connected to, if appropriate.
-          if (scenario.userOnSFProject) {
-            const sfProjectProfile: SFProjectProfile = createTestProjectProfile({
-              shortName,
-              name: projectName,
-              paratextId: ptProjectId
-            });
-            if (scenario.isResource) {
-              const resourceIdLength: number = DBL_RESOURCE_ID_LENGTH;
-              sfProjectProfile.paratextId = `resource-${i}-resource`.substring(0, resourceIdLength);
-              sfProjectProfile.resourceConfig = {
-                createdTimestamp: new Date(),
-                manifestChecksum: '123',
-                permissionsChecksum: '123',
-                revision: 1
-              };
+          const createProject = (
+            scenario: ProjectScenario,
+            shortName: string,
+            projectName: string,
+            projectProfileDocs: SFProjectProfileDoc[],
+            userParatextProjects: ParatextProject[]
+          ): void => {
+            // (Make sure the id is not 16 characters, so it is not incorrectly seen as a resource.)
+            const ptProjectId: string = `pt-id-${shortName}-paratext-project`;
+            const sfProjectId: string | undefined = scenario.projIsOnSF ? `sf-id-${shortName}` : undefined;
+
+            // Add to list of user's SF projects that they are connected to, if appropriate.
+            if (scenario.userOnSFProject) {
+              const sfProjectProfile: SFProjectProfile = createTestProjectProfile({
+                shortName,
+                name: projectName,
+                paratextId: ptProjectId
+              });
+              if (scenario.isResource) {
+                const resourceIdLength: number = DBL_RESOURCE_ID_LENGTH;
+                sfProjectProfile.paratextId = `${ptProjectId}-resource-resource`.substring(0, resourceIdLength);
+                sfProjectProfile.resourceConfig = {
+                  createdTimestamp: new Date(),
+                  manifestChecksum: '123',
+                  permissionsChecksum: '123',
+                  revision: 1
+                };
+              }
+              projectProfileDocs.push({
+                id: sfProjectId,
+                data: sfProjectProfile
+              } as SFProjectProfileDoc);
             }
-            projectProfileDocs.push({
-              id: sfProjectId,
-              data: sfProjectProfile
-            } as SFProjectProfileDoc);
-          }
 
-          // Define whether the project is on SF at all.
-          when(mockedParatextService.isParatextProjectInSF(objectContaining({ paratextId: ptProjectId }))).thenReturn(
-            scenario.projIsOnSF
-          );
+            // Define whether the project is on SF at all.
+            when(mockedParatextService.isParatextProjectInSF(objectContaining({ paratextId: ptProjectId }))).thenReturn(
+              scenario.projIsOnSF
+            );
 
-          // Add to list of user's PT projects that they have access to, if appropriate.
-          if (scenario.userPTRole != null) {
-            const sfProjectExists: boolean = scenario.projIsOnSF;
-            const sfUserIsOnSFProject: boolean = scenario.userOnSFProject;
-            const adminOnPTProject: boolean = scenario.userPTRole === 'pt_administrator';
-            // (See ParatextService.cs)
-            const ptProjectIsConnectable: boolean =
-              (sfProjectExists && !sfUserIsOnSFProject) || (!sfProjectExists && adminOnPTProject);
-            userParatextProjects.push({
-              projectId: sfProjectId,
-              name: projectName,
-              shortName,
-              paratextId: ptProjectId,
-              isConnectable: ptProjectIsConnectable,
-              isConnected: sfUserIsOnSFProject
-            } as ParatextProject);
+            // Add to list of user's PT projects that they have access to, if appropriate.
+            if (scenario.userPTRole != null) {
+              const sfProjectExists: boolean = scenario.projIsOnSF;
+              const sfUserIsOnSFProject: boolean = scenario.userOnSFProject;
+              const adminOnPTProject: boolean = scenario.userPTRole === 'pt_administrator';
+              // (See ParatextService.cs)
+              const ptProjectIsConnectable: boolean =
+                (sfProjectExists && !sfUserIsOnSFProject) || (!sfProjectExists && adminOnPTProject);
+              userParatextProjects.push({
+                projectId: sfProjectId,
+                shortName,
+                name: projectName,
+                paratextId: ptProjectId,
+                isConnectable: ptProjectIsConnectable,
+                isConnected: sfUserIsOnSFProject
+              } as ParatextProject);
+            }
+          };
+
+          createProject(scenario, shortName, projectName, projectProfileDocs, userParatextProjects);
+
+          // Optionally add more projects with names and descriptions of varying length, to test web page layout.
+          if (context.args.projectNameLengthCheck) {
+            const names: Map<string, string> = new Map();
+            names.set('S', 'Short');
+            names.set('SingleWord', 'ThisIsASingleWordHereUsedForTheProjectName');
+            names.set('MultiWord', 'This is multiple words used for the project name');
+            for (const name of names.keys()) {
+              shortName = scenario.shortNameBase + i + name;
+              projectName = names.get(name)!;
+              createProject(scenario, shortName, projectName, projectProfileDocs, userParatextProjects);
+            }
           }
         }
       }
@@ -426,4 +453,9 @@ export const PTLoadUndefined: Story = {
     ...PTAdmin.args,
     errorFetchingPTProjectListUndefined: true
   }
+};
+
+// Projects can have long names or descriptions that can push things around in the layout if we aren't careful.
+export const LayoutLengths: Story = {
+  args: { ...AllProjectScenarios.args, projectNameLengthCheck: true }
 };
