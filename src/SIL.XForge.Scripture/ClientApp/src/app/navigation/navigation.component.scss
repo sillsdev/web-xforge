@@ -3,6 +3,7 @@
 mat-nav-list .mdc-list-item {
   font-weight: 500;
   font-size: 14px;
+  padding-inline: 12px;
 
   mat-icon {
     color: variables.$purpleMedium;
@@ -23,9 +24,9 @@ mat-nav-list .mdc-list-item {
     display: flex;
     align-items: center;
     column-gap: 12px;
-    font-size: unset;
-    font-weight: unset;
-    letter-spacing: unset;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: normal;
   }
 
   &.navigation-header ::ng-deep .mat-mdc-list-item-unscoped-content {
