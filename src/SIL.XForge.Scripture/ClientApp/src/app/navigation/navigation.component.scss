@@ -85,10 +85,10 @@ mat-nav-list .mdc-list-item {
   margin-top: 2em;
 }
 
-.mat-nav-list.disabled-offline .mdc-list-item {
+.mat-mdc-nav-list.disabled-offline ::ng-deep .mat-mdc-list-item-unscoped-content {
   &,
   mat-icon {
-    color: variables.$disabled-text-color;
+    color: variables.$disabled-text-color !important;
   }
 }
 
