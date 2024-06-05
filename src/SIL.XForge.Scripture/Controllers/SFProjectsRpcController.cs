@@ -148,6 +148,8 @@ public class SFProjectsRpcController(
                     { "AlternateSourceParatextId", settings?.AlternateSourceParatextId },
                     { "AlternateTrainingSourceEnabled", settings?.AlternateTrainingSourceEnabled?.ToString() },
                     { "AlternateTrainingSourceParatextId", settings?.AlternateTrainingSourceParatextId },
+                    { "AdditionalTrainingSourceEnabled", settings?.AdditionalTrainingSourceEnabled?.ToString() },
+                    { "AdditionalTrainingSourceParatextId", settings?.AdditionalTrainingSourceParatextId },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },

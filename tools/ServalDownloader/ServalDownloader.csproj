@@ -18,7 +18,7 @@
     <PackageReference Include="IdentityModel.AspNetCore" Version="4.3.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Serval.Client" Version="1.3.1" />
+    <PackageReference Include="Serval.Client" Version="1.4.1" />
   </ItemGroup>
 
 </Project>

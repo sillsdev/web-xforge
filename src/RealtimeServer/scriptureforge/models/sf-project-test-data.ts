@@ -20,6 +20,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       defaultNoteTagId: 1,
       draftConfig: {
         additionalTrainingData: false,
+        additionalTrainingSourceEnabled: false,
         alternateSourceEnabled: false,
         alternateTrainingSourceEnabled: false,
         lastSelectedTrainingBooks: [],

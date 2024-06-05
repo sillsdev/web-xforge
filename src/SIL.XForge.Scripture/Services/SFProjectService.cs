@@ -282,6 +282,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
         bool unsetAlternateTrainingSourceProject =
             settings.AlternateTrainingSourceParatextId == ProjectSettingValueUnset;
+        bool unsetAdditionalTrainingSourceProject =
+            settings.AdditionalTrainingSourceParatextId == ProjectSettingValueUnset;
 
         // Get the list of projects for setting the source or alternate source
         IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
@@ -289,6 +291,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             (settings.SourceParatextId != null && !unsetSourceProject)
             || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
             || (settings.AlternateTrainingSourceParatextId != null && !unsetAlternateTrainingSourceProject)
+            || (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
         )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -355,6 +358,25 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
+        // Get the additional training source for pre-translation drafting
+        TranslateSource additionalTrainingSource = null;
+        if (settings.AdditionalTrainingSourceParatextId != null && !unsetAdditionalTrainingSourceProject)
+        {
+            additionalTrainingSource = await GetTranslateSourceAsync(
+                curUserId,
+                projectId,
+                settings.AdditionalTrainingSourceParatextId,
+                syncIfCreated: true,
+                ptProjects,
+                projectDoc.Data.UserRoles
+            );
+            if (additionalTrainingSource.ProjectRef == projectId)
+            {
+                // A project cannot reference itself
+                additionalTrainingSource = null;
+            }
+        }
+
         bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         await projectDoc.SubmitJson0OpAsync(op =>
         {
@@ -387,6 +409,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 p => p.TranslateConfig.DraftConfig.AlternateTrainingSource,
                 alternateTrainingSource,
                 unsetAlternateTrainingSourceProject
+            );
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.DraftConfig.AdditionalTrainingSourceEnabled,
+                settings.AdditionalTrainingSourceEnabled
+            );
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.DraftConfig.AdditionalTrainingSource,
+                additionalTrainingSource,
+                unsetAdditionalTrainingSourceProject
             );
             UpdateSetting(
                 op,
@@ -896,6 +929,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 || (
                     p.TranslateConfig.DraftConfig.AlternateTrainingSource != null
                     && (p.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef == projectId)
+                )
+                || (
+                    p.TranslateConfig.DraftConfig.AdditionalTrainingSource != null
+                    && (p.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef == projectId)
                 )
         );
     }
