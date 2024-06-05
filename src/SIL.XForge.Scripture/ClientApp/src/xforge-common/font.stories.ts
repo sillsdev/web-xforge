@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { FONT_FACE_DEFINITIONS, FontService } from './font.service';
+import FONT_FACE_DEFINITIONS from '../../../fonts.json';
+import { FontService } from './font.service';
 
 // Example text, only included for frequently used non-Latin fonts
 const EXAMPLE_TEXT = {
