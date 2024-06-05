@@ -49,7 +49,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     );
   }
 
-  public get isOnline(): boolean {
+  get isOnline(): boolean {
     return this.onlineStatusService.isOnline;
   }
 
