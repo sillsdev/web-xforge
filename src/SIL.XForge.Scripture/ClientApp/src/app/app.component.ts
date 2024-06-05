@@ -165,8 +165,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
+  get isLoggedIn(): Observable<boolean> {
+    return this.authService.loggedInState$.pipe(map(state => (state.loggedIn ? true : false)));
+  }
+
   get homeUrl$(): Observable<string> {
-    return this.authService.loggedInState$.pipe(map(state => (state.loggedIn ? '/projects' : '/')));
+    return this.isLoggedIn.pipe(map((loggedIn: boolean) => (loggedIn ? '/projects' : '/')));
   }
 
   get isAppLoading(): boolean {
@@ -212,6 +216,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get texts(): TextInfo[] {
     return this._selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
+  }
+
+  get appName(): string {
+    return environment.siteName;
   }
 
   async ngOnInit(): Promise<void> {
@@ -359,10 +367,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
-  }
-
-  get appName(): string {
-    return environment.siteName;
   }
 
   private async showProjectDeletedDialog(): Promise<void> {
