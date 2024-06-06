@@ -8,6 +8,9 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ParatextProject } from './models/paratext-project';
 
+/** Length of paratext ids for DBL resources. */
+export const RESOURCE_IDENTIFIER_LENGTH = 16;
+
 /**
  * A point-in-time revision of a document.
  */
@@ -28,6 +31,15 @@ export interface SelectableProject {
   providedIn: 'root'
 })
 export class ParatextService {
+  /**
+   * Determines if a Paratext id refers to a resource.
+   * @param paratextId The Paratext identifier.
+   * @returns True if the Paratext identifier is a resource identifier.
+   */
+  static isResource(paratextId: string): boolean {
+    return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
+  }
+
   constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
 
   linkParatext(returnUrl: string): void {

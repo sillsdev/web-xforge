@@ -154,6 +154,19 @@ describe('EditorTabsMenuService', () => {
       expect(service['canShowHistory'](projectDoc)).toBe(false);
     });
 
+    it('should return false if project is a resource', () => {
+      const env = new TestEnvironment();
+      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
+      const resourceProjectDoc = {
+        id: 'resource01',
+        data: createTestProjectProfile({
+          paratextId: 'resourceid16char',
+          userRoles: { user01: SFProjectRole.ParatextObserver }
+        })
+      } as SFProjectProfileDoc;
+      expect(service['canShowHistory'](resourceProjectDoc)).toBe(false);
+    });
+
     it('should return true only if the user is an administrator or translator', () => {
       const env = new TestEnvironment();
 
@@ -205,6 +218,7 @@ class TestEnvironment {
   constructor() {
     when(activatedProjectMock.projectDoc$).thenReturn(of(this.projectDoc));
     when(mockI18nService.translate(anything())).thenReturn(of(''));
+    when(mockUserService.currentUserId).thenReturn('user01');
     service = TestBed.inject(EditorTabMenuService);
   }
 
