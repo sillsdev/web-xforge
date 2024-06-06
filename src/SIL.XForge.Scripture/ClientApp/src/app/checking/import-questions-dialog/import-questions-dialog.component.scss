@@ -57,6 +57,10 @@
     margin-block-end: 16px;
   }
 
+  mat-card-actions {
+    display: unset;
+  }
+
   ol {
     padding-left: 1.25em;
   }
