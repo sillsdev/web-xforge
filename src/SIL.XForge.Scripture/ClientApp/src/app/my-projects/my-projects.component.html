@@ -128,7 +128,7 @@
       </mat-card>
     </div>
 
-    <app-notice id="message-offline" icon="cloud_off" type="error" *ngIf="!isOnline">
+    <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'" *ngIf="!isOnline">
       {{ t("offline") }}
     </app-notice>
   </div>
