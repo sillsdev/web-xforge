@@ -14,7 +14,7 @@ import { ParatextService } from '../core/paratext.service';
 import { ServalAdministrationService } from './serval-administration.service';
 
 class Row {
-  constructor(public readonly projectDoc: SFProjectProfileDoc, private readonly paratextService: ParatextService) {}
+  constructor(public readonly projectDoc: SFProjectProfileDoc) {}
 
   get alternateSource(): string {
     return this.projectDoc.data?.translateConfig.draftConfig.alternateSource == null
@@ -28,7 +28,7 @@ class Row {
     const paratextId: string | undefined =
       this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId;
 
-    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
+    if (paratextId != null && !ParatextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
     } else {
       return undefined;
@@ -47,7 +47,7 @@ class Row {
     const paratextId: string | undefined =
       this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId;
 
-    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
+    if (paratextId != null && !ParatextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
     } else {
       return undefined;
@@ -77,7 +77,7 @@ class Row {
   get sourceId(): string | undefined {
     const paratextId: string | undefined = this.projectDoc.data?.translateConfig.source?.paratextId;
 
-    if (paratextId != null && !this.paratextService.isResource(paratextId)) {
+    if (paratextId != null && !ParatextService.isResource(paratextId)) {
       return this.projectDoc.data?.translateConfig.source?.projectRef;
     } else {
       return undefined;
@@ -156,7 +156,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
 
     const rows: Row[] = [];
     for (const projectDoc of this.projectDocs) {
-      rows.push(new Row(projectDoc, this.paratextService));
+      rows.push(new Row(projectDoc));
     }
     this.rows = rows;
   }
