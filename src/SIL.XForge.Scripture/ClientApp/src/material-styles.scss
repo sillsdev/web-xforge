@@ -10,9 +10,11 @@
 //  If you specify typography styles for the components you use elsewhere, you should delete this line.
 //  If you don't need the default component typographies but still want the hierarchy styles,
 //  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
+//    `@include mat.legacy-typography-hierarchy(mat.define-typography-config());`
+// Remove all-legacy-component-typographies once all legacy components are migrated
 @include mat.all-legacy-component-typographies();
 @include mat.all-component-typographies();
+// Remove legacy-core once all legacy components are migrated
 @include mat.legacy-core();
 @include mat.core();
 
@@ -89,13 +91,22 @@ $matGreyPalette: mat.define-palette($mat-sf-grey, 800);
 $matGreenLightPalette: mat.define-palette($mat-sf-green, 500, 200);
 $matErrorPalette: mat.define-palette($mat-sf-error, 500);
 
+$app-typography: mat.define-typography-config(
+  $body-1: mat.define-typography-level(16px, 1.2em)
+);
+
+$dialog-typography: mat.define-typography-config(
+  $body-1: mat.define-typography-level(14px, 1.5em)
+);
+
 $material-app-theme: mat.define-light-theme(
   (
     color: (
       primary: $matGreyPalette,
       accent: $matGreenLightPalette,
       warn: $matErrorPalette
-    )
+    ),
+    typography: $app-typography
   )
 );
 
@@ -121,7 +132,8 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.card-theme($material-app-theme);
 @include mat.checkbox-theme($material-app-theme);
 @include mat.chips-theme($material-app-theme);
-@include mat.legacy-dialog-theme($material-app-theme);
+@include mat.dialog-theme($material-app-theme);
+@include mat.dialog-typography($dialog-typography);
 @include mat.divider-theme($material-app-theme);
 @include mat.expansion-theme($material-app-theme);
 @include mat.form-field-theme($material-theme-accent-error);
@@ -185,6 +197,14 @@ button.mat-icon-button {
 
 mat-card-title {
   --mat-card-title-text-size: 24px;
+}
+
+.mat-mdc-dialog-actions {
+  padding: 16px 24px !important;
+}
+
+.mat-mdc-dialog-container {
+  --mdc-dialog-supporting-text-color: rgba(0, 0, 0, 0.9);
 }
 
 @mixin dense_mat_select() {

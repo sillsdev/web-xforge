@@ -1,9 +1,9 @@
 <ng-container *transloco="let t; read: 'share_dialog'">
-  <h1 mat-dialog-title>
-    <span>{{ t("share_project", { project: projectName }) }}</span
-    ><button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+  <h1 mat-dialog-title class="dialog-icon-title">
+    <span>{{ t("share_project", { project: projectName }) }}</span>
+    <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
   </h1>
-  <div class="configurations">
+  <div mat-dialog-content class="configurations">
     <div class="configuration-option configuration-invitation-role">
       <mat-icon>public</mat-icon>
       <div>
@@ -67,11 +67,20 @@
         {{ t("recipient_only_notice") }}
       </app-notice>
     </ng-container>
+    <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">
+      {{ t("link_sharing_not_available_offline") }}
+    </app-notice>
   </div>
-  <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">
-    {{ t("link_sharing_not_available_offline") }}
-  </app-notice>
   <div mat-dialog-actions>
+    <button
+      id="copy-btn"
+      mat-flat-button
+      (click)="copyLink()"
+      [disabled]="!isLinkReady"
+      color="{{ !supportsShareAPI ? 'primary' : '' }}"
+    >
+      <mat-icon>content_copy</mat-icon>{{ t("copy_link") }}
+    </button>
     <button
       id="share-btn"
       mat-flat-button
@@ -81,15 +90,6 @@
       [disabled]="!isLinkReady"
     >
       <mat-icon>share</mat-icon>{{ t("share") }}
-    </button>
-    <button
-      id="copy-btn"
-      mat-flat-button
-      (click)="copyLink()"
-      [disabled]="!isLinkReady"
-      color="{{ !supportsShareAPI ? 'primary' : '' }}"
-    >
-      <mat-icon>content_copy</mat-icon>{{ t("copy_link") }}
     </button>
   </div>
 </ng-container>

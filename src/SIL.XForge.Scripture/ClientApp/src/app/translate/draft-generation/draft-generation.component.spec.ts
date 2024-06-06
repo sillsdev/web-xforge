@@ -1,8 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import {
-  MatLegacyDialogRef as MatDialogRef,
-  MatLegacyDialogState as MatDialogState
-} from '@angular/material/legacy-dialog';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import FileSaver from 'file-saver';

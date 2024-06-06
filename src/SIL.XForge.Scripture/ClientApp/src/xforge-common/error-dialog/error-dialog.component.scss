@@ -9,4 +9,9 @@ p:first-child {
 
 mat-dialog-content {
   max-width: 620px;
+
+  pre {
+    text-align: left;
+    overflow-x: auto;
+  }
 }

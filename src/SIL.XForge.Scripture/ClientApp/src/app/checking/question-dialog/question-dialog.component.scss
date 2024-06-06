@@ -2,8 +2,14 @@
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @use '../checking/checking-global-vars' as checking-vars;
 
-.mat-dialog-content.content-padding {
+.mat-mdc-dialog-content.content-padding {
   padding-top: 0.5em;
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  column-gap: 0.5em;
 }
 
 .references {
@@ -21,7 +27,7 @@ mat-form-field {
   }
 }
 
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   max-height: 70vh;
 }
 

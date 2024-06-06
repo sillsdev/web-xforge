@@ -9,9 +9,7 @@
 
 .row {
   column-gap: 12px;
-  margin-left: 12px;
-  margin-right: 12px;
-  margin-bottom: 25px;
+  margin: 20px 12px;
   flex-direction: row;
   box-sizing: border-box;
   display: flex;
@@ -56,9 +54,6 @@ span {
 }
 
 mat-dialog-actions {
-  place-content: stretch flex-end;
-  align-items: stretch;
-  flex-direction: row;
+  place-content: flex-end;
   box-sizing: border-box;
-  display: flex;
 }

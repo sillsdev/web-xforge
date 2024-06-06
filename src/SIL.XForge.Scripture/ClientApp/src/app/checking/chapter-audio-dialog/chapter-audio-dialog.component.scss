@@ -22,7 +22,7 @@
   }
 }
 
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   .warning {
     font-size: 21px;
     margin-inline-end: unset;
@@ -78,7 +78,7 @@ mat-select.book-select-menu ::ng-deep {
   }
 }
 
-.mat-dialog-actions {
+.mat-mdc-dialog-actions {
   justify-content: end;
 
   .uploading {

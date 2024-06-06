@@ -1,9 +1,9 @@
 <ng-container *transloco="let t; read: 'suggestions_settings_dialog'">
   <h1 mat-dialog-title>{{ t("translator_settings") }}</h1>
-  <div class="offline-text" *ngIf="!onlineStatusService.isOnline">
-    {{ t("settings_not_available_offline") }}
-  </div>
   <mat-dialog-content>
+    <div class="offline-text" *ngIf="!onlineStatusService.isOnline">
+      {{ t("settings_not_available_offline") }}
+    </div>
     <div class="row">
       <div class="col">
         <mat-slide-toggle
