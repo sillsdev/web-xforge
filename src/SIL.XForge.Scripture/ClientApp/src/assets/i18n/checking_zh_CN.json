@@ -326,10 +326,9 @@
     "text_size": "Text size"
   },
   "issue_email": {
-    "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
-    "not_applicable": "not applicable",
-    "subject": "{{ siteName }} issue",
-    "unknown": "unknown"
+    "heading": "Please explain the problem.",
+    "technical_details": "Technical details",
+    "unknown": "Unknown"
   },
   "join": {
     "error_occurred_login": "An error occurred trying to join the project",
