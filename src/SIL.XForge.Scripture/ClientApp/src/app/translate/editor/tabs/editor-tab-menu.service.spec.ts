@@ -176,6 +176,19 @@ describe('EditorTabMenuService', () => {
         expect(service['canShowHistory'](env.projectDoc)).toBe(isParatextRole(role));
       });
     });
+
+    it('should return false if project is resource', () => {
+      const env = new TestEnvironment();
+      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
+      const resourceProjectDoc = {
+        id: 'resource01',
+        data: createTestProjectProfile({
+          paratextId: 'resourceid16char',
+          userRoles: { user01: SFProjectRole.ParatextObserver }
+        })
+      } as SFProjectProfileDoc;
+      expect(service['canShowHistory'](resourceProjectDoc)).toBe(false);
+    });
   });
 
   describe('canShowResource', () => {
@@ -214,6 +227,7 @@ class TestEnvironment {
 
   constructor() {
     when(activatedProjectMock.projectDoc$).thenReturn(of(this.projectDoc));
+    when(mockUserService.currentUserId).thenReturn('user01');
     service = TestBed.inject(EditorTabMenuService);
   }
 

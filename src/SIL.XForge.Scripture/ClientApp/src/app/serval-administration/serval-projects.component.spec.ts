@@ -23,14 +23,12 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ParatextService } from '../core/paratext.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedServalAdministrationService = mock(ServalAdministrationService);
 const mockedUserService = mock(UserService);
-const mockedParatextService = mock(ParatextService);
 const mockAuthService = mock(AuthService);
 
 describe('ServalProjectsComponent', () => {
@@ -48,8 +46,7 @@ describe('ServalProjectsComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: AuthService, useMock: mockAuthService },
-      { provide: ParatextService, useMock: mockedParatextService }
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 
@@ -151,9 +148,6 @@ class TestEnvironment {
           })
         )
     );
-    when(mockedParatextService.isResource(anything())).thenCall((paratextId: string) => {
-      return paratextId?.startsWith('ptresource') ?? false;
-    });
 
     this.fixture = TestBed.createComponent(ServalProjectsComponent);
     this.component = this.fixture.componentInstance;
@@ -250,13 +244,13 @@ class TestEnvironment {
           translateConfig: {
             draftConfig: {
               alternateSource: {
-                paratextId: 'ptresource02',
+                paratextId: 'resource16char02',
                 projectRef: 'resource02',
                 name: 'Resource 02',
                 shortName: 'R2'
               },
               alternateTrainingSource: {
-                paratextId: 'ptresource03',
+                paratextId: 'resource16char03',
                 projectRef: 'resource03',
                 name: 'Resource 03',
                 shortName: 'R3'
@@ -264,7 +258,7 @@ class TestEnvironment {
             },
             preTranslate: false,
             source: {
-              paratextId: 'ptresource01',
+              paratextId: 'resource16char01',
               projectRef: 'resource01',
               name: 'Resource 01',
               shortName: 'R1'
