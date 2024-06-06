@@ -230,9 +230,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (Bugsnag.isStarted()) Bugsnag.setUser(this.currentUserDoc.id);
     }
 
-    const languageTag = this.currentUserDoc.data!.interfaceLanguage;
-    if (languageTag != null) {
-      this.i18n.trySetLocale(languageTag, this.authService);
+    // Set the locale in Auth0 user profile to the current browsing session based on the cookie
+    const languageTag: string | undefined = this.currentUserDoc.data!.interfaceLanguage;
+    if (languageTag != null && I18nService.getLocale(languageTag)?.canonicalTag !== this.i18n.localeCode) {
+      this.i18n.trySetLocale(this.i18n.localeCode, this.authService);
     }
 
     const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
