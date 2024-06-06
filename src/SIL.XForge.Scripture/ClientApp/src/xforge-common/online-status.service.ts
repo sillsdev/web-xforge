@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
-import { filter, mapTo, take } from 'rxjs/operators';
+import { BehaviorSubject, firstValueFrom, fromEvent, merge, Observable, of } from 'rxjs';
+import { filter, map, take } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { NAVIGATOR } from './browser-globals';
 
@@ -25,8 +25,8 @@ export class OnlineStatusService extends SubscriptionDisposable {
     this.subscribe(
       merge(
         of(this.navigator.onLine),
-        fromEvent(window, 'online').pipe(mapTo(true)),
-        fromEvent(window, 'offline').pipe(mapTo(false))
+        fromEvent(window, 'online').pipe(map(() => true)),
+        fromEvent(window, 'offline').pipe(map(() => false))
       ),
       status => {
         // Note that this isn't 100% as accurate as it sounds. "Online" simply means a valid network connection
@@ -63,13 +63,12 @@ export class OnlineStatusService extends SubscriptionDisposable {
    */
   get online(): Promise<void> {
     return new Promise<void>(resolve => {
-      this.onlineStatus$
-        .pipe(
+      firstValueFrom(
+        this.onlineStatus$.pipe(
           filter(isOnline => isOnline),
           take(1)
         )
-        .toPromise()
-        .then(() => resolve());
+      ).then(() => resolve());
     });
   }
 
@@ -78,7 +77,7 @@ export class OnlineStatusService extends SubscriptionDisposable {
       return false;
     }
     try {
-      return (await this.http.get('ping', { responseType: 'text' }).toPromise()) === 'ok';
+      return (await firstValueFrom(this.http.get('ping', { responseType: 'text' }))) === 'ok';
     } catch {
       return false;
     }
