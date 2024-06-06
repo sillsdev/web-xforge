@@ -12,12 +12,15 @@
         <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
           <mat-icon>menu</mat-icon>
         </button>
-        <a *ngIf="isLoggedIn | async" mat-icon-button fxHide.xs [routerLink]="homeUrl$ | async" class="logo">
+        @if (isLoggedIn | async) {
+        <a mat-icon-button fxHide.xs routerLink="/projects" class="logo">
           <img src="/assets/images/sf.svg" height="38" />
         </a>
-        <a *ngIf="(isLoggedIn | async) === false" mat-icon-button fxHide.xs [href]="homeUrl$ | async" class="logo">
+        } @else {
+        <a mat-icon-button fxHide.xs href="/" class="logo">
           <img src="/assets/images/sf.svg" height="38" />
         </a>
+        }
         <span class="project-name-wrapper" *ngIf="isProjectSelected" fxHide.xs>
           <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
           <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>

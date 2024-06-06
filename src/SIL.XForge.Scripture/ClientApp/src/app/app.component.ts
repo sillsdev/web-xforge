@@ -166,11 +166,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isLoggedIn(): Observable<boolean> {
-    return this.authService.loggedInState$.pipe(map(state => (state.loggedIn ? true : false)));
-  }
-
-  get homeUrl$(): Observable<string> {
-    return this.isLoggedIn.pipe(map((loggedIn: boolean) => (loggedIn ? '/projects' : '/')));
+    return this.authService.loggedInState$.pipe(map(state => state.loggedIn));
   }
 
   get isAppLoading(): boolean {
