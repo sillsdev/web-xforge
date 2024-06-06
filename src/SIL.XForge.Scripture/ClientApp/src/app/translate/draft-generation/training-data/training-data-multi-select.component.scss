@@ -4,7 +4,13 @@
   .mat-mdc-standard-chip {
     &.mat-mdc-chip-selected,
     &.mat-mdc-chip-highlighted {
+      padding-inline-start: 12px;
       --mdc-chip-elevated-container-color: #4a79c9;
+      ::ng-deep button {
+        .mat-mdc-chip-graphic {
+          display: none;
+        }
+      }
     }
   }
 
