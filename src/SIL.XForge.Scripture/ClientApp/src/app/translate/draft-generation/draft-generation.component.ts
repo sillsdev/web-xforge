@@ -299,7 +299,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   async generateDraft({ withConfirm = false } = {}): Promise<void> {
     if (withConfirm) {
-      const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
+      const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialogGiveRef({
         title: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_title'),
         message: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_message'),
         options: [
@@ -388,7 +388,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   async cancel(): Promise<void> {
     if (this.draftJob?.state === BuildStates.Active) {
-      const { dialogRef, result } = this.dialogService.openGenericDialog({
+      const { dialogRef, result } = this.dialogService.openGenericDialogGiveRef({
         title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
         message: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_message'),
         options: [

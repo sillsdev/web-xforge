@@ -128,7 +128,7 @@ describe('DraftGenerationComponent', () => {
         {},
         { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
       );
-      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
+      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialogGiveRef']);
       mockI18nService = jasmine.createSpyObj<I18nService>(
         ['getLanguageDisplayName', 'translate', 'interpolate', 'localizeBook'],
         {
@@ -1306,7 +1306,7 @@ describe('DraftGenerationComponent', () => {
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
       let env = new TestEnvironment(() => {
-        mockDialogService.openGenericDialog.and.returnValue({
+        mockDialogService.openGenericDialogGiveRef.and.returnValue({
           dialogRef: {} as MatDialogRef<any>,
           result: Promise.resolve(true)
         });
@@ -1317,14 +1317,14 @@ describe('DraftGenerationComponent', () => {
       await env.component.cancel();
       env.component.draftJob = { ...buildDto, state: BuildStates.Canceled };
       env.fixture.detectChanges();
-      expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
+      expect(mockDialogService.openGenericDialogGiveRef).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith(projectId);
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
     });
 
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
       let env = new TestEnvironment(() => {
-        mockDialogService.openGenericDialog.and.returnValue({
+        mockDialogService.openGenericDialogGiveRef.and.returnValue({
           dialogRef: {} as MatDialogRef<any>,
           result: Promise.resolve(false)
         });
@@ -1333,7 +1333,7 @@ describe('DraftGenerationComponent', () => {
 
       env.component.draftJob = { ...buildDto, state: BuildStates.Active };
       await env.component.cancel();
-      expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
+      expect(mockDialogService.openGenericDialogGiveRef).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).not.toHaveBeenCalled();
     });
 
@@ -1346,7 +1346,7 @@ describe('DraftGenerationComponent', () => {
       await env.component.cancel();
       env.component.draftJob = { ...buildDto, state: BuildStates.Canceled };
       env.fixture.detectChanges();
-      expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
+      expect(mockDialogService.openGenericDialogGiveRef).not.toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
     });

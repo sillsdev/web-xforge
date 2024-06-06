@@ -19,7 +19,7 @@ export class DialogService {
     return this.matDialog.open(component, { direction: this.i18n.direction, ...(config ?? {}) });
   }
 
-  openGenericDialog<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {
+  openGenericDialogGiveRef<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {
     const dialogRef: MatDialogRef<GenericDialogComponent<T>, T> = this.matDialog.open<
       GenericDialogComponent<T>,
       GenericDialogOptions<T>,
@@ -36,12 +36,23 @@ export class DialogService {
     };
   }
 
+  async openGenericDialog<T>(options: GenericDialogOptions<T>): Promise<T | undefined> {
+    return this.matDialog
+      .open<GenericDialogComponent<T>, GenericDialogOptions<T>, T>(GenericDialogComponent, {
+        direction: this.i18n.direction,
+        autoFocus: false,
+        data: options
+      })
+      .afterClosed()
+      .toPromise();
+  }
+
   async confirm(
     question: I18nKey | Observable<string>,
     affirmative: I18nKey | Observable<string>,
     negative?: I18nKey | Observable<string>
   ): Promise<boolean> {
-    const result: boolean | undefined = await this.openGenericDialog({
+    const result: boolean | undefined = await this.openGenericDialogGiveRef({
       title: this.ensureLocalized(question),
       options: [
         { value: false, label: this.ensureLocalized(negative ?? 'dialog.cancel') },
