@@ -6,7 +6,6 @@ import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -16,6 +15,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ObjectPaths } from '../../type-utils';
+import { CommandError } from '../../xforge-common/command.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 export interface AnonymousShareKeyDetails {
@@ -114,7 +114,8 @@ export class JoinComponent extends DataLoadingComponent {
         this.name.enable();
       }
     } catch (e) {
-      await this.informInvalidShareLinkAndRedirect(e instanceof HttpErrorResponse ? e.error : undefined);
+      await this.handleErrorJoining(e);
+      this.locationService.go(this.locationService.origin);
     }
     this.status = 'input';
   }
@@ -135,14 +136,7 @@ export class JoinComponent extends DataLoadingComponent {
       const projectId = await this.projectService.onlineJoinWithShareKey(shareKey);
       this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
     } catch (err) {
-      if (
-        err instanceof CommandError &&
-        (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
-      ) {
-        await this.informInvalidShareLinkAndRedirect(err.message);
-      } else {
-        throw err;
-      }
+      this.handleErrorJoining(err);
       this.router.navigateByUrl('/projects', { replaceUrl: true });
     }
   }
@@ -157,8 +151,9 @@ export class JoinComponent extends DataLoadingComponent {
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     try {
       this.joiningResponse = await this.anonymousService.checkShareKey(shareKey);
-    } catch (error) {
-      await this.informInvalidShareLinkAndRedirect(error instanceof HttpErrorResponse ? error.error : undefined);
+    } catch (e) {
+      await this.handleErrorJoining(e);
+      this.locationService.go(this.locationService.origin);
     } finally {
       this.loadingFinished();
     }
@@ -177,17 +172,25 @@ export class JoinComponent extends DataLoadingComponent {
     }
   }
 
-  private async informInvalidShareLinkAndRedirect(error: string = 'project_link_is_invalid'): Promise<void> {
-    const key: ObjectPaths<typeof en.join> = [
+  private async showJoinError(key: ObjectPaths<typeof en.join>): Promise<void> {
+    await this.dialogService.message(`join.${key}`);
+  }
+
+  private async handleErrorJoining(error: unknown): Promise<void> {
+    const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
       'error_occurred_login',
       'key_already_used',
       'key_expired',
       'max_users_reached',
       'role_not_found'
-    ].includes(error)
-      ? (error as ObjectPaths<typeof en.join>)
-      : 'project_link_is_invalid';
-    await this.dialogService.message(`join.${key}`);
-    this.locationService.go(this.locationService.origin);
+    ];
+
+    if (error instanceof HttpErrorResponse && KNOWN_ERROR_CODES.includes(error.error)) {
+      await this.showJoinError(error.error);
+    } else if (error instanceof CommandError && KNOWN_ERROR_CODES.includes(error.message as any)) {
+      await this.showJoinError(error.message as any);
+    } else {
+      throw error;
+    }
   }
 }
