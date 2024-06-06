@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, ErrorHandler } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
@@ -47,6 +47,7 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly reportingService: ErrorReportingService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly errorHandler: ErrorHandler,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -190,7 +191,7 @@ export class JoinComponent extends DataLoadingComponent {
     } else if (error instanceof CommandError && KNOWN_ERROR_CODES.includes(error.message as any)) {
       await this.showJoinError(error.message as any);
     } else {
-      throw error;
+      this.errorHandler.handleError(error);
     }
   }
 }
