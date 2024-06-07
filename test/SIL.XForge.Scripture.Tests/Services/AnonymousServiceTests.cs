@@ -40,7 +40,7 @@ public class AnonymousServiceTests
             );
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckShareKey(shareKey));
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.CheckShareKey(shareKey));
     }
 
     [Test]
