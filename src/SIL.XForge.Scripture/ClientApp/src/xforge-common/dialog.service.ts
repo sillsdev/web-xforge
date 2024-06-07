@@ -60,10 +60,10 @@ export class DialogService {
    * provided the button will use a default label for the close button.
    */
   async message(message: I18nKey | Observable<string>, close?: I18nKey | Observable<string>): Promise<void> {
-    await this.openGenericDialog({
+    return await this.openGenericDialog({
       title: this.ensureLocalized(message),
       options: [{ value: undefined, label: this.ensureLocalized(close ?? 'dialog.close'), highlight: true }]
-    });
+    }).result;
   }
 
   get openDialogCount(): number {
