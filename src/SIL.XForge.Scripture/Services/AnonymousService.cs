@@ -29,7 +29,7 @@ public class AnonymousService : IAnonymousService
         // Ensure the key hasn't been used by another recipient
         if (validShareKey.ShareKey.RecipientUserId != null)
         {
-            throw new ForbiddenException();
+            throw new DataNotFoundException("key_already_used");
         }
 
         return new AnonymousShareKeyResponse
