@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -118,6 +119,36 @@ describe('SyncComponent', () => {
     env.emitSyncComplete(true, env.projectId);
     expect(env.component.lastSyncDate!.getTime()).toBeGreaterThan(previousLastSyncDate!.getTime());
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
+  }));
+
+  it('should log the user out if they click the log out button when sync throws a forbidden error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineSync(env.projectId)).thenReject(
+      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
+    );
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+
+    env.clickElement(env.syncButton);
+
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedAuthService.logOut()).once();
+    expect(env.component.syncActive).toBe(false);
+  }));
+
+  it('should not log the user out if they click cancel when a sync throws a forbidden error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineSync(env.projectId)).thenReject(
+      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
+    );
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+
+    env.clickElement(env.syncButton);
+
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedAuthService.logOut()).never();
+    expect(env.component.syncActive).toBe(false);
   }));
 
   it('should report error if sync has a problem', fakeAsync(() => {
