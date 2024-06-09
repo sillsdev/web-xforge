@@ -1,7 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { AuthService } from 'xforge-common/auth.service';
+import { CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -35,7 +38,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: SFProjectService,
     readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly authService: AuthService
   ) {
     super(noticeService);
   }
@@ -120,7 +124,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
-        const username = await this.paratextService.getParatextUsername().toPromise();
+        const username = await firstValueFrom(this.paratextService.getParatextUsername());
         if (username != null) {
           this.paratextUsername = username;
         }
@@ -165,7 +169,18 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       return;
     }
     this._syncActive = true;
-    this.projectService.onlineSync(this.projectDoc.id);
+    this.projectService.onlineSync(this.projectDoc.id).catch((error: any) => {
+      this.checkSyncStatus();
+      if ('code' in error && error.code === CommandErrorCode.Forbidden) {
+        this.dialogService
+          .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
+          .then((logOut: boolean) => {
+            if (logOut) this.authService.logOut();
+          });
+      } else {
+        throw error;
+      }
+    });
   }
 
   cancelSync(): void {
