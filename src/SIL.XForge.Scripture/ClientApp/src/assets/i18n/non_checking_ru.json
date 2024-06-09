@@ -513,7 +513,7 @@
   },
   "warnings": {
     "cancel": "Отменить",
-    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
-    "logout": "Yes, logout"
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to log out?",
+    "logout": "Yes, log out"
   }
 }
