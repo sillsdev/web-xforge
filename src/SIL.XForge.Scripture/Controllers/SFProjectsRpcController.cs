@@ -463,7 +463,7 @@ public class SFProjectsRpcController(
             await projectService.SyncAsync(UserId, projectId);
             return Ok();
         }
-        catch (ForbiddenException)
+        catch (Exception ex) when (ex is ForbiddenException or UnauthorizedAccessException)
         {
             return ForbiddenError();
         }

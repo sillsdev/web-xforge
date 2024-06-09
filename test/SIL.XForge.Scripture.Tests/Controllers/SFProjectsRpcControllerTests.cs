@@ -8,6 +8,7 @@ using Hangfire.States;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using SIL.XForge.Controllers;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -45,6 +46,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -73,6 +75,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.DeleteTrainingData(Project01, User02, Data01);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -131,6 +134,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.UpdateRole(Project01, User02, projectRole);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -146,6 +150,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.UpdateRole(Project01, User02, projectRole);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -206,6 +211,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetPreTranslate(Project01, preTranslate);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -221,6 +227,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.SetPreTranslate(Project01, preTranslate);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -259,6 +266,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetSyncDisabled(Project01, syncDisabled);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -274,6 +282,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.SetSyncDisabled(Project01, syncDisabled);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -312,6 +321,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.SetServalConfig(Project01, servalConfig);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
         await env.SFProjectService.Received().SetServalConfigAsync(User01, Roles, Project01, servalConfig);
     }
 
@@ -328,6 +338,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.SetServalConfig(Project01, servalConfig);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -340,6 +351,66 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetServalConfig(Project01, servalConfig));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task Sync_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.Sync(Project01);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SyncAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task Sync_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SyncAsync(User01, Project01).Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.Sync(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task Sync_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SyncAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.Sync(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task Sync_Unauthorized()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SyncAsync(User01, Project01).Throws(new UnauthorizedAccessException());
+
+        // SUT
+        var result = await env.Controller.Sync(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void Sync_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SyncAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Sync(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -365,6 +436,7 @@ public class SFProjectsRpcControllerTests
         // SUT
         var result = await env.Controller.UpdateSettings(Project01, settings);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -380,6 +452,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.UpdateSettings(Project01, settings);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]

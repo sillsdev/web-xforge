@@ -12,6 +12,9 @@ namespace SIL.XForge.Controllers;
 [Authorize]
 public abstract class RpcControllerBase : RpcController
 {
+    public const int ForbiddenErrorCode = -32000;
+    public const int NotFoundErrorCode = -32001;
+
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IUserAccessor _userAccessor;
 
@@ -29,7 +32,7 @@ public abstract class RpcControllerBase : RpcController
     protected IRpcMethodResult InvalidParamsError(string message) => Error((int)RpcErrorCode.InvalidParams, message);
 
     protected IRpcMethodResult ForbiddenError() =>
-        Error(-32000, "The user does not have permission to perform this operation.");
+        Error(ForbiddenErrorCode, "The user does not have permission to perform this operation.");
 
-    protected IRpcMethodResult NotFoundError(string message) => Error(-32001, message);
+    protected IRpcMethodResult NotFoundError(string message) => Error(NotFoundErrorCode, message);
 }
