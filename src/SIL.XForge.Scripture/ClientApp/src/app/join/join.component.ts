@@ -157,8 +157,8 @@ export class JoinComponent extends DataLoadingComponent {
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     try {
       this.joiningResponse = await this.anonymousService.checkShareKey(shareKey);
-    } catch {
-      await this.informInvalidShareLinkAndRedirect();
+    } catch (error) {
+      await this.informInvalidShareLinkAndRedirect(error instanceof HttpErrorResponse ? error.error : undefined);
     } finally {
       this.loadingFinished();
     }
