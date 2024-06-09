@@ -70,6 +70,15 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
 
+  additionalTrainingSourceLanguage?: string;
+  additionalTrainingSourceLanguageDisplayName?: string;
+
+  alternateTrainingSourceLanguage?: string;
+  alternateTrainingSourceLanguageDisplayName?: string;
+
+  sourceLanguage?: string;
+  sourceLanguageDisplayName?: string;
+
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
 
@@ -216,27 +225,30 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
             this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
             this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
-            this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+
+            // If an alternate source is specified, that will be used for drafting (not training)
+            if (
+              (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
+              translateConfig?.draftConfig.alternateSource != null
+            ) {
+              this.sourceLanguage = translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
+            } else {
+              this.sourceLanguage = translateConfig?.source?.writingSystem.tag;
+            }
+
+            this.alternateTrainingSourceLanguage =
+              translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
+            this.additionalTrainingSourceLanguage =
+              translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag;
+            this.isSourceAndTargetDifferent = this.sourceLanguage !== this.targetLanguage;
 
             // The alternate training source and source languages must match
             if (
               (translateConfig?.draftConfig.alternateTrainingSourceEnabled ?? false) &&
               translateConfig?.draftConfig.alternateTrainingSource != null
             ) {
-              if (
-                (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
-                translateConfig?.draftConfig.alternateSource != null
-              ) {
-                // Compare the alternate training source with the alternate source
-                this.isSourceAndTrainingSourceLanguageIdentical =
-                  translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag ===
-                  translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
-              } else {
-                // Compare the alternate training source with the source
-                this.isSourceAndTrainingSourceLanguageIdentical =
-                  translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag ===
-                  translateConfig?.source?.writingSystem.tag;
-              }
+              this.isSourceAndTrainingSourceLanguageIdentical =
+                translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag === this.sourceLanguage;
             } else {
               // There is no alternate training source specified
               this.isSourceAndTrainingSourceLanguageIdentical = true;
@@ -253,21 +265,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
               ) {
                 // Compare the additional training source with the alternate training source
                 this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
-                  translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag ===
-                  translateConfig?.draftConfig.alternateTrainingSource?.writingSystem.tag;
-              } else if (
-                (translateConfig?.draftConfig.alternateSourceEnabled ?? false) &&
-                translateConfig?.draftConfig.alternateSource != null
-              ) {
-                // Compare the additional training source with the alternate source
-                this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
-                  translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag ===
-                  translateConfig?.draftConfig.alternateSource?.writingSystem.tag;
+                  this.additionalTrainingSourceLanguage === this.alternateTrainingSourceLanguage;
               } else {
-                // Compare the additional training source with the source
+                // Compare the additional training source with the source (which will be used for training)
+                // We do not compare to this.sourceLanguage, as that may be the alternate source (used for drafting)
                 this.isSourceAndAdditionalTrainingSourceLanguageIdentical =
-                  translateConfig?.draftConfig.additionalTrainingSource?.writingSystem.tag ===
-                  translateConfig?.source?.writingSystem.tag;
+                  this.additionalTrainingSourceLanguage === translateConfig?.source?.writingSystem.tag;
+                this.alternateTrainingSourceLanguage = translateConfig?.source?.writingSystem.tag;
               }
             } else {
               // There is no additional training source specified
@@ -330,7 +334,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     });
 
     this.subscribe(this.i18n.locale$, () => {
-      this.targetLanguageDisplayName = this.getTargetLanguageDisplayName();
+      this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
+      this.sourceLanguageDisplayName = this.i18n.getLanguageDisplayName(this.sourceLanguage);
+      this.alternateTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
+        this.alternateTrainingSourceLanguage
+      );
+      this.additionalTrainingSourceLanguageDisplayName = this.i18n.getLanguageDisplayName(
+        this.additionalTrainingSourceLanguage
+      );
     });
   }
 
@@ -549,10 +560,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       ),
       (job?: BuildDto) => (this.draftJob = job)
     );
-  }
-
-  private getTargetLanguageDisplayName(): string | undefined {
-    return this.i18n.getLanguageDisplayName(this.targetLanguage);
   }
 
   private pollBuild(): void {
