@@ -1462,8 +1462,7 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
-        await env.SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.TranslationQueuedAt);
@@ -1619,8 +1618,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -1643,8 +1641,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -1677,8 +1674,7 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.UserId == User01));
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
@@ -2052,6 +2048,8 @@ public class MachineApiServiceTests
                     },
                 }
             );
+            ProjectService = Substitute.For<ISFProjectService>();
+            ProjectService.SyncAsync(User01, Arg.Any<string>()).Returns(Task.FromResult(JobId));
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
 
@@ -2072,6 +2070,7 @@ public class MachineApiServiceTests
                 ParatextService,
                 PreTranslationService,
                 ProjectSecrets,
+                ProjectService,
                 realtimeService,
                 servalOptions,
                 SyncService,
@@ -2088,6 +2087,7 @@ public class MachineApiServiceTests
         public IPreTranslationService PreTranslationService { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+        public ISFProjectService ProjectService { get; }
         public MachineApiService Service { get; }
         public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }

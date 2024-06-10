@@ -496,6 +496,7 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The build was successfully started.</response>
+    /// <response code="401">Your Paratext tokens have expired, and you must log in again.</response>
     /// <response code="403">You do not have permission to build this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
@@ -527,6 +528,10 @@ public class MachineApiController : ControllerBase
             // Returning Forbid() results in a 400 error when executed in a POST action
             return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
     }
 
     /// <summary>
@@ -535,6 +540,7 @@ public class MachineApiController : ControllerBase
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translation build was successfully started.</response>
+    /// <response code="401">Your Paratext tokens have expired, and you must log in again.</response>
     /// <response code="403">You do not have permission to build this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
@@ -570,6 +576,10 @@ public class MachineApiController : ControllerBase
         {
             // Returning Forbid() results in a 400 error when executed in a POST action
             return new StatusCodeResult(StatusCodes.Status403Forbidden);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
         }
     }
 

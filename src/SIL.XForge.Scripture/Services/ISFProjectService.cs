@@ -14,7 +14,7 @@ public interface ISFProjectService : IProjectService
     Task DeleteProjectAsync(string curUserId, string projectId);
     Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings);
     Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
-    Task SyncAsync(string curUserId, string projectId);
+    Task<string> SyncAsync(string curUserId, string projectId);
     Task CancelSyncAsync(string curUserId, string projectId);
     Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
     Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role, string shareLinkType);

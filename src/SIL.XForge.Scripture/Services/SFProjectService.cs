@@ -481,11 +481,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="projectId">The paratext project identifier.</param>
-    /// <returns>An asynchronous task.</returns>
+    /// <returns>The job identifier.</returns>
     /// <exception cref="DataNotFoundException">The project or user does not exist.</exception>
     /// <exception cref="ForbiddenException">The user is not an administrator or translator.</exception>
     /// <exception cref="UnauthorizedAccessException">The user cannot access the Paratext Registry or Archives.</exception>
-    public async Task SyncAsync(string curUserId, string projectId)
+    public async Task<string> SyncAsync(string curUserId, string projectId)
     {
         // Ensure the project exists
         Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
@@ -520,7 +520,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new UnauthorizedAccessException();
 
         // Queue the sync
-        await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
+        return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
     }
 
     public async Task CancelSyncAsync(string curUserId, string projectId)
