@@ -1,4 +1,5 @@
 import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -16,7 +17,7 @@ import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-au
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { ProjectType, TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -699,12 +700,43 @@ describe('SettingsComponent', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedParatextService.getProjects()).thenResolve(undefined);
-        when(mockedParatextService.getResources()).thenResolve(undefined);
+        when(mockedParatextService.getParatextUsername()).thenReturn(of(undefined));
         env.wait();
         expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
         expect(env.basedOnSelect).not.toBeNull();
+      }));
+
+      it('should log the user out if they click the log out button when get projects and resources throws a forbidden error', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedParatextService.getProjects()).thenReject(new HttpErrorResponse({ status: 401 }));
+        when(mockedParatextService.getResources()).thenReject(new HttpErrorResponse({ status: 401 }));
+        const dialogSpy = spy(env.component.dialogService);
+        when(dialogSpy.confirm(anything(), anything())).thenResolve(true);
+        env.wait();
+
+        verify(mockedParatextService.getProjects()).once();
+        verify(mockedParatextService.getResources()).once();
+        verify(dialogSpy.confirm(anything(), anything())).once();
+        verify(mockedAuthService.logOut()).once();
+        expect(env.inputElement(env.basedOnSelect).disabled).toBe(true);
+      }));
+
+      it('should not log the user out if they click cancel when get projects throws a forbidden error', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedParatextService.getProjects()).thenReject(new HttpErrorResponse({ status: 401 }));
+        when(mockedParatextService.getResources()).thenReject(new HttpErrorResponse({ status: 401 }));
+        const dialogSpy = spy(env.component.dialogService);
+        when(dialogSpy.confirm(anything(), anything())).thenResolve(false);
+        env.wait();
+
+        verify(mockedParatextService.getProjects()).once();
+        verify(mockedParatextService.getResources()).once();
+        verify(dialogSpy.confirm(anything(), anything())).once();
+        verify(mockedAuthService.logOut()).never();
+        expect(env.inputElement(env.basedOnSelect).disabled).toBe(true);
       }));
 
       it('should hide Translation Suggestions when Based On is not set', fakeAsync(() => {
@@ -1038,6 +1070,7 @@ class TestEnvironment {
     );
     this.testOnlineStatusService.setIsOnline(hasConnection);
 
+    when(mockedParatextService.getParatextUsername()).thenReturn(of('Paratext 01'));
     when(mockedParatextService.getProjects()).thenResolve([
       {
         paratextId: 'paratextId01',
