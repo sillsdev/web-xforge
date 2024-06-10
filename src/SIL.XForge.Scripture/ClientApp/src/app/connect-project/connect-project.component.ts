@@ -1,8 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ErrorHandler, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
+import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -51,6 +54,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   private targetProjects?: ParatextProject[];
 
   constructor(
+    private readonly authService: AuthService,
+    private readonly dialogService: DialogService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly router: Router,
@@ -220,18 +225,35 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   private async populateProjectList(): Promise<void> {
     this.state = 'loading';
     this.loadingStarted();
-    const resourceFetchPromise = this.fetchResources();
-    const projects = await this.paratextService.getProjects();
+    try {
+      const resourceFetchPromise = this.fetchResources();
+      const projects = await this.paratextService.getProjects();
 
-    if (projects == null) {
-      this.state = 'login';
-    } else {
-      this._projects = projects.sort(compareProjectsForSorting);
-      this.targetProjects = this._projects.filter(p => p.isConnectable);
-      this.state = 'input';
-      await resourceFetchPromise;
+      if (projects == null) {
+        this.state = 'login';
+      } else {
+        this._projects = projects.sort(compareProjectsForSorting);
+        this.targetProjects = this._projects.filter(p => p.isConnectable);
+        this.state = 'input';
+        await resourceFetchPromise;
+      }
+    } catch (error: any) {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        this.dialogService
+          .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
+          .then((logOut: boolean) => {
+            if (logOut) {
+              this.authService.logOut();
+            } else {
+              this.router.navigate(['/projects']);
+            }
+          });
+      } else {
+        throw error;
+      }
+    } finally {
+      this.loadingFinished();
     }
-    this.loadingFinished();
   }
 
   private async fetchResources(): Promise<void> {
