@@ -2793,8 +2793,8 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SyncAsync(User01, Project01);
-        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        string actual = await env.Service.SyncAsync(User01, Project01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
@@ -2846,8 +2846,8 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SyncAsync(User05, Project01);
-        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        string actual = await env.Service.SyncAsync(User05, Project01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
@@ -3873,7 +3873,7 @@ public class SFProjectServiceTests
                                 ShareLinkType = ShareLinkType.Recipient,
                                 UsersGenerated = 250,
                             },
-                        ]
+                        ],
                     },
                 }
             );

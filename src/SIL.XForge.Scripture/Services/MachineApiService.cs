@@ -33,6 +33,7 @@ public class MachineApiService(
     IParatextService paratextService,
     IPreTranslationService preTranslationService,
     IRepository<SFProjectSecret> projectSecrets,
+    ISFProjectService projectService,
     IRealtimeService realtimeService,
     IOptions<ServalOptions> servalOptions,
     ISyncService syncService,
@@ -627,7 +628,8 @@ public class MachineApiService(
         MachineApi.EnsureProjectPermission(curUserId, projectDoc.Data);
 
         // Sync the source and target before running the build
-        string syncJobId = await syncService.SyncAsync(new SyncConfig { ProjectId = sfProjectId, UserId = curUserId });
+        // We use project service, as it provides permission and token checks
+        string syncJobId = await projectService.SyncAsync(curUserId, sfProjectId);
 
         // Run the training after the sync has completed
         string buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
@@ -716,9 +718,8 @@ public class MachineApiService(
         });
 
         // Sync the source and target before running the build
-        string jobId = await syncService.SyncAsync(
-            new SyncConfig { ProjectId = buildConfig.ProjectId, UserId = curUserId }
-        );
+        // We use project service, as it provides permission and token checks
+        string jobId = await projectService.SyncAsync(curUserId, buildConfig.ProjectId);
 
         // If we have an alternate source, sync that first
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
