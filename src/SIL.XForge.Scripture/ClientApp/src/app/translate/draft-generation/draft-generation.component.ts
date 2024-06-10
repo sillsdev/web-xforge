@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatTabGroup } from '@angular/material/tabs';
@@ -12,7 +13,7 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, firstValueFrom, of, Subscription } from 'rxjs';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -501,6 +502,17 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           if (this.isDraftComplete(job)) {
             this.lastCompletedBuild = job;
           }
+        }),
+        catchError(error => {
+          if (error instanceof HttpErrorResponse && error.status === 401) {
+            this.dialogService
+              .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
+              .then((logOut: boolean) => {
+                if (logOut) this.authService.logOut();
+              });
+          }
+
+          return of(undefined);
         })
       ),
       (job?: BuildDto) => (this.draftJob = job)
