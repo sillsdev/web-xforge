@@ -61,10 +61,9 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.initialLoadingSFProjects = false;
     });
     await this.loadUser();
-    this.subscribe(this.onlineStatusService.onlineStatus$, online => {
-      this.userIsPTUser = this.user?.data != null ? isPTUser(this.user.data) : false;
-      if (this.userIsPTUser && online) this.loadParatextProjects();
-    });
+    await this.onlineStatusService.online;
+    this.userIsPTUser = this.user?.data != null ? isPTUser(this.user.data) : false;
+    if (this.userIsPTUser) this.loadParatextProjects();
   }
 
   isLastSelectedProject(project: SFProjectProfileDoc): boolean {
@@ -84,7 +83,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   }
 
   private async loadParatextProjects(): Promise<void> {
-    if (!this.isOnline) return;
     this.loadingPTProjects = true;
     this.problemGettingPTProjects = false;
     try {

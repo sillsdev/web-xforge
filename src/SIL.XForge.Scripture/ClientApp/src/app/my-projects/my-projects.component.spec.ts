@@ -250,6 +250,17 @@ describe('MyProjectsComponent', () => {
     // Not throwing an exception.
   }));
 
+  it('fetch PT projects list if online', fakeAsync(() => {
+    // Suppose the user is online and visit this component. We fetch and display PT projects.
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+    verify(mockedParatextService.getProjects()).once();
+    // Unconnected project cards are shown
+    expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).not.toBeNull();
+    // We are not showing a message about needing to be online.
+    expect(env.messageOffline).toBeNull();
+  }));
+
   it('fetches projects list when user comes online', fakeAsync(() => {
     // Suppose the user is offline, and they visit this component. Then they connect to the Internet. Fetch their list
     // of PT projects without them needing to leave and come back to this component.
@@ -275,53 +286,6 @@ describe('MyProjectsComponent', () => {
     expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).not.toBeNull();
     // We are no longer showing a message about needing to be online.
     expect(env.messageOffline).toBeNull();
-  }));
-
-  it('clears trouble message when user comes online after a prior failed attempt to fetch PT projects', fakeAsync(() => {
-    // Suppose the user is online. They visit this component and receive an error when their PT projects are attempted
-    // to be fetched. They go offline. They come back online. Fetch their list of PT projects, and clear the error if
-    // there is no error at this point.
-    const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
-    env.waitUntilLoaded();
-
-    // Trouble message is shown.
-    expect(env.messageTroubleGettingPTProjectList).not.toBeNull();
-    // Show the header above it as well to make the context clear.
-    expect(env.headerNotConnectedProjects).not.toBeNull();
-    // Not throwing an exception.
-
-    // The user goes offline.
-    env.onlineStatus = false;
-    when(mockedParatextService.getProjects()).thenResolve(env.userParatextProjects);
-    // The user comes online.
-    env.onlineStatus = true;
-    // Trouble message is not shown.
-    expect(env.messageTroubleGettingPTProjectList).toBeNull();
-  }));
-
-  it('clears trouble message when user comes online after a prior failed attempt to fetch PT projects because of undefined projects list result', fakeAsync(() => {
-    // Suppose the user is online, and is a PT user. They visit this component and undefined is returned when their PT
-    // projects are attempted to be fetched (which would happen if the user's PT credentials are not working). We show
-    // an error message. They go offline. They come back online. Perhaps the undefined return from the PT projects list
-    // was intermittent, so try again. If we are now successful getting the PT projects list, clear the error message.
-    const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenResolve(undefined);
-    env.waitUntilLoaded();
-
-    // Trouble message is shown.
-    expect(env.messageTroubleGettingPTProjectList).not.toBeNull();
-    // Show the header above it as well to make the context clear.
-    expect(env.headerNotConnectedProjects).not.toBeNull();
-    // Not throwing an exception.
-
-    // The user goes offline.
-    env.onlineStatus = false;
-    when(mockedParatextService.getProjects()).thenResolve(env.userParatextProjects);
-    // The user comes online.
-    env.onlineStatus = true;
-    // Trouble message is not shown.
-    expect(env.messageTroubleGettingPTProjectList).toBeNull();
   }));
 
   it('shows loading card while waiting for SF projects list', fakeAsync(() => {
