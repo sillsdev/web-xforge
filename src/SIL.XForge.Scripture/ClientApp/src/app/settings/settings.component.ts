@@ -90,7 +90,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    readonly dialogService: DialogService,
+    private readonly dialogService: DialogService,
     private readonly router: Router,
     private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService,
@@ -243,13 +243,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           await Promise.all([mainSettingsPromise, projectsAndResourcesPromise]);
           this.loading = false;
 
-          if (paratextTokensExpired) {
-            this.dialogService
-              .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
-              .then((logOut: boolean) => {
-                if (logOut) this.authService.logOut();
-              });
-          }
+          if (paratextTokensExpired) this.authService.requestParatextCredentialUpdate();
 
           this.updateFormEnabled();
         }

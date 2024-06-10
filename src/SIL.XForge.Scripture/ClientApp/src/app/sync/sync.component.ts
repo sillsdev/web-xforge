@@ -172,11 +172,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     this.projectService.onlineSync(this.projectDoc.id).catch((error: any) => {
       this.checkSyncStatus();
       if ('code' in error && error.code === CommandErrorCode.Forbidden) {
-        this.dialogService
-          .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
-          .then((logOut: boolean) => {
-            if (logOut) this.authService.logOut();
-          });
+        this.authService.requestParatextCredentialUpdate();
       } else {
         throw error;
       }

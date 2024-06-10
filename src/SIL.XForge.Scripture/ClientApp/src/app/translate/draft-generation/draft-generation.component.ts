@@ -505,11 +505,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         }),
         catchError(error => {
           if (error instanceof HttpErrorResponse && error.status === 401) {
-            this.dialogService
-              .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
-              .then((logOut: boolean) => {
-                if (logOut) this.authService.logOut();
-              });
+            this.authService.requestParatextCredentialUpdate();
           }
 
           return of(undefined);

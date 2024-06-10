@@ -298,6 +298,16 @@ export class AuthService {
     }
   }
 
+  requestParatextCredentialUpdate(cancelCallback?: () => void): void {
+    this.dialogService.confirm('warnings.paratext_credentials_expired', 'warnings.logout').then((logOut: boolean) => {
+      if (logOut) {
+        this.logOut();
+      } else if (cancelCallback != null) {
+        cancelCallback();
+      }
+    });
+  }
+
   /**
    * Only used when joining with a share key
    */

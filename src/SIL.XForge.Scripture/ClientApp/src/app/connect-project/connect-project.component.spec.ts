@@ -13,7 +13,6 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -36,7 +35,6 @@ import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.compo
 import { ConnectProjectComponent } from './connect-project.component';
 
 const mockedAuthService = mock(AuthService);
-const mockedDialogService = mock(DialogService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedRouter = mock(Router);
@@ -59,7 +57,6 @@ describe('ConnectProjectComponent', () => {
     declarations: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: DialogService, useMock: mockedDialogService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: Router, useMock: mockedRouter },
@@ -375,31 +372,14 @@ describe('ConnectProjectComponent', () => {
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
-  it('should log the user out if they click the log out button when get projects throws a forbidden error', fakeAsync(() => {
+  it('should display the Paratext credentials update prompt when get projects throws a forbidden error', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
     when(mockedParatextService.getProjects()).thenThrow(new HttpErrorResponse({ status: 401 }));
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     env.waitForProjectsResponse();
 
     verify(mockedParatextService.getProjects()).once();
-    verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedAuthService.logOut()).once();
-    verify(mockedRouter.navigate(anything())).never();
-    expect(env.component.state).toEqual('loading');
-  }));
-
-  it('should not log the user out if they click cancel when get projects throws a forbidden error', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupDefaultProjectData();
-    when(mockedParatextService.getProjects()).thenThrow(new HttpErrorResponse({ status: 401 }));
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
-    env.waitForProjectsResponse();
-
-    verify(mockedParatextService.getProjects()).once();
-    verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedAuthService.logOut()).never();
-    verify(mockedRouter.navigate(anything())).once();
+    verify(mockedAuthService.requestParatextCredentialUpdate(anything())).once();
     expect(env.component.state).toEqual('loading');
   }));
 });

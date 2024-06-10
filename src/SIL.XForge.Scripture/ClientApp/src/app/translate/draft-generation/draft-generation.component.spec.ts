@@ -123,13 +123,15 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockAuthService = jasmine.createSpyObj<AuthService>(['logOut'], { currentUserRoles: [SystemRole.User] });
+      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
+        currentUserRoles: [SystemRole.User]
+      });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
         { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
       );
-      mockDialogService = jasmine.createSpyObj<DialogService>(['confirm', 'openGenericDialog']);
+      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(
         ['getLanguageDisplayName', 'translate', 'interpolate', 'localizeBook'],
         {
@@ -1303,12 +1305,11 @@ describe('DraftGenerationComponent', () => {
       verify(mockDialogRef.close()).once();
     });
 
-    it('should log the user out if they click the log out button when startBuild throws a forbidden error', fakeAsync(() => {
+    it('should display the Paratext credentials update prompt when startBuild throws a forbidden error', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
           throwError(() => new HttpErrorResponse({ status: 401 }))
         );
-        mockDialogService.confirm.and.returnValue(Promise.resolve(true));
       });
 
       env.component.startBuild({
@@ -1327,36 +1328,7 @@ describe('DraftGenerationComponent', () => {
         translationBooks: [],
         fastTraining: false
       });
-      expect(mockDialogService.confirm).toHaveBeenCalled();
-      expect(mockAuthService.logOut).toHaveBeenCalled();
-    }));
-
-    it('should not log the user out if they click cancel when startBuild throws a forbidden error', fakeAsync(() => {
-      let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
-          throwError(() => new HttpErrorResponse({ status: 401 }))
-        );
-        mockDialogService.confirm.and.returnValue(Promise.resolve(false));
-      });
-
-      env.component.startBuild({
-        trainingBooks: [],
-        trainingDataFiles: [],
-        translationBooks: [],
-        fastTraining: false,
-        projectId: projectId
-      });
-      tick();
-
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingBooks: [],
-        trainingDataFiles: [],
-        translationBooks: [],
-        fastTraining: false
-      });
-      expect(mockDialogService.confirm).toHaveBeenCalled();
-      expect(mockAuthService.logOut).not.toHaveBeenCalled();
+      expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
     }));
   });
 

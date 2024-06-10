@@ -12,7 +12,6 @@ import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -71,7 +70,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly authService: AuthService,
-    private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
     readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
@@ -198,11 +196,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       .catch((error: any) => {
         this.isTraining = false;
         if (error instanceof HttpErrorResponse && error.status === 401) {
-          this.dialogService
-            .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
-            .then((logOut: boolean) => {
-              if (logOut) this.authService.logOut();
-            });
+          this.authService.requestParatextCredentialUpdate();
         } else {
           this.noticeService.showError(translate('translate_overview.training_unavailable'));
         }

@@ -121,33 +121,16 @@ describe('SyncComponent', () => {
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
-  it('should log the user out if they click the log out button when sync throws a forbidden error', fakeAsync(() => {
+  it('should display the Paratext credentials update prompt when sync throws a forbidden error', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineSync(env.projectId)).thenReject(
       new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
     );
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
 
     env.clickElement(env.syncButton);
 
     verify(mockedProjectService.onlineSync(env.projectId)).once();
-    verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedAuthService.logOut()).once();
-    expect(env.component.syncActive).toBe(false);
-  }));
-
-  it('should not log the user out if they click cancel when a sync throws a forbidden error', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedProjectService.onlineSync(env.projectId)).thenReject(
-      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
-    );
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
-
-    env.clickElement(env.syncButton);
-
-    verify(mockedProjectService.onlineSync(env.projectId)).once();
-    verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedAuthService.logOut()).never();
+    verify(mockedAuthService.requestParatextCredentialUpdate()).once();
     expect(env.component.syncActive).toBe(false);
   }));
 
