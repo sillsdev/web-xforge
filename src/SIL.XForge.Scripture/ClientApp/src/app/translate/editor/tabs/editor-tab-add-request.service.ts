@@ -63,6 +63,7 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
         {
           panelClass: 'editor-tab-add-resource-dialog',
           disableClose: true, // Ensure explicit cancellation by user
+          autoFocus: false, // Prevent dialog from focusing the select box when user clicks outside the dialog
           width: '700px',
           data: {
             // Don't show projects/resources that are already open in a tab
