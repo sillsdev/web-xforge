@@ -19,6 +19,7 @@ import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -40,6 +41,8 @@ import { TrainingProgressComponent } from '../training-progress/training-progres
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedAuthService = mock(AuthService);
+const mockedDialogService = mock(DialogService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
@@ -59,8 +62,9 @@ describe('TranslateOverviewComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
-      { provide: AuthService, useMock: mock(AuthService) },
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -187,6 +191,38 @@ describe('TranslateOverviewComponent', () => {
       expect(env.component.isTraining).toBe(true);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.mode).toBe('determinate');
+    }));
+
+    it('should log the user out if they click the log out button when retrain throws a forbidden error', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(env.mockedRemoteTranslationEngine.startTraining()).thenReject(new HttpErrorResponse({ status: 401 }));
+      when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+      env.wait();
+
+      env.clickRetrainButton();
+      env.wait();
+
+      verify(env.mockedRemoteTranslationEngine.startTraining()).once();
+      verify(mockedDialogService.confirm(anything(), anything())).once();
+      verify(mockedAuthService.logOut()).once();
+      expect(env.trainingProgressShown).toBe(false);
+      expect(env.component.isTraining).toBe(false);
+    }));
+
+    it('should not log the user out if they click cancel when retrain throws a forbidden error', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(env.mockedRemoteTranslationEngine.startTraining()).thenReject(new HttpErrorResponse({ status: 401 }));
+      when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+      env.wait();
+
+      env.clickRetrainButton();
+      env.wait();
+
+      verify(env.mockedRemoteTranslationEngine.startTraining()).once();
+      verify(mockedDialogService.confirm(anything(), anything())).once();
+      verify(mockedAuthService.logOut()).never();
+      expect(env.trainingProgressShown).toBe(false);
+      expect(env.component.isTraining).toBe(false);
     }));
 
     it('should not create engine if no source text docs', fakeAsync(() => {
