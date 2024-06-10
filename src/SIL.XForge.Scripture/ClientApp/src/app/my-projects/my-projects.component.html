@@ -69,7 +69,7 @@
     <div class="pt-content" *ngIf="userIsPTUser">
       <h2
         id="header-not-connected-projects"
-        *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects"
+        *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects || !isOnline"
       >
         {{
           loadingPTProjects

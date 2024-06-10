@@ -62,8 +62,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     });
     await this.loadUser();
     await this.onlineStatusService.online;
-    this.userIsPTUser = this.user?.data != null ? isPTUser(this.user.data) : false;
-    if (this.userIsPTUser) this.loadParatextProjects();
+    if (this.userIsPTUser) await this.loadParatextProjects();
   }
 
   isLastSelectedProject(project: SFProjectProfileDoc): boolean {
@@ -80,6 +79,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
   private async loadUser(): Promise<void> {
     this.user = await this.userService.getCurrentUser();
+    this.userIsPTUser = this.user.data != null ? isPTUser(this.user.data) : false;
   }
 
   private async loadParatextProjects(): Promise<void> {

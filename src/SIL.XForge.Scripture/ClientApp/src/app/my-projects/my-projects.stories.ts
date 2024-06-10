@@ -311,6 +311,12 @@ const meta: Meta = {
       });
       when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(context.args.online));
       when(mockedOnlineStatusService.isOnline).thenReturn(context.args.online);
+      when(mockedOnlineStatusService.online).thenReturn(
+        new Promise(resolve => {
+          if (context.args.online) resolve();
+          // Else, never resolve.
+        })
+      );
       return story();
     }
   ],
@@ -360,6 +366,16 @@ export const NewAndPTTranslator: Story = {
     isKnownPTUser: true,
     userPTTranslatorNotSFConnectedAtAllCount: 2,
     userPTTranslatorNotConnectedToSFProjectCount: 1
+  }
+};
+
+// Someone registers at SF and has PT projects they administer. But they are offline.
+export const NewAndPTAdminOffline: Story = {
+  args: {
+    online: false,
+    isKnownPTUser: true,
+    userPTAdministratorNotSFConnectedAtAllCount: 2,
+    userPTAdministratorNotConnectedToSFProjectCount: 1
   }
 };
 
@@ -417,7 +433,10 @@ export const SFTranslatorOffline: Story = {
   args: { ...SFTranslator.args, online: false }
 };
 
-// PT user is offline.
+// PT user, with SF projects, is offline.
+export const PTTranslatorOffline: Story = { args: { ...PTTranslator.args, online: false } };
+
+// PT user, with SF projects, is offline.
 export const PTAdminOffline: Story = { args: { ...PTAdmin.args, online: false } };
 
 // User with PT projects comes to page, and experiences delay in waiting for the PT project list to come back from the
