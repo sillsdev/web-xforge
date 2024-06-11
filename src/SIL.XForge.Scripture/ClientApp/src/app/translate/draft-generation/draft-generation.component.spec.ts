@@ -1501,6 +1501,36 @@ describe('DraftGenerationComponent', () => {
       expect(env.downloadButton).not.toBe(null);
     });
 
+    it('button should display if there is a completed build while a build is faulted', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.lastCompletedBuild = { ...buildDto, state: BuildStates.Completed };
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      expect(env.downloadButton).not.toBe(null);
+    });
+
+    it('button should display if there is a completed build while a build is queued', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
+      env.component.lastCompletedBuild = { ...buildDto, state: BuildStates.Completed };
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      expect(env.downloadButton).not.toBe(null);
+    });
+
+    it('button should not display if there is no completed build while a build is faulter', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+      env.component.lastCompletedBuild = undefined;
+      env.component.hasDraftBooksAvailable = true;
+      env.fixture.detectChanges();
+
+      expect(env.downloadButton).toBe(null);
+    });
+
     it('button should display if the project updates the hasDraft field', () => {
       // Setup the project and subject
       const projectDoc: SFProjectProfileDoc = {

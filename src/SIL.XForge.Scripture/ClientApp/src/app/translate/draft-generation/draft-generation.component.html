@@ -223,15 +223,15 @@
 
           <ng-container *ngIf="isPreviewSupported">
             <ng-container *ngIf="draftJob != null">
-              <section *ngIf="!isDraftInProgress(draftJob)" class="draft-complete">
-                <mat-card *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
+              <section *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild" class="draft-complete">
+                <mat-card>
                   <mat-card-header>
                     <mat-card-title>
                       {{ isDraftComplete(draftJob) ? t("draft_is_ready") : t("preview_last_draft_header") }}
                     </mat-card-title>
                   </mat-card-header>
                   <mat-card-content>
-                    <p *ngIf="!isDraftComplete(draftJob)">{{ t("preview_last_draft_detail") }}</p>
+                    <p *ngIf="isDraftFaulted(draftJob)">{{ t("preview_last_draft_detail") }}</p>
                     <p>{{ t("click_book_to_preview") }}</p>
                     <app-draft-preview-books></app-draft-preview-books>
                   </mat-card-content>
@@ -256,7 +256,7 @@
                       <span>{{ t("download_draft") }}</span>
                     </button>
                     <button
-                      *ngIf="isGenerationSupported"
+                      *ngIf="isGenerationSupported && !isDraftInProgress(draftJob)"
                       mat-button
                       type="button"
                       (click)="generateDraft({ withConfirm: true })"
