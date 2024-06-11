@@ -6,9 +6,10 @@ import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
-import { ParatextService, SelectableProject } from '../../../../core/paratext.service';
+import { SelectableProject } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
+import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 
 export interface EditorTabAddResourceDialogData {
   excludedParatextIds: string[];
@@ -48,7 +49,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   constructor(
     private readonly destroyRef: DestroyRef,
     readonly onlineStatus: OnlineStatusService,
-    private readonly paratextService: ParatextService,
+    private readonly editorTabAddResourceDialogService: EditorTabAddResourceDialogService,
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
     private readonly dialogRef: MatDialogRef<EditorTabAddResourceDialogComponent, SFProjectDoc>,
@@ -119,14 +120,14 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.isLoading = true;
 
     await Promise.all([
-      this.paratextService
+      this.editorTabAddResourceDialogService
         .getProjects()
         .then(projects => {
           this.projectLoadingFailed = false;
           this.projects = this.filterConnectable(projects);
         })
         .catch(() => (this.projectLoadingFailed = true)),
-      this.paratextService
+      this.editorTabAddResourceDialogService
         .getResources()
         .then(resources => {
           this.resourceLoadingFailed = false;
