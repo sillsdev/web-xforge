@@ -57,6 +57,11 @@
     margin-block-end: 16px;
   }
 
+  mat-card-actions {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
   ol {
     padding-left: 1.25em;
   }
