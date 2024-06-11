@@ -52,7 +52,7 @@
           >
         </div>
         <mat-menu #linkUsageMenu>
-          <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1">
+          <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1" hideSingleSelectionIndicator>
             <mat-list-option
               *ngFor="let option of shareLinkUsageOptions"
               [selected]="option === shareLinkType"
