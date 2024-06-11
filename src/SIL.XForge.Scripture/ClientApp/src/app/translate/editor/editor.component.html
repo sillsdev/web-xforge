@@ -66,6 +66,8 @@
           [projectId]="tab.projectId"
           [bookNum]="bookNum"
           [chapter]="chapter"
+          [segmentRef]="target?.segmentRef"
+          [highlightSegment]="targetFocused"
         ></app-editor-resource>
 
         <div *ngIf="tab.type === 'project-source'" class="project-tab-container">

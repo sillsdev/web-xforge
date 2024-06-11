@@ -15,6 +15,8 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
   @Input() projectId?: string;
   @Input() bookNum?: number;
   @Input() chapter?: number;
+  @Input() segmentRef?: string;
+  @Input() highlightSegment?: boolean;
 
   @ViewChild(TextComponent) resourceText!: TextComponent;
 
