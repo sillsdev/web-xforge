@@ -1,7 +1,7 @@
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
 
@@ -56,6 +56,26 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
 export function getBaseVerse(segmentRef: string): string | undefined {
   const matchArray: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segmentRef);
   return matchArray == null ? undefined : matchArray[0];
+}
+
+/**
+ * Gets the digit code for Paratext filenames, such as 01 for GEN, 39 for MAL, and 41 for MAT.
+ *
+ * These are all 2 digits, except for xxg which is "100":
+ * 01...99, 100, A0...A9, B0...B9, C0...C9
+ *
+ * @param bookNum The book number.
+ * @returns The book number file name digits.
+ *
+ * This is based on ParatextData's ProjectSettings.BookFileNameDigits().
+ */
+export function getBookFileNameDigits(bookNum: number): string {
+  if (bookNum < 10) return '0' + bookNum;
+  if (bookNum < 40) return bookNum.toString();
+  if (bookNum < 100) return (bookNum + 1).toString();
+  if (bookNum < 110) return 'A' + (bookNum - 100);
+  if (bookNum < 120) return 'B' + (bookNum - 110);
+  return 'C' + (bookNum - 120);
 }
 
 /**

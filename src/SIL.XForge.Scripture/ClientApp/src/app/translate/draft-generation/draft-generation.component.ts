@@ -29,6 +29,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { SharedModule } from '../../shared/shared.module';
+import { getBookFileNameDigits } from '../../shared/utils';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates, BuildConfig } from './draft-generation';
@@ -349,7 +350,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       ).then(usfm => {
         if (usfm != null) {
           const fileName: string =
-            bookNum.toString().padStart(2, '0') + Canon.bookNumberToId(bookNum) + projectShortName + '.sfm';
+            getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.sfm';
           zip.file(fileName, usfm);
           this.downloadBooksProgress++;
         }
