@@ -193,7 +193,7 @@ describe('AppComponent', () => {
 
     tick();
     env.fixture.detectChanges();
-    verify(mockedI18nService.trySetLocale(anything(), anything())).never();
+    verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
   }));
 
   it('sets user locale when stored locale does not match the browsing session', fakeAsync(() => {
@@ -204,7 +204,7 @@ describe('AppComponent', () => {
 
     tick();
     env.fixture.detectChanges();
-    verify(mockedI18nService.trySetLocale('es', anything())).once();
+    verify(mockedAuthService.updateInterfaceLanguage('es')).once();
 
     env.component.setLocale('pt-BR');
     tick();

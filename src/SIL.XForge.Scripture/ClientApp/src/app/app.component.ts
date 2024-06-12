@@ -233,7 +233,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     // Set the locale in the Auth0 user profile to the current browsing session based on the cookie
     const languageTag: string | undefined = this.currentUserDoc.data!.interfaceLanguage;
     if (languageTag != null && I18nService.getLocale(languageTag)?.canonicalTag !== this.i18n.localeCode) {
-      this.i18n.trySetLocale(this.i18n.localeCode, this.authService);
+      this.authService.updateInterfaceLanguage(this.i18n.localeCode);
     }
 
     const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
