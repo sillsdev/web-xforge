@@ -169,8 +169,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       this.isTargetLanguageSupported &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
-      this.isSourceAndTrainingSourceLanguageIdentical &&
-      this.isSourceAndAdditionalTrainingSourceLanguageIdentical &&
       this.canAccessDraftSourceIfAvailable(this.source) &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
