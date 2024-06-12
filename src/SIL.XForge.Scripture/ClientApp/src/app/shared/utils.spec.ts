@@ -2,7 +2,14 @@ import { VerseRef } from '@sillsdev/scripture';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
-import { compareProjectsForSorting, getVerseNumbers, isBadDelta, projectLabel, XmlUtils } from './utils';
+import {
+  compareProjectsForSorting,
+  getBookFileNameDigits,
+  getVerseNumbers,
+  isBadDelta,
+  projectLabel,
+  XmlUtils
+} from './utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {
@@ -153,6 +160,33 @@ describe('shared utils', () => {
     });
     it('gets the verse number from a verse range', () => {
       expect(getVerseNumbers(new VerseRef('GEN', '2', '3,4-6'))).toEqual([3, 4, 6]);
+    });
+  });
+
+  describe('getBookFileNameDigits function', () => {
+    it('pads a number less than 10 with 0', () => {
+      expect(getBookFileNameDigits(1)).toEqual('01');
+      expect(getBookFileNameDigits(9)).toEqual('09');
+    });
+    it('does not pad a number between 10 and 39', () => {
+      expect(getBookFileNameDigits(10)).toEqual('10');
+      expect(getBookFileNameDigits(39)).toEqual('39');
+    });
+    it('returns number plus one for numbers between 40 and 99', () => {
+      expect(getBookFileNameDigits(40)).toEqual('41');
+      expect(getBookFileNameDigits(99)).toEqual('100');
+    });
+    it('returns A and the ones place value for numbers between 100 and 109', () => {
+      expect(getBookFileNameDigits(100)).toEqual('A0');
+      expect(getBookFileNameDigits(109)).toEqual('A9');
+    });
+    it('returns B and the ones place value for numbers between 110 and 119', () => {
+      expect(getBookFileNameDigits(110)).toEqual('B0');
+      expect(getBookFileNameDigits(119)).toEqual('B9');
+    });
+    it('returns C and the ones place value for numbers between 120 and 129', () => {
+      expect(getBookFileNameDigits(120)).toEqual('C0');
+      expect(getBookFileNameDigits(129)).toEqual('C9');
     });
   });
 });
