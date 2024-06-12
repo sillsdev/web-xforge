@@ -126,8 +126,8 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.autocomplete-theme($material-app-theme);
 @include mat.badge-theme($material-app-theme);
 @include mat.bottom-sheet-theme($material-app-theme);
+@include mat.icon-button-theme($material-app-theme);
 @include mat.button-theme($material-app-theme);
-@include mat.legacy-button-theme($material-app-theme);
 @include mat.button-toggle-theme($material-app-theme);
 @include mat.card-theme($material-app-theme);
 @include mat.checkbox-theme($material-app-theme);
@@ -180,14 +180,6 @@ html,
 .card-outline {
   @include mat.elevation(0);
   border: 1px solid #e0e0e0;
-}
-
-button.mat-icon-button {
-  transition: color 0.15s;
-
-  &:not([disabled]):hover {
-    color: $greenLight !important;
-  }
 }
 
 // Restore the tab header underline from Material pre-v15

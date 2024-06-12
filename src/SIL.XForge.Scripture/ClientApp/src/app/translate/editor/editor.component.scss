@@ -69,8 +69,7 @@
 
 .toolbar-separator {
   border-left: 1px solid vars.$border-color;
-  margin: 0 4px;
-  height: 36px;
+  margin: 6px 4px;
   width: 0;
 }
 
@@ -110,6 +109,7 @@ app-text {
   position: absolute;
   visibility: hidden;
   inset-inline-end: 10px;
+  background-color: vars.$greenLight;
 }
 
 .fab-bottom-sheet {
