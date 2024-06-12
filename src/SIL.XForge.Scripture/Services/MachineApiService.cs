@@ -132,12 +132,20 @@ public class MachineApiService(
         var anonymousType = new
         {
             Event = string.Empty,
-            Payload = new { Build = new { Id = string.Empty }, Engine = new { Id = string.Empty } }
+            Payload = new
+            {
+                Build = new { Id = string.Empty },
+                Engine = new { Id = string.Empty },
+                BuildState = string.Empty,
+            },
         };
         var delivery = JsonConvert.DeserializeAnonymousType(json, anonymousType);
 
-        // We only support translation build finished events
-        if (delivery.Event != "TranslationBuildFinished")
+        // We only support translation build finished events for completed builds
+        if (
+            delivery.Event != nameof(WebhookEvent.TranslationBuildFinished)
+            || delivery.Payload.BuildState != nameof(JobState.Completed)
+        )
         {
             return;
         }
@@ -159,9 +167,12 @@ public class MachineApiService(
         // Ensure we have a project id
         if (string.IsNullOrWhiteSpace(projectId))
         {
-            throw new DataNotFoundException(
-                $"A project id could not be found for translation engine id {translationEngineId}"
+            // Log the error in the console. We do not need to throw it, as the engine will be for another SF environment
+            logger.LogWarning(
+                "A project id could not be found for translation engine id {translationEngineId}",
+                translationEngineId
             );
+            return;
         }
 
         // Run the background job
@@ -566,6 +577,11 @@ public class MachineApiService(
     {
         try
         {
+            // Record the SF Project id to help with debugging
+            exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "sfProjectId", sfProjectId } }
+            );
+
             // Get the project secret to see if this is being run from another process
             if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
             {

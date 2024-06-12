@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
@@ -117,7 +118,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void ExecuteWebhook_MissingProjectId()
+    public async Task ExecuteWebhook_MissingProjectId()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -126,7 +127,8 @@ public class MachineApiServiceTests
         const string signature = "sha256=24BBC1C61AEE03CEC0A100478A38FB16AAD7CCFDAC1D9B6170CB6AA2EFF82F81";
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
+        await env.Service.ExecuteWebhookAsync(json, signature);
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Warning);
     }
 
     [Test]
@@ -140,6 +142,20 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.ExecuteWebhookAsync(json, signature));
+    }
+
+    [Test]
+    public async Task ExecuteWebhook_UnsupportedBuildState()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string json =
+            """{"event":"TranslationBuildFinished","payload":{"build":{"id":"6668b63edb2383657780f934","url":"/api/v1/translation/engines/6657d17c593d597a09de8503/builds/6668b63edb2383657780f934"},"engine":{"id":"6657d17c593d597a09de8503","url":"/api/v1/translation/engines/6657d17c593d597a09de8503"},"buildState":"Faulted","dateFinished":"2024-06-11T21:47:05.295Z"}}""";
+        const string signature = "sha256=6B6D3E071C019D8012677EA9F5F9DA8E3DF9E870BFAFC3F8D2B8CA1B6CF517D7";
+
+        // SUT
+        await env.Service.ExecuteWebhookAsync(json, signature);
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
