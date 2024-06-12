@@ -15,7 +15,7 @@ $questionsHeaderInlineStartPadding: 8px;
 
 header {
   display: flex;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .panel-content {
@@ -198,16 +198,16 @@ header {
         &.action-icons {
           justify-content: flex-end;
 
-          .add-question-button.mat-icon-button {
+          .add-question-button.mat-mdc-icon-button {
             display: none;
           }
 
           @include media-breakpoint('<', xl) {
-            .add-question-button.mat-button {
+            .add-question-button.mat-mdc-button {
               display: none;
             }
 
-            .add-question-button.mat-icon-button {
+            .add-question-button.mat-mdc-icon-button {
               display: block;
             }
           }
@@ -237,25 +237,17 @@ header {
     .question-nav-wrapper {
       display: flex;
 
-      // Align icon with text
-      .mat-button::ng-deep {
-        .mat-button-wrapper {
-          display: flex;
-          align-items: center;
-        }
-      }
-
-      .mat-icon-button {
+      .mat-mdc-icon-button {
         display: none;
       }
 
       // Switch to icon-only prev/next buttons on small screens
       @include media-breakpoint('<=', sm) {
-        .mat-button {
+        .mat-mdc-button {
           display: none;
         }
 
-        .mat-icon-button {
+        .mat-mdc-icon-button {
           display: block;
         }
       }
@@ -318,12 +310,12 @@ header {
   display: none;
 }
 
-.active-question-scope-button {
+.active-question-scope-button ::ng-deep {
   font-size: 13px;
-  color: vars.$blueMedium;
+  color: vars.$blueMedium !important;
   font-weight: 400;
   align-self: flex-start;
-  line-height: 1;
+  height: 26px;
   display: flex;
   align-items: center;
   margin-inline-start: -($questionsHeaderInlineStartPadding - 2px);
@@ -331,11 +323,6 @@ header {
   padding-bottom: 4px;
   padding-inline: 5px 8px; // Reduce padding from mat-button defaults
   white-space: pre-wrap;
-
-  ::ng-deep .mat-button-wrapper {
-    display: flex;
-    align-items: center;
-  }
 
   mat-icon {
     font-size: 18px;
@@ -348,5 +335,10 @@ header {
   .divider {
     font-size: 18px;
     margin: 0 5px;
+  }
+
+  span.mdc-button__label {
+    display: flex;
+    align-items: center;
   }
 }

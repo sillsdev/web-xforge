@@ -1,13 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
-import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { Breadcrumb, NotifiableError } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { Observable } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
 import { DialogService } from './dialog.service';
@@ -16,6 +16,7 @@ import { ErrorReportingService } from './error-reporting.service';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
+import { PwaService } from './pwa.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
 
@@ -24,6 +25,7 @@ const mockedDialogService = mock(DialogService);
 const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
+const mockedPwaService = mock(PwaService);
 const mockedCookieService = mock(CookieService);
 
 // suppress any expected logging so it won't be shown in the test results
@@ -49,7 +51,6 @@ class MockConsole {
     }
   }
 }
-
 describe('ExceptionHandlingService', () => {
   configureTestingModule(() => ({
     declarations: [HostComponent],
@@ -60,6 +61,7 @@ describe('ExceptionHandlingService', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: PwaService, useMock: mockedPwaService },
       { provide: CONSOLE, useValue: new MockConsole() },
       { provide: CookieService, useMock: mockedCookieService }
     ],
@@ -194,6 +196,14 @@ describe('ExceptionHandlingService', () => {
         expect(breadcrumb.metadata.targetSelector).toBe(test.expectedSelector);
       }
     }));
+
+    it('should report if pwa is installed', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.handleError({ message: 'Should report pwa installed' });
+      verify(mockedErrorReportingService.addMeta(anything())).once();
+      const [meta] = capture(mockedErrorReportingService.addMeta).first();
+      expect(meta['isPwaInstalled']).toBeDefined();
+    }));
   });
 });
 
@@ -249,6 +259,8 @@ class TestEnvironment {
           }
         } as Observable<{}>)
     } as MatDialogRef<ErrorDialogComponent, {}>);
+
+    when(mockedPwaService.isRunningInstalledApp).thenReturn(false);
 
     when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>
       this.errorReports.push({ error })

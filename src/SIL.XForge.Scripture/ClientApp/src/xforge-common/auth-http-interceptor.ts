@@ -4,7 +4,8 @@ import {
   HttpHandler,
   HttpInterceptor,
   HttpRequest,
-  HttpResponse
+  HttpResponse,
+  HttpStatusCode
 } from '@angular/common/http';
 import { Injectable, Injector } from '@angular/core';
 import { from, lastValueFrom, Observable } from 'rxjs';
@@ -45,6 +46,17 @@ export class AuthHttpInterceptor implements HttpInterceptor {
       case 401:
         await this.authService!.expireToken();
         return await this.handle(req, next);
+    }
+    // HTTP/2 Requests do not carry the status text from the HTTP/1.1 Request
+    // See: https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2.4
+    // Angular then will substitute OK for the empty status text
+    // See: https://angular.dev/api/common/http/HttpErrorResponse
+    if (error.status >= 400 && error.status < 600 && error.statusText === 'OK') {
+      error.statusText =
+        Object.keys(HttpStatusCode)
+          .find(key => HttpStatusCode[key] === error.status)
+          ?.replace(/([a-z])([A-Z])/g, '$1 $2') ?? 'Unknown Error';
+      error.message = error.message?.replace(/ OK$/, ' ' + error.statusText);
     }
     return await Promise.reject(error);
   }

@@ -68,7 +68,7 @@
         <button
           *ngIf="currentUser"
           mat-icon-button
-          title="{{ currentUser?.displayName }}"
+          title="{{ currentUser.displayName }}"
           [matMenuTriggerFor]="userMenu"
           (click)="dismissInstallIcon()"
           class="user-menu-btn"

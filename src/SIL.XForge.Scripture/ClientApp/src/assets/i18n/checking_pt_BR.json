@@ -326,9 +326,8 @@
     "text_size": "Text size"
   },
   "issue_email": {
-    "body": "Obrigado por relatar o problema!\nVocê nos ajudaria se preenchesse algumas das informações abaixo, mas por favor envie mesmo que não consiga preencher muita informação.\nSe você está solicitando um recurso, muitos campos podem não ser aplicáveis.\nLembre-se de que seu relatório de  bug estará disponível publicamente. Nunca envie senhas ou outros segredos.\n\nRelatório de bug\nUma descrição clara e concisa de qual é o bug.\n\nPassos a reproduzir\nPor exemplo:\n1. Vá para ...\n2. Clique em ...\n3. Desça até ...\n4. Veja o erro\n\nComportamento real\nPor favor, descreva o comportamento real do problema que você está observando.\n\nComportamento esperado\nUma descrição clara e concisa do que você esperava que acontecesse.\n\nCapturas de tela\nSe for o caso, adicione capturas de tela para ajudar a explicar seu problema.\n\nContexto Adicional\nAdicione qualquer outro contexto sobre o problema aqui.\n\nPossível solução\nAdicione qualquer solução possível para o problema aqui.\n\nSeu ambiente:\nVersão do Software\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
-    "not_applicable": "não aplicável",
-    "subject": "{{ siteName }} problema",
+    "heading": "Please explain the problem.",
+    "technical_details": "Technical details",
     "unknown": "desconhecido"
   },
   "join": {

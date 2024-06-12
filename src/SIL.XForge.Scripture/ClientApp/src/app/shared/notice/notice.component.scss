@@ -91,14 +91,15 @@ $colors: (
   }
 
   // Style buttons inside notices
-  ::ng-deep .mat-button-base {
+  ::ng-deep .mat-mdc-button-base {
     flex-shrink: 0;
-    background-color: var(--notice-color-button-bg);
-    color: var(--notice-color-button-text);
+    // set the button theme vars to our specific colors
+    --mdc-filled-button-container-color: var(--notice-color-button-bg);
+    --mdc-filled-button-label-text-color: var(--notice-color-button-text);
 
     &:hover {
-      background-color: var(--notice-color-button-hover-bg);
-      color: var(--notice-color-button-hover-text);
+      background-color: var(--notice-color-button-hover-bg) !important;
+      color: var(--notice-color-button-hover-text) !important;
     }
   }
 }

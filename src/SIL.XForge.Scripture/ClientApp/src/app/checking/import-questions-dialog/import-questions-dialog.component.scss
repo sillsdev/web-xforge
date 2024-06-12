@@ -3,14 +3,14 @@
 
 // Section: General dialog styles
 
-.mat-dialog-title {
+.mat-mdc-dialog-title {
   margin-bottom: 0.25em;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.mat-dialog-content {
+.mat-mdc-dialog-content {
   display: flex;
   flex-direction: column;
 }
@@ -55,6 +55,11 @@
   mat-card-content {
     flex-grow: 1;
     margin-block-end: 16px;
+  }
+
+  mat-card-actions {
+    flex-wrap: wrap;
+    row-gap: 8px;
   }
 
   ol {

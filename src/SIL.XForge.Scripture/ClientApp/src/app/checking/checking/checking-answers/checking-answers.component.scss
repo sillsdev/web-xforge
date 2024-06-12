@@ -56,29 +56,15 @@
   .attachments {
     display: flex;
     flex-direction: row;
+    .clear,
+    .answer-scripture-clear {
+      padding: 6px;
+    }
   }
   .form-actions {
     display: flex;
-    justify-content: flex-end;
-
-    .mat-flat-button,
-    .mat-button {
-      line-height: unset;
-      mat-icon {
-        margin-inline-end: 6px;
-      }
-      span {
-        vertical-align: middle;
-      }
-    }
-    .mat-icon-button {
-      ::ng-deep .mat-button-focus-overlay {
-        display: none;
-      }
-    }
-    mat-icon {
-      vertical-align: middle;
-    }
+    align-items: center;
+    column-gap: 8px;
   }
   .stop-recording {
     color: variables.$red;
@@ -233,5 +219,5 @@
 
 .short-button {
   line-height: unset;
-  padding: 0 8px;
+  height: 20px;
 }

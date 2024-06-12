@@ -326,10 +326,9 @@
     "text_size": "Taille du texte"
   },
   "issue_email": {
-    "body": "Merci d'avoir signalé le problème !\nNous serions heureux que vous remplissiez certaines des informations ci-dessous, mais n'hésitez pas à soumettre votre demande même si vous ne pouvez pas en remplir beaucoup.\nSi vous demandez une fonctionnalité, de nombreux champs peuvent ne pas être applicables.\n\nRapport de bogue\nUne description claire et concise du bogue.\n\nÉtapes pour le reproduire\nPar exemple :\n1. Aller à ...\n2. Cliquez sur ...\n3. Faites défiler jusqu'à ...\n4. Voir erreur\n\nComportement réel\nVeuillez décrire le comportement réel du problème que vous observez.\n\nComportement attendu\nUne description claire et concise de ce qui aurait dû se produire selon vous.\n\nCaptures d'écran\nLe cas échéant, ajoutez des captures d'écran pour aider à expliquer le problème.\n\nAutre information contextuelle\nAjoutez ici toute autre information contextuelle liée au problème.\n\nSolution possible\nAjoutez ici toute solution possible au problème.\n\nVotre environnement :\nLogiciel                Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL : {{ url }}\nID d'erreur {{ errorId }}",
-    "not_applicable": "non applicable",
-    "subject": "problème {{ siteName }}",
-    "unknown": "inconnu"
+    "heading": "Veuillez expliquer le problème.",
+    "technical_details": "Détails techniques",
+    "unknown": "Inconnu"
   },
   "join": {
     "error_occurred_login": "Une erreur s'est produite en essayant de rejoindre le projet",

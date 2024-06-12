@@ -38,7 +38,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   max-width: 400px !important;
 }
 
-.cdk-overlay-pane.inviteDialogComponent > .mat-dialog-container {
+.cdk-overlay-pane.inviteDialogComponent > .mat-mdc-dialog-container {
   padding-top: 5px !important;
 }
 
@@ -46,12 +46,21 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   --mdc-snackbar-container-color: #{variables.$errorColor};
 }
 
-.mat-flat-button,
-.mat-button-toggle-button {
-  transition: background-color 0.15s, color 0.15s;
+.mdc-button.mat-mdc-unelevated-button,
+.mdc-button.mat-button-toggle-button {
+  transition: color 0.15s, background-color 0.15s;
+
   &:not(:disabled):hover {
     background-color: variables.$greenLight;
     color: variables.$sf_grey;
+  }
+}
+
+button.mdc-icon-button {
+  transition: color 0.15s;
+
+  &:not([disabled]):hover {
+    color: variables.$greenLight;
   }
 }
 
@@ -61,6 +70,14 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 
 .locale-fonts mat-option {
   font-family: variables.$languageFonts;
+}
+
+// Titles with icons need extra padding above the text
+.mat-mdc-dialog-title.dialog-icon-title {
+  padding-top: 20px;
+  &:before {
+    display: none;
+  }
 }
 
 // Decrease the padding around a checkbox to be 0px as spacing is instead usually applied in other ways e.g. padding on

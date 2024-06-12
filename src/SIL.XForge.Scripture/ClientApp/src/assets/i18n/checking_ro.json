@@ -326,9 +326,8 @@
     "text_size": "Text size"
   },
   "issue_email": {
-    "body": "Vă mulțumim că ați raportat problema!\nNe-ar ajuta dacă ați completa unele dintre informațiile de mai jos, dar vă rugăm să ni le trimiteți chiar dacă nu completați prea multe.\nDacă solicitați o nouă funcționalitate, este posibil ca unele dintre câmpurile de mai jos să nu fie aplicabile.\nRețineți că raportul dvs. de eroare va fi public. Nu trimiteți niciodată parole sau alte secrete.\n\nRaport de eroare\nO descriere clară și concisă a problemei.\n\nPași pentru reproducere\nDe exemplu:\n1. Mergeți la ...\n2. Faceți clic pe ...\n3. Derulați în jos până la ...\n4. Vezi eroarea\n\nComportamentul observat\nDescrieți modul în care se manifestă problema observată.\n\nComportamentul așteptat\nO descriere clară și concisă a ceea ce vă așteptați să se întâmple.\n\nCapturi de ecran\nDacă este cazul, adăugați capturi de ecran pentru a ne ajuta să înțelegem problema.\n\nContext suplimentar\nAdăugați aici orice alt context referitor la problemă.\n\nSoluție posibilă\nAdăugați aici orice soluție posibilă a problemei.\n\nMediul dumneavoastră:\nVersiunea de software\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nId. eroare: {{ errorId }}",
-    "not_applicable": "nu este cazul",
-    "subject": "{{ siteName }} problemă",
+    "heading": "Please explain the problem.",
+    "technical_details": "Technical details",
     "unknown": "necunoscut"
   },
   "join": {

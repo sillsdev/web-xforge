@@ -326,14 +326,13 @@
     "text_size": "Tamaño del texto"
   },
   "issue_email": {
-    "body": "¡Gracias por reportar el incidente!\nNos ayudaría si a continuación completara algunos detalles sobre el incidente, pero envíelo incluso si no puede completar muchos.\nSi está solicitando una característica, muchos de los campos pueden no ser aplicables.\nTenga en cuenta que su informe de errores estará disponible públicamente. Nunca envíe contraseñas u otra información secreta.\n\nInforme de errores\nUna descripción clara y concisa del error.\n\nPasos para reproducirlo\nPor ejemplo:\n1. Ir a...\n2. Haga clic en ...\n3. Desplácese hacia abajo hasta ...\n4. Ver el error\n\nEl comportamiento actual\nPor favor, describa el comportamiento exacto del problema que está observando.\n\nComportamiento esperado\nUna descripción clara y concisa de lo que esperaba que sucediera.\n\nCapturas de pantalla\nSi corresponde, agregue capturas de pantalla para ayudar a explicar su problema.\n\nInformación adicional\nAñada aquí cualquier otra información sobre el problema.\n\nPosible solución\nAñada aquí cualquier posible solución al problema.\n\nTu entorno:\nSoftware                 Versión\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
-    "not_applicable": "no aplica",
-    "subject": "caso {{ siteName }}",
+    "heading": "Please explain the problem.",
+    "technical_details": "Technical details",
     "unknown": "desconocido"
   },
   "join": {
     "error_occurred_login": "Se ha producido un error al intentar unirse al proyecto",
-    "invited_to_join": "Has sido invitado a unirte al proyecto {{ boldStart }}{ projectName }}{{ boldEnd }}",
+    "invited_to_join": "Has sido invitado a unirte al proyecto {{ boldStart }}{{ projectName }}{{ boldEnd }}",
     "join": "Unirse",
     "join_a_project": "Unirse a un proyecto",
     "key_already_used": "El enlace del proyecto ya ha sido utilizado por otro usuario. Póngase en contacto con la persona que le envió el enlace y pídale uno nuevo.",

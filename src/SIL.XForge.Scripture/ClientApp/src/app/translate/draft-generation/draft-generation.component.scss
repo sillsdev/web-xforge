@@ -90,14 +90,6 @@ mat-divider.mat-divider-inset {
   gap: 20px;
 }
 
-.mat-button-base {
-  ::ng-deep .mat-button-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-}
-
 @include media-breakpoint('<', sm) {
   // Hide the button icons on side-by-side buttons to save space on mobile
   .button-strip mat-icon {
