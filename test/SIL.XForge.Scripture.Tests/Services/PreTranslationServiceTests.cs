@@ -194,9 +194,20 @@ public class PreTranslationServiceTests
                         new Pretranslation
                         {
                             TextId = "MAT",
-                            Refs = { "MAT 1:2" },
-                            Translation =
-                                "Abraham was the father of Isaac , Isaac was the father of James , and James was the father of Jude and his brethren .",
+                            Refs = { "MAT 1:2/0:q1" },
+                            Translation = "Abraham was the father of Isaac ,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "MAT",
+                            Refs = { "MAT 1:2/1:q2" },
+                            Translation = "Isaac was the father of James ,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "MAT",
+                            Refs = { "MAT 1:2/2:q3" },
+                            Translation = "and James was the father of Jude and his brethren .",
                         },
                         new Pretranslation
                         {
@@ -477,7 +488,7 @@ public class PreTranslationServiceTests
                         new Pretranslation { TextId = "MAT", Refs = ["MAT 1:1"] },
                         new Pretranslation { TextId = "MRK", Refs = ["MRK 1:1"] },
                         new Pretranslation { TextId = "MRK", Refs = ["MRK 1:2"] },
-                        new Pretranslation { TextId = "MRK", Refs = ["MRK 2:1"] },
+                        new Pretranslation { TextId = "MRK", Refs = ["MRK 2:1/3:h"] },
                     }
                 )
             );
