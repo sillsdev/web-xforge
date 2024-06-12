@@ -189,7 +189,7 @@
                     [projects]="projects"
                     [resources]="resources"
                     [nonSelectableProjects]="nonSelectableProjects"
-                    [hideProjectId]="projectParatextId"
+                    [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
                     [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
                   ></app-project-select>
                   <app-write-status
