@@ -37,15 +37,6 @@ export class ServalAdministrationService extends ProjectService<SFProjectProfile
   }
 
   /**
-   * Determines if a Paratext id refers to a resource.
-   * @param paratextId The Paratext identifier.
-   * @returns True if the Paratext identifier is a resource identifier.
-   */
-  isResource(paratextId?: string): boolean {
-    return (paratextId?.length ?? 0) === 16;
-  }
-
-  /**
    * Starts a job to retrieve the pre-translation status for a project.
    * This is the equivalent of running the webhook.
    * @param projectId The Scripture Forge project identifier.

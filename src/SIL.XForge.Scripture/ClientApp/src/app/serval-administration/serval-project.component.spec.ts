@@ -8,6 +8,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -25,6 +26,7 @@ const mockActivatedRoute = mock(ActivatedRoute);
 const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
+const mockAuthService = mock(AuthService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
@@ -41,7 +43,8 @@ describe('ServalProjectComponent', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
-      { provide: SFProjectService, useMock: mockSFProjectService }
+      { provide: SFProjectService, useMock: mockSFProjectService },
+      { provide: AuthService, useMock: mockAuthService }
     ]
   }));
 

@@ -61,6 +61,15 @@
           {{ tab.headerText }}
         </ng-template>
 
+        <app-editor-resource
+          *ngIf="tab.type === 'project-resource'"
+          [projectId]="tab.projectId"
+          [bookNum]="bookNum"
+          [chapter]="chapter"
+          [segmentRef]="target?.segmentRef"
+          [highlightSegment]="targetFocused"
+        ></app-editor-resource>
+
         <div *ngIf="tab.type === 'project-source'" class="project-tab-container">
           <app-notice *ngIf="hasSourceCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
             <div>
@@ -104,7 +113,7 @@
           </div>
         </div>
 
-        <div *ngIf="tab.type === 'project'" class="project-tab-container">
+        <div *ngIf="tab.type === 'project-target'" class="project-tab-container">
           <app-notice *ngIf="hasTargetCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
             <div>
               {{ targetCopyrightBanner }}

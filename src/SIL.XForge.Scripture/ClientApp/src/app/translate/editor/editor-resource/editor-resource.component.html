@@ -1,0 +1,11 @@
+<app-text
+  *ngIf="projectId"
+  [id]="projectId | textDocId : bookNum : chapter"
+  [isReadOnly]="true"
+  [subscribeToUpdates]="false"
+  [highlightSegment]="highlightSegment ?? false"
+  [segmentRef]="segmentRef ?? ''"
+  [isRightToLeft]="isRightToLeft"
+  [fontSize]="fontSize"
+  [style.--project-font]="font"
+></app-text>

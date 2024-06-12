@@ -2747,7 +2747,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CancelSyncAsync_AdministratorsCanCancelSync()
+    public void CancelSyncAsync_AdministratorsCanCancelSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2757,7 +2757,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CancelSyncAsync_TranslatorsCanCancelSync()
+    public void CancelSyncAsync_TranslatorsCancelCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2767,7 +2767,37 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CancelSyncAsync_ObserversCannotCancelSync()
+    public void CancelSyncAsync_AdministratorsCanCancelSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Resource01));
+    }
+
+    [Test]
+    public void CancelSyncAsync_TranslatorsCancelCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User05, Resource01));
+    }
+
+    [Test]
+    public void CancelSyncAsync_ObserversCanCancelSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User02, Resource01));
+    }
+
+    [Test]
+    public void CancelSyncAsync_ObserversCannotCancelSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2787,7 +2817,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_AdministratorsCanSync()
+    public void SyncAsync_AdministratorsCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2797,7 +2827,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_TranslatorsCanSync()
+    public void SyncAsync_TranslatorsCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -2807,7 +2837,37 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_ObserversCannotSync()
+    public void SyncAsync_AdministratorsCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User01, Resource01));
+    }
+
+    [Test]
+    public void SyncAsync_TranslatorsCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User05, Resource01));
+    }
+
+    [Test]
+    public void SyncAsync_ObserversCanSyncResource()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User02, Resource01));
+    }
+
+    [Test]
+    public void SyncAsync_ObserversCannotSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
@@ -3577,6 +3637,12 @@ public class SFProjectServiceTests
                                         }
                                     }
                                 }
+                            },
+                            UserRoles =
+                            {
+                                { User01, SFProjectRole.Administrator },
+                                { User05, SFProjectRole.Translator },
+                                { User02, SFProjectRole.PTObserver },
                             }
                         },
                         new SFProject

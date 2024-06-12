@@ -22,6 +22,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
+import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
@@ -34,6 +35,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedRouter = mock(Router);
 const mockedResumeCheckingService = mock(ResumeCheckingService);
+const mockedPermissionsService = mock(PermissionsService);
 let testActivatedProjectService: ActivatedProjectService;
 
 function setUpMocks(args: StoryState): void {
@@ -64,7 +66,10 @@ function setUpMocks(args: StoryState): void {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: UserService, useValue: instance(mockedUserService) }]
+    providers: [
+      { provide: UserService, useValue: instance(mockedUserService) },
+      { provide: PermissionsService, useValue: instance(mockedPermissionsService) }
+    ]
   });
 
   const realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);

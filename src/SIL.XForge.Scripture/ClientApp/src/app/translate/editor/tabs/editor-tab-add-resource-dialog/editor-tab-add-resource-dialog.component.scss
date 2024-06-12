@@ -1,0 +1,23 @@
+mat-progress-bar,
+app-sync-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+}
+
+mat-dialog-actions {
+  display: flex;
+  place-content: flex-end;
+}
+
+::ng-deep .editor-tab-add-resource-dialog {
+  // For positioning the progress bar within the dialog
+  position: relative !important;
+}
+
+.loading-message {
+  font-style: italic;
+  color: #777;
+}

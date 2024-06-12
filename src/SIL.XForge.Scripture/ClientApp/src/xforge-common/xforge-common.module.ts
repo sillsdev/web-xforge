@@ -6,7 +6,9 @@ import { RouterModule } from '@angular/router';
 import { TranslocoModule, TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
+import { ProjectSelectComponent } from '../app/project-select/project-select.component';
 import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
+import { SyncProgressComponent } from '../app/sync/sync-progress/sync-progress.component';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { GenericDialogComponent } from './generic-dialog/generic-dialog.component';
@@ -30,7 +32,9 @@ const componentExports = [
   SystemAdministrationComponent,
   PageNotFoundComponent,
   WriteStatusComponent,
-  OwnerComponent
+  OwnerComponent,
+  ProjectSelectComponent,
+  SyncProgressComponent
 ];
 
 @NgModule({
