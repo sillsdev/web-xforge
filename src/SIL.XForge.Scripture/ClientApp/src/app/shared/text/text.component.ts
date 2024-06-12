@@ -222,6 +222,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
   private _segment?: Segment;
+  private contentSet: boolean = false;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
@@ -433,7 +434,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get contentShowing(): boolean {
-    return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
+    return (this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty) || this.contentSet;
   }
 
   /**
@@ -860,7 +861,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.focused.emit(focus);
   }
 
-  private applyEditorStyles(): void {
+  setContents(delta: DeltaStatic, source?: Sources): void {
+    if (this._editor != null) {
+      this._editor.setContents(delta, source);
+      this.contentSet = true;
+    }
+  }
+
+  applyEditorStyles(): void {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
       for (const style in this.editorStyles) {

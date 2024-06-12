@@ -1,11 +1,7 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
@@ -26,9 +22,9 @@ import {
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
 import { Delta, TextDocId } from '../../../core/models/text-doc';
@@ -57,26 +53,26 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-legacy' | 'draft-empty' = 'draft-unknown';
   bookChapterName = '';
   generateDraftUrl?: string;
+  targetProject?: SFProjectProfile;
   textDocId?: TextDocId;
   isDraftReady = false;
   isDraftApplied = false;
   canApplyDraft = false;
 
-  private targetProject?: SFProjectProfile;
   private draftDelta?: DeltaStatic;
   private targetDelta?: DeltaStatic;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly destroyRef: DestroyRef,
+    private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftViewerService: DraftViewerService,
+    readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
-    private readonly userService: UserService,
-    private readonly textDocService: TextDocService,
-    private readonly dialogService: DialogService
+    private readonly textDocService: TextDocService
   ) {}
 
   ngOnChanges(): void {
@@ -134,7 +130,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         this.targetDelta = new Delta(targetOps);
 
         // Set the draft editor with the pre-translation segments
-        this.draftText.editor?.setContents(this.draftDelta, 'api');
+        this.draftText.setContents(this.draftDelta, 'api');
+        this.draftText.applyEditorStyles();
 
         this.isDraftApplied = this.draftDelta.diff(this.targetDelta).length() === 0;
 
@@ -210,60 +207,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return hasContent ?? false;
   }
 
-  /**
-   * This code is reimplemented from editor.component.ts
-   */
   private canEdit(): boolean {
     return (
-      this.isUsfmValid() &&
-      this.userHasGeneralEditRight() &&
-      this.hasChapterEditPermission() &&
-      this.targetProject?.sync?.dataInSync !== false &&
-      !this.draftText?.areOpsCorrupted &&
-      this.targetProject?.editable === true
+      this.textDocService.canEdit(this.targetProject, this.bookNum, this.chapter) && !this.draftText?.areOpsCorrupted
     );
-  }
-
-  /**
-   * This function is duplicated from editor.component.ts
-   */
-  private isUsfmValid(): boolean {
-    let text: TextInfo | undefined = this.targetProject?.texts.find(t => t.bookNum === this.bookNum);
-    if (text == null) {
-      return true;
-    }
-
-    const chapter: Chapter | undefined = text.chapters.find(c => c.number === this.chapter);
-    return chapter?.isValid ?? false;
-  }
-
-  /**
-   * This function is duplicated from editor.component.ts.
-   */
-  private userHasGeneralEditRight(): boolean {
-    if (this.targetProject == null) {
-      return false;
-    }
-
-    return SF_PROJECT_RIGHTS.hasRight(
-      this.targetProject,
-      this.userService.currentUserId,
-      SFProjectDomain.Texts,
-      Operation.Edit
-    );
-  }
-
-  /**
-   * This function is duplicated from editor.component.ts.
-   */
-  private hasChapterEditPermission(): boolean {
-    const chapter: Chapter | undefined = this.targetProject?.texts
-      .find(t => t.bookNum === this.bookNum)
-      ?.chapters.find(c => c.number === this.chapter);
-    // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
-    // is accessed after migration
-    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
-    return permission == null ? false : permission === TextInfoPermission.Write;
   }
 
   private getLocalizedBookChapter(): string {

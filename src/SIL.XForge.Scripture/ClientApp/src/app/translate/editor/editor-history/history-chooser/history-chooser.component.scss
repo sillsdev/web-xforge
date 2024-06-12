@@ -4,15 +4,22 @@
   display: block;
 }
 
-#history-select {
-  @include material-styles.dense_mat_select();
-}
+#toolbar {
+  display: flex;
+  overflow: hidden;
 
-mat-form-field {
-  height: auto;
+  #history-select {
+    @include material-styles.dense_mat_select();
+  }
 
-  mat-icon {
-    padding-top: 0;
-    padding-bottom: 0;
+  mat-form-field {
+    height: auto;
+  }
+
+  button {
+    margin-left: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

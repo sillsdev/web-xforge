@@ -2,19 +2,33 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { mock, when } from 'ts-mockito';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { anything, mock, verify, when } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
+import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { ParatextService } from '../../../../core/paratext.service';
+import { SFProjectService } from '../../../../core/sf-project.service';
+import { TextDocService } from '../../../../core/text-doc.service';
 import { HistoryChooserComponent } from './history-chooser.component';
 import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 
+const mockedDialogService = mock(DialogService);
 const mockedI18nService = mock(I18nService);
+const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
+const mockedProjectService = mock(SFProjectService);
+const mockedTextDocService = mock(TextDocService);
 
 describe('HistoryChooserComponent', () => {
   configureTestingModule(() => ({
@@ -22,14 +36,19 @@ describe('HistoryChooserComponent', () => {
       HttpClientTestingModule,
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule,
       UICommonModule
     ],
     declarations: [HistoryChooserComponent, HistoryRevisionFormatPipe],
     providers: [
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: ParatextService, useMock: mockedParatextService }
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: TextDocService, useMock: mockedTextDocService }
     ]
   }));
 
@@ -60,7 +79,7 @@ describe('HistoryChooserComponent', () => {
     env.triggerNgOnChanges();
     env.wait();
     expect(env.component.selectedRevision).toBeUndefined();
-    expect(env.historySelect).toBeUndefined();
+    expect(env.historySelect).toBeNull();
   }));
 
   it('should fetch revisions when coming online', fakeAsync(() => {
@@ -89,13 +108,64 @@ describe('HistoryChooserComponent', () => {
     when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve(undefined);
     env.triggerNgOnChanges();
     env.wait();
-    expect(env.historySelect).toBeUndefined();
+    expect(env.historySelect).toBeNull();
     expect(env.component.selectedRevision).toBeUndefined();
+  }));
+
+  it('should not revert if the user clicks cancel', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.component.selectedSnapshot).toBeDefined();
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything())).never();
+  }));
+
+  it('should not revert if the snapshot is missing', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenCall(() => {
+      // Simulate an out of order event altering the selected snapshot
+      env.component.selectedSnapshot = undefined;
+      return Promise.resolve(true);
+    });
+    env.triggerNgOnChanges();
+    env.wait();
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedNoticeService.showError(anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything())).never();
+    expect(env.component.selectedSnapshot).toBeUndefined();
+  }));
+
+  it('should not display the revert history button if the user cannot edit', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedTextDocService.canEdit(anything(), 40, 1)).thenReturn(false);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.revertHistoryButton).toBeNull();
+  }));
+
+  it('should revert to the snapshot', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.component.selectedRevision).toBeDefined();
+    expect(env.component.selectedSnapshot?.data.ops).toBeDefined();
+    expect(env.component.projectId).toBeDefined();
+    expect(env.component.bookNum).toBeDefined();
+    expect(env.component.chapter).toBeDefined();
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything())).once();
   }));
 
   class TestEnvironment {
     readonly component: HistoryChooserComponent;
     readonly fixture: ComponentFixture<HistoryChooserComponent>;
+    readonly realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
     readonly testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
     constructor() {
@@ -105,11 +175,16 @@ describe('HistoryChooserComponent', () => {
       this.component.bookNum = 40;
       this.component.chapter = 1;
 
+      this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+        id: 'project01',
+        data: createTestProjectProfile()
+      });
+
       when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve([
         { key: 'date_here', value: 'description_here' }
       ]);
       when(mockedParatextService.getSnapshot('project01', 'MAT', 1, 'date_here')).thenResolve({
-        data: {},
+        data: { ops: [] },
         id: 'id',
         type: '',
         v: 1
@@ -122,14 +197,28 @@ describe('HistoryChooserComponent', () => {
         tags: ['en'],
         production: false
       });
+      when(mockedProjectService.getProfile('project01')).thenCall(() =>
+        this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+      );
+      when(mockedTextDocService.canEdit(anything(), 40, 1)).thenReturn(true);
     }
 
     get historySelect(): HTMLElement {
-      return this.fixture.nativeElement.querySelectorAll('#history-select')[0] as HTMLElement;
+      return this.fixture.nativeElement.querySelector('#history-select') as HTMLElement;
+    }
+
+    get revertHistoryButton(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('#revert-history') as HTMLElement;
     }
 
     get showDiffButton(): HTMLElement {
-      return this.fixture.nativeElement.querySelectorAll('#show-diff')[0] as HTMLElement;
+      return this.fixture.nativeElement.querySelector('#show-diff') as HTMLElement;
+    }
+
+    clickRevertHistoryButton(): void {
+      this.revertHistoryButton.click();
+      flush();
+      this.fixture.detectChanges();
     }
 
     clickShowDiffButton(): void {
