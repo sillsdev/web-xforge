@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -59,7 +59,7 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
   }
 
   ngOnChanges(): void {
-    this.initBookOptions();
+    this.initTrainingDataOptions();
   }
 
   private getLanguageDisplayName(project: 'source' | 'target'): string | undefined {
@@ -91,15 +91,10 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
     await this.trainingDataService.deleteTrainingDataAsync(trainingData);
   }
 
-  initBookOptions(): void {
-    this.trainingDataOptions = this.availableTrainingData.map((item: TrainingData) => ({
-      value: item,
-      selected: this.selectedTrainingDataIds.includes(item.dataId)
-    }));
-  }
-
-  onChipListChange(event: MatChipListboxChange): void {
-    this.selectedTrainingDataIds = event.value.map((item: TrainingData) => item.dataId);
+  onChipListChange(data: TrainingDataOption): void {
+    const dataIndex: number = this.trainingDataOptions.findIndex(n => n.value.dataId === data.value.dataId);
+    this.trainingDataOptions[dataIndex].selected = !this.trainingDataOptions[dataIndex].selected;
+    this.selectedTrainingDataIds = this.trainingDataOptions.filter(n => n.selected).map(n => n.value.dataId);
     this.trainingDataSelect.emit(this.selectedTrainingDataIds);
   }
 
@@ -118,5 +113,12 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
       // Emit the selection event
       this.trainingDataSelect.emit([...this.selectedTrainingDataIds, result.dataId]);
     });
+  }
+
+  private initTrainingDataOptions(): void {
+    this.trainingDataOptions = this.availableTrainingData.map((item: TrainingData) => ({
+      value: item,
+      selected: this.selectedTrainingDataIds.includes(item.dataId)
+    }));
   }
 }

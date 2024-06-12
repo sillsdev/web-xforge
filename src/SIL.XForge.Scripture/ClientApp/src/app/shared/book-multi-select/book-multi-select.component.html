@@ -20,15 +20,18 @@
       </mat-card-content>
     </mat-card>
   </div>
-  <mat-chip-listbox
-    [multiple]="true"
-    [selectable]="!readonly"
-    class="book-multi-select"
-    [disabled]="readonly"
-    (change)="onChipListChange($event)"
-  >
-    <mat-chip-option *ngFor="let book of bookOptions" [value]="book" [selected]="book.selected">
-      {{ "canon.book_names." + book.bookId | transloco }}
-    </mat-chip-option>
-  </mat-chip-listbox>
+  <div class="flex-row">
+    <mat-chip-listbox
+      *ngFor="let book of bookOptions"
+      hideSingleSelectionIndicator
+      [selectable]="!readonly"
+      class="book-multi-select"
+      [disabled]="readonly"
+      (change)="onChipListChange(book)"
+    >
+      <mat-chip-option [value]="book" [selected]="book.selected">
+        {{ "canon.book_names." + book.bookId | transloco }}
+      </mat-chip-option>
+    </mat-chip-listbox>
+  </div>
 </ng-container>

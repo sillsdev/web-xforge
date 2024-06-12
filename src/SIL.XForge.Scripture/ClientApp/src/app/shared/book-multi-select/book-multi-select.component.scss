@@ -5,12 +5,6 @@
     &.mat-mdc-chip-selected,
     &.mat-mdc-chip-highlighted {
       --mdc-chip-elevated-container-color: #4a79c9;
-      ::ng-deep button {
-        padding: 0 12px;
-        .mat-mdc-chip-graphic {
-          display: none;
-        }
-      }
     }
   }
 }

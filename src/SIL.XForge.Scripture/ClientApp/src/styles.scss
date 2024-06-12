@@ -25,6 +25,8 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 .flex-row {
   display: flex;
   flex-direction: row;
+  column-gap: 8px;
+  flex-wrap: wrap;
 }
 
 .flex-max {

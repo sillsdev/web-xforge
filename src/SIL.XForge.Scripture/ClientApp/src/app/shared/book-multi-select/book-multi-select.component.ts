@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -42,8 +42,11 @@ export class BookMultiSelectComponent implements OnChanges {
     }));
   }
 
-  onChipListChange(event: MatChipListboxChange): void {
-    this.selectedBooks = event.value.map((item: BookOption) => item.bookNum);
+  onChipListChange(book: BookOption): void {
+    const bookIndex: number = this.bookOptions.findIndex(n => n.bookId === book.bookId);
+    this.bookOptions[bookIndex].selected = !this.bookOptions[bookIndex].selected;
+    this.selectedBooks = this.bookOptions.filter(n => n.selected).map(n => n.bookNum);
+
     this.selection = undefined;
     this.bookSelect.emit(this.selectedBooks);
   }
