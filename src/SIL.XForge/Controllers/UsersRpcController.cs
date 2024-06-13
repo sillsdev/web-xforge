@@ -6,7 +6,6 @@ using EdjCase.JsonRpc.Router.Abstractions;
 using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers;
@@ -80,9 +79,6 @@ public class UsersRpcController : RpcControllerBase
     /// </summary>
     public async Task<IRpcMethodResult> PullAuthUserProfile()
     {
-        if (!(_hostingEnv.IsDevelopment()))
-            return ForbiddenError();
-
         string userProfile = await _authService.GetUserAsync(AuthId);
         await _userService.UpdateUserFromProfileAsync(UserId, userProfile);
         return Ok();
