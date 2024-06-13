@@ -94,6 +94,7 @@ public class ParatextController : ControllerBase
     /// </summary>
     /// <response code="200">The projects were successfully retrieved.</response>
     /// <response code="204">The user does not have permission to access Paratext.</response>
+    /// <response code="401">The user's Paratext tokens have expired, and the user must log in again.</response>
     [HttpGet("projects")]
     public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
     {
@@ -204,6 +205,7 @@ public class ParatextController : ControllerBase
     /// values are an array with the short name followed by the name.
     /// </response>
     /// <response code="204">The user does not have permission to access Paratext.</response>
+    /// <response code="401">The user's Paratext tokens have expired, and the user must log in again.</response>
     [HttpGet("resources")]
     public async Task<ActionResult<Dictionary<string, string[]>>> ResourcesAsync()
     {
