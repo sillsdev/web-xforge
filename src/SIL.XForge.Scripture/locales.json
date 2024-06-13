@@ -60,6 +60,12 @@
     "production": true
   },
   {
+    "localName": "नेपाली",
+    "englishName": "Nepali",
+    "tags": ["npi", "npi-NP"],
+    "production": true
+  },
+  {
     "localName": "Română",
     "englishName": "Romanian",
     "tags": ["ro", "ro-RO"],
