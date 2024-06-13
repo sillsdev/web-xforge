@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { DebugElement } from '@angular/core';
+import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -30,6 +30,7 @@ import { SyncComponent } from './sync.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedErrorHandler = mock(ErrorHandler);
 const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
 const mockedParatextService = mock(ParatextService);
@@ -51,6 +52,7 @@ describe('SyncComponent', () => {
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: ParatextService, useMock: mockedParatextService },
