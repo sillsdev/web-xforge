@@ -26,6 +26,12 @@ app-sync-progress {
   background-color: variables.$pt-button-green;
   color: white;
   height: 2.5rem;
+
+  // helps style buttons with the paratext logo
+  ::ng-deep span.mdc-button__label {
+    display: flex;
+    align-items: center;
+  }
 }
 
 .paratext-logo {

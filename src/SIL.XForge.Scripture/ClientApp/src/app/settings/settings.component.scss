@@ -86,6 +86,12 @@ mat-icon {
   margin-top: 16px;
   margin-left: 24px;
 
+  // helps style buttons with the paratext logo
+  ::ng-deep span.mdc-button__label {
+    display: flex;
+    align-items: center;
+  }
+
   .paratext-logo {
     width: 24px;
     height: 24px;
