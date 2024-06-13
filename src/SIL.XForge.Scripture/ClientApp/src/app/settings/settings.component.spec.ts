@@ -1,4 +1,5 @@
 import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -699,12 +700,24 @@ describe('SettingsComponent', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        when(mockedParatextService.getProjects()).thenResolve(undefined);
-        when(mockedParatextService.getResources()).thenResolve(undefined);
+        when(mockedParatextService.getParatextUsername()).thenReturn(of(undefined));
         env.wait();
         expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
         expect(env.basedOnSelect).not.toBeNull();
+      }));
+
+      it('should display the Paratext credentials update prompt when get projects and resources throws a forbidden error', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedParatextService.getProjects()).thenReject(new HttpErrorResponse({ status: 401 }));
+        when(mockedParatextService.getResources()).thenReject(new HttpErrorResponse({ status: 401 }));
+        env.wait();
+
+        verify(mockedParatextService.getProjects()).once();
+        verify(mockedParatextService.getResources()).once();
+        verify(mockedAuthService.requestParatextCredentialUpdate()).once();
+        expect(env.inputElement(env.basedOnSelect).disabled).toBe(true);
       }));
 
       it('should hide Translation Suggestions when Based On is not set', fakeAsync(() => {
@@ -1038,6 +1051,7 @@ class TestEnvironment {
     );
     this.testOnlineStatusService.setIsOnline(hasConnection);
 
+    when(mockedParatextService.getParatextUsername()).thenReturn(of('Paratext 01'));
     when(mockedParatextService.getProjects()).thenResolve([
       {
         paratextId: 'paratextId01',

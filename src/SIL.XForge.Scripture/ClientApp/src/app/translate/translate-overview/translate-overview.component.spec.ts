@@ -40,6 +40,7 @@ import { TrainingProgressComponent } from '../training-progress/training-progres
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
@@ -59,7 +60,7 @@ describe('TranslateOverviewComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
-      { provide: AuthService, useMock: mock(AuthService) },
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
@@ -187,6 +188,20 @@ describe('TranslateOverviewComponent', () => {
       expect(env.component.isTraining).toBe(true);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.mode).toBe('determinate');
+    }));
+
+    it('should display the Paratext credentials update prompt when get projects throws a forbidden error', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(env.mockedRemoteTranslationEngine.startTraining()).thenReject(new HttpErrorResponse({ status: 401 }));
+      env.wait();
+
+      env.clickRetrainButton();
+      env.wait();
+
+      verify(env.mockedRemoteTranslationEngine.startTraining()).once();
+      verify(mockedAuthService.requestParatextCredentialUpdate()).once();
+      expect(env.trainingProgressShown).toBe(false);
+      expect(env.component.isTraining).toBe(false);
     }));
 
     it('should not create engine if no source text docs', fakeAsync(() => {

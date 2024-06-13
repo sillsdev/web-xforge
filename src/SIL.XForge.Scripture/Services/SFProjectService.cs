@@ -476,23 +476,51 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await _translateMetrics.ReplaceAsync(metrics, true);
     }
 
-    public async Task SyncAsync(string curUserId, string projectId)
+    /// <summary>
+    /// Starts the sync for the specified project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The paratext project identifier.</param>
+    /// <returns>The job identifier.</returns>
+    /// <exception cref="DataNotFoundException">The project or user does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user is not an administrator or translator.</exception>
+    /// <exception cref="UnauthorizedAccessException">The user cannot access the Paratext Registry or Archives.</exception>
+    public async Task<string> SyncAsync(string curUserId, string projectId)
     {
+        // Ensure the project exists
         Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
         if (!attempt.TryResult(out SFProject project))
             throw new DataNotFoundException("The project does not exist.");
 
+        // Ensure that the user has a Paratext role
         if (!HasParatextRole(project, curUserId))
             throw new ForbiddenException();
 
-        // Project syncs require admin or translator role.  Resources can sync with any paratext role.
-        if (!_paratextService.IsResource(project.ParatextId))
+        // Project syncs require admin or translator role. Resources can sync with any Paratext role.
+        if (
+            !_paratextService.IsResource(project.ParatextId)
+            && !(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId))
+        )
         {
-            if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
-                throw new ForbiddenException();
+            throw new ForbiddenException();
         }
 
-        await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
+        // Retrieve the user's secrets
+        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+        if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+            throw new DataNotFoundException("The user does not exist.");
+
+        // Ensure that the user can access the Paratext registry
+        // NOTE: These next two methods will throw UnauthorizedAccessException on failure to refresh the token
+        if (!await _paratextService.CanUserAuthenticateToPTRegistryAsync(userSecret))
+            throw new UnauthorizedAccessException();
+
+        // Ensure that the user can access the Paratext archives
+        if (!await _paratextService.CanUserAuthenticateToPTArchivesAsync(curUserId))
+            throw new UnauthorizedAccessException();
+
+        // Queue the sync
+        return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
     }
 
     public async Task CancelSyncAsync(string curUserId, string projectId)

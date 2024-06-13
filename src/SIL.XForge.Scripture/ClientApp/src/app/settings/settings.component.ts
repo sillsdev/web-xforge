@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
@@ -5,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { ProjectType, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest } from 'rxjs';
+import { combineLatest, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -76,6 +77,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   mainSettingsLoaded = false;
 
   private static readonly projectSettingValueUnset = 'unset';
+  private paratextUsername: string | undefined;
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
   private controlStates = new Map<keyof SFProjectSettings, ElementState>();
@@ -112,7 +114,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get isLoggedInToParatext(): boolean {
-    return this.projects != null;
+    return this.paratextUsername != null;
   }
 
   get isTranslationSuggestionsEnabled(): boolean {
@@ -191,6 +193,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             this.projectService
               .onlineIsSourceProject(projectId)
               .then(isActiveSourceProject => (this.isActiveSourceProject = isActiveSourceProject)),
+            firstValueFrom(this.paratextService.getParatextUsername()).then((username: string | undefined) => {
+              if (username != null) this.paratextUsername = username;
+            }),
             this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
           ]).then(() => {
             if (this.projectDoc != null) {
@@ -205,6 +210,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             }
           });
 
+          let paratextTokensExpired = false;
           const projectsAndResourcesPromise = Promise.all([
             this.paratextService
               .getProjects()
@@ -213,7 +219,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
                 this.projects = projects;
                 this.updateNonSelectableProjects();
               })
-              .catch(() => (this.projectLoadingFailed = true)),
+              .catch((error: any) => {
+                this.projectLoadingFailed = true;
+                if (error instanceof HttpErrorResponse && error.status === 401) {
+                  paratextTokensExpired = true;
+                }
+              }),
             this.paratextService
               .getResources()
               .then(resources => {
@@ -221,11 +232,18 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
                 this.resources = resources;
                 this.updateNonSelectableProjects();
               })
-              .catch(() => (this.resourceLoadingFailed = true))
+              .catch((error: any) => {
+                this.resourceLoadingFailed = true;
+                if (error instanceof HttpErrorResponse && error.status === 401) {
+                  paratextTokensExpired = true;
+                }
+              })
           ]);
 
           await Promise.all([mainSettingsPromise, projectsAndResourcesPromise]);
           this.loading = false;
+
+          if (paratextTokensExpired) this.authService.requestParatextCredentialUpdate();
 
           this.updateFormEnabled();
         }

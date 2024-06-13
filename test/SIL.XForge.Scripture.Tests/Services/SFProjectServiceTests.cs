@@ -2817,53 +2817,58 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_AdministratorsCanSyncProject()
+    public async Task SyncAsync_AdministratorsCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User01, Project01));
+        string actual = await env.Service.SyncAsync(User01, Project01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
-    public void SyncAsync_TranslatorsCanSyncProject()
+    public async Task SyncAsync_TranslatorsCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User05, Project01));
+        string actual = await env.Service.SyncAsync(User05, Project01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
-    public void SyncAsync_AdministratorsCanSyncResource()
+    public async Task SyncAsync_AdministratorsCanSyncResource()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User01, Resource01));
+        string actual = await env.Service.SyncAsync(User01, Resource01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
-    public void SyncAsync_TranslatorsCanSyncResource()
+    public async Task SyncAsync_TranslatorsCanSyncResource()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User05, Resource01));
+        string actual = await env.Service.SyncAsync(User05, Resource01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
-    public void SyncAsync_ObserversCanSyncResource()
+    public async Task SyncAsync_ObserversCanSyncResource()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.SyncAsync(User02, Resource01));
+        string actual = await env.Service.SyncAsync(User02, Resource01);
+        Assert.AreEqual("jobId", actual);
     }
 
     [Test]
@@ -2874,6 +2879,49 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(User02, Project01));
+    }
+
+    [Test]
+    public void SyncAsync_NoArchivesAccess()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        env.ParatextService.CanUserAuthenticateToPTArchivesAsync(User01).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+    }
+
+    [Test]
+    public void SyncAsync_NoRegistryAccess()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        env.ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(false);
+
+        // SUT
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+    }
+
+    [Test]
+    public void SyncAsync_ProjectDoesNotExist()
+    {
+        // Setup
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, "invalid_project"));
+    }
+
+    [Test]
+    public async Task SyncAsync_UserDoesNotExist()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        await env.UserSecrets.DeleteAsync(User01);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, Project01));
     }
 
     [Test]
@@ -3296,7 +3344,7 @@ public class SFProjectServiceTests
                             Id = User01,
                             Email = "user01@example.com",
                             ParatextId = "pt-user01",
-                            Roles = new List<string> { SystemRole.User },
+                            Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -3310,7 +3358,7 @@ public class SFProjectServiceTests
                             Id = User02,
                             Email = "user02@example.com",
                             ParatextId = "pt-user02",
-                            Roles = new List<string> { SystemRole.User },
+                            Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -3324,21 +3372,21 @@ public class SFProjectServiceTests
                             Id = User03,
                             Email = "user03@example.com",
                             ParatextId = "pt-user03",
-                            Roles = new List<string> { SystemRole.User },
+                            Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
                         {
                             Id = User04,
                             Email = "user04@example.com",
-                            Roles = new List<string> { SystemRole.SystemAdmin },
+                            Roles = [SystemRole.SystemAdmin],
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
                         {
                             Id = LinkExpiredUser,
                             Email = "expired@example.com",
-                            Roles = new List<string> { SystemRole.User },
+                            Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
                         },
                         new User
@@ -3346,7 +3394,7 @@ public class SFProjectServiceTests
                             Id = User05,
                             Email = "user05@example.com",
                             ParatextId = "pt-user05",
-                            Roles = new List<string> { SystemRole.User },
+                            Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -3359,7 +3407,7 @@ public class SFProjectServiceTests
                         {
                             Id = User06,
                             Email = "user06@example.com",
-                            Roles = new List<string> { SystemRole.User },
+                            Roles = [SystemRole.User],
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -3372,7 +3420,7 @@ public class SFProjectServiceTests
                         {
                             Id = User07,
                             Email = "user07@example.com",
-                            Roles = new List<string> { SystemRole.SystemAdmin },
+                            Roles = [SystemRole.SystemAdmin],
                             Sites = new Dictionary<string, Site>
                             {
                                 {
@@ -3407,9 +3455,9 @@ public class SFProjectServiceTests
                                     ParatextId = Resource01PTId,
                                     Name = "resource project",
                                     ShortName = "RES",
-                                    WritingSystem = new WritingSystem { Tag = "qaa" }
+                                    WritingSystem = new WritingSystem { Tag = "qaa" },
                                 },
-                                DraftConfig = new DraftConfig { ServalConfig = "{ existingConfig: true }", },
+                                DraftConfig = new DraftConfig { ServalConfig = "{ existingConfig: true }" },
                             },
                             CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
                             UserRoles = new Dictionary<string, string>
@@ -3417,12 +3465,12 @@ public class SFProjectServiceTests
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.CommunityChecker },
                                 { User05, SFProjectRole.Translator },
-                                { User06, SFProjectRole.Viewer }
+                                { User06, SFProjectRole.Viewer },
                             },
                             UserPermissions = new Dictionary<string, string[]>
                             {
-                                { User03, new[] { "text_audio.create", "text_audio.delete" } },
-                                { User05, Array.Empty<string>() }
+                                { User03, ["text_audio.create", "text_audio.delete"] },
+                                { User05, [] },
                             },
                             Texts =
                             {
@@ -3436,9 +3484,9 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
-                                        }
-                                    }
+                                            Permissions = [],
+                                        },
+                                    },
                                 },
                                 new TextInfo
                                 {
@@ -3450,7 +3498,7 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { },
+                                            Permissions = [],
                                             HasAudio = true,
                                         },
                                         new Chapter
@@ -3458,10 +3506,10 @@ public class SFProjectServiceTests
                                             Number = 2,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
-                                        }
-                                    }
-                                }
+                                            Permissions = [],
+                                        },
+                                    },
+                                },
                             },
                             WritingSystem = new WritingSystem { Tag = "qaa" },
                         },
@@ -3471,11 +3519,11 @@ public class SFProjectServiceTests
                             Name = "project02",
                             ShortName = "P02",
                             ParatextId = "paratext_" + Project02,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true, },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true },
                             UserRoles =
                             {
                                 { User02, SFProjectRole.Administrator },
-                                { User04, SFProjectRole.CommunityChecker }
+                                { User04, SFProjectRole.CommunityChecker },
                             },
                         },
                         new SFProject
@@ -3484,7 +3532,7 @@ public class SFProjectServiceTests
                             Name = "project03",
                             ShortName = "P03",
                             ParatextId = "paratext_" + Project03,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true, },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true },
                             TranslateConfig =
                             {
                                 TranslationSuggestionsEnabled = false,
@@ -3492,14 +3540,14 @@ public class SFProjectServiceTests
                                 {
                                     ProjectRef = SourceOnly,
                                     ParatextId = "pt_source_no_suggestions",
-                                    Name = "Source Only Project"
-                                }
+                                    Name = "Source Only Project",
+                                },
                             },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker }
-                            }
+                                { User02, SFProjectRole.CommunityChecker },
+                            },
                         },
                         new SFProject
                         {
@@ -3515,8 +3563,8 @@ public class SFProjectServiceTests
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },
-                                { User02, SFProjectRole.Administrator }
-                            }
+                                { User02, SFProjectRole.Administrator },
+                            },
                         },
                         new SFProject
                         {
@@ -3533,14 +3581,14 @@ public class SFProjectServiceTests
                                     ParatextId = Resource01PTId,
                                     Name = "resource project",
                                     ShortName = "RES",
-                                    WritingSystem = new WritingSystem { Tag = "qaa" }
-                                }
+                                    WritingSystem = new WritingSystem { Tag = "qaa" },
+                                },
                             },
                             CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRole.Administrator },
-                                { User02, SFProjectRole.CommunityChecker }
+                                { User02, SFProjectRole.CommunityChecker },
                             },
                             Texts =
                             {
@@ -3554,9 +3602,9 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
-                                        }
-                                    }
+                                            Permissions = [],
+                                        },
+                                    },
                                 },
                                 new TextInfo
                                 {
@@ -3568,31 +3616,31 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
+                                            Permissions = [],
                                         },
                                         new Chapter
                                         {
                                             Number = 2,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
-                                        }
-                                    }
-                                }
-                            }
+                                            Permissions = [],
+                                        },
+                                    },
+                                },
+                            },
                         },
                         new SFProject
                         {
                             Id = Project06,
                             Name = "project06",
                             ParatextId = "paratext_" + Project06,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = false, ShareEnabled = true, },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = false, ShareEnabled = true },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },
                                 { User02, SFProjectRole.CommunityChecker },
-                                { User07, SFProjectRole.Administrator }
-                            }
+                                { User07, SFProjectRole.Administrator },
+                            },
                         },
                         new SFProject
                         {
@@ -3612,9 +3660,9 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
-                                        }
-                                    }
+                                            Permissions = [],
+                                        },
+                                    },
                                 },
                                 new TextInfo
                                 {
@@ -3626,24 +3674,24 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
+                                            Permissions = [],
                                         },
                                         new Chapter
                                         {
                                             Number = 2,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
-                                        }
-                                    }
-                                }
+                                            Permissions = [],
+                                        },
+                                    },
+                                },
                             },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
                                 { User05, SFProjectRole.Translator },
                                 { User02, SFProjectRole.PTObserver },
-                            }
+                            },
                         },
                         new SFProject
                         {
@@ -3651,8 +3699,8 @@ public class SFProjectServiceTests
                             ParatextId = "pt_source_no_suggestions",
                             Name = "Source Only Project",
                             ShortName = "DSP",
-                            UserRoles = { { User01, SFProjectRole.Administrator } }
-                        }
+                            UserRoles = { { User01, SFProjectRole.Administrator } },
+                        },
                     }
                 )
             );
@@ -3675,7 +3723,7 @@ public class SFProjectServiceTests
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User02) },
-                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) }
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) },
                     }
                 )
             );
@@ -3693,21 +3741,21 @@ public class SFProjectServiceTests
                             DataId = TextAudio.GetDocId(Project01, 41, 1),
                             AudioUrl = "http://example.com/41_1.mp3",
                             MimeType = "audio/mp3",
-                            Timings = new List<AudioTiming>
-                            {
+                            Timings =
+                            [
                                 new AudioTiming
                                 {
                                     From = 0.0,
                                     TextRef = "MARK 1:1",
                                     To = 1.1,
                                 },
-                            },
+                            ],
                         },
                     }
                 )
             );
             RealtimeService.AddRepository(
-                "paratext_note_threads",
+                "note_threads",
                 OTType.Json0,
                 new MemoryRepository<NoteThread>(
                     new[]
@@ -3717,22 +3765,22 @@ public class SFProjectServiceTests
                             Id = "project01:dataId01",
                             DataId = "dataId01",
                             ThreadId = "thread01",
-                            Notes = new List<Note>()
-                            {
+                            Notes =
+                            [
                                 new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
-                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" }
-                            }
+                                new Note { DataId = "thread01:PT01", SyncUserRef = "PT02" },
+                            ],
                         },
                         new NoteThread
                         {
                             Id = "project01:dataId02",
                             DataId = "dataId02",
                             ThreadId = "thread02",
-                            Notes = new List<Note>()
-                            {
+                            Notes =
+                            [
                                 new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },
-                                new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" }
-                            }
+                                new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" },
+                            ],
                         },
                     }
                 )
@@ -3756,26 +3804,26 @@ public class SFProjectServiceTests
                     new SFProjectSecret
                     {
                         Id = Project01,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Key = "abcd",
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
-                            }
-                        }
+                                ShareLinkType = ShareLinkType.Recipient,
+                            },
+                        ],
                     },
                     new SFProjectSecret
                     {
                         Id = Project02,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Key = "linksharing02",
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Anyone
+                                ShareLinkType = ShareLinkType.Anyone,
                             },
                             new ShareKey
                             {
@@ -3783,22 +3831,22 @@ public class SFProjectServiceTests
                                 Key = "existingkeyuser03",
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
-                            }
-                        }
+                                ShareLinkType = ShareLinkType.Recipient,
+                            },
+                        ],
                     },
                     new SFProjectSecret
                     {
                         Id = Project03,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Email = "bob@example.com",
                                 Key = "key1111",
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
+                                ShareLinkType = ShareLinkType.Recipient,
                             },
                             new ShareKey
                             {
@@ -3806,7 +3854,7 @@ public class SFProjectServiceTests
                                 Key = "keyexp",
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
+                                ShareLinkType = ShareLinkType.Recipient,
                             },
                             new ShareKey
                             {
@@ -3814,7 +3862,7 @@ public class SFProjectServiceTests
                                 Key = "key1234",
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
+                                ShareLinkType = ShareLinkType.Recipient,
                             },
                             new ShareKey
                             {
@@ -3822,56 +3870,56 @@ public class SFProjectServiceTests
                                 Key = "key2222",
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
-                            }
-                        }
+                                ShareLinkType = ShareLinkType.Recipient,
+                            },
+                        ],
                     },
                     new SFProjectSecret
                     {
                         Id = Project04,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Key = "linksharing04",
                                 ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Anyone
+                                ShareLinkType = ShareLinkType.Anyone,
                             },
-                        }
+                        ],
                     },
                     new SFProjectSecret
                     {
                         Id = Project05,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Email = "user03@example.com",
                                 Key = "key12345",
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
-                                ShareLinkType = ShareLinkType.Recipient
-                            }
-                        }
+                                ShareLinkType = ShareLinkType.Recipient,
+                            },
+                        ],
                     },
                     new SFProjectSecret
                     {
                         Id = Project06,
-                        ShareKeys = new List<ShareKey>
-                        {
+                        ShareKeys =
+                        [
                             new ShareKey
                             {
                                 Key = "expiredKey",
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.Viewer,
-                                ShareLinkType = ShareLinkType.Recipient
+                                ShareLinkType = ShareLinkType.Recipient,
                             },
                             new ShareKey
                             {
                                 Key = "usedKey",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                RecipientUserId = User02
+                                RecipientUserId = User02,
                             },
                             new ShareKey
                             {
@@ -3879,7 +3927,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                Reserved = true
+                                Reserved = true,
                             },
                             new ShareKey
                             {
@@ -3892,9 +3940,9 @@ public class SFProjectServiceTests
                                 Key = "maxUsersReached",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                UsersGenerated = 250
+                                UsersGenerated = 250,
                             },
-                        }
+                        ],
                     },
                 }
             );
@@ -3908,11 +3956,11 @@ public class SFProjectServiceTests
                 {
                     ParatextId = "changedId",
                     Name = "NewSource",
-                    LanguageTag = "qaa"
+                    LanguageTag = "qaa",
                 },
                 new ParatextProject { ParatextId = GetProject(Project01).ParatextId },
                 new ParatextProject { ParatextId = PTProjectIdNotYetInSF },
-                new ParatextProject { ParatextId = "ptProject123" }
+                new ParatextProject { ParatextId = "ptProject123" },
             };
             ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
             IReadOnlyList<ParatextResource> ptResources = new[]
@@ -3921,17 +3969,20 @@ public class SFProjectServiceTests
                 {
                     ParatextId = "resource_project",
                     Name = "ResourceProject",
-                    LanguageTag = "qaa"
+                    LanguageTag = "qaa",
                 },
-                new ParatextResource { ParatextId = GetProject(Resource01).ParatextId }
+                new ParatextResource { ParatextId = GetProject(Resource01).ParatextId },
             };
             ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
+            ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(true));
+            ParatextService.CanUserAuthenticateToPTArchivesAsync(Arg.Any<string>()).Returns(Task.FromResult(true));
             UserSecrets = new MemoryRepository<UserSecret>(
                 new[]
                 {
                     new UserSecret { Id = User01 },
                     new UserSecret { Id = User02 },
-                    new UserSecret { Id = User03 }
+                    new UserSecret { Id = User03 },
+                    new UserSecret { Id = User05 },
                 }
             );
             var translateMetrics = new MemoryRepository<TranslateMetrics>();

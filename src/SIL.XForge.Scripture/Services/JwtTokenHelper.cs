@@ -1,6 +1,7 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
@@ -60,6 +61,13 @@ public class JwtTokenHelper : IJwtTokenHelper
         );
         request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
         HttpResponseMessage response = await client.SendAsync(request, token);
+
+        // Rethrow 400 errors as unauthorized, as these are related to invalid or expired tokens
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            throw new UnauthorizedAccessException();
+        }
+
         await _exceptionHandler.EnsureSuccessStatusCode(response);
 
         string responseJson = await response.Content.ReadAsStringAsync(token);

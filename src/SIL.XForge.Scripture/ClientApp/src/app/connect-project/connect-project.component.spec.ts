@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -10,6 +11,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -32,6 +34,7 @@ import { ProjectSelectComponent } from '../project-select/project-select.compone
 import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 import { ConnectProjectComponent } from './connect-project.component';
 
+const mockedAuthService = mock(AuthService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedRouter = mock(Router);
@@ -53,6 +56,7 @@ describe('ConnectProjectComponent', () => {
     ],
     declarations: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent],
     providers: [
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: Router, useMock: mockedRouter },
@@ -366,6 +370,17 @@ describe('ConnectProjectComponent', () => {
     };
     verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
+  }));
+
+  it('should display the Paratext credentials update prompt when get projects throws a forbidden error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupDefaultProjectData();
+    when(mockedParatextService.getProjects()).thenThrow(new HttpErrorResponse({ status: 401 }));
+    env.waitForProjectsResponse();
+
+    verify(mockedParatextService.getProjects()).once();
+    verify(mockedAuthService.requestParatextCredentialUpdate(anything())).once();
+    expect(env.component.state).toEqual('loading');
   }));
 });
 

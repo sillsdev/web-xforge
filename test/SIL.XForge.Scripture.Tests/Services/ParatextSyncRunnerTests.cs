@@ -611,6 +611,34 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_RefreshToken_UnauthorizedAccessException()
+    {
+        var env = new TestEnvironment();
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
+        env.SetupSFData(true, true, false, false, books);
+        env.SetupPTData(books);
+        env.ParatextService.GetParatextUsernameMappingAsync(
+            Arg.Any<UserSecret>(),
+            Arg.Any<SFProject>(),
+            CancellationToken.None
+        )
+            .Throws<UnauthorizedAccessException>();
+        env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+            .Throws<UnauthorizedAccessException>();
+
+        // SUT
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        // Check that the Exception was logged
+        env.MockLogger.AssertHasEvent((LogEvent logEvent) => logEvent.Exception is not null);
+
+        // Check that the exception was logged in the sync metrics
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+        StringAssert.StartsWith("System.UnauthorizedAccessException", syncMetrics.ErrorDetails);
+    }
+
+    [Test]
     public async Task SyncAsync_ProjectTextSetToNotEditable()
     {
         var env = new TestEnvironment();

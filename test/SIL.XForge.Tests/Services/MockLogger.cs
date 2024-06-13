@@ -11,19 +11,20 @@ namespace SIL.XForge.Services;
 /// </summary>
 public class LogEvent
 {
-    public LogLevel LogLevel { get; set; }
-    public EventId EventId { get; set; }
-    public object State { get; set; }
-    public Exception Exception { get; set; }
-    public string Message => State.ToString();
+    public LogLevel LogLevel { get; init; }
+    public EventId EventId { get; init; }
+    public object? State { get; init; }
+    public Exception? Exception { get; init; }
+    public string? Message => State?.ToString();
 
     public override string ToString()
     {
         string summary = $"LogEvent {EventId} {LogLevel}: {Message}";
-        if (Exception != null)
+        if (Exception is not null)
         {
             summary += $" ({Exception})";
         }
+
         return summary;
     }
 }

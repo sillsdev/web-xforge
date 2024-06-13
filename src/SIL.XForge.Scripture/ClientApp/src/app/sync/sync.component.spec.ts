@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { DebugElement } from '@angular/core';
+import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -29,6 +30,7 @@ import { SyncComponent } from './sync.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedErrorHandler = mock(ErrorHandler);
 const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
 const mockedParatextService = mock(ParatextService);
@@ -50,6 +52,7 @@ describe('SyncComponent', () => {
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: ParatextService, useMock: mockedParatextService },
@@ -118,6 +121,19 @@ describe('SyncComponent', () => {
     env.emitSyncComplete(true, env.projectId);
     expect(env.component.lastSyncDate!.getTime()).toBeGreaterThan(previousLastSyncDate!.getTime());
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
+  }));
+
+  it('should display the Paratext credentials update prompt when sync throws a forbidden error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineSync(env.projectId)).thenReject(
+      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
+    );
+
+    env.clickElement(env.syncButton);
+
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    verify(mockedAuthService.requestParatextCredentialUpdate()).once();
+    expect(env.component.syncActive).toBe(false);
   }));
 
   it('should report error if sync has a problem', fakeAsync(() => {

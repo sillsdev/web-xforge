@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -9,6 +10,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
+import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -67,6 +69,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
+    private readonly authService: AuthService,
     private readonly onlineStatusService: OnlineStatusService,
     readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
@@ -190,9 +193,13 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     this.isTraining = true;
     this.translationEngine
       .startTraining()
-      .catch(() => {
-        this.noticeService.showError(translate('translate_overview.training_unavailable'));
+      .catch((error: any) => {
         this.isTraining = false;
+        if (error instanceof HttpErrorResponse && error.status === 401) {
+          this.authService.requestParatextCredentialUpdate();
+        } else {
+          this.noticeService.showError(translate('translate_overview.training_unavailable'));
+        }
       })
       .then(() => this.listenForStatus());
   }

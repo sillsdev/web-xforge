@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -8,7 +9,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, EMPTY, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -122,7 +123,9 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.User] });
+      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
+        currentUserRoles: [SystemRole.User]
+      });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
@@ -1301,6 +1304,32 @@ describe('DraftGenerationComponent', () => {
       });
       verify(mockDialogRef.close()).once();
     });
+
+    it('should display the Paratext credentials update prompt when startBuild throws a forbidden error', fakeAsync(() => {
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
+          throwError(() => new HttpErrorResponse({ status: 401 }))
+        );
+      });
+
+      env.component.startBuild({
+        trainingBooks: [],
+        trainingDataFiles: [],
+        translationBooks: [],
+        fastTraining: false,
+        projectId: projectId
+      });
+      tick();
+
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: projectId,
+        trainingBooks: [],
+        trainingDataFiles: [],
+        translationBooks: [],
+        fastTraining: false
+      });
+      expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
+    }));
   });
 
   describe('cancel', () => {

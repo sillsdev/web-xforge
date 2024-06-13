@@ -693,6 +693,52 @@ describe('AuthService', () => {
     expect(env.isAuthenticated).toBeTrue();
     env.discardTokenExpiryTimer();
   }));
+
+  it('should log the user out if they click the log out button when requesting Paratext credential update', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.service.requestParatextCredentialUpdate();
+    tick();
+
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedWebAuth.logout(anything())).once();
+    expect(capture(mockedWebAuth.logout).last()).toBeDefined();
+  }));
+
+  it('should not log the user out if they click cancel when requesting Paratext credential update', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+    env.service.requestParatextCredentialUpdate();
+    tick();
+
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedWebAuth.logout(anything())).never();
+    expect().nothing();
+  }));
+
+  it('should execute the callback if the user clicks cancel when requesting Paratext credential update', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+    let callbackExecuted = false;
+    env.service.requestParatextCredentialUpdate(() => (callbackExecuted = true));
+    tick();
+
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedWebAuth.logout(anything())).never();
+    expect(callbackExecuted).toBe(true);
+  }));
+
+  it('should not execute the callback if the user clicks log out when requesting Paratext credential update', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    let callbackExecuted = false;
+    env.service.requestParatextCredentialUpdate(() => (callbackExecuted = true));
+    tick();
+
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedWebAuth.logout(anything())).once();
+    expect(callbackExecuted).toBe(false);
+  }));
 });
 
 interface TestEnvironmentConstructorArgs {
