@@ -407,7 +407,7 @@ describe('QuestionDialogComponent', () => {
       isArchived: false,
       dateCreated: '',
       dateModified: '',
-      audioUrl: '/path/to/audio.mp3'
+      audioUrl: 'test-audio-short.mp3'
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
@@ -653,7 +653,7 @@ class TestEnvironment {
     );
     when(mockedProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
-      createStorageFileData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
+      createStorageFileData(QuestionDoc.COLLECTION, 'question01', 'test-audio-short.mp3', getAudioBlob())
     );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')

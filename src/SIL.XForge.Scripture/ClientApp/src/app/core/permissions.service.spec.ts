@@ -134,13 +134,13 @@ describe('PermissionsService', () => {
 
     it('uses current user id if userId is not provided', () => {
       const env = new TestEnvironment();
-      env.service.canSync(env.projectDoc);
+      expect(env.service.canSync(env.projectDoc)).toBe(false);
       verify(mockedUserService.currentUserId).once();
     });
 
     it('does not use current user id if userId is provided', () => {
       const env = new TestEnvironment();
-      env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator);
+      expect(env.service.canSync(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
       verify(mockedUserService.currentUserId).never();
     });
 

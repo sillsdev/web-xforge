@@ -1,6 +1,7 @@
 import { QueryList } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { TabMenuService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabFactoryService } from './base-services/tab-factory.service';
@@ -16,7 +17,7 @@ describe('TabGroupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SFTabsModule],
+      imports: [SFTabsModule, TestTranslocoModule],
       declarations: [TabGroupComponent, TabComponent],
       providers: [
         { provide: TabFactoryService, useValue: { createTab: () => {} } },
