@@ -2869,7 +2869,7 @@ class TestEnvironment {
   simulateAudioRecordingFinishedProcessing(): void {
     this.component.answersPanel!.textAndAudio!.audioComponent!.audio = {
       status: 'processed',
-      url: 'example.com/foo.mp3'
+      url: 'test-audio-short.mp3'
     };
     flush();
     this.fixture.detectChanges();
