@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { translate } from '@ngneat/transloco';
+import { DeltaOperation } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { DeltaOperation } from 'rich-text';
 import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { Snapshot } from 'xforge-common/models/snapshot';

@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DeltaStatic } from 'quill';
+import { DeltaOperation } from 'quill';
+import { Op } from 'quill-delta';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
   catchError,
@@ -27,7 +27,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { isString } from '../../../../type-utils';
-import { Delta, TextDocId } from '../../../core/models/text-doc';
+import { Delta, DeltaStatic, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -194,13 +194,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.isDraftApplied = true;
   }
 
-  private hasContent(delta?: DeltaOperation[]): boolean {
+  private hasContent(delta?: Op[]): boolean {
     const hasContent = delta?.some(op => {
       if (op.insert == null || op.attributes?.segment == null) {
         return false;
       }
 
-      const isInsertBlank = (isString(op.insert) && op.insert.trim().length === 0) || op.insert.blank === true;
+      const isInsertBlank =
+        (isString(op.insert) && op.insert.trim().length === 0) || (op as DeltaOperation).insert.blank === true;
       return !isInsertBlank;
     });
 

@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
-import { DeltaStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { Delta } from 'rich-text';
 import { Observable, Subject } from 'rxjs';
 import { UserService } from 'xforge-common/user.service';
-import { TextDoc, TextDocId } from './models/text-doc';
+import { Delta, DeltaStatic, TextDoc, TextDocId } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
 
 @Injectable({

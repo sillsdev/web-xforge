@@ -1,8 +1,8 @@
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { DeltaOperation } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { DeltaOperation } from 'rich-text';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref

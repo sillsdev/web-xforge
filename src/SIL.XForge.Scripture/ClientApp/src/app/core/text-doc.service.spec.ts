@@ -1,5 +1,4 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { DeltaStatic } from 'quill';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -13,7 +12,7 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { getCombinedVerseTextDoc, getPoetryVerseTextDoc, getTextDoc } from '../shared/test-utils';
 import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
-import { TextDoc, TextDocId } from './models/text-doc';
+import { DeltaStatic, TextDoc, TextDocId } from './models/text-doc';
 import { SFProjectService } from './sf-project.service';
 import { TextDocService } from './text-doc.service';
 

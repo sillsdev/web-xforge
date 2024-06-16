@@ -1,6 +1,6 @@
 import { VerseRef } from '@sillsdev/scripture';
+import { DeltaOperation } from 'quill';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
 import { compareProjectsForSorting, getVerseNumbers, isBadDelta, projectLabel, XmlUtils } from './utils';
 

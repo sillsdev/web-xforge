@@ -1,15 +1,17 @@
 import { VerseRef } from '@sillsdev/scripture';
-import Quill, { DeltaOperation, DeltaStatic, RangeStatic } from 'quill';
+import Quill, { DeltaOperation, RangeStatic } from 'quill';
+import * as QuillDelta from 'quill-delta';
 import {
   getTextDocId,
+  TEXT_INDEX_PATHS,
   TextData,
   TEXTS_COLLECTION,
-  TextType,
-  TEXT_INDEX_PATHS
+  TextType
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 
+export type DeltaStatic = QuillDelta.default;
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
 /**

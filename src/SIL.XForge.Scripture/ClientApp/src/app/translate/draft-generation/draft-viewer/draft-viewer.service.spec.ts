@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { DeltaOperation } from 'rich-text';
+import { DeltaOperation } from 'quill';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftViewerService } from './draft-viewer.service';
 

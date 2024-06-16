@@ -29,7 +29,8 @@ import {
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
-import Quill, { DeltaStatic, RangeStatic } from 'quill';
+import Quill, { RangeStatic } from 'quill';
+import { Op } from 'quill-delta';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { EditorTabGroupType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
@@ -52,7 +53,6 @@ import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
   BehaviorSubject,
@@ -100,7 +100,7 @@ import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDocId } from '../../core/models/text-doc';
+import { Delta, DeltaStatic, TextDocId } from '../../core/models/text-doc';
 import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -1914,19 +1914,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const updatePromises: Promise<boolean>[] = [];
 
     // a user initiated delta with ops that include inserting a note embed can only be undo deleting a note icon
-    const reinsertedNoteEmbeds: DeltaOperation[] = delta.filter(
-      op => op.insert != null && op.insert['note-thread-embed'] != null
-    );
+    const reinsertedNoteEmbeds: Op[] = delta.filter(op => op.insert != null && op.insert['note-thread-embed'] != null);
     const reinsertedNoteIds: string[] = [];
     reinsertedNoteEmbeds.forEach(n => {
       if (n.attributes != null && n.attributes['threadid'] != null) {
         reinsertedNoteIds.push(n.attributes['threadid']);
       }
     });
-    const textInsertOps: DeltaOperation[] = delta.filter(
-      ops => ops.insert != null && ops.insert['note-thread-embed'] == null
-    );
-    const textDeleteOps: DeltaOperation[] = delta.filter(ops => ops.delete != null);
+    const textInsertOps: Op[] = delta.filter(ops => ops.insert != null && ops.insert['note-thread-embed'] == null);
+    const textDeleteOps: Op[] = delta.filter(ops => ops.delete != null);
     const hasTextEditOp: boolean = textInsertOps.length > 0 || textDeleteOps.length > 0;
     for (const affected of affectedEmbeds) {
       const editPosition: number | undefined = this.getEditPositionWithinRange(affected.verseRange, delta);
@@ -2140,8 +2136,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     for (const op of delta.ops) {
       const insertOp: any = op.insert;
       const deleteOp: number | undefined = op.delete;
-      const retainOp: number | undefined = op.retain;
-      if (retainOp != null) {
+      const retainOp: number | Record<string, unknown> | undefined = op.retain;
+      if (retainOp != null && typeof retainOp === 'number') {
         curIndex += retainOp;
         continue;
       }
@@ -2203,8 +2199,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         return curIndex;
       }
 
-      const retainOp: number | undefined = op.retain;
-      curIndex += retainOp == null ? 0 : retainOp;
+      const retainOp: number | Record<string, unknown> | undefined = op.retain;
+      if (retainOp != null && typeof retainOp === 'number') {
+        curIndex += retainOp;
+      }
     }
     return;
   }
