@@ -84,7 +84,7 @@
                 </button>
               </div>
             </div>
-            <div class="form-actions" *ngIf="isScreenSmall">
+            <div *ngIf="isScreenSmall">
               <button mat-icon-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
                 <mat-icon class="material-icons-outlined">cancel</mat-icon>
               </button>
@@ -92,7 +92,7 @@
                 <mat-icon>check_circle</mat-icon>
               </button>
             </div>
-            <div class="form-actions" *ngIf="!isScreenSmall">
+            <div *ngIf="!isScreenSmall" class="large-form-action-buttons">
               <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
                 <mat-icon>close</mat-icon>
                 {{ t("cancel") }}
