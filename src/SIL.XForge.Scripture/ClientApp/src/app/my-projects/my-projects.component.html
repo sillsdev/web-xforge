@@ -1,0 +1,135 @@
+<ng-container *transloco="let t; read: 'my_projects'">
+  <div class="wrapper">
+    <h1>{{ t("my_projects") }}</h1>
+    <app-notice
+      id="message-no-pt-or-sf-projects"
+      icon="warning"
+      type="warning"
+      *ngIf="!userHasProjects && !initialLoadingSFProjects && !loadingPTProjects"
+    >
+      {{ t("no_projects") }} {{ t("access_another_project") }}
+    </app-notice>
+    <h2 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
+      {{ t("connected") }}
+    </h2>
+    <mat-card
+      *ngFor="let projectDoc of userConnectedProjects"
+      [class.active-project]="isLastSelectedProject(projectDoc)"
+      id="user-connected-project-card-{{ projectDoc.data?.paratextId }}"
+      attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
+      data-project-type="user-connected-project"
+    >
+      <div>
+        <span class="project-name">
+          <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
+        </span>
+        <span class="project-description">
+          {{ projectTypeDescription(projectDoc) }}
+        </span>
+      </div>
+      <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
+    </mat-card>
+    <mat-card id="sf-loading-card" *ngIf="initialLoadingSFProjects" class="loading-card">
+      <div>
+        <div class="loading-project-name"></div>
+        <div class="loading-project-description"></div>
+      </div>
+      <div class="loading-action"></div>
+    </mat-card>
+    <mat-card class="loading-card" *ngIf="initialLoadingSFProjects">
+      <div>
+        <div class="loading-project-name"></div>
+        <div class="loading-project-description"></div>
+      </div>
+      <div class="loading-action"></div>
+    </mat-card>
+    <mat-expansion-panel id="message-looking-for-another-project" hideToggle *ngIf="userHasProjects && !userIsPTUser">
+      <mat-expansion-panel-header>{{ t("looking_for_another_project") }}</mat-expansion-panel-header>
+      <p>
+        {{ t("access_another_project") }}
+      </p>
+    </mat-expansion-panel>
+
+    <h2 *ngIf="userConnectedResources.length > 0">{{ t("dbl_resources") }}</h2>
+    <mat-card
+      *ngFor="let projectDoc of userConnectedResources"
+      [class.active-project]="isLastSelectedProject(projectDoc)"
+      attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
+      data-project-type="user-connected-resource"
+    >
+      <div>
+        <span class="project-name">
+          <span>{{ projectDoc.data?.shortName }}</span> - <span>{{ projectDoc.data?.name }}</span>
+        </span>
+        <span class="project-description">{{ t("dbl_resource") }}</span>
+      </div>
+      <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
+    </mat-card>
+
+    <div class="pt-content" *ngIf="userIsPTUser">
+      <h2
+        id="header-not-connected-projects"
+        *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects || !isOnline"
+      >
+        {{
+          loadingPTProjects
+            ? t("loading_more_pt_projects")
+            : userConnectedProjects.length === 0
+            ? t("connect_a_project_to_get_started")
+            : t("not_connected")
+        }}
+      </h2>
+      <app-notice
+        id="message-trouble-getting-pt-project-list"
+        icon="error"
+        type="error"
+        *ngIf="problemGettingPTProjects"
+      >
+        {{ t("problem_getting_pt_list") }}
+      </app-notice>
+
+      <mat-card
+        *ngFor="let ptProject of userUnconnectedParatextProjects"
+        attr.data-pt-project-id="{{ ptProject.paratextId }}"
+        data-project-type="user-unconnected-project"
+        [class.cannot-connect]="!ptProject.isConnectable"
+      >
+        <div>
+          <span class="project-name">
+            <span>{{ ptProject.shortName }}</span> - <span>{{ ptProject.name }}</span>
+          </span>
+          <span *ngIf="!ptProject.isConnectable" class="project-description">
+            {{ t("not_admin_cannot_connect_project") }}
+          </span>
+        </div>
+        <a
+          *ngIf="ptProject.isConnectable"
+          appRouterLink="/connect-project"
+          [state]="{ ptProjectId: ptProject.paratextId }"
+          mat-flat-button
+          color="primary"
+        >
+          {{ paratextService.isParatextProjectInSF(ptProject) ? t("join") : ("connect_project.connect" | transloco) }}
+        </a>
+      </mat-card>
+      <mat-card id="pt-loading-card" *ngIf="loadingPTProjects" class="loading-card">
+        <div>
+          <div class="loading-project-name"></div>
+          <div class="loading-project-description"></div>
+        </div>
+        <div class="loading-action"></div>
+      </mat-card>
+      <mat-card class="loading-card" *ngIf="loadingPTProjects">
+        <div>
+          <div class="loading-project-name"></div>
+          <div class="loading-project-description"></div>
+        </div>
+        <div class="loading-action"></div>
+      </mat-card>
+    </div>
+
+    <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'" *ngIf="!isOnline">
+      {{ t("offline") }}
+    </app-notice>
+  </div>
+</ng-container>
