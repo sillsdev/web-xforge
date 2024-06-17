@@ -39,7 +39,6 @@ public class ShareKey
     /// The date and time the share link expires. If null, the share link never expires. This is set when either:
     /// - the share key is sent to the user by email
     /// - the share key is copied/shared by a user and gets marked as "reserved"
-    /// As of right now, if the ShareLinkType is "anyone", the ExpirationTime is not ever set.
     /// </summary>
     public DateTime? ExpirationTime { get; set; }
 
