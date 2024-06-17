@@ -22,7 +22,6 @@
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
-    "project_home": "Project home",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
@@ -348,8 +347,23 @@
     "cancel": "Cancel",
     "close": "Close"
   },
-  "navigation-project_selector": {
-    "connect_project": "Connect project"
+  "my_projects": {
+    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected": "Connected",
+    "dbl_resource": "Digital Bible Library resource",
+    "dbl_resources": "Digital Bible Library resources",
+    "drafting": "Drafting",
+    "join": "Join",
+    "loading_more_pt_projects": "Loading additional Paratext projects ...",
+    "looking_for_another_project": "Looking for another project?",
+    "my_projects": "My projects",
+    "no_projects": "You have no projects.",
+    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
+    "not_connected": "Not connected",
+    "offline": "You will need to connect to the internet to get started with a project.",
+    "open": "Open",
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choose book",
@@ -401,10 +415,6 @@
     "share": "Share",
     "share_project": "Share {{ project }}",
     "share_with_others": "Share with others"
-  },
-  "start": {
-    "connect_project": "Connect project",
-    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "Audio recording is not supported in this browser.",
