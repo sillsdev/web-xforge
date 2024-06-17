@@ -433,7 +433,9 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         const string role = SFProjectRole.CommunityChecker;
 
+        env.SecurityService.GenerateKey().Returns("key1");
         string shareLink1 = await env.Service.GetLinkSharingKeyAsync(User02, Project02, role, ShareLinkType.Anyone, 14);
+        env.SecurityService.GenerateKey().Returns("key2");
         string shareLink2 = await env.Service.GetLinkSharingKeyAsync(User02, Project02, role, ShareLinkType.Anyone, 14);
 
         Assert.AreNotEqual(shareLink1, shareLink2);
