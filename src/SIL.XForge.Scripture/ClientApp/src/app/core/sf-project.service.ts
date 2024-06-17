@@ -245,18 +245,24 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     }))!;
   }
 
-  async onlineGetLinkSharingKey(projectId: string, role: SFProjectRole, shareLinkType: ShareLinkType): Promise<string> {
+  async onlineGetLinkSharingKey(
+    projectId: string,
+    role: SFProjectRole,
+    shareLinkType: ShareLinkType,
+    daysBeforeExpiration: number
+  ): Promise<string> {
     return (
       (await this.onlineInvoke<string>('linkSharingKey', {
         projectId,
         role,
-        shareLinkType
+        shareLinkType,
+        daysBeforeExpiration
       })) ?? ''
     );
   }
 
-  async onlineReserveLinkSharingKey(shareKey: string): Promise<void> {
-    await this.onlineInvoke<void>('reserveLinkSharingKey', { shareKey });
+  async onlineReserveLinkSharingKey(shareKey: string, daysBeforeExpiration: number): Promise<void> {
+    await this.onlineInvoke<void>('reserveLinkSharingKey', { shareKey, daysBeforeExpiration });
   }
 
   transceleratorQuestions(projectId: string, cancel: Subject<void>): RetryingRequest<TransceleratorQuestion[]> {
