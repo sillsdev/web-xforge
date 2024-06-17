@@ -636,7 +636,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         string projectId,
         string role,
-        string shareLinkType
+        string shareLinkType,
+        int daysBeforeExpiration
     )
     {
         SFProject project = await GetProjectAsync(projectId);
@@ -661,25 +662,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
-        SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
-        // Link sharing keys have Email set to null and ExpirationTime set to null.
-        string key = projectSecret
-            .ShareKeys.FirstOrDefault(
-                sk =>
-                    sk.Email == null
-                    && sk.ProjectRole == role
-                    && sk.ShareLinkType == shareLinkType
-                    && sk.RecipientUserId == null
-                    && sk.Reserved == null
-                    && sk.ExpirationTime == null
-                    && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
-            )
-            ?.Key;
-        if (!string.IsNullOrEmpty(key))
-            return key;
-
         // Generate a new link sharing key for the given role
-        key = _securityService.GenerateKey();
+        var key = _securityService.GenerateKey();
 
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
@@ -691,13 +675,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         Key = key,
                         ProjectRole = role,
                         ShareLinkType = shareLinkType,
+                        ExpirationTime = DateTime.UtcNow.AddDays(daysBeforeExpiration)
                     }
                 )
         );
         return key;
     }
 
-    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
+    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey, int daysBeforeExpiration)
     {
         ProjectSecret projectSecret =
             ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
@@ -713,7 +698,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             update =>
                 update
                     .Set(p => p.ShareKeys[index].Reserved, true)
-                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(14))
+                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(daysBeforeExpiration))
         );
     }
 
