@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { Observable } from 'rxjs';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -49,8 +50,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     );
   }
 
-  get isOnline(): boolean {
-    return this.onlineStatusService.isOnline;
+  get isOnline(): Observable<boolean> {
+    return this.onlineStatusService.onlineStatus$;
   }
 
   async ngOnInit(): Promise<void> {

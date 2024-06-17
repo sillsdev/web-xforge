@@ -69,7 +69,12 @@
     <div class="pt-content" *ngIf="userIsPTUser">
       <h2
         id="header-not-connected-projects"
-        *ngIf="userUnconnectedParatextProjects.length > 0 || loadingPTProjects || problemGettingPTProjects || !isOnline"
+        *ngIf="
+          userUnconnectedParatextProjects.length > 0 ||
+          loadingPTProjects ||
+          problemGettingPTProjects ||
+          (isOnline | async) === false
+        "
       >
         {{
           loadingPTProjects
@@ -128,7 +133,12 @@
       </mat-card>
     </div>
 
-    <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'" *ngIf="!isOnline">
+    <app-notice
+      id="message-offline"
+      icon="cloud_off"
+      [type]="userHasProjects ? 'info' : 'error'"
+      *ngIf="(isOnline | async) === false"
+    >
       {{ t("offline") }}
     </app-notice>
   </div>
