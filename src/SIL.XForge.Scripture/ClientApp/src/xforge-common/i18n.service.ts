@@ -110,8 +110,7 @@ export class I18nService {
     @Inject(DOCUMENT) private readonly document: Document,
     @Optional() @Inject(IGNORE_COOKIE_LOCALE) ignoreCookieLocale: boolean = false
   ) {
-    // Note that if the user is already logged in, and the user has a different interface language specified in their
-    // Auth0 profile, then the locale from the URL will end up being overridden.
+    // This will set the locale to what is specified in the URL first, or fallback to the cookie
     const urlLocale = new URLSearchParams(locationService.search).get('locale');
     if (urlLocale != null) {
       this.trySetLocale(urlLocale);

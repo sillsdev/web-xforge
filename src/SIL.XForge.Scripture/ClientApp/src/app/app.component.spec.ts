@@ -4,7 +4,6 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
-import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -13,14 +12,17 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -33,7 +35,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { filter } from 'rxjs/operators';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
@@ -52,10 +53,11 @@ const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedBugsnagService = mock(BugsnagService);
-const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
+const mockedI18nService = mock(I18nService);
+const mockedUrlService = mock(ExternalUrlService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
@@ -101,10 +103,11 @@ describe('AppComponent', () => {
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
+      { provide: I18nService, useMock: mockedI18nService },
+      { provide: ExternalUrlService, useMock: mockedUrlService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
@@ -112,6 +115,11 @@ describe('AppComponent', () => {
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
+
+  afterEach(() => {
+    // suppress no expectations warning
+    expect(1).toEqual(1);
+  });
 
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -176,6 +184,32 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.component.selectedProjectId).toBeUndefined();
+  }));
+
+  it('does not set user locale when stored locale matches the browsing session', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
+  }));
+
+  it('sets user locale when stored locale does not match the browsing session', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedI18nService.localeCode).thenReturn('es');
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedAuthService.updateInterfaceLanguage('es')).once();
+
+    env.component.setLocale('pt-BR');
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedI18nService.setLocale('pt-BR', anything())).once();
   }));
 
   it('response to remote project deletion', fakeAsync(() => {
@@ -288,8 +322,7 @@ describe('AppComponent', () => {
     env.init();
 
     verify(mockedErrorReportingService.addMeta(anything(), 'user')).once();
-    // The first call sets the locale, the second sets the user
-    const [metadata] = capture(mockedErrorReportingService.addMeta).second();
+    const [metadata] = capture(mockedErrorReportingService.addMeta).first();
     expect(metadata['id']).toEqual('user01');
   }));
 
@@ -513,10 +546,11 @@ class TestEnvironment {
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
     when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canSeeGenerateDraft$);
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
-    when(mockedCookieService.get(anything())).thenReturn('en');
-    new Promise<void>(resolve => {
-      this.comesOnline$.subscribe(() => resolve());
-    });
+    when(mockedI18nService.localeCode).thenReturn('en');
+    when(mockedUrlService.helps).thenReturn('helps');
+    when(mockedUrlService.communityAnnouncementPage).thenReturn('community-announcements');
+    when(mockedUrlService.communitySupport).thenReturn('community-support');
+    when(mockedUrlService.manual).thenReturn('manual');
 
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
