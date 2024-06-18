@@ -1,0 +1,164 @@
+name: "Deploy"
+
+on:
+  workflow_call:
+    inputs:
+      # Build environment
+      dotnet_version:
+        description: "The version of .NET to use when building."
+        type: string
+        required: true
+      node_version:
+        description: "The version of Node.js to use when building."
+        type: string
+        required: true
+      npm_version:
+        description: "The version of npm to use when building."
+        type: string
+        required: true
+      os:
+        description: "The operating system to use when building."
+        type: string
+        required: true
+
+      # Build configuration
+      angular_config:
+        description: "The Angular configuration to use for deployment."
+        type: string
+        required: true
+      app_name:
+        description: "The name of the application to deploy."
+        type: string
+        required: true
+      app_suffix:
+        description: "The suffix to use for the application."
+        type: string
+        required: true
+      build_number:
+        description: "The build number to use for the deployment."
+        type: string
+        required: true
+      node_options:
+        description: ""
+        type: string
+        required: true
+      project:
+        description: "The project to deploy."
+        type: string
+        required: true
+      vcs_tag_prefix:
+        description: "The prefix to use for the VCS tag."
+        type: string
+        required: true
+
+    secrets:
+      # App settings
+      auth_backend_secret:
+        description: "The secret to use for the authentication backend."
+        required: true
+      auth_webhook_password:
+        description: "The password to use for the authentication webbook."
+        required: true
+      paratext_client_id:
+        description: "The client ID to use for the Paratext API."
+        required: true
+      paratext_api_token:
+        description: "The Paratext API token."
+        required: true
+      paratext_resource_password_base64:
+        description: "The Paratext resource password."
+        required: true
+      paratext_resource_password_hash:
+        description: ""
+        required: true
+      serval_client_id:
+        description: "The client ID to use for the Serval API."
+        required: true
+      serval_client_secret:
+        description: "The secret to use for the Serval API."
+        required: true
+      serval_webhook_secret:
+        description: "The secret to use for the Serval webhook."
+        required: true
+
+      # Deploy information
+      deploy_server:
+        description: "The server to deploy to."
+        required: true
+      deploy_known_hosts:
+        description: "ssh known_hosts lines to use for deployment."
+        required: false
+      deploy_ssh_private_key:
+        description: "SSH private key to use for deployment."
+        required: true
+
+jobs:
+  deploy:
+    name: "Deploy"
+    runs-on: ${{inputs.os}}
+    steps:
+      - name: Place SSH deploy credentials
+        run: |
+          set -ueo pipefail
+          install --mode=700 --directory ~/.ssh
+          install --mode=600 /dev/stdin ~/.ssh/known_hosts <<< "${{secrets.deploy_known_hosts}}"
+          install --mode=600 /dev/stdin ~/.ssh/deploy_key <<< "${{secrets.deploy_ssh_private_key}}"
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{inputs.dotnet_version}}
+      - name: "Deps: Node"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{inputs.node_version}}
+      - name: "Deps: npm"
+        run: npm install --global npm@${{inputs.npm_version}}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which dotnet
+          dotnet --version
+          dpkg -l dotnet\*
+          dotnet --list-sdks
+          dotnet --list-runtimes
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${{inputs.node_version}} ]]
+          [[ $(npm --version) == ${{inputs.npm_version}} ]]
+      - name: "Deps: rsync"
+        run: sudo apt-get install rsync
+      - name: "Build and ship"
+        run: scripts/build-and-ship
+        env:
+          ANGULAR_CONFIG: ${{inputs.angular_config}}
+          APP_NAME: ${{inputs.app_name}}
+          BUILD_NUMBER: ${{inputs.build_number}}
+          DEPLOY_DESTINATION: ${{secrets.deploy_server}}
+          DEPLOY_CREDENTIALS: ~/.ssh/deploy_key
+          NODE_OPTIONS: ${{inputs.node_options}}
+          PARATEXT_CLIENT_ID: ${{secrets.paratext_client_id}}
+          PROJECT: ${{inputs.project}}
+          SERVAL_CLIENT_ID: ${{secrets.serval_client_id}}
+          AUTH_BACKEND_SECRET: ${{secrets.auth_backend_secret}}
+          AUTH_WEBHOOK_PASSWORD: ${{secrets.auth_webhook_password}}
+          PARATEXT_API_TOKEN: ${{secrets.paratext_api_token}}
+          PARATEXT_RESOURCE_PASSWORD_BASE64: ${{secrets.paratext_resource_password_base64}}
+          PARATEXT_RESOURCE_PASSWORD_HASH: ${{secrets.paratext_resource_password_hash}}
+          SERVAL_CLIENT_SECRET: ${{secrets.serval_client_secret}}
+          SERVAL_WEBHOOK_SECRET: ${{secrets.serval_webhook_secret}}
+      - name: "Tag release"
+        run: |
+          set -ueo pipefail
+          git config --global user.name "ci"
+          git config --global user.email "ci"
+          tag="${{inputs.vcs_tag_prefix}}${{inputs.build_number}}"
+          git tag --annotate --message "Release ${tag}" "${tag}"
+          git push origin "${tag}"
