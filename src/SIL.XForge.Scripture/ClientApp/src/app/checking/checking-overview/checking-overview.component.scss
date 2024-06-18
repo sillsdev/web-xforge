@@ -14,7 +14,9 @@
 
 #add-question-button {
   @include breakpoints.media-breakpoint-only(xs, variables.$grid-breakpoints) {
-    min-width: 48px;
+    min-width: 36px;
+    padding-inline-end: 8px;
+    padding-inline-start: 20px;
   }
 }
 
