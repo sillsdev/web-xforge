@@ -43,7 +43,12 @@ public interface ISFProjectService : IProjectService
     Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
     bool IsSourceProject(string projectId);
     Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
-    Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token);
+    Task UpdatePermissionsAsync(
+        string curUserId,
+        IDocument<SFProject> projectDoc,
+        IReadOnlyList<ParatextProjectUser>? users = null,
+        CancellationToken token = default
+    );
     Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId);
     Task CreateAudioTimingData(
         string userId,
