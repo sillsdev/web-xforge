@@ -61,6 +61,8 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 
 button.mdc-icon-button {
   transition: color 0.15s;
+  --mdc-icon-button-state-layer-size: 40px !important;
+  padding: 8px !important;
 
   &:not([disabled]):hover {
     color: variables.$greenLight;
