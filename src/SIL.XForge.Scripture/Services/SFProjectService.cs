@@ -1197,7 +1197,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // in order to query the PT roles and DBL permissions of other SF project/resource users.
         if ((await TryGetProjectRoleAsync(projectDoc.Data, userDoc.Id)).Success)
         {
-            await UpdatePermissionsAsync(userDoc.Id, projectDoc, CancellationToken.None);
+            await UpdatePermissionsAsync(userDoc.Id, projectDoc);
         }
 
         // Add to the source project, if required
@@ -1230,7 +1230,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
     /// user to perform PT queries and set values in the SF DB.
     /// </summary>
-    public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token)
+    public async Task UpdatePermissionsAsync(
+        string curUserId,
+        IDocument<SFProject> projectDoc,
+        IReadOnlyList<ParatextProjectUser>? users = null,
+        CancellationToken token = default
+    )
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -1239,12 +1244,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         string paratextId = projectDoc.Data.ParatextId;
-        HashSet<int> booksInProject = new HashSet<int>(_paratextService.GetBookList(userSecret, paratextId));
-        IReadOnlyDictionary<string, string> ptUsernameMapping = await _paratextService.GetParatextUsernameMappingAsync(
-            userSecret,
-            projectDoc.Data,
-            token
-        );
+        HashSet<int> booksInProject = [.._paratextService.GetBookList(userSecret, paratextId)];
+        users ??= await _paratextService.GetParatextUsersAsync(userSecret, projectDoc.Data, token);
+        IReadOnlyDictionary<string, string> ptUsernameMapping = users.ToDictionary(u => u.Id, u => u.Username);
         bool isResource = _paratextService.IsResource(paratextId);
         // Place to collect all chapter permissions to record in the project.
         var projectChapterPermissions =

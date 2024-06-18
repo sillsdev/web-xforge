@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver.Linq;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
@@ -578,44 +579,26 @@ public class ParatextService : DisposableBase, IParatextService
         );
     }
 
-    private void WarnIfNonuniqueValues(Dictionary<string, string> sfUserIdToPTUsernameMap, string context)
-    {
-        IEnumerable<KeyValuePair<string, string>> recordsWithNonuniqueValues = sfUserIdToPTUsernameMap.Where(
-            (KeyValuePair<string, string> record) =>
-                sfUserIdToPTUsernameMap.Values.Count(val => val == record.Value) > 1
-        );
-        if (recordsWithNonuniqueValues.Count() > 0)
-        {
-            string display = string.Join(
-                ", ",
-                recordsWithNonuniqueValues.Select(record => $"{record.Key}: {record.Value}")
-            );
-            _logger.LogWarning(
-                $"Warning: The PT Username mapping contains multiple records with duplicate values. The following records have values that occur more than once: {display}. {context}"
-            );
-        }
-    }
-
     /// <summary>
-    /// Queries the ParatextRegistry for the project and builds a dictionary of SF user id
-    /// to paratext user names for members of the project.
+    /// Queries the ParatextRegistry for the project and retrieves the users for that project.
     /// </summary>
     /// <param name="userSecret">The user secret.</param>
     /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>
-    /// A dictionary where the key is the SF user ID and the value is Paratext username. (May be empty)
+    /// A list of <see cref="ParatextProjectUser"/> objects.
     /// </returns>
-    public async Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(
+    public async Task<IReadOnlyList<ParatextProjectUser>> GetParatextUsersAsync(
         UserSecret userSecret,
         SFProject project,
         CancellationToken token
     )
     {
-        // Skip all the work if the project is a resource. Resources don't have project members
+        // Skip all the work if the project is a resource
+        List<ParatextProjectUser> users = [];
         if (IsResource(project.ParatextId))
         {
-            return new Dictionary<string, string>();
+            // Resources don't have project members or roles
         }
         else if (await IsRegisteredAsync(userSecret, project.ParatextId, token))
         {
@@ -627,34 +610,39 @@ public class ParatextService : DisposableBase, IParatextService
                 null,
                 token
             );
-            Dictionary<string, string> paratextMapping = JArray
+
+            users = JArray
                 .Parse(response)
-                .OfType<JObject>()
-                .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["username"]))
-                .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
+                .Where(
+                    m =>
+                        !string.IsNullOrEmpty((string?)m["userId"])
+                        && !string.IsNullOrEmpty((string)m["username"])
+                        && !string.IsNullOrEmpty((string?)m["role"])
+                )
+                .Select(
+                    m =>
+                        new ParatextProjectUser
+                        {
+                            ParatextId = (string)m["userId"] ?? string.Empty,
+                            Role = (string)m["role"] ?? string.Empty,
+                            Username = (string)m["username"] ?? string.Empty,
+                        }
+                )
+                .ToList();
 
             // Get the mapping of Scripture Forge user IDs to Paratext usernames
-            IQueryable<User> relevantUsers = _realtimeService
+            string[] paratextIds = users.Select(p => p.ParatextId).ToArray();
+            Dictionary<string, string> userMapping = _realtimeService
                 .QuerySnapshots<User>()
-                .Where(u => paratextMapping.Keys.Contains(u.ParatextId));
-            string sfUserIdToPTUserIdMap = string.Join(
-                ", ",
-                relevantUsers.Select((User userItem) => userItem.Id + ": " + userItem.ParatextId).ToArray<string>()
-            );
-            Dictionary<string, string> userMapping = await relevantUsers.ToDictionaryAsync(
-                u => u.Id,
-                u => paratextMapping[u.ParatextId]
-            );
-
-            WarnIfNonuniqueValues(
-                userMapping,
-                $"This occurred while SF user id '{userSecret.Id}' was querying registered PT project id "
-                    + $"'{project.ParatextId}' (SF project id '{project.Id}').\n"
-                    + $"The project-member json info returned from the server was: {response}\n"
-                    + "The records of SF user ids and their corresponding user paratext ids that was taken from "
-                    + $"realtimeservice to further consider was: {sfUserIdToPTUserIdMap}"
-            );
-            return userMapping;
+                .Where(u => paratextIds.Contains(u.ParatextId))
+                .ToDictionary(u => u.ParatextId, u => u.Id);
+            foreach (ParatextProjectUser user in users)
+            {
+                if (userMapping.TryGetValue(user.ParatextId, out string id))
+                {
+                    user.Id = id;
+                }
+            }
         }
         else
         {
@@ -675,32 +663,73 @@ public class ParatextService : DisposableBase, IParatextService
             SharedRepository remotePtProject = remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
 
             // Build a dictionary of user IDs mapped to usernames using the user secrets
-            var userMapping = new Dictionary<string, string>();
-            foreach (string userId in project.UserRoles.Keys)
+            foreach (
+                ParatextProjectUser user in project.UserRoles.Keys.Select(
+                    userId => new ParatextProjectUser { Id = userId }
+                )
+            )
             {
                 UserSecret projectUserSecret;
-                if (userId == userSecret.Id)
+                if (user.Id == userSecret.Id)
                 {
                     projectUserSecret = userSecret;
                 }
                 else
                 {
-                    projectUserSecret = await _userSecretRepository.GetAsync(userId);
+                    projectUserSecret = await _userSecretRepository.GetAsync(user.Id);
                 }
 
-                string projectUserName = GetParatextUsername(projectUserSecret);
-                if (remotePtProject.SourceUsers.UserNames.Contains(projectUserName))
+                // Get the PT role
+                user.Username = GetParatextUsername(projectUserSecret) ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(user.Username))
                 {
-                    userMapping.Add(userId, projectUserName);
+                    // Skip users that we do not have paratext information for
+                    continue;
+                }
+
+                if (remotePtProject.SourceUsers is null)
+                {
+                    throw new InvalidDataException(
+                        $"Unexpected null SourceUsers when working with PT project id {remotePtProject.SendReceiveId}."
+                    );
+                }
+
+                if (remotePtProject.SourceUsers.Users is null)
+                {
+                    throw new InvalidDataException(
+                        $"Unexpected null SourceUsers.Users when working with PT project id {remotePtProject.SendReceiveId}."
+                    );
+                }
+
+                user.Role = ConvertFromUserRole(
+                    remotePtProject
+                        .SourceUsers.Users.SingleOrDefault(u =>
+                        {
+                            if (u is null)
+                            {
+                                _logger.LogWarning(
+                                    $"An element of SourceUsers.Users was null when working with PT project id {remotePtProject.SendReceiveId}."
+                                );
+                            }
+                            return u?.UserName == user.Username;
+                        })
+                        ?.Role
+                );
+
+                // Get the PT user ID
+                var accessToken = new JwtSecurityToken(projectUserSecret.ParatextTokens.AccessToken);
+                user.ParatextId =
+                    accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject)?.Value ?? string.Empty;
+
+                // Only add if we have a user ID and role
+                if (!string.IsNullOrEmpty(user.ParatextId) && !string.IsNullOrEmpty(user.Role))
+                {
+                    users.Add(user);
                 }
             }
-
-            WarnIfNonuniqueValues(
-                userMapping,
-                $"This occurred while SF user id '{userSecret.Id}' was querying unregistered PT project id '{project.ParatextId}' (SF project id '{project.Id}')."
-            );
-            return userMapping;
         }
+
+        return users;
     }
 
     /// <summary>
@@ -826,147 +855,6 @@ public class ParatextService : DisposableBase, IParatextService
             string message = $"Problem fetching repositories: {contextInformation}";
             _logger.LogWarning(e, message);
             throw;
-        }
-    }
-
-    /// <summary>
-    /// Gets the project roles asynchronously.
-    /// </summary>
-    /// <param name="userSecret">The user secret.</param>
-    /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
-    /// <param name="token">The cancellation token.</param>
-    /// <returns>
-    /// A dictionary where the key is the PT user ID and the value is the PT role.
-    /// </returns>
-    public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(
-        UserSecret userSecret,
-        SFProject project,
-        CancellationToken token
-    )
-    {
-        if (IsResource(project.ParatextId))
-        {
-            // Resources do not have roles
-            return new Dictionary<string, string>();
-        }
-        else if (await IsRegisteredAsync(userSecret, project.ParatextId, token))
-        {
-            // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
-            // environment so instead we call the registry API.
-            string response = await CallApiAsync(
-                userSecret,
-                HttpMethod.Get,
-                $"projects/{project.ParatextId}/members",
-                null,
-                token
-            );
-            JArray? members = JArray.Parse(response);
-            if (members == null)
-            {
-                throw new DataNotFoundException(
-                    $"Got a null list of members when parsing registry members list, for project SF id {project.Id}, using user secret id {userSecret.Id}."
-                );
-            }
-            return members
-                .OfType<JObject>()
-                .Where(m => !string.IsNullOrEmpty((string?)m["userId"]) && !string.IsNullOrEmpty((string?)m["role"]))
-                .ToDictionary(m => (string)m["userId"]!, m => (string)m["role"]!);
-        }
-        else
-        {
-            // Get the list of users from the repository
-            IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(
-                userSecret.Id,
-                CancellationToken.None
-            );
-
-            bool hasRole = project.UserRoles.TryGetValue(userSecret.Id, out string? userRole);
-            string moreInformation =
-                $"SF user id '{userSecret.Id}', "
-                + $"while interested in unregistered PT project id '{project.ParatextId}' "
-                + $"(SF project id {project.Id}). "
-                + $"On SF project, user has {(hasRole ? $"role '{userRole}'." : "no role.")}";
-
-            IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource, $"For {moreInformation}");
-            SharedRepository? remotePtProject = remotePtProjects.SingleOrDefault(p =>
-                p.SendReceiveId.Id == project.ParatextId
-            );
-            if (remotePtProject == null)
-            {
-                string projects = string.Join(",", remotePtProjects.Select((SharedRepository r) => r.SendReceiveId.Id));
-                string message =
-                    $"Failed to find project, when looking in permissible set of repositories "
-                    + $"of PT ids '{projects}', for {moreInformation}";
-                throw new ForbiddenException(message);
-            }
-
-            // Build a dictionary of user IDs mapped to roles using the user secrets
-            var userMapping = new Dictionary<string, string>();
-            foreach (string userId in project.UserRoles.Keys)
-            {
-                // Reuse the userSecret if this is for the current user
-                UserSecret projectUserSecret;
-                if (userId == userSecret.Id)
-                {
-                    projectUserSecret = userSecret;
-                }
-                else
-                {
-                    projectUserSecret = await _userSecretRepository.GetAsync(userId);
-                }
-
-                if (projectUserSecret == null)
-                {
-                    // Skip users that we won't be able to find a PT role for.
-                    continue;
-                }
-
-                // Get the PT role
-                string? projectUserName = GetParatextUsername(projectUserSecret);
-                if (projectUserName == null)
-                {
-                    continue;
-                }
-
-                if (remotePtProject.SourceUsers is null)
-                {
-                    throw new InvalidDataException(
-                        $"Unexpected null SourceUsers when working with PT project id {remotePtProject.SendReceiveId}."
-                    );
-                }
-                if (remotePtProject.SourceUsers.Users is null)
-                {
-                    throw new InvalidDataException(
-                        $"Unexpected null SourceUsers.Users when working with PT project id {remotePtProject.SendReceiveId}."
-                    );
-                }
-                string role = ConvertFromUserRole(
-                    remotePtProject
-                        .SourceUsers.Users.SingleOrDefault(u =>
-                        {
-                            if (u is null)
-                            {
-                                _logger.LogWarning(
-                                    $"An element of SourceUsers.Users was null when working with PT project id {remotePtProject.SendReceiveId}."
-                                );
-                            }
-                            return u?.UserName == projectUserName;
-                        })
-                        ?.Role
-                );
-
-                // Get the PT user ID
-                var accessToken = new JwtSecurityToken(projectUserSecret.ParatextTokens.AccessToken);
-                string ptUserId = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject)?.Value;
-
-                // Only add if we have a user ID and role
-                if (!string.IsNullOrEmpty(ptUserId) && !string.IsNullOrEmpty(role))
-                {
-                    userMapping.Add(ptUserId, role);
-                }
-            }
-
-            return userMapping;
         }
     }
 
@@ -2303,15 +2191,12 @@ public class ParatextService : DisposableBase, IParatextService
             );
             return registeredParatextId.Trim('"') == paratextId;
         }
-        catch (HttpRequestException error)
+        catch (HttpRequestException error) when (error.StatusCode == HttpStatusCode.NotFound)
         {
             // A 404 error means the project is not registered. It can also mean
             // the authenticated user is not authorized to view it, according to
             // the API and as seen in practice.
-            if (error.StatusCode == HttpStatusCode.NotFound)
-                return false;
-            else
-                throw;
+            return false;
         }
     }
 
