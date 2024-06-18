@@ -4016,7 +4016,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetProjectRolesAsync_UsesTheRepositoryForUnregisteredProjects()
+    public async Task GetParatextUsersAsync_UsesTheRepositoryForUnregisteredProjects()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4027,16 +4027,18 @@ public class ParatextServiceTests
         Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
         // SUT
-        var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
-        Assert.That(roles.Count, Is.EqualTo(2));
-        var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
-        Assert.That(roles.First(), Is.EqualTo(firstRole));
-        var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
-        Assert.That(roles.Last(), Is.EqualTo(secondRole));
+        IReadOnlyList<ParatextProjectUser> users = await env.Service.GetParatextUsersAsync(
+            userSecret,
+            project,
+            CancellationToken.None
+        );
+        Assert.That(users.Count, Is.EqualTo(2));
+        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
+        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
     }
 
     [Test]
-    public async Task GetProjectRolesAsync_UnregisteredProject_SkipsNonPTUsers()
+    public async Task GetParatextUsersAsync_UnregisteredProject_SkipsNonPTUsers()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4050,16 +4052,18 @@ public class ParatextServiceTests
         Assert.That(project.UserRoles.Count, Is.EqualTo(4), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
         // SUT
-        var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
-        Assert.That(roles.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
-        var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
-        Assert.That(roles.First(), Is.EqualTo(firstRole));
-        var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
-        Assert.That(roles.Last(), Is.EqualTo(secondRole));
+        IReadOnlyList<ParatextProjectUser> users = await env.Service.GetParatextUsersAsync(
+            userSecret,
+            project,
+            CancellationToken.None
+        );
+        Assert.That(users.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
+        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
+        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
     }
 
     [Test]
-    public async Task GetProjectRolesAsync_UnregisteredProject_MoreInfoWhenHttpException()
+    public async Task GetParatextUsersAsync_UnregisteredProject_MoreInfoWhenHttpException()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4077,11 +4081,11 @@ public class ParatextServiceTests
 
         // SUT
         Assert.ThrowsAsync<HttpException>(
-            () => env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None)
+            () => env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
         );
 
         // Various pieces of significant data are reported when a 401 Unauthorized goes thru.
-        string[] notes = { "unregistered", project.ParatextId, project.Id, userSecret.Id, "role" };
+        string[] notes = ["unregistered", project.ParatextId, project.Id, userSecret.Id, "role"];
         env.MockLogger.AssertHasEvent(
             (LogEvent logEvent) => notes.All((string note) => logEvent.Message.Contains(note))
         );
@@ -4117,63 +4121,18 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetParatextUsernameMappingAsync_UsesTheRepositoryForUnregisteredProjects()
-    {
-        var env = new TestEnvironment();
-        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
-        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
-        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-        var project = projects.First();
-        env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
-        // SUT
-        var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
-        KeyValuePair<string, string>[] expected = new[]
-        {
-            new KeyValuePair<string, string>(env.User01, env.Username01),
-            new KeyValuePair<string, string>(env.User02, env.Username02)
-        };
-        Assert.That(mapping, Is.EquivalentTo(expected));
-    }
-
-    [Test]
-    public async Task GetParatextUsernameMappingAsync_ReturnsEmptyMappingForResourceProject()
+    public async Task GetParatextUsersAsync_ReturnsEmptyMappingForResourceProject()
     {
         var env = new TestEnvironment();
         const string resourceId = "1234567890abcdef";
         Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
         var userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        var mapping = await env.Service.GetParatextUsernameMappingAsync(
+        var mapping = await env.Service.GetParatextUsersAsync(
             userSecret,
             new SFProject { ParatextId = resourceId },
             CancellationToken.None
         );
         Assert.That(mapping.Count, Is.EqualTo(0));
-    }
-
-    [Test]
-    public async Task GetParatextUsernameMappingAsync_WarnsWhenDuplicatePTUsernamesInUnregisteredProject()
-    {
-        var env = new TestEnvironment();
-        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        // Note that the following user secret has same PT username and id as the other user. This presumably
-        // represents a bad DB state.
-        TestEnvironment.MakeUserSecret(env.User02, env.Username01, env.ParatextUserId01);
-        env.MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == env.User02)).Returns(env.Username01);
-
-        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
-        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-        var project = projects.First();
-        env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
-        // SUT
-        var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
-        string[] requiredLogWords = { "unregistered", env.Username01, "duplicate" };
-        // Warn about the situation.
-        env.MockLogger.AssertHasEvent(
-            (LogEvent ev) => requiredLogWords.All((string requiredWord) => ev.Message.Contains(requiredWord))
-        );
-        // And still return the data.
-        Assert.That(mapping.Count, Is.EqualTo(2));
     }
 
     enum SelectionType
@@ -5217,6 +5176,24 @@ public class ParatextServiceTests
         public MockScrText ProjectScrText { get; set; }
         public CommentManager ProjectCommentManager { get; set; }
         public ProjectFileManager ProjectFileManager { get; set; }
+
+        public ParatextProjectUser ParatextProjectUser01 =>
+            new ParatextProjectUser
+            {
+                Id = User01,
+                ParatextId = ParatextUserId01,
+                Role = SFProjectRole.Administrator,
+                Username = Username01,
+            };
+
+        public ParatextProjectUser ParatextProjectUser02 =>
+            new ParatextProjectUser
+            {
+                Id = User02,
+                ParatextId = ParatextUserId02,
+                Role = SFProjectRole.Administrator,
+                Username = Username02,
+            };
 
         public static HttpResponseMessage MakeOkHttpResponseMessage(string content)
         {

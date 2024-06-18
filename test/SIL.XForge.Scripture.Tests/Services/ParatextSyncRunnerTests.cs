@@ -559,16 +559,15 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UserRoleChangedAndUserRemoved()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
-        var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
-        env.ParatextService.GetProjectRolesAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Any<UserSecret>(),
             Arg.Is((SFProject project) => project.ParatextId == "target"),
             Arg.Any<CancellationToken>()
         )
-            .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            .Returns([TestEnvironment.ParatextProjectUser01 with { Role = SFProjectRole.Translator }]);
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
@@ -585,16 +584,15 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SetsUserPermissions()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
-        var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
-        env.ParatextService.GetProjectRolesAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Any<UserSecret>(),
             Arg.Is((SFProject project) => project.ParatextId == "target"),
             Arg.Any<CancellationToken>()
         )
-            .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            .Returns([TestEnvironment.ParatextProjectUser01 with { Role = SFProjectRole.Translator }]);
 
         // SUT
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -606,6 +604,7 @@ public class ParatextSyncRunnerTests
                     (IDocument<SFProject> sfProjDoc) =>
                         sfProjDoc.Data.Id == "project01" && sfProjDoc.Data.ParatextId == "target"
                 ),
+                Arg.Any<IReadOnlyList<ParatextProjectUser>>(),
                 Arg.Any<CancellationToken>()
             );
     }
@@ -617,13 +616,7 @@ public class ParatextSyncRunnerTests
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
-        env.ParatextService.GetParatextUsernameMappingAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Any<SFProject>(),
-            CancellationToken.None
-        )
-            .Throws<UnauthorizedAccessException>();
-        env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+        env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
             .Throws<UnauthorizedAccessException>();
 
         // SUT
@@ -642,18 +635,17 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_ProjectTextSetToNotEditable()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 1) };
+        Book[] books = [new Book("MAT", 1)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
         SFProject project = env.GetProject("project01");
         Assert.That(project.Editable, Is.True, "setup");
-        var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
-        env.ParatextService.GetProjectRolesAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Any<UserSecret>(),
             Arg.Is((SFProject project) => project.ParatextId == "target"),
             Arg.Any<CancellationToken>()
         )
-            .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            .Returns([TestEnvironment.ParatextProjectUser01]);
 
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
             .Returns(new ParatextSettings { Editable = false });
@@ -797,17 +789,17 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SetsProjectSettings()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 1) };
+        Book[] books = [new Book("MAT", 1)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
-        env.ParatextService.GetProjectRolesAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Any<UserSecret>(),
             Arg.Is<SFProject>(project => project.ParatextId == "target"),
             Arg.Any<CancellationToken>()
         )
-            .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            .Returns([TestEnvironment.ParatextProjectUser01]);
         int fontSize = 10;
         string font = ProjectSettings.defaultFontName;
         string sourceWritingSystemTag = "en";
@@ -912,17 +904,17 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_ProjectSettingsIsNull_SyncFailsAndTextNotUpdated()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 1) };
+        Book[] books = [new Book("MAT", 1)];
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
-        env.ParatextService.GetProjectRolesAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Any<UserSecret>(),
             Arg.Is((SFProject project) => project.ParatextId == "target"),
             Arg.Any<CancellationToken>()
         )
-            .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            .Returns([TestEnvironment.ParatextProjectUser01]);
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(x => null);
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -938,16 +930,15 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
     {
         var env = new TestEnvironment();
-        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
-        var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
-        env.ParatextService.GetProjectRolesAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Any<UserSecret>(),
             Arg.Is((SFProject project) => project.ParatextId == "target"),
             Arg.Any<CancellationToken>()
         )
-            .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            .Returns([TestEnvironment.ParatextProjectUser01]);
 
         await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
         SFProject project = env.GetProject();
@@ -1322,15 +1313,7 @@ public class ParatextSyncRunnerTests
         using var cancellationTokenSource = new CancellationTokenSource();
 
         // Setup a trap to crash the task
-        env.NotesMapper.When(
-            x =>
-                x.InitAsync(
-                    Arg.Any<UserSecret>(),
-                    Arg.Any<List<User>>(),
-                    Arg.Any<SFProject>(),
-                    Arg.Any<CancellationToken>()
-                )
-        )
+        env.NotesMapper.When(x => x.Init(Arg.Any<UserSecret>(), Arg.Any<IReadOnlyList<ParatextProjectUser>>()))
             .Do(_ => throw new ArgumentException());
 
         // Run the task
@@ -1392,15 +1375,7 @@ public class ParatextSyncRunnerTests
         using var cancellationTokenSource = new CancellationTokenSource();
 
         // Setup a trap to cancel the task
-        env.NotesMapper.When(
-            x =>
-                x.InitAsync(
-                    Arg.Any<UserSecret>(),
-                    Arg.Any<List<User>>(),
-                    Arg.Any<SFProject>(),
-                    Arg.Any<CancellationToken>()
-                )
-        )
+        env.NotesMapper.When(x => x.Init(Arg.Any<UserSecret>(), Arg.Any<IReadOnlyList<ParatextProjectUser>>()))
             .Do(_ =>
             {
                 cancellationTokenSource.Cancel();
@@ -3261,6 +3236,30 @@ public class ParatextSyncRunnerTests
         private bool _sendReceivedCalled = false;
         private readonly int _guidStartNum = 3;
 
+        public static readonly ParatextProjectUser ParatextProjectUser01 = new ParatextProjectUser
+        {
+            Id = "user01",
+            ParatextId = "pt01",
+            Role = SFProjectRole.Administrator,
+            Username = "User 1",
+        };
+
+        public static readonly ParatextProjectUser ParatextProjectUser02 = new ParatextProjectUser
+        {
+            Id = "user02",
+            ParatextId = "pt02",
+            Role = SFProjectRole.Translator,
+            Username = "User 2",
+        };
+
+        public static readonly ParatextProjectUser ParatextProjectUser03 = new ParatextProjectUser
+        {
+            Id = "user03",
+            ParatextId = "pt03",
+            Role = SFProjectRole.PTObserver,
+            Username = "User 3",
+        };
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TestEnvironment" /> class.
         /// </summary>
@@ -3278,11 +3277,7 @@ public class ParatextSyncRunnerTests
             _projectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
                 {
-                    new SFProjectSecret
-                    {
-                        Id = "project01",
-                        JobIds = new List<string> { "test_jobid" },
-                    },
+                    new SFProjectSecret { Id = "project01", JobIds = ["test_jobid"], },
                     new SFProjectSecret { Id = "project02" },
                     new SFProjectSecret { Id = "project03" },
                     new SFProjectSecret { Id = "project04" },
@@ -3305,21 +3300,16 @@ public class ParatextSyncRunnerTests
             SFProjectService = Substitute.For<ISFProjectService>();
             ParatextService = Substitute.For<IParatextService>();
 
-            var ptUserRoles = new Dictionary<string, string>
-            {
-                { "pt01", SFProjectRole.Administrator },
-                { "pt02", SFProjectRole.Translator }
-            };
             ParatextService
                 .GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
                 .Returns(Task.FromResult(new BiblicalTermsChanges()));
             ParatextService
-                .GetProjectRolesAsync(
+                .GetParatextUsersAsync(
                     Arg.Any<UserSecret>(),
                     Arg.Is((SFProject project) => project.ParatextId == "target"),
                     Arg.Any<CancellationToken>()
                 )
-                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+                .Returns([ParatextProjectUser01, ParatextProjectUser02]);
             ParatextService
                 .When(
                     x =>
@@ -3400,19 +3390,10 @@ public class ParatextSyncRunnerTests
 
         public SFProjectSecret GetProjectSecret(string projectId = "project01") => _projectSecrets.Get(projectId);
 
-        public SFProjectUserConfig GetProjectUserConfig(string projectId, string userId)
-        {
-            return RealtimeService
-                .GetRepository<SFProjectUserConfig>()
-                .Get(SFProjectUserConfig.GetDocId(projectId, userId));
-        }
-
-        public bool ContainsText(string projectId, string bookId, int chapter)
-        {
-            return RealtimeService
+        public bool ContainsText(string projectId, string bookId, int chapter) =>
+            RealtimeService
                 .GetRepository<TextData>()
                 .Contains(TextData.GetTextDocId(projectId, Canon.BookIdToNumber(bookId), chapter));
-        }
 
         /// <summary>
         /// Fetches the text docs for a book.
@@ -3940,19 +3921,9 @@ public class ParatextSyncRunnerTests
                         Arg.Any<Dictionary<string, ParatextUserProfile>>()
                     )
                     .Returns(new[] { noteThreadChange });
-                Dictionary<string, string> userIdsToUsernames = new Dictionary<string, string>
-                {
-                    { "user01", "User 1" },
-                    { "user02", "User 2" },
-                    { "user03", "User 3" },
-                };
                 ParatextService
-                    .GetParatextUsernameMappingAsync(
-                        Arg.Any<UserSecret>(),
-                        Arg.Any<SFProject>(),
-                        CancellationToken.None
-                    )
-                    .Returns(userIdsToUsernames);
+                    .GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+                    .Returns([ParatextProjectUser01, ParatextProjectUser02, ParatextProjectUser03]);
             }
         }
 

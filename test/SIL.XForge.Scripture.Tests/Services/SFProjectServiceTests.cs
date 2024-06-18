@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
@@ -946,14 +947,12 @@ public class SFProjectServiceTests
         // and in ParatextService.CallApiAsync() there originates a System.Net.Http.HttpRequestException or perhaps
         // EdjCase.JsonRpc.Common.RpcException. Our test should not end up doing down a path that causes this
         // exception.
-        env.ParatextService.GetParatextUsernameMappingAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
             Arg.Is((SFProject project) => project.ParatextId == project05PTId),
             Arg.Any<CancellationToken>()
         )
-            .Returns(
-                Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
-            );
+            .Returns(Task.FromException<IReadOnlyList<ParatextProjectUser>>(new HttpRequestException()));
 
         string userRoleOnPTProject = null;
         env.ParatextService.TryGetProjectRoleAsync(
@@ -1126,14 +1125,12 @@ public class SFProjectServiceTests
         );
         Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
-        env.ParatextService.GetParatextUsernameMappingAsync(
+        env.ParatextService.GetParatextUsersAsync(
             Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
             Arg.Is((SFProject project) => project.ParatextId == project05PTId),
             Arg.Any<CancellationToken>()
         )
-            .Returns(
-                Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
-            );
+            .Returns(Task.FromException<IReadOnlyList<ParatextProjectUser>>(new HttpRequestException()));
 
         string userRoleOnPTProject = null;
         env.ParatextService.TryGetProjectRoleAsync(
@@ -1852,7 +1849,7 @@ public class SFProjectServiceTests
         IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
         // SUT
-        await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
+        await env.Service.UpdatePermissionsAsync(User01, project01Doc);
 
         // Permissions were set for the books and chapters that we were able to handle.
         sfProject = env.GetProject(Project01);
@@ -1877,9 +1874,7 @@ public class SFProjectServiceTests
         IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.UpdatePermissionsAsync(User04, project01Doc, CancellationToken.None)
-        );
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc));
     }
 
     [Test]
@@ -1926,7 +1921,7 @@ public class SFProjectServiceTests
         IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
         // SUT
-        await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
+        await env.Service.UpdatePermissionsAsync(User01, project01Doc);
 
         sfProject = env.GetProject(Project01);
         Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
@@ -1979,7 +1974,7 @@ public class SFProjectServiceTests
         IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
         // SUT
-        await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
+        await env.Service.UpdatePermissionsAsync(User01, project01Doc);
 
         sfProject = env.GetProject(Project01);
         Assert.That(sfProject.Texts.First().Permissions[User01], Is.EqualTo(TextInfoPermission.Read));
@@ -2052,9 +2047,9 @@ public class SFProjectServiceTests
         IDocument<SFProject> resource01Doc = await conn.FetchAsync<SFProject>(Resource01);
 
         // SUT 1 - Setting target project permissions continues to work as expected.
-        await env.Service.UpdatePermissionsAsync(User01, project01Doc, CancellationToken.None);
+        await env.Service.UpdatePermissionsAsync(User01, project01Doc);
         // SUT 2 - Resource permissions are set.
-        await env.Service.UpdatePermissionsAsync(User01, resource01Doc, CancellationToken.None);
+        await env.Service.UpdatePermissionsAsync(User01, resource01Doc);
 
         sfProject = env.GetProject(Project01);
         resource = env.GetProject(Resource01);
