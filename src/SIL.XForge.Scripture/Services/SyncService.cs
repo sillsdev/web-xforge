@@ -139,15 +139,15 @@ public class SyncService(
                 );
                 try
                 {
-                    await sourceProjectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
-                    WarnIfAnomalousQueuedCount(
-                        sourceProjectDoc.Data.Sync.QueuedCount,
-                        $"For parent SF project id {sourceProjectDoc.Id} after inc."
-                    );
                     await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
                     WarnIfAnomalousQueuedCount(
                         projectDoc.Data.Sync.QueuedCount,
                         $"For daughter SF project id {projectDoc.Id} after inc."
+                    );
+                    await sourceProjectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+                    WarnIfAnomalousQueuedCount(
+                        sourceProjectDoc.Data.Sync.QueuedCount,
+                        $"For parent SF project id {sourceProjectDoc.Id} after inc."
                     );
 
                     // Store the source job id, so we can cancel the job later if needed
