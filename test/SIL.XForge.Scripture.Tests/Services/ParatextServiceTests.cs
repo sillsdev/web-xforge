@@ -3729,6 +3729,50 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task SendReceiveAsync_ProjectIsRegistered_Succeeds()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+            user01Secret,
+            userRoleOnAllThePtProjects: UserRoles.Administrator,
+            extraSharedRepository: false,
+            paratextId: ptProjectId
+        );
+        env.SetupSuccessfulSendReceive();
+
+        // SUT 1
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
+        env.MockSharingLogicWrapper.Received(1)
+            .ShareChanges(
+                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId),
+                Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId)
+            );
+        mockSource.DidNotReceive().Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
+        env.MockSharingLogicWrapper.ClearReceivedCalls();
+
+        // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
+        // SUT 2
+        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(
+            () =>
+                env.Service.SendReceiveAsync(
+                    user01Secret,
+                    "unknownPtProjectId8",
+                    null,
+                    default,
+                    Substitute.For<SyncMetrics>()
+                )
+        );
+        Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
+        env.MockSharingLogicWrapper.DidNotReceive()
+            .ShareChanges(default, Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), default);
+    }
+
+    [Test]
     public async Task SendReceiveAsync_ProjectNotYetCloned()
     {
         var env = new TestEnvironment();
@@ -5353,7 +5397,8 @@ public class ParatextServiceTests
         public IInternetSharedRepositorySource SetSharedRepositorySource(
             UserSecret userSecret,
             UserRoles userRoleOnAllThePtProjects,
-            bool extraSharedRepository = false
+            bool extraSharedRepository = false,
+            string? paratextId = null
         )
         {
             // Set up the XML for the user roles - we could use an XML Document, but this is simpler
@@ -5412,6 +5457,38 @@ public class ParatextServiceTests
             }
             mockSource.GetRepositories().Returns(sharedRepositories);
             mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
+
+            // Set up the individual metadata and license calls if we are to configure it
+            if (paratextId is not null)
+            {
+                JObject projectLicense = JObject.Parse(
+                    $$"""
+                                       {
+                                         "type": "translator",
+                                         "licensedToParatextId": "{{paratextId}}",
+                                         "licensedToOrgs": [
+                                           "5494956f5117ad586f2e2f40"
+                                         ],
+                                         "issuedAt": "2024-06-18T22:26:28.854Z",
+                                         "expiresAt": "2024-06-18T22:26:28.854Z",
+                                         "revoked": true
+                                       }
+                                       """
+                );
+                mockSource.GetLicenseForUserProject(paratextId).Returns(new ProjectLicense(projectLicense));
+                if (paratextId == PTProjectIds[Project01].Id)
+                {
+                    mockSource.GetProjectMetadata(paratextId).Returns(projMeta1);
+                }
+                else if (paratextId == PTProjectIds[Project02].Id)
+                {
+                    mockSource.GetProjectMetadata(paratextId).Returns(projMeta2);
+                }
+                else if (paratextId == PTProjectIds[Project03].Id)
+                {
+                    mockSource.GetProjectMetadata(paratextId).Returns(projMeta3);
+                }
+            }
 
             // An HttpException means that the repo is already unlocked, so any code should be OK with this
             mockSource
