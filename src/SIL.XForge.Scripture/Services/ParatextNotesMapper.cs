@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Localization;
@@ -26,60 +25,33 @@ namespace SIL.XForge.Scripture.Services;
 /// comments data, the PT user for a answer/comment is recorded as an opaque id. This class maintains the mapping
 /// of ids to PT usernames in the project entity.
 /// </summary>
-public class ParatextNotesMapper : IParatextNotesMapper
+public class ParatextNotesMapper(
+    IRepository<UserSecret> userSecrets,
+    IParatextService paratextService,
+    IUserService userService,
+    IStringLocalizer<SharedResource> localizer,
+    IOptions<SiteOptions> siteOptions,
+    IGuidService guidService
+) : IParatextNotesMapper
 {
-    private readonly IRepository<UserSecret> _userSecrets;
-    private readonly IParatextService _paratextService;
-    private readonly IUserService _userService;
-    private readonly IStringLocalizer<SharedResource> _localizer;
-    private readonly IOptions<SiteOptions> _siteOptions;
     private UserSecret? _currentUserSecret;
     private string? _currentParatextUsername;
-    private readonly IGuidService _guidService;
-    private HashSet<string> _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
+    private HashSet<string> _ptProjectUsersWhoCanWriteNotes = [];
 
-    public ParatextNotesMapper(
-        IRepository<UserSecret> userSecrets,
-        IParatextService paratextService,
-        IUserService userService,
-        IStringLocalizer<SharedResource> localizer,
-        IOptions<SiteOptions> siteOptions,
-        IGuidService guidService
-    )
-    {
-        _userSecrets = userSecrets;
-        _paratextService = paratextService;
-        _userService = userService;
-        _localizer = localizer;
-        _siteOptions = siteOptions;
-        _guidService = guidService;
-    }
-
-    public async Task InitAsync(
-        UserSecret currentUserSecret,
-        List<User> ptUsers,
-        SFProject project,
-        CancellationToken token
-    )
+    public void Init(UserSecret currentUserSecret, IReadOnlyList<ParatextProjectUser> users)
     {
         _currentUserSecret = currentUserSecret;
-        _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
-        _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
-        IReadOnlyDictionary<string, string> roles = await _paratextService.GetProjectRolesAsync(
-            currentUserSecret,
-            project,
-            token
-        );
-        var ptRolesCanWriteNote = new HashSet<string>
-        {
+        _currentParatextUsername = paratextService.GetParatextUsername(currentUserSecret);
+        HashSet<string> ptRolesCanWriteNote =
+        [
             SFProjectRole.Administrator,
             SFProjectRole.Translator,
             SFProjectRole.Consultant,
-        };
+        ];
 
         // Populate the list with all Paratext users belonging to the project and who can write notes
-        _ptProjectUsersWhoCanWriteNotes = ptUsers
-            .Where(u => roles.TryGetValue(u.ParatextId, out string role) && ptRolesCanWriteNote.Contains(role))
+        _ptProjectUsersWhoCanWriteNotes = users
+            .Where(u => ptRolesCanWriteNote.Contains(u.Role))
             .Select(u => u.Id)
             .ToHashSet();
     }
@@ -129,7 +101,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
 
                     // Questions that have empty texts will show in Paratext notes that it is audio-only
                     string qText = string.IsNullOrEmpty(question.Text)
-                        ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name]
+                        ? localizer[SharedResource.Keys.AudioOnlyQuestion, siteOptions.Value.Name]
                         : question.Text;
                     answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
                     if (!string.IsNullOrEmpty(answer.ScriptureText))
@@ -146,7 +118,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                         checkerUsernames
                     );
                     if (!string.IsNullOrEmpty(username))
-                        answerPrefixContents.Add($"[{username} - {_siteOptions.Value.Name}]");
+                        answerPrefixContents.Add($"[{username} - {siteOptions.Value.Name}]");
 
                     string answerSyncUserId = await UpdateThreadElemAsync(
                         oldCommentElems,
@@ -172,7 +144,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                             checkerUsernames
                         );
                         if (!string.IsNullOrEmpty(commentUsername))
-                            commentPrefixContents.Add($"[{commentUsername} - {_siteOptions.Value.Name}]");
+                            commentPrefixContents.Add($"[{commentUsername} - {siteOptions.Value.Name}]");
 
                         string commentSyncUserId = await UpdateThreadElemAsync(
                             oldCommentElems,
@@ -309,7 +281,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         var contentElem = new XElement("content");
         // Responses that have empty texts will show in Paratext notes that it is audio-only
         string responseText = string.IsNullOrEmpty(comment.Text)
-            ? _localizer[SharedResource.Keys.AudioOnlyResponse, _siteOptions.Value.Name]
+            ? localizer[SharedResource.Keys.AudioOnlyResponse, siteOptions.Value.Name]
             : comment.Text;
         if (prefixContent == null || prefixContent.Count == 0)
         {
@@ -365,9 +337,9 @@ public class ParatextNotesMapper : IParatextNotesMapper
         string paratextUsername = null;
         if (_ptProjectUsersWhoCanWriteNotes.Contains(ownerRef))
         {
-            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(ownerRef);
+            Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(ownerRef);
             if (attempt.TryResult(out UserSecret userSecret))
-                paratextUsername = _paratextService.GetParatextUsername(userSecret);
+                paratextUsername = paratextService.GetParatextUsername(userSecret);
         }
 
         bool canWritePtNoteOnProject = paratextUsername != null;
@@ -411,7 +383,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
             // to the NewSyncUsers property
             ptProjectUser = new ParatextUserProfile
             {
-                OpaqueUserId = _guidService.NewObjectId(),
+                OpaqueUserId = guidService.NewObjectId(),
                 Username = paratextUsername,
             };
             // Add the sync user to the dictionary
@@ -445,7 +417,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         }
 
         // the user is an SF community checker
-        username = await _userService.GetUsernameFromUserId(_currentUserSecret.Id, userId);
+        username = await userService.GetUsernameFromUserId(_currentUserSecret.Id, userId);
         checkerUsernames.Add(userId, username);
         return username;
     }

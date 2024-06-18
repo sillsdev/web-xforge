@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -97,6 +96,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     internal SyncMetrics _syncMetrics;
     private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
     private Dictionary<string, string> _userIdsToDisplayNames;
+    private IReadOnlyList<ParatextProjectUser> _paratextUsers = [];
 
     public ParatextSyncRunner(
         IRepository<UserSecret> userSecrets,
@@ -442,7 +442,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             // We will always update permissions, even if this is a resource project
             LogMetric("Updating permissions");
-            await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
+            await _projectService.UpdatePermissionsAsync(userId, _projectDoc, _paratextUsers, token);
 
             await NotifySyncProgress(SyncPhase.Phase9, 40.0);
 
@@ -1029,16 +1029,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
             return false;
         }
 
-        _currentPtSyncUsers = await GetCurrentProjectPTUsers(token);
-        List<User> paratextUsers = await _realtimeService
-            .QuerySnapshots<User>()
-            .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
-            .ToListAsync();
-
         // Report on authentication success before other attempts.
         await PreflightAuthenticationReportAsync();
 
-        await _notesMapper.InitAsync(_userSecret, paratextUsers, _projectDoc.Data, token);
+        _paratextUsers = await _paratextService.GetParatextUsersAsync(_userSecret, _projectDoc.Data, token);
+        _currentPtSyncUsers = GetCurrentProjectPtUsers();
+
+        _notesMapper.Init(_userSecret, _paratextUsers);
 
         await NotifySyncProgress(SyncPhase.Phase1, 20.0);
         return true;
@@ -1651,7 +1648,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         LogMetric("Completing sync");
         bool updateRoles = true;
         IReadOnlyDictionary<string, string> ptUserRoles;
-        if (_paratextService.IsResource(_projectDoc.Data.ParatextId) || token.IsCancellationRequested)
+        if (!successful || _paratextService.IsResource(_projectDoc.Data.ParatextId) || token.IsCancellationRequested)
         {
             // Do not update permissions on sync, if this is a resource project, as then,
             // permission updates will be performed when a target project is synchronized.
@@ -1661,29 +1658,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         else
         {
-            try
-            {
-                ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret, _projectDoc.Data, token);
-            }
-            catch (Exception ex)
-            {
-                if (ex is HttpRequestException or OperationCanceledException or UnauthorizedAccessException)
-                {
-                    Log(
-                        $"CompleteSync: Problem fetching project roles. Maybe the user does not have access to the project or cancelled the sync. ({ex})"
-                    );
-                    // This throws a 404 if the user does not have access to the project
-                    // A task cancelled exception will be thrown if the user cancels the task
-                    // Note: OperationCanceledException includes TaskCanceledException
-                    ptUserRoles = new Dictionary<string, string>();
-                    updateRoles = false;
-                }
-                else
-                {
-                    Log($"CompleteSync: Problem fetching project roles. Rethrowing: ({ex})");
-                    throw;
-                }
-            }
+            ptUserRoles = _paratextUsers.ToDictionary(u => u.ParatextId, u => u.Role);
         }
 
         var userIdsToRemove = new List<string>();
@@ -1998,24 +1973,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
     }
 
-    private async Task<Dictionary<string, ParatextUserProfile>> GetCurrentProjectPTUsers(CancellationToken token)
+    private Dictionary<string, ParatextUserProfile> GetCurrentProjectPtUsers()
     {
-        IReadOnlyDictionary<string, string> sfUserIdsToUsernames =
-            await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
         Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc.Data.ParatextUsers.ToDictionary(
             p => p.Username
         );
-        foreach (var (sfUserId, username) in sfUserIdsToUsernames)
+        foreach (ParatextProjectUser paratextUser in _paratextUsers)
         {
-            if (!paratextUsers.TryGetValue(username, out ParatextUserProfile profile))
+            if (!paratextUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
             {
                 ParatextUserProfile userProfile = new ParatextUserProfile
                 {
-                    Username = username,
-                    SFUserId = sfUserId,
-                    OpaqueUserId = _guidService.NewObjectId()
+                    Username = paratextUser.Username,
+                    SFUserId = paratextUser.Id,
+                    OpaqueUserId = _guidService.NewObjectId(),
                 };
-                paratextUsers.TryAdd(username, userProfile);
+                paratextUsers.TryAdd(paratextUser.Username, userProfile);
             }
             else
             {
@@ -2023,10 +1996,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 // We create a new object to so that the logic in projectDoc.SubmitJson0OpAsync() will see the change.
                 if (profile.SFUserId is null)
                 {
-                    paratextUsers[username] = new ParatextUserProfile
+                    paratextUsers[paratextUser.Username] = new ParatextUserProfile
                     {
                         Username = profile.Username,
-                        SFUserId = sfUserId,
+                        SFUserId = paratextUser.Id,
                         OpaqueUserId = profile.OpaqueUserId,
                     };
                 }
