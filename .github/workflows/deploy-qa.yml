@@ -1,0 +1,41 @@
+name: "Deploy to QA"
+
+concurrency: deploy-staging
+
+on:
+  push:
+    branches:
+      - sf-qa
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: "Deploy to QA"
+    uses: ./.github/workflows/deploy.yml
+    with:
+      dotnet_version: "8.0.x"
+      node_version: "18.20.2"
+      npm_version: "10.5.0"
+      os: "ubuntu-20.04"
+
+      angular_config: "staging"
+      app_name: "scriptureforge"
+      app_suffix: "_qa"
+      build_number: "${{ github.run_number }}"
+      node_options: "--max_old_space_size=4096"
+      project: "SIL.XForge.Scripture"
+      vcs_tag_prefix: "SF-QAv"
+
+    secrets:
+      deploy_server: ${{secrets.qa_deploy_server}}
+      deploy_known_hosts: ${{secrets.qa_deploy_known_hosts}}
+      deploy_ssh_private_key: ${{secrets.qa_deploy_ssh_private_key}}
+      auth_backend_secret: ${{ secrets.qa_auth_backend_secret }}
+      auth_webhook_password: ${{ secrets.qa_auth_webhook_password }}
+      paratext_client_id: ${{secrets.qa_paratext_client_id}}
+      paratext_api_token: ${{ secrets.qa_paratext_api_token }}
+      paratext_resource_password_base64: ${{ secrets.qa_paratext_resource_password_base64 }}
+      paratext_resource_password_hash: ${{ secrets.qa_paratext_resource_password_hash }}
+      serval_client_id: ${{secrets.qa_serval_client_id}}
+      serval_client_secret: ${{ secrets.qa_serval_client_secret }}
+      serval_webhook_secret: ${{ secrets.qa_serval_webhook_secret }}

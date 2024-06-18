@@ -1,0 +1,41 @@
+name: "Deploy to Live"
+
+concurrency: deploy-prod
+
+on:
+  push:
+    branches:
+      - sf-live
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: "Deploy to Live"
+    uses: ./.github/workflows/deploy.yml
+    with:
+      dotnet_version: "8.0.x"
+      node_version: "18.20.2"
+      npm_version: "10.5.0"
+      os: "ubuntu-20.04"
+
+      angular_config: "production"
+      app_name: "scriptureforge"
+      app_suffix: ""
+      build_number: "${{ github.run_number }}"
+      node_options: "--max_old_space_size=4096"
+      project: "SIL.XForge.Scripture"
+      vcs_tag_prefix: "SFv"
+
+    secrets:
+      deploy_server: ${{secrets.live_deploy_server}}
+      deploy_known_hosts: ${{secrets.live_deploy_known_hosts}}
+      deploy_ssh_private_key: ${{secrets.live_deploy_ssh_private_key}}
+      auth_backend_secret: ${{ secrets.live_auth_backend_secret }}
+      auth_webhook_password: ${{ secrets.live_auth_webhook_password }}
+      paratext_client_id: ${{secrets.live_paratext_client_id}}
+      paratext_api_token: ${{ secrets.live_paratext_api_token }}
+      paratext_resource_password_base64: ${{ secrets.live_paratext_resource_password_base64 }}
+      paratext_resource_password_hash: ${{ secrets.live_paratext_resource_password_hash }}
+      serval_client_id: ${{secrets.live_serval_client_id}}
+      serval_client_secret: ${{ secrets.live_serval_client_secret }}
+      serval_webhook_secret: ${{ secrets.live_serval_webhook_secret }}
