@@ -216,13 +216,40 @@ public class ParatextService : DisposableBase, IParatextService
             _alertSystem.AddListener(alertListener);
 
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id, token);
-            IEnumerable<SharedRepository> repositories = GetRepositories(
-                source,
-                $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}."
-            );
-            IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
-            IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
-            SharedRepository sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
+
+            // See if we can retrieve the project metadata and repository directly via the Paratext id
+            ProjectMetadata? projectMetadata = source.GetProjectMetadata(paratextId);
+            SharedRepository? sendReceiveRepository = null;
+            IEnumerable<ProjectMetadata> projectsMetadata = [];
+            IEnumerable<string> projectGuids = [];
+            if (projectMetadata is not null)
+            {
+                // Get the project license, so we can get the repositories for it
+                ProjectLicense? projectLicense = source.GetLicenseForUserProject(paratextId);
+                if (projectLicense is not null)
+                {
+                    // Get the repository for the project
+                    IEnumerable<SharedRepository> repositories = source.GetRepositories([projectLicense]);
+                    sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
+
+                    // Set up the projects metadata
+                    projectsMetadata = [projectMetadata];
+                    projectGuids = [projectMetadata.ProjectGuid.Id];
+                }
+            }
+
+            // If we could not get the send/receive repository, this project shares a registration with another project
+            if (sendReceiveRepository is null)
+            {
+                IEnumerable<SharedRepository> repositories = GetRepositories(
+                    source,
+                    $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}."
+                );
+                projectsMetadata = source.GetProjectsMetaData();
+                projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
+                sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
+            }
+
             if (TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ParatextProject ptProject))
             {
                 if (!projectGuids.Contains(paratextId))
