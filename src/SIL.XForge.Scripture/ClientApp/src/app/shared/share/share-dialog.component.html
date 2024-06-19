@@ -66,7 +66,7 @@
       <div class="configuration-option">
         <mat-icon>schedule</mat-icon>
         <div>
-          {{ t("will_expire_in") }} <b>{{ shareExpiration }} {{ t("days") }}</b>
+          <transloco key="share_dialog.will_expire_in" [params]="{ count: shareExpiration }"></transloco>
           <a
             [matMenuTriggerFor]="expireMenu"
             *ngIf="linkExpirationOptions.length > 1"
