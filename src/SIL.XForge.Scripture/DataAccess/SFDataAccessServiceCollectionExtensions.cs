@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -20,10 +21,19 @@ public static class SFDataAccessServiceCollectionExtensions
             "sf_project_secrets",
             null,
             idx =>
-                idx.CreateOne(
-                    new CreateIndexModel<SFProjectSecret>(
-                        Builders<SFProjectSecret>.IndexKeys.Ascending(ps => ps.ServalData.PreTranslationEngineId)
-                    )
+                idx.CreateMany(
+                    [
+                        new CreateIndexModel<SFProjectSecret>(
+                            Builders<SFProjectSecret>.IndexKeys.Ascending(ps => ps.ServalData.PreTranslationEngineId)
+                        ),
+                        // The C# Driver still does not support fluent syntax for multi-key indexes.
+                        // See https://jira.mongodb.org/browse/CSHARP-1309
+                        new CreateIndexModel<SFProjectSecret>(
+                            Builders<SFProjectSecret>.IndexKeys.Ascending(
+                                $"{nameof(SFProjectSecret.ShareKeys)}.{nameof(ShareKey.Key)}"
+                            )
+                        ),
+                    ]
                 )
         );
         services.AddMongoRepository<SyncMetrics>("sync_metrics", cm => cm.MapIdProperty(sm => sm.Id));
