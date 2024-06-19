@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingQuestionComponent } from '../checking/checking/checking-answers/checking-question/checking-question.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
@@ -27,7 +28,14 @@ const componentExports = [
 ];
 
 @NgModule({
-  imports: [CommonModule, QuillModule.forRoot(), UICommonModule, TranslocoModule, NoticeComponent],
+  imports: [
+    CommonModule,
+    QuillModule.forRoot(),
+    UICommonModule,
+    TranslocoModule,
+    NoticeComponent,
+    TranslocoMarkupModule
+  ],
   declarations: componentExports,
   exports: [...componentExports, NoticeComponent]
 })
