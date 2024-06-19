@@ -697,7 +697,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new ForbiddenException();
 
         // Generate a new link sharing key for the given role
-        var key = _securityService.GenerateKey();
+        string key = _securityService.GenerateKey();
 
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
