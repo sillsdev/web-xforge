@@ -386,6 +386,9 @@ public class ParatextServiceTests
     {
         // Set up environment
         var env = new TestEnvironment();
+        env.AddUserRepository([new User { Id = env.User01, AuthId = "auth01" }]);
+        env.MockAuthService.GetParatextTokensAsync("auth01", CancellationToken.None)
+            .Returns(Task.FromResult(new Tokens()));
         env.MockJwtTokenHelper.RefreshAccessTokenAsync(
             Arg.Any<ParatextOptions>(),
             Arg.Any<Tokens>(),
@@ -5080,6 +5083,7 @@ public class ParatextServiceTests
         public readonly ParatextService Service;
         public readonly HttpClient MockRegistryHttpClient;
         public readonly IDeltaUsxMapper DeltaUsxMapper;
+        public readonly IAuthService MockAuthService;
         public readonly Dictionary<string, string> usernames;
         private bool disposed;
 
@@ -5105,6 +5109,7 @@ public class ParatextServiceTests
                 Substitute.For<ILogger<DeltaUsxMapper>>(),
                 Substitute.For<IExceptionHandler>()
             );
+            MockAuthService = Substitute.For<IAuthService>();
 
             DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
             string accessToken1 = TokenHelper.CreateAccessToken(
@@ -5174,7 +5179,8 @@ public class ParatextServiceTests
                 MockGuidService,
                 MockRestClientFactory,
                 MockHgWrapper,
-                DeltaUsxMapper
+                DeltaUsxMapper,
+                MockAuthService
             )
             {
                 ScrTextCollection = MockScrTextCollection,
@@ -5212,6 +5218,7 @@ public class ParatextServiceTests
             RegistryU.Implementation = new DotNetCoreRegistry();
             ScrTextCollection.Implementation = new SFScrTextCollection();
             AddProjectRepository();
+            AddUserRepository();
         }
 
         public MockScrText ProjectScrText { get; set; }
@@ -5485,6 +5492,9 @@ public class ParatextServiceTests
                 )
                 .Returns(true);
         }
+
+        public void AddUserRepository(User[]? users = null) =>
+            RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(users ?? []));
 
         public void AddTextDocs(
             int bookNum,

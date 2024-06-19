@@ -78,6 +78,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IWebHostEnvironment _env;
     private readonly DotNetCoreAlert _alertSystem;
     private readonly IDeltaUsxMapper _deltaUsxMapper;
+    private readonly IAuthService _authService;
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -94,7 +95,8 @@ public class ParatextService : DisposableBase, IParatextService
         IGuidService guidService,
         ISFRestClientFactory restClientFactory,
         IHgWrapper hgWrapper,
-        IDeltaUsxMapper deltaUsxMapper
+        IDeltaUsxMapper deltaUsxMapper,
+        IAuthService authService
     )
     {
         _paratextOptions = paratextOptions;
@@ -113,6 +115,7 @@ public class ParatextService : DisposableBase, IParatextService
         _env = env;
         _alertSystem = new DotNetCoreAlert(_logger);
         _deltaUsxMapper = deltaUsxMapper;
+        _authService = authService;
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -3315,7 +3318,27 @@ public class ParatextService : DisposableBase, IParatextService
                             + $"from call RefreshAccessTokenAsync(). The current access token has issuedAt time "
                             + $"of {userSecret.ParatextTokens.IssuedAt:o}."
                     );
-                    throw;
+
+                    // Get the tokens from auth0, and unsure they are up-to-date
+                    // If they cannot be refreshed, an exception will throw
+                    Attempt<User> userAttempt = await _realtimeService.TryGetSnapshotAsync<User>(sfUserId);
+                    if (!userAttempt.TryResult(out User user))
+                    {
+                        throw;
+                    }
+
+                    refreshedUserTokens = await _authService.GetParatextTokensAsync(user.AuthId, token);
+                    if (refreshedUserTokens is null)
+                    {
+                        throw;
+                    }
+
+                    refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(
+                        _paratextOptions.Value,
+                        refreshedUserTokens,
+                        _registryClient,
+                        token
+                    );
                 }
 
                 userSecret = await _userSecretRepository.UpdateAsync(

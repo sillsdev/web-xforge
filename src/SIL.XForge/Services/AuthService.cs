@@ -1,5 +1,6 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -22,21 +23,45 @@ public class AuthService : DisposableBase, IAuthService
 {
     private readonly HttpClient _httpClient;
     private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
-    private string _accessToken;
+    private string? _accessToken;
     private readonly IOptions<AuthOptions> _authOptions;
     private readonly IExceptionHandler _exceptionHandler;
 
-    public AuthService(IOptions<AuthOptions> authOptions, IExceptionHandler exceptionHandler)
+    public AuthService(
+        IOptions<AuthOptions> authOptions,
+        IExceptionHandler exceptionHandler,
+        IHttpClientFactory httpClientFactory
+    )
     {
         _authOptions = authOptions;
         _exceptionHandler = exceptionHandler;
-        _httpClient = new HttpClient { BaseAddress = new Uri($"https://{_authOptions.Value.Domain}") };
+        _httpClient = httpClientFactory.CreateClient();
+        _httpClient.BaseAddress = new Uri($"https://{_authOptions.Value.Domain}");
     }
 
     public bool ValidateWebhookCredentials(string username, string password)
     {
         AuthOptions authOptions = _authOptions.Value;
         return authOptions.WebhookUsername == username && authOptions.WebhookPassword == password;
+    }
+
+    public async Task<Tokens?> GetParatextTokensAsync(string authId, CancellationToken token)
+    {
+        string userProfileJson = await CallApiAsync(HttpMethod.Get, $"users/{authId}", content: null, token);
+
+        JObject userProfile = JObject.Parse(userProfileJson);
+        JArray identities = userProfile["identities"] as JArray;
+        JObject ptIdentity = identities?.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "paratext");
+        if (ptIdentity is not null)
+        {
+            return new Tokens
+            {
+                AccessToken = (string)ptIdentity["access_token"] ?? string.Empty,
+                RefreshToken = (string)ptIdentity["refresh_token"] ?? string.Empty,
+            };
+        }
+
+        return null;
     }
 
     public Task<string> GetUserAsync(string authId) => CallApiAsync(HttpMethod.Get, $"users/{authId}");
@@ -67,7 +92,7 @@ public class AuthService : DisposableBase, IAuthService
     public Task UpdateAvatar(string authId, string url)
     {
         var content = new JObject(new JProperty("user_metadata", new JObject(new JProperty("picture", url))));
-        return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+        return CallApiAsync(HttpMethod.Patch, $"users/{authId}", content);
     }
 
     public Task UpdateInterfaceLanguage(string authId, string language)
@@ -75,8 +100,7 @@ public class AuthService : DisposableBase, IAuthService
         var content = new JObject(
             new JProperty("user_metadata", new JObject(new JProperty("interface_language", language)))
         );
-        // Since .NET Std 2.0 see https://stackoverflow.com/a/23600004/5501739
-        return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+        return CallApiAsync(HttpMethod.Patch, $"users/{authId}", content);
     }
 
     /// <summary>
@@ -90,36 +114,40 @@ public class AuthService : DisposableBase, IAuthService
             new JProperty("nickname", "Anonymous"),
             new JProperty("picture", "https://cdn.auth0.com/avatars/a.png")
         );
-        return await CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+        return await CallApiAsync(HttpMethod.Patch, $"users/{authId}", content);
     }
 
-    private async Task<string> CallApiAsync(HttpMethod method, string url, JToken content = null)
+    private async Task<string> CallApiAsync(
+        HttpMethod method,
+        string url,
+        JToken? content = null,
+        CancellationToken token = default
+    )
     {
         bool refreshed = false;
         while (!refreshed)
         {
-            var (AccessToken, Refreshed) = await GetAccessTokenAsync();
-            string accessToken = AccessToken;
-            refreshed = Refreshed;
+            (string? accessToken, bool wasRefreshed) = await GetAccessTokenAsync(token);
+            refreshed = wasRefreshed;
 
             using var request = new HttpRequestMessage(method, $"api/v2/{url}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             if (content != null)
                 request.Content = new StringContent(content.ToString(), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            HttpResponseMessage response = await _httpClient.SendAsync(request, token);
             if (response.StatusCode != HttpStatusCode.Unauthorized)
             {
                 await _exceptionHandler.EnsureSuccessStatusCode(response);
-                return await response.Content.ReadAsStringAsync();
+                return await response.Content.ReadAsStringAsync(token);
             }
         }
 
         throw new SecurityException("The Auth0 access token is invalid.");
     }
 
-    private async Task<(string AccessToken, bool Refreshed)> GetAccessTokenAsync()
+    private async Task<(string AccessToken, bool Refreshed)> GetAccessTokenAsync(CancellationToken token)
     {
-        await _lock.WaitAsync();
+        await _lock.WaitAsync(token);
         try
         {
             if (!IsAccessTokenExpired())
@@ -138,10 +166,10 @@ public class AuthService : DisposableBase, IAuthService
             {
                 Console.WriteLine("Note: AuthService is using an empty BackendClientSecret.");
             }
-            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            HttpResponseMessage response = await _httpClient.SendAsync(request, token);
             await _exceptionHandler.EnsureSuccessStatusCode(response);
 
-            string responseJson = await response.Content.ReadAsStringAsync();
+            string responseJson = await response.Content.ReadAsStringAsync(token);
             var responseObj = JObject.Parse(responseJson);
             _accessToken = (string)responseObj["access_token"];
             return (_accessToken, true);
