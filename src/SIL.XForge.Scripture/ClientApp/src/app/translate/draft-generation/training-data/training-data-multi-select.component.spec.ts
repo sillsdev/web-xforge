@@ -1,5 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatChipListboxChange } from '@angular/material/chips';
 import { MatDialogRef } from '@angular/material/dialog';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -104,7 +103,8 @@ describe('TrainingDataMultiSelectComponent', () => {
     component.trainingDataSelect.subscribe((_result: string[]) => {
       result = _result;
     });
-    component.onChipListChange({ value: [{ dataId: 'data01' }] } as MatChipListboxChange);
+    component.ngOnChanges();
+    component.onChipListChange({ selected: true, value: mockTrainingData[2] });
     tick();
 
     expect(result).toEqual(['data01']);
