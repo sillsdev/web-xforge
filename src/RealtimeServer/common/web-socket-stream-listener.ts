@@ -21,7 +21,7 @@ export class WebSocketStreamListener {
     private readonly scope: string,
     authority: string,
     private readonly port: number,
-    private readonly origin: string,
+    private readonly origin: string[],
     private exceptionReporter: ExceptionReporter
   ) {
     // Create web servers to serve files and listen to WebSocket connections
@@ -119,7 +119,7 @@ export class WebSocketStreamListener {
     info: { origin: string; secure: boolean; req: http.IncomingMessage },
     callback: (res: boolean, code?: number, message?: string, headers?: http.OutgoingHttpHeaders) => void
   ): void => {
-    if (info.origin !== this.origin) {
+    if (!this.origin.includes(info.origin)) {
       callback(false, 401, 'Unauthorized');
     } else {
       this.verifyToken(info.req, callback);

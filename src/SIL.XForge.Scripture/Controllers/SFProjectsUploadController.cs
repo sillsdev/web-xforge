@@ -43,6 +43,24 @@ public class SFProjectsUploadController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the website root for URL operations.
+    /// </summary>
+    private Uri SiteRoot
+    {
+        get
+        {
+            var uriBuilder = new UriBuilder(Request.Scheme, Request.Host.Host, Request.Host.Port ?? -1);
+            if (uriBuilder.Uri.IsDefaultPort)
+            {
+                // -1 means to not specify the port in the URL
+                uriBuilder.Port = -1;
+            }
+
+            return uriBuilder.Uri;
+        }
+    }
+
+    /// <summary>
     /// Uploads an audio file.
     /// </summary>
     /// <response code="200">The file was uploaded successfully.</response>
@@ -65,7 +83,8 @@ public class SFProjectsUploadController : ControllerBase
         {
             // Upload, convert and save the audio file
             (dataId, path, projectId) = await HandleFileUploadAsync();
-            Uri uri = await _projectService.SaveAudioAsync(_userAccessor.UserId, projectId, dataId, path);
+            Uri relativeUri = await _projectService.SaveAudioAsync(_userAccessor.UserId, projectId, dataId, path);
+            Uri uri = new Uri(SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
         catch (ForbiddenException)
@@ -125,7 +144,13 @@ public class SFProjectsUploadController : ControllerBase
         {
             // Upload, convert and save the training data file
             (dataId, path, projectId) = await HandleFileUploadAsync();
-            Uri uri = await _trainingDataService.SaveTrainingDataAsync(_userAccessor.UserId, projectId, dataId, path);
+            Uri relativeUri = await _trainingDataService.SaveTrainingDataAsync(
+                _userAccessor.UserId,
+                projectId,
+                dataId,
+                path
+            );
+            Uri uri = new Uri(SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
         catch (ForbiddenException)

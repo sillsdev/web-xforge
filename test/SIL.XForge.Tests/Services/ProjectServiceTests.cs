@@ -32,10 +32,7 @@ public class ProjectServiceTests
 
         // SUT
         Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
-        Assert.That(
-            uri.ToString().StartsWith($"http://localhost/assets/audio/{Project01}/{User01}_{dataId}.mp3?t="),
-            Is.True
-        );
+        Assert.That(uri.ToString().StartsWith($"/assets/audio/{Project01}/{User01}_{dataId}.mp3?t="), Is.True);
         await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
     }
 
@@ -50,10 +47,7 @@ public class ProjectServiceTests
 
         // SUT
         Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
-        Assert.That(
-            uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
-            Is.True
-        );
+        Assert.That(uri.ToString().StartsWith($"/assets/audio/project01/user01_{dataId}.mp3?t="), Is.True);
         env.FileSystemService.Received().MoveFile(path, filePath);
         await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
     }
@@ -482,15 +476,7 @@ public class ProjectServiceTests
             );
 
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(
-                new SiteOptions
-                {
-                    Id = SiteId,
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost"),
-                    SiteDir = "site"
-                }
-            );
+            siteOptions.Value.Returns(new SiteOptions { Id = SiteId, SiteDir = "site", });
             AudioService = Substitute.For<IAudioService>();
 
             ProjectSecrets = new MemoryRepository<TestProjectSecret>(

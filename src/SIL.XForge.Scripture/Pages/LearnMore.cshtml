@@ -1,5 +1,4 @@
 @page "/learn-more"
-@using Microsoft.AspNetCore.Mvc.Localization
 @inject IViewLocalizer Localizer
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @model LearnMoreModel
@@ -34,7 +33,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupSync", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
                         </ol>
                     </div>
-                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/2hcMXh1FBrI?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe width="560" height="315" src='https://www.youtube-nocookie.com/embed/2hcMXh1FBrI?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
                 <div class="feature right">
                     <div class="text">
@@ -47,7 +46,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeInteract", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
                         </ol>
                     </div>
-                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/MfNV4IaGWy8?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe width="560" height="315" src='https://www.youtube-nocookie.com/embed/MfNV4IaGWy8?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
                 <div class="feature">
                     <div class="text">
@@ -60,7 +59,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingOfflineSaving", "<span class=\"highlight\">", "</span>"]))</li>
                         </ol>
                     </div>
-                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/lnBew9W7Bk4?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe width="560" height="315" src='https://www.youtube-nocookie.com/embed/lnBew9W7Bk4?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
             </div>
         </div>
