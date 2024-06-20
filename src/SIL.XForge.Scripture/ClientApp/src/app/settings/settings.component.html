@@ -134,8 +134,6 @@
                     id="alternate-source-status"
                   ></app-write-status>
                 </div>
-              </ng-container>
-              <ng-container *ngIf="mainSettingsLoaded">
                 <div class="tool-setting">
                   <div class="tool-setting-field checkbox-field">
                     <mat-checkbox
@@ -166,6 +164,38 @@
                     [state]="getControlState('alternateTrainingSourceParatextId')"
                     [formGroup]="form"
                     id="alternate-training-source-status"
+                  ></app-write-status>
+                </div>
+                <div class="tool-setting">
+                  <div class="tool-setting-field checkbox-field">
+                    <mat-checkbox
+                      formControlName="additionalTrainingSourceEnabled"
+                      id="checkbox-additional-training-source-enabled"
+                      >{{ t("enable_additional_training_source") }}</mat-checkbox
+                    >
+                    <app-info [text]="t('pre_translation_additional_training_source_info')"></app-info>
+                    <app-write-status
+                      [state]="getControlState('additionalTrainingSourceEnabled')"
+                      [formGroup]="form"
+                      id="additional-training-source-enabled-status"
+                    ></app-write-status>
+                  </div>
+                </div>
+                <div *ngIf="isAdditionalTrainingSourceEnabled" class="tool-setting-field">
+                  <app-project-select
+                    id="additionalTrainingSourceParatextId"
+                    formControlName="additionalTrainingSourceParatextId"
+                    [placeholder]="t('pre_translation_additional_training_source_text_placeholder')"
+                    [projects]="projects"
+                    [resources]="resources"
+                    [nonSelectableProjects]="nonSelectableProjects"
+                    [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
+                    [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                  ></app-project-select>
+                  <app-write-status
+                    [state]="getControlState('additionalTrainingSourceParatextId')"
+                    [formGroup]="form"
+                    id="additional-training-source-status"
                   ></app-write-status>
                 </div>
                 <div class="tool-setting">

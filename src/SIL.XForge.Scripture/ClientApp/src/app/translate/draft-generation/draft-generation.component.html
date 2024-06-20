@@ -73,7 +73,7 @@
       >
         <transloco
           key="draft_generation.info_alert_same_source_and_target_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
         ></transloco>
       </app-notice>
 
@@ -85,7 +85,11 @@
       >
         <transloco
           key="draft_generation.info_alert_different_training_and_source_language"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          [params]="{
+            alternateTrainingSourceLanguageDisplayName,
+            sourceLanguageDisplayName,
+            projectSettingsUrl: { route: projectSettingsUrl }
+          }"
         ></transloco>
       </app-notice>
 
@@ -94,6 +98,28 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
+          !isSourceAndAdditionalTrainingSourceLanguageIdentical
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-mix-source-different"
+      >
+        <transloco
+          key="draft_generation.info_alert_different_additional_training_and_source_language"
+          [params]="{
+            additionalTrainingSourceLanguageDisplayName,
+            alternateTrainingSourceLanguageDisplayName,
+            projectSettingsUrl: { route: projectSettingsUrl }
+          }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndAdditionalTrainingSourceLanguageIdentical &&
           !canAccessDraftSourceIfAvailable(source)
         "
         type="warning"
@@ -114,6 +140,7 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndAdditionalTrainingSourceLanguageIdentical &&
           canAccessDraftSourceIfAvailable(source) &&
           !canAccessDraftSourceIfAvailable(alternateSource)
         "
@@ -135,6 +162,7 @@
           isSourceProjectSet &&
           isSourceAndTargetDifferent &&
           isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndAdditionalTrainingSourceLanguageIdentical &&
           canAccessDraftSourceIfAvailable(source) &&
           canAccessDraftSourceIfAvailable(alternateSource) &&
           !canAccessDraftSourceIfAvailable(alternateTrainingSource)
@@ -148,6 +176,30 @@
           [params]="{
             connectProjectUrl: { route: '/connect-project' },
             name: alternateTrainingSource?.name,
+          }"
+        ></transloco>
+      </app-notice>
+
+      <app-notice
+        *ngIf="
+          isSourceProjectSet &&
+          isSourceAndTargetDifferent &&
+          isSourceAndTrainingSourceLanguageIdentical &&
+          isSourceAndAdditionalTrainingSourceLanguageIdentical &&
+          canAccessDraftSourceIfAvailable(source) &&
+          canAccessDraftSourceIfAvailable(alternateSource) &&
+          canAccessDraftSourceIfAvailable(alternateTrainingSource) &&
+          !canAccessDraftSourceIfAvailable(additionalTrainingSource)
+        "
+        type="warning"
+        icon="warning"
+        data-test-id="warning-mix-source-no-access"
+      >
+        <transloco
+          key="draft_generation.info_alert_no_additional_training_source_access"
+          [params]="{
+            connectProjectUrl: { route: '/connect-project' },
+            name: additionalTrainingSource?.name
           }"
         ></transloco>
       </app-notice>

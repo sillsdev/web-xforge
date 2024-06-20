@@ -44,7 +44,8 @@ describe('DraftSourcesService', () => {
           target: undefined,
           source: undefined,
           alternateSource: undefined,
-          alternateTrainingSource: undefined
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
         } as DraftSources);
         done();
       });
@@ -83,7 +84,16 @@ describe('DraftSourcesService', () => {
               }
             },
             alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true
+            alternateTrainingSourceEnabled: true,
+            additionalTrainingSource: {
+              projectRef: 'additional_training_source_project',
+              name: 'Additional Training Source Project',
+              shortName: 'ADSP',
+              writingSystem: {
+                tag: 'en_UK'
+              }
+            },
+            additionalTrainingSourceEnabled: true
           }
         }
       });
@@ -122,6 +132,15 @@ describe('DraftSourcesService', () => {
               tag: 'en_AU'
             },
             noAccess: true
+          },
+          additionalTrainingSource: {
+            name: 'Additional Training Source Project',
+            shortName: 'ADSP',
+            texts: [],
+            writingSystem: {
+              tag: 'en_UK'
+            },
+            noAccess: true
           }
         } as DraftSources);
         done();
@@ -142,7 +161,11 @@ describe('DraftSourcesService', () => {
               projectRef: 'alternate_training_source_project'
             },
             alternateSourceEnabled: true,
-            alternateTrainingSourceEnabled: true
+            alternateTrainingSourceEnabled: true,
+            additionalTrainingSource: {
+              projectRef: 'additional_training_source_project'
+            },
+            additionalTrainingSourceEnabled: true
           }
         }
       });
@@ -170,6 +193,14 @@ describe('DraftSourcesService', () => {
           tag: 'en_AU'
         }
       });
+      const additionalTrainingSourceProject = createTestProjectProfile({
+        name: 'Additional Training Source Project',
+        shortName: 'ADSP',
+        texts: [{ bookNum: 1 }],
+        writingSystem: {
+          tag: 'en_UK'
+        }
+      });
       when(mockActivatedProjectService.projectDoc$).thenReturn(
         new BehaviorSubject<SFProjectProfileDoc>({
           data: targetProject
@@ -184,12 +215,20 @@ describe('DraftSourcesService', () => {
       when(mockProjectService.getProfile('alternate_training_source_project')).thenResolve({
         data: alternateTrainingSourceProject
       } as SFProjectProfileDoc);
+      when(mockProjectService.getProfile('additional_training_source_project')).thenResolve({
+        data: additionalTrainingSourceProject
+      } as SFProjectProfileDoc);
       when(mockUserService.getCurrentUser()).thenResolve({
         data: createTestUser(
           {
             sites: {
               [environment.siteId]: {
-                projects: ['source_project', 'alternate_source_project', 'alternate_training_source_project']
+                projects: [
+                  'source_project',
+                  'alternate_source_project',
+                  'alternate_training_source_project',
+                  'additional_training_source_project'
+                ]
               }
             }
           },
@@ -202,7 +241,68 @@ describe('DraftSourcesService', () => {
           target: targetProject,
           source: sourceProject,
           alternateSource: alternateSourceProject,
-          alternateTrainingSource: alternateTrainingSourceProject
+          alternateTrainingSource: alternateTrainingSourceProject,
+          additionalTrainingSource: additionalTrainingSourceProject
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the alternate source project if disabled', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            alternateSource: {
+              projectRef: 'alternate_source_project',
+              name: 'Alternate Source Project',
+              shortName: 'ASP',
+              writingSystem: {
+                tag: 'en_NZ'
+              }
+            },
+            alternateSourceEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the alternate source project if enabled but missing', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            alternateSourceEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
         } as DraftSources);
         done();
       });
@@ -235,7 +335,8 @@ describe('DraftSourcesService', () => {
           target: targetProject,
           source: undefined,
           alternateSource: undefined,
-          alternateTrainingSource: undefined
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
         } as DraftSources);
         done();
       });
@@ -260,7 +361,68 @@ describe('DraftSourcesService', () => {
           target: targetProject,
           source: undefined,
           alternateSource: undefined,
-          alternateTrainingSource: undefined
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the additional training source project if disabled', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            additionalTrainingSource: {
+              projectRef: 'additional_training_source_project',
+              name: 'Additional Training Source Project',
+              shortName: 'ADSP',
+              writingSystem: {
+                tag: 'en_UK'
+              }
+            },
+            additionalTrainingSourceEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
+        } as DraftSources);
+        done();
+      });
+    });
+
+    it('should not pass the additional training source project if enabled but missing', done => {
+      const targetProject = createTestProjectProfile({
+        translateConfig: {
+          draftConfig: {
+            additionalTrainingSourceEnabled: false
+          }
+        }
+      });
+      when(mockActivatedProjectService.projectDoc$).thenReturn(
+        new BehaviorSubject<SFProjectProfileDoc>({
+          data: targetProject
+        } as SFProjectProfileDoc)
+      );
+
+      service.getDraftProjectSources().subscribe(result => {
+        expect(result).toEqual({
+          target: targetProject,
+          source: undefined,
+          alternateSource: undefined,
+          alternateTrainingSource: undefined,
+          additionalTrainingSource: undefined
         } as DraftSources);
         done();
       });

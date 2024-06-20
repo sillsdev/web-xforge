@@ -433,6 +433,144 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
     }));
+
+    it('should detect additional training source language when different to alternate training source language', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'abc'
+          },
+          translateConfig: {
+            draftConfig: {
+              alternateTrainingSourceEnabled: true,
+              alternateTrainingSource: {
+                projectRef: 'alternateTrainingSourceProjectId',
+                writingSystem: {
+                  tag: 'def'
+                }
+              },
+              additionalTrainingSourceEnabled: true,
+              additionalTrainingSource: {
+                projectRef: 'additionalTrainingSourceProjectId',
+                writingSystem: {
+                  tag: 'ghi'
+                }
+              }
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'def'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
+      expect(env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical).toBe(false);
+    }));
+
+    it('should detect additional training source language when different to source language', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'abc'
+          },
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingSourceEnabled: true,
+              additionalTrainingSource: {
+                projectRef: 'alternateTrainingSourceProjectId',
+                writingSystem: {
+                  tag: 'def'
+                }
+              }
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'xyz'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
+      expect(env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical).toBe(false);
+    }));
+
+    it('should not detect additional training source language as different when enabled but null', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'abc'
+          },
+          translateConfig: {
+            draftConfig: {
+              additionalTrainingSourceEnabled: true
+            },
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'xyz'
+              }
+            }
+          }
+        })
+      } as SFProjectProfileDoc;
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: projectDoc,
+          projectDoc$: of(projectDoc),
+          changes$: of(projectDoc)
+        });
+      });
+      env.fixture.detectChanges();
+      tick();
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
+    }));
   });
 
   describe('Online status', () => {
@@ -567,6 +705,74 @@ describe('DraftGenerationComponent', () => {
       });
     });
 
+    describe('source and additional training source language must be the same', () => {
+      it('should show warning when source and additional training source are different AND target language is supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-different')).not.toBe(null);
+      });
+
+      it('should not show warning when target language is not supported', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = false;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-different')).toBe(null);
+      });
+
+      it('should not show warning when source project is not set', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = false;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-different')).toBe(null);
+      });
+
+      it('should not show warning when the source and target language are the same', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-different')).toBe(null);
+      });
+
+      it('should not show warning when source and additional training source language are the same', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-different')).toBe(null);
+      });
+
+      it('should not show warning when source and alternate training source are different', () => {
+        let env = new TestEnvironment();
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-different')).toBe(null);
+      });
+    });
+
     describe('user must have access to source project', () => {
       it('should show warning when no access to source project', () => {
         let env = new TestEnvironment(() => {
@@ -658,6 +864,25 @@ describe('DraftGenerationComponent', () => {
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when source and additional training source language are different', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBe(null);
@@ -768,6 +993,25 @@ describe('DraftGenerationComponent', () => {
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-alternate-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when source and additional training source language are different', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-source-no-access')).toBe(null);
@@ -904,6 +1148,25 @@ describe('DraftGenerationComponent', () => {
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBe(null);
       });
 
+      it('should not show warning when source and additional training source language are different', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBe(null);
+      });
+
       it('should not show warning when no access to source project', () => {
         let env = new TestEnvironment(() => {
           mockDraftSourcesService.getDraftProjectSources.and.returnValue(
@@ -962,6 +1225,207 @@ describe('DraftGenerationComponent', () => {
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-alternate-training-source-no-access')).toBe(null);
+      });
+    });
+
+    describe('user must have access to additional training source project', () => {
+      it('should show warning when no access to additional training source project', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).not.toBe(null);
+      });
+
+      it('should not show warning when target language is not supported', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = false;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when source project is not set', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = false;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when the source and target language are the same', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when source and alternate training source language are different', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when source and additional training source language are different', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when no access to source project', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              source: {
+                noAccess: true
+              } as DraftSource,
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when no access to alternate source project', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateSource: {
+                noAccess: true
+              } as DraftSource,
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when no access to alternate training source project', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              alternateTrainingSource: {
+                noAccess: true
+              } as DraftSource,
+              additionalTrainingSource: {
+                noAccess: true
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
+      });
+
+      it('should not show warning when access to additional training source project', () => {
+        let env = new TestEnvironment(() => {
+          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
+            of({
+              additionalTrainingSource: {
+                noAccess: false
+              } as DraftSource
+            })
+          );
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = true;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.getElementByTestId('warning-mix-source-no-access')).toBe(null);
       });
     });
 
