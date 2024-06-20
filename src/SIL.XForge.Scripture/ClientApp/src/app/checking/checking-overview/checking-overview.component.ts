@@ -1,10 +1,11 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
@@ -16,6 +17,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { Breakpoint, MediaBreakpointService } from '../../../xforge-common/media-breakpoints/media-breakpoint.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -43,6 +45,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   texts: TextInfo[] = [];
   projectId?: string;
 
+  isScreenSmall = false;
+
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId?: TextsByBookId;
   private projectDoc?: SFProjectProfileDoc;
@@ -64,7 +68,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly permissions: PermissionsService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService,
     private readonly onlineStatusService: OnlineStatusService,
-    readonly featureFlagsService: FeatureFlagService
+    readonly featureFlagsService: FeatureFlagService,
+    private readonly breakpointObserver: BreakpointObserver,
+    private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     super(noticeService);
   }
@@ -248,6 +254,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           }
         });
     });
+
+    // Allows hiding the prev/next chapter buttons for small screens
+    this.subscribe(
+      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.SM)),
+      (state: BreakpointState) => {
+        this.isScreenSmall = state.matches;
+      }
+    );
   }
 
   ngOnDestroy(): void {

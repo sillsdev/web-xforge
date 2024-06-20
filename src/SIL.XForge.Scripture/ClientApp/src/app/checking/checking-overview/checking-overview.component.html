@@ -7,14 +7,24 @@
         {{ t("import_questions") }}
       </button>
       <button
-        *ngIf="!isLoading"
+        *ngIf="!isLoading && !isScreenSmall"
         mat-flat-button
         type="button"
         color="primary"
         (click)="questionDialog()"
         id="add-question-button"
       >
-        <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
+        <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
+      </button>
+      <button
+        *ngIf="!isLoading && isScreenSmall"
+        mat-mini-fab
+        type="button"
+        color="primary"
+        (click)="questionDialog()"
+        id="add-question-button"
+      >
+        <mat-icon class="mirror-rtl">post_add</mat-icon>
       </button>
     </ng-container>
     <ng-template #overallProgressChart>

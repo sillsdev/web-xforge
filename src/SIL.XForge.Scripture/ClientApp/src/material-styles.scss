@@ -124,6 +124,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.dialog-typography($dialog-typography);
 @include mat.divider-theme($material-app-theme);
 @include mat.expansion-theme($material-app-theme);
+@include mat.fab-theme($material-app-theme);
 @include mat.form-field-theme($material-theme-accent-error);
 @include mat.icon-theme($material-app-theme);
 @include mat.input-theme($material-app-theme);
