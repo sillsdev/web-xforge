@@ -611,7 +611,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
         }
         string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-        string url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}&locale={locale}";
+        string origin = siteOptions.Origin.Split(';', StringSplitOptions.RemoveEmptyEntries).First();
+        Uri url = new Uri(
+            new Uri(origin, UriKind.Absolute),
+            $"projects/{projectId}?sharing=true&shareKey={key}&locale={locale}"
+        );
         string linkExpires = _localizer[SharedResource.Keys.InviteLinkExpires];
 
         User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);

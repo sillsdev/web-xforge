@@ -3791,7 +3791,7 @@ public class SFProjectServiceTests
                 {
                     Id = SiteId,
                     Name = "xForge",
-                    Origin = new Uri("http://localhost"),
+                    Origin = "http://localhost",
                     SiteDir = "xforge"
                 }
             );
