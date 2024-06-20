@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use 'variables';
 
 // This creates css variables for common breakpoints (needed when using MediaBreakpointService with BreakpointObserver)
@@ -121,5 +122,60 @@ body[dir='rtl'] .mirror-rtl {
   transform: scaleX(-1);
   .mat-badge-content {
     transform: scaleX(-1);
+  }
+}
+
+// These breakpoints can be somewhat confusing, because a breakpoint can be thought of as a range, or as a specific
+// width. If they're fixed numbers, hide-lt-md and hide-gt-md would be mutually exclusive, but if you think of them as
+// ranges, you would need to use hide-lt-md and hide-gt-sm to make two elements mutually exclusive. For the purposes of
+// these classes, all breakpoints are fixed points, not a range of widths.
+// One of the consequences of this is that there is no such thing as gt-xs, since extra small is defined as anything
+// less than small. The same is not true of xl; xl has an actual value, and a screen can be larger than xl.
+
+.hide-lt-sm {
+  @media (width < map.get(variables.$grid-breakpoints, 'sm')) {
+    display: none !important;
+  }
+}
+
+.hide-lt-md {
+  @media (width < map.get(variables.$grid-breakpoints, 'md')) {
+    display: none !important;
+  }
+}
+
+.hide-lt-lg {
+  @media (width < map.get(variables.$grid-breakpoints, 'lg')) {
+    display: none !important;
+  }
+}
+
+.hide-lt-xl {
+  @media (width < map.get(variables.$grid-breakpoints, 'xl')) {
+    display: none !important;
+  }
+}
+
+.hide-gt-sm {
+  @media (width >= map.get(variables.$grid-breakpoints, 'sm')) {
+    display: none !important;
+  }
+}
+
+.hide-gt-md {
+  @media (width >= map.get(variables.$grid-breakpoints, 'md')) {
+    display: none !important;
+  }
+}
+
+.hide-gt-lg {
+  @media (width >= map.get(variables.$grid-breakpoints, 'lg')) {
+    display: none !important;
+  }
+}
+
+.hide-gt-xl {
+  @media (width >= map.get(variables.$grid-breakpoints, 'xl')) {
+    display: none !important;
   }
 }

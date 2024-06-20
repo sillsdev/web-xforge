@@ -197,20 +197,6 @@ header {
 
         &.action-icons {
           justify-content: flex-end;
-
-          .add-question-button.mat-mdc-icon-button {
-            display: none;
-          }
-
-          @include media-breakpoint('<', xl) {
-            .add-question-button.mat-mdc-button {
-              display: none;
-            }
-
-            .add-question-button.mat-mdc-icon-button {
-              display: block;
-            }
-          }
         }
       }
     }
