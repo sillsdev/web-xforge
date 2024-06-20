@@ -412,8 +412,8 @@
     "browser_unsupported": "Bu brauzerə dəstək göstərilmir",
     "safari_for_audio_on_ios": "İPhone və iPad-də səs qeydləri yalnız Safari-də işləyir.",
     "some_features_may_not_work": "Bu veb saytın bəzi xüsusiyyətləri brauzerinizlə düzgün işləməyə bilər.",
-    "upgrade_chrome_firefox": "{{newLine}} Ən son {{chromeLink}} və ya {{firefoxLink}} səviyyəsinə keçməyi məsləhət görürük.",
-    "upgrade_safari": "{{newLine}} Ən son {{safariLink}} səviyyəsinə keçməyi məsləhət görürük."
+    "upgrade_chrome_firefox": "{{ newLine }} Ən son {{ chromeLink }} və ya {{ firefoxLink }} səviyyəsinə keçməyi məsləhət görürük.",
+    "upgrade_safari": "{{ newLine }} Ən son {{ safariLink }} səviyyəsinə keçməyi məsləhət görürük."
   },
   "text": {
     "book_does_not_exist": "Bu kitab mövcud deyil.",

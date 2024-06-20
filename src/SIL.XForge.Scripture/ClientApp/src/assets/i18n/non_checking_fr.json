@@ -141,7 +141,7 @@
     "dialog_confirm_draft_regeneration_title": "Est-ce que vous avez terminé avec le projet actuel?",
     "dialog_confirm_draft_regeneration_yes": "Continuer",
     "download_draft": "Télécharger le brouillon",
-    "draft_active_detail": "Génération de l'ébauche ; cela peut prendre quelques heures.",
+    "draft_active_detail": "Générer un brouillon; cela prend généralement au moins 8 heures.",
     "draft_active_header": "L'ébauche en cours",
     "draft_is_ready": "Votre brouillon est prêt",
     "draft_queued_detail_multiple": "La génération de la traduction de l'ébauche est numéro {{ count }} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
@@ -152,11 +152,15 @@
     "generate_forward_translation_drafts_header": "Générer des ébauches de traduction",
     "generate_new_draft": "Nouveau brouillon",
     "go_to_draft_viewer": "Allez sur [link:draftViewerUrl]l'aperçu du brouillon[/link] pour prévisualiser et appliquer le brouillon généré aux chapitres de votre choix.",
+    "info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Select a different additional training text on the [link:projectSettingsUrl]settings page[/link].",
+    "info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Select a different alternate training text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_last_sync_failed": "Votre projet n'a pas réussi à se synchroniser. Il sera synchronisé lorsque vous générerez votre prochain brouillon.",
     "info_alert_no_source_access": "Vous n'avez pas accès au projet de traduction {{ name }}. Veuillez contacter votre administrateur Paratext pour obtenir l'accès, puis [link:connectProjectUrl]connectez-vous à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_no_alternate_source_access": "Vous n'avez pas accès au projet source {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_no_alternate_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer un brouillon.",
     "info_alert_download_error": "Un problème est survenu lors du téléchargement de votre brouillon. Veuillez vérifier votre connexion Internet et réessayer dans quelques minutes.",
+    "info_alert_no_additional_training_source_access": "You do not have access to the additional training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
+    "info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Select a different source text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est nécessaire pour produire une ébauche. Sélectionnez un texte source sur la [link:projectSettingsUrl]page des paramètres[/link].",
     "instructions_draft_process": "La génération d'une ébauche prend généralement au moins 8 heures.",
     "instructions_draft_process_subtext": "Cela peut prendre beaucoup plus de temps lorsque le système est occupé.",
@@ -236,12 +240,24 @@
     "offline_notice": "L'historique de l'éditeur n'est pas disponible hors connexion."
   },
   "editor_tabs_menu": {
-    "history_tab_header": "Historique",
+    "history_menu_item": "Historique",
+    "draft_menu_item": "Brouillon automatique",
+    "project_resource_menu_item": "Ressource..."
+  },
+  "editor_tab_factory": {
+    "default_history_tab_header": "Historique",
+    "default_project_tab_header": "Projet",
+    "default_resource_tab_header": "Ressource",
     "draft_tab_header": "Brouillon automatique"
   },
   "history_chooser": {
+    "confirm_revert": "Êtes-vous sûr de vouloir restaurer ce chapitre à la révision sélectionnée ?",
+    "confirm_yes": "Restaurer",
+    "error": "Une erreur s'est produite lors de la restauration du chapitre. Aucune modification n'a été apportée.",
     "hide_changes": "Masquer les modifications",
     "hide_diff": "Masquer les différences par rapport à la dernière version",
+    "revert": "Restaurer cette version",
+    "revert_details": "Restaurer cette version précédente du chapitre",
     "show_changes": "Afficher les modifications",
     "show_diff": "Afficher les différences par rapport à la dernière version"
   },
@@ -386,6 +402,7 @@
     "delete_project_cannot_be_undone": "Une fois que vous avez supprimé un projet, il est impossible de revenir en arrière. Soyez sûr de vous.",
     "delete_this_project": "Supprimer ce projet",
     "email_invitations_only": "Envoyer les invitations par e-mail uniquement",
+    "enable_additional_training_source": "Add another source to use for training",
     "enable_alternate_source": "Utilisez une autre source pour le brouillon",
     "enable_alternate_training_source": "Utilisez une source différente pour l'entraînement.",
     "enable_community_checking": "Activer la vérification par la communauté",
@@ -408,6 +425,8 @@
     "pre_translation_alternate_training_source_info": "Sélectionner une traduction séparée à des fins d'entraînement, telle qu'une retraduction, peut améliorer la qualité de la rédaction.",
     "pre_translation_alternate_training_source_text_placeholder": "Texte source d'entraînement alternatif (optionnel)",
     "pre_translation_drafting_description": "Configurer les options de génération de brouillons.",
+    "pre_translation_additional_training_source_info": "Select another translation in the source language to combine with your training source",
+    "pre_translation_additional_training_source_text_placeholder": "Additional training source text (optional)",
     "pre_translation_send_all_segments": "Pré-traduire les titres et le matériel non-verse",
     "pre_translation_send_all_segments_info": "Pour que ceux-ci soient pré-traduits, votre structure de traduction doit correspondre exactement à votre source.",
     "pre_translation_source_text_placeholder": "Texte source de rédaction alternatif (optionnel)",
@@ -429,6 +448,18 @@
     "hide_community_checking_text": "Masquer le texte des Écritures",
     "checkers_listen_to_scripture_audio": "Les vérificateurs devront écouter l'audio des Écritures.",
     "will_not_delete_paratext_project": "Cela {{ boldStart }}ne va pas{{ boldEnd }} supprimer votre projet Paratext, mais cela supprimera toutes les données non synchronisées stockées dans Scripture Forge. Il est recommandé de {{ templateTagBoundary }}Synchroniser{{ templateTagBoundary }} d'abord, avant de supprimer."
+  },
+  "editor_add_tab_resource_dialog": {
+    "dialog_title": "Ouvrir l'onglet Ressource",
+    "error_fetching_projects_resources": "Une erreur s'est produite lors de la récupération des projets et des ressources.",
+    "error_fetching_projects": "Une erreur s'est produite lors de la récupération des projets. Vous ne pourrez sélectionner que les ressources de la bibliothèque biblique numérique.",
+    "error_fetching_resources": "Une erreur s'est produite lors de la récupération des ressources de la bibliothèque biblique numérique. Vous ne pourrez sélectionner que des projets.",
+    "error_loading_resource": "Une erreur s'est produite lors du chargement de la ressource sélectionnée.",
+    "loading": "Chargement en cours",
+    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
+    "placeholder_ready": "Sélectionner un projet paratext ou une ressource BBN",
+    "cancel": "Annuler",
+    "select": "Sélectionner"
   },
   "suggestions_settings_dialog": {
     "better": "Meilleures",
@@ -512,6 +543,7 @@
   "warnings": {
     "cancel": "Annuler",
     "login_cookie_deletion": "Si vous vous déconnectez, vous ne pourrez plus vous reconnecter à ce compte. Êtes-vous sûr de vouloir vous déconnecter ?",
-    "logout": "Oui, se déconnecter"
+    "logout": "Oui, se déconnecter",
+    "paratext_credentials_expired": "Vos identifiants utilisateur Paratext ont expiré. Veuillez vous déconnecter et vous reconnecter."
   }
 }
