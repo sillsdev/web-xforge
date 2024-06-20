@@ -321,9 +321,7 @@ public class TrainingDataServiceTests
         Assert.That(
             actual
                 .ToString()
-                .StartsWith(
-                    $"http://localhost/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="
-                ),
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
             Is.True
         );
 
@@ -346,9 +344,7 @@ public class TrainingDataServiceTests
         Assert.That(
             actual
                 .ToString()
-                .StartsWith(
-                    $"http://localhost/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="
-                ),
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
             Is.True
         );
 
@@ -370,9 +366,7 @@ public class TrainingDataServiceTests
         Assert.That(
             actual
                 .ToString()
-                .StartsWith(
-                    $"http://localhost/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="
-                ),
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
             Is.True
         );
 
@@ -410,9 +404,7 @@ public class TrainingDataServiceTests
         Assert.That(
             actual
                 .ToString()
-                .StartsWith(
-                    $"http://localhost/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="
-                ),
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
             Is.True
         );
 
@@ -454,9 +446,7 @@ public class TrainingDataServiceTests
         Assert.That(
             actual
                 .ToString()
-                .StartsWith(
-                    $"http://localhost/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="
-                ),
+                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
             Is.True
         );
 
@@ -510,9 +500,7 @@ public class TrainingDataServiceTests
         public TestEnvironment()
         {
             SiteOptions = Substitute.For<IOptions<SiteOptions>>();
-            SiteOptions.Value.Returns(
-                new SiteOptions { Origin = new Uri("http://localhost/", UriKind.Absolute), SiteDir = "site-dir" }
-            );
+            SiteOptions.Value.Returns(new SiteOptions { SiteDir = "site-dir" });
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
             FileSystemService.FileExists(Arg.Any<string>()).Returns(true);

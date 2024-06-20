@@ -105,13 +105,11 @@ public class SFProjectsUploadControllerTests
         using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Set up the URI to the uploaded file
-        Uri baseUri = new Uri("https://scriptureforge.org/", UriKind.Absolute);
         Uri relativeUri = new Uri(
             $"/assets/audio/{Project01}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
             UriKind.Relative
         );
-        env.SFProjectService.SaveAudioAsync(User01, Project01, Data01, Arg.Any<string>())
-            .Returns(new Uri(baseUri, relativeUri));
+        env.SFProjectService.SaveAudioAsync(User01, Project01, Data01, Arg.Any<string>()).Returns(relativeUri);
 
         // SUT
         IActionResult actual = await env.Controller.UploadAudioAsync();
@@ -235,13 +233,12 @@ public class SFProjectsUploadControllerTests
         using HttpRequestMessage _ = await env.CreateSuccessfulFileUploadResultAsync(Data01, Project01, fileName, data);
 
         // Set up the URI to the uploaded file
-        Uri baseUri = new Uri("https://scriptureforge.org/", UriKind.Absolute);
         Uri relativeUri = new Uri(
             $"/assets/{TrainingDataService.DirectoryName}/{Project01}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
             UriKind.Relative
         );
         env.TrainingDataService.SaveTrainingDataAsync(User01, Project01, Data01, Arg.Any<string>())
-            .Returns(new Uri(baseUri, relativeUri));
+            .Returns(relativeUri);
 
         // SUT
         IActionResult actual = await env.Controller.UploadTrainingDataAsync();
@@ -339,6 +336,8 @@ public class SFProjectsUploadControllerTests
                     ContentType = request.Content.Headers.ContentType?.ToString(),
                     Body = await request.Content.ReadAsStreamAsync(),
                     Method = request.Method.Method,
+                    Host = new HostString("scriptureforge.org", 443),
+                    Scheme = "https",
                 },
             };
 
