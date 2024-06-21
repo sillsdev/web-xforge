@@ -141,7 +141,7 @@
     "dialog_confirm_draft_regeneration_title": "Are you done with the current draft?",
     "dialog_confirm_draft_regeneration_yes": "Continue",
     "download_draft": "Download draft",
-    "draft_active_detail": "Generating draft; this can take a few hours.",
+    "draft_active_detail": "Generating draft; this usually takes at least 8 hours.",
     "draft_active_header": "Draft in progress",
     "draft_is_ready": "Your draft is ready",
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
@@ -152,11 +152,15 @@
     "generate_forward_translation_drafts_header": "Generate translation drafts",
     "generate_new_draft": "New draft",
     "go_to_draft_viewer": "Go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the generated draft to chapters of your choice.",
+    "info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Select a different additional training text on the [link:projectSettingsUrl]settings page[/link].",
+    "info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Select a different alternate training text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_last_sync_failed": "Your project failed to synchronize. It will be synchronized when you next generate a draft.",
     "info_alert_no_source_access": "You do not have access to the translation source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_alternate_source_access": "You do not have access to the drafting source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_no_alternate_training_source_access": "You do not have access to the training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_download_error": "There was a problem downloading your draft. Please check your Internet connection and try again in several minutes.",
+    "info_alert_no_additional_training_source_access": "You do not have access to the additional training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
+    "info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Select a different source text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Select a source text on the [link:projectSettingsUrl]settings page[/link].",
     "instructions_draft_process": "Generating a draft usually takes at least 8 hours.",
     "instructions_draft_process_subtext": "It can take much longer when the system is busy.",
@@ -236,12 +240,24 @@
     "offline_notice": "Editor history is not available offline."
   },
   "editor_tabs_menu": {
-    "history_tab_header": "History",
+    "history_menu_item": "History",
+    "draft_menu_item": "Auto Draft",
+    "project_resource_menu_item": "Resource..."
+  },
+  "editor_tab_factory": {
+    "default_history_tab_header": "History",
+    "default_project_tab_header": "Project",
+    "default_resource_tab_header": "Resource",
     "draft_tab_header": "Auto Draft"
   },
   "history_chooser": {
+    "confirm_revert": "Are you sure you want to restore this chapter to the selected revision?",
+    "confirm_yes": "Restore",
+    "error": "There was an error restoring the chapter. No changes were made.",
     "hide_changes": "Hide changes",
     "hide_diff": "Hide differences from the latest version",
+    "revert": "Restore this version",
+    "revert_details": "Restore this previous version of the chapter",
     "show_changes": "Show changes",
     "show_diff": "Show differences from the latest version"
   },
@@ -386,6 +402,7 @@
     "delete_project_cannot_be_undone": "После удаления восстановить проект будет невозможно. Пожалуйста, убедитесь, что вы знаете, что делаете.",
     "delete_this_project": "Удалить этот проект",
     "email_invitations_only": "Email invitations only",
+    "enable_additional_training_source": "Add another source to use for training",
     "enable_alternate_source": "Use a different source for drafting",
     "enable_alternate_training_source": "Use a different source for training",
     "enable_community_checking": "Enable Community Checking",
@@ -408,6 +425,8 @@
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",
     "pre_translation_drafting_description": "Configure options for generating translation drafts.",
+    "pre_translation_additional_training_source_info": "Select another translation in the source language to combine with your training source",
+    "pre_translation_additional_training_source_text_placeholder": "Additional training source text (optional)",
     "pre_translation_send_all_segments": "Pre-translate headings and non-verse material",
     "pre_translation_send_all_segments_info": "For these to be pre-translated, your translation structure must match your source exactly.",
     "pre_translation_source_text_placeholder": "Alternate drafting source text (optional)",
@@ -429,6 +448,18 @@
     "hide_community_checking_text": "Hide Scripture text",
     "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
+  },
+  "editor_add_tab_resource_dialog": {
+    "dialog_title": "Open Resource Tab",
+    "error_fetching_projects_resources": "There was an error fetching projects and resources.",
+    "error_fetching_projects": "There was an error fetching projects. You will only be able to select resources from Digital Bible Library.",
+    "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
+    "error_loading_resource": "There was an error loading the selected resource.",
+    "loading": "Loading",
+    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
+    "placeholder_ready": "Select paratext project or DBL resource",
+    "cancel": "Отменить",
+    "select": "Выбрать"
   },
   "suggestions_settings_dialog": {
     "better": "Лучший, лучше",
@@ -512,6 +543,7 @@
   "warnings": {
     "cancel": "Отменить",
     "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to log out?",
-    "logout": "Yes, log out"
+    "logout": "Yes, log out",
+    "paratext_credentials_expired": "Your Paratext user credentials have expired. Please log out and log back in again."
   }
 }
