@@ -470,5 +470,6 @@ class TestEnvironment {
   wait(): void {
     flush();
     this.fixture.detectChanges();
+    flush();
   }
 }
