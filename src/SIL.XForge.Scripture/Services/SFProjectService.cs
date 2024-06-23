@@ -572,7 +572,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await _syncService.CancelSyncAsync(curUserId, projectId);
     }
 
-    public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role)
+    public async Task<bool> InviteAsync(
+        string curUserId,
+        string projectId,
+        string email,
+        string locale,
+        string role,
+        Uri websiteUrl
+    )
     {
         SFProject project = await GetProjectAsync(projectId);
         if (!CanUserShareRole(curUserId, project, role))
@@ -644,11 +651,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
         }
         string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-        string origin = siteOptions.Origin.Split(';', StringSplitOptions.RemoveEmptyEntries).First();
-        Uri url = new Uri(
-            new Uri(origin, UriKind.Absolute),
-            $"projects/{projectId}?sharing=true&shareKey={key}&locale={locale}"
-        );
+        Uri url = new Uri(websiteUrl, $"projects/{projectId}?sharing=true&shareKey={key}&locale={locale}");
         string linkExpires = _localizer[SharedResource.Keys.InviteLinkExpires];
 
         User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);

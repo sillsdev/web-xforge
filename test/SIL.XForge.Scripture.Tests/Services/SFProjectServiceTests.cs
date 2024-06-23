@@ -55,7 +55,7 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
 
-        await env.Service.InviteAsync(User01, Project01, email, "en", role);
+        await env.Service.InviteAsync(User01, Project01, email, "en", role, TestEnvironment.WebsiteUrl);
         await env.EmailService.Received(1)
             .SendEmailAsync(
                 email,
@@ -77,7 +77,7 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
 
-        await env.Service.InviteAsync(User01, Project03, email, "en", role);
+        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
         await env.EmailService.Received(1)
             .SendEmailAsync(
                 email,
@@ -102,7 +102,14 @@ public class SFProjectServiceTests
         const string observerEmail = "sf_observer@example.com";
         const string observerKey = "sfobserverkey";
         env.SecurityService.GenerateKey().Returns(observerKey);
-        await env.Service.InviteAsync(User02, Project04, observerEmail, "en", SFProjectRole.Viewer);
+        await env.Service.InviteAsync(
+            User02,
+            Project04,
+            observerEmail,
+            "en",
+            SFProjectRole.Viewer,
+            TestEnvironment.WebsiteUrl
+        );
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
             projectSecret.ShareKeys.Any(
@@ -122,7 +129,14 @@ public class SFProjectServiceTests
         const string reviewerEmail = "reviewer@example.com";
         const string reviewerKey = "reviewerKey";
         env.SecurityService.GenerateKey().Returns(reviewerKey);
-        await env.Service.InviteAsync(User02, Project04, reviewerEmail, "en", SFProjectRole.Commenter);
+        await env.Service.InviteAsync(
+            User02,
+            Project04,
+            reviewerEmail,
+            "en",
+            SFProjectRole.Commenter,
+            TestEnvironment.WebsiteUrl
+        );
         projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
             projectSecret.ShareKeys.Any(
@@ -164,7 +178,7 @@ public class SFProjectServiceTests
         );
         Assert.That(invitees[0].Role == initialRole);
 
-        await env.Service.InviteAsync(User01, Project03, email, "en", endingRole);
+        await env.Service.InviteAsync(User01, Project03, email, "en", endingRole, TestEnvironment.WebsiteUrl);
         // Invitation email was resent but with original code and updated time
         await env.EmailService.Received(1)
             .SendEmailAsync(
@@ -211,7 +225,7 @@ public class SFProjectServiceTests
         );
 
         env.SecurityService.GenerateKey().Returns("newkey");
-        await env.Service.InviteAsync(User01, Project03, email, "en", role);
+        await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl);
         // Invitation email was sent with a new code
         await env.EmailService.Received(1)
             .SendEmailAsync(
@@ -240,7 +254,7 @@ public class SFProjectServiceTests
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         // SUT
-        await env.Service.InviteAsync(User02, Project02, email, "en", role);
+        await env.Service.InviteAsync(User02, Project02, email, "en", role, TestEnvironment.WebsiteUrl);
         await env.EmailService.Received(1)
             .SendEmailAsync(
                 email,
@@ -259,7 +273,14 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
-                env.Service.InviteAsync(User02, Project01, "newuser@example.com", "en", SFProjectRole.CommunityChecker)
+                env.Service.InviteAsync(
+                    User02,
+                    Project01,
+                    "newuser@example.com",
+                    "en",
+                    SFProjectRole.CommunityChecker,
+                    TestEnvironment.WebsiteUrl
+                )
         );
         await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
     }
@@ -274,7 +295,10 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.TryGetValue(User02, out string userRole), Is.True);
         Assert.That(userRole, Is.EqualTo(role), "setup - user should already be a project user");
 
-        Assert.That(await env.Service.InviteAsync(User01, Project03, email, "en", role), Is.False);
+        Assert.That(
+            await env.Service.InviteAsync(User01, Project03, email, "en", role, TestEnvironment.WebsiteUrl),
+            Is.False
+        );
         project = env.GetProject(Project03);
         Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "user should still be a project user");
 
@@ -295,8 +319,12 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
-        Assert.DoesNotThrowAsync(() => env.Service.InviteAsync(User02, Project03, email, "en", role));
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InviteAsync(User03, Project03, email, "en", role));
+        Assert.DoesNotThrowAsync(
+            () => env.Service.InviteAsync(User02, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
+        );
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.InviteAsync(User03, Project03, email, "en", role, TestEnvironment.WebsiteUrl)
+        );
     }
 
     [Test]
@@ -3438,6 +3466,8 @@ public class SFProjectServiceTests
 
     private class TestEnvironment
     {
+        public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
+
         public TestEnvironment()
         {
             RealtimeService = new SFMemoryRealtimeService();
@@ -3899,8 +3929,7 @@ public class SFProjectServiceTests
                 {
                     Id = SiteId,
                     Name = "xForge",
-                    Origin = "http://localhost",
-                    SiteDir = "xforge"
+                    SiteDir = "xforge",
                 }
             );
             var audioService = Substitute.For<IAudioService>();

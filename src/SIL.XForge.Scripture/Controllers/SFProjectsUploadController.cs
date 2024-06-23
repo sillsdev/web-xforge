@@ -22,6 +22,7 @@ public class SFProjectsUploadController : ControllerBase
 {
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFileSystemService _fileSystemService;
+    private readonly IHttpRequestAccessor _httpRequestAccessor;
     private readonly ISFProjectService _projectService;
     private readonly ITrainingDataService _trainingDataService;
     private readonly IUserAccessor _userAccessor;
@@ -29,35 +30,19 @@ public class SFProjectsUploadController : ControllerBase
     public SFProjectsUploadController(
         IExceptionHandler exceptionHandler,
         IFileSystemService fileSystemService,
+        IHttpRequestAccessor httpRequestAccessor,
         ISFProjectService projectService,
         ITrainingDataService trainingDataService,
         IUserAccessor userAccessor
     )
     {
         _fileSystemService = fileSystemService;
+        _httpRequestAccessor = httpRequestAccessor;
         _projectService = projectService;
         _trainingDataService = trainingDataService;
         _userAccessor = userAccessor;
         _exceptionHandler = exceptionHandler;
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
-    }
-
-    /// <summary>
-    /// Gets the website root for URL operations.
-    /// </summary>
-    private Uri SiteRoot
-    {
-        get
-        {
-            var uriBuilder = new UriBuilder(Request.Scheme, Request.Host.Host, Request.Host.Port ?? -1);
-            if (uriBuilder.Uri.IsDefaultPort)
-            {
-                // -1 means to not specify the port in the URL
-                uriBuilder.Port = -1;
-            }
-
-            return uriBuilder.Uri;
-        }
     }
 
     /// <summary>
@@ -84,7 +69,7 @@ public class SFProjectsUploadController : ControllerBase
             // Upload, convert and save the audio file
             (dataId, path, projectId) = await HandleFileUploadAsync();
             Uri relativeUri = await _projectService.SaveAudioAsync(_userAccessor.UserId, projectId, dataId, path);
-            Uri uri = new Uri(SiteRoot, relativeUri);
+            Uri uri = new Uri(_httpRequestAccessor.SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
         catch (ForbiddenException)
@@ -150,7 +135,7 @@ public class SFProjectsUploadController : ControllerBase
                 dataId,
                 path
             );
-            Uri uri = new Uri(SiteRoot, relativeUri);
+            Uri uri = new Uri(_httpRequestAccessor.SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
         catch (ForbiddenException)

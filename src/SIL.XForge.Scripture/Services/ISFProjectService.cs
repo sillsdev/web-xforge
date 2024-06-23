@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +17,14 @@ public interface ISFProjectService : IProjectService
     Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
     Task<string> SyncAsync(string curUserId, string projectId);
     Task CancelSyncAsync(string curUserId, string projectId);
-    Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
+    Task<bool> InviteAsync(
+        string curUserId,
+        string projectId,
+        string email,
+        string locale,
+        string role,
+        Uri websiteUrl
+    );
     Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role, string shareLinkType);
     Task<ValidShareKey> CheckShareKeyValidity(string shareKey);
     Task<SFProject> GetProjectAsync(string projectId);
