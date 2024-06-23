@@ -22,12 +22,13 @@ namespace SIL.XForge.Scripture.Controllers;
 public class SFProjectsRpcController(
     IBackgroundJobClient backgroundJobClient,
     IExceptionHandler exceptionHandler,
+    IHttpRequestAccessor httpRequestAccessor,
     ISFProjectService projectService,
     ITrainingDataService trainingDataService,
     IUserAccessor userAccessor
 ) : RpcControllerBase(userAccessor, exceptionHandler)
 {
-    private const string AlreadyProjectMemberResponse = "alreadyProjectMember";
+    internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
     // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
@@ -276,7 +277,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            if (await projectService.InviteAsync(UserId, projectId, email, locale, role))
+            if (await projectService.InviteAsync(UserId, projectId, email, locale, role, httpRequestAccessor.SiteRoot))
                 return Ok();
             return Ok(AlreadyProjectMemberResponse);
         }

@@ -259,6 +259,8 @@ public class SFProjectsUploadControllerTests
         {
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             FileSystemService = Substitute.For<IFileSystemService>();
+            var httpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
+            httpRequestAccessor.SiteRoot.Returns(new Uri("https://scriptureforge.org", UriKind.Absolute));
             SFProjectService = Substitute.For<ISFProjectService>();
             TrainingDataService = Substitute.For<ITrainingDataService>();
             var userAccessor = Substitute.For<IUserAccessor>();
@@ -267,6 +269,7 @@ public class SFProjectsUploadControllerTests
             Controller = new SFProjectsUploadController(
                 ExceptionHandler,
                 FileSystemService,
+                httpRequestAccessor,
                 SFProjectService,
                 TrainingDataService,
                 userAccessor
@@ -336,8 +339,6 @@ public class SFProjectsUploadControllerTests
                     ContentType = request.Content.Headers.ContentType?.ToString(),
                     Body = await request.Content.ReadAsStreamAsync(),
                     Method = request.Method.Method,
-                    Host = new HostString("scriptureforge.org", 443),
-                    Scheme = "https",
                 },
             };
 
