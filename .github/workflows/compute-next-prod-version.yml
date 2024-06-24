@@ -1,0 +1,77 @@
+name: "Increment version"
+
+on:
+  workflow_call:
+    inputs:
+      release-type:
+        description: "The type of release. This will bump the major.minor.patch version number accordingly. Options: major, minor, patch."
+        required: true
+        type: string
+      tag_prefix:
+        description: "The prefix of the VCS tags, such as 'ABCv' or 'DEFv'."
+        required: true
+        type: string
+    outputs:
+      next_version:
+        description: "The next version number."
+        value: ${{ jobs.deploy.outputs.next_version }}
+
+jobs:
+  deploy:
+    name: "Increment version"
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.compute_next_version.outputs.next_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Compute next version
+        id: compute_next_version
+        run: |
+          python3 << EOF
+          import os
+          import re
+          import subprocess
+
+          def get_latest_tag(tag_prefix):
+              result = subprocess.check_output(['git', 'describe', '--match', f'{tag_prefix}?*', '--abbrev=0'], text=True)
+              return result.strip()
+
+          def increment_version(tag, release_type, tag_prefix):
+              pattern = re.compile(fr'^{re.escape(tag_prefix)}(\d+)\.(\d+)\.(\d+)$')
+              match = pattern.match(tag)
+              if not match:
+                  raise ValueError(f'Tag does not match pattern {tag_prefix}1.2.3')
+
+              major, minor, patch = map(int, match.groups())
+
+              if release_type == 'major':
+                  major += 1
+                  minor = 0
+                  patch = 0
+              elif release_type == 'minor':
+                  minor += 1
+                  patch = 0
+              elif release_type == 'patch':
+                  patch += 1
+              else:
+                  raise ValueError('Invalid release_type value')
+
+              return f'{major}.{minor}.{patch}'
+
+            # Receive input
+            release_type = os.getenv('RELEASE_TYPE')
+            tag_prefix = os.getenv('TAG_PREFIX')
+
+            # Get latest tag
+            latest_tag = get_latest_tag(tag_prefix)
+
+            # Increment version
+            next_version = increment_version(latest_tag, release_type, tag_prefix)
+
+            # Output next version number
+            print(f'::set-output name=next_version::{next_version}')
+          EOF
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+          TAG_PREFIX: ${{ github.event.inputs.tag_prefix }}
