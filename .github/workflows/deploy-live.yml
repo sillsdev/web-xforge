@@ -19,12 +19,25 @@ on:
           - "major"
 
 jobs:
+  update_branch:
+    name: "Update branch"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set branch
+        # TODO Could release from a chosen QA tag.
+        run: git push origin origin/sf-qa:sf-live
+
   determine_version:
     name: "Determine version"
     uses: ./github/workflows/compute-next-prod-version.yml
     with:
       release-type: ${{ github.event.inputs.release-type }}
       tag_prefix: ${{ env.vcs_tag_prefix }}
+
   deploy:
     name: "Deploy to Live"
     uses: ./.github/workflows/deploy.yml
