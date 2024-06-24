@@ -6,12 +6,25 @@ env:
 concurrency: deploy-staging
 
 on:
-  push:
-    branches:
-      - sf-qa
+  schedule:
+    # Run every day except Tuesday, at 01:30 UTC, shortly before beginning of tester workday.
+    # Note that this workflow can be disabled from the GitHub UI by going to
+    # Actions > Workflows > Deploy to QA > "..." > Disable workflow
+    - cron: "30 1 * * 0-1,3-6"
   workflow_dispatch:
 
 jobs:
+  update_branch:
+    name: "Update branch"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set branch
+        run: git push origin origin/master:sf-qa
+
   determine_version:
     name: "Determine version"
     uses: ./github/workflows/compute-next-stag-version.yml
