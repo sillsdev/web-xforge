@@ -70,6 +70,14 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     try {
       if (paratextId != null) {
         this.isLoading = true;
+
+        // If the Paratext project has a SF project id, add the user to that project if they are not already
+        const project = this.projects?.find(p => p.paratextId === paratextId);
+        if (project?.projectId != null && !project.isConnected) {
+          await this.projectService.onlineAddCurrentUser(project.projectId);
+        }
+
+        // Load the project
         this.selectedProjectDoc = await this.fetchProject(paratextId);
 
         if (this.selectedProjectDoc != null) {
