@@ -1,5 +1,8 @@
 name: "Deploy to QA"
 
+env:
+  vcs_tag_prefix: "SF-QAv"
+
 concurrency: deploy-staging
 
 on:
@@ -9,9 +12,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  determine_version:
+    name: "Determine version"
+    uses: ./github/workflows/compute-next-stag-version.yml
+    with:
+      tag_prefix: ${{ env.vcs_tag_prefix }}
+
   deploy:
     name: "Deploy to QA"
     uses: ./.github/workflows/deploy.yml
+    needs: determine_version
     with:
       dotnet_version: "8.0.x"
       node_version: "18.20.2"
@@ -21,10 +31,10 @@ jobs:
       angular_config: "staging"
       app_name: "scriptureforge"
       app_suffix: "_qa"
-      build_number: "${{ github.run_number }}"
+      version_number: "${{ needs.determine_version.outputs.next_version }}"
+      vcs_tag_prefix: ${{ env.vcs_tag_prefix }}
       node_options: "--max_old_space_size=4096"
       project: "SIL.XForge.Scripture"
-      vcs_tag_prefix: "SF-QAv"
 
     secrets:
       deploy_server: ${{secrets.qa_deploy_server}}

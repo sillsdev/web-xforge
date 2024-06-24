@@ -34,8 +34,8 @@ on:
         description: "The suffix to use for the application."
         type: string
         required: true
-      build_number:
-        description: "The build number to use for the deployment."
+      version_number:
+        description: "The version number to use for the deployment."
         type: string
         required: true
       node_options:
@@ -140,7 +140,7 @@ jobs:
         env:
           ANGULAR_CONFIG: ${{inputs.angular_config}}
           APP_NAME: ${{inputs.app_name}}
-          BUILD_NUMBER: ${{inputs.build_number}}
+          BUILD_NUMBER: ${{inputs.version_number}}
           DEPLOY_DESTINATION: ${{secrets.deploy_server}}
           DEPLOY_CREDENTIALS: ~/.ssh/deploy_key
           NODE_OPTIONS: ${{inputs.node_options}}
@@ -159,6 +159,6 @@ jobs:
           set -ueo pipefail
           git config --global user.name "ci"
           git config --global user.email "ci"
-          tag="${{inputs.vcs_tag_prefix}}${{inputs.build_number}}"
+          tag="${{inputs.vcs_tag_prefix}}${{inputs.version_number}}"
           git tag --annotate --message "Release ${tag}" "${tag}"
           git push origin "${tag}"
