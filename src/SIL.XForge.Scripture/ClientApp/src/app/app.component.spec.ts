@@ -1,6 +1,7 @@
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
@@ -60,6 +61,7 @@ const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedMediaObserver = mock(MediaObserver);
 const mockedPermissions = mock(PermissionsService);
 
 @Component({
@@ -109,6 +111,7 @@ describe('AppComponent', () => {
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
@@ -155,6 +158,64 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.component.selectedProjectId).toBeUndefined();
+  }));
+
+  it('drawer disappears as appropriate in small viewport', fakeAsync(() => {
+    // The user goes to a project. They are using an sm size viewport.
+    const env = new TestEnvironment();
+    env.media.next([{ mqAlias: 'sm' } as MediaChange]);
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
+    env.navigateFully(['/projects', 'project01']);
+    // (And we are not here calling env.init(), which would open the drawer.)
+
+    // With a smaller viewport, at a project page, the drawer should not be visible. Although it is in the dom.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    // But the hamburger menu button will be visible.
+    expect(env.hamburgerMenuButton).not.toBeNull();
+
+    // The user clicks the hamburger button, revealing the drawer.
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.hamburgerMenuButton).not.toBeNull();
+
+    // Clicking the hamburger button again makes the drawer disappear (but is still in the dom.)
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+
+    // The user opens the drawer again.
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.component.isExpanded).toBe(true);
+    // The user clicks to navigate to the translate overview page.
+    env.click(env.menuListItems[1]);
+    // The drawer disappears, but is still in the dom.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.component.isExpanded).toBe(false);
+
+    // The opens the drawer.
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.component.isExpanded).toBe(true);
+    // The user navigates to the My projects page by clicking the SF logo in the
+    // toolbar (or from the My projects item in the avatar menu).
+    env.click(env.sfLogoButton);
+    // The drawer disappears, even from the dom. The hamburger menu icon is also gone.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).toBeNull();
+    expect(env.hamburgerMenuButton).toBeNull();
+    expect(env.component.isExpanded).toBe(false);
+    // The user clicks in the My projects component to open another project.
+    env.navigateFully(['projects', 'project02']);
+    // The drawer should not be showing, but is in the dom.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.component.isExpanded).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.hamburgerMenuButton).not.toBeNull();
   }));
 
   it('does not set user locale when stored locale matches the browsing session', fakeAsync(() => {
@@ -447,6 +508,7 @@ class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
+  readonly media: BehaviorSubject<MediaChange[]> = new BehaviorSubject<MediaChange[]>([]);
   readonly comesOnline$: Subject<void> = new Subject<void>();
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -526,6 +588,7 @@ class TestEnvironment {
     when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
+    when(mockedMediaObserver.asObservable()).thenReturn(this.media.asObservable());
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
     when(mockedPwaService.canInstall$).thenReturn(this.canInstall$);
 
@@ -590,7 +653,15 @@ class TestEnvironment {
   }
 
   get isDrawerVisible(): boolean {
-    return this.menuDrawer != null;
+    return this.menuDrawer?.componentInstance.opened ?? false;
+  }
+
+  get hamburgerMenuButton(): DebugElement {
+    return this.getElement('#hamburger-menu-button');
+  }
+
+  get sfLogoButton(): DebugElement {
+    return this.getElement('#sf-logo-button');
   }
 
   get currentUserDoc(): UserDoc {
@@ -633,6 +704,20 @@ class TestEnvironment {
 
   navigate(commands: any[]): void {
     this.ngZone.run(() => this.router.navigate(commands)).then();
+  }
+
+  navigateFully(commands: any[]): void {
+    this.ngZone.run(() => this.router.navigate(commands)).then();
+    flush();
+    this.fixture.detectChanges();
+    flush();
+  }
+
+  click(element: DebugElement): void {
+    element.nativeElement.click();
+    tick();
+    this.fixture.detectChanges();
+    flush();
   }
 
   clickEditDisplayName(): void {
@@ -697,5 +782,9 @@ class TestEnvironment {
         paratextUsers: paratextUsersFromRoles(userRoles)
       })
     });
+  }
+
+  private getElement(query: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(query));
   }
 }

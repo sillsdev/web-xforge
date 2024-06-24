@@ -9,7 +9,12 @@
     <span class="site-admin" *ngIf="isLive && isSystemAdmin">site admin</span>
     <mat-toolbar color="primary">
       <mat-toolbar-row>
-        <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
+        <button
+          id="hamburger-menu-button"
+          mat-icon-button
+          *ngIf="!isDrawerPermanent && isProjectSelected"
+          (click)="toggleDrawer()"
+        >
           <mat-icon>menu</mat-icon>
         </button>
         @if (isLoggedIn | async) {
@@ -157,7 +162,7 @@
       [opened]="isExpanded || isDrawerPermanent"
       (closed)="drawerCollapsed()"
     >
-      <app-navigation (menuItemClicked)="itemSelected()"></app-navigation>
+      <app-navigation></app-navigation>
     </mat-drawer>
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
     <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">

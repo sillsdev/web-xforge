@@ -282,6 +282,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.checkDeviceStorage();
     });
 
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        // Any time we navigate somewhere, the drawer shouldn't still be expanded (which will only be noticeable on
+        // smaller screens where the drawer is not permanent).
+        this.isExpanded = false;
+      }
+    });
+
     this.loadingFinished();
   }
 
@@ -334,12 +342,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   logOut(): void {
     this.authService.logOut();
-  }
-
-  itemSelected(): void {
-    if (!this.isDrawerPermanent) {
-      this.collapseDrawer();
-    }
   }
 
   collapseDrawer(): void {
