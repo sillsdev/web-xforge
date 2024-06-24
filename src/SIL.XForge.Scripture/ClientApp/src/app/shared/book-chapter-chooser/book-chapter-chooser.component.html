@@ -28,7 +28,7 @@
       (click)="prevChapter()"
       [disabled]="isPrevChapterDisabled()"
       title="{{ t('previous_chapter') }}"
-      fxHide.xs
+      class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
     </button>
@@ -37,7 +37,7 @@
       (click)="nextChapter()"
       [disabled]="isNextChapterDisabled()"
       title="{{ t('next_chapter') }}"
-      fxHide.xs
+      class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
     </button>

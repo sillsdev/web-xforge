@@ -86,11 +86,11 @@
                   type="button"
                   [matTooltip]="t('add_question')"
                   (click)="questionDialog()"
-                  class="add-question-button"
+                  class="add-question-button hide-gt-xl"
                 >
                   <mat-icon class="mirror-rtl">post_add</mat-icon>
                 </button>
-                <button mat-button type="button" (click)="questionDialog()" class="add-question-button">
+                <button mat-button type="button" (click)="questionDialog()" class="add-question-button hide-lt-xl">
                   <mat-icon class="mirror-rtl">post_add</mat-icon>
                   <span>{{ t("add_question") }}</span>
                 </button>
