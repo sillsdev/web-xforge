@@ -665,6 +665,21 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void JoinWithShareKeyAsync_ReusableSharingLinkExpired_ForbiddenError()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project06);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.JoinWithShareKeyAsync(User03, "expiredKeyReusable"),
+            "The user should be forbidden to join the project: Code was expired."
+        );
+    }
+
+    [Test]
     public void JoinWithShareKeyAsync_SpecificSharingAndWrongCode_ForbiddenError()
     {
         var env = new TestEnvironment();
@@ -3935,6 +3950,7 @@ public class SFProjectServiceTests
                                 Key = "abcd",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                         ],
                     },
@@ -3956,6 +3972,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                         ],
                     },
@@ -3971,6 +3988,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                             new ShareKey
                             {
@@ -3979,6 +3997,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                             new ShareKey
                             {
@@ -3987,6 +4006,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                             new ShareKey
                             {
@@ -3995,6 +4015,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                         ],
                     },
@@ -4023,6 +4044,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                         ],
                     },
@@ -4037,12 +4059,22 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
+                            },
+                            new ShareKey
+                            {
+                                Key = "expiredKeyReusable",
+                                ExpirationTime = currentTime.AddDays(-2),
+                                ProjectRole = SFProjectRole.Viewer,
+                                ShareLinkType = ShareLinkType.Anyone,
+                                CreatedByAdmin = false
                             },
                             new ShareKey
                             {
                                 Key = "usedKey",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true,
                                 RecipientUserId = User02,
                             },
                             new ShareKey
@@ -4051,6 +4083,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true,
                                 Reserved = true,
                             },
                             new ShareKey
@@ -4058,12 +4091,14 @@ public class SFProjectServiceTests
                                 Key = "toBeReservedKey",
                                 ProjectRole = SFProjectRole.Commenter,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
                             },
                             new ShareKey
                             {
                                 Key = "maxUsersReached",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true,
                                 UsersGenerated = 250,
                             },
                         ],
