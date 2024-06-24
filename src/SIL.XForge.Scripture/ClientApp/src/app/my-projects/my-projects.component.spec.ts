@@ -150,9 +150,11 @@ describe('MyProjectsComponent', () => {
     // There should not be a connect/join/open button.
     expect(env.goButtonForProject('pt-notConnToSFAndUserIsTran')).toBeNull();
     // The card should show a guiding message.
-    env
-      .cardForUserUnconnectedProject('pt-notConnToSFAndUserIsTran')
-      .nativeElement.textContent.includes('only_paratext_admins_can_start');
+    expect(
+      env
+        .cardForUserUnconnectedProject('pt-notConnToSFAndUserIsTran')
+        .nativeElement.textContent.includes('ask the administrator')
+    ).toBe(true);
   }));
 
   it('guides user when user has no known SF projects, and not a PT user', fakeAsync(() => {
