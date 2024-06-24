@@ -288,6 +288,23 @@ describe('MyProjectsComponent', () => {
     expect(env.messageOffline).toBeNull();
   }));
 
+  it('Non-PT user is not told they are offline', fakeAsync(() => {
+    // Suppose a non-PT user visits the page and is offline. They could potentially be told updated information if
+    // online, such as if their project's source text changed to another resource, or if they were somehow added to a
+    // project (via means other than an invitation somehow like directly editing the DB), or if they were removed from a
+    // project. But most of the time the only _new_ thing that will appear on the My projects page is a result of
+    // accepting an invitation to a project, or logging back in as a PT user. So don't bother to tell a non-PT user that
+    // they are offline.
+    const env = new TestEnvironment({ isKnownPTUser: false });
+    env.onlineStatus = false;
+    env.waitUntilLoaded();
+
+    // We are offline.
+    verify(mockedParatextService.getProjects()).never();
+    // But we don't display the offline message to the non-PT user.
+    expect(env.messageOffline).toBeNull();
+  }));
+
   it('shows loading card while waiting for SF projects list', fakeAsync(() => {
     const env = new TestEnvironment();
     let didCheckAtLoadingTime: boolean = false;

@@ -344,10 +344,10 @@ export const SFTranslator: Story = {
 };
 
 // Someone registers at SF but is not a PT user.
-export const NoProjects: Story = {};
+export const SFNoProjects: Story = {};
 
 // Someone registers at SF, is not a PT user, and is offline.
-export const NoProjectsOffline: Story = {
+export const SFNoProjectsOffline: Story = {
   args: { online: false }
 };
 

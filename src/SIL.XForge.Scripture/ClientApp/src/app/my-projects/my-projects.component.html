@@ -131,15 +131,14 @@
         </div>
         <div class="loading-action"></div>
       </mat-card>
+      <app-notice
+        id="message-offline"
+        icon="cloud_off"
+        [type]="userHasProjects ? 'info' : 'error'"
+        *ngIf="(isOnline | async) === false"
+      >
+        {{ t("offline") }}
+      </app-notice>
     </div>
-
-    <app-notice
-      id="message-offline"
-      icon="cloud_off"
-      [type]="userHasProjects ? 'info' : 'error'"
-      *ngIf="(isOnline | async) === false"
-    >
-      {{ t("offline") }}
-    </app-notice>
   </div>
 </ng-container>
