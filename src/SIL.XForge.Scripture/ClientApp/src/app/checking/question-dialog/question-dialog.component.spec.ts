@@ -289,6 +289,22 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.dirty).toBe(true);
   }));
 
+  it('control marked as touched after reference chooser closed', fakeAsync(() => {
+    env = new TestEnvironment();
+    when(env.mockedScriptureChooserMatDialogRef.afterOpened()).thenReturn(of());
+    when(env.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of('close'));
+    flush();
+
+    env.clickElement(env.scriptureStartInputIcon);
+    flush();
+
+    verify(env.dialogServiceSpy.openMatDialog(anything(), anything())).once();
+    flush();
+
+    expect(env.component.scriptureStart.touched).toBe(true);
+    expect(env.component.scriptureStart.dirty).toBe(false);
+  }));
+
   it('passes start reference to end-reference chooser', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
