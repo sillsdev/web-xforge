@@ -308,14 +308,18 @@ public class ParatextSyncRunnerTests
             1
         );
 
-        await env.ParatextService.DidNotReceive()
+        await env
+            .ParatextService.DidNotReceive()
             .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<XDocument>());
-        await env.ParatextService.DidNotReceive()
+        await env
+            .ParatextService.DidNotReceive()
             .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<XDocument>());
 
-        await env.ParatextService.DidNotReceive()
+        await env
+            .ParatextService.DidNotReceive()
             .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<XDocument>());
-        await env.ParatextService.DidNotReceive()
+        await env
+            .ParatextService.DidNotReceive()
             .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<XDocument>());
 
         var delta = Delta.New().InsertText("text");
@@ -348,14 +352,18 @@ public class ParatextSyncRunnerTests
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
 
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
 
         var delta = Delta.New().InsertText("text");
@@ -387,14 +395,18 @@ public class ParatextSyncRunnerTests
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
 
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<XDocument>(), Arg.Any<Dictionary<int, string>>());
 
         env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
@@ -564,10 +576,10 @@ public class ParatextSyncRunnerTests
         env.SetupPTData(books);
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
         env.ParatextService.GetProjectRolesAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -590,16 +602,17 @@ public class ParatextSyncRunnerTests
         env.SetupPTData(books);
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Translator } };
         env.ParatextService.GetProjectRolesAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
         // SUT
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
-        await env.SFProjectService.Received()
+        await env
+            .SFProjectService.Received()
             .UpdatePermissionsAsync(
                 "user01",
                 Arg.Is<IDocument<SFProject>>(
@@ -618,10 +631,10 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsernameMappingAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Any<SFProject>(),
-            CancellationToken.None
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                CancellationToken.None
+            )
             .Throws<UnauthorizedAccessException>();
         env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
             .Throws<UnauthorizedAccessException>();
@@ -649,10 +662,10 @@ public class ParatextSyncRunnerTests
         Assert.That(project.Editable, Is.True, "setup");
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetProjectRolesAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
@@ -720,13 +733,13 @@ public class ParatextSyncRunnerTests
         notesElem.Add(threadElem);
 
         env.NotesMapper.GetNotesChangelistAsync(
-            Arg.Any<XElement>(),
-            Arg.Any<IEnumerable<IDocument<Question>>>(),
-            Arg.Any<Dictionary<string, ParatextUserProfile>>(),
-            Arg.Any<Dictionary<string, string>>(),
-            CheckingAnswerExport.MarkedForExport,
-            Arg.Any<int>()
-        )
+                Arg.Any<XElement>(),
+                Arg.Any<IEnumerable<IDocument<Question>>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<Dictionary<string, string>>(),
+                CheckingAnswerExport.MarkedForExport,
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(notesElem));
         // project01 has questions but does not export any
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -803,10 +816,10 @@ public class ParatextSyncRunnerTests
 
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetProjectRolesAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is<SFProject>(project => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>(project => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
         int fontSize = 10;
         string font = ProjectSettings.defaultFontName;
@@ -918,10 +931,10 @@ public class ParatextSyncRunnerTests
 
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetProjectRolesAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(x => null);
 
@@ -943,10 +956,10 @@ public class ParatextSyncRunnerTests
         env.SetupPTData(books);
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetProjectRolesAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
 
         await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
@@ -1322,15 +1335,14 @@ public class ParatextSyncRunnerTests
         using var cancellationTokenSource = new CancellationTokenSource();
 
         // Setup a trap to crash the task
-        env.NotesMapper.When(
-            x =>
+        env.NotesMapper.When(x =>
                 x.InitAsync(
                     Arg.Any<UserSecret>(),
                     Arg.Any<List<User>>(),
                     Arg.Any<SFProject>(),
                     Arg.Any<CancellationToken>()
                 )
-        )
+            )
             .Do(_ => throw new ArgumentException());
 
         // Run the task
@@ -1363,10 +1375,9 @@ public class ParatextSyncRunnerTests
             .Do(_ => throw new ArgumentException());
 
         env.ParatextService.When(p => p.RestoreRepository(Arg.Any<UserSecret>(), "target"))
-            .Do(
-                _ =>
-                    env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
-                        .Returns("revNotMatchingVersion")
+            .Do(_ =>
+                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target")
+                    .Returns("revNotMatchingVersion")
             );
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -1392,15 +1403,14 @@ public class ParatextSyncRunnerTests
         using var cancellationTokenSource = new CancellationTokenSource();
 
         // Setup a trap to cancel the task
-        env.NotesMapper.When(
-            x =>
+        env.NotesMapper.When(x =>
                 x.InitAsync(
                     Arg.Any<UserSecret>(),
                     Arg.Any<List<User>>(),
                     Arg.Any<SFProject>(),
                     Arg.Any<CancellationToken>()
                 )
-        )
+            )
             .Do(_ =>
             {
                 cancellationTokenSource.Cancel();
@@ -1437,8 +1447,7 @@ public class ParatextSyncRunnerTests
         using var cancellationTokenSource = new CancellationTokenSource();
 
         // Setup a trap to cancel the task
-        env.ParatextService.When(
-            x =>
+        env.ParatextService.When(x =>
                 x.SendReceiveAsync(
                     Arg.Any<UserSecret>(),
                     Arg.Any<string>(),
@@ -1446,7 +1455,7 @@ public class ParatextSyncRunnerTests
                     Arg.Any<CancellationToken>(),
                     Arg.Any<SyncMetrics>()
                 )
-        )
+            )
             .Do(_ => cancellationTokenSource.Cancel());
 
         // Run the task
@@ -1471,8 +1480,7 @@ public class ParatextSyncRunnerTests
         env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
         env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
 
-        env.ParatextService.When(
-            x =>
+        env.ParatextService.When(x =>
                 x.SendReceiveAsync(
                     Arg.Any<UserSecret>(),
                     Arg.Any<string>(),
@@ -1480,7 +1488,7 @@ public class ParatextSyncRunnerTests
                     Arg.Any<CancellationToken>(),
                     Arg.Any<SyncMetrics>()
                 )
-        )
+            )
             .Do(_ => cancellationTokenSource.Cancel());
         await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
         env.ParatextService.Received(1).RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>());
@@ -1534,8 +1542,7 @@ public class ParatextSyncRunnerTests
         env.Connection.Get<SFProject>("project01").Returns(project);
 
         // Setup a trap to cancel the task
-        env.ParatextService.When(
-            x =>
+        env.ParatextService.When(x =>
                 x.SendReceiveAsync(
                     Arg.Any<UserSecret>(),
                     Arg.Any<string>(),
@@ -1543,7 +1550,7 @@ public class ParatextSyncRunnerTests
                     Arg.Any<CancellationToken>(),
                     Arg.Any<SyncMetrics>()
                 )
-        )
+            )
             .Do(_ => cancellationTokenSource.Cancel());
 
         // Run the task
@@ -1578,14 +1585,14 @@ public class ParatextSyncRunnerTests
         // as the substitute RealtimeService will not update documents.
         env.Connection.Received(1)
             .ExcludePropertyFromTransaction(
-                Arg.Is<Expression<Func<SFProject, object>>>(
-                    ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"
+                Arg.Is<Expression<Func<SFProject, object>>>(ex =>
+                    string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"
                 )
             );
         env.Connection.Received(1)
             .ExcludePropertyFromTransaction(
-                Arg.Is<Expression<Func<SFProject, object>>>(
-                    ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
+                Arg.Is<Expression<Func<SFProject, object>>>(ex =>
+                    string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
                 )
             );
         env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
@@ -1734,18 +1741,19 @@ public class ParatextSyncRunnerTests
         env.SetupNoteChanges(dataId, "thread01", "MAT 1:1", false);
         SyncMetricInfo info = new SyncMetricInfo(0, 0, 1);
         env.ParatextService.UpdateParatextCommentsAsync(
-            Arg.Any<UserSecret>(),
-            "target",
-            40,
-            Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
-            Arg.Any<Dictionary<string, string>>(),
-            Arg.Any<Dictionary<string, ParatextUserProfile>>(),
-            Arg.Any<int>()
-        )
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, string>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(info));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
-        await env.ParatextService.Received(1)
+        await env
+            .ParatextService.Received(1)
             .UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
@@ -1773,18 +1781,19 @@ public class ParatextSyncRunnerTests
         env.AddParatextNoteThreadData(books, true, true);
         SyncMetricInfo info = new SyncMetricInfo(1, 0, 0);
         env.ParatextService.UpdateParatextCommentsAsync(
-            Arg.Any<UserSecret>(),
-            "target",
-            40,
-            Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
-            Arg.Any<Dictionary<string, string>>(),
-            Arg.Any<Dictionary<string, ParatextUserProfile>>(),
-            Arg.Any<int>()
-        )
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, string>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(info));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
-        await env.ParatextService.Received(1)
+        await env
+            .ParatextService.Received(1)
             .UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
@@ -2271,12 +2280,12 @@ public class ParatextSyncRunnerTests
         env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
         env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>()).Returns(true);
         env.ParatextService.SendReceiveAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Any<string>(),
-            Arg.Any<IProgress<ProgressState>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<SyncMetrics>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
+            )
             .Returns(new ParatextResource());
 
         // SUT
@@ -2312,12 +2321,12 @@ public class ParatextSyncRunnerTests
         env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
         env.ParatextService.ResourceDocsNeedUpdating(Arg.Any<SFProject>(), Arg.Any<ParatextResource>()).Returns(false);
         env.ParatextService.SendReceiveAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Any<string>(),
-            Arg.Any<IProgress<ProgressState>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<SyncMetrics>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
+            )
             .Returns(new ParatextResource());
 
         // SUT
@@ -2421,17 +2430,18 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
         env.ParatextService.PutBookText(
-            Arg.Any<UserSecret>(),
-            Arg.Any<string>(),
-            Arg.Any<int>(),
-            Arg.Any<XDocument>(),
-            Arg.Any<Dictionary<int, string>>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<XDocument>(),
+                Arg.Any<Dictionary<int, string>>()
+            )
             .Returns(1);
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
-        await env.ParatextService.Received(2)
+        await env
+            .ParatextService.Received(2)
             .PutBookText(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
@@ -2464,12 +2474,12 @@ public class ParatextSyncRunnerTests
         // Setup the environment so the Paratext service will return that source is a resource
         env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
         env.ParatextService.SendReceiveAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Any<string>(),
-            Arg.Any<IProgress<ProgressState>>(),
-            Arg.Any<CancellationToken>(),
-            Arg.Any<SyncMetrics>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
+            )
             .Returns(new ParatextResource());
 
         // Ensure that the source is project02, and has no users with access
@@ -2665,18 +2675,19 @@ public class ParatextSyncRunnerTests
         env.AddParatextNoteThreadData(books, true, true, true);
         SyncMetricInfo info = new SyncMetricInfo(1, 0, 0);
         env.ParatextService.UpdateParatextCommentsAsync(
-            Arg.Any<UserSecret>(),
-            "target",
-            null,
-            Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
-            Arg.Any<Dictionary<string, string>>(),
-            Arg.Any<Dictionary<string, ParatextUserProfile>>(),
-            Arg.Any<int>()
-        )
+                Arg.Any<UserSecret>(),
+                "target",
+                null,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, string>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            )
             .Returns(Task.FromResult(info));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
-        await env.ParatextService.Received(1)
+        await env
+            .ParatextService.Received(1)
             .UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
@@ -2741,7 +2752,8 @@ public class ParatextSyncRunnerTests
             Substitute.For<SortedList<int, IDocument<TextData>>>()
         );
         // The usx was unchanged by content of chapter deltas, so we don't write something new.
-        await env.ParatextService.DidNotReceive()
+        await env
+            .ParatextService.DidNotReceive()
             .PutBookText(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
@@ -2787,7 +2799,8 @@ public class ParatextSyncRunnerTests
             Substitute.For<SortedList<int, IDocument<TextData>>>()
         );
         // The usx was changed by the content of chapter deltas, so we do write something new.
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
@@ -2823,7 +2836,8 @@ public class ParatextSyncRunnerTests
         );
         // The usx was unchanged by content of chapter deltas, so we don't write something new.
         // Importantly, the space between <char> elements should not have been removed (as in SF-1444).
-        await env.ParatextService.DidNotReceive()
+        await env
+            .ParatextService.DidNotReceive()
             .PutBookText(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
@@ -3221,7 +3235,8 @@ public class ParatextSyncRunnerTests
         string expectedUsx = sb2.ToString();
 
         // The USX sent back to PT should have roundtripped correctly.
-        await env.ParatextService.Received()
+        await env
+            .ParatextService.Received()
             .PutBookText(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
@@ -3321,15 +3336,14 @@ public class ParatextSyncRunnerTests
                 )
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
             ParatextService
-                .When(
-                    x =>
-                        x.SendReceiveAsync(
-                            Arg.Any<UserSecret>(),
-                            "target",
-                            Arg.Any<IProgress<ProgressState>>(),
-                            Arg.Any<CancellationToken>(),
-                            Arg.Any<SyncMetrics>()
-                        )
+                .When(x =>
+                    x.SendReceiveAsync(
+                        Arg.Any<UserSecret>(),
+                        "target",
+                        Arg.Any<IProgress<ProgressState>>(),
+                        Arg.Any<CancellationToken>(),
+                        Arg.Any<SyncMetrics>()
+                    )
                 )
                 .Do(x =>
                 {
@@ -3341,15 +3355,12 @@ public class ParatextSyncRunnerTests
             ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("User 1");
             ParatextService
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
-                .Returns(
-                    x =>
-                        new ParatextSettings
-                        {
-                            FullName = (string)x[1],
-                            IsRightToLeft = false,
-                            Editable = true
-                        }
-                );
+                .Returns(x => new ParatextSettings
+                {
+                    FullName = (string)x[1],
+                    IsRightToLeft = false,
+                    Editable = true
+                });
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source").Returns("beforeSR", "afterSR");
             RealtimeService = new SFMemoryRealtimeService();
@@ -3836,16 +3847,13 @@ public class ParatextSyncRunnerTests
                 BookNum = Canon.BookIdToNumber(book.Id),
                 Chapters = Enumerable
                     .Range(1, book.HighestTargetChapter)
-                    .Select(
-                        c =>
-                            new Chapter
-                            {
-                                Number = c,
-                                LastVerse = 10,
-                                IsValid = !book.InvalidChapters.Contains(c),
-                                Permissions = { }
-                            }
-                    )
+                    .Select(c => new Chapter
+                    {
+                        Number = c,
+                        LastVerse = 10,
+                        IsValid = !book.InvalidChapters.Contains(c),
+                        Permissions = { }
+                    })
                     .ToList(),
                 HasSource = book.HighestSourceChapter > 0
             };

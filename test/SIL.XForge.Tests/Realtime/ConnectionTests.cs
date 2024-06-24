@@ -42,7 +42,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -93,11 +94,14 @@ public class ConnectionTests
         await env.Service.CommitTransactionAsync();
 
         // Verify Submit Operations
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .SubmitOpAsync<object>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
 
@@ -129,7 +133,8 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.OtTypeName, otTypeName);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(0)
+        await env
+            .RealtimeService.Server.Received(0)
             .CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
     }
 
@@ -150,7 +155,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .CreateDocAsync(
                 Arg.Any<int>(),
                 Arg.Any<string>(),
@@ -180,7 +186,8 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Id, id);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(0)
+        await env
+            .RealtimeService.Server.Received(0)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -199,7 +206,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -402,7 +410,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(0)
+        await env
+            .RealtimeService.Server.Received(0)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -448,7 +457,8 @@ public class ConnectionTests
         Assert.Zero(env.Service.QueuedOperations.Count);
 
         // Verify that the call was passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
 
@@ -490,7 +500,8 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Op, op);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(0)
+        await env
+            .RealtimeService.Server.Received(0)
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
 
@@ -517,7 +528,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server.Received(1)
+        await env
+            .RealtimeService.Server.Received(1)
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
 

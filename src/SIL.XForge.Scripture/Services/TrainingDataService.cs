@@ -241,7 +241,6 @@ public class TrainingDataService(
             case ".CSV":
             case ".TSV":
             case ".TXT":
-
                 {
                     // Ensure that there are only two columns
                     await using (Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open))
@@ -260,7 +259,6 @@ public class TrainingDataService(
                 }
                 break;
             case ".XLS":
-
                 {
                     // Load the Excel 97-2003 spreadsheet
                     await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);
@@ -269,7 +267,6 @@ public class TrainingDataService(
                 }
                 break;
             case ".XLSX":
-
                 {
                     // Load the Excel 2007+ spreadsheet
                     await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);

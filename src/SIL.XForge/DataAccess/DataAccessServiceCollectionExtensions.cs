@@ -20,20 +20,19 @@ public static class DataAccessServiceCollectionExtensions
         var options = configuration.GetOptions<DataAccessOptions>();
         string jobDatabaseName = options.JobDatabaseName ?? options.Prefix + "_jobs";
         services.AddHangfireServer();
-        services.AddHangfire(
-            x =>
-                x.UseMongoStorage(
-                    $"{options.ConnectionString}/{jobDatabaseName}",
-                    new MongoStorageOptions
+        services.AddHangfire(x =>
+            x.UseMongoStorage(
+                $"{options.ConnectionString}/{jobDatabaseName}",
+                new MongoStorageOptions
+                {
+                    CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
+                    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(10),
+                    MigrationOptions = new MongoMigrationOptions
                     {
-                        CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
-                        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(10),
-                        MigrationOptions = new MongoMigrationOptions
-                        {
-                            MigrationStrategy = new MigrateMongoMigrationStrategy(),
-                        },
-                    }
-                )
+                        MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                    },
+                }
+            )
         );
 
         DataAccessClassMap.RegisterConventions(

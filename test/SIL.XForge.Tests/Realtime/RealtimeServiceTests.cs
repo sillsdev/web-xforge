@@ -227,8 +227,8 @@ public class RealtimeServiceTests
             env.Service.Server.Received().Restart(Arg.Any<object>());
             env.ExceptionHandler.Received()
                 .ReportException(
-                    Arg.Is<Exception>(
-                        e => e.Message == $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes"
+                    Arg.Is<Exception>(e =>
+                        e.Message == $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes"
                     )
                 );
         }
@@ -249,8 +249,8 @@ public class RealtimeServiceTests
             env.Service.Server.Received().Restart(Arg.Any<object>());
             env.ExceptionHandler.Received()
                 .ReportException(
-                    Arg.Is<Exception>(
-                        e => e.Message == $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes"
+                    Arg.Is<Exception>(e =>
+                        e.Message == $"Failed to restart the Realtime Server - retrying in {restartDelay} minutes"
                     )
                 );
         }

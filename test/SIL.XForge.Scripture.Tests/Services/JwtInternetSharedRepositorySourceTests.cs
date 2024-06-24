@@ -19,12 +19,8 @@ public class JwtInternetSharedRepositorySourceTests
         var env = new TestEnvironment();
         env.MockPTArchivesClient.Configure()
             .Get(Arg.Any<string>())
-            .Returns(
-                _ =>
-                    throw HttpException.Create(
-                        new WebException(),
-                        GenericRequest.Create(new Uri("https://example.com"))
-                    )
+            .Returns(_ =>
+                throw HttpException.Create(new WebException(), GenericRequest.Create(new Uri("https://example.com")))
             );
         // One SUT
         Assert.That(env.RepoSource.CanUserAuthenticateToPTArchives(), Is.False, "problem when using server");

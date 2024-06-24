@@ -177,8 +177,8 @@ public class MachineApiService(
         }
 
         // Run the background job
-        backgroundJobClient.Enqueue<MachineApiService>(
-            r => r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
+        backgroundJobClient.Enqueue<MachineApiService>(r =>
+            r.RetrievePreTranslationStatusAsync(projectId, CancellationToken.None)
         );
     }
 

@@ -124,7 +124,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -142,7 +143,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -162,7 +164,8 @@ public class MachineProjectServiceTests
         );
 
         // Ensure that the additional texts were retrieved
-        await env.TrainingDataService.Received()
+        await env
+            .TrainingDataService.Received()
             .GetTextsAsync(
                 User01,
                 Project01,
@@ -172,14 +175,16 @@ public class MachineProjectServiceTests
             );
 
         // Ensure that the additional files corpus was synced, and the build started
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
         Assert.IsNotEmpty(
             env.ProjectSecrets.Get(Project01)
                 .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
                 .Key
         );
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 Arg.Any<string>(),
                 Arg.Is<TranslationBuildConfig>(b => b.TrainOn == null),
@@ -203,7 +208,8 @@ public class MachineProjectServiceTests
         );
 
         // Ensure that the additional texts were retrieved
-        await env.TrainingDataService.Received()
+        await env
+            .TrainingDataService.Received()
             .GetTextsAsync(
                 User01,
                 Project02,
@@ -214,7 +220,8 @@ public class MachineProjectServiceTests
 
         // Ensure that the previous files with different IDs were deleted, and new ones added
         await env.DataFilesClient.Received(2).DeleteAsync(File02);
-        await env.DataFilesClient.Received()
+        await env
+            .DataFilesClient.Received()
             .CreateAsync(Arg.Any<FileParameter>(), Arg.Any<FileFormat>(), Data01, CancellationToken.None);
     }
 
@@ -240,7 +247,8 @@ public class MachineProjectServiceTests
         );
 
         // Ensure that the additional texts were retrieved
-        await env.TrainingDataService.Received()
+        await env
+            .TrainingDataService.Received()
             .GetTextsAsync(
                 User01,
                 Project02,
@@ -250,10 +258,12 @@ public class MachineProjectServiceTests
             );
 
         // Ensure that the build passed the additional files corpus in the train_on parameter
-        string corpusId = env.ProjectSecrets.Get(Project02)
+        string corpusId = env
+            .ProjectSecrets.Get(Project02)
             .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
             .Key;
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 Arg.Any<string>(),
                 Arg.Is<TranslationBuildConfig>(b => b.TrainOn.Any(c => c.CorpusId == corpusId)),
@@ -275,7 +285,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine01,
                 Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 20),
@@ -299,7 +310,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine01,
                 Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 20),
@@ -323,7 +335,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine01,
                 Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["max_steps"]) == 35),
@@ -348,10 +361,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(
-                Arg.Is<TranslationEngineConfig>(
-                    t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
+                Arg.Is<TranslationEngineConfig>(t =>
+                    t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
                 ),
                 CancellationToken.None
             );
@@ -376,10 +390,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(
-                Arg.Is<TranslationEngineConfig>(
-                    t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
+                Arg.Is<TranslationEngineConfig>(t =>
+                    t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
                 ),
                 CancellationToken.None
             );
@@ -421,10 +436,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(
-                Arg.Is<TranslationEngineConfig>(
-                    t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == sourceLanguage
+                Arg.Is<TranslationEngineConfig>(t =>
+                    t.SourceLanguage == sourceLanguage && t.TargetLanguage == sourceLanguage
                 ),
                 CancellationToken.None
             );
@@ -444,9 +460,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -464,16 +482,15 @@ public class MachineProjectServiceTests
 
         // Return the correctly created corpus
         env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
-            .Returns(
-                args =>
-                    Task.FromResult(
-                        new TranslationCorpus
-                        {
-                            Id = args.ArgAt<string>(1),
-                            SourceLanguage = "en",
-                            TargetLanguage = "en_US",
-                        }
-                    )
+            .Returns(args =>
+                Task.FromResult(
+                    new TranslationCorpus
+                    {
+                        Id = args.ArgAt<string>(1),
+                        SourceLanguage = "en",
+                        TargetLanguage = "en_US",
+                    }
+                )
             );
 
         // SUT
@@ -484,9 +501,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -511,9 +530,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.DataFilesClient.Received()
+        await env
+            .DataFilesClient.Received()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
     }
 
@@ -537,9 +558,11 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-        await env.DataFilesClient.Received()
+        await env
+            .DataFilesClient.Received()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
     }
 
@@ -562,7 +585,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         project = env.Projects.Get(Project03);
         Assert.IsNotNull(project.WritingSystem.Tag);
@@ -605,10 +629,12 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         await env.TranslationEnginesClient.Received().DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
@@ -669,9 +695,11 @@ public class MachineProjectServiceTests
 
         // The old engine should not be deleted, as it is an incorrect association
         await env.TranslationEnginesClient.DidNotReceive().DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
@@ -709,7 +737,8 @@ public class MachineProjectServiceTests
         );
 
         // The old corpus and its files should be deleted
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
         await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
 
@@ -737,19 +766,19 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine01,
-                Arg.Is<TranslationBuildConfig>(
-                    b =>
-                        b.TrainOn.Count == 1
-                        && b.TrainOn.First().CorpusId == Corpus01
-                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
-                        && b.TrainOn.First().TextIds == null
-                        && b.Pretranslate.Count == 1
-                        && b.Pretranslate.First().CorpusId == Corpus01
-                        && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
-                        && b.Pretranslate.First().TextIds == null
+                Arg.Is<TranslationBuildConfig>(b =>
+                    b.TrainOn.Count == 1
+                    && b.TrainOn.First().CorpusId == Corpus01
+                    && b.TrainOn.First().ScriptureRange == "GEN;EXO"
+                    && b.TrainOn.First().TextIds == null
+                    && b.Pretranslate.Count == 1
+                    && b.Pretranslate.First().CorpusId == Corpus01
+                    && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
+                    && b.Pretranslate.First().TextIds == null
                 ),
                 CancellationToken.None
             );
@@ -787,19 +816,19 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine02,
-                Arg.Is<TranslationBuildConfig>(
-                    b =>
-                        b.TrainOn.Count == 1
-                        && b.TrainOn.First().CorpusId == Corpus02
-                        && b.TrainOn.First().ScriptureRange == "GEN;EXO"
-                        && b.TrainOn.First().TextIds == null
-                        && b.Pretranslate.Count == 1
-                        && b.Pretranslate.First().CorpusId == Corpus01
-                        && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
-                        && b.Pretranslate.First().TextIds == null
+                Arg.Is<TranslationBuildConfig>(b =>
+                    b.TrainOn.Count == 1
+                    && b.TrainOn.First().CorpusId == Corpus02
+                    && b.TrainOn.First().ScriptureRange == "GEN;EXO"
+                    && b.TrainOn.First().TextIds == null
+                    && b.Pretranslate.Count == 1
+                    && b.Pretranslate.First().CorpusId == Corpus01
+                    && b.Pretranslate.First().ScriptureRange == "LEV;NUM"
+                    && b.Pretranslate.First().TextIds == null
                 ),
                 CancellationToken.None
             );
@@ -826,17 +855,17 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine01,
-                Arg.Is<TranslationBuildConfig>(
-                    b =>
-                        b.Pretranslate.Count == 1
-                        && b.Pretranslate.First().ScriptureRange == null
-                        && b.Pretranslate.First().TextIds == null
-                        && b.TrainOn.Count == 1
-                        && b.TrainOn.First().ScriptureRange == null
-                        && b.TrainOn.First().TextIds!.Count == 0
+                Arg.Is<TranslationBuildConfig>(b =>
+                    b.Pretranslate.Count == 1
+                    && b.Pretranslate.First().ScriptureRange == null
+                    && b.Pretranslate.First().TextIds == null
+                    && b.TrainOn.Count == 1
+                    && b.TrainOn.First().ScriptureRange == null
+                    && b.TrainOn.First().TextIds!.Count == 0
                 ),
                 CancellationToken.None
             );
@@ -875,17 +904,17 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(
                 TranslationEngine02,
-                Arg.Is<TranslationBuildConfig>(
-                    b =>
-                        b.Pretranslate.Count == 1
-                        && b.Pretranslate.First().ScriptureRange == null
-                        && b.Pretranslate.First().TextIds == null
-                        && b.TrainOn.Count == 1
-                        && b.TrainOn.First().ScriptureRange == null
-                        && b.TrainOn.First().TextIds!.Count == 0
+                Arg.Is<TranslationBuildConfig>(b =>
+                    b.Pretranslate.Count == 1
+                    && b.Pretranslate.First().ScriptureRange == null
+                    && b.Pretranslate.First().TextIds == null
+                    && b.TrainOn.Count == 1
+                    && b.TrainOn.First().ScriptureRange == null
+                    && b.TrainOn.First().TextIds!.Count == 0
                 ),
                 CancellationToken.None
             );
@@ -905,7 +934,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
@@ -923,10 +953,9 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        env.MockLogger.AssertHasEvent(
-            logEvent =>
-                logEvent.Message.Contains("DataNotFoundException", StringComparison.OrdinalIgnoreCase)
-                && logEvent.LogLevel == LogLevel.Warning
+        env.MockLogger.AssertHasEvent(logEvent =>
+            logEvent.Message.Contains("DataNotFoundException", StringComparison.OrdinalIgnoreCase)
+            && logEvent.LogLevel == LogLevel.Warning
         );
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
@@ -981,10 +1010,10 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
         ServalApiException ex = ServalApiExceptions.BuildInProgress;
         env.TranslationEnginesClient.StartBuildAsync(
-            Arg.Any<string>(),
-            Arg.Any<TranslationBuildConfig>(),
-            CancellationToken.None
-        )
+                Arg.Any<string>(),
+                Arg.Any<TranslationBuildConfig>(),
+                CancellationToken.None
+            )
             .Throws(ex);
 
         // SUT
@@ -995,7 +1024,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .StartBuildAsync(Arg.Any<string>(), Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
         env.MockLogger.AssertNoEvent(logEvent => logEvent.Exception == ex);
         env.ExceptionHandler.DidNotReceiveWithAnyArgs().ReportException(ex);
@@ -1141,7 +1171,8 @@ public class MachineProjectServiceTests
 
         // Ensure that the translation engine, corpus and any files are deleted
         await env.TranslationEnginesClient.Received(1).DeleteAsync(TranslationEngine02, CancellationToken.None);
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .DeleteCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync(File01, CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync(File02, CancellationToken.None);
@@ -1157,9 +1188,11 @@ public class MachineProjectServiceTests
         await env.Service.RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         // Ensure that the translation engine, corpus and any files were not deleted
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteAsync(TranslationEngine01, CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(TranslationEngine01, Corpus01, CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(File01, CancellationToken.None);
     }
@@ -1200,16 +1233,18 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .AddCorpusAsync(
                 Arg.Any<string>(),
-                Arg.Is<TranslationCorpusConfig>(
-                    t => t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
+                Arg.Is<TranslationCorpusConfig>(t =>
+                    t.SourceLanguage == sourceLanguage && t.TargetLanguage == targetLanguage
                 ),
                 CancellationToken.None
             );
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient.Received(2)
+        await env
+            .DataFilesClient.Received(2)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Project01, CancellationToken.None);
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).ServalData?.Corpora[Corpus01].SourceFiles.Count);
     }
@@ -1243,7 +1278,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
     }
@@ -1257,10 +1293,10 @@ public class MachineProjectServiceTests
 
         // Make adding the corpus to fail due to an API issue
         env.TranslationEnginesClient.AddCorpusAsync(
-            TranslationEngine01,
-            Arg.Any<TranslationCorpusConfig>(),
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                Arg.Any<TranslationCorpusConfig>(),
+                CancellationToken.None
+            )
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -1328,7 +1364,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.DataFilesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .DataFilesClient.DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient.Received(1).UpdateAsync(File01, Arg.Any<FileParameter>(), CancellationToken.None);
@@ -1384,7 +1421,8 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync("File04", CancellationToken.None);
-        await env.DataFilesClient.Received(2)
+        await env
+            .DataFilesClient.Received(2)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Project02, CancellationToken.None);
     }
 
@@ -1424,8 +1462,8 @@ public class MachineProjectServiceTests
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
 
         // The 404 exception was logged
-        env.MockLogger.AssertHasEvent(
-            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+        env.MockLogger.AssertHasEvent(logEvent =>
+            logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
         );
     }
 
@@ -1464,7 +1502,8 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
 
         // The old corpus and its files should be deleted
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
         await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
 
@@ -1472,8 +1511,8 @@ public class MachineProjectServiceTests
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
 
         // The 404 exception was logged
-        env.MockLogger.AssertHasEvent(
-            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+        env.MockLogger.AssertHasEvent(logEvent =>
+            logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
         );
     }
 
@@ -1511,7 +1550,8 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
 
         // The old corpus and its files should be deleted
-        await env.TranslationEnginesClient.Received()
+        await env
+            .TranslationEnginesClient.Received()
             .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
         await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
 
@@ -1519,8 +1559,8 @@ public class MachineProjectServiceTests
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
 
         // The 404 exception was logged
-        env.MockLogger.AssertHasEvent(
-            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+        env.MockLogger.AssertHasEvent(logEvent =>
+            logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
         );
     }
 
@@ -1614,7 +1654,8 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
 
         // Check for the upload of the source, target, source duplicated as training source, and mixed source
-        await env.DataFilesClient.Received(4)
+        await env
+            .DataFilesClient.Received(4)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
     }
 
@@ -1644,7 +1685,8 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
 
         // Check for the upload of the source, target, alternate training source, and mixed source
-        await env.DataFilesClient.Received(4)
+        await env
+            .DataFilesClient.Received(4)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Arg.Any<string>(), CancellationToken.None);
     }
 
@@ -1674,11 +1716,14 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -1703,16 +1748,15 @@ public class MachineProjectServiceTests
 
         // Make the Serval API return the corpus
         env.TranslationEnginesClient.GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
-            .Returns(
-                args =>
-                    Task.FromResult(
-                        new TranslationCorpus
-                        {
-                            Id = args.ArgAt<string>(1),
-                            SourceLanguage = "fr",
-                            TargetLanguage = "de"
-                        }
-                    )
+            .Returns(args =>
+                Task.FromResult(
+                    new TranslationCorpus
+                    {
+                        Id = args.ArgAt<string>(1),
+                        SourceLanguage = "fr",
+                        TargetLanguage = "de"
+                    }
+                )
             );
 
         // SUT
@@ -1723,11 +1767,14 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
         Assert.IsTrue(actual);
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
-        await env.TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
                 Arg.Any<string>(),
                 Arg.Any<string>(),
@@ -2128,29 +2175,27 @@ public class MachineProjectServiceTests
                 );
             TranslationEnginesClient
                 .GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
-                .Returns(
-                    args =>
-                        Task.FromResult(
-                            new TranslationCorpus
-                            {
-                                Id = args.ArgAt<string>(1),
-                                SourceLanguage = "en_US",
-                                TargetLanguage = "en_GB",
-                            }
-                        )
+                .Returns(args =>
+                    Task.FromResult(
+                        new TranslationCorpus
+                        {
+                            Id = args.ArgAt<string>(1),
+                            SourceLanguage = "en_US",
+                            TargetLanguage = "en_GB",
+                        }
+                    )
                 );
             TranslationEnginesClient
                 .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
-                .Returns(
-                    args =>
-                        Task.FromResult(
-                            new TranslationCorpus
-                            {
-                                Id = args.ArgAt<string>(1),
-                                SourceLanguage = "en",
-                                TargetLanguage = "en_US",
-                            }
-                        )
+                .Returns(args =>
+                    Task.FromResult(
+                        new TranslationCorpus
+                        {
+                            Id = args.ArgAt<string>(1),
+                            SourceLanguage = "en",
+                            TargetLanguage = "en_US",
+                        }
+                    )
                 );
             TranslationEnginesClient
                 .UpdateCorpusAsync(
@@ -2198,12 +2243,9 @@ public class MachineProjectServiceTests
                 .Returns(callInfo => new[] { Path.Combine(callInfo.ArgAt<string>(0), "file") });
             FileSystemService
                 .OpenFile(Arg.Any<string>(), FileMode.Open)
-                .Returns(
-                    callInfo =>
-                        new MemoryStream(
-                            Encoding.UTF8.GetBytes(Path.Combine(callInfo.ArgAt<string>(0) + "_file_contents"))
-                        )
-                );
+                .Returns(callInfo => new MemoryStream(
+                    Encoding.UTF8.GetBytes(Path.Combine(callInfo.ArgAt<string>(0) + "_file_contents"))
+                ));
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
