@@ -14,11 +14,11 @@
         </button>
         @if (isLoggedIn | async) {
         <a id="sf-logo-button" mat-icon-button class="logo hide-lt-sm" routerLink="/projects">
-          <img src="/assets/images/sf.svg" height="38" />
+          <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
         </a>
         } @else {
         <a id="sf-logo-button" mat-icon-button class="logo hide-lt-sm" href="/">
-          <img src="/assets/images/sf.svg" height="38" />
+          <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
         </a>
         }
         <span class="project-name-wrapper" *ngIf="isProjectSelected" class="hide-lt-sm">
