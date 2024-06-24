@@ -299,11 +299,11 @@ public class MachineApiServiceTests
         const int revision = 553;
         const JobState state = JobState.Active;
         env.TranslationEnginesClient.GetBuildAsync(
-            TranslationEngine01,
-            Build01,
-            minRevision: null,
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -358,11 +358,11 @@ public class MachineApiServiceTests
         const string corpusId2 = "corpusId2";
         const int step = 123;
         env.TranslationEnginesClient.GetBuildAsync(
-            TranslationEngine01,
-            Build01,
-            minRevision: null,
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -533,10 +533,10 @@ public class MachineApiServiceTests
         const int revision = 553;
         const JobState state = JobState.Active;
         env.TranslationEnginesClient.GetCurrentBuildAsync(
-            TranslationEngine01,
-            minRevision: null,
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                minRevision: null,
+                CancellationToken.None
+            )
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -583,10 +583,10 @@ public class MachineApiServiceTests
         const int revision = 43;
         const JobState state = JobState.Completed;
         env.TranslationEnginesClient.GetCurrentBuildAsync(
-            TranslationEngine01,
-            minRevision: null,
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                minRevision: null,
+                CancellationToken.None
+            )
             .Throws(ServalApiExceptions.NoContent);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
@@ -634,10 +634,10 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient.GetCurrentBuildAsync(
-            TranslationEngine01,
-            minRevision: null,
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                minRevision: null,
+                CancellationToken.None
+            )
             .Throws(ServalApiExceptions.NoContent);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>(new List<TranslationBuild>()));
@@ -1331,7 +1331,8 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.RetrievePreTranslationStatusAsync(Project01, CancellationToken.None);
 
-        await env.PreTranslationService.DidNotReceive()
+        await env
+            .PreTranslationService.DidNotReceive()
             .UpdatePreTranslationStatusAsync(Project01, CancellationToken.None);
     }
 
@@ -1482,7 +1483,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
+        await env
+            .SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -1517,9 +1519,11 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
+        await env
+            .SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
-        await env.SyncService.Received(1)
+        await env
+            .SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -1720,7 +1724,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
+        await env
+            .SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -1753,7 +1758,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1)
+        await env
+            .SyncService.Received(1)
             .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
@@ -1803,10 +1809,10 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient.TrainSegmentAsync(
-            TranslationEngine01,
-            Arg.Any<SegmentPair>(),
-            CancellationToken.None
-        )
+                TranslationEngine01,
+                Arg.Any<SegmentPair>(),
+                CancellationToken.None
+            )
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -1824,7 +1830,8 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None);
 
-        await env.TranslationEnginesClient.Received(1)
+        await env
+            .TranslationEnginesClient.Received(1)
             .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None);
     }
 

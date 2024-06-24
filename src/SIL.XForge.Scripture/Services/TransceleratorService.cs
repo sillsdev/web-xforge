@@ -26,10 +26,9 @@ public class TransceleratorService : ITransceleratorService
         IEnumerable<XmlElement> docs = QuestionFiles(paratextId).Select(file => ReadFileAsXml(file).DocumentElement);
         // Check that the schema version declared in the file is at least 1.1 (coresponding to Transcelerator version 1.5.2)
         if (
-            docs.Any(
-                doc =>
-                    doc.Attributes["version"] == null
-                    || !VersionSatisfies(doc.Attributes["version"].Value, new int[] { 1, 1 })
+            docs.Any(doc =>
+                doc.Attributes["version"] == null
+                || !VersionSatisfies(doc.Attributes["version"].Value, new int[] { 1, 1 })
             )
         )
         {
@@ -41,19 +40,16 @@ public class TransceleratorService : ITransceleratorService
             string lang = doc.Attributes["xml:lang"].Value;
             return doc.SelectNodes("Question")
                 .Cast<XmlNode>()
-                .Select(
-                    q =>
-                        new TransceleratorQuestion()
-                        {
-                            Book = book,
-                            StartChapter = AttributeText(q, "startChapter"),
-                            StartVerse = AttributeText(q, "startVerse"),
-                            EndChapter = AttributeText(q, "endChapter"),
-                            EndVerse = AttributeText(q, "endVerse"),
-                            Text = NodeTextOfLanguage(q.SelectNodes("Q/StringAlt").Cast<XmlNode>(), lang),
-                            Id = AttributeText(q, "id")
-                        }
-                );
+                .Select(q => new TransceleratorQuestion()
+                {
+                    Book = book,
+                    StartChapter = AttributeText(q, "startChapter"),
+                    StartVerse = AttributeText(q, "startVerse"),
+                    EndChapter = AttributeText(q, "endChapter"),
+                    EndVerse = AttributeText(q, "endVerse"),
+                    Text = NodeTextOfLanguage(q.SelectNodes("Q/StringAlt").Cast<XmlNode>(), lang),
+                    Id = AttributeText(q, "id")
+                });
         });
     }
 

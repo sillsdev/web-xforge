@@ -276,8 +276,8 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         ProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectDoc.Id);
         if (!string.IsNullOrWhiteSpace(shareKey) && projectSecret != null)
         {
-            int index = projectSecret.ShareKeys.FindIndex(
-                sk => sk.RecipientUserId == null && sk.ShareLinkType == ShareLinkType.Recipient && sk.Key == shareKey
+            int index = projectSecret.ShareKeys.FindIndex(sk =>
+                sk.RecipientUserId == null && sk.ShareLinkType == ShareLinkType.Recipient && sk.Key == shareKey
             );
             if (index > -1)
             {

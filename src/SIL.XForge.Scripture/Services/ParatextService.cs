@@ -499,8 +499,7 @@ public class ParatextService : DisposableBase, IParatextService
             string role = ConvertFromUserRole(
                 remotePtProjects
                     .SingleOrDefault(p => p.SendReceiveId.Id == paratextId)
-                    ?.SourceUsers
-                    .Users.FirstOrDefault(u => u.UserName == username)
+                    ?.SourceUsers.Users.FirstOrDefault(u => u.UserName == username)
                     ?.Role
             );
             if (string.IsNullOrEmpty(role))
@@ -886,8 +885,8 @@ public class ParatextService : DisposableBase, IParatextService
                 + $"On SF project, user has {(hasRole ? $"role '{userRole}'." : "no role.")}";
 
             IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource, $"For {moreInformation}");
-            SharedRepository? remotePtProject = remotePtProjects.SingleOrDefault(
-                p => p.SendReceiveId.Id == project.ParatextId
+            SharedRepository? remotePtProject = remotePtProjects.SingleOrDefault(p =>
+                p.SendReceiveId.Id == project.ParatextId
             );
             if (remotePtProject == null)
             {
@@ -980,16 +979,13 @@ public class ParatextService : DisposableBase, IParatextService
         CommentTags commentTags = CommentTags.Get(scrText);
         IEnumerable<NoteTag> noteTags = commentTags
             .GetAllTags()
-            .Select(
-                t =>
-                    new NoteTag
-                    {
-                        TagId = t.Id,
-                        Icon = t.Icon,
-                        Name = t.Name,
-                        CreatorResolve = t.CreatorResolve
-                    }
-            );
+            .Select(t => new NoteTag
+            {
+                TagId = t.Id,
+                Icon = t.Icon,
+                Name = t.Name,
+                CreatorResolve = t.CreatorResolve
+            });
 
         // If the copyright banner is blank or empty, make it null so it will not be displayed
         string? copyrightBanner = scrText.CopyrightBannerText;
@@ -1261,8 +1257,8 @@ public class ParatextService : DisposableBase, IParatextService
         CommentTags commentTags = GetCommentTags(userSecret, paratextId);
         List<string> matchedThreadIds = new List<string>();
         List<NoteThreadChange> changes = new List<NoteThreadChange>();
-        IEnumerable<IDocument<NoteThread>> activeNoteThreadDocs = noteThreadDocs.Where(
-            nt => nt.Data.Notes.Any(n => !n.Deleted)
+        IEnumerable<IDocument<NoteThread>> activeNoteThreadDocs = noteThreadDocs.Where(nt =>
+            nt.Data.Notes.Any(n => !n.Deleted)
         );
 
         foreach (var threadDoc in activeNoteThreadDocs)
@@ -1536,15 +1532,15 @@ public class ParatextService : DisposableBase, IParatextService
 
             // Get the term localizations
             Dictionary<string, TermLocalizations> allTermLocalizations = TermLocalizations
-                .LanguagesAvailable.Select(
-                    language => (language, termLocalizations: TermLocalizations.GetTermLocalizations(language))
+                .LanguagesAvailable.Select(language =>
+                    (language, termLocalizations: TermLocalizations.GetTermLocalizations(language))
                 )
                 .ToDictionary(l => l.language, l => l.termLocalizations);
 
             // Create the collection of Biblical Terms with Renderings
             foreach (
-                Term term in projectSettingsBiblicalTerms.Terms.Where(
-                    t => t.VerseRefs().Any(v => books.Contains(v.BookNum))
+                Term term in projectSettingsBiblicalTerms.Terms.Where(t =>
+                    t.VerseRefs().Any(v => books.Contains(v.BookNum))
                 )
             )
             {
@@ -1556,7 +1552,8 @@ public class ParatextService : DisposableBase, IParatextService
                     TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
                     BiblicalTermDefinition biblicalTermDefinition = new BiblicalTermDefinition
                     {
-                        Categories = term.CategoryIds.Select(c => termLocalizations.GetCategoryLocalization(c))
+                        Categories = term
+                            .CategoryIds.Select(c => termLocalizations.GetCategoryLocalization(c))
                             .ToList(),
                         Domains = term.SemanticDomains.Select(d => termLocalizations.GetDomainLocalization(d)).ToList(),
                         Gloss = termLocalization.Gloss,
@@ -2224,8 +2221,8 @@ public class ParatextService : DisposableBase, IParatextService
 
         foreach (SharedRepository remotePtProject in remotePtProjects)
         {
-            SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(
-                sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId.Id
+            SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(sfProj =>
+                sfProj.ParatextId == remotePtProject.SendReceiveId.Id
             );
 
             bool sfProjectExists = correspondingSfProject != null;
@@ -2553,9 +2550,9 @@ public class ParatextService : DisposableBase, IParatextService
             CommentThread? existingThread = manager.FindThread(thread[0].Thread);
             foreach (Paratext.Data.ProjectComments.Comment comment in thread)
             {
-                Paratext.Data.ProjectComments.Comment existingComment = existingThread
-                    ?.Comments
-                    .FirstOrDefault(c => c.Id == comment.Id);
+                Paratext.Data.ProjectComments.Comment existingComment = existingThread?.Comments.FirstOrDefault(c =>
+                    c.Id == comment.Id
+                );
                 if (existingComment == null)
                 {
                     manager.AddComment(comment);
@@ -2697,28 +2694,25 @@ public class ParatextService : DisposableBase, IParatextService
         IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
         return resources
             .OrderBy(r => r.FullName)
-            .Select(
-                r =>
-                    new ParatextResource
-                    {
-                        AvailableRevision = r.DBLRevision,
-                        CreatedTimestamp = r.CreatedTimestamp,
-                        InstallableResource = includeInstallableResource ? r : null,
-                        InstalledRevision = resourceRevisions.ContainsKey(r.DBLEntryUid.Id)
-                            ? resourceRevisions[r.DBLEntryUid.Id]
-                            : 0,
-                        IsConnectable = false,
-                        IsConnected = false,
-                        IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
-                        LanguageTag = r.LanguageID.Code,
-                        ManifestChecksum = r.ManifestChecksum,
-                        Name = r.FullName,
-                        ParatextId = r.DBLEntryUid.Id,
-                        PermissionsChecksum = r.PermissionsChecksum,
-                        ProjectId = null,
-                        ShortName = r.Name,
-                    }
-            )
+            .Select(r => new ParatextResource
+            {
+                AvailableRevision = r.DBLRevision,
+                CreatedTimestamp = r.CreatedTimestamp,
+                InstallableResource = includeInstallableResource ? r : null,
+                InstalledRevision = resourceRevisions.ContainsKey(r.DBLEntryUid.Id)
+                    ? resourceRevisions[r.DBLEntryUid.Id]
+                    : 0,
+                IsConnectable = false,
+                IsConnected = false,
+                IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid.Id),
+                LanguageTag = r.LanguageID.Code,
+                ManifestChecksum = r.ManifestChecksum,
+                Name = r.FullName,
+                ParatextId = r.DBLEntryUid.Id,
+                PermissionsChecksum = r.PermissionsChecksum,
+                ProjectId = null,
+                ShortName = r.Name,
+            })
             .ToArray();
     }
 
@@ -2746,8 +2740,8 @@ public class ParatextService : DisposableBase, IParatextService
         // Try another method to find the comment
         DateTime noteTime = note.DateCreated.ToUniversalTime();
         return thread
-            .Comments.Where(
-                c => DateTime.Equals(noteTime, DateTime.Parse(c.Date, null, DateTimeStyles.AdjustToUniversal))
+            .Comments.Where(c =>
+                DateTime.Equals(noteTime, DateTime.Parse(c.Date, null, DateTimeStyles.AdjustToUniversal))
             )
             .LastOrDefault(c => c.User == ptUser.Username);
     }

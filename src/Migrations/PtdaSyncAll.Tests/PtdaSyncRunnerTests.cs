@@ -202,14 +202,18 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
@@ -223,7 +227,8 @@ namespace PtdaSyncAll
             Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
 
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
@@ -246,14 +251,18 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.Received()
+            await env
+                .ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.Received()
+            await env
+                .ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
@@ -287,17 +296,22 @@ namespace PtdaSyncAll
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.Received()
+            await env
+                .ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.Received()
+            await env
+                .ParatextService.Received()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT", Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK", Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive()
+            await env
+                .ParatextService.DidNotReceive()
                 .UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
@@ -1004,15 +1018,12 @@ namespace PtdaSyncAll
                     BookNum = Canon.BookIdToNumber(book.Id),
                     Chapters = Enumerable
                         .Range(1, book.HighestTargetChapter)
-                        .Select(
-                            c =>
-                                new Chapter
-                                {
-                                    Number = c,
-                                    LastVerse = 10,
-                                    IsValid = !book.InvalidChapters.Contains(c)
-                                }
-                        )
+                        .Select(c => new Chapter
+                        {
+                            Number = c,
+                            LastVerse = 10,
+                            IsValid = !book.InvalidChapters.Contains(c)
+                        })
                         .ToList(),
                     HasSource = book.HighestSourceChapter > 0
                 };
@@ -1095,15 +1106,12 @@ namespace PtdaSyncAll
                 var chapterDeltas = Enumerable
                     .Range(1, highestChapter)
                     .Where(chapterNumber => !(missingChapters?.Contains(chapterNumber) ?? false))
-                    .Select(
-                        c =>
-                            new ChapterDelta(
-                                c,
-                                10,
-                                !(invalidChapters?.Contains(c) ?? false),
-                                Delta.New().InsertText("text")
-                            )
-                    );
+                    .Select(c => new ChapterDelta(
+                        c,
+                        10,
+                        !(invalidChapters?.Contains(c) ?? false),
+                        Delta.New().InsertText("text")
+                    ));
                 if (chapterDeltas.Count() == 0)
                 {
                     // Add implicit ChapterDelta, mimicing DeltaUsxMapper.ToChapterDeltas().
@@ -1130,10 +1138,9 @@ namespace PtdaSyncAll
                 string newBookText = GetBookText(textType, bookId, changed ? 2 : 1);
                 DeltaUsxMapper
                     .ToUsx(
-                        Arg.Is<XDocument>(
-                            d =>
-                                (string)d.Root.Element("book").Attribute("code") == bookId
-                                && (string)d.Root.Element("book") == GetParatextProject(textType)
+                        Arg.Is<XDocument>(d =>
+                            (string)d.Root.Element("book").Attribute("code") == bookId
+                            && (string)d.Root.Element("book") == GetParatextProject(textType)
                         ),
                         Arg.Is<IEnumerable<ChapterDelta>>(
                             (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() > 0

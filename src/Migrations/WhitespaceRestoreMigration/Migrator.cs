@@ -524,8 +524,8 @@ public class Migrator : DisposableBase
         var textDocs = new SortedList<int, IDocument<TextData>>(text.Chapters.Count);
         foreach (Chapter chapter in text.Chapters)
         {
-            IDocument<TextData>? textDoc = docs.FirstOrDefault(
-                d => d.Id == TextData.GetTextDocId(project.Id, text.BookNum, chapter.Number)
+            IDocument<TextData>? textDoc = docs.FirstOrDefault(d =>
+                d.Id == TextData.GetTextDocId(project.Id, text.BookNum, chapter.Number)
             );
             if (textDoc is not null)
             {
@@ -543,14 +543,11 @@ public class Migrator : DisposableBase
         );
         var projectGroups = _problemStats
             .AsEnumerable()
-            .GroupBy(
-                row =>
-                    new
-                    {
-                        SFProjectId = row.Field<string>("SFProjectId"),
-                        DirtyStatus = row.Field<DirtyStatus>("DirtyStatus")
-                    }
-            )
+            .GroupBy(row => new
+            {
+                SFProjectId = row.Field<string>("SFProjectId"),
+                DirtyStatus = row.Field<DirtyStatus>("DirtyStatus")
+            })
             .OrderBy(group => group.Key.SFProjectId);
 
         foreach (var projectGroup in projectGroups)

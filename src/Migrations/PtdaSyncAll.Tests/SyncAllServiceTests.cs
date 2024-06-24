@@ -30,7 +30,8 @@ namespace PtdaSyncAll
             await env.Service.SynchronizeAllProjectsAsync(false);
 
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
-            await env.ParatextSyncRunner.DidNotReceive()
+            await env
+                .ParatextSyncRunner.DidNotReceive()
                 .RunAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
             env.ProgramLogger.DidNotReceive()
                 .Log(Arg.Is<string>((string message) => message.Contains("Starting an asynchronous synchronization")));

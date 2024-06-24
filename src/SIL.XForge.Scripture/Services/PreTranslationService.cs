@@ -52,8 +52,7 @@ public class PreTranslationService(
         // Ensure we have the parameters to retrieve the pre-translation
         string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
         string corpusId = projectSecret
-            .ServalData?.Corpora
-            .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+            .ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
             .Key;
         if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
         {
@@ -210,8 +209,7 @@ public class PreTranslationService(
         // Ensure we have the parameters to retrieve the pre-translation
         string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
         string? corpusId = projectSecret
-            .ServalData?.Corpora
-            .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+            .ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
             .Key;
         if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
         {
@@ -266,8 +264,7 @@ public class PreTranslationService(
         // Ensure we have the parameters to retrieve the pre-translation
         string translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
         string corpusId = projectSecret
-            .ServalData?.Corpora
-            .FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
+            .ServalData?.Corpora.FirstOrDefault(c => c.Value.PreTranslate && !c.Value.AlternateTrainingSource)
             .Key;
         if (string.IsNullOrWhiteSpace(translationEngineId) || string.IsNullOrWhiteSpace(corpusId))
         {

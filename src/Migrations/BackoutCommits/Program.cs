@@ -118,8 +118,8 @@ public class Program
         foreach (CommitData commit in relevantCommits)
         {
             foreach (
-                string notesFile in commit.Files.Where(
-                    f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0
+                string notesFile in commit.Files.Where(f =>
+                    Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0
                 )
             )
             {

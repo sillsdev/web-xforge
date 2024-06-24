@@ -115,7 +115,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
         {
             if (
-                this.RealtimeService.QuerySnapshots<SFProject>()
+                this
+                    .RealtimeService.QuerySnapshots<SFProject>()
                     .Any((SFProject sfProject) => sfProject.ParatextId == project.ParatextId)
             )
             {
@@ -697,15 +698,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
         // Link sharing keys have Email set to null and ExpirationTime set to null.
         string key = projectSecret
-            .ShareKeys.FirstOrDefault(
-                sk =>
-                    sk.Email == null
-                    && sk.ProjectRole == role
-                    && sk.ShareLinkType == shareLinkType
-                    && sk.RecipientUserId == null
-                    && sk.Reserved == null
-                    && sk.ExpirationTime == null
-                    && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
+            .ShareKeys.FirstOrDefault(sk =>
+                sk.Email == null
+                && sk.ProjectRole == role
+                && sk.ShareLinkType == shareLinkType
+                && sk.RecipientUserId == null
+                && sk.Reserved == null
+                && sk.ExpirationTime == null
+                && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
             )
             ?.Key;
         if (!string.IsNullOrEmpty(key))
@@ -814,15 +814,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         DateTime now = DateTime.UtcNow;
         return projectSecret
             .ShareKeys.Where(s => s.Email != null)
-            .Select(
-                sk =>
-                    new InviteeStatus
-                    {
-                        Email = sk.Email,
-                        Role = sk.ProjectRole,
-                        Expired = sk.ExpirationTime < now
-                    }
-            )
+            .Select(sk => new InviteeStatus
+            {
+                Email = sk.Email,
+                Role = sk.ProjectRole,
+                Expired = sk.ExpirationTime < now
+            })
             .ToArray();
     }
 
@@ -947,21 +944,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public bool IsSourceProject(string projectId)
     {
         IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
-        return projectQuery.Any(
-            p =>
-                (p.TranslateConfig.Source != null && (p.TranslateConfig.Source.ProjectRef == projectId))
-                || (
-                    p.TranslateConfig.DraftConfig.AlternateSource != null
-                    && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
-                )
-                || (
-                    p.TranslateConfig.DraftConfig.AlternateTrainingSource != null
-                    && (p.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef == projectId)
-                )
-                || (
-                    p.TranslateConfig.DraftConfig.AdditionalTrainingSource != null
-                    && (p.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef == projectId)
-                )
+        return projectQuery.Any(p =>
+            (p.TranslateConfig.Source != null && (p.TranslateConfig.Source.ProjectRef == projectId))
+            || (
+                p.TranslateConfig.DraftConfig.AlternateSource != null
+                && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
+            )
+            || (
+                p.TranslateConfig.DraftConfig.AlternateTrainingSource != null
+                && (p.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef == projectId)
+            )
+            || (
+                p.TranslateConfig.DraftConfig.AdditionalTrainingSource != null
+                && (p.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef == projectId)
+            )
         );
     }
 
@@ -1060,8 +1056,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
         int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
-        await projectDoc.SubmitJson0OpAsync(
-            op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, true)
+        await projectDoc.SubmitJson0OpAsync(op =>
+            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, true)
         );
     }
 
@@ -1105,8 +1101,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
         int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
-        await projectDoc.SubmitJson0OpAsync(
-            op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, false)
+        await projectDoc.SubmitJson0OpAsync(op =>
+            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, false)
         );
     }
 
@@ -1140,8 +1136,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
-        await projectDoc.SubmitJson0OpAsync(
-            op => op.Set(p => p.TranslateConfig.DraftConfig.ServalConfig, servalConfig)
+        await projectDoc.SubmitJson0OpAsync(op =>
+            op.Set(p => p.TranslateConfig.DraftConfig.ServalConfig, servalConfig)
         );
     }
 
@@ -1649,8 +1645,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 ParatextProject ptProject = ptProjects.FirstOrDefault(p => p.ProjectId == projectDoc.Id);
                 if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
                 {
-                    await projectDoc.SubmitJson0OpAsync(
-                        op => UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag)
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                        UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag)
                     );
                 }
             }
@@ -1658,13 +1654,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             // Update the source writing system tag, if it is in the Paratext project
             if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source?.WritingSystem.Tag))
             {
-                ParatextProject ptProject = ptProjects.FirstOrDefault(
-                    p => p.ParatextId == projectDoc.Data.TranslateConfig.Source.ParatextId
+                ParatextProject ptProject = ptProjects.FirstOrDefault(p =>
+                    p.ParatextId == projectDoc.Data.TranslateConfig.Source.ParatextId
                 );
                 if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
                 {
-                    await projectDoc.SubmitJson0OpAsync(
-                        op => UpdateSetting(op, p => p.TranslateConfig.Source.WritingSystem.Tag, ptProject.LanguageTag)
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                        UpdateSetting(op, p => p.TranslateConfig.Source.WritingSystem.Tag, ptProject.LanguageTag)
                     );
                 }
             }

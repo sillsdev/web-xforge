@@ -169,9 +169,8 @@ public class Startup
             .AddMvc()
             .AddNewtonsoftJson()
             .AddViewLocalization()
-            .AddDataAnnotationsLocalization(
-                options =>
-                    options.DataAnnotationLocalizerProvider = (type, factory) => factory.Create(typeof(SharedResource))
+            .AddDataAnnotationsLocalization(options =>
+                options.DataAnnotationLocalizerProvider = (type, factory) => factory.Create(typeof(SharedResource))
             );
 
         services.AddXFJsonRpc();

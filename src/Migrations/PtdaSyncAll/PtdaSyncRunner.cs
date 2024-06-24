@@ -122,15 +122,15 @@ namespace PtdaSyncAll
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
 
                 var targetBooks = new HashSet<int>(
-                    (await _paratextService.GetBooksAsync(_userSecret, targetParatextId)).Select(
-                        bookId => Canon.BookIdToNumber(bookId)
+                    (await _paratextService.GetBooksAsync(_userSecret, targetParatextId)).Select(bookId =>
+                        Canon.BookIdToNumber(bookId)
                     )
                 );
 
                 var sourceBooks = new HashSet<int>(
                     TranslationSuggestionsEnabled
-                        ? (await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)).Select(
-                            bookId => Canon.BookIdToNumber(bookId)
+                        ? (await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)).Select(bookId =>
+                            Canon.BookIdToNumber(bookId)
                         )
                         : Enumerable.Empty<int>()
                 );

@@ -218,11 +218,14 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<NoContentResult>(actual.Result);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetQueuedStateAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetCurrentBuildAsync(User01, Project01, minRevision: 1, preTranslate: false, CancellationToken.None);
-        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+        await env
+            .MachineApiService.DidNotReceiveWithAnyArgs()
             .GetBuildAsync(
                 User01,
                 Project01,
@@ -251,11 +254,14 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None);
-        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+        await env
+            .MachineApiService.DidNotReceiveWithAnyArgs()
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None);
-        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+        await env
+            .MachineApiService.DidNotReceiveWithAnyArgs()
             .GetBuildAsync(User01, Project01, Build01, null, true, CancellationToken.None);
     }
 
@@ -277,11 +283,14 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None);
-        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+        await env
+            .MachineApiService.DidNotReceiveWithAnyArgs()
             .GetBuildAsync(User01, Project01, Build01, null, true, CancellationToken.None);
     }
 
@@ -303,11 +312,14 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+        await env
+            .MachineApiService.DidNotReceiveWithAnyArgs()
             .GetQueuedStateAsync(User01, Project01, preTranslate: true, CancellationToken.None);
-        await env.MachineApiService.DidNotReceiveWithAnyArgs()
+        await env
+            .MachineApiService.DidNotReceiveWithAnyArgs()
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetBuildAsync(User01, Project01, Build01, null, true, CancellationToken.None);
     }
 
@@ -329,7 +341,8 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetBuildAsync(User01, Project01, Build01, null, false, CancellationToken.None);
     }
 
@@ -453,7 +466,8 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetCurrentBuildAsync(User01, Project01, null, false, CancellationToken.None);
     }
 
@@ -601,7 +615,8 @@ public class MachineApiControllerTests
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
 
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
     }
 
@@ -1146,10 +1161,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.StartPreTranslationBuildAsync(
-            User01,
-            Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
-            CancellationToken.None
-        )
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -1169,10 +1184,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.StartPreTranslationBuildAsync(
-            User01,
-            Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
-            CancellationToken.None
-        )
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new ForbiddenException());
 
         // SUT
@@ -1191,10 +1206,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.StartPreTranslationBuildAsync(
-            User01,
-            Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
-            CancellationToken.None
-        )
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
@@ -1212,10 +1227,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.StartPreTranslationBuildAsync(
-            User01,
-            new BuildConfig { ProjectId = Project01 },
-            CancellationToken.None
-        )
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                CancellationToken.None
+            )
             .Returns(Task.CompletedTask);
 
         // SUT
@@ -1233,10 +1248,10 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService.StartPreTranslationBuildAsync(
-            User01,
-            Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
-            CancellationToken.None
-        )
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new UnauthorizedAccessException());
 
         // SUT
@@ -1307,7 +1322,8 @@ public class MachineApiControllerTests
         ActionResult actual = await env.Controller.TrainSegmentAsync(Project01, segmentPair, CancellationToken.None);
 
         Assert.IsInstanceOf<OkResult>(actual);
-        await env.MachineApiService.Received(1)
+        await env
+            .MachineApiService.Received(1)
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
     }
 

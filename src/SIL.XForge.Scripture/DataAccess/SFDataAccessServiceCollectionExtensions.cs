@@ -11,8 +11,8 @@ public static class SFDataAccessServiceCollectionExtensions
     {
         services.AddDataAccess(configuration);
 
-        DataAccessClassMap.RegisterClass<ParatextUserProfile>(
-            cm => cm.GetMemberMap(c => c.SFUserId).SetElementName("sfUserId")
+        DataAccessClassMap.RegisterClass<ParatextUserProfile>(cm =>
+            cm.GetMemberMap(c => c.SFUserId).SetElementName("sfUserId")
         );
 
         services.AddMongoRepository<TranslateMetrics>("translate_metrics", cm => cm.MapIdProperty(tm => tm.Id));

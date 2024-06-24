@@ -163,8 +163,8 @@ public class MachineProjectService(
                     );
                     if (!string.IsNullOrEmpty(sourceLanguageTag))
                     {
-                        await projectDoc.SubmitJson0OpAsync(
-                            op => op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, sourceLanguageTag)
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                            op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, sourceLanguageTag)
                         );
                     }
                 }
@@ -173,8 +173,7 @@ public class MachineProjectService(
             // Clear the existing translation engine id and corpora, based on whether this is pre-translation or not
             string[] corporaIds =
                 projectSecret
-                    .ServalData?.Corpora
-                    .Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
+                    .ServalData?.Corpora.Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                     .Select(c => c.Key)
                     .ToArray() ?? [];
             await projectSecrets.UpdateAsync(
@@ -255,8 +254,7 @@ public class MachineProjectService(
             // A 404 means that the translation engine does not exist
             logger.LogInformation($"Translation Engine {translationEngineId} does not exist.");
             string? corporaId = projectSecret
-                .ServalData?.Corpora
-                .FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
+                .ServalData?.Corpora.FirstOrDefault(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                 .Key;
             // Clear the existing translation engine id and corpora
             await projectSecrets.UpdateAsync(
@@ -659,8 +657,8 @@ public class MachineProjectService(
 
         // See if there is a translation corpus
         string? corpusId = projectSecret
-            .ServalData.Corpora.FirstOrDefault(
-                c => c.Value.PreTranslate == preTranslate && !c.Value.AlternateTrainingSource
+            .ServalData.Corpora.FirstOrDefault(c =>
+                c.Value.PreTranslate == preTranslate && !c.Value.AlternateTrainingSource
             )
             .Key;
 
@@ -1191,8 +1189,8 @@ public class MachineProjectService(
 
         // Add the pre-translation books
         foreach (
-            KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
-                s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource && !s.Value.AdditionalTrainingData
+            KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(s =>
+                s.Value.PreTranslate && !s.Value.AlternateTrainingSource && !s.Value.AdditionalTrainingData
             )
         )
         {
@@ -1251,8 +1249,8 @@ public class MachineProjectService(
         {
             trainOn = [];
             foreach (
-                KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(
-                    s => s.Value.PreTranslate && s.Value.AlternateTrainingSource
+                KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(s =>
+                    s.Value.PreTranslate && s.Value.AlternateTrainingSource
                 )
             )
             {
@@ -1428,8 +1426,8 @@ public class MachineProjectService(
 
         // Upload the file if it is not there or has changed
         string checksum = sb.ToString();
-        ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(
-            c => c.TextId == textId && c.ProjectId == projectId
+        ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(c =>
+            c.TextId == textId && c.ProjectId == projectId
         );
         if (previousCorpusFile is null || previousCorpusFile.FileChecksum != checksum)
         {

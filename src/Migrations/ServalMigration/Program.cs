@@ -144,12 +144,11 @@ public class Program
                 }
             )
             .UseConfiguration(configuration)
-            .ConfigureKestrel(
-                options =>
-                    // Listen to a different port than the default. Then it won't have a
-                    // conflict if SF is running. And specific, rather than just available, to
-                    // make sure we really won't be handling user requests.
-                    options.Listen(IPAddress.Loopback, migratorDotnetPort)
+            .ConfigureKestrel(options =>
+                // Listen to a different port than the default. Then it won't have a
+                // conflict if SF is running. And specific, rather than just available, to
+                // make sure we really won't be handling user requests.
+                options.Listen(IPAddress.Loopback, migratorDotnetPort)
             )
             .UseStartup<Startup>();
     }
