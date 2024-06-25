@@ -47,13 +47,8 @@ jobs:
             # Receive input
             tag_prefix = os.getenv('TAG_PREFIX')
 
-            # Get latest tag
             latest_tag = get_latest_tag(tag_prefix)
-
-            # Increment version
             next_version = increment_version(latest_tag, tag_prefix)
-
-            # Output new tag
             print(f'::set-output name=next_version::{next_version}')
           EOF
         env:

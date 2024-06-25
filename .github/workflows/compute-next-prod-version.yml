@@ -21,7 +21,7 @@ jobs:
     name: "Increment version"
     runs-on: ubuntu-latest
     outputs:
-      new_tag: ${{ steps.compute_next_version.outputs.next_version }}
+      next_version: ${{ steps.compute_next_version.outputs.next_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,13 +63,8 @@ jobs:
             release_type = os.getenv('RELEASE_TYPE')
             tag_prefix = os.getenv('TAG_PREFIX')
 
-            # Get latest tag
             latest_tag = get_latest_tag(tag_prefix)
-
-            # Increment version
             next_version = increment_version(latest_tag, release_type, tag_prefix)
-
-            # Output next version number
             print(f'::set-output name=next_version::{next_version}')
           EOF
         env:
