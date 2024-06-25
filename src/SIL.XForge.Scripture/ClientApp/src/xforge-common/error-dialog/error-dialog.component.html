@@ -4,7 +4,12 @@
     <p>{{ data.message }}</p>
     <p [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></p>
     <p *ngIf="browserUnsupported" class="unsupported-browser" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
-    <p class="error-id">{{ t("error_id", { errorId: data.eventId }) }}</p>
+    <p>
+      <ng-container *ngFor="let portion of i18n.interpolateVariables('error.error_id', { errorId: data.eventId })">
+        <ng-container *ngIf="portion.id == null">{{ portion.text }}</ng-container>
+        <span *ngIf="portion.id === 'errorId'" class="error-id">{{ portion.text }}</span>
+      </ng-container>
+    </p>
 
     <ng-container *ngIf="data.stack">
       <a (click)="this.showDetails = !this.showDetails">{{ showDetails ? t("hide_details") : t("show_details") }}</a>

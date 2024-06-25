@@ -49,7 +49,7 @@ const defaultArgs = {
   dialogData: {
     message: 'The error message',
     stack: 'Error Stack line 1\nError Stack line 2\nError Stack line 3',
-    eventId: '12345'
+    eventId: '667adf9d90c462f4d7f3f6b8'
   }
 };
 

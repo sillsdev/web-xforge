@@ -284,6 +284,46 @@ export class I18nService {
   }
 
   /**
+   * Given a translation string like `Please email {{ email }} for help.` and a params object like
+   * `{ email: 'help@example.com' }`, this function will return an array of objects like:
+   * `[
+   *  { text: 'Please email ' },
+   *  { text: 'help@example.com', id: 'email' },
+   *  { text: ' for help.' }
+   * ]`
+   * This array can then be iterated in the view and based on the value of the id, either a plain string added to the
+   * view, or a link for the email address.
+   */
+  interpolateVariables(key: I18nKey, params: object = {}): { text: string; id?: string }[] {
+    const regex = /\{\{\s*(\w+)\s*\}\}/g;
+
+    const translation: string = this.transloco.getTranslation(this.transloco.getActiveLang())[key];
+    // find instances of "Some {{ variable }} text"
+    const matches: RegExpExecArray[] = [];
+
+    // ES2020 introduces string.matchAll(regex), but as of the time of writing SF is using ES2018
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(translation)) !== null) {
+      matches.push(match);
+    }
+
+    const sections: { text: string; id?: string }[] = [];
+    let i = 0;
+    for (const match of matches) {
+      const variableWithBraces = match[0];
+      const variable = match[1];
+      // Add the text before the variable
+      sections.push({ text: translation.substring(i, match.index) });
+      // Add the variable itself
+      sections.push({ text: params[variable], id: variable });
+      i = match.index + variableWithBraces.length;
+    }
+    sections.push({ text: translation.substring(i) });
+
+    return sections;
+  }
+
+  /**
    * Looks up a given translation and then breaks it up into chunks according it its numbered tags. For example, a
    * translation of 'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
    * would result in an array of items as shown below:
