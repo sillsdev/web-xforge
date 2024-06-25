@@ -3810,6 +3810,18 @@ public class ParatextServiceTests
         ComparableProjectPermissionManager targetScrTextPermissions = (ComparableProjectPermissionManager)
             env.ProjectScrText.Permissions;
 
+        // The permissions will return a null user, so we will have the registry return the correct permissions
+        env.MockSharingLogicWrapper.SearchForBestProjectUsersData(
+                Arg.Any<SharedRepositorySource>(),
+                Arg.Is<SharedProject>(s => s.SendReceiveId.Id == sourceProjectId)
+            )
+            .Returns(sourceScrTextPermissions);
+        env.MockSharingLogicWrapper.SearchForBestProjectUsersData(
+                Arg.Any<SharedRepositorySource>(),
+                Arg.Is<SharedProject>(s => s.SendReceiveId.Id == targetProjectId)
+            )
+            .Returns(targetScrTextPermissions);
+
         ParatextProject targetProject = await env.Service.SendReceiveAsync(
             user01Secret,
             targetProjectId,
