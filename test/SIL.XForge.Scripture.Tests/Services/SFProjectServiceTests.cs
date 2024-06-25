@@ -332,14 +332,13 @@ public class SFProjectServiceTests
         Assert.That(shareLink, Is.EqualTo("newKey"));
         projectSecret = env.ProjectSecrets.Get(Project06);
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "newKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Viewer
-                    && sk.Reserved == null
-                    && sk.UsersGenerated == 0
-                    && sk.ExpirationTime != null
+            projectSecret.ShareKeys.Any(sk =>
+                sk.Key == "newKey"
+                && sk.ShareLinkType == ShareLinkType.Recipient
+                && sk.ProjectRole == SFProjectRole.Viewer
+                && sk.Reserved == null
+                && sk.UsersGenerated == 0
+                && sk.ExpirationTime != null
             ),
             Is.True
         );
@@ -372,13 +371,12 @@ public class SFProjectServiceTests
         Assert.That(shareLink, Is.EqualTo("newKey"));
         projectSecret = env.ProjectSecrets.Get(Project06);
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "newKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Viewer
-                    && sk.Reserved == null
-                    && sk.ExpirationTime != null
+            projectSecret.ShareKeys.Any(sk =>
+                sk.Key == "newKey"
+                && sk.ShareLinkType == ShareLinkType.Recipient
+                && sk.ProjectRole == SFProjectRole.Viewer
+                && sk.Reserved == null
+                && sk.ExpirationTime != null
             ),
             Is.True
         );
@@ -672,7 +670,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project06);
-        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
