@@ -17,10 +17,16 @@ on:
           - "patch"
           - "minor"
           - "major"
+      skip-branch-update:
+        description: "Don't update the branch, and release from its current commit. For example, when releasing a hotfix that has already been pushed to the branch. If this is set, 'from-staging-version' is ignored."
+        required: false
+        type: boolean
+        default: false
       from-staging-version:
         description: "QA version from which to release (eg '123'). Leave blank for latest."
         required: false
         type: string
+        default: ""
 
 jobs:
   update_branch:
@@ -32,6 +38,9 @@ jobs:
         with:
           fetch-depth: "0"
       - name: Set branch
+        # Note that just the step is conditional, not the entire job, so that subsequent jobs can still depend on this
+        # job either finishing or being basically skipped.
+        if: ${{ !github.event.inputs.skip-branch-update }}
         env:
           FROM_STAGING_VERSION: ${{ github.event.inputs.from-staging-version }}
         run: |
