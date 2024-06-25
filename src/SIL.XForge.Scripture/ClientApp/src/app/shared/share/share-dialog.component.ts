@@ -31,24 +31,25 @@ export enum ShareLinkType {
   Recipient = 'recipient'
 }
 
-export enum ShareExpiration {
-  Seven = '7',
-  Fourteen = '14',
-  Thirty = '30',
-  Ninety = '90',
-  ThreeSixtyFive = '365'
-}
-
 @Component({
   templateUrl: './share-dialog.component.html',
   styleUrls: ['./share-dialog.component.scss']
 })
 export class ShareDialogComponent extends SubscriptionDisposable {
+  // this is duplicated with the strings to ease their translation
+  readonly ShareExpiration = {
+    days_seven: 7,
+    days_fourteen: 14,
+    days_thirty: 30,
+    days_ninety: 90,
+    days_threesixtyfive: 365
+  };
+
   isProjectAdmin: boolean = false;
   shareLocaleCode: Locale;
   shareRole: SFProjectRole = this.data.defaultRole;
   shareLinkType: ShareLinkType = ShareLinkType.Anyone;
-  shareExpiration: ShareExpiration = ShareExpiration.Fourteen;
+  shareExpiration: number = this.ShareExpiration.days_fourteen;
 
   private readonly projectId?: string;
   private linkSharingKey: string | undefined;
@@ -140,11 +141,11 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     return options;
   }
 
-  get linkExpirationOptions(): ShareExpiration[] {
+  get linkExpirationOptions(): string[] {
     if (this.isProjectAdmin) {
-      return Object.values(ShareExpiration);
+      return Object.keys(this.ShareExpiration);
     } else {
-      return [ShareExpiration.Fourteen];
+      return ['days_fourteen'];
     }
   }
 
@@ -209,8 +210,8 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     this.updateSharingKey();
   }
 
-  setLinkExpiration(expiration: ShareExpiration): void {
-    this.shareExpiration = expiration;
+  setLinkExpiration(expirationKey: string): void {
+    this.shareExpiration = this.ShareExpiration[expirationKey];
     this.updateSharingKey();
   }
 
@@ -231,7 +232,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     if (this.shareLinkType !== ShareLinkType.Recipient || this.linkSharingKey == null) {
       return;
     }
-    await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey, Number.parseInt(this.shareExpiration));
+    await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey, this.shareExpiration);
     this.updateSharingKey();
   }
 
@@ -248,12 +249,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       return;
     }
     this.projectService
-      .onlineGetLinkSharingKey(
-        this.projectId,
-        this.shareRole,
-        this.shareLinkType,
-        Number.parseInt(this.shareExpiration)
-      )
+      .onlineGetLinkSharingKey(this.projectId, this.shareRole, this.shareLinkType, this.shareExpiration)
       .then((shareKey: string) => {
         this.linkSharingKey = shareKey;
         this.linkSharingReady = true;
