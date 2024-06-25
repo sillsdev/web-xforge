@@ -17,6 +17,10 @@ on:
           - "patch"
           - "minor"
           - "major"
+      from-staging-version:
+        description: "QA version from which to release (eg '123'). Leave blank for latest."
+        required: false
+        type: string
 
 jobs:
   update_branch:
@@ -26,14 +30,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: "0"
       - name: Set branch
-        # TODO Could release from a chosen QA tag.
-        run: git push origin origin/sf-qa:sf-live
+        env:
+          FROM_STAGING_VERSION: ${{ github.event.inputs.from-staging-version }}
+        run: |
+          set -ueo pipefail
+          if [[ -z "${FROM_STAGING_VERSION}" ]]; then
+            git push origin origin/sf-qa:sf-live
+          else
+            git push origin $(git rev-list -1 "SF-QAv${FROM_STAGING_VERSION}"):sf-live
+          fi
 
   determine_version:
     name: "Determine version"
     uses: ./github/workflows/compute-next-prod-version.yml
+    needs: update_branch
     with:
       release-type: ${{ github.event.inputs.release-type }}
       tag_prefix: ${{ env.vcs_tag_prefix }}
