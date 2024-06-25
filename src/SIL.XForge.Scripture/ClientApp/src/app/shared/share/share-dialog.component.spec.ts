@@ -25,7 +25,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareDialogComponent, ShareDialogData, ShareExpiration, ShareLinkType } from './share-dialog.component';
+import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
@@ -169,7 +169,7 @@ describe('ShareDialogComponent', () => {
     env = new TestEnvironment({ userId: TestUsers.Admin });
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything(), 14)).once();
 
-    env.component.setLinkExpiration(ShareExpiration.Ninety);
+    env.component.setLinkExpiration('days_ninety');
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything(), 90)).once();
   }));
 
