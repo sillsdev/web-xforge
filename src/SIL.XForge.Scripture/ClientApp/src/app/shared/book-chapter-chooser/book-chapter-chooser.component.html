@@ -18,7 +18,7 @@
       [disabled]="!!chapterSelectDisabled"
       [hideSingleSelectionIndicator]="true"
       panelClass="chapter-select-menu"
-      [panelWidth]="chapters.length < 100 ? 60 : 80"
+      [panelWidth]="chapters.length < 100 ? 70 : 80"
     >
       <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
     </mat-select>
