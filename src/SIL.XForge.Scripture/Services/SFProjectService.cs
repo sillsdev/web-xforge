@@ -881,14 +881,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
         SFProject project = await GetProjectAsync(projectSecret.Id);
 
+        // If the key isn't complete
         if (string.IsNullOrWhiteSpace(projectSecretShareKey?.ProjectRole))
         {
             throw new DataNotFoundException("role_not_found");
         }
+        // If the key is expired
         if (projectSecretShareKey.ExpirationTime < DateTime.UtcNow)
         {
             throw new DataNotFoundException("key_expired");
         }
+        // If the desired role is community checker but community checking is disabled
         if (
             projectSecretShareKey.ProjectRole == SFProjectRole.CommunityChecker
             && !project.CheckingConfig.CheckingEnabled
@@ -896,6 +899,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("role_not_found");
         }
+        // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
         if (!projectSecretShareKey.CreatedByAdmin)
         {
             string[] availableRoles = new Dictionary<string, bool>
