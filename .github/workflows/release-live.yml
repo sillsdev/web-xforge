@@ -1,4 +1,4 @@
-name: "Deploy to Live"
+name: "Release to Live"
 
 env:
   vcs_tag_prefix: "SFv"
@@ -61,7 +61,7 @@ jobs:
 
   deploy:
     name: "Deploy to Live"
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/release.yml
     needs: determine_version
     with:
       dotnet_version: "8.0.x"
