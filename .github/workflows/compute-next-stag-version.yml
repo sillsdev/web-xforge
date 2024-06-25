@@ -26,30 +26,13 @@ jobs:
         run: |
           python3 << EOF
           import os
-          import re
-          import subprocess
+          import utils
 
-          def get_latest_tag(tag_prefix):
-              result = subprocess.check_output(['git', 'describe', '--match', f'{tag_prefix}?*', '--abbrev=0'], text=True)
-              return result.strip()
+          tag_prefix = os.getenv('TAG_PREFIX')
 
-          def increment_version(tag, release_type, tag_prefix):
-              pattern = re.compile(fr'^{re.escape(tag_prefix)}(\d+)$')
-              match = pattern.match(tag)
-              if not match:
-                  raise ValueError(f'Tag does not match pattern {tag_prefix}123')
-
-              patch = map(int, match.groups())
-              patch += 1
-
-              return f'{patch}'
-
-            # Receive input
-            tag_prefix = os.getenv('TAG_PREFIX')
-
-            latest_tag = get_latest_tag(tag_prefix)
-            next_version = increment_version(latest_tag, tag_prefix)
-            print(f'::set-output name=next_version::{next_version}')
+          latest_tag = utils.get_latest_tag(tag_prefix)
+          next_version = utils.increment_staging_version(latest_tag, tag_prefix)
+          print(f'::set-output name=next_version::{next_version}')
           EOF
         env:
           TAG_PREFIX: ${{ github.event.inputs.tag_prefix }}
