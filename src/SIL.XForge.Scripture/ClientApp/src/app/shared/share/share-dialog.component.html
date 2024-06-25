@@ -78,17 +78,17 @@
         <mat-menu #expireMenu>
           <mat-selection-list [multiple]="false" *ngIf="linkExpirationOptions.length > 1">
             <mat-list-option
-              *ngFor="let option of linkExpirationOptions"
-              [selected]="option === shareExpiration"
-              (click)="setLinkExpiration(option)"
+              *ngFor="let key of linkExpirationOptions"
+              [selected]="ShareExpiration[key] === shareExpiration"
+              (click)="setLinkExpiration(key)"
             >
-              {{ option }} {{ t("days") }}
+              {{ t(key) }}
             </mat-list-option>
           </mat-selection-list>
         </mat-menu>
       </div>
       <app-notice *ngIf="isRecipientOnlyLink" icon="info">
-        {{ t("recipient_only_notice", { shareExpiration: shareExpiration + " " + t("days") }) }}
+        {{ t("recipient_only_notice", { shareExpiration: shareExpiration }) }}
       </app-notice>
     </ng-container>
     <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">
