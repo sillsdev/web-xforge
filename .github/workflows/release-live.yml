@@ -46,9 +46,9 @@ jobs:
         run: |
           set -ueo pipefail
           if [[ -z "${FROM_STAGING_VERSION}" ]]; then
-            git push origin origin/sf-qa:sf-live
+            git push --force origin origin/sf-qa:sf-live
           else
-            git push origin $(git rev-list -1 "SF-QAv${FROM_STAGING_VERSION}"):sf-live
+            git push --force origin $(git rev-list -1 "SF-QAv${FROM_STAGING_VERSION}"):sf-live
           fi
 
   determine_version:

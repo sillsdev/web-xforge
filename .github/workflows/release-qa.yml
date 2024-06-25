@@ -32,7 +32,7 @@ jobs:
         # Note that just the step is conditional, not the entire job, so that subsequent jobs can still depend on this
         # job either finishing or being basically skipped.
         if: ${{ !github.event.inputs.skip-branch-update }}
-        run: git push origin origin/master:sf-qa
+        run: git push --force origin origin/master:sf-qa
 
   determine_version:
     name: "Determine version"
