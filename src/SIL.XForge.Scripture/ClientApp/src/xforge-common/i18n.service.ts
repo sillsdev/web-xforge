@@ -98,8 +98,6 @@ export class I18nService {
 
   private currentLocale$ = new BehaviorSubject<Locale>(defaultLocale);
 
-  private interpolationCache: { [key: string]: { text: string; id?: number }[] } = {};
-
   constructor(
     locationService: LocationService,
     private readonly bugsnagService: BugsnagService,
@@ -284,6 +282,40 @@ export class I18nService {
   }
 
   /**
+   * Given a translation string like `Please email {{ email }} for help.` and a params object like
+   * `{ email: 'help@example.com' }`, this function will return an array of objects like:
+   * `[
+   *  { text: 'Please email ' },
+   *  { text: 'help@example.com', id: 'email' },
+   *  { text: ' for help.' }
+   * ]`
+   * This array can then be iterated in the view and based on the value of the id, either a plain string added to the
+   * view, or a link for the email address.
+   */
+  interpolateVariables(key: I18nKey, params: object = {}): { text: string; id?: string }[] {
+    const translation: string = this.transloco.getTranslation(this.transloco.getActiveLang())[key];
+
+    // find instances of "Some {{ variable }} text"
+    const regex = /\{\{\s*(\w+)\s*\}\}/g;
+
+    const sections: { text: string; id?: string }[] = [];
+    let i = 0;
+    for (const match of translation.matchAll(regex)) {
+      const variableWithBraces = match[0];
+      const variable = match[1];
+      // Add the text before the variable
+      sections.push({ text: translation.substring(i, match.index) });
+      // Add the variable itself
+      sections.push({ text: params[variable], id: variable });
+      // The index on a match can only be undefined when calling String.prototype.match with a non-global regex
+      i = match.index! + variableWithBraces.length;
+    }
+    sections.push({ text: translation.substring(i) });
+
+    return sections;
+  }
+
+  /**
    * Looks up a given translation and then breaks it up into chunks according it its numbered tags. For example, a
    * translation of 'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
    * would result in an array of items as shown below:
@@ -299,36 +331,24 @@ export class I18nService {
    * that reorder "fox" and "dog".
    */
   interpolate(key: I18nKey, params?: HashMap): { text: string; id?: number }[] {
-    const hashKey = this.localeCode + ' ' + key;
-    if (this.interpolationCache[hashKey] != null) {
-      return this.interpolationCache[hashKey];
-    }
-
     const translation: string = this.transloco.translate(key, params);
     // find instances of "{ 1 } text { 2 }"
     const regex = /\{\s*\d+\s*\}(.*?)\{\s*\d+\s*\}/g;
-    const matches: RegExpExecArray[] = [];
-
-    // ES2020 introduces string.matchAll(regex), but as of the time of writing SF is using ES2018
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(translation)) !== null) {
-      matches.push(match);
-    }
 
     const sections: { text: string; id?: number }[] = [];
     let i = 0;
-    for (const match of matches) {
+    for (const match of translation.matchAll(regex)) {
       const fullMatchText = match[0];
       const matchInnerText = match[1];
       sections.push({ text: translation.substring(i, match.index) });
       const id = Number.parseInt(fullMatchText.match(/\d+/)![0], 10);
       sections.push({ text: matchInnerText, id });
-      i = match.index + fullMatchText.length;
+      // The index on a match can only be undefined when calling String.prototype.match with a non-global regex
+      i = match.index! + fullMatchText.length;
     }
     sections.push({ text: translation.substring(i) });
 
-    this.interpolationCache[hashKey] = sections.filter(section => !(section.text === '' && section.id == null));
-    return this.interpolationCache[hashKey];
+    return sections;
   }
 
   /**
