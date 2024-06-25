@@ -13,7 +13,6 @@
 body {
   margin: 0;
   font-family: Roboto, sans-serif;
-  @include mat.icon-button-density(-2);
 }
 
 as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
