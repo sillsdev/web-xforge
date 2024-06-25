@@ -26,7 +26,7 @@
           <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
         </a>
         }
-        <span class="project-name-wrapper" *ngIf="isProjectSelected" class="hide-lt-sm">
+        <span class="project-name-wrapper hide-lt-sm" *ngIf="isProjectSelected">
           <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
           <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
         </span>
