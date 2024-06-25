@@ -593,6 +593,20 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project02);
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+        await env.Service.UpdateSettingsAsync(
+            User02,
+            Project02,
+            new SFProjectSettings { CheckingShareEnabled = false }
+        );
+        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "reusableLinkFromAdmin"));
+    }
+
+    [Test]
     public async Task JoinWithShareKeyAsync_LinkSharingEnabled_UserJoined()
     {
         var env = new TestEnvironment();
@@ -638,6 +652,36 @@ public class SFProjectServiceTests
         project = env.GetProject(Project02);
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+    }
+
+    [Test]
+    public void JoinWithShareKeyAsync_CommunityCheckerCantUseReusable_WhenCheckingDisabled()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project06);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+        Assert.That(project.CheckingConfig.CheckingEnabled, Is.False, "setup");
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+        Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "CheckerMultiUseFromNonAdmin"), Is.True, "setup");
+
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.JoinWithShareKeyAsync(User03, "CheckerMultiUseFromNonAdmin")
+        );
+    }
+
+    [Test]
+    public void JoinWithShareKeyAsync_CommunityCheckerCantUseSingle_WhenCheckingDisabled()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project06);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+        Assert.That(project.CheckingConfig.CheckingEnabled, Is.False, "setup");
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+        Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "CheckerSingleUse"), Is.True, "setup");
+
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "CheckerSingleUse"));
     }
 
     [Test]
@@ -4094,6 +4138,13 @@ public class SFProjectServiceTests
                             },
                             new ShareKey
                             {
+                                Key = "reusableLinkFromAdmin",
+                                ProjectRole = SFProjectRole.CommunityChecker,
+                                ShareLinkType = ShareLinkType.Anyone,
+                                CreatedByAdmin = true
+                            },
+                            new ShareKey
+                            {
                                 Email = "user03@example.com",
                                 Key = "existingkeyuser03",
                                 ExpirationTime = currentTime.AddDays(1),
@@ -4217,6 +4268,21 @@ public class SFProjectServiceTests
                             {
                                 Key = "toBeReservedKey",
                                 ProjectRole = SFProjectRole.Commenter,
+                                ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true
+                            },
+                            new ShareKey
+                            {
+                                Key = "CheckerMultiUseFromNonAdmin",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker,
+                                ShareLinkType = ShareLinkType.Anyone,
+                            },
+                            new ShareKey
+                            {
+                                Key = "CheckerSingleUse",
+                                ExpirationTime = currentTime.AddDays(1),
+                                ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
                                 CreatedByAdmin = true
                             },
