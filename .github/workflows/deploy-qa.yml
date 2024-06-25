@@ -12,6 +12,12 @@ on:
     # Actions > Workflows > Deploy to QA > "..." > Disable workflow
     - cron: "30 1 * * 0-1,3-6"
   workflow_dispatch:
+    inputs:
+      skip-branch-update:
+        description: "Don't update the branch, and release from its current commit. For example, when releasing a hotfix that has already been pushed to the branch."
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   update_branch:
@@ -23,6 +29,9 @@ jobs:
         with:
           fetch-depth: "0"
       - name: Set branch
+        # Note that just the step is conditional, not the entire job, so that subsequent jobs can still depend on this
+        # job either finishing or being basically skipped.
+        if: ${{ !github.event.inputs.skip-branch-update }}
         run: git push origin origin/master:sf-qa
 
   determine_version:
