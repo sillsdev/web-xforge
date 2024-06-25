@@ -4,13 +4,18 @@ import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { mock } from 'ts-mockito';
+import { FeatureFlagService } from '../feature-flags/feature-flag.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog.component';
 
+const mockedFeatureFlagService = mock(FeatureFlagService);
+
 describe('ErrorDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule]
+    imports: [DialogTestModule],
+    providers: [{ provide: FeatureFlagService, useMock: mockedFeatureFlagService }]
   }));
 
   let overlayContainer: OverlayContainer;
@@ -35,7 +40,7 @@ describe('ErrorDialogComponent', () => {
 
     expect(env.errorMessage.textContent).toBe(dialogData.message);
     expect(env.showDetails?.textContent).toBe('Show details');
-    expect(env.errorId.textContent).toBe(`Error ID: ${dialogData.eventId}`);
+    expect(env.errorId.textContent).toBe(dialogData.eventId);
     expect(env.stackTrace).toBeNull();
 
     env.showDetails?.click();
