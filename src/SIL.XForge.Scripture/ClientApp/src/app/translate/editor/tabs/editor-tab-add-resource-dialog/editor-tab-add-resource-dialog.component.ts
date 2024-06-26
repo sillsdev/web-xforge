@@ -73,12 +73,17 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
         // If the Paratext project has a SF project id, add the user to that project if they are not already
         const project = this.projects?.find(p => p.paratextId === paratextId);
-        if (project?.projectId != null && !project.isConnected) {
-          await this.projectService.onlineAddCurrentUser(project.projectId);
+        if (project?.projectId != null) {
+          // Add the user to the project if they are not already connected to it
+          if (!project.isConnected) {
+            await this.projectService.onlineAddCurrentUser(project.projectId);
+          }
+          this.selectedProjectDoc = await this.projectService.get(project.projectId);
+        } else {
+          // Load the project or resource, creating it if it is not present
+          const projectId: string | undefined = await this.projectService.onlineCreateResourceProject(paratextId);
+          this.selectedProjectDoc = projectId != null ? await this.projectService.get(projectId) : undefined;
         }
-
-        // Load the project
-        this.selectedProjectDoc = await this.fetchProject(paratextId);
 
         if (this.selectedProjectDoc != null) {
           if (this.permissionsService.canSync(this.selectedProjectDoc)) {
@@ -160,14 +165,6 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.resourceLoadingFailed = false;
     this.projectFetchFailed = false;
     this.syncFailed = false;
-  }
-
-  /**
-   * Gets the project/resource with the selected paratext id, creating an SF project for it if needed.
-   */
-  private async fetchProject(paratextId: string): Promise<SFProjectDoc | undefined> {
-    const selectedProjectId: string | undefined = await this.projectService.getOrCreateRealtimeProject(paratextId);
-    return selectedProjectId != null ? this.projectService.get(selectedProjectId) : undefined;
   }
 
   private async syncProject(projectId: string): Promise<void> {

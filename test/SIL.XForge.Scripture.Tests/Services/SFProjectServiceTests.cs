@@ -2837,7 +2837,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
         // SUT
-        string sfProjectId = await env.Service.CreateResourceProjectAsync(User01, "resource_project");
+        string sfProjectId = await env.Service.CreateResourceProjectAsync(User01, "resource_project", addUser: false);
         Assert.That(env.ContainsProject(sfProjectId), Is.True);
         Assert.That(
             env.RealtimeService.GetRepository<SFProject>().Query().Count(),
@@ -2854,13 +2854,70 @@ public class SFProjectServiceTests
         SFProject existingSfProject = env.GetProject(Resource01);
         // SUT
         InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.CreateResourceProjectAsync(User01, existingSfProject.ParatextId)
+            () => env.Service.CreateResourceProjectAsync(User01, existingSfProject.ParatextId, addUser: false)
         );
         Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
         Assert.That(
             env.RealtimeService.GetRepository<SFProject>().Query().Count(),
             Is.EqualTo(projectCount),
             "should not have changed"
+        );
+    }
+
+    [Test]
+    public async Task CreateResourceProjectAsync_AlreadyExists_AddUser()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.Read));
+        SFProject existingSfProject = env.GetProject(Resource01);
+        // SUT
+        Assert.IsFalse(existingSfProject.UserRoles.ContainsKey(User03));
+        string actual = await env.Service.CreateResourceProjectAsync(
+            User03,
+            existingSfProject.ParatextId,
+            addUser: true
+        );
+        Assert.AreEqual(existingSfProject.Id, actual);
+        existingSfProject = env.GetProject(Resource01);
+        Assert.IsTrue(existingSfProject.UserRoles.ContainsKey(User03));
+    }
+
+    [Test]
+    public async Task CreateResourceProjectAsync_AlreadyExists_AddUserAlreadyExists()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.None));
+        SFProject existingSfProject = env.GetProject(Resource01);
+        // SUT
+        Assert.IsTrue(existingSfProject.UserRoles.ContainsKey(User01));
+        string actual = await env.Service.CreateResourceProjectAsync(
+            User01,
+            existingSfProject.ParatextId,
+            addUser: true
+        );
+        Assert.AreEqual(existingSfProject.Id, actual);
+        existingSfProject = env.GetProject(Resource01);
+        Assert.IsTrue(existingSfProject.UserRoles.ContainsKey(User01));
+    }
+
+    [Test]
+    public async Task CreateResourceProjectAsync_NotExisting_AddUser()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.Read));
+        int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+        // SUT
+        string sfProjectId = await env.Service.CreateResourceProjectAsync(User01, "resource_project", addUser: true);
+        Assert.That(env.ContainsProject(sfProjectId), Is.True);
+        SFProject project = env.GetProject(sfProjectId);
+        Assert.That(project.UserRoles.ContainsKey(User01), Is.True);
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+            Is.EqualTo(projectCount + 1),
+            "should have increased"
         );
     }
 

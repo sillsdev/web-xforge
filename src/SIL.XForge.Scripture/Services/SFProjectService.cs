@@ -167,6 +167,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="paratextId">The paratext resource identifier.</param>
+    /// <param name="addUser">
+    /// If <c>true</c>, add the user to the project.
+    /// If the project already exists, no error is returned but the user is added to the project.
+    /// </param>
     /// <returns>SF project id of created project</returns>
     /// <remarks>
     /// This method will also work for a source project that has been deleted for some reason.
@@ -177,7 +181,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// The paratext project does not exist.
     /// </exception>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task<string> CreateResourceProjectAsync(string curUserId, string paratextId)
+    public async Task<string> CreateResourceProjectAsync(string curUserId, string paratextId, bool addUser)
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -191,7 +195,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (ptProject == null)
         {
             // If it is not a project, see if there is a matching resource
-            IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
+            IReadOnlyList<ParatextResource> resources = await _paratextService.GetResourcesAsync(curUserId);
             ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             if (ptProject == null)
             {
@@ -199,7 +203,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        return await CreateResourceProjectInternalAsync(curUserId, ptProject);
+        if (addUser)
+        {
+            // See if the project exists to add the user to it
+            SFProject? project = await RealtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefaultAsync(sfProject => sfProject.ParatextId == ptProject.ParatextId);
+            if (project is not null)
+            {
+                // Add the user, if they are not already on the project
+                if (!project.UserRoles.ContainsKey(curUserId))
+                {
+                    await AddUserAsync(curUserId, project.Id, projectRole: null);
+                }
+
+                return project.Id;
+            }
+        }
+
+        // Create the project, as it does not already exist, and add the user if we should
+        string projectId = await CreateResourceProjectInternalAsync(curUserId, ptProject);
+        if (addUser)
+        {
+            await AddUserAsync(curUserId, projectId, projectRole: null);
+        }
+
+        return projectId;
     }
 
     public async Task DeleteProjectAsync(string curUserId, string projectId)
@@ -1510,7 +1539,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         else
         {
-            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId);
+            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId, addUser: false);
             projectCreated = true;
         }
 

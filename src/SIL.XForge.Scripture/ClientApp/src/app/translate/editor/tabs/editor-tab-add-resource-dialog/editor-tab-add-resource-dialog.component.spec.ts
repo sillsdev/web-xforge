@@ -89,11 +89,11 @@ describe('EditorTabAddResourceDialogComponent', () => {
   });
 
   describe('confirmSelection', () => {
-    it('should call fetchProject when confirmSelection is called', fakeAsync(() => {
+    it('should call get or create the project when confirmSelection is called', fakeAsync(() => {
       const env = new TestEnvironment();
       env.component.confirmSelection();
       tick();
-      verify(mockSFProjectService.getOrCreateRealtimeProject(env.paratextId)).once();
+      verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
     }));
 
     it('should call syncProject and not close dialog if fetched project has no texts when confirmSelection is called', fakeAsync(() => {
@@ -128,10 +128,10 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
     it('should set projectFetchFailed to true when fetchProject returns undefined', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockSFProjectService.getOrCreateRealtimeProject(env.paratextId)).thenReturn(Promise.resolve(undefined));
+      when(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).thenReturn(Promise.resolve(undefined));
       env.component.confirmSelection();
       tick();
-      verify(mockSFProjectService.getOrCreateRealtimeProject(env.paratextId)).once();
+      verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
       expect(env.component.projectFetchFailed).toBe(true);
     }));
 
@@ -218,7 +218,7 @@ class TestEnvironment {
 
     when(mockParatextService.getProjects()).thenReturn(Promise.resolve(this.projects));
     when(mockParatextService.getResources()).thenReturn(Promise.resolve(this.resources));
-    when(mockSFProjectService.getOrCreateRealtimeProject(this.paratextId)).thenCall(() =>
+    when(mockSFProjectService.onlineCreateResourceProject(this.paratextId)).thenCall(() =>
       Promise.resolve(this.testProjectDoc.id)
     );
     when(mockSFProjectService.get(this.projectId)).thenCall(() => Promise.resolve(this.testProjectDoc));

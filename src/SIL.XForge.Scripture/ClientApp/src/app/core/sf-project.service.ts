@@ -52,44 +52,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /**
-   * Creates an SF project/resource with the given paratext id.
+   * Creates an SF project/resource with the given paratext id, and adds the user to it.
    * @param paratextId The paratext id of the project or resource.
    * @returns The SF project id.
    */
   async onlineCreateResourceProject(paratextId: string): Promise<string | undefined> {
     return this.onlineInvoke<string>('createResourceProject', { paratextId });
-  }
-
-  async getRealtimeProject(paratextId: string): Promise<SFProjectDoc | undefined> {
-    const query: RealtimeQuery<SFProjectDoc> = await this.realtimeService.onlineQuery<SFProjectDoc>(this.collection, {
-      paratextId
-    });
-    return query.docs[0];
-  }
-
-  /**
-   * Gets the SF project Id for the project/resource with the given paratext id.  Creates the project if needed.
-   * @param paratextId The paratext id of the project or resource.
-   * @returns The SF project id.
-   */
-  async getOrCreateRealtimeProject(paratextId: string, role?: string): Promise<string | undefined> {
-    // First check if project exists
-    const project: SFProjectDoc | undefined = await this.getRealtimeProject(paratextId);
-
-    // If SF project exists, return its id
-    if (project != null) {
-      return Promise.resolve(project.id);
-    }
-
-    // Otherwise, create realtime project
-    const projectId: string | undefined = await this.onlineCreateResourceProject(paratextId);
-
-    // Add current user to project
-    if (projectId != null) {
-      await this.onlineAddCurrentUser(projectId, role);
-    }
-
-    return projectId;
   }
 
   /**

@@ -43,7 +43,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     protected IFileSystemService FileSystemService { get; }
     protected abstract string ProjectAdminRole { get; }
 
-    public async Task AddUserAsync(string curUserId, string projectId, string projectRole)
+    public async Task AddUserAsync(string curUserId, string projectId, string? projectRole)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
@@ -57,7 +57,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
                 throw new ForbiddenException();
         }
 
-        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole!);
     }
 
     /// <summary>
