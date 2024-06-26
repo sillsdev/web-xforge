@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isEqual } from 'lodash-es';
-import { BehaviorSubject, distinctUntilChanged, map, Observable } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, filter, map, Observable, Subject, takeUntil } from 'rxjs';
 import { moveItemInReadonlyArray, transferItemAcrossReadonlyArrays } from 'xforge-common/util/array-util';
 import { TabLocation } from '../sf-tabs.types';
 import { TabGroup } from './tab-group';
@@ -27,30 +28,27 @@ export interface TabInfo<TType extends string> {
 @Injectable()
 export class TabStateService<TGroupId extends string, T extends TabInfo<string>> {
   protected readonly groups = new Map<TGroupId, TabGroup<TGroupId, T>>();
-  protected tabGroupsSource$ = new BehaviorSubject<Map<TGroupId, TabGroup<TGroupId, T>>>(this.groups);
 
-  tabGroups$: Observable<Map<TGroupId, TabGroup<TGroupId, T>>> = this.tabGroupsSource$.asObservable();
+  protected tabGroupsSource$ = new BehaviorSubject<Map<TGroupId, TabGroup<TGroupId, T>>>(this.groups);
+  protected tabsConsolidatedSource$ = new Subject<boolean>();
+
+  protected lastConsolidationGroupId?: TGroupId;
+  protected tabsToDeconsolidate?: Map<TGroupId, readonly T[]>;
+
+  tabGroups$: Observable<Map<TGroupId, TabGroup<TGroupId, T>>> = this.tabGroupsSource$.pipe(
+    distinctUntilChanged(isEqual)
+  );
 
   tabs$: Observable<FlatTabInfo<TGroupId, T>[]> = this.tabGroupsSource$.pipe(
-    map(tabGroups => {
-      const tabs: FlatTabInfo<TGroupId, T>[] = [];
-      tabGroups.forEach(group => {
-        group.tabs.forEach((tab, index) => {
-          tabs.push({
-            ...tab,
-            groupId: group.groupId,
-            isSelected: group.selectedIndex === index
-          });
-        });
-      });
-      return tabs;
-    }),
+    map(this.flattenTabGroups),
     distinctUntilChanged(isEqual)
   );
 
   groupIds$: Observable<TGroupId[]> = this.tabGroupsSource$.pipe(map(groups => Array.from(groups.keys())));
 
-  constructor() {}
+  tabsConsolidated$ = this.tabsConsolidatedSource$.asObservable();
+
+  constructor(private readonly destroyRef: DestroyRef) {}
 
   setTabGroups(tabGroups: TabGroup<TGroupId, T>[]): void {
     this.groups.clear();
@@ -187,5 +185,145 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
         }
       }
     }
+  }
+
+  /**
+   * Consolidates tabs from all tab groups into the specified group and stores the moved tabs for later restoration.
+   * The cache is lost when TabStateService is destroyed (i.e. on navigation or refresh).
+   */
+  consolidateTabGroups(into: TGroupId): void {
+    // First deconsolidate any existing consolidated tabs
+    this.deconsolidateTabGroups();
+
+    const consolidatedTabs: T[] = [];
+    const intoGroup: TabGroup<TGroupId, T> | undefined = this.groups.get(into);
+
+    if (intoGroup == null) {
+      return;
+    }
+
+    this.lastConsolidationGroupId = into;
+
+    if (this.tabsToDeconsolidate == null) {
+      this.tabsToDeconsolidate = new Map();
+    }
+
+    this.groups.forEach(group => {
+      if (group.groupId === into) {
+        // Adjust selected index for consolidated group
+        group.selectedIndex += consolidatedTabs.length;
+      } else {
+        // Store moved tabs for later restoration
+        this.tabsToDeconsolidate!.set(group.groupId, group.tabs);
+        group.selectedIndex = 0;
+
+        // Update consolidated tabs when tabs are added to other groups
+        group.tabsAdded$
+          .pipe(
+            takeUntil(this.tabsConsolidated$.pipe(filter(consolidated => !consolidated))),
+            takeUntilDestroyed(this.destroyRef)
+          )
+          .subscribe(({ tabs }) => {
+            const deconsolidationGroupTabs: readonly T[] = this.tabsToDeconsolidate!.get(group.groupId)!;
+            const lastTab: T = deconsolidationGroupTabs[deconsolidationGroupTabs.length - 1];
+            const updatedConsolidatedTabs: T[] = [...intoGroup.tabs];
+            const insertAt: number = intoGroup.tabs.indexOf(lastTab) + 1;
+
+            // Insert new tabs after the last tab from the group that added the tabs
+            updatedConsolidatedTabs.splice(insertAt, 0, ...tabs);
+            intoGroup.setTabs(updatedConsolidatedTabs);
+
+            // Add new tabs to the deconsolidation group
+            this.tabsToDeconsolidate!.set(group.groupId, [...deconsolidationGroupTabs, ...tabs]);
+
+            // Remove added tabs from this group
+            group.setTabs(group.tabs.filter(t => !tabs.includes(t)));
+
+            // Update selected index if necessary
+            if (intoGroup.selectedIndex >= insertAt) {
+              intoGroup.selectedIndex += tabs.length;
+            }
+
+            this.tabGroupsSource$.next(this.groups);
+          });
+      }
+
+      consolidatedTabs.push(...group.tabs);
+
+      // Clear tabs from all groups except 'into' group
+      group.setTabs(group.groupId === into ? consolidatedTabs : []);
+    });
+
+    // Remove tab from restore list if tab is removed from consolidated group
+    intoGroup.tabRemoved$
+      .pipe(
+        takeUntil(this.tabsConsolidated$.pipe(filter(consolidated => !consolidated))),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(({ tab }) => {
+        if (this.tabsToDeconsolidate == null) {
+          return;
+        }
+
+        for (const [groupId, tabs] of this.tabsToDeconsolidate) {
+          if (tabs.includes(tab)) {
+            this.tabsToDeconsolidate.set(
+              groupId,
+              tabs.filter(t => t !== tab)
+            );
+            return;
+          }
+        }
+      });
+
+    this.tabsConsolidatedSource$.next(true);
+    this.tabGroupsSource$.next(this.groups);
+  }
+
+  /**
+   * Restores tabs moved from last consolidation into their original groups.
+   */
+  deconsolidateTabGroups(): void {
+    if (this.tabsToDeconsolidate == null || this.lastConsolidationGroupId == null) {
+      return;
+    }
+
+    const groupFrom: TabGroup<TGroupId, T> | undefined = this.groups.get(this.lastConsolidationGroupId);
+
+    this.tabsToDeconsolidate.forEach((tabsToMove, groupId) => {
+      const groupToRestore: TabGroup<TGroupId, T> = this.groups.get(groupId)!;
+
+      // Restore tabs from consolidated group
+      groupToRestore.setTabs(tabsToMove);
+
+      // Remove restored tabs from consolidated group
+      groupFrom?.tabs.forEach(tab => {
+        if (tabsToMove.includes(tab)) {
+          groupFrom.removeTab(groupFrom.tabs.indexOf(tab));
+        }
+      });
+    });
+
+    this.tabsToDeconsolidate = undefined;
+    this.lastConsolidationGroupId = undefined;
+
+    this.tabsConsolidatedSource$.next(false);
+    this.tabGroupsSource$.next(this.groups);
+  }
+
+  private flattenTabGroups(tabGroups: Map<TGroupId, TabGroup<TGroupId, T>>): FlatTabInfo<TGroupId, T>[] {
+    const tabs: FlatTabInfo<TGroupId, T>[] = [];
+
+    tabGroups.forEach(group => {
+      group.tabs.forEach((tab, index) => {
+        tabs.push({
+          ...tab,
+          groupId: group.groupId,
+          isSelected: group.selectedIndex === index
+        });
+      });
+    });
+
+    return tabs;
   }
 }
