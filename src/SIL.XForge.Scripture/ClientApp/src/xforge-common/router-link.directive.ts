@@ -5,7 +5,17 @@ import { WINDOW } from './browser-globals';
 @Directive({
   selector: '[appRouterLink]'
 })
-export class RouterDirective {
+export class RouterLinkDirective {
+  @Input() set appRouterLink(value: string | string[]) {
+    this._route = Array.isArray(value) ? value : [value];
+    if (this.isLink) {
+      (this.element.nativeElement as HTMLElement).setAttribute('href', this.url);
+    }
+  }
+
+  /** Holds NavigationBehaviorOptions state. Write with `[state]="{ foo: 'baz' }"` */
+  @Input() state?: { [key: string]: any };
+
   private _route!: string[];
 
   constructor(
@@ -14,13 +24,6 @@ export class RouterDirective {
     private currentRoute: ActivatedRoute,
     @Inject(WINDOW) private window: Window
   ) {}
-
-  @Input() set appRouterLink(value: string | string[]) {
-    this._route = Array.isArray(value) ? value : [value];
-    if (this.isLink) {
-      (this.element.nativeElement as HTMLElement).setAttribute('href', this.url);
-    }
-  }
 
   get route(): string[] {
     return this._route;
@@ -58,8 +61,11 @@ export class RouterDirective {
   }
 
   private get routerOptions(): NavigationExtras {
+    let routerNavigationExtras: NavigationExtras = {};
     const isRelativeRoute = this.route[0][0] !== '/';
-    return { relativeTo: isRelativeRoute ? this.currentRoute : null };
+    routerNavigationExtras.relativeTo = isRelativeRoute ? this.currentRoute : null;
+    routerNavigationExtras.state = this.state;
+    return routerNavigationExtras;
   }
 
   private get isLink(): boolean {

@@ -1,0 +1,103 @@
+@use 'src/_variables' as variables;
+
+button {
+  .text-padding {
+    padding: 0 0.5em;
+  }
+}
+
+.wrapper {
+  max-width: 50em;
+  margin: 0 auto 2em;
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
+}
+
+.pt-content {
+  display: flex;
+  flex-direction: column;
+  row-gap: 1em;
+}
+
+mat-card {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  column-gap: 1em;
+  align-items: center;
+  padding: 1em;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+    // Keep project name text within boundary, to not push action button to the right.
+    overflow: hidden;
+  }
+
+  > a {
+    // Keep the button wide enough when project name is long.
+    flex-shrink: 0;
+  }
+}
+
+.project-description {
+  color: variables.$lighterTextColor;
+}
+
+.project-name {
+  font-size: 1.25em;
+  display: flex;
+  gap: 8px;
+}
+
+.active-project {
+  background-color: #e2efdc;
+}
+
+.loading-card {
+  animation: loading-card-animation 1s ease-in-out 0s infinite alternate;
+}
+
+.loading-project-name {
+  height: 1.25em;
+  width: 15em;
+  max-width: 80%;
+  background-color: variables.$greyLight;
+}
+
+.loading-project-description {
+  height: 1em;
+  width: 10em;
+  max-width: 65%;
+  background-color: variables.$greyLight;
+}
+
+.loading-action {
+  height: 36px;
+  width: 102px;
+  background-color: variables.$greyLight;
+}
+
+@keyframes loading-card-animation {
+  0% {
+    opacity: 50%;
+  }
+  100% {
+    opacity: 100%;
+  }
+}
+
+#message-looking-for-another-project {
+  box-shadow: none;
+
+  p {
+    font-size: initial;
+  }
+}
+
+.cannot-connect {
+  opacity: 0.5;
+  background-color: #eee;
+}

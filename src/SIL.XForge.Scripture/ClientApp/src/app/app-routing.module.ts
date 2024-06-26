@@ -12,11 +12,11 @@ import { ServalProjectComponent } from './serval-administration/serval-project.c
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
-import { StartComponent } from './start/start.component';
+import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { SyncComponent } from './sync/sync.component';
 
 const routes: Routes = [
-  { path: 'callback/auth0', component: StartComponent, canActivate: [AuthGuard] },
+  { path: 'callback/auth0', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
   { path: 'join/:shareKey', component: JoinComponent },
@@ -24,7 +24,7 @@ const routes: Routes = [
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
-  { path: 'projects', component: StartComponent, canActivate: [AuthGuard] },
+  { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'serval-administration', component: ServalAdministrationComponent, canActivate: [ServalAdminAuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
