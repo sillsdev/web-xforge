@@ -27,11 +27,6 @@ const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 describe('PermissionsService', () => {
-  afterEach(() => {
-    // suppress no expectations warning
-    expect(true).toBe(true);
-  });
-
   configureTestingModule(() => ({
     imports: [
       RouterModule.forRoot([]),
