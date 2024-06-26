@@ -1,5 +1,10 @@
+import { Subject } from 'rxjs';
+
 export class TabGroup<TKey, T> {
   selectedIndex: number = 0;
+
+  tabsAdded$ = new Subject<{ tabs: T[] }>();
+  tabRemoved$ = new Subject<{ index: number; tab: T }>();
 
   constructor(readonly groupId: TKey, public tabs: ReadonlyArray<T> = []) {}
 
@@ -9,6 +14,7 @@ export class TabGroup<TKey, T> {
 
   addTabs(tabs: Iterable<T>): void {
     this.tabs = [...this.tabs, ...tabs];
+    this.tabsAdded$.next({ tabs: [...tabs] });
   }
 
   addTab(tab: T, selectTab: boolean = true): void {
@@ -17,10 +23,17 @@ export class TabGroup<TKey, T> {
     if (selectTab) {
       this.selectedIndex = this.tabs.length - 1;
     }
+
+    this.tabsAdded$.next({ tabs: [tab] });
   }
 
   removeTab(index: number): void {
+    const tab = this.tabs[index];
     this.tabs = this.tabs.filter((_, i) => i !== index);
+
+    if (tab != null) {
+      this.tabRemoved$.next({ index, tab });
+    }
 
     // Select preceding tab if removed tab is or is before before the currently selected tab
     if (index <= this.selectedIndex) {

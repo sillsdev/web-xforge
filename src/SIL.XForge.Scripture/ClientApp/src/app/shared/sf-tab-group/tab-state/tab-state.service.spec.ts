@@ -239,5 +239,85 @@ describe('TabStateService', () => {
         expect(service['groups'].get(toGroupId)!.selectedIndex).toBe(1);
       });
     });
+
+    describe('tab consolidation', () => {
+      let sourceTabs: TabInfo<string>[];
+      let targetTabs: TabInfo<string>[];
+
+      beforeEach(() => {
+        sourceTabs = [
+          { type: 'type-a', headerText: 'Source Header 1', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Source Header 2', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Source Header 3', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Source Header 4', closeable: true, movable: true }
+        ];
+
+        targetTabs = [
+          { type: 'type-a', headerText: 'Target Header 1', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Target Header 2', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Target Header 3', closeable: true, movable: true },
+          { type: 'type-b', headerText: 'Target Header 4', closeable: true, movable: true }
+        ];
+
+        service['groups'].set('source', new TabGroup<string, any>('source', sourceTabs));
+        service['groups'].set('target', new TabGroup<string, any>('target', targetTabs));
+      });
+
+      it('should consolidate tab groups', () => {
+        const targetGroupSelectedIndex = 1;
+        service['groups'].get('target')!.selectedIndex = targetGroupSelectedIndex;
+
+        expect(service['lastConsolidationGroupId']).toBeUndefined();
+        expect(service['tabsToDeconsolidate']).toBeUndefined();
+
+        service.consolidateTabGroups('target');
+
+        expect(service['groups'].get('source')?.tabs).toEqual([]);
+        expect(service['groups'].get('target')?.tabs).toEqual(sourceTabs.concat(targetTabs));
+        expect(service['groups'].get('target')?.selectedIndex).toBe(sourceTabs.length + targetGroupSelectedIndex);
+        expect(service['lastConsolidationGroupId']).toBe('target');
+        expect(service['tabsToDeconsolidate']?.size).toBe(1);
+        expect(service['tabsToDeconsolidate']?.get('source')).toEqual(sourceTabs);
+      });
+
+      it('should remove tab from restore list if tab is removed from consolidated group', () => {
+        service.consolidateTabGroups('target');
+        expect(service['tabsToDeconsolidate']?.get('source')).toEqual(sourceTabs);
+
+        service['groups'].get('target')?.removeTab(3);
+        expect(service['tabsToDeconsolidate']?.get('source')).toEqual(sourceTabs.slice(0, 3));
+      });
+
+      it('should add tab to restore list and consolidated group when tabs are added after consolidation and before deconsolidation', () => {
+        const tabsToAdd = [
+          { type: 'type-c', headerText: 'added source Source Header 5', closeable: true, movable: true },
+          { type: 'type-c', headerText: 'added source Source Header 6', closeable: true, movable: true }
+        ];
+
+        service.consolidateTabGroups('target');
+        const selectedIndex = service['groups'].get('target')!.selectedIndex;
+
+        service['groups'].get('source')?.addTabs(tabsToAdd);
+        expect(service['tabsToDeconsolidate']?.get('source')).toEqual(sourceTabs.concat(tabsToAdd));
+        expect(service['groups'].get('source')?.tabs).toEqual([]);
+        expect(service['groups'].get('target')?.tabs).toEqual([...sourceTabs, ...tabsToAdd, ...targetTabs]);
+        expect(service['groups'].get('target')?.selectedIndex).toEqual(selectedIndex + tabsToAdd.length);
+      });
+
+      it('should deconsolidate tab groups', () => {
+        service.consolidateTabGroups('target');
+        expect(service['lastConsolidationGroupId']).toBeDefined();
+        expect(service['tabsToDeconsolidate']).toBeDefined();
+        expect(service['groups'].get('source')?.tabs).toEqual([]);
+        expect(service['groups'].get('target')?.tabs).toEqual(sourceTabs.concat(targetTabs));
+
+        service.deconsolidateTabGroups();
+        expect(service['lastConsolidationGroupId']).toBeUndefined();
+        expect(service['tabsToDeconsolidate']).toBeUndefined();
+        expect(service['groups'].get('source')?.tabs).toEqual(sourceTabs);
+        expect(service['groups'].get('target')?.tabs).toEqual(targetTabs);
+        expect(service['groups'].get('source')?.selectedIndex).toBe(0);
+      });
+    });
   });
 });
