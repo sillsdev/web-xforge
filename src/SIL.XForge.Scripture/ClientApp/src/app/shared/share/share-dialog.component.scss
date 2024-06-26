@@ -48,8 +48,14 @@ div[mat-dialog-actions] {
   }
 }
 
-::ng-deep .share-selection-role.mat-list-base {
-  padding-top: 0;
+.mat-mdc-list-base {
+  padding-block: 0;
+  mat-list-option {
+    --mdc-list-list-item-selected-container-color: rgba(0, 0, 0, 0.12);
+  }
+}
+
+.share-selection-role.mat-mdc-list-base {
   mat-list-option {
     height: auto;
   }
@@ -63,4 +69,5 @@ div[mat-dialog-actions] {
   color: gray;
   font-size: 0.9em !important;
   margin-bottom: 8px !important;
+  white-space: normal;
 }

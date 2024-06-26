@@ -13,7 +13,7 @@
         >
       </div>
       <mat-menu #roleMenu>
-        <mat-selection-list [multiple]="false" class="share-selection-role">
+        <mat-selection-list [multiple]="false" class="share-selection-role" hideSingleSelectionIndicator>
           <mat-list-option *ngFor="let role of availableRoles" [selected]="role === shareRole" (click)="setRole(role)">
             <div class="role-name">{{ i18n.localizeRole(role) }}</div>
             <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
@@ -28,7 +28,7 @@
         <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}">({{ t("change") }})</a>
       </div>
       <mat-menu #langMenu>
-        <mat-selection-list [multiple]="false">
+        <mat-selection-list [multiple]="false" hideSingleSelectionIndicator>
           <mat-list-option
             *ngFor="let locale of i18n.locales"
             [selected]="locale === shareLocaleCode"
@@ -52,7 +52,7 @@
           >
         </div>
         <mat-menu #linkUsageMenu>
-          <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1">
+          <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1" hideSingleSelectionIndicator>
             <mat-list-option
               *ngFor="let option of shareLinkUsageOptions"
               [selected]="option === shareLinkType"
