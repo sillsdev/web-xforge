@@ -1,4 +1,4 @@
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -17,7 +17,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { Breakpoint, MediaBreakpointService } from '../../../xforge-common/media-breakpoints/media-breakpoint.service';
+import { MediaBreakpointService } from '../../../xforge-common/media-breakpoints/media-breakpoint.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -44,8 +44,6 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextInfo[] = [];
   projectId?: string;
-
-  isScreenSmall = false;
 
   private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId?: TextsByBookId;
@@ -254,14 +252,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           }
         });
     });
-
-    // Allows hiding the prev/next chapter buttons for small screens
-    this.subscribe(
-      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.SM)),
-      (state: BreakpointState) => {
-        this.isScreenSmall = state.matches;
-      }
-    );
   }
 
   ngOnDestroy(): void {
