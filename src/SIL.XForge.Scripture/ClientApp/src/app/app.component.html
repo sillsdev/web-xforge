@@ -18,11 +18,11 @@
           <mat-icon>menu</mat-icon>
         </button>
         @if (isLoggedIn | async) {
-        <a id="sf-logo-button" mat-icon-button class="logo hide-lt-sm" routerLink="/projects">
+        <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" routerLink="/projects">
           <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
         </a>
         } @else {
-        <a id="sf-logo-button" mat-icon-button class="logo hide-lt-sm" href="/">
+        <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" href="/">
           <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
         </a>
         }
