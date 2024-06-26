@@ -13,7 +13,10 @@ export const SF_PROJECT_PROFILES_COLLECTION = 'sf_projects_profile';
 export const SF_PROJECT_PROFILES_INDEX_PATHS: string[] = [];
 
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
-export const SF_PROJECT_INDEX_PATHS: string[] = [obj<SFProject>().pathStr(q => q.name)];
+export const SF_PROJECT_INDEX_PATHS: string[] = [
+  obj<SFProject>().pathStr(q => q.name),
+  obj<SFProject>().pathStr(q => q.paratextId)
+];
 
 export interface SFProjectProfile extends Project {
   paratextId: string;
