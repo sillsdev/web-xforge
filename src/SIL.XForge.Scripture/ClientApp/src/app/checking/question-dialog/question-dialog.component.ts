@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
@@ -241,8 +241,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       });
     }
     dialogRef.afterClosed().subscribe(result => {
+      control.markAsTouched();
       if (result != null && result !== 'close') {
-        control.markAsTouched();
         control.markAsDirty();
         control.setValue(result.toString());
       }
