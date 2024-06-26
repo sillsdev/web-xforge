@@ -197,7 +197,7 @@ describe('AppComponent', () => {
     expect(env.menuDrawer).not.toBeNull();
     expect(env.component.isExpanded).toBe(false);
 
-    // The opens the drawer.
+    // The user opens the drawer.
     env.click(env.hamburgerMenuButton);
     expect(env.isDrawerVisible).toBe(true);
     expect(env.component.isExpanded).toBe(true);
