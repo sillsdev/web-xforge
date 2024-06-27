@@ -184,6 +184,7 @@ describe('EditorTabAddResourceDialogComponent', () => {
       env.component.confirmSelection();
       tick();
       verify(mockSFProjectService.onlineAddCurrentUser(env.projectId)).never();
+      verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
       verify(mockMatDialogRef.close(anything())).once();
     }));
   });
