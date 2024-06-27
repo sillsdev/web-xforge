@@ -18,6 +18,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { ActivatedProjectService } from '../../xforge-common/activated-project.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
@@ -99,7 +100,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService,
     readonly authService: AuthService,
-    readonly featureFlags: FeatureFlagService
+    readonly featureFlags: FeatureFlagService,
+    private readonly activatedProjectService: ActivatedProjectService
   ) {
     super(noticeService);
     this.loading = true;
@@ -153,7 +155,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get projectId(): string {
-    return this.projectDoc?.id || '';
+    return this.activatedProjectService.projectId ?? '';
   }
 
   get projectParatextId(): string | undefined {
