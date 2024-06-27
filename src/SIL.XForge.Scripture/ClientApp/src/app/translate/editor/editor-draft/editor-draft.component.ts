@@ -5,7 +5,6 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
-  catchError,
   combineLatest,
   distinctUntilChanged,
   EMPTY,
@@ -17,8 +16,7 @@ import {
   Subject,
   switchMap,
   tap,
-  throttleTime,
-  throwError
+  throttleTime
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -31,7 +29,6 @@ import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
-import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
 
@@ -116,14 +113,22 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             distinctUntilChanged()
           );
         }),
-        switchMap(() => combineLatest([this.getTargetOps(), this.getDraft({ isDraftLegacy: false })])),
-        map(([targetOps, draft]) => ({
-          targetOps,
-          // Convert legacy draft to draft ops
-          draftOps: this.isDraftSegmentMap(draft)
-            ? this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true })
-            : draft
-        }))
+        switchMap(() =>
+          combineLatest([
+            this.getTargetOps(),
+            this.draftViewerService.getDraft(this.textDocId!, { isDraftLegacy: false })
+          ])
+        ),
+        map(([targetOps, draft]) => {
+          if (this.draftViewerService.isDraftSegmentMap(draft)) {
+            this.draftCheckState = 'draft-legacy';
+          }
+          return {
+            targetOps,
+            // Convert legacy draft to draft ops
+            draftOps: this.draftViewerService.draftDataToOps(draft, targetOps)
+          };
+        })
       )
       .subscribe(({ targetOps, draftOps }) => {
         this.draftDelta = new Delta(draftOps);
@@ -154,27 +159,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftExists(): Observable<boolean> {
     // This method of checking for draft may be temporary until there is a better way supplied by serval
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
-  }
-
-  private getDraft({ isDraftLegacy }: { isDraftLegacy: boolean }): Observable<DeltaOperation[] | DraftSegmentMap> {
-    return isDraftLegacy
-      ? // Fetch legacy draft
-        this.draftGenerationService.getGeneratedDraft(this.projectId!, this.bookNum!, this.chapter!).pipe()
-      : // Fetch draft in USFM format (fallback to legacy)
-        this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(this.projectId!, this.bookNum!, this.chapter!)
-          .pipe(
-            catchError(err => {
-              // If the corpus does not support USFM
-              if (err.status === 405) {
-                // Prompt the user to run a new build to use the new features
-                this.draftCheckState = 'draft-legacy';
-                return this.getDraft({ isDraftLegacy: true });
-              }
-
-              return throwError(() => err);
-            })
-          );
   }
 
   async applyDraft(): Promise<void> {
@@ -232,9 +216,5 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         )
       )
     );
-  }
-
-  private isDraftSegmentMap(draft: DeltaOperation[] | DraftSegmentMap): draft is DraftSegmentMap {
-    return !Array.isArray(draft);
   }
 }
