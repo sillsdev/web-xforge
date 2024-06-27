@@ -36,11 +36,6 @@
     .mat-mdc-menu-item {
       min-height: auto;
     }
-
-    // Make ripple more visible (otherwise it uses the light green from button hover text color)
-    .mat-ripple-element {
-      background-color: #000;
-    }
   }
 }
 
