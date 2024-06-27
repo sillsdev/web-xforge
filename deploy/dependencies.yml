@@ -11,7 +11,7 @@
       - "vars/os_defaults.yml"
   vars:
     node_version: 18.20.2
-    mongodb_version: 5.0
+    mongodb_version: 6.0
     repo_path: "{{playbook_dir}}/.."
   pre_tasks:
     - name: "Add .NET Core | add key"
