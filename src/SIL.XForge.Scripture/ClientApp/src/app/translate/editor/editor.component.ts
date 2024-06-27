@@ -57,6 +57,7 @@ import {
   asyncScheduler,
   BehaviorSubject,
   combineLatest,
+  firstValueFrom,
   fromEvent,
   merge,
   Observable,
@@ -105,6 +106,7 @@ import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { BuildDto } from '../../machine-api/build-dto';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
@@ -125,6 +127,7 @@ import {
   verseRefFromMouseEvent,
   XmlUtils
 } from '../../shared/utils';
+import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -262,6 +265,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabFactory: EditorTabFactoryService,
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly destroyRef: DestroyRef
   ) {
     super(noticeService);
@@ -1138,11 +1142,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  setHistoryTabRevisionLabel(tab: EditorTabInfo, revision: Revision | undefined): void {
-    tab.headerText =
-      revision != null
-        ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`
-        : `${this.targetLabel} - History`;
+  onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): void {
+    if (revision != null) {
+      tab.headerText = `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`;
+      tab.tooltip = `${this.projectDoc?.data?.name} - ${this.editorHistoryService.formatTimestamp(revision.key, true)}`;
+    } else {
+      tab.headerText = `${this.targetLabel} - History`;
+      tab.tooltip = `${this.projectDoc?.data?.name} - History`;
+    }
+
+    this.changeDetector.detectChanges();
 
     // TODO: Respond to locale changes
   }
@@ -1330,7 +1339,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
       // Add to 'source' tab group if no draft tab
       if (existingDraftTab == null) {
-        this.tabState.addTab('source', await this.editorTabFactory.createTab('draft'), urlDraftActive);
+        const draftBuild: BuildDto | undefined = await firstValueFrom(
+          this.draftGenerationService.getLastCompletedBuild(this.projectId!)
+        );
+
+        this.tabState.addTab(
+          'source',
+          await this.editorTabFactory.createTab('draft', {
+            tooltip: `Draft - ${this.editorHistoryService.formatTimestamp(
+              draftBuild?.additionalInfo?.dateFinished,
+              true
+            )}`
+          }),
+          urlDraftActive
+        );
       }
 
       if (urlDraftActive) {

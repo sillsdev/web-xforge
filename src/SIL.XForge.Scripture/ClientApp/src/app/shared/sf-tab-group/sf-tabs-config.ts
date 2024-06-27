@@ -5,5 +5,5 @@ export interface SFTabsConfig {
 }
 
 export const SF_TABS_CONFIG = new InjectionToken<SFTabsConfig>('SF_TABS_CONFIG', {
-  factory: () => ({ tooltipShowDelay: 700 })
+  factory: () => ({ tooltipShowDelay: 500 })
 });

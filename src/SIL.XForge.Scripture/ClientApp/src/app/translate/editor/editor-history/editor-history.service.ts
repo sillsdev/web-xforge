@@ -10,7 +10,7 @@ const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
 export class EditorHistoryService {
   constructor(private readonly i18n: I18nService) {}
 
-  formatTimestamp(timestamp: string | null | undefined): string {
+  formatTimestamp(timestamp: string | null | undefined, forceLong: boolean = false): string {
     if (timestamp != null) {
       const date = new Date(timestamp);
       const now = new Date();
@@ -19,13 +19,13 @@ export class EditorHistoryService {
       let options: Intl.DateTimeFormatOptions;
 
       // If the date is within the last 26 weeks (6 months) show month and day like 'Jan 5'
-      if (date > weeksAgo26) {
+      if (!forceLong && date > weeksAgo26) {
         options = {
           month: 'short',
           day: 'numeric'
         };
       } else {
-        // If the date is more than 26 weeks ago show month, day, and year (mm/dd/yy)
+        // If the date is more than 26 weeks ago, or long date is forced, show month, day, and year (mm/dd/yy)
         options = {
           dateStyle: 'short'
         };
