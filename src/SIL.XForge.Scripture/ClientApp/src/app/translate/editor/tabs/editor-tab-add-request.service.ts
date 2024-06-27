@@ -77,7 +77,8 @@ export class EditorTabAddRequestService implements TabAddRequestService<EditorTa
         map((projectDoc: SFProjectDoc) => {
           return {
             projectId: projectDoc.id,
-            headerText: projectDoc.data?.shortName
+            headerText: projectDoc.data?.shortName,
+            tooltip: projectDoc.data?.name
           };
         })
       );
