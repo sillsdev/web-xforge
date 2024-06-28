@@ -14,6 +14,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
@@ -130,8 +131,10 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   }
 
   private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {
+    if (projectDoc.data == null) return false;
+    if (ParatextService.isResource(projectDoc.data.paratextId)) return false;
     // The user must be a Paratext user. No specific edit permission for the chapter is required.
-    return isParatextRole(projectDoc.data?.userRoles[this.userService.currentUserId]);
+    return isParatextRole(projectDoc.data.userRoles[this.userService.currentUserId]);
   }
 
   private canShowResource(projectDoc: SFProjectProfileDoc): boolean {

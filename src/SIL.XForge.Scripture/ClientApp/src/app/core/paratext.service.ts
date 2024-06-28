@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -31,6 +31,15 @@ export interface SelectableProject {
   providedIn: 'root'
 })
 export class ParatextService {
+  /**
+   * Determines if a Paratext id refers to a resource.
+   * @param paratextId The Paratext identifier.
+   * @returns True if the Paratext identifier is a resource identifier.
+   */
+  static isResource(paratextId: string): boolean {
+    return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
+  }
+
   constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
 
   linkParatext(returnUrl: string): void {
@@ -44,37 +53,36 @@ export class ParatextService {
   }
 
   getProjects(): Promise<ParatextProject[] | undefined> {
-    return this.http
-      .get<ParatextProject[] | undefined>(`${PARATEXT_API_NAMESPACE}/projects`, { headers: this.headers })
-      .toPromise();
+    return firstValueFrom(
+      this.http.get<ParatextProject[] | undefined>(`${PARATEXT_API_NAMESPACE}/projects`, { headers: this.headers })
+    );
   }
 
   getResources(): Promise<SelectableProject[] | undefined> {
-    return this.http
-      .get<{ [id: string]: [shortName: string, name: string] }>(`${PARATEXT_API_NAMESPACE}/resources`, {
+    return firstValueFrom(
+      this.http.get<{ [id: string]: [shortName: string, name: string] }>(`${PARATEXT_API_NAMESPACE}/resources`, {
         headers: this.headers
       })
-      .toPromise()
-      .then(result =>
-        result == null
-          ? undefined
-          : Object.entries(result).map(([paratextId, [shortName, projectName]]) => ({
-              paratextId,
-              shortName,
-              name: projectName
-            }))
-      );
+    ).then(result =>
+      result == null
+        ? undefined
+        : Object.entries(result).map(([paratextId, [shortName, projectName]]) => ({
+            paratextId,
+            shortName,
+            name: projectName
+          }))
+    );
   }
 
   async getRevisions(projectId: string, book: string, chapter: number): Promise<Revision[] | undefined> {
-    return await this.http
-      .get<Revision[] | undefined>(
+    return await firstValueFrom(
+      this.http.get<Revision[] | undefined>(
         `${PARATEXT_API_NAMESPACE}/history/revisions/${projectId}_${book}_${chapter}_target`,
         {
           headers: this.headers
         }
       )
-      .toPromise();
+    );
   }
 
   async getSnapshot(
@@ -83,14 +91,14 @@ export class ParatextService {
     chapter: number,
     timestamp: string
   ): Promise<Snapshot<TextData> | undefined> {
-    return await this.http
-      .get<Snapshot<TextData>>(
+    return await firstValueFrom(
+      this.http.get<Snapshot<TextData>>(
         `${PARATEXT_API_NAMESPACE}/history/snapshot/${projectId}_${book}_${chapter}_target?timestamp=${timestamp}`,
         {
           headers: this.headers
         }
       )
-      .toPromise();
+    );
   }
 
   private get headers(): HttpHeaders {
@@ -98,14 +106,5 @@ export class ParatextService {
       Accept: 'application/json',
       'Content-Type': 'application/json'
     });
-  }
-
-  /**
-   * Determines if a Paratext id refers to a resource.
-   * @param paratextId The Paratext identifier.
-   * @returns True if the Paratext identifier is a resource identifier.
-   */
-  isResource(paratextId: string): boolean {
-    return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
   }
 }

@@ -42,7 +42,6 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly paratextService: ParatextService,
     private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
@@ -76,7 +75,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the source
           if (
             project.translateConfig.source != null &&
-            !this.paratextService.isResource(project.translateConfig.source.paratextId)
+            !ParatextService.isResource(project.translateConfig.source.paratextId)
           ) {
             rows.push({
               id: project.translateConfig.source.projectRef,
@@ -89,7 +88,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the alternate source
           if (
             project.translateConfig.draftConfig.alternateSource != null &&
-            !this.paratextService.isResource(project.translateConfig.draftConfig.alternateSource.paratextId)
+            !ParatextService.isResource(project.translateConfig.draftConfig.alternateSource.paratextId)
           ) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateSource.projectRef,
@@ -105,7 +104,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the alternate training source
           if (
             project.translateConfig.draftConfig.alternateTrainingSource != null &&
-            !this.paratextService.isResource(project.translateConfig.draftConfig.alternateTrainingSource.paratextId)
+            !ParatextService.isResource(project.translateConfig.draftConfig.alternateTrainingSource.paratextId)
           ) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateTrainingSource.projectRef,
