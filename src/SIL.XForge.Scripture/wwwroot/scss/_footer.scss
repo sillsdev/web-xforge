@@ -93,7 +93,7 @@ footer {
     }
 
     a:not(:first-child) {
-      margin-inline-start: 82px;
+      margin-inline-start: 40px;
       @include media-breakpoint-down(md) {
         margin-left: 0;
       }

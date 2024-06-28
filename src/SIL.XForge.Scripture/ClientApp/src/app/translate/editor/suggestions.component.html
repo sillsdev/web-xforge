@@ -1,5 +1,12 @@
 <div class="loading-indicator" *ngIf="isLoading"><span></span> <span></span> <span></span></div>
-<mat-selection-list *ngIf="!isLoading" #list dense [multiple]="false" (click)="selectAll($event)">
+<mat-selection-list
+  *ngIf="!isLoading"
+  #list
+  dense
+  [multiple]="false"
+  (click)="selectAll($event)"
+  hideSingleSelectionIndicator
+>
   <ng-container *ngFor="let suggestion of suggestions; let i = index">
     <mat-list-option [selected]="suggestion && i === 0">
       <div class="suggestion">

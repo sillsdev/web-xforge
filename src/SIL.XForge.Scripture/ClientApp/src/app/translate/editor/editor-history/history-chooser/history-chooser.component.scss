@@ -4,11 +4,11 @@
   display: block;
 }
 
-#toolbar {
+.toolbar {
   display: flex;
   overflow: hidden;
 
-  #history-select {
+  .history-select {
     @include material-styles.dense_mat_select();
   }
 

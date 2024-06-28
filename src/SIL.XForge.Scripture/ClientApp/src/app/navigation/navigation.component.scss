@@ -1,14 +1,16 @@
 @use 'src/variables';
 
-mat-nav-list .mat-list-item {
-  height: 48px;
+mat-nav-list .mdc-list-item {
   font-weight: 500;
   font-size: 14px;
+  padding-inline: 12px;
 
   mat-icon {
     color: variables.$purpleMedium;
     fill: variables.$purpleMedium;
     transition: color 0.15s;
+    padding: 4px;
+    box-sizing: content-box;
   }
   &:hover {
     mat-icon {
@@ -17,19 +19,20 @@ mat-nav-list .mat-list-item {
     }
   }
 
-  mat-icon:last-child {
-    margin-left: auto;
-  }
-
-  ::ng-deep .mat-list-item-content {
-    padding-inline: 12px;
+  ::ng-deep .mat-mdc-list-item-unscoped-content {
+    height: 48px;
+    display: flex;
+    align-items: center;
     column-gap: 12px;
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: normal;
   }
 
-  &.navigation-header ::ng-deep .mat-list-item-content {
+  &.navigation-header ::ng-deep .mat-mdc-list-item-unscoped-content {
     font-size: 0.95em;
     color: #777;
-    padding-inline-start: 18px;
+    padding-inline-start: 6px;
   }
 
   &.activated-nav-item,
@@ -47,7 +50,7 @@ mat-nav-list .mat-list-item {
 
 #tools-menu-list,
 #admin-pages-menu-list {
-  padding-top: 0;
+  padding-block: 0;
 }
 
 #tools-menu-list {
@@ -74,24 +77,25 @@ mat-nav-list .mat-list-item {
   top: -7px;
 }
 
-.navigation-header:hover {
-  background-color: initial;
+.navigation-header {
+  --mdc-list-list-item-hover-state-layer-opacity: 0;
   cursor: initial;
 }
 .navigation-header:not(:first-child) {
   margin-top: 2em;
 }
 
-.mat-nav-list.disabled-offline .mat-list-item {
+.mat-mdc-nav-list.disabled-offline ::ng-deep .mat-mdc-list-item-unscoped-content {
   &,
   mat-icon {
-    color: variables.$disabled-text-color;
+    color: variables.$disabled-text-color !important;
   }
 }
 
 .nav-label {
   color: white;
   padding: 2px 6px;
+  line-height: 1rem;
   border-radius: 100px;
   font-size: 0.95em;
   background: #4678d6;

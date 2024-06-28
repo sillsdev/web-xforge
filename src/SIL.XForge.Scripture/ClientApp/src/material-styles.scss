@@ -3,19 +3,7 @@
 @use 'variables' as *;
 @use 'src/app/shared/sf-tab-group/sf-tab-group-theme' as sf-tab-group;
 
-// TODO(v15): As of v15 mat.legacy-core no longer includes default typography styles.
-//  The following line adds:
-//    1. Default typography styles for all components
-//    2. Styles for typography hierarchy classes (e.g. .mat-headline-1)
-//  If you specify typography styles for the components you use elsewhere, you should delete this line.
-//  If you don't need the default component typographies but still want the hierarchy styles,
-//  you can delete this line and instead use:
-//    `@include mat.legacy-typography-hierarchy(mat.define-typography-config());`
-// Remove all-legacy-component-typographies once all legacy components are migrated
-@include mat.all-legacy-component-typographies();
 @include mat.all-component-typographies();
-// Remove legacy-core once all legacy components are migrated
-@include mat.legacy-core();
 @include mat.core();
 
 $mat-sf-purple: (
@@ -139,7 +127,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.form-field-theme($material-theme-accent-error);
 @include mat.icon-theme($material-app-theme);
 @include mat.input-theme($material-app-theme);
-@include mat.legacy-list-theme($material-app-theme);
+@include mat.list-theme($material-app-theme);
 @include mat.menu-theme($material-app-theme);
 @include mat.paginator-theme($material-app-theme);
 @include mat.progress-bar-theme($material-app-theme);
@@ -160,7 +148,6 @@ $material-theme-accent-error: mat.define-light-theme(
 // Other components that appear to not be used at this time
 
 // @include mat.grid-list-theme($material-app-theme);
-// @include mat.slide-toggle-theme($material-app-theme);
 // @include mat.sort-theme($material-app-theme);
 // @include mat.tree-theme($material-app-theme);
 
@@ -175,6 +162,10 @@ html,
 .mat-mdc-menu-item-text {
   letter-spacing: initial;
   --mat-menu-item-label-text-tracking: initial;
+}
+
+mat-list-item {
+  --mdc-list-list-item-label-text-tracking: initial;
 }
 
 .card-outline {

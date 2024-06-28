@@ -111,7 +111,7 @@ describe('I18nService', () => {
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
 
-  it('should interpolate translations', () => {
+  it('should interpolate translations around and within numbered template tags', () => {
     when(mockedTranslocoService.translate<string>('app.settings', anything())).thenReturn(
       'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
     );
@@ -122,6 +122,19 @@ describe('I18nService', () => {
       { text: ' jumps over the lazy ' },
       { text: 'dog', id: 3 },
       { text: '.' }
+    ]);
+  });
+
+  it('should interpolate translations around template variables', () => {
+    when(mockedTranslocoService.getActiveLang()).thenReturn('en');
+    when(mockedTranslocoService.getTranslation('en')).thenReturn({
+      'error.to_report_issue_email': 'Please email {{ email }} for help.'
+    });
+    const service = getI18nService();
+    expect(service.interpolateVariables('error.to_report_issue_email', { email: 'email@example.com' })).toEqual([
+      { text: 'Please email ' },
+      { text: 'email@example.com', id: 'email' },
+      { text: ' for help.' }
     ]);
   });
 

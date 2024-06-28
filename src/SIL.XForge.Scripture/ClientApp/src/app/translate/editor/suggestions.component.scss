@@ -4,7 +4,6 @@
   background-color: #faf9f7;
   position: absolute;
   z-index: 2;
-  font-size: 14px;
   border-radius: 2px;
   overflow: hidden;
 }
@@ -48,11 +47,13 @@ mat-selection-list[dense] {
   }
 }
 
-.mat-list-option ::ng-deep .mat-list-item-content {
+mat-list-option {
   padding: 6px 8px !important;
-  .mat-list-text {
-    padding: 0 !important;
-  }
+  --mdc-list-list-item-selected-container-color: rgba(0, 0, 0, 0.12);
+}
+
+:host ::ng-deep .mdc-list-item__content {
+  overflow: visible;
 }
 
 .suggestion-confidence {
@@ -65,4 +66,9 @@ mat-selection-list[dense] {
   column-gap: 5px;
   align-items: baseline;
   justify-content: space-between;
+
+  font-size: 12px;
+  line-height: 12px;
+  letter-spacing: initial;
+  white-space: normal;
 }

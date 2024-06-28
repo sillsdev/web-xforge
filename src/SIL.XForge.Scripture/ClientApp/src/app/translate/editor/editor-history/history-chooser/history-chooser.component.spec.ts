@@ -204,15 +204,15 @@ describe('HistoryChooserComponent', () => {
     }
 
     get historySelect(): HTMLElement {
-      return this.fixture.nativeElement.querySelector('#history-select') as HTMLElement;
+      return this.fixture.nativeElement.querySelector('.history-select') as HTMLElement;
     }
 
     get revertHistoryButton(): HTMLElement {
-      return this.fixture.nativeElement.querySelector('#revert-history') as HTMLElement;
+      return this.fixture.nativeElement.querySelector('.revert-history') as HTMLElement;
     }
 
     get showDiffButton(): HTMLElement {
-      return this.fixture.nativeElement.querySelector('#show-diff') as HTMLElement;
+      return this.fixture.nativeElement.querySelector('.show-diff') as HTMLElement;
     }
 
     clickRevertHistoryButton(): void {
