@@ -37,4 +37,8 @@ export class ExternalUrlService {
   get csvImportHelpPage(): string {
     return this.helps + '/community-checking#42107c9def434bf396442d0004577710';
   }
+
+  get chapterAudioHelpPage(): string {
+    return this.helps + '/community-checking#fd31ef9b6d74417099996e7dadb5068e';
+  }
 }
