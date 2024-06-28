@@ -71,7 +71,7 @@ public class SFProjectsRpcController(
     {
         try
         {
-            string projectId = await projectService.CreateResourceProjectAsync(UserId, paratextId);
+            string projectId = await projectService.CreateResourceProjectAsync(UserId, paratextId, addUser: true);
             return Ok(projectId);
         }
         catch (ForbiddenException)
