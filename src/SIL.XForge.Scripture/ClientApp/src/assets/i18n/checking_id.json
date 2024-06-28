@@ -217,6 +217,7 @@
     "drag_and_drop_files": "Seret dan letakkan berkas suara dan pengaturan waktu di sini",
     "drag_and_drop_or_browse": "ATAU",
     "from_timing_past_to_timing": "Satu atau lebih nilai akhir berakhir sebelum nilai awalnya.",
+    "help": "Bantuan",
     "no_audio_file_uploaded": "Tidak ada berkas suara yang diunggah",
     "no_timing_data_uploaded": "Tidak ada data waktu yang diunggah",
     "not_upload_audio_offline": "File audio tidak dapat diunggah tanpa terhubung ke internet.",

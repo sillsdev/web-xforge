@@ -217,6 +217,7 @@
     "drag_and_drop_files": "Arrastre y suelte aquí los archivos de audio y sincronización",
     "drag_and_drop_or_browse": "O",
     "from_timing_past_to_timing": "Uno o más valores finales terminan antes que sus valores iniciales.",
+    "help": "Ayuda",
     "no_audio_file_uploaded": "No se ha cargado ningún archivo de audio",
     "no_timing_data_uploaded": "No se han cargado datos de sincronización",
     "not_upload_audio_offline": "Los archivos de audio no pueden cargarse sin conectarse a Internet.",
