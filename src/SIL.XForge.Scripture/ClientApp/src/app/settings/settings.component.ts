@@ -8,6 +8,7 @@ import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/mod
 import { ProjectType, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -99,7 +100,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService,
     readonly authService: AuthService,
-    readonly featureFlags: FeatureFlagService
+    readonly featureFlags: FeatureFlagService,
+    private readonly activatedProjectService: ActivatedProjectService
   ) {
     super(noticeService);
     this.loading = true;
@@ -153,7 +155,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get projectId(): string {
-    return this.projectDoc?.id || '';
+    return this.activatedProjectService.projectId ?? '';
   }
 
   get projectParatextId(): string | undefined {
