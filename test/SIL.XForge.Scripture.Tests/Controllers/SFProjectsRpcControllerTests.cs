@@ -25,6 +25,12 @@ public class SFProjectsRpcControllerTests
     private const string User02 = "user02";
     private static readonly string[] Roles = [SystemRole.User];
 
+    // Constants for Invite
+    const string Email = "test@example.com";
+    const string Role = SFProjectRole.Commenter;
+    const string Locale = "en";
+    private static readonly Uri WebsiteUrl = new Uri("https://scriptureforge.org", UriKind.Absolute);
+
     [Test]
     public async Task DeleteTrainingData_Success()
     {
@@ -87,6 +93,76 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteTrainingData(Project01, User02, Data01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task Invite_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Returns(Task.FromResult(true));
+
+        // SUT
+        var result = await env.Controller.Invite(Project01, Email, Locale, Role);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl);
+    }
+
+    [Test]
+    public async Task Invite_SuccessAlreadyMember()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Returns(Task.FromResult(false));
+
+        // SUT
+        var result = await env.Controller.Invite(Project01, Email, Locale, Role);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(
+            SFProjectsRpcController.AlreadyProjectMemberResponse,
+            (result as RpcMethodSuccessResult)!.ReturnObject
+        );
+        await env.SFProjectService.Received().InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl);
+    }
+
+    [Test]
+    public async Task Invite_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.Invite(Project01, Email, Locale, Role);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task Invite_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.Invite(Project01, Email, Locale, Role);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void Invite_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Invite(Project01, Email, Locale, Role));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -489,6 +565,8 @@ public class SFProjectsRpcControllerTests
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
+            var httpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
+            httpRequestAccessor.SiteRoot.Returns(WebsiteUrl);
             SFProjectService = Substitute.For<ISFProjectService>();
             TrainingDataService = Substitute.For<ITrainingDataService>();
             var userAccessor = Substitute.For<IUserAccessor>();
@@ -497,6 +575,7 @@ public class SFProjectsRpcControllerTests
             Controller = new SFProjectsRpcController(
                 BackgroundJobClient,
                 ExceptionHandler,
+                httpRequestAccessor,
                 SFProjectService,
                 TrainingDataService,
                 userAccessor

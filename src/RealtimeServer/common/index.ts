@@ -82,7 +82,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       options.scope,
       options.authority,
       options.port,
-      options.origin,
+      options.origin.split(';').filter(s => s !== ''),
       exceptionReporter
     );
     streamListener.listen(server);

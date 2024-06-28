@@ -22,6 +22,7 @@ public class SFProjectsUploadController : ControllerBase
 {
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFileSystemService _fileSystemService;
+    private readonly IHttpRequestAccessor _httpRequestAccessor;
     private readonly ISFProjectService _projectService;
     private readonly ITrainingDataService _trainingDataService;
     private readonly IUserAccessor _userAccessor;
@@ -29,12 +30,14 @@ public class SFProjectsUploadController : ControllerBase
     public SFProjectsUploadController(
         IExceptionHandler exceptionHandler,
         IFileSystemService fileSystemService,
+        IHttpRequestAccessor httpRequestAccessor,
         ISFProjectService projectService,
         ITrainingDataService trainingDataService,
         IUserAccessor userAccessor
     )
     {
         _fileSystemService = fileSystemService;
+        _httpRequestAccessor = httpRequestAccessor;
         _projectService = projectService;
         _trainingDataService = trainingDataService;
         _userAccessor = userAccessor;
@@ -65,7 +68,8 @@ public class SFProjectsUploadController : ControllerBase
         {
             // Upload, convert and save the audio file
             (dataId, path, projectId) = await HandleFileUploadAsync();
-            Uri uri = await _projectService.SaveAudioAsync(_userAccessor.UserId, projectId, dataId, path);
+            Uri relativeUri = await _projectService.SaveAudioAsync(_userAccessor.UserId, projectId, dataId, path);
+            Uri uri = new Uri(_httpRequestAccessor.SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
         catch (ForbiddenException)
@@ -125,7 +129,13 @@ public class SFProjectsUploadController : ControllerBase
         {
             // Upload, convert and save the training data file
             (dataId, path, projectId) = await HandleFileUploadAsync();
-            Uri uri = await _trainingDataService.SaveTrainingDataAsync(_userAccessor.UserId, projectId, dataId, path);
+            Uri relativeUri = await _trainingDataService.SaveTrainingDataAsync(
+                _userAccessor.UserId,
+                projectId,
+                dataId,
+                path
+            );
+            Uri uri = new Uri(_httpRequestAccessor.SiteRoot, relativeUri);
             return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
         }
         catch (ForbiddenException)
