@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -117,14 +117,6 @@ describe('ShareControlComponent', () => {
     expect(capture(mockedNoticeService.show).last()[0]).toContain('is already');
   }));
 
-  it('shareLink is for projectId and has specific key', fakeAsync(() => {
-    const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'myProject1' });
-    env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything(), anything())).once();
-    expect(env.component.shareLink).toContain('/join/linkSharing01');
-    flush();
-  }));
-
   it('Does not crash inviting blank email address if click Send twice', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setInvitationLanguage('en');
@@ -189,7 +181,7 @@ describe('ShareControlComponent', () => {
     verify(mockedProjectService.onlineInvite(anything(), anything(), anything(), anything())).once();
   }));
 
-  it('changing user role refreshes the share key', fakeAsync(() => {
+  it('contains the appropriate role options', fakeAsync(() => {
     const env = new TestEnvironment({
       projectId: 'project01',
       userId: 'user02',
@@ -200,13 +192,6 @@ describe('ShareControlComponent', () => {
     expect(roles).toContain(SFProjectRole.CommunityChecker);
     expect(roles).toContain(SFProjectRole.Viewer);
     expect(roles).toContain(SFProjectRole.Commenter);
-    env.component.roleControl.setValue(SFProjectRole.Viewer);
-    env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).twice();
-    env.component.roleControl.setValue(SFProjectRole.Commenter);
-    env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).thrice();
-    expect(env.component.isLinkSharingEnabled).toBe(true);
   }));
 
   it('role should be visible for administrators', fakeAsync(() => {
@@ -233,46 +218,6 @@ describe('ShareControlComponent', () => {
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
     expect(env.hostComponent.component.availableRolesInfo.length).toBe(2);
-  }));
-
-  it('should hide link sharing if checking is unavailable', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-    // Disable checking
-    const checkingConfig: CheckingConfig = {
-      checkingEnabled: false,
-      shareEnabled: true,
-      usersSeeEachOthersResponses: false,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    };
-    env.updateCheckingProperties(checkingConfig);
-    env.wait();
-    expect(env.shareLink).toBeNull();
-    // Enable checking
-    checkingConfig.checkingEnabled = true;
-    env.updateCheckingProperties(checkingConfig);
-    env.wait();
-    expect(env.shareLink).not.toBeNull();
-    // Disable link sharing
-    checkingConfig.checkingEnabled = false;
-    env.updateCheckingProperties(checkingConfig);
-    env.wait();
-    expect(env.shareLink).toBeNull();
-  }));
-
-  it('should show link sharing to admin when link sharing is enabled but sharing is disabled', fakeAsync(() => {
-    const env = new TestEnvironment({ userId: 'user02', checkingEnabled: true, isLinkSharingEnabled: true });
-    env.wait();
-    expect(env.shareLink).not.toBeNull();
-    const checkingConfig: CheckingConfig = {
-      checkingEnabled: true,
-      shareEnabled: false,
-      usersSeeEachOthersResponses: false,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    };
-    env.updateCheckingProperties(checkingConfig);
-    env.wait();
-    expect(env.shareLink).not.toBeNull();
   }));
 
   it('should require setting the email before sending an invite', fakeAsync(() => {
@@ -366,7 +311,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
     when(mockedUserService.currentUserId).thenReturn(args.userId!);
-    when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything(), anything())).thenResolve(
+    when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything(), anything(), anything())).thenResolve(
       args.isLinkSharingEnabled ? 'linkSharing01' : ''
     );
     when(mockedProjectService.generateSharingUrl(anything())).thenCall(
@@ -411,10 +356,6 @@ class TestEnvironment {
 
   get roleField(): DebugElement {
     return this.fetchElement('#invitation-role');
-  }
-
-  get shareLink(): DebugElement {
-    return this.fetchElement('.invite-by-link app-share-button');
   }
 
   set onlineStatus(value: boolean) {

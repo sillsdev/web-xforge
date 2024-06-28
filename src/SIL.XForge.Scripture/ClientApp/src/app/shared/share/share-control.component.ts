@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, 
 import { FormGroupDirective, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -19,7 +19,6 @@ import {
   SF_PROJECT_ROLES
 } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareLinkType } from './share-dialog.component';
 
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
@@ -47,7 +46,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
 
   private _projectId?: string;
-  private linkSharingKey: string = '';
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectDoc?: SFProjectProfileDoc;
 
@@ -88,10 +86,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
 
   get availableRolesInfo(): ProjectRoleInfo[] {
     return SF_PROJECT_ROLES.filter(info => info.canBeShared && this.userShareableRoles.includes(info.role));
-  }
-
-  get shareLink(): string {
-    return this.projectService.generateSharingUrl(this.linkSharingKey);
   }
 
   get shareRole(): SFProjectRole {
@@ -205,13 +199,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
 
   private async updateFormEnabledStateAndLinkSharingKey(): Promise<void> {
     if (this.onlineStatusService.isOnline) {
-      if (this._projectId != null && this.shareRole != null) {
-        this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(
-          this._projectId,
-          this.shareRole,
-          ShareLinkType.Recipient
-        );
-      }
       this.sendInviteForm.enable({ emitEvent: false });
     } else {
       this.sendInviteForm.disable({ emitEvent: false });

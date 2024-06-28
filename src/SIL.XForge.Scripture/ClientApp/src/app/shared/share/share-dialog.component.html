@@ -41,7 +41,7 @@
     </div>
     <ng-container *ngIf="canUserChangeLinkUsage">
       <div class="configuration-option configuration-link-type">
-        <mat-icon>groups</mat-icon>
+        <mat-icon>{{ shareLinkType === "anyone" ? "groups" : "person" }}</mat-icon>
         <div>
           {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
           <a
@@ -63,8 +63,32 @@
           </mat-selection-list>
         </mat-menu>
       </div>
+      <div class="configuration-option">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <transloco key="share_dialog.will_expire_in" [params]="{ count: shareExpiration }"></transloco>
+          <a
+            [matMenuTriggerFor]="expireMenu"
+            *ngIf="linkExpirationOptions.length > 1"
+            title="{{ t('expiration_description') }}"
+          >
+            ({{ t("change") }})
+          </a>
+        </div>
+        <mat-menu #expireMenu>
+          <mat-selection-list [multiple]="false" *ngIf="linkExpirationOptions.length > 1">
+            <mat-list-option
+              *ngFor="let key of linkExpirationOptions"
+              [selected]="ShareExpiration[key] === shareExpiration"
+              (click)="setLinkExpiration(key)"
+            >
+              {{ t(key) }}
+            </mat-list-option>
+          </mat-selection-list>
+        </mat-menu>
+      </div>
       <app-notice *ngIf="isRecipientOnlyLink" icon="info">
-        {{ t("recipient_only_notice") }}
+        {{ t("recipient_only_notice", { shareExpiration: shareExpiration }) }}
       </app-notice>
     </ng-container>
     <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">

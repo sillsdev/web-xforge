@@ -17,11 +17,17 @@ public interface ISFProjectService : IProjectService
     Task<string> SyncAsync(string curUserId, string projectId);
     Task CancelSyncAsync(string curUserId, string projectId);
     Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
-    Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role, string shareLinkType);
+    Task<string> GetLinkSharingKeyAsync(
+        string curUserId,
+        string projectId,
+        string role,
+        string shareLinkType,
+        int daysBeforeExpiration
+    );
     Task<ValidShareKey> CheckShareKeyValidity(string shareKey);
     Task<SFProject> GetProjectAsync(string projectId);
     SFProjectSecret GetProjectSecretByShareKey(string shareKey);
-    Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey);
+    Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey, int daysBeforeExpiration);
     Task IncreaseShareKeyUsersGenerated(string shareKey);
     Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
     Task UninviteUserAsync(string curUserId, string projectId, string email);

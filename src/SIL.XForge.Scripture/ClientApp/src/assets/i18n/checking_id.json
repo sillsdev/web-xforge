@@ -395,9 +395,6 @@
     "invitation_shared_in_language": "Undangan akan dibagikan di",
     "link_can_be_used_by": "Tautan dapat digunakan oleh",
     "link_sharing_not_available_offline": "Mengundang pengguna dengan berbagi tautan tidak tersedia saat luring.",
-    "recipient": "Hanya penerima",
-    "recipient_can": "Hanya penerima yang dapat",
-    "recipient_only_notice": "Setiap tautan hanya dapat digunakan satu kali dan akan kedaluwarsa setelah 14 hari. Klik tombol sekali lagi untuk membuat dan membagikan tautan baru.",
     "share": "Bagikan",
     "share_project": "Bagikan {{ project }}",
     "share_with_others": "Bagikan dengan orang lain"

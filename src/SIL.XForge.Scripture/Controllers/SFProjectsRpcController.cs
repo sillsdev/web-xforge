@@ -406,11 +406,24 @@ public class SFProjectsRpcController(
 
     public IRpcMethodResult IsSourceProject(string projectId) => Ok(projectService.IsSourceProject(projectId));
 
-    public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role, string shareLinkType)
+    public async Task<IRpcMethodResult> LinkSharingKey(
+        string projectId,
+        string role,
+        string shareLinkType,
+        int daysBeforeExpiration
+    )
     {
         try
         {
-            return Ok(await projectService.GetLinkSharingKeyAsync(UserId, projectId, role, shareLinkType));
+            return Ok(
+                await projectService.GetLinkSharingKeyAsync(
+                    UserId,
+                    projectId,
+                    role,
+                    shareLinkType,
+                    daysBeforeExpiration
+                )
+            );
         }
         catch (DataNotFoundException dnfe)
         {
@@ -425,6 +438,7 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "role", role },
                     { "shareLinkType", shareLinkType },
+                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() }
                 }
             );
             throw;
@@ -435,13 +449,13 @@ public class SFProjectsRpcController(
         "New endpoints require the share link type. Old clients would only ever request a recipient link for email"
     )]
     public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role) =>
-        await LinkSharingKey(projectId, role, ShareLinkType.Recipient);
+        await LinkSharingKey(projectId, role, ShareLinkType.Recipient, 14);
 
-    public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey)
+    public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey, int daysBeforeExpiration)
     {
         try
         {
-            await projectService.ReserveLinkSharingKeyAsync(UserId, shareKey);
+            await projectService.ReserveLinkSharingKeyAsync(UserId, shareKey, daysBeforeExpiration);
             return Ok();
         }
         catch (DataNotFoundException dnfe)
@@ -451,7 +465,12 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "ReserveLinkSharingKey" }, { "shareKey", shareKey }, }
+                new Dictionary<string, string>
+                {
+                    { "method", "ReserveLinkSharingKey" },
+                    { "shareKey", shareKey },
+                    { "daysBeforeExpiration", daysBeforeExpiration.ToString() }
+                }
             );
             throw;
         }

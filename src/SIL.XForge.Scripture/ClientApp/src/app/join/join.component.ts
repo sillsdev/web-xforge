@@ -67,7 +67,7 @@ export class JoinComponent extends DataLoadingComponent {
       if (this.authService.currentUserId == null) {
         this.i18nService.setLocale(joining.locale, this.authService);
       }
-      this.checkShareKey(joining.shareKey);
+      this.initialize(joining.shareKey);
     });
     this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateOfflineJoiningStatus());
   }
@@ -147,7 +147,7 @@ export class JoinComponent extends DataLoadingComponent {
     }
   }
 
-  private async checkShareKey(shareKey: string): Promise<void> {
+  private async initialize(shareKey: string): Promise<void> {
     this.loadingStarted();
     const isLoggedIn: boolean = await this.authService.isLoggedIn;
     if (isLoggedIn) {
