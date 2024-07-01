@@ -1238,9 +1238,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         string paratextId = projectDoc.Data.ParatextId;
-        HashSet<int> booksInProject = [.._paratextService.GetBookList(userSecret, paratextId)];
+        HashSet<int> booksInProject = [.. _paratextService.GetBookList(userSecret, paratextId)];
         users ??= await _paratextService.GetParatextUsersAsync(userSecret, projectDoc.Data, token);
-        IReadOnlyDictionary<string, string> ptUsernameMapping = users.ToDictionary(u => u.Id, u => u.Username);
+        IReadOnlyDictionary<string, string> ptUsernameMapping = users
+            .Where(u => !string.IsNullOrWhiteSpace(u.Id) && !string.IsNullOrWhiteSpace(u.Username))
+            .ToDictionary(u => u.Id, u => u.Username);
         bool isResource = _paratextService.IsResource(paratextId);
         // Place to collect all chapter permissions to record in the project.
         var projectChapterPermissions =

@@ -4096,24 +4096,24 @@ public class ParatextServiceTests
         // Set up the call of the list of users in the project
         using HttpResponseMessage usersResponse = TestEnvironment.MakeOkHttpResponseMessage(
             $$"""
-              [
-                {
-                  "role": "{{SFProjectRole.Administrator}}",
-                  "userId": "{{env.ParatextUserId01}}",
-                  "username": "{{env.Username01}}"
-                },
-                {
-                  "role": "{{SFProjectRole.Administrator}}",
-                  "userId": "{{env.ParatextUserId02}}",
-                  "username": "{{env.Username02}}"
-                }
-              ]
-              """
+            [
+              {
+                "role": "{{SFProjectRole.Administrator}}",
+                "userId": "{{env.ParatextUserId01}}",
+                "username": "{{env.Username01}}"
+              },
+              {
+                "role": "{{SFProjectRole.Administrator}}",
+                "userId": "{{env.ParatextUserId02}}",
+                "username": "{{env.Username02}}"
+              }
+            ]
+            """
         );
         env.MockRegistryHttpClient.SendAsync(
-            Arg.Is<HttpRequestMessage>(r => r.RequestUri.ToString().Contains("/members")),
-            CancellationToken.None
-        )
+                Arg.Is<HttpRequestMessage>(r => r.RequestUri.ToString().Contains("/members")),
+                CancellationToken.None
+            )
             .Returns(usersResponse);
 
         // SUT
@@ -5463,17 +5463,17 @@ public class ParatextServiceTests
             {
                 JObject projectLicense = JObject.Parse(
                     $$"""
-                                       {
-                                         "type": "translator",
-                                         "licensedToParatextId": "{{paratextId}}",
-                                         "licensedToOrgs": [
-                                           "5494956f5117ad586f2e2f40"
-                                         ],
-                                         "issuedAt": "2024-06-18T22:26:28.854Z",
-                                         "expiresAt": "2024-06-18T22:26:28.854Z",
-                                         "revoked": true
-                                       }
-                                       """
+                    {
+                      "type": "translator",
+                      "licensedToParatextId": "{{paratextId}}",
+                      "licensedToOrgs": [
+                        "5494956f5117ad586f2e2f40"
+                      ],
+                      "issuedAt": "2024-06-18T22:26:28.854Z",
+                      "expiresAt": "2024-06-18T22:26:28.854Z",
+                      "revoked": true
+                    }
+                    """
                 );
                 mockSource.GetLicenseForUserProject(paratextId).Returns(new ProjectLicense(projectLicense));
                 if (paratextId == PTProjectIds[Project01].Id)
@@ -5584,18 +5584,20 @@ public class ParatextServiceTests
                 .Returns(true);
         }
 
-        public void AddUserRepository() =>
+        public void AddUserRepository(User[]? users = null) =>
             RealtimeService.AddRepository(
                 "users",
                 OTType.Json0,
                 new MemoryRepository<User>(
-                    [
-                        new User { Id = User01, ParatextId = ParatextUserId01 },
-                        new User { Id = User02, ParatextId = ParatextUserId02 },
-                        new User { Id = User03, ParatextId = ParatextUserId03 },
-                        new User { Id = User04 },
-                        new User { Id = User05 },
-                    ]
+                    users
+                        ??
+                        [
+                            new User { Id = User01, ParatextId = ParatextUserId01 },
+                            new User { Id = User02, ParatextId = ParatextUserId02 },
+                            new User { Id = User03, ParatextId = ParatextUserId03 },
+                            new User { Id = User04 },
+                            new User { Id = User05 },
+                        ]
                 )
             );
 

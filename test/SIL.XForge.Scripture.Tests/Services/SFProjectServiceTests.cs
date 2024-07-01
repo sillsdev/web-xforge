@@ -1054,10 +1054,10 @@ public class SFProjectServiceTests
         // EdjCase.JsonRpc.Common.RpcException. Our test should not end up doing down a path that causes this
         // exception.
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-            Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromException<IReadOnlyList<ParatextProjectUser>>(new HttpRequestException()));
 
         string userRoleOnPTProject = null;
@@ -1234,10 +1234,10 @@ public class SFProjectServiceTests
         Assert.That(resource.Texts.First().Chapters.First().Permissions.ContainsKey(User03), Is.False, "setup");
 
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
-            Arg.Is((SFProject project) => project.ParatextId == project05PTId),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Is<UserSecret>((UserSecret userSecret) => userSecret.Id == User03),
+                Arg.Is((SFProject project) => project.ParatextId == project05PTId),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromException<IReadOnlyList<ParatextProjectUser>>(new HttpRequestException()));
 
         string userRoleOnPTProject = null;

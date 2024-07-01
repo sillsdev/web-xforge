@@ -1974,8 +1974,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     private Dictionary<string, ParatextUserProfile> GetCurrentProjectPtUsers()
     {
-        Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc.Data.ParatextUsers.ToDictionary(
-            p => p.Username
+        Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc.Data.ParatextUsers.ToDictionary(p =>
+            p.Username
         );
         foreach (ParatextProjectUser paratextUser in _paratextUsers)
         {
