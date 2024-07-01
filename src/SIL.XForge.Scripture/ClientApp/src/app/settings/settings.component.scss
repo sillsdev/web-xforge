@@ -8,6 +8,14 @@
   padding-block-end: 10px;
 }
 
+.mat-mdc-checkbox {
+  --mdc-checkbox-state-layer-size: 18px;
+
+  ::ng-deep .mdc-label {
+    padding-left: 10px !important;
+  }
+}
+
 .mat-mdc-card {
   padding: 8px 4px;
 }
@@ -26,9 +34,6 @@
   }
 
   > .tool-setting-field {
-    &:not(:last-child) {
-      padding-bottom: 16px;
-    }
     column-gap: 10px;
 
     > app-write-status {
