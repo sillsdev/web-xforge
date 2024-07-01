@@ -640,21 +640,17 @@ public class ParatextService : DisposableBase, IParatextService
 
             users = JArray
                 .Parse(response)
-                .Where(
-                    m =>
-                        !string.IsNullOrEmpty((string?)m["userId"])
-                        && !string.IsNullOrEmpty((string)m["username"])
-                        && !string.IsNullOrEmpty((string?)m["role"])
+                .Where(m =>
+                    !string.IsNullOrEmpty((string?)m["userId"])
+                    && !string.IsNullOrEmpty((string)m["username"])
+                    && !string.IsNullOrEmpty((string?)m["role"])
                 )
-                .Select(
-                    m =>
-                        new ParatextProjectUser
-                        {
-                            ParatextId = (string)m["userId"] ?? string.Empty,
-                            Role = (string)m["role"] ?? string.Empty,
-                            Username = (string)m["username"] ?? string.Empty,
-                        }
-                )
+                .Select(m => new ParatextProjectUser
+                {
+                    ParatextId = (string)m["userId"] ?? string.Empty,
+                    Role = (string)m["role"] ?? string.Empty,
+                    Username = (string)m["username"] ?? string.Empty,
+                })
                 .ToList();
 
             // Get the mapping of Scripture Forge user IDs to Paratext usernames
@@ -691,9 +687,10 @@ public class ParatextService : DisposableBase, IParatextService
 
             // Build a dictionary of user IDs mapped to usernames using the user secrets
             foreach (
-                ParatextProjectUser user in project.UserRoles.Keys.Select(
-                    userId => new ParatextProjectUser { Id = userId }
-                )
+                ParatextProjectUser user in project.UserRoles.Keys.Select(userId => new ParatextProjectUser
+                {
+                    Id = userId
+                })
             )
             {
                 UserSecret projectUserSecret;

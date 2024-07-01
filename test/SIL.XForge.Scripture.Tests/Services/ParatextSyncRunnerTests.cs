@@ -575,10 +575,10 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns([TestEnvironment.ParatextProjectUser01 with { Role = SFProjectRole.Translator }]);
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -600,10 +600,10 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns([TestEnvironment.ParatextProjectUser01 with { Role = SFProjectRole.Translator }]);
 
         // SUT
@@ -654,10 +654,10 @@ public class ParatextSyncRunnerTests
         SFProject project = env.GetProject("project01");
         Assert.That(project.Editable, Is.True, "setup");
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns([TestEnvironment.ParatextProjectUser01]);
 
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
@@ -808,10 +808,10 @@ public class ParatextSyncRunnerTests
 
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is<SFProject>(project => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is<SFProject>(project => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns([TestEnvironment.ParatextProjectUser01]);
         int fontSize = 10;
         string font = ProjectSettings.defaultFontName;
@@ -923,10 +923,10 @@ public class ParatextSyncRunnerTests
 
         var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns([TestEnvironment.ParatextProjectUser01]);
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(x => null);
 
@@ -947,10 +947,10 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(
-            Arg.Any<UserSecret>(),
-            Arg.Is((SFProject project) => project.ParatextId == "target"),
-            Arg.Any<CancellationToken>()
-        )
+                Arg.Any<UserSecret>(),
+                Arg.Is((SFProject project) => project.ParatextId == "target"),
+                Arg.Any<CancellationToken>()
+            )
             .Returns([TestEnvironment.ParatextProjectUser01]);
 
         await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
