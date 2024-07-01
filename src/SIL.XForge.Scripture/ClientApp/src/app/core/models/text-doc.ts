@@ -2,15 +2,17 @@ import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic } from 'quill';
 import {
   getTextDocId,
+  TEXT_INDEX_PATHS,
   TextData,
   TEXTS_COLLECTION,
-  TextType,
-  TEXT_INDEX_PATHS
+  TextType
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
+
+export type TextDocSource = 'draft' | 'editor' | 'history';
 
 /**
  * This class represents the different components for a text doc id. It can be converted to the actual text doc id
