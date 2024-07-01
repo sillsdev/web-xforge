@@ -175,10 +175,12 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     this.selectedSnapshot = undefined;
 
     // Get the snapshot from the paratext service
-    await this.paratextService.getSnapshot(this.projectId, this.bookId, this.chapter, revision.key).then(snapshot => {
-      // Remember the snapshot so we can apply it
-      this.selectedSnapshot = snapshot;
-      this.revisionSelect.emit({ revision, snapshot });
-    });
+    await this.paratextService
+      .getSnapshot(this.projectId, this.bookId, this.chapter, revision.timestamp)
+      .then(snapshot => {
+        // Remember the snapshot so we can apply it
+        this.selectedSnapshot = snapshot;
+        this.revisionSelect.emit({ revision, snapshot });
+      });
   }
 }

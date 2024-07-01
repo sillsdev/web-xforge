@@ -15,10 +15,20 @@ export const RESOURCE_IDENTIFIER_LENGTH = 16;
  * A point-in-time revision of a document.
  */
 export interface Revision {
+  /**
+   * The source of the revision.
+   * This may be 'editor', 'history', 'draft', 'paratext', or null.
+   */
+  source?: string;
+
   /** The date and time of the revision in UTC. */
-  key: string;
-  /** A brief summary of the revision. */
-  value: string;
+  timestamp: string;
+
+  /**
+   * The user who created the revision.
+   * This will null if the user is unknown.
+   */
+  userId?: string;
 }
 
 export interface SelectableProject {

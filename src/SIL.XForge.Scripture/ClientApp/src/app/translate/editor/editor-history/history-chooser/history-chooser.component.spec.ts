@@ -180,9 +180,7 @@ describe('HistoryChooserComponent', () => {
         data: createTestProjectProfile()
       });
 
-      when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve([
-        { key: 'date_here', value: 'description_here' }
-      ]);
+      when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve([{ timestamp: 'date_here' }]);
       when(mockedParatextService.getSnapshot('project01', 'MAT', 1, 'date_here')).thenResolve({
         data: { ops: [] },
         id: 'id',
