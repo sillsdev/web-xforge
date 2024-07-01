@@ -81,6 +81,8 @@ declare module 'sharedb/lib/client' {
     readonly subscribed: boolean;
     readonly wantSubscribe: boolean;
 
+    submitSource: boolean;
+
     readonly inflightOp: any;
     readonly pendingOps: any[];
 
