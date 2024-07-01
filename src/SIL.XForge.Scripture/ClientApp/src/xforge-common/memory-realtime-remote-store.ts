@@ -93,6 +93,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     on: (_event: string, _handler: Function) => {},
     off: (_event: string, _handler: Function) => {}
   } as Presence;
+  submitSource: boolean = false;
   subscribed: boolean = false;
   version: number = -1;
   private _previousSnapshot: Snapshot;

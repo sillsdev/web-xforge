@@ -24,10 +24,19 @@ export function createDoc<T>(conn: Connection, collection: string, id: string, d
   return docCreate(conn.get(collection, id), data, type);
 }
 
-export async function submitOp(conn: Connection, collection: string, id: string, components: any): Promise<void> {
+export async function submitOp(
+  conn: Connection,
+  collection: string,
+  id: string,
+  components: any,
+  source: boolean | any | undefined = undefined
+): Promise<void> {
   const doc = conn.get(collection, id);
   await docFetch(doc);
-  await docSubmitOp(doc, components);
+  if (source != null) {
+    doc.submitSource = true;
+  }
+  await docSubmitOp(doc, components, source);
 }
 
 export async function submitJson0Op<T>(
