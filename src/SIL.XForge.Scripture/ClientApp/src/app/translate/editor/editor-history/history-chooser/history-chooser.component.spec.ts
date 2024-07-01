@@ -159,7 +159,7 @@ describe('HistoryChooserComponent', () => {
     expect(env.component.chapter).toBeDefined();
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedTextDocService.overwrite(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).once();
   }));
 
   class TestEnvironment {
