@@ -121,8 +121,18 @@ public class MemoryConnection : IConnection
                 },
                 new Op
                 {
-                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow },
+                    Metadata = new OpMetadata { Timestamp = DateTime.UtcNow.AddMinutes(-1) },
                     Version = 3,
+                },
+                new Op
+                {
+                    Metadata = new OpMetadata
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        UserId = "user01",
+                        Source = "test",
+                    },
+                    Version = 4,
                 },
             }
         );
