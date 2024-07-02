@@ -49,6 +49,9 @@ class MigrationConnection extends Connection {
     if (op.mv != null) {
       message.mv = op.mv;
     }
+    if (doc.submitSource && op.source != null) {
+      message.x = { source: op.source };
+    }
     this.send(message);
   }
 }
@@ -71,7 +74,16 @@ class MigrationAgent extends ShareDB.Agent {
       // such as a resubmission after a reconnect, but it usually isn't needed
       const src = request.src || this._src();
       // c, d, and m arguments are intentionally undefined. These are set later
-      const op: any = { src, seq: request.seq, v: request.v, mv: request.mv, c: undefined, d: undefined, m: undefined };
+      const op: any = {
+        src,
+        seq: request.seq,
+        v: request.v,
+        mv: request.mv,
+        x: request.x,
+        c: undefined,
+        d: undefined,
+        m: undefined
+      };
       if (request.op != null) {
         op.op = request.op;
       } else if (request.create != null) {
@@ -151,20 +163,25 @@ export class RealtimeServer extends ShareDB {
         .catch(err => done(err));
     });
 
-    // Configure milestone creation
-    this.use('commit', (request, callback) => {
-      switch (request.collection) {
+    // Configure op, snapshot, or milestone changes to be made just before the op is committed to the database
+    this.use('commit', (context, callback) => {
+      switch (context.collection) {
         case 'texts':
           // Save a milestone for texts, every 1000 ops (about 7-10 verses typed live)
-          if (request.snapshot != null) {
-            request.saveMilestoneSnapshot = request.snapshot.v % 1000 === 0;
+          if (context.snapshot != null) {
+            context.saveMilestoneSnapshot = context.snapshot.v % 1000 === 0;
+          }
+          // If a source was specified, and is a string, set this as metadata for the op
+          // The source will reach the realtime server if submitSource was set to true for the document on the client
+          if (typeof context.extra?.source === 'string') {
+            context.op.m.source = context.extra.source;
           }
           break;
         default:
           // Don't save any milestones for collections not named here.
           // IMPORTANT: We have to set this to false to actively disable milestones
           // If left to null, then the default interval will still apply
-          request.saveMilestoneSnapshot = false;
+          context.saveMilestoneSnapshot = false;
       }
 
       callback();

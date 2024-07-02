@@ -53,6 +53,34 @@ describe('TextDocService', () => {
     tick();
   }));
 
+  it('should submit the source if it is specified', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const newDelta: DeltaStatic = getPoetryVerseTextDoc(env.textDocId) as DeltaStatic;
+
+    const textDoc = env.getTextDoc(env.textDocId);
+    textDoc.adapter.changes$.subscribe(() => {
+      // overwrite() resets submitSource to false, so we check it when the op is submitted
+      expect(textDoc.adapter.submitSource).toBe(true);
+    });
+
+    env.textDocService.overwrite(env.textDocId, newDelta, 'editor');
+    tick();
+  }));
+
+  it('should not submit the source if it is undefined', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const newDelta: DeltaStatic = getPoetryVerseTextDoc(env.textDocId) as DeltaStatic;
+
+    const textDoc = env.getTextDoc(env.textDocId);
+    textDoc.adapter.changes$.subscribe(() => {
+      // overwrite() resets submitSource to false, so we check it when the op is submitted
+      expect(textDoc.adapter.submitSource).toBe(false);
+    });
+
+    env.textDocService.overwrite(env.textDocId, newDelta);
+    tick();
+  }));
+
   describe('canEdit', () => {
     it('should return false if the project is undefined', () => {
       const env = new TestEnvironment();

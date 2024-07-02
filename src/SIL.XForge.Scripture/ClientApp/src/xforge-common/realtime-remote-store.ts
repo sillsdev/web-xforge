@@ -31,6 +31,8 @@ export interface RealtimeDocAdapter {
   readonly channelPresence: Presence;
   readonly docPresence: Presence;
 
+  submitSource: boolean;
+
   readonly idle$: Observable<void>;
   /** Fires when underlying data is recreated. */
   readonly create$: Observable<void>;

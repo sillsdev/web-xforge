@@ -8,7 +8,7 @@ import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
-import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
@@ -49,6 +49,21 @@ describe('TextService', () => {
 
     const conn = clientConnect(env.server, 'observer');
     await expect(submitOp(conn, TEXTS_COLLECTION, getTextDocId('project01', 40, 1), new Delta())).rejects.toThrow();
+  });
+
+  it('writes the op source to the database', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn = clientConnect(env.server, 'translator');
+    const id: string = getTextDocId('project01', 40, 1);
+    const source: string = 'history';
+    await submitOp(conn, TEXTS_COLLECTION, id, new Delta(), source);
+    await new Promise<void>(resolve => {
+      env.db.getOps(TEXTS_COLLECTION, id, 1, null, { metadata: true }, (_, ops) => {
+        expect(ops[0].m.source).toBe(source);
+        resolve();
+      });
+    });
   });
 });
 

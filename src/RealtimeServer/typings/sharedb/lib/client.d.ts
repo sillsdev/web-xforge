@@ -61,7 +61,7 @@ export interface Error {
 }
 
 export interface ShareDBSourceOptions {
-  source?: boolean;
+  source?: boolean | any;
 }
 
 export class Doc extends EventEmitter {
@@ -70,19 +70,20 @@ export class Doc extends EventEmitter {
   data: any;
   version: number;
   collection: string;
+  submitSource: boolean;
   fetch: (callback: (err: Error) => void) => void;
   subscribe: (callback: (err: Error) => void) => void;
 
   on(event: 'load' | 'no write pending' | 'nothing pending', callback: () => void): this;
-  on(event: 'create', callback: (source: boolean) => void): this;
-  on(event: 'op' | 'before op', callback: (ops: Op[], source: boolean) => void): this;
-  on(event: 'del', callback: (data: any, source: boolean) => void): this;
+  on(event: 'create', callback: (source: boolean | any) => void): this;
+  on(event: 'op' | 'before op', callback: (ops: Op[], source: boolean | any) => void): this;
+  on(event: 'del', callback: (data: any, source: boolean | any) => void): this;
   on(event: 'error', callback: (err: Error) => void): this;
 
   addListener(event: 'load' | 'no write pending' | 'nothing pending', callback: () => void): this;
-  addListener(event: 'create', callback: (source: boolean) => void): this;
-  addListener(event: 'op' | 'before op', callback: (ops: Op[], source: boolean) => void): this;
-  addListener(event: 'del', callback: (data: any, source: boolean) => void): this;
+  addListener(event: 'create', callback: (source: boolean | any) => void): this;
+  addListener(event: 'op' | 'before op', callback: (ops: Op[], source: boolean | any) => void): this;
+  addListener(event: 'del', callback: (data: any, source: boolean | any) => void): this;
   addListener(event: 'error', callback: (err: Error) => void): this;
 
   ingestSnapshot(snapshot: Snapshot, callback: (err: Error) => void): void;

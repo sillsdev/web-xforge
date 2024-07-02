@@ -303,6 +303,14 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     return pendingOps;
   }
 
+  get submitSource(): boolean {
+    return this.doc.submitSource;
+  }
+
+  set submitSource(value: boolean) {
+    this.doc.submitSource = value;
+  }
+
   create(data: any, type?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.doc.create(data, type, undefined, err => {
@@ -402,6 +410,7 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
         const data = { op: component.op, type: this.doc.type, callbacks: [] };
         if (component.hasOwnProperty('src')) data['src'] = component.src;
         if (component.hasOwnProperty('seq')) data['seq'] = component.seq;
+        if (component.hasOwnProperty('source')) data['source'] = component.source;
         return data;
       })
     );

@@ -171,7 +171,7 @@ public class ParatextController : ControllerBase
     /// <response code="403">The user does not have permission to access the document.</response>
     /// <response code="404">The document does not exist.</response>
     [HttpGet("history/revisions/{projectId}_{book}_{chapter:int}_target")]
-    public async Task<ActionResult<IAsyncEnumerable<KeyValuePair<DateTime, string>>>> GetRevisionHistoryAsync(
+    public async Task<ActionResult<IAsyncEnumerable<DocumentRevision>>> GetRevisionHistoryAsync(
         string projectId,
         string book,
         int chapter

@@ -97,6 +97,14 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     return this.adapter.changes$;
   }
 
+  get submitSource(): boolean {
+    return this.adapter.submitSource;
+  }
+
+  set submitSource(value: boolean) {
+    this.adapter.submitSource = value;
+  }
+
   /**
    * Subscribes to remote changes for the realtime data.
    * For this record, update the RealtimeDoc cache, if any, from IndexedDB.
@@ -121,6 +129,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
    * @param {Ops} ops The operations to submit.
    * @param {*} [source] The source. In practice, `true` (the default) specifies that the op should be
    * to considered to have originated locally, rather than `false` to specify remotely.
+   * This can also be set to a value that is passed to the server if `submitSource is `true`.
    * @returns {Promise<void>} Resolves when the operations have been successfully submitted.
    */
   async submit(ops: Ops, source?: any): Promise<void> {
@@ -220,6 +229,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
         const data = { op: this.prepareDataForStore(opInfo.op) };
         if (opInfo.hasOwnProperty('src')) data['src'] = opInfo.src;
         if (opInfo.hasOwnProperty('seq')) data['seq'] = opInfo.seq;
+        if (opInfo.hasOwnProperty('source')) data['source'] = opInfo.source;
         return data;
       });
 

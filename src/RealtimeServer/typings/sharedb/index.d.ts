@@ -283,6 +283,7 @@ interface SubmitRequest {
   index: string;
   projection: ShareDB.Projection | undefined;
   collection: string;
+  extra: any | null;
   id: string;
   op: common.RawOp;
   options: any;

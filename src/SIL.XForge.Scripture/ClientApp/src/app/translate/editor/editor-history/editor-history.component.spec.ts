@@ -71,7 +71,7 @@ describe('EditorHistoryComponent', () => {
 
   it('should load history after view init', fakeAsync(() => {
     const diff = new Delta();
-    const revision: Revision = { key: 'date_here', value: 'description_here' };
+    const revision: Revision = { timestamp: 'date_here' };
     const textDoc: TextDoc = { data: { ops: [] } } as unknown as TextDoc;
     const snapshot: Snapshot<TextData> = {
       data: { ops: [] } as TextData,
@@ -104,7 +104,7 @@ describe('EditorHistoryComponent', () => {
   it('should not reload history if browser goes offline and comes back online', fakeAsync(() => {
     const onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     const diff = new Delta();
-    const revision: Revision = { key: 'date_here', value: 'description_here' };
+    const revision: Revision = { timestamp: 'date_here' };
     const textDoc: TextDoc = { data: { ops: [] } } as unknown as TextDoc;
     const snapshot: Snapshot<TextData> = {
       data: { ops: [] } as TextData,

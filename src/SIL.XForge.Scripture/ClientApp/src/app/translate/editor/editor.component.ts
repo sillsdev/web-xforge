@@ -1141,7 +1141,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   setHistoryTabRevisionLabel(tab: EditorTabInfo, revision: Revision | undefined): void {
     tab.headerText =
       revision != null
-        ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`
+        ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.timestamp)}`
         : `${this.targetLabel} - History`;
 
     // TODO: Respond to locale changes
