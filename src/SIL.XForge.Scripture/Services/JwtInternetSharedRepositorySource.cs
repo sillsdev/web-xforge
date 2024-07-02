@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Paratext;
@@ -149,6 +150,48 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         return projects?.Select(p => new ProjectMetadata((JObject)p)).ToList();
     }
 
+    /// <summary>
+    /// Gets the licenses for the project if the current user is a member of it.
+    /// Sourced from <see cref="RegistryServer" />.
+    /// </summary>
+    /// <param name="paratextId">The project's Paratext identifier.</param>
+    /// <returns>
+    /// The <see cref="ProjectLicense"/>, or <c>null</c> if it could not be found.
+    /// </returns>
+    /// <remarks>
+    /// Null will typically be returned if a project uses another project's registration.
+    /// </remarks>
+    public ProjectLicense? GetLicenseForUserProject(string paratextId)
+    {
+        JObject? license = GetJsonObject($"projects/{paratextId}/license");
+        if (license is null)
+            return null;
+        var projectLicense = new ProjectLicense(license);
+        if (projectLicense.IsInvalid || projectLicense.IsExpired)
+            return null;
+        return projectLicense;
+    }
+
+    /// <summary>
+    /// Gets the metadata for the project if the current user is a member of it.
+    /// Sourced from <see cref="RegistryServer" />.
+    /// </summary>
+    /// <param name="paratextId">The project's Paratext identifier.</param>
+    /// <returns>
+    /// The <see cref="ProjectMetadata"/>, or <c>null</c> if it could not be found.
+    /// </returns>
+    /// <remarks>
+    /// Null will typically be returned if a project uses another project's registration.
+    /// </remarks>
+    public ProjectMetadata? GetProjectMetadata(string paratextId)
+    {
+        JObject metadata = GetJsonObject($"projects/{paratextId}");
+        if (metadata is null)
+            return null;
+        var projectMetadata = new ProjectMetadata(metadata);
+        return projectMetadata;
+    }
+
     /// <summary>Gets the client.</summary>
     /// <remarks>Helps unit tests</remarks>
     public virtual RESTClient GetClient() => client;
@@ -173,7 +216,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         return result;
     }
 
-    private JArray GetJsonArray(string cgiCall)
+    private JArray? GetJsonArray(string cgiCall)
     {
         DateTime startTime = DateTime.UtcNow;
         string projectData;
@@ -194,6 +237,37 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         );
         if (!string.IsNullOrEmpty(projectData) && !projectData.Equals("null", StringComparison.OrdinalIgnoreCase))
             return JArray.Parse(projectData);
+        return null;
+    }
+
+    private JObject? GetJsonObject(string cgiCall)
+    {
+        DateTime startTime = DateTime.UtcNow;
+        string projectData;
+        try
+        {
+            projectData = _registryClient.Get(cgiCall);
+        }
+        catch (HttpException ex) when (ex.Response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogInformation(
+                $"external_api_request_timing pt_registry GET {cgiCall} returned 404 {(DateTime.UtcNow - startTime).Milliseconds} ms"
+            );
+            return null;
+        }
+        catch (HttpException e)
+        {
+            _logger.LogInformation(
+                e,
+                $"external_api_request_timing pt_registry GET {cgiCall} failed after {(DateTime.UtcNow - startTime).Milliseconds} ms"
+            );
+            throw;
+        }
+        _logger.LogInformation(
+            $"external_api_request_timing pt_registry GET {cgiCall} took {(DateTime.UtcNow - startTime).Milliseconds} ms"
+        );
+        if (!string.IsNullOrEmpty(projectData) && !projectData.Equals("null", StringComparison.OrdinalIgnoreCase))
+            return JObject.Parse(projectData);
         return null;
     }
 
