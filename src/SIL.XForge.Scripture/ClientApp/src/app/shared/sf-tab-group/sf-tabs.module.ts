@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@ngneat/transloco';
 import { NoopTabAddRequestService, TabAddRequestService } from './base-services/tab-add-request.service';
 import { TabGroupHeaderComponent } from './tab-group-header/tab-group-header.component';
@@ -27,10 +27,10 @@ import { TabComponent } from './tab/tab.component';
   ],
   imports: [
     CommonModule,
-    MatTabsModule,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     DragDropModule,
     TranslocoModule
   ],
