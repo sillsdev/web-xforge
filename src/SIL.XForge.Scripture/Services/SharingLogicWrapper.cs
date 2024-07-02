@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Paratext.Data.Repository;
+using Paratext.Data.Users;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -18,4 +19,7 @@ public class SharingLogicWrapper : ISharingLogicWrapper
 
     public bool HandleErrors(Action action, bool throwExceptions = false) =>
         SharingLogic.HandleErrors(action, throwExceptions);
+
+    public PermissionManager SearchForBestProjectUsersData(SharedRepositorySource source, SharedProject sharedProj) =>
+        SharingLogic.SearchForBestProjectUsersData(source, sharedProj);
 }
