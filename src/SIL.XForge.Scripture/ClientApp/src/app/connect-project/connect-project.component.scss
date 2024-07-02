@@ -14,6 +14,14 @@
   padding-bottom: 16px;
 }
 
+.mat-mdc-checkbox {
+  --mdc-checkbox-state-layer-size: 18px;
+
+  ::ng-deep .mdc-label {
+    padding-inline-start: 6px !important;
+  }
+}
+
 .content {
   max-width: 512px;
   width: 100%;
