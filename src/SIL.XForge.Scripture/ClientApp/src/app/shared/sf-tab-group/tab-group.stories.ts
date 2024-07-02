@@ -126,7 +126,7 @@ export default {
 type Story = StoryObj<SFTabGroupStoriesComponent>;
 
 const tabGroups: TabGroup<string, TabInfo<string>>[] = [
-  new TabGroup('group-1', [
+  new TabGroup<string, TabInfo<string>>('group-1', [
     {
       type: 'type-a',
       headerText: 'Uncloseable, unmovable Tab 1 is great!',
@@ -164,7 +164,7 @@ export const TabReorderAndMove: Story = {
   args: {
     tabGroups: [
       ...tabGroups,
-      new TabGroup('group-2', [
+      new TabGroup<string, TabInfo<string>>('group-2', [
         { type: 'type-a', headerText: 'Uncloseable, unmovable Tab 1', closeable: false, movable: false },
         { type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
         { type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },

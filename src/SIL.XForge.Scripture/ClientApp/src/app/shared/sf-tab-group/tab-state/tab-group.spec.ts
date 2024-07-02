@@ -26,14 +26,25 @@ describe('TabGroup', () => {
     expect(tabGroup.tabs).toEqual(['tab1', 'tab2', 'tab3']);
   });
 
-  it('should remove a tab', () => {
-    tabGroup.removeTab(0);
-    expect(tabGroup.tabs).toEqual(['tab2']);
-  });
+  describe('removeTab', () => {
+    it('should remove a tab', () => {
+      tabGroup.removeTab(0);
+      expect(tabGroup.tabs).toEqual(['tab2']);
+    });
 
-  it('should adjust selected index when removing a tab', () => {
-    tabGroup.selectedIndex = 1;
-    tabGroup.removeTab(0);
-    expect(tabGroup.selectedIndex).toEqual(0);
+    it('should adjust selected index when removing a tab', () => {
+      tabGroup.selectedIndex = 1;
+      tabGroup.removeTab(0);
+      expect(tabGroup.selectedIndex).toEqual(0);
+    });
+
+    it('should emit the removed tab', () => {
+      let removedTabEvent: { index: number; tab: string } | undefined;
+      tabGroup.tabRemoved$.subscribe(event => {
+        removedTabEvent = event;
+      });
+      tabGroup.removeTab(0);
+      expect(removedTabEvent).toEqual({ index: 0, tab: 'tab1' });
+    });
   });
 });
