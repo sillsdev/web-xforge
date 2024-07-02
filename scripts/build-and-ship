@@ -9,6 +9,7 @@ DEPLOY_PATH="/var/www/${APP_NAME}.org${APP_SUFFIX}"
 SERVICE_UNIT_SUFFIX=""
 # Relative to repo root
 ERROR_PAGES_PATH="src/SIL.XForge.Scripture/ErrorPages"
+ALTERNATE_DOMAIN=""
 
 scriptDir="$(dirname "$0")"
 "${scriptDir}"/build-production "$@"
