@@ -1,0 +1,92 @@
+name: "Release to Live"
+
+env:
+  vcs_tag_prefix: "SFv"
+
+concurrency: deploy-prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: "The type of release. This will bump the major.minor.patch version number accordingly."
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+      skip-branch-update:
+        description: "Don't update the branch, and release from its current commit. For example, when releasing a hotfix that has already been pushed to the branch. If this is set, 'from-staging-version' is ignored."
+        required: false
+        type: boolean
+        default: false
+      from-staging-version:
+        description: "QA version from which to release (eg '123'). Leave blank for latest."
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  update_branch:
+    name: "Update branch"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+      - name: Set branch
+        # Note that just the step is conditional, not the entire job, so that subsequent jobs can still depend on this
+        # job either finishing or being basically skipped.
+        if: ${{ !github.event.inputs.skip-branch-update }}
+        env:
+          FROM_STAGING_VERSION: ${{ github.event.inputs.from-staging-version }}
+        run: |
+          set -ueo pipefail
+          if [[ -z "${FROM_STAGING_VERSION}" ]]; then
+            git push --force origin origin/sf-qa:sf-live
+          else
+            git push --force origin $(git rev-list -1 "SF-QAv${FROM_STAGING_VERSION}"):sf-live
+          fi
+
+  determine_version:
+    name: "Determine version"
+    uses: ./github/workflows/compute-next-prod-version.yml
+    needs: update_branch
+    with:
+      release-type: ${{ github.event.inputs.release-type }}
+      tag_prefix: ${{ env.vcs_tag_prefix }}
+
+  deploy:
+    name: "Deploy to Live"
+    uses: ./.github/workflows/release.yml
+    needs: determine_version
+    with:
+      dotnet_version: "8.0.x"
+      node_version: "18.20.2"
+      npm_version: "10.5.0"
+      os: "ubuntu-20.04"
+
+      angular_config: "production"
+      app_name: "scriptureforge"
+      app_suffix: ""
+      version_number: "${{ needs.determine_version.outputs.next_version }}"
+      vcs_tag_prefix: ${{ env.vcs_tag_prefix }}
+      node_options: "--max_old_space_size=4096"
+      project: "SIL.XForge.Scripture"
+
+    secrets:
+      deploy_server: ${{secrets.live_deploy_server}}
+      deploy_known_hosts: ${{secrets.live_deploy_known_hosts}}
+      deploy_ssh_private_key: ${{secrets.live_deploy_ssh_private_key}}
+      auth_backend_secret: ${{ secrets.live_auth_backend_secret }}
+      auth_webhook_password: ${{ secrets.live_auth_webhook_password }}
+      paratext_client_id: ${{secrets.live_paratext_client_id}}
+      paratext_api_token: ${{ secrets.live_paratext_api_token }}
+      paratext_resource_password_base64: ${{ secrets.live_paratext_resource_password_base64 }}
+      paratext_resource_password_hash: ${{ secrets.live_paratext_resource_password_hash }}
+      serval_client_id: ${{secrets.live_serval_client_id}}
+      serval_client_secret: ${{ secrets.live_serval_client_secret }}
+      serval_webhook_secret: ${{ secrets.live_serval_webhook_secret }}
