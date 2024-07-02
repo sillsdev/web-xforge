@@ -120,7 +120,7 @@ describe('HistoryChooserComponent', () => {
     expect(env.component.selectedSnapshot).toBeDefined();
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedTextDocService.overwrite(anything(), anything())).never();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
   }));
 
   it('should not revert if the snapshot is missing', fakeAsync(() => {
@@ -135,7 +135,7 @@ describe('HistoryChooserComponent', () => {
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     verify(mockedNoticeService.showError(anything())).once();
-    verify(mockedTextDocService.overwrite(anything(), anything())).never();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
     expect(env.component.selectedSnapshot).toBeUndefined();
   }));
 
