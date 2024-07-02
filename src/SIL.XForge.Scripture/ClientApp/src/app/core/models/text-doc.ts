@@ -8,6 +8,8 @@ import {
   TextType
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
+import { RealtimeDocAdapter } from 'xforge-common/realtime-remote-store';
+import { RealtimeService } from 'xforge-common/realtime.service';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
@@ -42,6 +44,11 @@ export class TextDocId {
 export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
+
+  constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
+    adapter.submitSource = true;
+    super(realtimeService, adapter);
+  }
 
   getSegmentCount(): { translated: number; blank: number } {
     let blank = 0;
