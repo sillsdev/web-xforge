@@ -1,5 +1,27 @@
 @use 'src/material-styles';
 
+::ng-deep .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  --mat-option-selected-state-layer-color: rgba(0, 0, 0, 0.12);
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    flex-grow: 1;
+  }
+
+  mat-icon {
+    margin: 0;
+  }
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;

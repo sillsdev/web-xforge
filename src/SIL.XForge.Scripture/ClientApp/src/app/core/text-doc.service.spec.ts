@@ -63,7 +63,7 @@ describe('TextDocService', () => {
       expect(textDoc.adapter.submitSource).toBe(true);
     });
 
-    env.textDocService.overwrite(env.textDocId, newDelta, 'editor');
+    env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
     tick();
   }));
 

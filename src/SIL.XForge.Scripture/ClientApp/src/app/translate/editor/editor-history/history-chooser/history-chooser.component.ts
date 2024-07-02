@@ -154,7 +154,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     // Revert to the snapshot
     const delta: DeltaStatic = new Delta(this.selectedSnapshot.data.ops);
     const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
-    await this.textDocService.overwrite(textDocId, delta, 'history');
+    await this.textDocService.overwrite(textDocId, delta, 'History');
 
     // Force the history editor to reload
     this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
