@@ -14,3 +14,11 @@ app-notice {
   max-width: 25em;
   margin: 1em 0;
 }
+
+.mat-mdc-checkbox {
+  --mdc-checkbox-state-layer-size: 18px;
+
+  ::ng-deep .mdc-label {
+    padding-inline-start: 10px !important;
+  }
+}
