@@ -73,7 +73,7 @@ public class PreTranslationService(
         {
             // A reference will be in one of the formats:
             // FileFormat.Text: "40_1:verse_001_002"
-            // FileFormat.Paratext: "MAT 1:2"
+            // FileFormat.Paratext: "MAT 1:2" or "MAT 1:2/1:p"
             string reference = preTranslation.Refs.FirstOrDefault();
             if (string.IsNullOrWhiteSpace(reference))
             {
@@ -84,6 +84,12 @@ public class PreTranslationService(
             if (useParatextVerseRef)
             {
                 // The file format is FileFormat.Paratext
+
+                // If there is a forward slash, in the reference, the first half is the verse reference
+                if (reference.Contains('/', StringComparison.OrdinalIgnoreCase))
+                {
+                    reference = reference.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                }
 
                 // Ensure we have a valid verse reference and it is for this chapter
                 if (!VerseRef.TryParse(reference, out VerseRef verseRef) || verseRef.ChapterNum != chapterNum)
@@ -290,8 +296,14 @@ public class PreTranslationService(
             {
                 // The file format is FileFormat.Paratext
                 // We need to get the chapter number from the reference, as the textId is the book code
-                // A reference will be in the format: MAT 1:2
-                string reference = preTranslation.Refs.FirstOrDefault();
+                // A reference will be in the format: MAT 1:2 or MAT 1:2/1:p
+                string reference = preTranslation.Refs.FirstOrDefault() ?? string.Empty;
+
+                // If there is a forward slash, in the reference, the first half is the verse reference
+                if (reference.Contains('/', StringComparison.OrdinalIgnoreCase))
+                {
+                    reference = reference.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                }
 
                 // Ensure we have a valid verse reference and it is for this chapter
                 if (string.IsNullOrWhiteSpace(reference) || !VerseRef.TryParse(reference, out VerseRef verseRef))
