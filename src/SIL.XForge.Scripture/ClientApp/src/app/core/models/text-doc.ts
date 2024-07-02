@@ -12,7 +12,7 @@ import { getVerseStrFromSegmentRef } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
-export type TextDocSource = 'draft' | 'editor' | 'history';
+export type TextDocSource = 'Draft' | 'Editor' | 'History' | 'Paratext';
 
 /**
  * This class represents the different components for a text doc id. It can be converted to the actual text doc id

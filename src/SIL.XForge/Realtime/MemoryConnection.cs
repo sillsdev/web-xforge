@@ -130,7 +130,7 @@ public class MemoryConnection : IConnection
                     {
                         Timestamp = DateTime.UtcNow,
                         UserId = "user01",
-                        Source = "test",
+                        Source = "draft",
                     },
                     Version = 4,
                 },

@@ -225,7 +225,7 @@ describe('EditorDraftComponent', () => {
       tick();
 
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
-      verify(mockTextDocService.overwrite(component.textDocId!, component['draftDelta']!, 'draft')).once();
+      verify(mockTextDocService.overwrite(component.textDocId!, component['draftDelta']!, 'Draft')).once();
       expect(component.isDraftApplied).toBe(true);
     }));
   });

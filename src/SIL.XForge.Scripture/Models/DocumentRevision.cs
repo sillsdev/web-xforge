@@ -8,11 +8,6 @@ namespace SIL.XForge.Scripture.Models;
 public class DocumentRevision
 {
     /// <summary>
-    /// A source value representing revisions from Paratext.
-    /// </summary>
-    public const string Paratext = "paratext";
-
-    /// <summary>
     /// Gets the date and time of the revision in UTC.
     /// </summary>
     [Obsolete("For backwards compatibility with older frontend clients. Deprecated July 2024.")]
@@ -22,9 +17,10 @@ public class DocumentRevision
     /// Gets the source of the revision, if known.
     /// </summary>
     /// <value>
-    /// The source may be: 'editor', 'history', 'draft', 'paratext', or null.
+    /// The source of the op/ops that comprise this revision.
     /// </value>
-    public string? Source { get; init; }
+    /// <remarks>The source will be serialized as a string.</remarks>
+    public DocumentRevisionSource? Source { get; init; }
 
     /// <summary>
     /// Gets the timestamp at which the revision was made.
@@ -42,5 +38,6 @@ public class DocumentRevision
     /// Gets a brief summary of the revision.
     /// </summary>
     [Obsolete("For backwards compatibility with older frontend clients. Deprecated July 2024.")]
-    public string Value => Source == Paratext ? "Updated in Paratext" : "Updated in Scripture Forge";
+    public string Value =>
+        Source == DocumentRevisionSource.Paratext ? "Updated in Paratext" : "Updated in Scripture Forge";
 }

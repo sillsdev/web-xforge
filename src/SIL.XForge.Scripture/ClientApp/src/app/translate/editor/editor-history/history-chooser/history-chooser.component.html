@@ -6,10 +6,16 @@
         (selectionChange)="onSelectionChanged($event)"
         panelWidth="''"
         [disabled]="isSelectDisabled$ | async"
+        hideSingleSelectionIndicator
       >
+        <mat-select-trigger>
+          {{ selectedRevision ?? "" | revisionFormat }}
+        </mat-select-trigger>
         <mat-option *ngFor="let r of historyRevisions" [value]="r">
-          <mat-icon>{{ r.source === "draft" ? "auto_awesome" : r.source === "history" ? "history" : "" }}</mat-icon>
-          {{ r | revisionFormat }}
+          <div class="option-content">
+            <span>{{ r | revisionFormat }}</span>
+            <mat-icon>{{ r.source === "Draft" ? "auto_awesome" : r.source === "History" ? "history" : "" }}</mat-icon>
+          </div>
         </mat-option>
       </mat-select>
     </mat-form-field>
