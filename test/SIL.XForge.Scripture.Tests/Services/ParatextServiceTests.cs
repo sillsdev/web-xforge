@@ -4878,10 +4878,11 @@ public class ParatextServiceTests
             DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)
         )
         {
-            historyExists = true;
+            // NOTE: These values are defined in MemoryConnection.GetOpsAsync()
             Assert.IsTrue(revision.Timestamp > DateTime.MinValue);
             Assert.AreEqual(revision.UserId, env.User01);
-            Assert.AreEqual(revision.Source, "test");
+            Assert.AreEqual(revision.Source, DocumentRevisionSource.Draft);
+            historyExists = true;
             break;
         }
 

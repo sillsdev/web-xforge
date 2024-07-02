@@ -7,6 +7,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ParatextProject } from './models/paratext-project';
+import { TextDocSource } from './models/text-doc';
 
 /** Length of paratext ids for DBL resources. */
 export const RESOURCE_IDENTIFIER_LENGTH = 16;
@@ -17,9 +18,8 @@ export const RESOURCE_IDENTIFIER_LENGTH = 16;
 export interface Revision {
   /**
    * The source of the revision.
-   * This may be 'editor', 'history', 'draft', 'paratext', or null.
    */
-  source?: string;
+  source?: TextDocSource;
 
   /** The date and time of the revision in UTC. */
   timestamp: string;

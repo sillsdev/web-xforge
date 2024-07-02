@@ -234,7 +234,7 @@ export class TextViewModel {
     if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
-        this.textDoc.submit(modelDelta, 'editor');
+        this.textDoc.submit(modelDelta, 'Editor');
       }
     }
 
