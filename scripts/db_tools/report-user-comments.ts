@@ -54,8 +54,8 @@ class UserCommentReport {
     this.env = args.env!;
     this.connectionConfig = databaseConfigs.get(this.env)!;
     this.projectShortName = args.project;
-    this.from = args.from ? new Date(args.from) : undefined;
-    this.to = args.to ? new Date(args.to) : undefined;
+    this.from = args.from ? new Date(`${this.normalizeDateString(args.from)}T00:00`) : undefined; // Start of day
+    this.to = args.to ? new Date(`${this.normalizeDateString(args.to)}T23:59:59`) : undefined; // End of day
     this.outfile = args.outfile!;
 
     this.fromPretty = this.formatDate(this.from) ?? 'beginning';
@@ -116,6 +116,14 @@ class UserCommentReport {
       .replace(/\[dateTo\]/g, this.toPretty);
   }
 
+  /**
+   * Converts a date string from 'YYYY-M-D' to 'YYYY-MM-DD'.
+   */
+  private normalizeDateString(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  }
+
   private processArgs(): ScriptArgs {
     return yargs(hideBin(process.argv))
       .option('env', {
@@ -146,6 +154,23 @@ class UserCommentReport {
         default: '[project]_[report]_([dateFrom]_to_[dateTo]).tsv',
         requiresArg: true,
         description: 'File path to write report to'
+      })
+      .check(argv => {
+        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}$/;
+
+        if (argv.from && !dateFormatRegex.test(argv.from)) {
+          throw new Error("The 'from' date must be in the format YYYY-M-D");
+        }
+
+        if (argv.to && !dateFormatRegex.test(argv.to)) {
+          throw new Error("The 'to' date must be in the format YYYY-M-D");
+        }
+
+        if (argv.from && argv.to && new Date(argv.from) > new Date(argv.to)) {
+          throw new Error('Start date must be before end date');
+        }
+
+        return true;
       })
       .strict()
       .parseSync();
