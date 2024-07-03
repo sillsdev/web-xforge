@@ -64,14 +64,10 @@
                 <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
                   {{ t("enable_translation_suggestions") }}
                 </mat-checkbox>
-                <div>
-                  <div fxFlex="24px" class="indent"></div>
-                  <mat-hint
-                    fxFlex
-                    class="helper-text"
-                    [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                  ></mat-hint>
-                </div>
+                <p
+                  class="helper-text"
+                  [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
+                ></p>
               </div>
             </div>
           </ng-container>
@@ -83,10 +79,7 @@
               {{ t("enable_community_checking") }}
             </mat-checkbox>
           </div>
-          <div>
-            <div fxFlex="24px" class="indent"></div>
-            <mat-hint fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</mat-hint>
-          </div>
+          <p class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</p>
         </mat-card-content>
       </mat-card>
       <button mat-flat-button type="submit" id="connect-submit-button" [disabled]="submitDisabled">
