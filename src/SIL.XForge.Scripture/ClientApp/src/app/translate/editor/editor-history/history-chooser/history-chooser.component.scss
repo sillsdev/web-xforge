@@ -1,26 +1,11 @@
 @use 'src/material-styles';
 
-:host {
-  display: block;
-}
-
 .toolbar {
   display: flex;
-  overflow: hidden;
   flex-wrap: wrap;
+  gap: 4px;
+}
 
-  .history-select {
-    @include material-styles.dense_mat_select();
-  }
-
-  mat-form-field {
-    height: auto;
-  }
-
-  button {
-    margin-left: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+.history-select {
+  @include material-styles.dense_mat_select();
 }
