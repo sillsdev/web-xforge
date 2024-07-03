@@ -72,7 +72,7 @@ public class MemoryDocument<T> : IDocument<T>
             await CreateAsync(createData());
     }
 
-    public async Task SubmitOpAsync(object op)
+    public async Task SubmitOpAsync(object op, string? source)
     {
         Data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
         Data.Id = Id;

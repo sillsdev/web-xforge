@@ -20,5 +20,5 @@ public interface IRealtimeServer
     void Stop();
     bool IsServerRunning();
     bool Restart(object options);
-    Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op);
+    Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op, string? source);
 }

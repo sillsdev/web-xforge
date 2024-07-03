@@ -20,7 +20,7 @@ public interface IDocument<T>
 
     Task FetchOrCreateAsync(Func<T> createData);
 
-    Task SubmitOpAsync(object op);
+    Task SubmitOpAsync(object op, string? source);
 
     Task DeleteAsync();
 }
