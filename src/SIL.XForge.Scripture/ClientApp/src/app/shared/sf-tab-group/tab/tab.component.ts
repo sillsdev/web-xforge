@@ -9,6 +9,7 @@ import { TabHeaderDirective } from '../tab-header/tab-header.directive';
 export class TabComponent {
   @Input() closeable: boolean = true;
   @Input() movable: boolean = true;
+  @Input() tooltip?: string;
   @ViewChild(TemplateRef) contentTemplate!: TemplateRef<any>;
   @ContentChild(TabHeaderDirective, { read: TemplateRef }) tabHeaderTemplate?: any;
 }
