@@ -185,6 +185,7 @@ public class MemoryConnection : IConnection
         string id,
         object op,
         T currentDoc,
-        int currentVersion
+        int currentVersion,
+        string? source
     ) => throw new NotImplementedException();
 }

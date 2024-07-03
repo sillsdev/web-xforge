@@ -231,7 +231,14 @@ export = {
     server.db.getOps(collection, id, 0, null, { metadata: true }, (err, ops) => callback(err, ops));
   },
 
-  submitOp: (callback: InteropCallback, handle: number, collection: string, id: string, ops: ShareDB.Op[]): void => {
+  submitOp: (
+    callback: InteropCallback,
+    handle: number,
+    collection: string,
+    id: string,
+    ops: ShareDB.Op[],
+    source: string | undefined
+  ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -241,7 +248,17 @@ export = {
       callback(new Error('Connection not found.'));
       return;
     }
-    doc.submitOp(ops, undefined, err => callback(err, createSnapshot(doc)));
+    const options: any = {};
+    if (source != null) {
+      options.source = source;
+      doc.submitSource = true;
+    }
+    doc.submitOp(ops, options, err => {
+      if (source != null) {
+        doc.submitSource = false;
+      }
+      callback(err, createSnapshot(doc));
+    });
   },
 
   deleteDoc: (callback: InteropCallback, handle: number, collection: string, id: string): void => {

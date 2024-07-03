@@ -76,8 +76,8 @@ public class RealtimeServer : IRealtimeServer
 
     public Task<Op[]> GetOpsAsync(string collection, string id) => InvokeExportAsync<Op[]>("getOps", collection, id);
 
-    public Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op) =>
-        InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op);
+    public Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op, string? source) =>
+        InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op, source);
 
     public Task DeleteDocAsync(int handle, string collection, string id) =>
         InvokeExportAsync("deleteDoc", handle, collection, id);
