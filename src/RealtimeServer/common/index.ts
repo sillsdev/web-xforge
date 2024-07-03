@@ -249,9 +249,9 @@ export = {
       return;
     }
     const options: any = {};
+    doc.submitSource = source != null;
     if (source != null) {
       options.source = source;
-      doc.submitSource = true;
     }
     doc.submitOp(ops, options, err => {
       if (source != null) {
