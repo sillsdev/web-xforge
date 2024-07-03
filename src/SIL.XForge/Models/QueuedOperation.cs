@@ -86,4 +86,12 @@ internal class QueuedOperation
     /// See <see cref="Realtime.OTType" /> for allowed values.
     /// </remarks>
     public string OtTypeName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the source of the op.
+    /// </summary>
+    /// <value>
+    /// The op source.
+    /// </value>
+    public string? Source { get; set; }
 }
