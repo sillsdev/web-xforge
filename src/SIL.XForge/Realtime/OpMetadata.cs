@@ -20,11 +20,11 @@ public class OpMetadata
     /// <summary>
     /// Handles errors in serializing/deserializing this class.
     /// </summary>
-    /// <param name="context">The context.</param>
+    /// <param name="_">The context.</param>
     /// <param name="errorContext">The error context.</param>
     /// <remarks>This ignores errors, particularly when serializing/deserializing the source.</remarks>
     [OnError]
 #pragma warning disable CA1822 // Members that do not access instance data or call instance methods can be marked static
-    internal void OnError(StreamingContext context, ErrorContext errorContext) => errorContext.Handled = true;
+    internal void OnError(StreamingContext _, ErrorContext errorContext) => errorContext.Handled = true;
 #pragma warning restore CA1822
 }
