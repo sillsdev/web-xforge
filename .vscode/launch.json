@@ -12,7 +12,7 @@
       // This also works with Edge. Type doesn't seem to need to be "pwa-msedge" to attach with Edge.
       // First you need to launch Chromium/Chrome or Edge with --remote-debugging-port=9977. The SF frontend must
       // also be running/accessible.
-      "name": "Attach to frontend (in a running Chromium)",
+      "name": "Attach to frontend (in a running Chromium) (inc Docker)",
       "port": 9977,
       "request": "attach",
       "type": "pwa-chrome",
@@ -28,7 +28,8 @@
     {
       // Attach to and debug the running realtime server. The dotnet backend needs to have been started with
       // --node-options=--inspect=9230 or --node-options=--inspect-brk=9230
-      "name": "Attach to backend realtime server",
+      // While this can attach to realtime server in Docker, the source maps do not seem to be working.
+      "name": "Attach to backend realtime server (inc Docker)",
       "request": "attach",
       "type": "node",
       "port": 9230
@@ -45,6 +46,17 @@
       "sourceMaps": true,
       "pathMapping": {
         "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
+      }
+    },
+    {
+      "name": "Docker: Attach to backend dotnet application",
+      "type": "docker",
+      "request": "attach",
+      "platform": "netCore",
+      "containerName": "web-xforge",
+      "processName": "dotnet",
+      "sourceFileMap": {
+        "/src": "${workspaceFolder}/src"
       }
     },
     {
@@ -157,17 +169,6 @@
       "env": {
         // "SF_PROJECT_SET": "544444444444444444444 655555555555555555555",
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    {
-      "name": "Docker .NET Attach (Preview)",
-      "type": "docker",
-      "request": "attach",
-      "platform": "netCore",
-      "containerName": "web-xforge",
-      "processId": "${command:pickRemoteDockerProcess}",
-      "sourceFileMap": {
-        "/src": "${workspaceFolder}/src"
       }
     }
   ]
