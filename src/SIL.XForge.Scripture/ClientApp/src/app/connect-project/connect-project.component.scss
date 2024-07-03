@@ -14,14 +14,6 @@
   padding-bottom: 16px;
 }
 
-.mat-mdc-checkbox {
-  --mdc-checkbox-state-layer-size: 18px;
-
-  ::ng-deep .mdc-label {
-    padding-inline-start: 6px !important;
-  }
-}
-
 .content {
   max-width: 512px;
   width: 100%;
@@ -93,26 +85,12 @@
       }
     }
 
-    p.helper-select,
-    .indented-field-row {
-      margin-top: 16px;
-    }
-
     .helper-text {
       margin: 0;
+      margin-inline-start: 44px;
       font-size: 14px;
-    }
-
-    .select-helper-text,
-    mat-error {
-      font-size: 14px;
-      margin-top: 10px;
     }
   }
-}
-
-#based-on-field {
-  max-width: calc(100% - 44px);
 }
 
 app-project-select {
