@@ -1,3 +1,5 @@
+using SIL.XForge.Realtime;
+
 namespace SIL.XForge.Models;
 
 /// <summary>
@@ -93,5 +95,5 @@ internal class QueuedOperation
     /// <value>
     /// The op source.
     /// </value>
-    public string? Source { get; set; }
+    public OpSource? Source { get; set; }
 }

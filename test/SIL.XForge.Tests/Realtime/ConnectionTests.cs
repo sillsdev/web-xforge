@@ -107,7 +107,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<string>()
+                Arg.Any<OpSource?>()
             );
     }
 
@@ -470,7 +470,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<string>()
+                Arg.Any<OpSource?>()
             );
     }
 
@@ -498,7 +498,14 @@ public class ConnectionTests
 
         // SUT
         env.Service.BeginTransaction();
-        var result = await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, null);
+        var result = await env.Service.SubmitOpAsync(
+            collection,
+            id,
+            op,
+            snapshot.Data,
+            snapshot.Version,
+            OpSource.Editor
+        );
 
         // Verify result
         Assert.AreEqual(result.Version, 2);
@@ -510,6 +517,7 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Action, QueuedAction.Submit);
         Assert.AreEqual(queuedOperation.Collection, collection);
         Assert.AreEqual(queuedOperation.Op, op);
+        Assert.AreEqual(queuedOperation.Source, OpSource.Editor);
 
         // Verify that the call was not passed to the underlying realtime server
         await env
@@ -519,7 +527,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<string>()
+                Arg.Any<OpSource?>()
             );
     }
 
@@ -553,7 +561,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<string>()
+                Arg.Any<OpSource?>()
             );
     }
 

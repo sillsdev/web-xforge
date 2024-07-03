@@ -1242,7 +1242,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
                 if (diffDelta.Ops.Count > 0)
                 {
-                    tasks.Add(textDataDoc.SubmitOpAsync(diffDelta, DocumentRevisionSource.Paratext.ToString()));
+                    tasks.Add(textDataDoc.SubmitOpAsync(diffDelta, OpSource.Paratext));
                     _syncMetrics.TextDocs.Updated++;
                 }
 

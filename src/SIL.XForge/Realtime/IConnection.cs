@@ -30,6 +30,6 @@ public interface IConnection : IDisposable, IAsyncDisposable
         object op,
         T currentDoc,
         int currentVersion,
-        string? source
+        OpSource? source
     );
 }
