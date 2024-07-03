@@ -130,7 +130,7 @@ public class MemoryConnection : IConnection
                     {
                         Timestamp = DateTime.UtcNow,
                         UserId = "user01",
-                        Source = "draft",
+                        Source = OpSource.Draft,
                     },
                     Version = 4,
                 },
@@ -186,6 +186,6 @@ public class MemoryConnection : IConnection
         object op,
         T currentDoc,
         int currentVersion,
-        string? source
+        OpSource? source
     ) => throw new NotImplementedException();
 }

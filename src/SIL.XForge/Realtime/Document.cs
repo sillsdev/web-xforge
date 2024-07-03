@@ -82,7 +82,7 @@ public class Document<T> : IDocument<T>
         }
     }
 
-    public async Task SubmitOpAsync(object op, string? source)
+    public async Task SubmitOpAsync(object op, OpSource? source)
     {
         await _lock.WaitAsync();
         try

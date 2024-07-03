@@ -371,7 +371,7 @@ public class ParatextControllerTests
         public readonly DocumentRevision TestRevision = new DocumentRevision
         {
             Timestamp = Timestamp,
-            Source = DocumentRevisionSource.History,
+            Source = OpSource.History,
         };
 
         public readonly Snapshot<TextData> TestSnapshot = new Snapshot<TextData>
