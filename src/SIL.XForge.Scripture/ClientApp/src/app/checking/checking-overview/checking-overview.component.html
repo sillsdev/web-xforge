@@ -8,23 +8,21 @@
       </button>
       <button
         *ngIf="!isLoading"
-        class="hide-lt-sm"
+        class="add-question-button hide-lt-sm"
         mat-flat-button
         type="button"
         color="primary"
         (click)="questionDialog()"
-        id="add-question-button"
       >
         <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
       </button>
       <button
         *ngIf="!isLoading"
-        class="hide-gt-sm"
+        class="add-question-button hide-gt-sm"
         mat-mini-fab
         type="button"
         color="primary"
         (click)="questionDialog()"
-        id="add-question-button"
       >
         <mat-icon class="mirror-rtl">post_add</mat-icon>
       </button>

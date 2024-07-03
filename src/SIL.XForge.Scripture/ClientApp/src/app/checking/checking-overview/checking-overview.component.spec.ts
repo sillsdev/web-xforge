@@ -1,8 +1,8 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatExpansionPanel } from '@angular/material/expansion';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route, RouterModule } from '@angular/router';
@@ -1059,7 +1059,7 @@ class TestEnvironment {
   }
 
   get addQuestionButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#add-question-button'));
+    return this.fixture.debugElement.query(By.css('.add-question-button'));
   }
 
   get archivedQuestions(): DebugElement {
