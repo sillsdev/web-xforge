@@ -1,4 +1,5 @@
 using System;
+using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Scripture.Models;
 
@@ -20,7 +21,7 @@ public class DocumentRevision
     /// The source of the op/ops that comprise this revision.
     /// </value>
     /// <remarks>The source will be serialized as a string.</remarks>
-    public DocumentRevisionSource? Source { get; init; }
+    public OpSource? Source { get; init; }
 
     /// <summary>
     /// Gets the timestamp at which the revision was made.
@@ -38,6 +39,5 @@ public class DocumentRevision
     /// Gets a brief summary of the revision.
     /// </summary>
     [Obsolete("For backwards compatibility with older frontend clients. Deprecated July 2024.")]
-    public string Value =>
-        Source == DocumentRevisionSource.Paratext ? "Updated in Paratext" : "Updated in Scripture Forge";
+    public string Value => Source == OpSource.Paratext ? "Updated in Paratext" : "Updated in Scripture Forge";
 }

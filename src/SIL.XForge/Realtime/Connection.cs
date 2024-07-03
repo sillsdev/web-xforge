@@ -389,7 +389,7 @@ public class Connection : DisposableBase, IConnection
         object op,
         T currentDoc,
         int currentVersion,
-        string? source
+        OpSource? source
     )
     {
         if (_isTransaction)

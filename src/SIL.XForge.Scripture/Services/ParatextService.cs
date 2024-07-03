@@ -1937,11 +1937,7 @@ public class ParatextService : DisposableBase, IParatextService
             Op op = ops[i];
             if (
                 op.Metadata.Timestamp < milestonePeriod.AddMinutes(0 - interval)
-                || !string.Equals(
-                    op.Metadata.Source,
-                    documentRevision.Source?.ToString(),
-                    StringComparison.OrdinalIgnoreCase
-                )
+                || op.Metadata.Source != documentRevision.Source
                 || op.Metadata.UserId != documentRevision.UserId
             )
             {
@@ -1962,9 +1958,7 @@ public class ParatextService : DisposableBase, IParatextService
                 // As this is the latest op in the new period, it will define the milestone
                 documentRevision = new DocumentRevision
                 {
-                    Source = Enum.TryParse(op.Metadata.Source, ignoreCase: true, out DocumentRevisionSource source)
-                        ? source
-                        : null,
+                    Source = op.Metadata.Source,
                     Timestamp = op.Metadata.Timestamp,
                     UserId = op.Metadata.UserId,
                 };
@@ -2017,7 +2011,7 @@ public class ParatextService : DisposableBase, IParatextService
                 paratextUsers.TryGetValue(revision.User, out string? userId);
                 yield return new DocumentRevision
                 {
-                    Source = DocumentRevisionSource.Paratext,
+                    Source = OpSource.Paratext,
                     Timestamp = revision.CommitTimeStamp.UtcDateTime,
                     UserId = userId,
                 };
