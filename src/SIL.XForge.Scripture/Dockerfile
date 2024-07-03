@@ -39,6 +39,8 @@ RUN ln -s /usr/bin/hg /usr/local/bin/hg \
     </InternetSettingsMemento>' > ~/.local/share/Paratext95/InternetSettings.xml
 EXPOSE 5000
 EXPOSE 5003
+# Realtime Server debugging port
+EXPOSE 9230
 
 FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS build
 ARG configuration=Release
@@ -82,4 +84,4 @@ RUN dotnet publish SIL.XForge.Scripture.csproj -c $configuration -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "SIL.XForge.Scripture.dll", "--start-ng-serve=none"]
+ENTRYPOINT ["dotnet", "SIL.XForge.Scripture.dll", "--start-ng-serve=none", "--node-options=--inspect=0.0.0.0:9230"]
