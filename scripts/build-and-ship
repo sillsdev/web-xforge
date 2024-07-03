@@ -34,7 +34,7 @@ cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
     "WebhookPassword": "${AUTH_WEBHOOK_PASSWORD}"
   },
   "Site": {
-    "Origin": "https://scriptureforge.org;${ALTERNATE_DOMAIN}",
+    "Origin": "https://${HOSTNAME};${ALTERNATE_DOMAIN}",
   }
 }
 EOF
