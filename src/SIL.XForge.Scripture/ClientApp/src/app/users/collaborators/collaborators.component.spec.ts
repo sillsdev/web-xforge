@@ -448,9 +448,9 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything())).thenResolve(
-      'linkSharingKey01'
-    );
+    when(
+      mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything(), anything())
+    ).thenResolve('linkSharingKey01');
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
       (projectId: string, userId: string, permissions: string[]) => {
         const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);

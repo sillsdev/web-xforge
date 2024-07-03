@@ -396,9 +396,6 @@
     "invitation_shared_in_language": "L'invitation sera partagée dans",
     "link_can_be_used_by": "Le lien peut être utilisé par",
     "link_sharing_not_available_offline": "L'invitation des utilisateurs par partage de lien n'est pas disponible hors ligne.",
-    "recipient": "Seul le destinataire",
-    "recipient_can": "Seul le destinataire peut",
-    "recipient_only_notice": "Chaque lien ne peut être utilisé qu'une seule fois et expirera après 14 jours. Cliquez à nouveau sur le bouton pour générer et partager un nouveau lien.",
     "share": "Partager",
     "share_project": "Partager {{ project }}",
     "share_with_others": "Partager avec d'autres"

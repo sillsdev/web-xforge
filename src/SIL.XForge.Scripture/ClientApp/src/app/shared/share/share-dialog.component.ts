@@ -1,8 +1,8 @@
 import { Component, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -36,10 +36,20 @@ export enum ShareLinkType {
   styleUrls: ['./share-dialog.component.scss']
 })
 export class ShareDialogComponent extends SubscriptionDisposable {
+  // this is duplicated with the strings to ease their translation
+  readonly ShareExpiration = {
+    days_seven: 7,
+    days_fourteen: 14,
+    days_thirty: 30,
+    days_ninety: 90,
+    days_threesixtyfive: 365
+  };
+
   isProjectAdmin: boolean = false;
   shareLocaleCode: Locale;
   shareRole: SFProjectRole = this.data.defaultRole;
   shareLinkType: ShareLinkType = ShareLinkType.Anyone;
+  shareExpiration: number = this.ShareExpiration.days_fourteen;
 
   private readonly projectId?: string;
   private linkSharingKey: string | undefined;
@@ -75,7 +85,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       });
       this.shareRole = this.defaultShareRole;
       if (this.isProjectAdmin) {
-        this.shareLinkType = ShareLinkType.Recipient;
+        this.shareLinkType = this.shareLinkUsageOptions[0];
       }
       this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateSharingKey());
     });
@@ -118,9 +128,9 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   get shareLinkUsageOptions(): ShareLinkType[] {
     const options: ShareLinkType[] = [];
     if (this.isProjectAdmin) {
+      options.push(ShareLinkType.Anyone);
       options.push(ShareLinkType.Recipient);
-    }
-    if (
+    } else if (
       (this.shareRole === SFProjectRole.CommunityChecker &&
         this.projectDoc?.data?.checkingConfig.checkingEnabled &&
         this.projectDoc?.data?.checkingConfig.shareEnabled) ||
@@ -129,6 +139,14 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       options.push(ShareLinkType.Anyone);
     }
     return options;
+  }
+
+  get linkExpirationOptions(): string[] {
+    if (this.isProjectAdmin) {
+      return Object.keys(this.ShareExpiration);
+    } else {
+      return ['days_fourteen'];
+    }
   }
 
   get showLinkSharingUnavailable(): boolean {
@@ -192,6 +210,11 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     this.updateSharingKey();
   }
 
+  setLinkExpiration(expirationKey: string): void {
+    this.shareExpiration = this.ShareExpiration[expirationKey];
+    this.updateSharingKey();
+  }
+
   private get defaultShareRole(): SFProjectRole {
     const roles = this.userShareableRoles;
     if (this.data.defaultRole != null && roles.some(role => role === this.data.defaultRole)) {
@@ -209,7 +232,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     if (this.shareLinkType !== ShareLinkType.Recipient || this.linkSharingKey == null) {
       return;
     }
-    await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey);
+    await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey, this.shareExpiration);
     this.updateSharingKey();
   }
 
@@ -218,7 +241,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   /**
-   * Fetches or generates a new share key from the server based on the sharing requirements
+   * Generates a new share key from the server based on the sharing requirements
    */
   private updateSharingKey(): void {
     this.linkSharingReady = false;
@@ -226,7 +249,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       return;
     }
     this.projectService
-      .onlineGetLinkSharingKey(this.projectId, this.shareRole, this.shareLinkType)
+      .onlineGetLinkSharingKey(this.projectId, this.shareRole, this.shareLinkType, this.shareExpiration)
       .then((shareKey: string) => {
         this.linkSharingKey = shareKey;
         this.linkSharingReady = true;

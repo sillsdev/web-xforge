@@ -663,6 +663,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ExpirationTime = expTime,
                         ProjectRole = role,
                         ShareLinkType = ShareLinkType.Recipient,
+                        CreatedByAdmin = isAdmin
                     }
                 )
         );
@@ -706,7 +707,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         string projectId,
         string role,
-        string shareLinkType
+        string shareLinkType,
+        int daysBeforeExpiration
     )
     {
         SFProject project = await GetProjectAsync(projectId);
@@ -731,24 +733,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
-        SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
-        // Link sharing keys have Email set to null and ExpirationTime set to null.
-        string key = projectSecret
-            .ShareKeys.FirstOrDefault(sk =>
-                sk.Email == null
-                && sk.ProjectRole == role
-                && sk.ShareLinkType == shareLinkType
-                && sk.RecipientUserId == null
-                && sk.Reserved == null
-                && sk.ExpirationTime == null
-                && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
-            )
-            ?.Key;
-        if (!string.IsNullOrEmpty(key))
-            return key;
-
         // Generate a new link sharing key for the given role
-        key = _securityService.GenerateKey();
+        string key = _securityService.GenerateKey();
 
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
@@ -760,13 +746,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         Key = key,
                         ProjectRole = role,
                         ShareLinkType = shareLinkType,
+                        ExpirationTime = DateTime.UtcNow.AddDays(daysBeforeExpiration),
+                        CreatedByAdmin = isProjectAdmin
                     }
                 )
         );
         return key;
     }
 
-    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
+    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey, int daysBeforeExpiration)
     {
         ProjectSecret projectSecret =
             ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
@@ -782,7 +770,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             update =>
                 update
                     .Set(p => p.ShareKeys[index].Reserved, true)
-                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(14))
+                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(daysBeforeExpiration))
         );
     }
 
@@ -922,25 +910,37 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         throw new DataNotFoundException("project_link_is_invalid");
     }
 
+    /// <summary> Check that a share link is valid and return the corresponding secret key. </summary>
     public async Task<ValidShareKey> CheckShareKeyValidity(string shareKey)
     {
         SFProjectSecret projectSecret = GetProjectSecretByShareKey(shareKey);
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        SFProject project = await GetProjectAsync(projectSecret.Id);
 
+        // If the key isn't complete
         if (string.IsNullOrWhiteSpace(projectSecretShareKey?.ProjectRole))
         {
             throw new DataNotFoundException("role_not_found");
         }
-
-        SFProject project = await GetProjectAsync(projectSecret.Id);
-        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
+        // If the key is expired
+        if (projectSecretShareKey.ExpirationTime < DateTime.UtcNow)
+        {
+            throw new DataNotFoundException("key_expired");
+        }
+        // If the desired role is community checker but community checking is disabled
+        if (
+            projectSecretShareKey.ProjectRole == SFProjectRole.CommunityChecker
+            && !project.CheckingConfig.CheckingEnabled
+        )
+        {
+            throw new DataNotFoundException("role_not_found");
+        }
+        // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
+        if (!projectSecretShareKey.CreatedByAdmin)
         {
             string[] availableRoles = new Dictionary<string, bool>
             {
-                {
-                    SFProjectRole.CommunityChecker,
-                    project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
-                },
+                { SFProjectRole.CommunityChecker, project.CheckingConfig.ShareEnabled },
                 { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
                 { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
             }
@@ -953,13 +953,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 throw new DataNotFoundException("role_not_found");
             }
         }
-        else if (
-            projectSecretShareKey.ExpirationTime < DateTime.UtcNow
-            && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
-        )
-        {
-            throw new DataNotFoundException("key_expired");
-        }
+
         return new ValidShareKey()
         {
             Project = project,
