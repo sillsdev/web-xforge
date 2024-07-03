@@ -146,7 +146,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// </summary>
     public IEnumerable<ProjectMetadata> GetProjectsMetaData()
     {
-        JArray projects = GetJsonArray("my/projects");
+        JArray projects = GetJson<JArray>("my/projects");
         return projects?.Select(p => new ProjectMetadata((JObject)p)).ToList();
     }
 
@@ -163,7 +163,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// </remarks>
     public ProjectLicense? GetLicenseForUserProject(string paratextId)
     {
-        JObject? license = GetJsonObject($"projects/{paratextId}/license");
+        JObject? license = GetJson<JObject>($"projects/{paratextId}/license");
         if (license is null)
             return null;
         var projectLicense = new ProjectLicense(license);
@@ -185,7 +185,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// </remarks>
     public ProjectMetadata? GetProjectMetadata(string paratextId)
     {
-        JObject metadata = GetJsonObject($"projects/{paratextId}");
+        JObject metadata = GetJson<JObject>($"projects/{paratextId}");
         if (metadata is null)
             return null;
         var projectMetadata = new ProjectMetadata(metadata);
@@ -202,7 +202,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// </summary>
     private List<ProjectLicense> GetLicensesForUserProjects()
     {
-        JArray licenses = GetJsonArray("my/licenses");
+        JArray licenses = GetJson<JArray>("my/licenses");
         if (licenses == null)
             return null;
         List<ProjectLicense> result = new List<ProjectLicense>();
@@ -216,31 +216,8 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         return result;
     }
 
-    private JArray? GetJsonArray(string cgiCall)
-    {
-        DateTime startTime = DateTime.UtcNow;
-        string projectData;
-        try
-        {
-            projectData = _registryClient.Get(cgiCall);
-        }
-        catch (Paratext.Data.HttpException e)
-        {
-            _logger.LogInformation(
-                e,
-                $"external_api_request_timing pt_registry GET {cgiCall} failed after {(DateTime.UtcNow - startTime).Milliseconds} ms"
-            );
-            throw;
-        }
-        _logger.LogInformation(
-            $"external_api_request_timing pt_registry GET {cgiCall} took {(DateTime.UtcNow - startTime).Milliseconds} ms"
-        );
-        if (!string.IsNullOrEmpty(projectData) && !projectData.Equals("null", StringComparison.OrdinalIgnoreCase))
-            return JArray.Parse(projectData);
-        return null;
-    }
-
-    private JObject? GetJsonObject(string cgiCall)
+    private T? GetJson<T>(string cgiCall)
+        where T : JToken
     {
         DateTime startTime = DateTime.UtcNow;
         string projectData;
@@ -267,7 +244,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             $"external_api_request_timing pt_registry GET {cgiCall} took {(DateTime.UtcNow - startTime).Milliseconds} ms"
         );
         if (!string.IsNullOrEmpty(projectData) && !projectData.Equals("null", StringComparison.OrdinalIgnoreCase))
-            return JObject.Parse(projectData);
+            return JToken.Parse(projectData) as T;
         return null;
     }
 

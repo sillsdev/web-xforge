@@ -626,6 +626,7 @@ public class ParatextService : DisposableBase, IParatextService
         if (IsResource(project.ParatextId))
         {
             // Resources don't have project members or roles
+            return users;
         }
         else if (await IsRegisteredAsync(userSecret, project.ParatextId, token))
         {
@@ -666,6 +667,8 @@ public class ParatextService : DisposableBase, IParatextService
                     user.Id = id;
                 }
             }
+
+            return users;
         }
         else
         {
@@ -751,9 +754,9 @@ public class ParatextService : DisposableBase, IParatextService
                     users.Add(user);
                 }
             }
-        }
 
-        return users;
+            return users;
+        }
     }
 
     /// <summary>
