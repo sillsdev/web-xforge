@@ -14,7 +14,6 @@
 import { Canon } from '@sillsdev/scripture';
 import * as fs from 'fs';
 import { AbstractCursor, Db, MongoClient } from 'mongodb';
-import { Connection } from 'sharedb/lib/client';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { colored, colors, ConnectionSettings, createWS, databaseConfigs } from './utils';
@@ -72,7 +71,6 @@ class UserCommentReport {
 
     try {
       await client.connect();
-      const conn = new Connection(ws);
       const cursor = await this.queryDB(client.db());
 
       for await (const doc of cursor) {
