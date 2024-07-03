@@ -185,9 +185,6 @@ class UserCommentReport {
       )}.`
     );
 
-    const startTime: number | undefined = this.from?.getTime();
-    const endTime: number | undefined = this.to?.getTime();
-
     // First, find projects with given 'shortName' and get the project ids
     const projects = await db
       .collection('sf_projects')
@@ -211,16 +208,22 @@ class UserCommentReport {
         $unwind: '$notes'
       },
       {
+        // Convert date string to date object
+        $addFields: {
+          'notes.dateModifiedDate': { $toDate: '$notes.dateModified' }
+        }
+      },
+      {
         $match: {
           projectRef: this.projectId,
           'notes.threadId': { $not: /^BT_/ },
           'notes.type': { $ne: 'conflict' },
           'notes.content': { $exists: true },
           // Time range if provided
-          ...((startTime || endTime) && {
-            'notes.dateModified': {
-              ...(startTime && { $gte: startTime }),
-              ...(endTime && { $lte: endTime })
+          ...((this.from || this.to) && {
+            'notes.dateModifiedDate': {
+              ...(this.from && { $gte: this.from }),
+              ...(this.to && { $lte: this.to })
             }
           })
         }
