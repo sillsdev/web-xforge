@@ -76,7 +76,7 @@
           </a>
         </div>
         <mat-menu #expireMenu>
-          <mat-selection-list [multiple]="false" *ngIf="linkExpirationOptions.length > 1">
+          <mat-selection-list [multiple]="false" *ngIf="linkExpirationOptions.length > 1" hideSingleSelectionIndicator>
             <mat-list-option
               *ngFor="let key of linkExpirationOptions"
               [selected]="ShareExpiration[key] === shareExpiration"
