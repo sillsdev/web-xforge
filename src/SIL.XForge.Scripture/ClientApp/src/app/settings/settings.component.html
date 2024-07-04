@@ -264,11 +264,9 @@
               </div>
               <div class="tool-setting" *ngIf="featureFlags.scriptureAudio.enabled">
                 <div class="tool-setting-field checkbox-field">
-                  <mat-checkbox
-                    formControlName="hideCommunityCheckingText"
-                    id="checkbox-hide-community-checking-text"
-                    >{{ t("hide_community_checking_text") }}</mat-checkbox
-                  >
+                  <mat-checkbox formControlName="hideCommunityCheckingText" id="checkbox-hide-community-checking-text">
+                    {{ t("hide_community_checking_text") }}
+                  </mat-checkbox>
                   <app-info [text]="t('checkers_listen_to_scripture_audio')"></app-info>
                   <app-write-status
                     [state]="getControlState('hideCommunityCheckingText')"
