@@ -3,7 +3,8 @@ import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { catchError, Observable, throwError } from 'rxjs';
 import { isString } from '../../../../type-utils';
-import { Delta, TextDocId } from '../../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../../core/models/text-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
@@ -24,6 +25,7 @@ export interface DraftDiff {
 export class DraftViewerService {
   constructor(
     private readonly textDocService: TextDocService,
+    private readonly projectService: SFProjectService,
     private readonly draftGenerationService: DraftGenerationService
   ) {}
 
@@ -157,10 +159,25 @@ export class DraftViewerService {
           );
   }
 
-  async applyDraftAsync(textDocId: TextDocId, targetOps: DeltaOperation[]): Promise<void> {
+  async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: DeltaStatic): Promise<void> {
+    await this.textDocService.overwrite(textDocId, draftDelta);
+  }
+
+  async getAndApplyDraftAsync(textDocId: TextDocId): Promise<void> {
     await new Promise<void>(resolve => {
       this.getDraft(textDocId, { isDraftLegacy: false }).subscribe(async draft => {
-        const ops: DeltaOperation[] = this.draftDataToOps(draft, targetOps);
+        let ops: DeltaOperation[] = [];
+        if (this.isDraftSegmentMap(draft)) {
+          // Get the text doc to use to determine ops to apply
+          const textDoc: TextDoc = await this.projectService.getText(textDocId);
+          if (textDoc.data?.ops == null) {
+            throwError(() => new Error('text doc is null'));
+          } else {
+            ops = this.toDraftOps(draft, textDoc.data.ops);
+          }
+        } else {
+          ops = draft;
+        }
         const draftDelta: DeltaStatic = new Delta(ops);
         await this.textDocService.overwrite(textDocId, draftDelta);
         resolve();
