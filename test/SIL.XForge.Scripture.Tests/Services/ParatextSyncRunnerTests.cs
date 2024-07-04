@@ -1743,7 +1743,6 @@ public class ParatextSyncRunnerTests
         env.ParatextService.UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
-                40,
                 Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
@@ -1757,7 +1756,6 @@ public class ParatextSyncRunnerTests
             .UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
-                40,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Count() == 1 && t.First().Id == "project01:dataId01"),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
@@ -1783,7 +1781,6 @@ public class ParatextSyncRunnerTests
         env.ParatextService.UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
-                40,
                 Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
@@ -1797,7 +1794,6 @@ public class ParatextSyncRunnerTests
             .UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
-                40,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:dataId01"),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
@@ -2677,7 +2673,6 @@ public class ParatextSyncRunnerTests
         env.ParatextService.UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
-                null,
                 Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
@@ -2691,7 +2686,6 @@ public class ParatextSyncRunnerTests
             .UpdateParatextCommentsAsync(
                 Arg.Any<UserSecret>(),
                 "target",
-                null,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:dataId01"),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),

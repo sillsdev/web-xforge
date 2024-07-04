@@ -2638,7 +2638,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             noteThreadDocs,
             env.usernames,
             ptProjectUsers,
@@ -2717,7 +2716,6 @@ public class ParatextServiceTests
         var syncMetricsInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             paratextUsers,
@@ -2790,7 +2788,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -2888,7 +2885,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -2990,7 +2986,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3062,7 +3057,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3167,7 +3161,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3263,7 +3256,6 @@ public class ParatextServiceTests
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3322,7 +3314,6 @@ public class ParatextServiceTests
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3395,7 +3386,6 @@ public class ParatextServiceTests
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3441,7 +3431,6 @@ public class ParatextServiceTests
         await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             emptyDocs,
             env.usernames,
             ptProjectUsers,
@@ -3487,7 +3476,6 @@ public class ParatextServiceTests
                 env.Service.UpdateParatextCommentsAsync(
                     userSecret,
                     paratextId,
-                    40,
                     new[] { noteThreadDoc },
                     env.usernames,
                     ptProjectUsers,
