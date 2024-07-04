@@ -10,15 +10,15 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { DraftViewerService } from '../draft-viewer/draft-viewer.service';
+import { DraftHandlingService } from '../draft-handling/draft-handling.service';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedI18nService = mock(I18nService);
-const mockedDraftViewerService = mock(DraftViewerService);
+const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedNoticeService = mock(NoticeService);
 
-fdescribe('DraftPreviewBooks', () => {
+describe('DraftPreviewBooks', () => {
   configureTestingModule(() => ({
     imports: [
       UICommonModule,
@@ -30,7 +30,7 @@ fdescribe('DraftPreviewBooks', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: DraftViewerService, useMock: mockedDraftViewerService },
+      { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
@@ -49,7 +49,7 @@ fdescribe('DraftPreviewBooks', () => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     env.component.applyBookDraft(bookWithDraft);
-    verify(mockedDraftViewerService.getAndApplyDraftAsync(anything())).times(2);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).times(2);
     expect().nothing();
   }));
 });
@@ -91,7 +91,7 @@ class TestEnvironment {
   constructor() {
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.mockProjectDoc));
     when(mockedI18nService.localizeBook(1)).thenReturn('Genesis');
-    when(mockedDraftViewerService.getAndApplyDraftAsync(anything())).thenResolve();
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).thenResolve();
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;
     this.component;

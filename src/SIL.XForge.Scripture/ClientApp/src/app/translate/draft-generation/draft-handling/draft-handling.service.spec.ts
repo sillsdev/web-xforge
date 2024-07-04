@@ -8,14 +8,14 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
-import { DraftViewerService } from './draft-viewer.service';
+import { DraftHandlingService } from './draft-handling.service';
 
 const mockedTextDocService = mock(TextDocService);
 const mockedProjectService = mock(SFProjectService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 
-fdescribe('DraftViewerService', () => {
-  let service: DraftViewerService;
+describe('DraftHandlingService', () => {
+  let service: DraftHandlingService;
 
   configureTestingModule(() => ({
     providers: [
@@ -26,7 +26,7 @@ fdescribe('DraftViewerService', () => {
   }));
 
   beforeEach(() => {
-    service = TestBed.inject(DraftViewerService);
+    service = TestBed.inject(DraftHandlingService);
   });
 
   describe('hasDraftOps', () => {

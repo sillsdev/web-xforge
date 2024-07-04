@@ -30,7 +30,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
+import { DraftHandlingService } from '../../draft-generation/draft-handling/draft-handling.service';
 
 @Component({
   selector: 'app-editor-draft',
@@ -64,7 +64,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly destroyRef: DestroyRef,
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly draftViewerService: DraftViewerService,
+    private readonly draftHandlingService: DraftHandlingService,
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -116,17 +116,17 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         switchMap(() =>
           combineLatest([
             this.getTargetOps(),
-            this.draftViewerService.getDraft(this.textDocId!, { isDraftLegacy: false })
+            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false })
           ])
         ),
         map(([targetOps, draft]) => {
-          if (this.draftViewerService.isDraftSegmentMap(draft)) {
+          if (this.draftHandlingService.isDraftSegmentMap(draft)) {
             this.draftCheckState = 'draft-legacy';
           }
           return {
             targetOps,
             // Convert legacy draft to draft ops
-            draftOps: this.draftViewerService.draftDataToOps(draft, targetOps)
+            draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
           };
         })
       )
@@ -174,7 +174,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       }
     }
 
-    await this.draftViewerService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
+    await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
     this.isDraftApplied = true;
   }
 
