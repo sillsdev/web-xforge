@@ -297,6 +297,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly allowAdditionalTrainingSource: FeatureFlag = new FeatureFlagFromStorage(
+    'AllowAdditionalTrainingSource',
+    'Allow mixing in an additional training source',
+    13,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }
