@@ -9,7 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
-import { DraftViewerService } from '../draft-viewer/draft-viewer.service';
+import { DraftHandlingService } from '../draft-handling/draft-handling.service';
 
 export interface BookWithDraft {
   bookNumber: number;
@@ -43,7 +43,7 @@ export class DraftPreviewBooksComponent {
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly i18nService: I18nService,
-    private readonly draftViewerService: DraftViewerService,
+    private readonly draftHandlingService: DraftHandlingService,
     private readonly noticeService: NoticeService
   ) {}
 
@@ -70,7 +70,7 @@ export class DraftPreviewBooksComponent {
     const promises: Promise<void>[] = [];
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       promises.push(
-        this.draftViewerService.getAndApplyDraftAsync(
+        this.draftHandlingService.getAndApplyDraftAsync(
           new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter)
         )
       );

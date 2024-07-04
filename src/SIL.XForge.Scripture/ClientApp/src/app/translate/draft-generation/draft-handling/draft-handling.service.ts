@@ -22,7 +22,7 @@ export interface DraftDiff {
 @Injectable({
   providedIn: 'root'
 })
-export class DraftViewerService {
+export class DraftHandlingService {
   constructor(
     private readonly textDocService: TextDocService,
     private readonly projectService: SFProjectService,
