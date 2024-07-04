@@ -30,7 +30,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { DraftHandlingService } from '../../draft-generation/draft-handling/draft-handling.service';
+import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 
 @Component({
   selector: 'app-editor-draft',
@@ -119,13 +119,15 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false })
           ])
         ),
-        map(([targetOps, draft]) => {
+        tap(([_, draft]) => {
           if (this.draftHandlingService.isDraftSegmentMap(draft)) {
             this.draftCheckState = 'draft-legacy';
           }
+        }),
+        map(([targetOps, draft]) => {
           return {
             targetOps,
-            // Convert legacy draft to draft ops
+            // Convert legacy draft to draft ops if necessary
             draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
           };
         })

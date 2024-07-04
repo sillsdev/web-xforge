@@ -9,7 +9,7 @@
     </button>
   </div>
   <mat-menu #menu="matMenu">
-    <button mat-menu-item (click)="applyBookDraft(book)">{{ t("add_to_project") }}</button>
+    <button mat-menu-item (click)="applyBookDraftAsync(book)">{{ t("add_to_project") }}</button>
   </mat-menu>
   } @empty { <strong>{{ t("no_books_have_drafts") }}</strong> }
 </ng-container>
