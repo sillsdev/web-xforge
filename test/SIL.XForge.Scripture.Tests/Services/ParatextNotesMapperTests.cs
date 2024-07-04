@@ -27,7 +27,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(false, true);
+        env.InitMapper(false, true);
         env.AddData(null, null, null, null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -136,7 +136,7 @@ public class ParatextNotesMapperTests
         // pt user is a community checker on the project
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(false);
-        await env.InitMapperAsync(false, false);
+        env.InitMapper(false, false);
         env.AddData(null, null, null, null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -226,7 +226,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(false, true);
+        env.InitMapper(false, true);
         env.AddData(null, null, null, null, true);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -334,7 +334,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(false);
-        await env.InitMapperAsync(false, true);
+        env.InitMapper(false, false);
         env.AddData(null, null, null, null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -447,7 +447,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(true, true);
+        env.InitMapper(true, true);
         env.AddData("syncUser01", "syncUser03", null, "syncUser03");
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -562,7 +562,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(true, true);
+        env.InitMapper(true, true);
         env.AddData("syncUser01", "syncUser01", "syncUser03", "syncUser01");
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -693,7 +693,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(true, true);
+        env.InitMapper(true, true);
         env.AddData("syncUser01", "syncUser01", "syncUser03", "syncUser01");
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -790,7 +790,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(false, true);
+        env.InitMapper(false, true);
         env.AddData(null, null, null, null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -871,7 +871,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(false, true);
+        env.InitMapper(false, true);
         env.AddData(null, null, null, null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -895,7 +895,7 @@ public class ParatextNotesMapperTests
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
-        await env.InitMapperAsync(false, true);
+        env.InitMapper(false, true);
         env.AddData(null, null, null, null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
@@ -992,16 +992,11 @@ public class ParatextNotesMapperTests
         private IUserService UserService { get; }
         public IEnumerable<ParatextUserProfile> PtProjectUsers { get; private set; } = new List<ParatextUserProfile>();
 
-        public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
+        public void InitMapper(bool includeSyncUsers, bool twoPtUsersOnProject)
         {
             SFProject project = Project(includeSyncUsers);
             PtProjectUsers = project.ParatextUsers;
-            await Mapper.InitAsync(
-                UserSecrets.Get("user01"),
-                ParatextUsersOnProject(twoPtUsersOnProject),
-                project,
-                CancellationToken.None
-            );
+            Mapper.Init(UserSecrets.Get("user01"), ParatextUsersOnProject(twoPtUsersOnProject));
         }
 
         public void AddData(
@@ -1128,18 +1123,10 @@ public class ParatextNotesMapperTests
             return new[] { questionDoc };
         }
 
-        public void SetParatextProjectRoles(bool twoPtUserOnProject)
-        {
-            Dictionary<string, string> ptUserRoles = new Dictionary<string, string>
-            {
-                ["ptuser01"] = SFProjectRole.Administrator,
-            };
-            if (twoPtUserOnProject)
-                ptUserRoles["ptuser03"] = SFProjectRole.Translator;
+        public void SetParatextProjectRoles(bool twoPtUserOnProject) =>
             ParatextService
-                .GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
-                .Returns(ptUserRoles);
-        }
+                .GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
+                .Returns(ParatextUsersOnProject(twoPtUserOnProject));
 
         private static SFProject Project(bool includeSyncUsers = true)
         {
@@ -1158,14 +1145,26 @@ public class ParatextNotesMapperTests
             };
         }
 
-        private static List<User> ParatextUsersOnProject(bool twoPtUsersOnProject)
+        private static List<ParatextProjectUser> ParatextUsersOnProject(bool twoPtUsersOnProject)
         {
-            var ptUsers = new List<User>
-            {
-                new User { Id = "user01", ParatextId = "ptuser01" },
-            };
+            List<ParatextProjectUser> ptUsers =
+            [
+                new ParatextProjectUser
+                {
+                    Id = "user01",
+                    ParatextId = "ptuser01",
+                    Role = SFProjectRole.Administrator,
+                },
+            ];
             if (twoPtUsersOnProject)
-                ptUsers.Add(new User { Id = "user03", ParatextId = "ptuser03" });
+                ptUsers.Add(
+                    new ParatextProjectUser
+                    {
+                        Id = "user03",
+                        ParatextId = "ptuser03",
+                        Role = SFProjectRole.Translator
+                    }
+                );
             return ptUsers;
         }
     }

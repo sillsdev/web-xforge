@@ -19,17 +19,12 @@ public interface IParatextService
     Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
     string? GetParatextUsername(UserSecret userSecret);
     Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);
-    Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(
-        UserSecret userSecret,
-        SFProject project,
-        CancellationToken token
-    );
     ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId);
 
     Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
     bool IsResource(string paratextId);
     Task<string> GetResourcePermissionAsync(string paratextId, string userId, CancellationToken token);
-    Task<IReadOnlyDictionary<string, string>> GetParatextUsernameMappingAsync(
+    Task<IReadOnlyList<ParatextProjectUser>> GetParatextUsersAsync(
         UserSecret userSecret,
         SFProject project,
         CancellationToken token

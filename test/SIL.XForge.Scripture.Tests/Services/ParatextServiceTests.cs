@@ -3729,6 +3729,50 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task SendReceiveAsync_ProjectIsRegistered_Succeeds()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
+            user01Secret,
+            userRoleOnAllThePtProjects: UserRoles.Administrator,
+            extraSharedRepository: false,
+            paratextId: ptProjectId
+        );
+        env.SetupSuccessfulSendReceive();
+
+        // SUT 1
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
+        env.MockSharingLogicWrapper.Received(1)
+            .ShareChanges(
+                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId),
+                Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId.Id == ptProjectId)
+            );
+        mockSource.DidNotReceive().Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
+        env.MockSharingLogicWrapper.ClearReceivedCalls();
+
+        // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
+        // SUT 2
+        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(
+            () =>
+                env.Service.SendReceiveAsync(
+                    user01Secret,
+                    "unknownPtProjectId8",
+                    null,
+                    default,
+                    Substitute.For<SyncMetrics>()
+                )
+        );
+        Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
+        env.MockSharingLogicWrapper.DidNotReceive()
+            .ShareChanges(default, Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), default);
+    }
+
+    [Test]
     public async Task SendReceiveAsync_ProjectNotYetCloned()
     {
         var env = new TestEnvironment();
@@ -4013,7 +4057,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetProjectRolesAsync_UsesTheRepositoryForUnregisteredProjects()
+    public async Task GetParatextUsersAsync_UsesTheRepositoryForUnregisteredProjects()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4024,16 +4068,67 @@ public class ParatextServiceTests
         Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
         // SUT
-        var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
-        Assert.That(roles.Count, Is.EqualTo(2));
-        var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
-        Assert.That(roles.First(), Is.EqualTo(firstRole));
-        var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
-        Assert.That(roles.Last(), Is.EqualTo(secondRole));
+        IReadOnlyList<ParatextProjectUser> users = await env.Service.GetParatextUsersAsync(
+            userSecret,
+            project,
+            CancellationToken.None
+        );
+        Assert.That(users.Count, Is.EqualTo(2));
+        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
+        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
     }
 
     [Test]
-    public async Task GetProjectRolesAsync_UnregisteredProject_SkipsNonPTUsers()
+    public async Task GetParatextUsersAsync_UsesTheRegistryForRegisteredProjects()
+    {
+        var env = new TestEnvironment();
+        env.AddUserRepository();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        SFProject project = projects.First();
+        Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
+
+        // Set up the OK request for IsRegisteredAsync()
+        using HttpResponseMessage okResponse = TestEnvironment.MakeOkHttpResponseMessage($"\"{project.ParatextId}\"");
+        env.MakeRegistryClientReturn(okResponse);
+
+        // Set up the call of the list of users in the project
+        using HttpResponseMessage usersResponse = TestEnvironment.MakeOkHttpResponseMessage(
+            $$"""
+            [
+              {
+                "role": "{{SFProjectRole.Administrator}}",
+                "userId": "{{env.ParatextUserId01}}",
+                "username": "{{env.Username01}}"
+              },
+              {
+                "role": "{{SFProjectRole.Administrator}}",
+                "userId": "{{env.ParatextUserId02}}",
+                "username": "{{env.Username02}}"
+              }
+            ]
+            """
+        );
+        env.MockRegistryHttpClient.SendAsync(
+                Arg.Is<HttpRequestMessage>(r => r.RequestUri.ToString().Contains("/members")),
+                CancellationToken.None
+            )
+            .Returns(usersResponse);
+
+        // SUT
+        IReadOnlyList<ParatextProjectUser> users = await env.Service.GetParatextUsersAsync(
+            userSecret,
+            project,
+            CancellationToken.None
+        );
+        Assert.That(users.Count, Is.EqualTo(2));
+        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
+        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
+    }
+
+    [Test]
+    public async Task GetParatextUsersAsync_UnregisteredProject_SkipsNonPTUsers()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4047,16 +4142,18 @@ public class ParatextServiceTests
         Assert.That(project.UserRoles.Count, Is.EqualTo(4), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
         // SUT
-        var roles = await env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None);
-        Assert.That(roles.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
-        var firstRole = new KeyValuePair<string, string>(env.ParatextUserId01, SFProjectRole.Administrator);
-        Assert.That(roles.First(), Is.EqualTo(firstRole));
-        var secondRole = new KeyValuePair<string, string>(env.ParatextUserId02, SFProjectRole.Administrator);
-        Assert.That(roles.Last(), Is.EqualTo(secondRole));
+        IReadOnlyList<ParatextProjectUser> users = await env.Service.GetParatextUsersAsync(
+            userSecret,
+            project,
+            CancellationToken.None
+        );
+        Assert.That(users.Count, Is.EqualTo(2), "map of PT roles should only include PT users");
+        Assert.That(users.First(), Is.EqualTo(env.ParatextProjectUser01));
+        Assert.That(users.Last(), Is.EqualTo(env.ParatextProjectUser02));
     }
 
     [Test]
-    public async Task GetProjectRolesAsync_UnregisteredProject_MoreInfoWhenHttpException()
+    public async Task GetParatextUsersAsync_UnregisteredProject_MoreInfoWhenHttpException()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4074,11 +4171,11 @@ public class ParatextServiceTests
 
         // SUT
         Assert.ThrowsAsync<HttpException>(
-            () => env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None)
+            () => env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
         );
 
         // Various pieces of significant data are reported when a 401 Unauthorized goes thru.
-        string[] notes = { "unregistered", project.ParatextId, project.Id, userSecret.Id, "role" };
+        string[] notes = ["unregistered", project.ParatextId, project.Id, userSecret.Id, "role"];
         env.MockLogger.AssertHasEvent(
             (LogEvent logEvent) => notes.All((string note) => logEvent.Message.Contains(note))
         );
@@ -4114,33 +4211,13 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetParatextUsernameMappingAsync_UsesTheRepositoryForUnregisteredProjects()
-    {
-        var env = new TestEnvironment();
-        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
-        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
-        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-        var project = projects.First();
-        env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
-        // SUT
-        var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
-        KeyValuePair<string, string>[] expected = new[]
-        {
-            new KeyValuePair<string, string>(env.User01, env.Username01),
-            new KeyValuePair<string, string>(env.User02, env.Username02)
-        };
-        Assert.That(mapping, Is.EquivalentTo(expected));
-    }
-
-    [Test]
-    public async Task GetParatextUsernameMappingAsync_ReturnsEmptyMappingForResourceProject()
+    public async Task GetParatextUsersAsync_ReturnsEmptyMappingForResourceProject()
     {
         var env = new TestEnvironment();
         const string resourceId = "1234567890abcdef";
         Assert.That(resourceId.Length, Is.EqualTo(SFInstallableDblResource.ResourceIdentifierLength));
         var userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        var mapping = await env.Service.GetParatextUsernameMappingAsync(
+        var mapping = await env.Service.GetParatextUsersAsync(
             userSecret,
             new SFProject { ParatextId = resourceId },
             CancellationToken.None
@@ -4148,37 +4225,12 @@ public class ParatextServiceTests
         Assert.That(mapping.Count, Is.EqualTo(0));
     }
 
-    [Test]
-    public async Task GetParatextUsernameMappingAsync_WarnsWhenDuplicatePTUsernamesInUnregisteredProject()
-    {
-        var env = new TestEnvironment();
-        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        // Note that the following user secret has same PT username and id as the other user. This presumably
-        // represents a bad DB state.
-        TestEnvironment.MakeUserSecret(env.User02, env.Username01, env.ParatextUserId01);
-        env.MockJwtTokenHelper.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == env.User02)).Returns(env.Username01);
-
-        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
-        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-        var project = projects.First();
-        env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
-        // SUT
-        var mapping = await env.Service.GetParatextUsernameMappingAsync(userSecret, project, CancellationToken.None);
-        string[] requiredLogWords = { "unregistered", env.Username01, "duplicate" };
-        // Warn about the situation.
-        env.MockLogger.AssertHasEvent(
-            (LogEvent ev) => requiredLogWords.All((string requiredWord) => ev.Message.Contains(requiredWord))
-        );
-        // And still return the data.
-        Assert.That(mapping.Count, Is.EqualTo(2));
-    }
-
     enum SelectionType
     {
         Standard,
         RelatedVerse,
         Section,
-        SectionEnd
+        SectionEnd,
     }
 
     struct ThreadComponents
@@ -5044,19 +5096,21 @@ public class ParatextServiceTests
         public readonly string RuthBookUsfm =
             "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
 
-        public readonly HttpResponseMessage UnauthorizedHttpResponseMessage =
-            new(HttpStatusCode.Unauthorized)
-            {
-                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
-                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem"))
-            };
+        public readonly HttpResponseMessage UnauthorizedHttpResponseMessage = new HttpResponseMessage(
+            HttpStatusCode.Unauthorized
+        )
+        {
+            RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+            Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem")),
+        };
 
-        public readonly HttpResponseMessage NotFoundHttpResponseMessage =
-            new(HttpStatusCode.NotFound)
-            {
-                RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
-                Content = new ByteArrayContent(Encoding.UTF8.GetBytes("we looked everywhere"))
-            };
+        public readonly HttpResponseMessage NotFoundHttpResponseMessage = new HttpResponseMessage(
+            HttpStatusCode.NotFound
+        )
+        {
+            RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+            Content = new ByteArrayContent(Encoding.UTF8.GetBytes("we looked everywhere")),
+        };
 
         public readonly IWebHostEnvironment MockWebHostEnvironment;
         public readonly IOptions<ParatextOptions> MockParatextOptions;
@@ -5219,14 +5273,30 @@ public class ParatextServiceTests
         public CommentManager ProjectCommentManager { get; set; }
         public ProjectFileManager ProjectFileManager { get; set; }
 
-        public static HttpResponseMessage MakeOkHttpResponseMessage(string content)
-        {
-            return new HttpResponseMessage(HttpStatusCode.OK)
+        public ParatextProjectUser ParatextProjectUser01 =>
+            new ParatextProjectUser
+            {
+                Id = User01,
+                ParatextId = ParatextUserId01,
+                Role = SFProjectRole.Administrator,
+                Username = Username01,
+            };
+
+        public ParatextProjectUser ParatextProjectUser02 =>
+            new ParatextProjectUser
+            {
+                Id = User02,
+                ParatextId = ParatextUserId02,
+                Role = SFProjectRole.Administrator,
+                Username = Username02,
+            };
+
+        public static HttpResponseMessage MakeOkHttpResponseMessage(string content) =>
+            new HttpResponseMessage(HttpStatusCode.OK)
             {
                 RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
-                Content = new ByteArrayContent(Encoding.UTF8.GetBytes(content))
+                Content = new ByteArrayContent(Encoding.UTF8.GetBytes(content)),
             };
-        }
 
         public static UserSecret MakeUserSecret(string userSecretId, string username, string paratextUserId)
         {
@@ -5327,7 +5397,8 @@ public class ParatextServiceTests
         public IInternetSharedRepositorySource SetSharedRepositorySource(
             UserSecret userSecret,
             UserRoles userRoleOnAllThePtProjects,
-            bool extraSharedRepository = false
+            bool extraSharedRepository = false,
+            string? paratextId = null
         )
         {
             // Set up the XML for the user roles - we could use an XML Document, but this is simpler
@@ -5387,6 +5458,38 @@ public class ParatextServiceTests
             mockSource.GetRepositories().Returns(sharedRepositories);
             mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
 
+            // Set up the individual metadata and license calls if we are to configure it
+            if (paratextId is not null)
+            {
+                JObject projectLicense = JObject.Parse(
+                    $$"""
+                    {
+                      "type": "translator",
+                      "licensedToParatextId": "{{paratextId}}",
+                      "licensedToOrgs": [
+                        "5494956f5117ad586f2e2f40"
+                      ],
+                      "issuedAt": "2024-06-18T22:26:28.854Z",
+                      "expiresAt": "2024-06-18T22:26:28.854Z",
+                      "revoked": true
+                    }
+                    """
+                );
+                mockSource.GetLicenseForUserProject(paratextId).Returns(new ProjectLicense(projectLicense));
+                if (paratextId == PTProjectIds[Project01].Id)
+                {
+                    mockSource.GetProjectMetadata(paratextId).Returns(projMeta1);
+                }
+                else if (paratextId == PTProjectIds[Project02].Id)
+                {
+                    mockSource.GetProjectMetadata(paratextId).Returns(projMeta2);
+                }
+                else if (paratextId == PTProjectIds[Project03].Id)
+                {
+                    mockSource.GetProjectMetadata(paratextId).Returns(projMeta3);
+                }
+            }
+
             // An HttpException means that the repo is already unlocked, so any code should be OK with this
             mockSource
                 .When(s => s.UnlockRemoteRepository(Arg.Any<SharedRepository>()))
@@ -5404,9 +5507,8 @@ public class ParatextServiceTests
             return mockSource;
         }
 
-        public SFProject NewSFProject()
-        {
-            return new SFProject
+        public SFProject NewSFProject() =>
+            new SFProject
             {
                 Id = "sf_id_" + Project01,
                 ParatextId = PTProjectIds[Project01].Id,
@@ -5421,7 +5523,7 @@ public class ParatextServiceTests
                         ParatextId = "paratextId",
                         Name = "Source",
                         ShortName = "SRC",
-                        WritingSystem = new WritingSystem { Tag = "qaa" }
+                        WritingSystem = new WritingSystem { Tag = "qaa" },
                     }
                 },
                 CheckingConfig = new CheckingConfig { ShareEnabled = false },
@@ -5429,7 +5531,7 @@ public class ParatextServiceTests
                 {
                     { User01, SFProjectRole.Administrator },
                     { User02, SFProjectRole.CommunityChecker },
-                    { User05, SFProjectRole.Commenter }
+                    { User05, SFProjectRole.Commenter },
                 },
                 Texts =
                 {
@@ -5443,9 +5545,9 @@ public class ParatextServiceTests
                                 Number = 1,
                                 LastVerse = 6,
                                 IsValid = true,
-                                Permissions = { }
-                            }
-                        }
+                                Permissions = [],
+                            },
+                        },
                     },
                     new TextInfo
                     {
@@ -5457,25 +5559,24 @@ public class ParatextServiceTests
                                 Number = 1,
                                 LastVerse = 3,
                                 IsValid = true,
-                                Permissions = { }
+                                Permissions = [],
                             },
                             new Chapter
                             {
                                 Number = 2,
                                 LastVerse = 3,
                                 IsValid = true,
-                                Permissions = { }
-                            }
-                        }
-                    }
-                }
+                                Permissions = [],
+                            },
+                        },
+                    },
+                },
             };
-        }
 
         public void AddProjectRepository(SFProject proj = null)
         {
             proj ??= NewSFProject();
-            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(new[] { proj }));
+            RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>([proj]));
             MockFileSystemService
                 .DirectoryExists(
                     Arg.Is<string>((string path) => path.EndsWith(Path.Combine(PTProjectIds[Project01].Id, "target")))
@@ -5484,7 +5585,21 @@ public class ParatextServiceTests
         }
 
         public void AddUserRepository(User[]? users = null) =>
-            RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(users ?? []));
+            RealtimeService.AddRepository(
+                "users",
+                OTType.Json0,
+                new MemoryRepository<User>(
+                    users
+                        ??
+                        [
+                            new User { Id = User01, ParatextId = ParatextUserId01 },
+                            new User { Id = User02, ParatextId = ParatextUserId02 },
+                            new User { Id = User03, ParatextId = ParatextUserId03 },
+                            new User { Id = User04 },
+                            new User { Id = User05 },
+                        ]
+                )
+            );
 
         public void AddTextDocs(
             int bookNum,
@@ -6041,12 +6156,10 @@ public class ParatextServiceTests
             return changes;
         }
 
-        public void MakeRegistryClientReturn(HttpResponseMessage responseMessage)
-        {
+        public void MakeRegistryClientReturn(HttpResponseMessage responseMessage) =>
             MockRegistryHttpClient
                 .SendAsync(Arg.Any<HttpRequestMessage>(), Arg.Any<CancellationToken>())
                 .Returns(responseMessage);
-        }
 
         public void Dispose()
         {
