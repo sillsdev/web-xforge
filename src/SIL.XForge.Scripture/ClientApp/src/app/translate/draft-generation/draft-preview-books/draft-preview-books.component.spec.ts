@@ -5,6 +5,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -17,6 +18,7 @@ const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedI18nService = mock(I18nService);
 const mockedDraftHandlingService = mock(DraftHandlingService);
 const mockedNoticeService = mock(NoticeService);
+const mockedDialogService = mock(DialogService);
 
 describe('DraftPreviewBooks', () => {
   configureTestingModule(() => ({
@@ -31,7 +33,8 @@ describe('DraftPreviewBooks', () => {
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -45,11 +48,29 @@ describe('DraftPreviewBooks', () => {
     expect(env.getBookButtonAtIndex(0).textContent).toContain('Genesis');
   }));
 
+  it('does not apply draft if user cancels', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+    env.component.applyBookDraftAsync(bookWithDraft);
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).never();
+    verify(mockedNoticeService.show(anything())).never();
+    expect().nothing();
+  }));
+
   it('can apply all chapters of a draft to a book', fakeAsync(() => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    env.component.applyBookDraft(bookWithDraft);
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.component.applyBookDraftAsync(bookWithDraft);
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).times(2);
+    verify(mockedNoticeService.show(anything())).once();
     expect().nothing();
   }));
 });
