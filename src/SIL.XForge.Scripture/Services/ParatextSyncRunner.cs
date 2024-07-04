@@ -554,7 +554,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 .ToList();
             if (!_paratextService.IsResource(paratextId))
             {
-                LogMetric("Updating Paratext notes");
+                LogMetric("Updating Paratext notes for questions");
                 if (questionDocsByBook[text.BookNum].Count > 0)
                 {
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
@@ -564,24 +564,32 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     .Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null)
                     .ToList();
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
-                // Only update the note tag if there are SF note threads in the project
-                if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
-                    await UpdateTranslateNoteTag(paratextId);
+            }
+        }
 
-                // If there are no editable notes, do not update Paratext
-                if (noteThreadDocs.Any(nt => nt.Data.Notes.Any(n => n.Editable == true)))
-                {
-                    int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
-                    _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
-                        _userSecret,
-                        paratextId,
-                        text.BookNum,
-                        noteThreadDocs,
-                        _userIdsToDisplayNames,
-                        _currentPtSyncUsers,
-                        sfNoteTagId
-                    );
-                }
+        // Update the notes for all books if this is not a resource
+        LogMetric("Updating Paratext notes");
+        if (!_paratextService.IsResource(paratextId))
+        {
+            // Only update the note tag if there are SF note threads in the project
+            if (noteDocs.Any(nt => nt.Data.PublishedToSF == true && nt.Data?.BiblicalTermId == null))
+                await UpdateTranslateNoteTag(paratextId);
+
+            // Only update Paratext if there are editable notes
+            List<IDocument<NoteThread>> editableNotes = noteDocs
+                .Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null)
+                .ToList();
+            if (editableNotes.Count > 0)
+            {
+                int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
+                _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
+                    _userSecret,
+                    paratextId,
+                    editableNotes,
+                    _userIdsToDisplayNames,
+                    _currentPtSyncUsers,
+                    sfNoteTagId
+                );
             }
         }
 
@@ -590,7 +598,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         biblicalTermNoteThreadDocs.AddRange(noteDocs.Where(n => n.Data?.BiblicalTermId != null));
 
         // If biblical terms is not enabled, we do not want to sync an empty list, as it will remove any biblical term notes
-        if (!_projectDoc.Data.BiblicalTermsConfig.BiblicalTermsEnabled && !biblicalTermNoteThreadDocs.Any())
+        if (!_projectDoc.Data.BiblicalTermsConfig.BiblicalTermsEnabled && biblicalTermNoteThreadDocs.Count == 0)
         {
             return;
         }
@@ -601,7 +609,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
             _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
                 _userSecret,
                 paratextId,
-                null,
                 biblicalTermNoteThreadDocs,
                 _userIdsToDisplayNames,
                 _currentPtSyncUsers,
