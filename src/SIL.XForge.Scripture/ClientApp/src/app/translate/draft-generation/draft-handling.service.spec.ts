@@ -200,7 +200,7 @@ describe('DraftHandlingService', () => {
     });
   });
 
-  describe('getDraft', () => {
+  describe('draftDataToOps', () => {
     it('should return empty ops if draft is legacy and target ops is empty', () => {
       const draft: DraftSegmentMap = {
         verse_1_1: 'In the beginning',
