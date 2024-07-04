@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -42,9 +43,10 @@ export class DraftPreviewBooksComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly i18nService: I18nService,
+    private readonly i18n: I18nService,
     private readonly draftHandlingService: DraftHandlingService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly dialogService: DialogService
   ) {}
 
   linkForBookAndChapter(bookNumber: number, chapterNumber: number): string[] {
@@ -62,10 +64,19 @@ export class DraftPreviewBooksComponent {
   }
 
   bookNumberToName(bookNumber: number): string {
-    return this.i18nService.localizeBook(bookNumber);
+    return this.i18n.localizeBook(bookNumber);
   }
 
-  async applyBookDraft(bookWithDraft: BookWithDraft): Promise<void> {
+  async applyBookDraftAsync(bookWithDraft: BookWithDraft): Promise<void> {
+    const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
+    if (
+      !(await this.dialogService.confirm(
+        this.i18n.translate('draft_preview_books.add_book_to_project', { bookName }),
+        this.i18n.translate('draft_preview_books.book_contents_will_be_overwritten', { bookName })
+      ))
+    ) {
+      return;
+    }
     // TODO: What happpens if we have an error?
     const promises: Promise<void>[] = [];
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
@@ -76,6 +87,6 @@ export class DraftPreviewBooksComponent {
       );
     }
     await Promise.all(promises);
-    this.noticeService.show('drafts successfully applied');
+    this.noticeService.show(translate('draft_preview_books.draft_successfully_applied', { bookName }));
   }
 }
