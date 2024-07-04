@@ -1,20 +1,26 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { RouterModule } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { map, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
-import { DraftHandlingService } from '../draft-handling/draft-handling.service';
+import { DraftAddDialogComponent } from '../draft-add-dialog/draft-add-dialog.component';
+import { DraftHandlingService } from '../draft-handling.service';
 
 export interface BookWithDraft {
   bookNumber: number;
   chaptersWithDrafts: number[];
+}
+
+interface DraftAddDialogData {
+  bookName: string;
 }
 
 @Component({
@@ -69,16 +75,16 @@ export class DraftPreviewBooksComponent {
 
   async applyBookDraftAsync(bookWithDraft: BookWithDraft): Promise<void> {
     const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
-    if (
-      !(await this.dialogService.confirm(
-        this.i18n.translate('draft_preview_books.add_book_to_project', { bookName }),
-        this.i18n.translate('draft_preview_books.book_contents_will_be_overwritten', { bookName })
-      ))
-    ) {
-      return;
-    }
+    const data: DraftAddDialogData = { bookName };
+    const dialogRef: MatDialogRef<DraftAddDialogComponent, boolean> = this.dialogService.openMatDialog(
+      DraftAddDialogComponent,
+      { data }
+    );
+    const result: boolean | undefined = await firstValueFrom(dialogRef.afterClosed());
+    if (result !== true) return;
+
     // TODO: What happpens if we have an error?
-    const promises: Promise<void>[] = [];
+    const promises: Promise<boolean>[] = [];
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       promises.push(
         this.draftHandlingService.getAndApplyDraftAsync(
@@ -86,7 +92,12 @@ export class DraftPreviewBooksComponent {
         )
       );
     }
-    await Promise.all(promises);
+    const results: boolean[] = await Promise.all(promises);
+    if (results.some(result => !result)) {
+      // The draft is in the legacy format. This can only be applied chapter by chapter.
+      this.dialogService.message(translate('draft_preview_books.one_or_more_drafts_failed'));
+      return;
+    }
     this.noticeService.show(translate('draft_preview_books.draft_successfully_applied', { bookName }));
   }
 }

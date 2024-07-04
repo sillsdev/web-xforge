@@ -21,7 +21,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { DraftHandlingService } from '../../draft-generation/draft-handling/draft-handling.service';
+import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 import { EditorDraftComponent } from './editor-draft.component';
 
 const mockDraftGenerationService = mock(DraftGenerationService);

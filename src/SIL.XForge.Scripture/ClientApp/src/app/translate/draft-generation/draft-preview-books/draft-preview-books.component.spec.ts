@@ -1,9 +1,10 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -11,7 +12,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { DraftHandlingService } from '../draft-handling/draft-handling.service';
+import { DraftHandlingService } from '../draft-handling.service';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -51,11 +52,13 @@ describe('DraftPreviewBooks', () => {
   it('does not apply draft if user cancels', fakeAsync(() => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
+    const mockedMatDialogRef = mock(MatDialogRef);
+    when(mockedMatDialogRef.afterClosed()).thenReturn(of(false));
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(mockedMatDialogRef));
     env.component.applyBookDraftAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).never();
     verify(mockedNoticeService.show(anything())).never();
     expect().nothing();
@@ -64,13 +67,33 @@ describe('DraftPreviewBooks', () => {
   it('can apply all chapters of a draft to a book', fakeAsync(() => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    const mockedMatDialogRef = mock(MatDialogRef);
+    when(mockedMatDialogRef.afterClosed()).thenReturn(of(true));
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(mockedMatDialogRef));
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).thenResolve(true);
     env.component.applyBookDraftAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
-    verify(mockedDialogService.confirm(anything(), anything())).once();
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).times(2);
     verify(mockedNoticeService.show(anything())).once();
+    expect().nothing();
+  }));
+
+  it('shows message to generate a new draft if legacy USFM draft', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
+    const mockedMatDialogRef = mock(MatDialogRef);
+    when(mockedMatDialogRef.afterClosed()).thenReturn(of(true));
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(mockedMatDialogRef));
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).thenResolve(false);
+    env.component.applyBookDraftAsync(bookWithDraft);
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything())).times(2);
+    verify(mockedNoticeService.show(anything())).never();
+    verify(mockedDialogService.message(anything())).once();
     expect().nothing();
   }));
 });
