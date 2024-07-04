@@ -174,7 +174,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       }
     }
 
-    await this.textDocService.overwrite(this.textDocId!, this.draftDelta, 'Draft');
+    await this.draftViewerService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
     this.isDraftApplied = true;
   }
 
