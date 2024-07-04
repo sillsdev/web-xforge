@@ -7,6 +7,7 @@ import { Canon } from '@sillsdev/scripture';
 import { firstValueFrom, map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -52,7 +53,8 @@ export class DraftPreviewBooksComponent {
     private readonly i18n: I18nService,
     private readonly draftHandlingService: DraftHandlingService,
     private readonly noticeService: NoticeService,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly errorReportingService: ErrorReportingService
   ) {}
 
   linkForBookAndChapter(bookNumber: number, chapterNumber: number): string[] {
@@ -83,7 +85,6 @@ export class DraftPreviewBooksComponent {
     const result: boolean | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (result !== true) return;
 
-    // TODO: What happpens if we have an error?
     const promises: Promise<boolean>[] = [];
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
       promises.push(
@@ -92,12 +93,22 @@ export class DraftPreviewBooksComponent {
         )
       );
     }
-    const results: boolean[] = await Promise.all(promises);
-    if (results.some(result => !result)) {
-      // The draft is in the legacy format. This can only be applied chapter by chapter.
+
+    try {
+      const results: boolean[] = await Promise.all(promises);
+      if (results.some(result => !result)) {
+        // The draft is in the legacy format. This can only be applied chapter by chapter.
+        this.dialogService.message(translate('draft_preview_books.one_or_more_drafts_failed'));
+        return;
+      }
+      this.noticeService.show(translate('draft_preview_books.draft_successfully_applied', { bookName }));
+    } catch (error) {
+      // report the error to bugsnag
+      this.errorReportingService.silentError(
+        'Error while trying to apply a draft',
+        ErrorReportingService.normalizeError(error)
+      );
       this.dialogService.message(translate('draft_preview_books.one_or_more_drafts_failed'));
-      return;
     }
-    this.noticeService.show(translate('draft_preview_books.draft_successfully_applied', { bookName }));
   }
 }

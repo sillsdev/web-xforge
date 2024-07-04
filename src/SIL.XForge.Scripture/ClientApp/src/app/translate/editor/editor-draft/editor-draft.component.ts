@@ -150,6 +150,23 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       });
   }
 
+  async applyDraft(): Promise<void> {
+    if (this.draftDelta == null) {
+      throw new Error('No draft ops to apply.');
+    }
+
+    // Warn before overwriting existing text
+    if (this.hasContent(this.targetDelta?.ops)) {
+      const proceed: boolean = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
+      if (!proceed) {
+        return;
+      }
+    }
+
+    await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
+    this.isDraftApplied = true;
+  }
+
   private setInitialState(): void {
     this.draftCheckState = 'draft-unknown';
     this.bookChapterName = this.getLocalizedBookChapter();
@@ -161,23 +178,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftExists(): Observable<boolean> {
     // This method of checking for draft may be temporary until there is a better way supplied by serval
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
-  }
-
-  async applyDraft(): Promise<void> {
-    if (this.draftDelta == null) {
-      throw new Error('No draft ops to apply.');
-    }
-
-    // Warn before overwriting existing text
-    if (this.hasContent(this.targetDelta?.ops)) {
-      const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
-      if (!proceed) {
-        return;
-      }
-    }
-
-    await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
-    this.isDraftApplied = true;
   }
 
   private hasContent(delta?: DeltaOperation[]): boolean {
