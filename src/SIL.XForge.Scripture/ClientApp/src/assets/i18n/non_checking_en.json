@@ -203,7 +203,8 @@
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
   },
   "draft_preview_books": {
-    "no_books_have_drafts": " No books have any drafts."
+    "no_books_have_drafts": " No books have any drafts.",
+    "add_to_project": "Add to project"
   },
   "editor": {
     "add_comment": "Add Comment",

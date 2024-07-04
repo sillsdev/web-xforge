@@ -182,7 +182,7 @@ describe('EditorDraftComponent', () => {
       });
     }));
 
-    it('should apply draft using TextDocService.overwrite()', fakeAsync(() => {
+    it('should apply draft using draft viewer service', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
       } as SFProjectProfileDoc;
@@ -202,7 +202,7 @@ describe('EditorDraftComponent', () => {
       tick();
 
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
-      verify(mockTextDocService.overwrite(component.textDocId!, component['draftDelta']!)).once();
+      verify(mockDraftViewerService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
       expect(component.isDraftApplied).toBe(true);
     }));
   });

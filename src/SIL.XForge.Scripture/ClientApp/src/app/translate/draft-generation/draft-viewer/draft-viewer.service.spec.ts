@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { DeltaOperation } from 'rich-text';
+import { Delta, DeltaOperation } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -14,13 +14,13 @@ const mockedTextDocService = mock(TextDocService);
 const mockedProjectService = mock(SFProjectService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 
-describe('DraftViewerService', () => {
+fdescribe('DraftViewerService', () => {
   let service: DraftViewerService;
 
   configureTestingModule(() => ({
     providers: [
-      { provide: TextDocService, useMock: mockedTextDocService },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: TextDocService, useMock: mockedTextDocService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
     ]
   }));
@@ -243,6 +243,31 @@ describe('DraftViewerService', () => {
       ];
       const result: DeltaOperation[] = service.draftDataToOps(draftOps, targetOps);
       expect(result).toEqual(draftOps);
+    });
+  });
+
+  describe('applyChapterDraftAsync', () => {
+    it('should apply draft to text doc', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const draftOps: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
+      verify(mockedTextDocService.overwrite(textDocId, anything())).once();
+      expect().nothing();
+    });
+  });
+
+  describe('getAndApplyDraftAsync', () => {
+    it('should get and apply draft', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const draft: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      when(
+        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
+      ).thenReturn(of(draft));
+      await service.getAndApplyDraftAsync(textDocId);
+      verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
+      verify(mockedProjectService.getText(textDocId)).never();
+      verify(mockedTextDocService.overwrite(textDocId, anything())).once();
+      expect().nothing();
     });
   });
 
