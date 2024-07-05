@@ -198,7 +198,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         }
 
         err.message = this.translocoService.translate('connect_project.problem_already_connected');
-        this.errorHandler.handleError(err);
+        await this.errorHandler.handleError(err);
         this.state = 'input';
         this.populateProjectList();
         return;
