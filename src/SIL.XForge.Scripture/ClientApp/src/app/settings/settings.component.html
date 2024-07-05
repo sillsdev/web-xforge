@@ -167,7 +167,10 @@
                     id="alternate-training-source-status"
                   ></app-write-status>
                 </div>
-                <div class="tool-setting">
+                <div
+                  *ngIf="isAdditionalTrainingSourceEnabled || featureFlags.allowAdditionalTrainingSource.enabled"
+                  class="tool-setting"
+                >
                   <div class="tool-setting-field checkbox-field">
                     <mat-checkbox
                       formControlName="additionalTrainingSourceEnabled"
