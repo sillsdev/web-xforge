@@ -117,7 +117,8 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
 
   movablePredicate(index: number, draggingTab: CdkDrag<TabComponent>, dropList: CdkDropList): boolean {
     const dropListItems = dropList.getSortedItems();
-    const isGroupTransfer = !dropListItems.includes(draggingTab);
+    const draggingTabIndex = dropListItems.indexOf(draggingTab);
+    const isGroupTransfer = draggingTabIndex === -1;
     let dragIndex: number = index;
 
     // As of (v16), CDK drag and drop seems to have some issues transferring horizontally-oriented items in RTL
@@ -132,7 +133,22 @@ export class TabGroupHeaderComponent implements OnChanges, OnInit, AfterViewInit
     }
 
     const tabToMove: CdkDrag<any> = dropListItems[dragIndex];
-    return tabToMove != null && (tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable);
+
+    if (tabToMove == null) {
+      return false;
+    }
+
+    // Can't move item from after immovable to before immovable within same group
+    if (!isGroupTransfer && draggingTabIndex > dragIndex) {
+      // Disallow move if any items between the drag index and the dragging tab are immovable
+      for (let i = dragIndex; i < draggingTabIndex; i++) {
+        if (!dropListItems[i].data.movable && !dropListItems[i].data.isAddTab) {
+          return false;
+        }
+      }
+    }
+
+    return tabToMove.data.isAddTab || (tabToMove.data as TabComponent).movable;
   }
 
   onAddTabClicked(): void {
