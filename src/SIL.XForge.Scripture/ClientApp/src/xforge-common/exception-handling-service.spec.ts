@@ -6,8 +6,8 @@ import { Breadcrumb, NotifiableError } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { Observable } from 'rxjs';
-import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { of } from 'rxjs';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
 import { DialogService } from './dialog.service';
@@ -238,8 +238,7 @@ class TestEnvironment {
   readonly errorReports: { error: any }[] = [];
   readonly fixture: ComponentFixture<HostComponent>;
   readonly service: ExceptionHandlingService;
-  rejectUser = false;
-  timeoutUser = false;
+  readonly mockedDialogRef = mock<MatDialogRef<ErrorDialogComponent>>(MatDialogRef);
 
   userDoc: UserDoc | undefined = {
     data: createTestUser() as Readonly<User>,
@@ -251,14 +250,8 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
 
-    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn({
-      afterClosed: () =>
-        ({
-          subscribe: (callback: () => void) => {
-            setTimeout(callback, 0);
-          }
-        } as Observable<{}>)
-    } as MatDialogRef<ErrorDialogComponent, {}>);
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedDialogRef));
+    when(this.mockedDialogRef.afterClosed()).thenReturn(of({}));
 
     when(mockedPwaService.isRunningInstalledApp).thenReturn(false);
 
@@ -286,8 +279,8 @@ class TestEnvironment {
     return breadcrumb;
   }
 
-  async handleError(error: any): Promise<void> {
-    await this.service.handleError(error);
+  handleError(error: any): void {
+    this.service.handleError(error);
     flush();
   }
 }
