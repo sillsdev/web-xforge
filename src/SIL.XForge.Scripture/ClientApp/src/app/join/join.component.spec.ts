@@ -1,5 +1,5 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -35,6 +35,7 @@ const mockedLocationService = mock(LocationService);
 const mockedRouter = mock(Router);
 const mockErrorReportingService = mock(ErrorReportingService);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedErrorHandler = mock(ErrorHandler);
 
 describe('JoinComponent', () => {
   configureTestingModule(() => ({
@@ -58,7 +59,8 @@ describe('JoinComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: Router, useMock: mockedRouter },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
-      { provide: SFProjectService, useMock: mockedSFProjectService }
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: ErrorHandler, useMock: mockedErrorHandler }
     ]
   }));
 
@@ -85,23 +87,10 @@ describe('JoinComponent', () => {
     expect().nothing();
   }));
 
-  it('check sharing link forbidden', fakeAsync(() => {
-    const callback = (_: TestEnvironment): void => {
-      when(mockedSFProjectService.onlineJoinWithShareKey(anything())).thenReject(
-        new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
-      );
-    };
-    new TestEnvironment({ callback, isLoggedIn: true });
-
-    verify(mockedDialogService.message(anything())).once();
-    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
-    expect().nothing();
-  }));
-
   it('check sharing link project not found', fakeAsync(() => {
     const callback = (_: TestEnvironment): void => {
       when(mockedSFProjectService.onlineJoinWithShareKey(anything())).thenReject(
-        new CommandError(CommandErrorCode.NotFound, 'NotFound')
+        new CommandError(CommandErrorCode.NotFound, 'role_not_found')
       );
     };
     new TestEnvironment({ callback, isLoggedIn: true });
@@ -176,12 +165,24 @@ describe('JoinComponent', () => {
     it('redirect to home when using an invalid share link', fakeAsync(() => {
       const callback = (_: TestEnvironment): void => {
         when(mockedAnonymousService.checkShareKey(anything())).thenReject(
-          new CommandError(CommandErrorCode.NotFound, 'NotFound')
+          new CommandError(CommandErrorCode.NotFound, 'key_expired')
         );
       };
       new TestEnvironment({ callback });
 
       verify(mockedDialogService.message(anything())).once();
+      verify(mockedLocationService.go('/')).once();
+      expect().nothing();
+    }));
+
+    it('redirect to home on unknown error', fakeAsync(() => {
+      const callback = (_: TestEnvironment): void => {
+        when(mockedAnonymousService.checkShareKey(anything())).thenReject(
+          new CommandError(CommandErrorCode.NotFound, 'unknown')
+        );
+      };
+      new TestEnvironment({ callback });
+      verify(mockedErrorHandler.handleError(anything())).once();
       verify(mockedLocationService.go('/')).once();
       expect().nothing();
     }));

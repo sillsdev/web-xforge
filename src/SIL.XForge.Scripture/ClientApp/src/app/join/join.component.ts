@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, ErrorHandler } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
@@ -14,8 +14,8 @@ import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { CommandError } from 'xforge-common/command.service';
 import { ObjectPaths } from '../../type-utils';
-import { CommandError } from '../../xforge-common/command.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 export interface AnonymousShareKeyDetails {
@@ -47,6 +47,7 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly reportingService: ErrorReportingService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly errorHandler: ErrorHandler,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -176,7 +177,7 @@ export class JoinComponent extends DataLoadingComponent {
     await this.dialogService.message(`join.${key}`);
   }
 
-  private async handleErrorJoining(error: unknown): Promise<void> {
+  private async handleErrorJoining(error: any): Promise<void> {
     const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
       'error_occurred_login',
       'key_already_used',
@@ -185,12 +186,14 @@ export class JoinComponent extends DataLoadingComponent {
       'role_not_found'
     ];
 
-    if (error instanceof HttpErrorResponse && KNOWN_ERROR_CODES.includes(error.error)) {
+    const isKnownJoinError = (code: any): code is ObjectPaths<typeof en.join> => KNOWN_ERROR_CODES.includes(code);
+
+    if (error instanceof HttpErrorResponse && isKnownJoinError(error.error)) {
       await this.showJoinError(error.error);
-    } else if (error instanceof CommandError && KNOWN_ERROR_CODES.includes(error.message as any)) {
-      await this.showJoinError(error.message as any);
+    } else if (error instanceof CommandError && isKnownJoinError(error.message)) {
+      await this.showJoinError(error.message);
     } else {
-      throw error;
+      await this.errorHandler.handleError(error);
     }
   }
 }
