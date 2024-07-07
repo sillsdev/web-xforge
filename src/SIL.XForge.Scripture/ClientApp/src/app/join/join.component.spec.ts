@@ -96,6 +96,7 @@ describe('JoinComponent', () => {
     new TestEnvironment({ callback, isLoggedIn: true });
 
     verify(mockedDialogService.message(anything())).once();
+    verify(mockedErrorHandler.handleError(anything())).never();
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
@@ -171,6 +172,7 @@ describe('JoinComponent', () => {
       new TestEnvironment({ callback });
 
       verify(mockedDialogService.message(anything())).once();
+      verify(mockedErrorHandler.handleError(anything())).never();
       verify(mockedLocationService.go('/')).once();
       expect().nothing();
     }));

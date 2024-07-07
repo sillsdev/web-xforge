@@ -115,7 +115,7 @@ export class JoinComponent extends DataLoadingComponent {
         this.name.enable();
       }
     } catch (e) {
-      await this.handleErrorJoining(e);
+      await this.handleJoiningError(e);
       this.locationService.go(this.locationService.origin);
     }
     this.status = 'input';
@@ -137,7 +137,7 @@ export class JoinComponent extends DataLoadingComponent {
       const projectId = await this.projectService.onlineJoinWithShareKey(shareKey);
       this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
     } catch (err) {
-      this.handleErrorJoining(err);
+      await this.handleJoiningError(err);
       this.router.navigateByUrl('/projects', { replaceUrl: true });
     }
   }
@@ -153,7 +153,7 @@ export class JoinComponent extends DataLoadingComponent {
     try {
       this.joiningResponse = await this.anonymousService.checkShareKey(shareKey);
     } catch (e) {
-      await this.handleErrorJoining(e);
+      await this.handleJoiningError(e);
       this.locationService.go(this.locationService.origin);
     } finally {
       this.loadingFinished();
@@ -177,7 +177,7 @@ export class JoinComponent extends DataLoadingComponent {
     await this.dialogService.message(`join.${key}`);
   }
 
-  private async handleErrorJoining(error: any): Promise<void> {
+  private async handleJoiningError(error: any): Promise<void> {
     const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
       'error_occurred_login',
       'key_already_used',
