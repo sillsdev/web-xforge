@@ -54,10 +54,16 @@
                   mat-icon-button
                   *ngIf="!answer.input?.audioUrl && answer.audioAttachment.status !== 'recording'"
                   (click)="startRecording()"
+                  [matTooltip]="t('tooltip_record')"
                 >
                   <mat-icon>mic</mat-icon>
                 </button>
-                <button mat-icon-button *ngIf="answer.audioAttachment.status === 'recording'" (click)="stopRecording()">
+                <button
+                  mat-icon-button
+                  *ngIf="answer.audioAttachment.status === 'recording'"
+                  (click)="stopRecording()"
+                  [matTooltip]="t('tooltip_stop')"
+                >
                   <mat-icon class="stop-recording">stop</mat-icon>
                 </button>
               </div>
@@ -74,7 +80,13 @@
                   <mat-icon>clear</mat-icon>
                 </button>
               </div>
-              <button mat-icon-button *ngIf="!selectedText" id="select-scripture" (click)="selectScripture()">
+              <button
+                mat-icon-button
+                *ngIf="!selectedText"
+                id="select-scripture"
+                (click)="selectScripture()"
+                [matTooltip]="t('tooltip_attach')"
+              >
                 <mat-icon class="attach-icon">attach_file</mat-icon>
               </button>
               <div *ngIf="selectedText" class="answer-scripture">

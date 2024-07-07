@@ -167,7 +167,13 @@
                       disableRipple
                     >
                       <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                        <button mat-icon-button (click)="questionDialog(questionDoc)" class="edit-btn">
+                        <button
+                          mat-icon-button
+                          (click)="questionDialog(questionDoc)"
+                          class="edit-btn"
+                          [matTooltip]="t('tooltip_edit')"
+                          matTooltipPosition="left"
+                        >
                           <mat-icon>edit</mat-icon>
                         </button>
                         v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
