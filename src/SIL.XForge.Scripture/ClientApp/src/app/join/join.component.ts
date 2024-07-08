@@ -181,7 +181,7 @@ export class JoinComponent extends DataLoadingComponent {
     const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
       'error_occurred_login',
       'key_already_used',
-      'key_expired',
+      // 'key_expired',
       'max_users_reached',
       'role_not_found'
     ];
