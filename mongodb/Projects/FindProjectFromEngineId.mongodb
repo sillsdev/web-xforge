@@ -1,0 +1,11 @@
+use('xforge')
+
+const engineId = '';
+
+const projectId = db.sf_project_secrets.findOne({
+  'servalData.preTranslationEngineId': engineId
+})._id
+
+db.sf_projects.findOne({
+  _id: projectId
+})
