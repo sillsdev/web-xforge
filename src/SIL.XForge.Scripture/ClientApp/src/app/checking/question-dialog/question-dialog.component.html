@@ -51,10 +51,16 @@
             mat-icon-button
             *ngIf="!input.input?.audioUrl && input.audioAttachment.status !== 'recording'"
             (click)="startRecording()"
+            [matTooltip]="t('tooltip_record')"
           >
             <mat-icon>mic</mat-icon>
           </button>
-          <button mat-icon-button *ngIf="input.audioAttachment.status === 'recording'" (click)="stopRecording()">
+          <button
+            mat-icon-button
+            *ngIf="input.audioAttachment.status === 'recording'"
+            (click)="stopRecording()"
+            [matTooltip]="t('tooltip_stop')"
+          >
             <mat-icon class="stop-recording">stop</mat-icon>
           </button>
         </div>

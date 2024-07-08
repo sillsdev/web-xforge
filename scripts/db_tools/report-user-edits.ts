@@ -5,10 +5,10 @@
  * Generates a TSV file with user edit counts by chapter for a given project within a given time range.
  * Usage: ./report-user-edits.ts
  *        --env [dev|qa|live] (default: dev)
- *        --project [projectId] (required)
+ *        --project [project short name] (required)
  *        --from [YYYY-MM-DD] (optional)
  *        --to [YYYY-MM-DD] (optional)
- *        --outfile [filename] (default: summary.tsv)
+ *        --outfile [filename] (default: [project]_[report]_([dateFrom]_to_[dateTo]).tsv)
  */
 
 import diff from 'fast-diff';
@@ -41,7 +41,8 @@ interface UserEditData {
 class UserEditReport {
   connectionConfig: ConnectionSettings;
   env: string;
-  projectId: string;
+  projectId?: string;
+  projectShortName: string;
   from?: Date;
   to?: Date;
   outfile: string;
@@ -51,17 +52,19 @@ class UserEditReport {
 
   summary?: Map<string, UserEditData>;
 
+  readonly reportName = 'user-edit-counts';
+
   constructor() {
     const args: ScriptArgs = this.processArgs();
     this.env = args.env!;
     this.connectionConfig = databaseConfigs.get(this.env)!;
-    this.projectId = args.project;
-    this.from = args.from ? new Date(args.from) : undefined;
-    this.to = args.to ? new Date(args.to) : undefined;
+    this.projectShortName = args.project;
+    this.from = args.from ? new Date(`${this.normalizeDateString(args.from)}T00:00`) : undefined; // Start of day
+    this.to = args.to ? new Date(`${this.normalizeDateString(args.to)}T23:59:59`) : undefined; // End of day
     this.outfile = args.outfile!;
 
-    this.fromPretty = this.from?.toLocaleDateString() ?? 'beginning';
-    this.toPretty = this.to?.toLocaleDateString() ?? 'now';
+    this.fromPretty = this.formatDate(this.from) ?? 'beginning';
+    this.toPretty = this.formatDate(this.to ?? new Date())!;
   }
 
   async run() {
@@ -74,7 +77,7 @@ class UserEditReport {
     try {
       await client.connect();
       const conn = new Connection(ws);
-      const cursor = this.queryDB(client.db());
+      const cursor = await this.queryDB(client.db());
       let baselineSnapshotVersion = 0;
       let prevKey: string | null = null;
       let prevDoc: any = null;
@@ -117,8 +120,23 @@ class UserEditReport {
     }
   }
 
+  /**
+   * Formats a date to a string in the format 'YYYY-MM-DD'.
+   */
+  private formatDate(date: Date | undefined | null): string | undefined {
+    return date?.toLocaleDateString('en-CA', { year: 'numeric', month: 'numeric', day: 'numeric' });
+  }
+
   private getColorFunc(color: number) {
     return colored.bind(null, color);
+  }
+
+  private getOutfileName(): string {
+    return this.outfile
+      .replace(/\[project\]/g, this.projectShortName)
+      .replace(/\[report\]/g, this.reportName)
+      .replace(/\[dateFrom\]/g, this.fromPretty)
+      .replace(/\[dateTo\]/g, this.toPretty);
   }
 
   /**
@@ -148,6 +166,14 @@ class UserEditReport {
     }
 
     return key;
+  }
+
+  /**
+   * Converts a date string from 'YYYY-M-D' to 'YYYY-MM-DD'.
+   */
+  private normalizeDateString(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
   }
 
   /**
@@ -211,7 +237,7 @@ class UserEditReport {
         type: 'string',
         requiresArg: true,
         demandOption: true,
-        description: 'Project ID'
+        description: 'Project short name'
       })
       .option('from', {
         type: 'string',
@@ -225,23 +251,60 @@ class UserEditReport {
       })
       .option('outfile', {
         type: 'string',
-        default: 'summary.tsv',
+        default: '[project]_[report]_([dateFrom]_to_[dateTo]).tsv',
         requiresArg: true,
         description: 'File path to write report to'
+      })
+      .check(argv => {
+        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}$/;
+
+        if (argv.from && !dateFormatRegex.test(argv.from)) {
+          throw new Error("The 'from' date must be in the format YYYY-M-D");
+        }
+
+        if (argv.to && !dateFormatRegex.test(argv.to)) {
+          throw new Error("The 'to' date must be in the format YYYY-M-D");
+        }
+
+        if (argv.from && argv.to && new Date(argv.from) > new Date(argv.to)) {
+          throw new Error('Start date must be before end date');
+        }
+
+        return true;
       })
       .strict()
       .parseSync();
   }
 
-  private queryDB(db: Db): AbstractCursor {
+  private async queryDB(db: Db): Promise<AbstractCursor> {
     const blue = this.getColorFunc(colors.lightBlue);
 
     console.log(
-      `Querying edits for project ${blue(this.projectId)} from ${blue(this.fromPretty)} to ${blue(this.toPretty)}.`
+      `Querying edits for project "${blue(this.projectShortName)}" from ${blue(this.fromPretty)} to ${blue(
+        this.toPretty
+      )}.`
     );
 
     const startTime: number | undefined = this.from?.getTime();
     const endTime: number | undefined = this.to?.getTime();
+
+    // First, find projects with given 'shortName' and get the project ids
+    const projects = await db
+      .collection('sf_projects')
+      .find({ shortName: new RegExp(`^${this.projectShortName}$`, 'i') }, { projection: { _id: 1, shortName: 1 } })
+      .toArray();
+
+    // Ensure only one matching project (there are occasional collisions with short names)
+    if (projects.length === 0) {
+      throw new Error(`No project found with shortName ${this.projectShortName}`);
+    } else if (projects.length > 1) {
+      throw new Error(
+        `Multiple projects found with shortName "${this.projectShortName}" ${projects.map(p => p._id).join(', ')}`
+      );
+    }
+
+    this.projectId = projects[0]._id.toString();
+    this.projectShortName = projects[0].shortName; // Update project short name to match case in db
 
     const query = {
       d: new RegExp(`^${this.projectId}:`),
@@ -296,24 +359,17 @@ class UserEditReport {
    * Stringifies a UserEditData object to a TSV row.
    */
   private toDataRow(data: UserEditData): string {
-    return [
-      data.userId,
-      data.userDisplayName,
-      data.bookChapter,
-      data.inserts,
-      data.deletes,
-      data.wordAdds,
-      data.wordDeletes
-    ].join('\t');
+    return [data.userDisplayName, data.bookChapter, data.inserts, data.deletes, data.wordAdds, data.wordDeletes].join(
+      '\t'
+    );
   }
 
   /**
    * Converts a map of UserEditData objects to a TSV string.
    */
   private toTsv(summary: Map<string, UserEditData>): string {
-    const title = `User edits on ${this.env} for project "${this.projectId}" from ${this.fromPretty} to ${this.toPretty}`;
+    const title = `User edits on ${this.env} for project "${this.projectShortName} (${this.projectId})" from ${this.fromPretty} to ${this.toPretty}`;
     const header: string[] = [
-      'User ID',
       'User Name',
       'Book:Chapter',
       'Raw Insertions',
@@ -331,9 +387,11 @@ class UserEditReport {
       throw new Error('Summary not initialized.');
     }
 
-    console.log(`\nWriting summary to "${this.outfile}"`);
+    const outfile = this.getOutfileName();
+
+    console.log(`\nWriting summary to "${outfile}"`);
     const encoder = new TextEncoder();
-    fs.writeFileSync(this.outfile, encoder.encode(this.toTsv(this.summary)));
+    fs.writeFileSync(outfile, encoder.encode(this.toTsv(this.summary)));
   }
 }
 
