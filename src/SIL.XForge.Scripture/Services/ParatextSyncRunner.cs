@@ -1693,7 +1693,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         }
 
-        // NOTE: This is executed outside of the transaction because it modifies "Sync.QueuedCount"
         await _projectDoc.SubmitJson0OpAsync(op =>
         {
             op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
@@ -1708,29 +1707,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 Log($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
                 op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
                 op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
-                op.Set(pd => pd.Sync.DataInSync, true);
             }
             else
             {
                 Log(
                     $"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'."
                 );
-                op.Set(pd => pd.Sync.DataInSync, dataInSync);
-            }
-            // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
-            // an event for each individual op even if they are applied as a batch, so this needs to be set last,
-            // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
-            // complete.
-            if (_projectDoc.Data.Sync.QueuedCount > 0)
-            {
-                op.Inc(pd => pd.Sync.QueuedCount, -1);
-            }
-            else
-            {
-                Log(
-                    $"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly {_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing."
-                );
-                op.Set(pd => pd.Sync.QueuedCount, 0);
             }
 
             if (updateRoles)
@@ -1889,9 +1871,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Commit or rollback the transaction, depending on success
         if (successful)
         {
-            // Write the operations to the database
-            await _conn.CommitTransactionAsync();
-
             // Backup the repository
             if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
             {
@@ -1903,15 +1882,42 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                 if (!backupOutcome)
                 {
-                    Log($"CompleteSync: Failure backing up local PT repo.");
+                    Log("CompleteSync: Failure backing up local PT repo.");
                 }
             }
+
+            // Write the operations to the database
+            await _conn.CommitTransactionAsync();
         }
         else
         {
             // Rollback the operations (the repository was restored above)
             _conn.RollbackTransaction();
         }
+
+        // NOTE: This is executed outside the transaction because QueuedCount updates the frontend,
+        // and dataInSync must record the real value if a transaction fails.
+        await _projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Set(pd => pd.Sync.DataInSync, dataInSync);
+
+            // The frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
+            // an event for each individual op even if they are applied as a batch, so this needs to be set last,
+            // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
+            // complete.
+            if (_projectDoc.Data.Sync.QueuedCount > 0)
+            {
+                op.Inc(pd => pd.Sync.QueuedCount, -1);
+            }
+            else
+            {
+                Log(
+                    $"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly "
+                        + $"{_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing."
+                );
+                op.Set(pd => pd.Sync.QueuedCount, 0);
+            }
+        });
 
         ReportRepoRevs("CompleteSync: ");
 
