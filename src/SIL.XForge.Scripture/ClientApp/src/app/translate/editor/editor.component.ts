@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentType } from '@angular/cdk/portal';
 import {
   AfterViewInit,
@@ -86,6 +87,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -240,6 +242,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private commenterSelectedVerseRef?: VerseRef;
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
+  private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
 
@@ -266,7 +269,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly destroyRef: DestroyRef
+    private readonly destroyRef: DestroyRef,
+    private readonly breakpointObserver: BreakpointObserver,
+    private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -760,6 +765,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .subscribe(() => {
         this.syncScroll();
       });
+
+    // Consolidate tab groups for small screen widths
+    combineLatest([
+      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.SM)),
+      this.tabStateInitialized$.pipe(filter(initialized => initialized)),
+      this.targetEditorLoaded$
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([breakpointState]) => {
+        if (breakpointState.matches && this.showSource) {
+          this.tabState.consolidateTabGroups('target');
+        } else {
+          this.tabState.deconsolidateTabGroups();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -1163,8 +1183,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * avoiding potential NG0911 error 'View has already been destroyed'.
    */
   initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
-    const tabStateInitialized$ = new BehaviorSubject<boolean>(false);
-
     // Set tab state from persisted tabs plus non-persisted tabs
     const storeToState$: Observable<any> = this.editorTabPersistenceService.persistedTabs$.pipe(
       take(1),
@@ -1217,7 +1235,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
 
         // Notify to start tab persistence on tab state changes
-        tabStateInitialized$.next(true);
+        this.tabStateInitialized$.next(true);
 
         // View is initialized before the tab state is initialized, so re-run change detection
         this.changeDetector.detectChanges();
@@ -1227,7 +1245,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Persist tabs from tab state changes once tab state has been initialized
     const stateToStore$: Observable<any> = combineLatest([
       this.tabState.tabs$,
-      tabStateInitialized$.pipe(filter(initialized => initialized))
+      this.tabStateInitialized$.pipe(filter(initialized => initialized))
     ]).pipe(
       map(([tabs]) => {
         const tabsToPersist: EditorTabPersistData[] = [];
@@ -1336,15 +1354,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (hasDraft) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
+      const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
-      // Add to 'source' tab group if no draft tab
+      // Add to 'source' (or 'target' if showSource is false) tab group if no existing draft tab
       if (existingDraftTab == null) {
         const draftBuild: BuildDto | undefined = await firstValueFrom(
           this.draftGenerationService.getLastCompletedBuild(this.projectId!)
         );
 
         this.tabState.addTab(
-          'source',
+          groupIdToAddTo,
           await this.editorTabFactory.createTab('draft', {
             tooltip: `Draft - ${this.editorHistoryService.formatTimestamp(
               draftBuild?.additionalInfo?.dateFinished,
@@ -1356,10 +1375,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
 
       if (urlDraftActive) {
-        // Remove 'draft-active' query string from url when another tab from 'source' is selected
+        // Remove 'draft-active' query string from url when another tab from group is selected
         this.tabState.tabs$
           .pipe(
-            filter(tabs => tabs.some(tab => tab.groupId === 'source' && tab.type !== 'draft' && tab.isSelected)),
+            filter(tabs => tabs.some(tab => tab.groupId === groupIdToAddTo && tab.type !== 'draft' && tab.isSelected)),
             take(1)
           )
           .subscribe(() => {
