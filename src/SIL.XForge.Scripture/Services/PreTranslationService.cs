@@ -12,7 +12,6 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
-using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -40,13 +39,6 @@ public class PreTranslationService(
         if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
-        }
-
-        // Load the project from the realtime service
-        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
-        if (!attempt.TryResult(out SFProject project))
-        {
-            throw new DataNotFoundException("The project does not exist.");
         }
 
         // Ensure we have the parameters to retrieve the pre-translation
@@ -228,6 +220,7 @@ public class PreTranslationService(
             corpusId,
             GetTextId(bookNum),
             PretranslationUsfmTextOrigin.OnlyPretranslated,
+            PretranslationUsfmTemplate.Source,
             cancellationToken
         );
 
