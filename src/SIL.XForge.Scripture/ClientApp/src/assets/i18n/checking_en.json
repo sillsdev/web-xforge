@@ -203,6 +203,9 @@
     "save_answer": "Save",
     "select_verses": "Select verses",
     "show_more_unread": "Show {{ count }} more unread answers",
+    "tooltip_attach": "Attach scripture",
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
@@ -271,7 +274,8 @@
     "my_progress": "My progress",
     "project_stats": "Project stats",
     "questions": "Questions",
-    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio.",
+    "tooltip_edit": "Edit"
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
