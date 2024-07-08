@@ -650,6 +650,7 @@ public class PreTranslationServiceTests
                     Arg.Any<string>(),
                     "MAT",
                     PretranslationUsfmTextOrigin.OnlyPretranslated,
+                    PretranslationUsfmTemplate.Source,
                     CancellationToken.None
                 )
                 .Returns(MatthewBookUsfm);
