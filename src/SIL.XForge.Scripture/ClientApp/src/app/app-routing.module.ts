@@ -16,21 +16,47 @@ import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { SyncComponent } from './sync/sync.component';
+import { environment } from '../environments/environment';
 
 const routes: Routes = [
   { path: 'callback/auth0', component: MyProjectsComponent, canActivate: [AuthGuard] },
-  { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
+  {
+    path: 'connect-project',
+    component: ConnectProjectComponent,
+    canActivate: [AuthGuard],
+    title: `Connect Project - ${environment.siteName}`
+  },
   { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
-  { path: 'join/:shareKey', component: JoinComponent },
-  { path: 'join/:shareKey/:locale', component: JoinComponent },
-  { path: 'projects/:projectId/event-log', component: EventMetricsComponent, canActivate: [EventMetricsAuthGuard] },
-  { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
-  { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
+  { path: 'join/:shareKey', component: JoinComponent, title: `Join Project - ${environment.siteName}` },
+  { path: 'join/:shareKey/:locale', component: JoinComponent, title: `Join Project - ${environment.siteName}` },
+  {
+    path: 'projects/:projectId/event-log', component: EventMetricsComponent, canActivate: [EventMetricsAuthGuard] },
+  { path: 'projects/:projectId/settings',
+    component: SettingsComponent,
+    canActivate: [SettingsAuthGuard],
+    title: `Project Settings - ${environment.siteName}`
+  },
+  {
+    path: 'projects/:projectId/sync',
+    component: SyncComponent,
+    canActivate: [SyncAuthGuard],
+    title: `Synchronize Project - ${environment.siteName}`
+  },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: MyProjectsComponent, canActivate: [AuthGuard] },
   { path: 'serval-administration/:projectId', component: ServalProjectComponent, canActivate: [ServalAdminAuthGuard] },
-  { path: 'serval-administration', component: ServalAdministrationComponent, canActivate: [ServalAdminAuthGuard] },
-  { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
+  {
+    path: 'serval-administration',
+    component: ServalAdministrationComponent,
+    canActivate: [ServalAdminAuthGuard],
+    title: `Serval Administration - ${environment.siteName}`
+  },
+  {
+    path: 'system-administration',
+    component: SystemAdministrationComponent,
+    canActivate: [SystemAdminAuthGuard],
+    title: `System Administration - ${environment.siteName}`
+  },
   { path: '**', component: PageNotFoundComponent }
 ];
 

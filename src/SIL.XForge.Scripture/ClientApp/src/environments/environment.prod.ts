@@ -17,5 +17,7 @@ export const environment = {
   authDomain: 'login.languagetechnology.org',
   authClientId: 'tY2wXn40fsL5VsPM4uIHNtU6ZUEXGeFn',
   offlineDBVersion: 8,
-  googleTagId: 'G-SVKBDV7K3Q'
+  googleTagManagerId: 'GTM-P2DF8SLM',
+  googleTagManagerAuth: 'OCXvABYNFBKJ0TJkAGsvAw',
+  googleTagManagerPreview: 'env-1'
 };

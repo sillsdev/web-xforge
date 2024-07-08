@@ -1,55 +1,35 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../environments/environment';
+import { GoogleTagManagerService } from 'angular-google-tag-manager';
 import { OnlineStatusService } from './online-status.service';
 
-declare function gtag(...args: any): void;
-
-interface CommandParams {}
-
-enum GoogleCommands {
-  Config = 'config',
-  Event = 'event',
-  JavaScript = 'js'
+interface TagEvent {
+  event: TagEventType;
 }
 
-interface ConfigParams extends CommandParams {
-  send_page_view?: boolean;
+export interface PageViewEvent extends TagEvent {
+  event: TagEventType.PageView;
+  pageName: string;
+  title?: string;
 }
 
-interface PageViewParams extends CommandParams {
-  page_location?: string;
-  page_title?: string;
+export enum TagEventType {
+  PageView = 'virtualPageView'
 }
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  private initiated?: Promise<void>;
-  constructor(private readonly onlineStatus: OnlineStatusService) {
-    if (typeof environment.googleTagId !== 'string') {
-      return;
-    }
-
-    this.initiated = new Promise(resolve => {
-      this.onlineStatus.online.then(() => {
-        this.send(GoogleCommands.JavaScript, new Date());
-        this.send(GoogleCommands.Config, environment.googleTagId, { send_page_view: false } as ConfigParams);
-        resolve();
-      });
-    });
-  }
+  constructor(private readonly onlineStatus: OnlineStatusService, private gtmService: GoogleTagManagerService) {}
 
   /**
    * Logs the page navigation event to the analytics service. This method is responsible for sanitizing the URL before
    * logging it.
-   * @param url The URL of the page that was navigated to.
+   * @param event The URL of the page that was navigated to.
    */
-  logNavigation(url: string): void {
-    const sanitizedUrl = sanitizeUrl(url);
-    this.send(GoogleCommands.Event, 'page_view', { page_location: sanitizedUrl } as PageViewParams);
-  }
-
-  private send(command: GoogleCommands, name: any, params?: CommandParams): void {
-    Promise.all([this.initiated, this.onlineStatus.online]).then(() => gtag(command, name, params));
+  logNavigation(event: PageViewEvent): void {
+    event.event = TagEventType.PageView;
+    event.pageName = sanitizeUrl(event.pageName);
+    console.log(event);
+    // this.gtmService.pushTag(event);
   }
 }
 
@@ -87,7 +67,7 @@ function redactJoinKey(url: string): string {
 }
 
 /**
- * Redacts sensitive information from the given URL. Currently this only redacts the access token and the join key, so
+ * Redacts sensitive information from the given URL. Currently, this only redacts the access token and the join key, so
  * if relying on this method in the future, be sure to check that it is still redacting everything you need it to.
  * @param url The URL to sanitize.
  * @returns A sanitized version of the URL.
