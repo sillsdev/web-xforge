@@ -26,11 +26,29 @@ interface ScriptArgs {
   outfile?: string;
 }
 
-interface UserCommentData {
+interface UserCommentReportData {
+  years: UserCommentReportYearData[];
+}
+
+interface UserCommentReportYearData {
+  year: number;
+  months: UserCommentReportMonthData[];
+}
+
+interface UserCommentReportMonthData {
+  month: number;
+  users: UserCommentReportUserData[];
+}
+
+interface UserCommentReportUserData {
   userId: string;
   userName: string;
+  bookChapters: UserCommentReportBookChapterData[];
+}
+
+interface UserCommentReportBookChapterData {
   bookChapter: string;
-  commentCount: number;
+  noteCount: number;
 }
 
 class UserCommentReport {
@@ -45,7 +63,7 @@ class UserCommentReport {
   fromPretty: string;
   toPretty: string;
 
-  summary?: Map<string, UserCommentData[]>;
+  summary: UserCommentReportData = { years: [] };
 
   readonly reportName = 'user-comment-counts';
 
@@ -65,7 +83,6 @@ class UserCommentReport {
   async run() {
     console.log(`Connecting to ${this.env} at ${this.connectionConfig.dbLocation}`);
 
-    this.summary = new Map<string, UserCommentData[]>();
     const client = new MongoClient(this.connectionConfig.dbLocation);
     const ws = createWS(this.connectionConfig);
 
@@ -73,16 +90,23 @@ class UserCommentReport {
       await client.connect();
       const cursor = await this.queryDB(client.db());
 
+      this.summary = { years: [] };
+
       for await (const doc of cursor) {
-        this.summary.set(
-          doc.userId,
-          doc.chapterNotes.map((item: any) => ({
-            userId: doc.userId,
-            userName: doc.userName,
-            bookChapter: this.getBookChapter(item.bookNum, item.chapterNum),
-            commentCount: item.noteCount
+        this.summary.years.push({
+          year: doc._id,
+          months: doc.months.map((month: any) => ({
+            month: month.month,
+            users: month.users.map((user: any) => ({
+              userId: user.userId,
+              userName: user.userName,
+              bookChapters: user.bookChapters.map((item: any) => ({
+                bookChapter: this.getBookChapter(item.bookNum, item.chapterNum),
+                noteCount: item.noteCount
+              }))
+            }))
           }))
-        );
+        });
       }
 
       this.writeFile();
@@ -99,6 +123,9 @@ class UserCommentReport {
     return date?.toLocaleDateString('en-CA', { year: 'numeric', month: 'numeric', day: 'numeric' });
   }
 
+  /**
+   * Formats a book number and chapter number to a string in the format 'book:chapter'.
+   */
   private getBookChapter(bookNum: number, chapterNum: number): string {
     const book = Canon.bookNumberToId(bookNum);
     return `${book}:${chapterNum}`;
@@ -146,6 +173,15 @@ class UserCommentReport {
     }
 
     return new Date(this.normalizeDateString(normalizedDateString) + timeString);
+  }
+
+  /**
+   * Returns the name of the month given its number (1-12).
+   */
+  getMonthName(month: number): string {
+    const date = new Date();
+    date.setMonth(month - 1); // Months are 0-indexed
+    return date.toLocaleString('default', { month: 'long' });
   }
 
   private processArgs(): ScriptArgs {
@@ -229,15 +265,17 @@ class UserCommentReport {
 
     return db.collection('note_threads').aggregate([
       {
+        // Unwind the notes array to process each note document individually
         $unwind: '$notes'
       },
       {
-        // Convert date string to date object
+        // Convert the dateModified field from string to date object for each note
         $addFields: {
           'notes.dateModifiedDate': { $toDate: '$notes.dateModified' }
         }
       },
       {
+        // Filter for project, date range, and notes that are not conflict notes or biblical terms notes (BT_)
         $match: {
           projectRef: this.projectId,
           'notes.threadId': { $not: /^BT_/ },
@@ -253,9 +291,12 @@ class UserCommentReport {
         }
       },
       {
+        // Group by year, month, userId, bookNum, and chapterNum, and count the number of notes
         $group: {
           _id: {
-            ownerRef: '$notes.ownerRef',
+            year: { $year: '$notes.dateModifiedDate' },
+            month: { $month: '$notes.dateModifiedDate' },
+            userId: '$notes.ownerRef',
             bookNum: '$verseRef.bookNum',
             chapterNum: '$verseRef.chapterNum'
           },
@@ -263,15 +304,23 @@ class UserCommentReport {
         }
       },
       {
+        // Sort the grouped results by year, month, bookNum, and chapterNum in ascending order
         $sort: {
+          '_id.year': 1,
+          '_id.month': 1,
           '_id.bookNum': 1,
           '_id.chapterNum': 1
         }
       },
       {
+        // Regroup the documents by year, month, and userId to collect book chapters and their note counts
         $group: {
-          _id: '$_id.ownerRef',
-          chapterNotes: {
+          _id: {
+            year: '$_id.year',
+            month: '$_id.month',
+            userId: '$_id.userId'
+          },
+          bookChapters: {
             $push: {
               bookNum: '$_id.bookNum',
               chapterNum: '$_id.chapterNum',
@@ -281,51 +330,105 @@ class UserCommentReport {
         }
       },
       {
+        // Sort the regrouped results by year, month, and userId in ascending order
+        $sort: {
+          '_id.year': 1,
+          '_id.month': 1,
+          '_id.userId': 1
+        }
+      },
+      {
+        // Lookup user details from the 'users' collection based on userId
         $lookup: {
           from: 'users',
-          localField: '_id',
+          localField: '_id.userId',
           foreignField: '_id',
           as: 'user'
         }
       },
       {
+        // Unwind the user details to grab the user name
         $unwind: '$user'
       },
       {
+        // Project year, month, userId, userName, and book chapters with their note counts
         $project: {
-          _id: 0,
-          userId: '$_id',
+          _id: 1,
           userName: '$user.name',
-          chapterNotes: 1
+          bookChapters: 1
+        }
+      },
+      {
+        // Group by year and month, pushing user details and their book chapters into an array
+        $group: {
+          _id: {
+            year: '$_id.year',
+            month: '$_id.month'
+          },
+          users: {
+            $push: {
+              userId: '$_id.userId',
+              userName: '$userName',
+              bookChapters: '$bookChapters'
+            }
+          }
+        }
+      },
+      {
+        // Sort by year and month
+        $sort: {
+          '_id.year': 1,
+          '_id.month': 1
+        }
+      },
+      {
+        // Group by year to collect all months, including the users and their book chapters for each month
+        $group: {
+          _id: '$_id.year',
+          months: {
+            $push: {
+              month: '$_id.month',
+              users: '$users'
+            }
+          }
+        }
+      },
+      {
+        // Sort the final output by year
+        $sort: {
+          _id: 1
         }
       }
     ]);
   }
 
-  /**
-   * Stringifies a UserCommentData object to a TSV row.
-   */
-  private toDataRow(data: UserCommentData): string {
-    return [data.userName, data.bookChapter, data.commentCount].join('\t');
-  }
+  private toTsv(summary: UserCommentReportData): string {
+    const header: string[] = ['Year', 'Month', 'User Name', 'Book:Chapter', 'Comment Count'];
+    const data = [];
 
-  private toTsv(summary: Map<string, UserCommentData[]>): string {
-    const title = `User comments on ${this.env} for project "${this.projectShortName} (${this.projectId})" from ${this.fromPretty} to ${this.toPretty}`;
-    const header: string[] = ['User Name', 'Book:Chapter', 'Comment Count'];
-    const userDataGroups: string[] = [];
+    for (const yearData of summary.years) {
+      data.push(yearData.year);
 
-    for (const userBookChapterNotes of summary.values()) {
-      userDataGroups.push(...userBookChapterNotes.map(this.toDataRow));
+      for (const monthData of yearData.months) {
+        data.push(`\t${this.getMonthName(monthData.month)}`);
+
+        for (const userData of monthData.users) {
+          data.push(`\t\t${userData.userName}`);
+
+          for (const bookChapterData of userData.bookChapters) {
+            data.push(`\t\t\t${bookChapterData.bookChapter}\t${bookChapterData.noteCount}`);
+            console.log(
+              `${yearData.year}/${monthData.month} - ${userData.userName} - ${bookChapterData.bookChapter} - ${bookChapterData.noteCount}`
+            );
+          }
+        }
+      }
     }
 
-    return [title + '\n', header.join('\t'), ...userDataGroups].join('\n');
+    return [header.join('\t'), ...data].join('\n');
   }
 
   private writeFile() {
-    if (this.summary == null) {
-      throw new Error('Summary not initialized.');
-    }
-
     const outfile = this.getOutfileName();
 
     console.log(`\nWriting summary to "${outfile}"`);
