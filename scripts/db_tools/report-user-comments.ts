@@ -6,8 +6,8 @@
  * Usage: ./report-user-comments.ts
  *        --env [dev|qa|live] (default: dev)
  *        --project [project short name] (required)
- *        --from [YYYY-MM-DD] (optional)
- *        --to [YYYY-MM-DD] (optional)
+ *        --from [YYYY-MM-DD] or YYYY-MM-DDTHH:MM:SS (optional)
+ *        --to [YYYY-MM-DD] or YYYY-MM-DDTHH:MM:SS (optional)
  *        --outfile [filename] (default: [project]_[report]_([dateFrom]_to_[dateTo]).tsv)
  */
 
@@ -54,8 +54,8 @@ class UserCommentReport {
     this.env = args.env!;
     this.connectionConfig = databaseConfigs.get(this.env)!;
     this.projectShortName = args.project;
-    this.from = args.from ? new Date(`${this.normalizeDateString(args.from)}T00:00`) : undefined; // Start of day
-    this.to = args.to ? new Date(`${this.normalizeDateString(args.to)}T23:59:59`) : undefined; // End of day
+    this.from = this.toDate(args.from, 'start-of-day'); // Use start of day for 'from' date if time not specified
+    this.to = this.toDate(args.to, 'end-of-day'); // Use end of day for 'to' date if time not specified
     this.outfile = args.outfile!;
 
     this.fromPretty = this.formatDate(this.from) ?? 'beginning';
@@ -117,11 +117,35 @@ class UserCommentReport {
   }
 
   /**
-   * Converts a date string from 'YYYY-M-D' to 'YYYY-MM-DD'.
+   * Converts a date string from 'YYYY-M-D' to 'YYYY-MM-DD'.  Time is preserved if present.
    */
   private normalizeDateString(date: string): string {
-    const [year, month, day] = date.split('-').map(Number);
-    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const [dateToken, timeToken] = date.split('T');
+    const [year, month, day] = dateToken.split('-').map(Number);
+
+    let normalizedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const timeSuffix = timeToken ? `T${timeToken}` : '';
+
+    return normalizedDate + timeSuffix;
+  }
+
+  /**
+   * Converts the date string to a Date object. 'time' specifies the time to use if time not present in the date string.
+   */
+  private toDate(dateString: string | undefined, time: 'start-of-day' | 'end-of-day'): Date | undefined {
+    if (dateString == null) {
+      return undefined;
+    }
+
+    const normalizedDateString: string = this.normalizeDateString(dateString);
+    let timeString: string = '';
+
+    // Add time if not already present in date string
+    if (!normalizedDateString.includes('T')) {
+      timeString = `T${time === 'start-of-day' ? '00:00' : '23:59:59'}`;
+    }
+
+    return new Date(this.normalizeDateString(normalizedDateString) + timeString);
   }
 
   private processArgs(): ScriptArgs {
@@ -142,12 +166,12 @@ class UserCommentReport {
       .option('from', {
         type: 'string',
         requiresArg: true,
-        description: 'Start date in the format YYYY-M-D'
+        description: 'Start date in the format YYYY-M-D or YYYY-MM-DDTHH:MM:SS'
       })
       .option('to', {
         type: 'string',
         requiresArg: true,
-        description: 'End date in the format YYYY-M-D'
+        description: 'End date in the format YYYY-M-D or YYYY-MM-DDTHH:MM:SS'
       })
       .option('outfile', {
         type: 'string',
@@ -156,14 +180,14 @@ class UserCommentReport {
         description: 'File path to write report to'
       })
       .check(argv => {
-        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}$/;
+        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}(T\d{2}:\d{2}(:\d{2})?)?$/;
 
         if (argv.from && !dateFormatRegex.test(argv.from)) {
-          throw new Error("The 'from' date must be in the format YYYY-M-D");
+          throw new Error("The 'from' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
         if (argv.to && !dateFormatRegex.test(argv.to)) {
-          throw new Error("The 'to' date must be in the format YYYY-M-D");
+          throw new Error("The 'to' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
         if (argv.from && argv.to && new Date(argv.from) > new Date(argv.to)) {
