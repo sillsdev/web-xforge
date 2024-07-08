@@ -364,7 +364,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   openFeatureFlagDialog(): void {
-    this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+    this.dialogService.openMatDialog(FeatureFlagsDialogComponent, { autoFocus: false });
   }
 
   private async showProjectDeletedDialog(): Promise<void> {
