@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -9,6 +10,7 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import isEqual from 'lodash-es/isEqual';
@@ -32,6 +34,7 @@ import { getBrowserEngine, objectId } from 'xforge-common/utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TextDocService } from '../../core/text-doc.service';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef, VERSE_REGEX } from '../utils';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
@@ -113,6 +116,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _editorStyles: any = { fontSize: '1rem' };
   private activePresenceSubscription?: Subscription;
   private onDeleteSub?: Subscription;
+  private localSystemChangesSub?: Subscription;
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
     keyboard: {
@@ -252,7 +256,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly onlineStatusService: OnlineStatusService,
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
-    private readonly viewModel: TextViewModel
+    private readonly viewModel: TextViewModel,
+    private readonly destroyRef: DestroyRef,
+    private readonly textDocService: TextDocService
   ) {
     super();
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
@@ -464,13 +470,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.viewModel != null) {
-      this.viewModel.unbind();
-    }
+    this.viewModel?.unbind();
     this.dismissPresences();
-    if (this.onDeleteSub != null) {
-      this.onDeleteSub.unsubscribe();
-    }
+    this.onDeleteSub?.unsubscribe();
+    this.localSystemChangesSub?.unsubscribe();
   }
 
   onEditorCreated(editor: Quill): void {
@@ -959,6 +962,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this._id = undefined;
       this.updatePlaceholderText();
     });
+
+    // Local system changes are big - usually complete rewrites of the document via TextDocService.overwrite()
+    // As these are user initiated, it is OK to complete reload the editor, as the user will not be in the editor
+    this.localSystemChangesSub?.unsubscribe();
+    this.localSystemChangesSub = this.textDocService
+      .getLocalSystemChanges$(this._id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.bindQuill();
+      });
 
     this.loaded.emit();
     this.applyEditorStyles();
