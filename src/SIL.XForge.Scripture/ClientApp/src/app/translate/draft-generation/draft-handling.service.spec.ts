@@ -3,6 +3,7 @@ import { Delta, DeltaOperation } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextDocService } from '../../core/text-doc.service';
 import { DraftSegmentMap } from './draft-generation';
@@ -11,6 +12,7 @@ import { DraftHandlingService } from './draft-handling.service';
 
 const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedSFProject = mock(SFProjectProfileDoc);
 
 describe('DraftHandlingService', () => {
   let service: DraftHandlingService;
@@ -247,6 +249,7 @@ describe('DraftHandlingService', () => {
     it('should apply draft to text doc', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
       const draftOps: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
       await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
       verify(mockedTextDocService.overwrite(textDocId, anything())).once();
       expect().nothing();
@@ -260,10 +263,24 @@ describe('DraftHandlingService', () => {
       when(
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(of(draft));
-      const result: boolean = await service.getAndApplyDraftAsync(textDocId);
+      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
       expect(result).toBe(true);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedTextDocService.overwrite(textDocId, anything())).once();
+    });
+
+    it('should not apply if user does not have permission', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const draft: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      when(
+        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
+      ).thenReturn(of(draft));
+      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(false);
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
+      expect(result).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).never();
+      verify(mockedTextDocService.overwrite(textDocId, anything())).never();
     });
 
     it('should not apply legacy USFM draft', async () => {
@@ -273,7 +290,8 @@ describe('DraftHandlingService', () => {
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(throwError(() => ({ status: 405 })));
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of(draft));
-      const result: boolean = await service.getAndApplyDraftAsync(textDocId);
+      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).once();

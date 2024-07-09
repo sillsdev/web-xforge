@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { catchError, Observable, throwError } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
@@ -179,7 +180,11 @@ export class DraftHandlingService {
    * @returns True if the draft was successfully applied, false if the draft was not applied i.e. the draft
    * was in the legacy USFM format.
    */
-  async getAndApplyDraftAsync(textDocId: TextDocId): Promise<boolean> {
+  async getAndApplyDraftAsync(project: SFProjectProfile, textDocId: TextDocId): Promise<boolean> {
+    if (!this.textDocService.canEdit(project, textDocId.bookNum, textDocId.chapterNum)) {
+      return false;
+    }
+
     return await new Promise<boolean>(resolve => {
       this.getDraft(textDocId, { isDraftLegacy: false }).subscribe(async draft => {
         let ops: DeltaOperation[] = [];
