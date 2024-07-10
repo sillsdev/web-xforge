@@ -1572,7 +1572,13 @@ public class ParatextSyncRunnerTests
                     string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
                 )
             );
-        env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+        env.Connection.Received(1)
+            .ExcludePropertyFromTransaction(
+                Arg.Is<Expression<Func<SFProject, object>>>(ex =>
+                    string.Join('.', new ObjectPath(ex).Items) == "Sync.LastSyncSuccessful"
+                )
+            );
+        env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
     }
 
     [Test]
