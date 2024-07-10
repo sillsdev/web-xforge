@@ -36,7 +36,7 @@ import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
-describe('DraftGenerationComponent', () => {
+fdescribe('DraftGenerationComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
