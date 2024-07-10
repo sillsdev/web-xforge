@@ -295,10 +295,15 @@ public class ParatextService : DisposableBase, IParatextService
                 ProjectUser? user = sharedProj.Permissions.GetUser();
                 if (user is null || user.Role == UserRoles.None)
                 {
-                    sharedProj.Permissions = SharingLogicWrapper.SearchForBestProjectUsersData(
+                    // As we expect the permission manager to come from the Registry, the default username will be from
+                    // the Paratext license for this machine, or incorrect if Paratext is installed. That will cause the
+                    // DefaultUser to be invalid if Paratext is not installed. To resolve this, we have a wrapper
+                    // implementation of PermissionManager that allows us to define the default username.
+                    PermissionManager permissionManager = SharingLogicWrapper.SearchForBestProjectUsersData(
                         source.AsInternetSharedRepositorySource(),
                         sharedProj
                     );
+                    sharedProj.Permissions = new ParatextRegistryPermissionManager(username, permissionManager);
                 }
 
                 List<SharedProject> sharedPtProjectsToSr = [sharedProj];

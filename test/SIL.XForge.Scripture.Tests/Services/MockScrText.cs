@@ -57,8 +57,6 @@ public class MockScrText : ScrText
         return fileManager;
     }
 
-    protected override PermissionManager CreatePermissionManager() => new ComparableProjectPermissionManager(this);
-
     public override ProjectSettings Settings => _settings;
     public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("./usfm.sty");
     public override string Directory => projectName.ProjectPath;
