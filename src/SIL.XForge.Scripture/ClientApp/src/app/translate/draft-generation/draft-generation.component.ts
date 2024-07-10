@@ -11,6 +11,7 @@ import JSZip from 'jszip';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, firstValueFrom, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
@@ -199,6 +200,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
    */
   get lastSyncSuccessful(): boolean {
     return this.activatedProject.projectDoc?.data?.sync.lastSyncSuccessful ?? false;
+  }
+
+  get isProjectAdmin(): boolean {
+    const userId = this.authService.currentUserId;
+    if (userId) {
+      return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
+    }
+    return false;
   }
 
   ngOnInit(): void {

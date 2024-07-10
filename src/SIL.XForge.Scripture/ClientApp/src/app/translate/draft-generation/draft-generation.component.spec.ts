@@ -36,7 +36,7 @@ import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
-describe('DraftGenerationComponent', () => {
+fdescribe('DraftGenerationComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
@@ -213,6 +213,10 @@ describe('DraftGenerationComponent', () => {
 
     getElementByTestId(testId: string): HTMLElement | null {
       return this.fixture.nativeElement.querySelector(`[data-test-id="${testId}"]`);
+    }
+
+    getElementByKey(key: string): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector(`[key="${key}"]`);
     }
   }
 
@@ -590,12 +594,60 @@ describe('DraftGenerationComponent', () => {
 
   describe('warnings', () => {
     describe('source text missing', () => {
-      it('should show warning when source text is missing AND target language is supported', () => {
-        let env = new TestEnvironment();
+      it('should show warning with settings link when source text is missing AND target language is supported, user is Paratext Admin', () => {
+        let projectDoc: SFProjectProfileDoc = {
+          data: createTestProjectProfile({
+            userRoles: { user01: 'pt_administrator' }
+          })
+        } as SFProjectProfileDoc;
+        let env = new TestEnvironment(() => {
+          mockAuthService = jasmine.createSpyObj<AuthService>([], {
+            currentUserId: 'user01',
+            currentUserRoles: [SystemRole.None]
+          });
+          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+            projectId: projectId,
+            projectId$: of(projectId),
+            projectDoc: projectDoc,
+            projectDoc$: of(projectDoc),
+            changes$: of(projectDoc)
+          });
+        });
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(true);
         expect(env.getElementByTestId('warning-source-text-missing')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_source_text_not_selected')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_source_text_not_selected')).toBe(null);
+      });
+
+      it('should show warning to contact Paratext Admin when source text is missing AND target language is supported, user is Translator', () => {
+        let projectDoc: SFProjectProfileDoc = {
+          data: createTestProjectProfile({
+            userRoles: { user01: 'translator' }
+          })
+        } as SFProjectProfileDoc;
+        let env = new TestEnvironment(() => {
+          mockAuthService = jasmine.createSpyObj<AuthService>([], {
+            currentUserId: 'user01',
+            currentUserRoles: [SystemRole.None]
+          });
+          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+            projectId: projectId,
+            projectId$: of(projectId),
+            projectDoc: projectDoc,
+            projectDoc$: of(projectDoc),
+            changes$: of(projectDoc)
+          });
+        });
+        env.component.isSourceProjectSet = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toBe(false);
+        expect(env.getElementByTestId('warning-source-text-missing')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_source_text_not_selected')).toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_source_text_not_selected')).not.toBe(null);
       });
 
       it('should not show warning when target language is not supported', () => {
@@ -616,13 +668,64 @@ describe('DraftGenerationComponent', () => {
     });
 
     describe('source and target text must be different', () => {
-      it('should show warning when source text is not missing AND source and target are same AND target language is supported', () => {
-        let env = new TestEnvironment();
+      it('should show warning with settings page link when source text is not missing AND source and target are same AND target language is supported, user is Paratext Admin', () => {
+        let projectDoc: SFProjectProfileDoc = {
+          data: createTestProjectProfile({
+            userRoles: { user01: 'pt_administrator' }
+          })
+        } as SFProjectProfileDoc;
+        let env = new TestEnvironment(() => {
+          mockAuthService = jasmine.createSpyObj<AuthService>([], {
+            currentUserId: 'user01',
+            currentUserRoles: [SystemRole.None]
+          });
+          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+            projectId: projectId,
+            projectId$: of(projectId),
+            projectDoc: projectDoc,
+            projectDoc$: of(projectDoc),
+            changes$: of(projectDoc)
+          });
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(true);
         expect(env.getElementByTestId('warning-source-target-same')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_same_source_and_target_language')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_same_source_and_target_language')).toBe(null);
+      });
+
+      it('should show warning to contact Paratext Admin when source text is not missing AND source and target are same AND target language is supported, user is Translator', () => {
+        let projectDoc: SFProjectProfileDoc = {
+          data: createTestProjectProfile({
+            userRoles: { user01: 'translator' }
+          })
+        } as SFProjectProfileDoc;
+        let env = new TestEnvironment(() => {
+          mockAuthService = jasmine.createSpyObj<AuthService>([], {
+            currentUserId: 'user01',
+            currentUserRoles: [SystemRole.None]
+          });
+          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+            projectId: projectId,
+            projectId$: of(projectId),
+            projectDoc: projectDoc,
+            projectDoc$: of(projectDoc),
+            changes$: of(projectDoc)
+          });
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(false);
+        expect(env.getElementByTestId('warning-source-target-same')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_same_source_and_target_language')).toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_same_source_and_target_language')).not.toBe(
+          null
+        );
       });
 
       it('should not show warning when target language is not supported', () => {
@@ -706,15 +809,74 @@ describe('DraftGenerationComponent', () => {
     });
 
     describe('source and additional training source language must be the same', () => {
-      it('should show warning when source and additional training source are different AND target language is supported', () => {
-        let env = new TestEnvironment();
+      it('should show warning with link to settings page when source and additional training source are different AND target language is supported, user is Paratext Admin', () => {
+        let projectDoc: SFProjectProfileDoc = {
+          data: createTestProjectProfile({
+            userRoles: { user01: 'pt_administrator' }
+          })
+        } as SFProjectProfileDoc;
+        let env = new TestEnvironment(() => {
+          mockAuthService = jasmine.createSpyObj<AuthService>([], {
+            currentUserId: 'user01',
+            currentUserRoles: [SystemRole.None]
+          });
+          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+            projectId: projectId,
+            projectId$: of(projectId),
+            projectDoc: projectDoc,
+            projectDoc$: of(projectDoc),
+            changes$: of(projectDoc)
+          });
+        });
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(true);
         expect(env.getElementByTestId('warning-mix-source-different')).not.toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.info_alert_different_additional_training_and_source_language')
+        ).not.toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.non_pa_info_alert_different_additional_training_and_source_language')
+        ).toBe(null);
+      });
+
+      it('should show warning to contact Paratext Admin when source and additional training source are different AND target language is supported, user is Translator', () => {
+        let projectDoc: SFProjectProfileDoc = {
+          data: createTestProjectProfile({
+            userRoles: { user01: 'translator' }
+          })
+        } as SFProjectProfileDoc;
+        let env = new TestEnvironment(() => {
+          mockAuthService = jasmine.createSpyObj<AuthService>([], {
+            currentUserId: 'user01',
+            currentUserRoles: [SystemRole.None]
+          });
+          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+            projectId: projectId,
+            projectId$: of(projectId),
+            projectDoc: projectDoc,
+            projectDoc$: of(projectDoc),
+            changes$: of(projectDoc)
+          });
+        });
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(false);
+        expect(env.getElementByTestId('warning-mix-source-different')).not.toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.info_alert_different_additional_training_and_source_language')
+        ).toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.non_pa_info_alert_different_additional_training_and_source_language')
+        ).not.toBe(null);
       });
 
       it('should not show warning when target language is not supported', () => {
