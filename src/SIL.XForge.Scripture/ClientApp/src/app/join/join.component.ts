@@ -183,7 +183,8 @@ export class JoinComponent extends DataLoadingComponent {
       'key_already_used',
       'key_expired',
       'max_users_reached',
-      'role_not_found'
+      'role_not_found',
+      'project_link_is_invalid'
     ];
 
     const isKnownJoinError = (code: any): code is ObjectPaths<typeof en.join> => KNOWN_ERROR_CODES.includes(code);
