@@ -38,6 +38,7 @@ RUN ln -s /usr/bin/hg /usr/local/bin/hg \
     <ProxyPort>0</ProxyPort>\
     </InternetSettingsMemento>' > ~/.local/share/Paratext95/InternetSettings.xml
 EXPOSE 5000
+# ShareDB
 EXPOSE 5003
 # Realtime Server debugging port
 EXPOSE 9230

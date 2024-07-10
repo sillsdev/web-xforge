@@ -15,7 +15,8 @@ public class RealtimeServer : IRealtimeServer
     public RealtimeServer(INodeJSService nodeJSService)
     {
         _nodeJSService = nodeJSService;
-        _modulePath = Path.Combine("RealtimeServer", "lib", "cjs", "common", "index");
+        string assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        _modulePath = Path.Combine(assemblyDirectory, "RealtimeServer", "lib", "cjs", "common", "index");
     }
 
     public void Start(object options)

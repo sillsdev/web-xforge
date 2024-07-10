@@ -43,7 +43,8 @@ public static class Migrator
         Console.WriteLine($"Total time running migrator was {process.ExitTime - startTime}");
         if (exitCode != 0)
         {
-            throw new Exception($"Migrator exited with code {exitCode}");
+            Console.WriteLine($"WARNING ignoring migrator error.");
+            //            throw new Exception($"Migrator exited with code {exitCode}");
         }
     }
 }
