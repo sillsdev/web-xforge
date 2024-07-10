@@ -7,7 +7,7 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { firstValueFrom } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -21,6 +21,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { Locale } from '../../../xforge-common/models/i18n-locale';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -95,12 +96,6 @@ describe('ShareDialogComponent', () => {
     expect(env.copyLinkButton.disabled).toBe(false);
   }));
 
-  it('shareLink is for projectId and has specific key', fakeAsync(() => {
-    env = new TestEnvironment({ projectId: 'myProject1' });
-    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything(), anything(), anything())).once();
-    expect(env.component.sharableLink).toContain('/join/linkSharing01/en');
-  }));
-
   it('does not allow sharing or copying link when offline', fakeAsync(() => {
     env = new TestEnvironment();
     expect(env.shareButton.disabled).toBe(false);
@@ -121,6 +116,7 @@ describe('ShareDialogComponent', () => {
   it('clicking copy link should copy link to clipboard', fakeAsync(() => {
     env = new TestEnvironment({ projectId: 'project123' });
     expect(env.clipboardText).toBeUndefined();
+    env.component.setLocale(env.locale);
     env.copyLinkButton.click();
     env.wait();
     expect(env.clipboardText).toContain('/join/linkSharing01/en');
@@ -129,6 +125,7 @@ describe('ShareDialogComponent', () => {
 
   it('clicking share link should open share control', fakeAsync(() => {
     env = new TestEnvironment({ projectId: 'project123' });
+    env.component.setLocale(env.locale);
     env.shareButton.click();
     env.wait();
     const expectedShareData: ShareData = {
@@ -137,6 +134,29 @@ describe('ShareDialogComponent', () => {
       text: "You've been invited to join the Share Project project on Scripture Forge.\nJust click the link below, choose how to log in, and you will be ready to start."
     };
     expect(env.shareData).toEqual(expectedShareData);
+  }));
+
+  it('has no language selected by default', fakeAsync(() => {
+    env = new TestEnvironment({ projectId: 'project123' });
+    expect(env.component.shareLocaleCode).toBeUndefined();
+  }));
+
+  it('will not allow copying when no language is selected', fakeAsync(() => {
+    env = new TestEnvironment({ projectId: 'project123' });
+    expect(env.clipboardText).toBeUndefined();
+    env.copyLinkButton.click();
+    env.wait();
+    expect(env.clipboardText).toBeUndefined();
+    expect(env.component.error).toBeDefined();
+  }));
+
+  it('will not allow sharing when no language is selected', fakeAsync(() => {
+    env = new TestEnvironment({ projectId: 'project123' });
+    expect(env.clipboardText).toBeUndefined();
+    env.shareButton.click();
+    env.wait();
+    expect(env.clipboardText).toBeUndefined();
+    expect(env.component.error).toBeDefined();
   }));
 
   it('changing user role refreshes the share key', fakeAsync(() => {
@@ -290,11 +310,21 @@ describe('ShareDialogComponent', () => {
     expect(env.canChangeLinkUsage).toBe(true);
   }));
 
+  it('shareLink is for projectId and has specific key', fakeAsync(() => {
+    env = new TestEnvironment({ projectId: 'myProject1' });
+    env.component.setLocale(env.locale);
+    env.clickElement(env.copyLinkButton);
+
+    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything(), anything(), anything())).once();
+    expect(env.component.shareableLink).toContain('/join/linkSharing01/en');
+  }));
+
   it('should reserve sharing key for recipient only links', fakeAsync(() => {
     env = new TestEnvironment({ userId: TestUsers.Admin });
     env.component.shareLinkType = ShareLinkType.Recipient;
     verify(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything(), anything())).once();
     verify(mockedProjectService.onlineReserveLinkSharingKey(anything(), anything())).never();
+    env.component.setLocale(env.locale);
 
     env.clickElement(env.copyLinkButton);
     verify(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything(), anything())).twice();
@@ -330,6 +360,7 @@ class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
+  readonly locale: Locale;
   private _clipboardText?: string;
   private _shareData?: ShareData;
   private share = (shareData?: ShareData | undefined): Promise<void> => {
@@ -360,6 +391,9 @@ class TestEnvironment {
         checkingConfig: { checkingEnabled: checkingEnabled, shareEnabled: checkingShareEnabled }
       }
     });
+    const locale = mock<Locale>();
+    when(locale.canonicalTag).thenReturn('en');
+    this.locale = instance(locale);
     if (shareAPIEnabled) {
       when(mockedNavigator.share).thenReturn(this.share);
     } else {
@@ -384,7 +418,7 @@ class TestEnvironment {
     when(mockedProjectService.generateSharingUrl(anything(), anything())).thenCall(
       () =>
         `https://scriptureforge.org/join/${(this.component as any).linkSharingKey}/${
-          this.component.shareLocaleCode.canonicalTag
+          this.component.shareLocaleCode!.canonicalTag
         }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);

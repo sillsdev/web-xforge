@@ -11,6 +11,7 @@
   display: flex;
   flex-direction: column;
   row-gap: 16px;
+  padding-block-end: 4px;
   .configuration-option {
     display: flex;
     column-gap: 10px;
@@ -39,6 +40,7 @@
 div[mat-dialog-actions] {
   display: flex;
   place-content: flex-end;
+  gap: 8px;
 
   button {
     mat-icon {
@@ -70,4 +72,22 @@ div[mat-dialog-actions] {
   font-size: 0.9em !important;
   margin-bottom: 8px !important;
   white-space: normal;
+}
+
+.empty-field {
+  user-select: none;
+}
+
+.error {
+  color: $red;
+}
+
+.help-text {
+  font-size: 0.8em;
+  min-height: 0.8em;
+  line-height: normal;
+}
+
+.hidden {
+  visibility: hidden;
 }
