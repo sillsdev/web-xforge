@@ -1315,7 +1315,6 @@ public class ParatextService : DisposableBase, IParatextService
     public async Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
