@@ -330,6 +330,7 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
     tick();
     env.fixture.detectChanges();
+    tick();
 
     verify(mockedParatextService.getProjects()).once();
     verify(mockedParatextService.getResources()).once();
