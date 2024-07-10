@@ -78,7 +78,7 @@ chmod 0600 ~/.ssh/authorized_keys
 sudo tee /root/regenerate-ssh-host-keys >/dev/null << END
 #!/bin/bash
 # Regenerate ssh host keys if not present
-test -f /etc/ssh/ssh_host_rsa_key || dpkg-reconfigure openssh-server
+test -f /etc/ssh/ssh_host_rsa_key || dpkg-reconfigure --frontend=noninteractive openssh-server
 END
 sudo chmod +x /root/regenerate-ssh-host-keys
 sudo tee /etc/systemd/system/regenerate-ssh-host-keys.service >/dev/null << END

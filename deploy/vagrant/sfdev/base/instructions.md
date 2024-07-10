@@ -93,7 +93,7 @@ using it.
   The `--base` argument is the name of the base machine in virtualbox manager.
   Edit the value VERSION in the first line below before running.
 
-export BOX="sfdev" && export VERSION="1.1.0" &&
+export BOX="sfdev" && export VERSION="1.1.1" &&
   date && vagrant package --base ${BOX}-base --output ${BOX}-${VERSION}.box &&
   date && ls -lh ${BOX}-${VERSION}.box &&
   sha256sum ${BOX}-${VERSION}.box | tee --append "${BOX}".json &&
