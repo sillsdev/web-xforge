@@ -33,7 +33,7 @@ public static class RealtimeServiceCollectionExtensions
         });
 
         // If we are using another NodeJS process, be sure to use our factory implementation
-        if (useExistingRealtimeServer)
+        if (true || useExistingRealtimeServer)
         {
             services.AddSingleton<INodeJSProcessFactory, ExistingNodeJSProcessFactory>();
         }

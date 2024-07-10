@@ -20,8 +20,7 @@ public static class Migrator
             "scriptureforge",
             "migrator.js"
         );
-
-        var startInfo = new ProcessStartInfo
+        _ = new ProcessStartInfo
         {
             FileName = "node",
             RedirectStandardOutput = true,
@@ -30,7 +29,9 @@ public static class Migrator
 
         var startTime = DateTime.Now;
         Console.WriteLine($"[{startTime:o}] Starting migrator");
-
+        Console.WriteLine($"Nevermind, not starting migrator.");
+        return;
+        ProcessStartInfo startInfo;
         using var process = Process.Start(startInfo);
         while (!process.StandardOutput.EndOfStream)
         {
@@ -43,7 +44,8 @@ public static class Migrator
         Console.WriteLine($"Total time running migrator was {process.ExitTime - startTime}");
         if (exitCode != 0)
         {
-            throw new Exception($"Migrator exited with code {exitCode}");
+            Console.WriteLine($"WARNING ignoring migrator error.");
+            //            throw new Exception($"Migrator exited with code {exitCode}");
         }
     }
 }

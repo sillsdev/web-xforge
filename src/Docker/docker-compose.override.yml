@@ -13,6 +13,13 @@ services:
       - mongo_config:/data/configdb
       - mongo_data:/data/db
 
+  realtimeserver:
+    container_name: realtimeserver
+    ports:
+      - "5002:5002"
+      # ?
+      - "5003:5003"
+
   web-xforge:
     container_name: web-xforge
     build:
@@ -26,10 +33,9 @@ services:
       - urls=http://*:5000 # Docker apps cannot bind to localhost, so we bind to all IP addresses
     ports:
       - "5000:5000"
-      - "5003:5003"
-      - "9230:9230"
     depends_on:
       - db-xforge
+      - realtimeserver
     volumes:
       - scriptureforge-data:/var/lib/scriptureforge
       - xforge-data:/var/lib/xforge

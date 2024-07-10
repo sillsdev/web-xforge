@@ -8,6 +8,7 @@ import ws from 'ws';
 import { ExceptionReporter } from './exception-reporter';
 
 function isLocalRequest(request: http.IncomingMessage): boolean {
+  console.log(`DEBUG isLocalRequest`);
   const addr = request.socket.remoteAddress;
   return addr === '127.0.0.1' || addr === '::ffff:127.0.0.1' || addr === '::1';
 }

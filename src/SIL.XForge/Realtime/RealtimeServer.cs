@@ -15,7 +15,11 @@ public class RealtimeServer : IRealtimeServer
     public RealtimeServer(INodeJSService nodeJSService)
     {
         _nodeJSService = nodeJSService;
-        _modulePath = Path.Combine("RealtimeServer", "lib", "cjs", "common", "index");
+        // string assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        // _modulePath = Path.Combine(assemblyDirectory, "RealtimeServer", "lib", "cjs", "common", "index.js");
+
+        // Path to realtimeserver index file in the realtimeserver docker container.
+        _modulePath = Path.Combine("/app", "lib", "cjs", "common", "index.js");
     }
 
     public void Start(object options)
