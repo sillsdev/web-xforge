@@ -37,7 +37,7 @@ jobs:
     needs: update_branch
     uses: ./.github/workflows/compute-next-version.yml
     with:
-      deployment-type: "staging"
+      versioning-system: "staging"
       tag_prefix: "SF-QAv"
 
   deploy:

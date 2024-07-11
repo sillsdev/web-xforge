@@ -3,12 +3,12 @@ name: "Compute next version"
 on:
   workflow_call:
     inputs:
-      deployment-type:
-        description: "The type of deployment. Options: production, staging."
+      versioning-system:
+        description: "The type of versioning system. Options: production, staging."
         required: true
         type: string
-      release-type:
-        description: "The type of release, if production. This will bump the major.minor.patch version number accordingly. Options: major, minor, patch. Default: patch."
+      release-level:
+        description: "The level of release, if production. This will bump the major.minor.patch version number accordingly. Options: major, minor, patch. Default: patch."
         required: false
         type: string
         default: "patch"
@@ -40,14 +40,14 @@ jobs:
           import os
           import utils
 
-          deployment_type = os.getenv('DEPLOYMENT_TYPE')
-          release_type = os.getenv('RELEASE_TYPE')
+          versioning_system = os.getenv('VERSIONING_SYSTEM')
+          release_level = os.getenv('RELEASE_LEVEL')
           tag_prefix = os.getenv('TAG_PREFIX')
 
           latest_tag = utils.get_latest_tag(tag_prefix)
 
-          if deployment_type == 'production':
-            next_version = utils.increment_production_version(latest_tag, release_type, tag_prefix)
+          if versioning_system == 'production':
+            next_version = utils.increment_production_version(latest_tag, release_level, tag_prefix)
           else:
             next_version = utils.increment_staging_version(latest_tag, tag_prefix)
 
@@ -55,6 +55,6 @@ jobs:
             file.write(f'next_version={next_version}')
           EOF
         env:
-          DEPLOYMENT_TYPE: "${{ inputs.deployment-type }}"
-          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+          VERSIONING_SYSTEM: "${{ inputs.versioning-system }}"
+          RELEASE_LEVEL: ${{ github.event.inputs.release-level }}
           TAG_PREFIX: ${{ github.event.inputs.tag_prefix }}

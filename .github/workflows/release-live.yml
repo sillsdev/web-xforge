@@ -6,8 +6,8 @@ concurrency: deploy-prod
 on:
   workflow_dispatch:
     inputs:
-      release-type:
-        description: "The type of release. This will bump the major.minor.patch version number accordingly."
+      release-level:
+        description: "The level of release. This will bump the major.minor.patch version number accordingly."
         required: true
         default: "patch"
         type: choice
@@ -54,8 +54,8 @@ jobs:
     needs: update_branch
     uses: ./.github/workflows/compute-next-version.yml
     with:
-      deployment-type: "production"
-      release-type: ${{ github.event.inputs.release-type }}
+      versioning-system: "production"
+      release-level: ${{ github.event.inputs.release-level }}
       tag_prefix: "SFv"
 
   deploy:
