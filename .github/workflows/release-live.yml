@@ -52,8 +52,9 @@ jobs:
   determine_version:
     name: "Determine version"
     needs: update_branch
-    uses: ./.github/workflows/compute-next-prod-version.yml
+    uses: ./.github/workflows/compute-next-version.yml
     with:
+      deployment-type: "production"
       release-type: ${{ github.event.inputs.release-type }}
       tag_prefix: "SFv"
 

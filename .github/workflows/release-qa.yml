@@ -35,8 +35,9 @@ jobs:
   determine_version:
     name: "Determine version"
     needs: update_branch
-    uses: ./.github/workflows/compute-next-stag-version.yml
+    uses: ./.github/workflows/compute-next-version.yml
     with:
+      deployment-type: "staging"
       tag_prefix: "SF-QAv"
 
   deploy:
