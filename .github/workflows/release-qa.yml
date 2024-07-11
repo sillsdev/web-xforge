@@ -41,42 +41,46 @@ jobs:
 
   determine_version:
     name: "Determine version"
-    uses: ./.github/workflows/compute-next-stag-version.yml
     needs: update_branch
-    with:
-      tag_prefix: ${{ env.vcs_tag_prefix }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/compute-next-stag-version.yml
+        with:
+          tag_prefix: "${{ env.vcs_tag_prefix }}"
 
   deploy:
     name: "Deploy to QA"
-    uses: ./.github/workflows/release.yml
     needs: determine_version
     environment:
       name: "qa_deploy"
       url: "https://qa.scriptureforge.org"
-    with:
-      dotnet_version: "8.0.x"
-      node_version: "18.20.2"
-      npm_version: "10.5.0"
-      os: "ubuntu-20.04"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/release.yml
+        with:
+          dotnet_version: "8.0.x"
+          node_version: "18.20.2"
+          npm_version: "10.5.0"
+          os: "ubuntu-20.04"
 
-      angular_config: "staging"
-      app_name: "scriptureforge"
-      app_suffix: "_qa"
-      version_number: "${{ needs.determine_version.outputs.next_version }}"
-      vcs_tag_prefix: ${{ env.vcs_tag_prefix }}
-      node_options: "--max_old_space_size=4096"
-      project: "SIL.XForge.Scripture"
+          angular_config: "staging"
+          app_name: "scriptureforge"
+          app_suffix: "_qa"
+          version_number: "${{ needs.determine_version.outputs.next_version }}"
+          vcs_tag_prefix: "${{ env.vcs_tag_prefix }}"
+          node_options: "--max_old_space_size=4096"
+          project: "SIL.XForge.Scripture"
 
-    secrets:
-      deploy_server: ${{secrets.deploy_server}}
-      deploy_known_hosts: ${{secrets.deploy_known_hosts}}
-      deploy_ssh_private_key: ${{secrets.deploy_ssh_private_key}}
-      auth_backend_secret: ${{ secrets.auth_backend_secret }}
-      auth_webhook_password: ${{ secrets.auth_webhook_password }}
-      paratext_client_id: ${{secrets.paratext_client_id}}
-      paratext_api_token: ${{ secrets.paratext_api_token }}
-      paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
-      paratext_resource_password_hash: ${{ secrets.paratext_resource_password_hash }}
-      serval_client_id: ${{secrets.serval_client_id}}
-      serval_client_secret: ${{ secrets.serval_client_secret }}
-      serval_webhook_secret: ${{ secrets.serval_webhook_secret }}
+        # secrets:
+        #   deploy_server: ${{secrets.deploy_server}}
+        #   deploy_known_hosts: ${{secrets.deploy_known_hosts}}
+        #   deploy_ssh_private_key: ${{secrets.deploy_ssh_private_key}}
+        #   auth_backend_secret: ${{ secrets.auth_backend_secret }}
+        #   auth_webhook_password: ${{ secrets.auth_webhook_password }}
+        #   paratext_client_id: ${{secrets.paratext_client_id}}
+        #   paratext_api_token: ${{ secrets.paratext_api_token }}
+        #   paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
+        #   paratext_resource_password_hash: ${{ secrets.paratext_resource_password_hash }}
+        #   serval_client_id: ${{secrets.serval_client_id}}
+        #   serval_client_secret: ${{ secrets.serval_client_secret }}
+        #   serval_webhook_secret: ${{ secrets.serval_webhook_secret }}

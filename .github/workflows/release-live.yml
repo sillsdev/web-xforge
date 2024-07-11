@@ -58,7 +58,7 @@ jobs:
     needs: update_branch
     with:
       release-type: ${{ github.event.inputs.release-type }}
-      tag_prefix: ${{ env.vcs_tag_prefix }}
+      tag_prefix: "${{ env.vcs_tag_prefix }}"
 
   deploy:
     name: "Deploy to Live"
@@ -77,7 +77,7 @@ jobs:
       app_name: "scriptureforge"
       app_suffix: ""
       version_number: "${{ needs.determine_version.outputs.next_version }}"
-      vcs_tag_prefix: ${{ env.vcs_tag_prefix }}
+      vcs_tag_prefix: "${{ env.vcs_tag_prefix }}"
       node_options: "--max_old_space_size=4096"
       project: "SIL.XForge.Scripture"
 
