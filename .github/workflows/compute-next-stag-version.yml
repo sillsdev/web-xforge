@@ -3,7 +3,7 @@ name: "Increment version"
 on:
   workflow_call:
     inputs:
-      tag_prefix:
+      tag_prefixX:
         description: "The prefix of the VCS tags, such as 'ABCv' or 'DEFv'."
         required: true
         type: string
