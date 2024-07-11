@@ -13,16 +13,6 @@ on:
         value: ${{ jobs.deploy.outputs.next_version }}
 
 jobs:
-  check:
-    name: "Check inputs"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check inputs
-        run: |
-          echo "i: ${{ toJson( inputs )}}"
-          echo "event inputs: ${{ toJson(github.event.inputs)}}"
-          echo "TAG_PREFIX=${{ github.event.inputs.tag_prefix }}"
-
   deploy:
     name: "Increment version"
     runs-on: ubuntu-latest
@@ -49,4 +39,4 @@ jobs:
             file.write(f'next_version={next_version}')
           EOF
         env:
-          TAG_PREFIX: "${{ github.event.inputs.tag_prefix }}"
+          TAG_PREFIX: "${{ inputs.tag_prefix }}"
