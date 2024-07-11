@@ -13,6 +13,15 @@ on:
         value: ${{ jobs.deploy.outputs.next_version }}
 
 jobs:
+  check:
+    name: "Check inputs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check inputs
+        run: |
+          echo "TAG_PREFIX=${TAG_PREFIX}"
+        env:
+          TAG_PREFIX: ${{ github.event.inputs.tag_prefix }}
   deploy:
     name: "Increment version"
     runs-on: ubuntu-latest
