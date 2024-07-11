@@ -49,7 +49,7 @@ jobs:
     # environment:
     #   name: "qa_deploy"
     #   url: "https://qa.scriptureforge.org"
-
+    # secrets: inherit
     uses: ./.github/workflows/release.yml
     with:
       dotnet_version: "8.0.x"
