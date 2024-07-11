@@ -96,9 +96,8 @@ jobs:
   deploy:
     name: "Deploy"
     environment:
-      "qa_deploy"
-      # name: "qa_deploy"
-      # url: "https://scriptureforge.org"
+      name: "qa_deploy"
+      url: "https://scriptureforge.org"
     runs-on: ${{inputs.os}}
     steps:
       - name: Place SSH deploy credentials
