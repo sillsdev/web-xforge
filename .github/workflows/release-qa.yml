@@ -42,16 +42,9 @@ jobs:
   determine_version:
     name: "Determine version"
     needs: update_branch
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: "0"
-      - name: Computer version
-        uses: ./.github/workflows/compute-next-stag-version.yml
-        with:
-          tag_prefix: "${{ env.vcs_tag_prefix }}"
+    uses: ./.github/workflows/compute-next-stag-version.yml
+    with:
+      tag_prefix: "SF-QAv"
 
   deploy:
     name: "Deploy to QA"
