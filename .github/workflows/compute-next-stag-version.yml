@@ -3,7 +3,7 @@ name: "Increment version"
 on:
   workflow_call:
     inputs:
-      tag_prefixX:
+      tag_prefix:
         description: "The prefix of the VCS tags, such as 'ABCv' or 'DEFv'."
         required: true
         type: string
@@ -19,9 +19,8 @@ jobs:
     steps:
       - name: Check inputs
         run: |
-          echo "TAG_PREFIX=${TAG_PREFIX}"
-        env:
-          TAG_PREFIX: ${{ github.event.inputs.tag_prefix }}
+          echo "TAG_PREFIX=${{ github.event.inputs.tag_prefix }}"
+
   deploy:
     name: "Increment version"
     runs-on: ubuntu-latest
