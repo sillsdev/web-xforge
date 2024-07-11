@@ -1,9 +1,6 @@
 # Releases from master branch to QA staging server.
 name: "Release__ to QA"
 
-env:
-  vcs_tag_prefix: "SF-QAv"
-
 concurrency: deploy-staging
 
 on:
@@ -65,7 +62,7 @@ jobs:
           app_name: "scriptureforge"
           app_suffix: "_qa"
           version_number: "${{ needs.determine_version.outputs.next_version }}"
-          vcs_tag_prefix: "${{ env.vcs_tag_prefix }}"
+          vcs_tag_prefix: "SF-QAv"
           node_options: "--max_old_space_size=4096"
           project: "SIL.XForge.Scripture"
 
