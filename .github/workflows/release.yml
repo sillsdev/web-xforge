@@ -3,6 +3,11 @@ name: "Release"
 on:
   workflow_call:
     inputs:
+      environment:
+        description: "The GitHub environment to deploy to."
+        required: true
+        type: string
+
       # Build environment
       dotnet_version:
         description: "The version of .NET to use when building."
@@ -96,7 +101,7 @@ jobs:
   deploy:
     name: "Deploy"
     environment:
-      name: "qa_deploy"
+      name: "${{inputs.environment}}"
       url: "https://scriptureforge.org"
     runs-on: ${{inputs.os}}
     steps:
