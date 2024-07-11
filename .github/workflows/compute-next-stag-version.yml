@@ -38,4 +38,5 @@ jobs:
           print(f'::set-output name=next_version::{next_version}')
           EOF
         env:
-          TAG_PREFIX: ${{ github.event.inputs.tag_prefix }}
+          # temporarily hard code tag
+          TAG_PREFIX: "SF-QAv${{ github.event.inputs.tag_prefix }}"
