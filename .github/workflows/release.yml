@@ -51,50 +51,53 @@ on:
         type: string
         required: true
 
-    secrets:
-      # App settings
-      auth_backend_secret:
-        description: "The secret to use for the authentication backend."
-        required: true
-      auth_webhook_password:
-        description: "The password to use for the authentication webbook."
-        required: true
-      paratext_client_id:
-        description: "The client ID to use for the Paratext API."
-        required: true
-      paratext_api_token:
-        description: "The Paratext API token."
-        required: true
-      paratext_resource_password_base64:
-        description: "The Paratext resource password."
-        required: true
-      paratext_resource_password_hash:
-        description: ""
-        required: true
-      serval_client_id:
-        description: "The client ID to use for the Serval API."
-        required: true
-      serval_client_secret:
-        description: "The secret to use for the Serval API."
-        required: true
-      serval_webhook_secret:
-        description: "The secret to use for the Serval webhook."
-        required: true
+    # secrets:
+    #   # App settings
+    #   auth_backend_secret:
+    #     description: "The secret to use for the authentication backend."
+    #     required: true
+    #   auth_webhook_password:
+    #     description: "The password to use for the authentication webbook."
+    #     required: true
+    #   paratext_client_id:
+    #     description: "The client ID to use for the Paratext API."
+    #     required: true
+    #   paratext_api_token:
+    #     description: "The Paratext API token."
+    #     required: true
+    #   paratext_resource_password_base64:
+    #     description: "The Paratext resource password."
+    #     required: true
+    #   paratext_resource_password_hash:
+    #     description: ""
+    #     required: true
+    #   serval_client_id:
+    #     description: "The client ID to use for the Serval API."
+    #     required: true
+    #   serval_client_secret:
+    #     description: "The secret to use for the Serval API."
+    #     required: true
+    #   serval_webhook_secret:
+    #     description: "The secret to use for the Serval webhook."
+    #     required: true
 
-      # Deploy information
-      deploy_server:
-        description: "The server to deploy to."
-        required: true
-      deploy_known_hosts:
-        description: "ssh known_hosts lines to use for deployment."
-        required: false
-      deploy_ssh_private_key:
-        description: "SSH private key to use for deployment."
-        required: true
+    #   # Deploy information
+    #   deploy_server:
+    #     description: "The server to deploy to."
+    #     required: true
+    #   deploy_known_hosts:
+    #     description: "ssh known_hosts lines to use for deployment."
+    #     required: false
+    #   deploy_ssh_private_key:
+    #     description: "SSH private key to use for deployment."
+    #     required: true
 
 jobs:
   deploy:
     name: "Deploy"
+    environment:
+      name: "qa_deploy"
+      url: "https://scriptureforge.org"
     runs-on: ${{inputs.os}}
     steps:
       - name: Place SSH deploy credentials
