@@ -1,4 +1,4 @@
-name: "Increment version"
+name: "Compute next version"
 
 on:
   workflow_call:
@@ -23,7 +23,7 @@ on:
 
 jobs:
   deploy:
-    name: "Increment version"
+    name: "Compute next version"
     runs-on: ubuntu-latest
     outputs:
       next_version: ${{ steps.compute_next_version.outputs.next_version }}
