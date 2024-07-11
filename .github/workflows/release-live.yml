@@ -1,5 +1,5 @@
 # Releases from sf-qa branch to Live production server.
-name: "Release to Live"
+name: "Release__ to Live"
 
 env:
   vcs_tag_prefix: "SFv"

@@ -1,5 +1,5 @@
 # Releases from master branch to QA staging server.
-name: "Release to QA"
+name: "Release__ to QA"
 
 env:
   vcs_tag_prefix: "SF-QAv"
