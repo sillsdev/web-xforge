@@ -7,6 +7,7 @@ import FileSaver from 'file-saver';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
@@ -36,7 +37,7 @@ import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
 
-describe('DraftGenerationComponent', () => {
+fdescribe('DraftGenerationComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
@@ -147,34 +148,7 @@ describe('DraftGenerationComponent', () => {
         'getGeneratedDraftUsfm',
         'getLastCompletedBuild'
       ]);
-      const projectDoc = {
-        id: projectId,
-        data: createTestProjectProfile({
-          writingSystem: {
-            tag: 'en'
-          },
-          translateConfig: {
-            preTranslate: true,
-            projectType: ProjectType.BackTranslation,
-            source: {
-              projectRef: 'testSourceProjectId',
-              writingSystem: {
-                tag: 'es'
-              }
-            }
-          },
-          sync: {
-            lastSyncSuccessful: true
-          }
-        })
-      } as SFProjectProfileDoc;
-      mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
-        projectId: projectId,
-        projectId$: of(projectId),
-        projectDoc: projectDoc,
-        projectDoc$: of(projectDoc),
-        changes$: of(projectDoc)
-      });
+      TestEnvironment.initProject('user01', false);
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
       mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
@@ -193,6 +167,46 @@ describe('DraftGenerationComponent', () => {
       // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
       // eslint-disable-next-line deprecation/deprecation
       spyOn(FileSaver, 'saveAs').and.stub();
+    }
+
+    static initProject(currentUserId: string, initializeUser: boolean): void {
+      const projectDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'en'
+          },
+          translateConfig: {
+            preTranslate: true,
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'es'
+              }
+            }
+          },
+          userRoles: {
+            user01: SFProjectRole.ParatextAdministrator,
+            user02: SFProjectRole.ParatextTranslator
+          },
+          sync: {
+            lastSyncSuccessful: true
+          }
+        })
+      } as SFProjectProfileDoc;
+      if (initializeUser)
+        mockAuthService = jasmine.createSpyObj<AuthService>([], {
+          currentUserId,
+          currentUserRoles: [SystemRole.User]
+        });
+      mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
+        projectId: projectId,
+        projectId$: of(projectId),
+        projectDoc: projectDoc,
+        projectDoc$: of(projectDoc),
+        changes$: of(projectDoc)
+      });
     }
 
     get downloadButton(): HTMLElement | null {
@@ -595,24 +609,7 @@ describe('DraftGenerationComponent', () => {
   describe('warnings', () => {
     describe('source text missing', () => {
       it('should show warning with settings link when source text is missing AND target language is supported, user is Paratext Admin', () => {
-        let projectDoc: SFProjectProfileDoc = {
-          data: createTestProjectProfile({
-            userRoles: { user01: 'pt_administrator' }
-          })
-        } as SFProjectProfileDoc;
-        let env = new TestEnvironment(() => {
-          mockAuthService = jasmine.createSpyObj<AuthService>([], {
-            currentUserId: 'user01',
-            currentUserRoles: [SystemRole.None]
-          });
-          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-            projectId: projectId,
-            projectId$: of(projectId),
-            projectDoc: projectDoc,
-            projectDoc$: of(projectDoc),
-            changes$: of(projectDoc)
-          });
-        });
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
@@ -623,24 +620,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should show warning to contact Paratext Admin when source text is missing AND target language is supported, user is Translator', () => {
-        let projectDoc: SFProjectProfileDoc = {
-          data: createTestProjectProfile({
-            userRoles: { user01: 'translator' }
-          })
-        } as SFProjectProfileDoc;
-        let env = new TestEnvironment(() => {
-          mockAuthService = jasmine.createSpyObj<AuthService>([], {
-            currentUserId: 'user01',
-            currentUserRoles: [SystemRole.None]
-          });
-          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-            projectId: projectId,
-            projectId$: of(projectId),
-            projectDoc: projectDoc,
-            projectDoc$: of(projectDoc),
-            changes$: of(projectDoc)
-          });
-        });
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02', true));
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
@@ -669,24 +649,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('source and target text must be different', () => {
       it('should show warning with settings page link when source text is not missing AND source and target are same AND target language is supported, user is Paratext Admin', () => {
-        let projectDoc: SFProjectProfileDoc = {
-          data: createTestProjectProfile({
-            userRoles: { user01: 'pt_administrator' }
-          })
-        } as SFProjectProfileDoc;
-        let env = new TestEnvironment(() => {
-          mockAuthService = jasmine.createSpyObj<AuthService>([], {
-            currentUserId: 'user01',
-            currentUserRoles: [SystemRole.None]
-          });
-          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-            projectId: projectId,
-            projectId$: of(projectId),
-            projectDoc: projectDoc,
-            projectDoc$: of(projectDoc),
-            changes$: of(projectDoc)
-          });
-        });
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
@@ -698,24 +661,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should show warning to contact Paratext Admin when source text is not missing AND source and target are same AND target language is supported, user is Translator', () => {
-        let projectDoc: SFProjectProfileDoc = {
-          data: createTestProjectProfile({
-            userRoles: { user01: 'translator' }
-          })
-        } as SFProjectProfileDoc;
-        let env = new TestEnvironment(() => {
-          mockAuthService = jasmine.createSpyObj<AuthService>([], {
-            currentUserId: 'user01',
-            currentUserRoles: [SystemRole.None]
-          });
-          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-            projectId: projectId,
-            projectId$: of(projectId),
-            projectDoc: projectDoc,
-            projectDoc$: of(projectDoc),
-            changes$: of(projectDoc)
-          });
-        });
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02', true));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
@@ -810,24 +756,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('source and additional training source language must be the same', () => {
       it('should show warning with link to settings page when source and additional training source are different AND target language is supported, user is Paratext Admin', () => {
-        let projectDoc: SFProjectProfileDoc = {
-          data: createTestProjectProfile({
-            userRoles: { user01: 'pt_administrator' }
-          })
-        } as SFProjectProfileDoc;
-        let env = new TestEnvironment(() => {
-          mockAuthService = jasmine.createSpyObj<AuthService>([], {
-            currentUserId: 'user01',
-            currentUserRoles: [SystemRole.None]
-          });
-          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-            projectId: projectId,
-            projectId$: of(projectId),
-            projectDoc: projectDoc,
-            projectDoc$: of(projectDoc),
-            changes$: of(projectDoc)
-          });
-        });
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
@@ -845,24 +774,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should show warning to contact Paratext Admin when source and additional training source are different AND target language is supported, user is Translator', () => {
-        let projectDoc: SFProjectProfileDoc = {
-          data: createTestProjectProfile({
-            userRoles: { user01: 'translator' }
-          })
-        } as SFProjectProfileDoc;
-        let env = new TestEnvironment(() => {
-          mockAuthService = jasmine.createSpyObj<AuthService>([], {
-            currentUserId: 'user01',
-            currentUserRoles: [SystemRole.None]
-          });
-          mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-            projectId: projectId,
-            projectId$: of(projectId),
-            projectDoc: projectDoc,
-            projectDoc$: of(projectDoc),
-            changes$: of(projectDoc)
-          });
-        });
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02', true));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
