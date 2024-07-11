@@ -1,13 +1,9 @@
 # Releases from sf-qa branch to Live production server.
-name: "Release__ to Live"
+name: "Release to Live"
 
 concurrency: deploy-prod
 
 on:
-  # TODO 'push' is temporary for testing.
-  push:
-    branches:
-      - task/gha-prod
   workflow_dispatch:
     inputs:
       release-type:

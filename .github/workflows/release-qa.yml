@@ -1,13 +1,9 @@
 # Releases from master branch to QA staging server.
-name: "Release__ to QA"
+name: "Release to QA"
 
 concurrency: deploy-staging
 
 on:
-  # TODO 'push' is temporary for testing.
-  push:
-    branches:
-      - task/gha-prod
   schedule:
     # Run every day except Tuesday, at 01:30 UTC, shortly before beginning of tester workday.
     # Note that this workflow can be disabled from the GitHub UI by going to
