@@ -30,7 +30,7 @@ namespace SIL.XForge.Scripture.Services;
 /// Algorithm:
 /// 1. The text deltas from the real-time docs are converted to USX.
 /// 2. The local repo is updated using the converted USX.
-/// 3. A note changelist is computed by diffing the the real-time question docs and the notes in the local repo.
+/// 3. A note changelist is computed by diffing the real-time question docs and the notes in the local repo.
 /// 4. The local repo is updated using the note changelist.
 /// 5. PT send/receive is performed (remote and local repos are synced).
 /// 6. Docs associated with remotely deleted books are deleted.
@@ -554,7 +554,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 .ToList();
             if (!_paratextService.IsResource(paratextId))
             {
-                LogMetric("Updating Paratext notes");
+                LogMetric("Updating Paratext notes for questions");
                 if (questionDocsByBook[text.BookNum].Count > 0)
                 {
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
@@ -564,24 +564,32 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     .Where(n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null)
                     .ToList();
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
-                // Only update the note tag if there are SF note threads in the project
-                if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
-                    await UpdateTranslateNoteTag(paratextId);
+            }
+        }
 
-                // If there are no editable notes, do not update Paratext
-                if (noteThreadDocs.Any(nt => nt.Data.Notes.Any(n => n.Editable == true)))
-                {
-                    int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
-                    _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
-                        _userSecret,
-                        paratextId,
-                        text.BookNum,
-                        noteThreadDocs,
-                        _userIdsToDisplayNames,
-                        _currentPtSyncUsers,
-                        sfNoteTagId
-                    );
-                }
+        // Update the notes for all books if this is not a resource
+        LogMetric("Updating Paratext notes");
+        if (!_paratextService.IsResource(paratextId))
+        {
+            // Only update the note tag if there are SF note threads in the project
+            if (noteDocs.Any(nt => nt.Data.PublishedToSF == true && nt.Data?.BiblicalTermId == null))
+                await UpdateTranslateNoteTag(paratextId);
+
+            // Only update Paratext if there are editable notes
+            List<IDocument<NoteThread>> editableNotes = noteDocs
+                .Where(nt => nt.Data.Notes.Any(n => n.Editable == true) && nt.Data?.BiblicalTermId == null)
+                .ToList();
+            if (editableNotes.Count > 0)
+            {
+                int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
+                _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
+                    _userSecret,
+                    paratextId,
+                    editableNotes,
+                    _userIdsToDisplayNames,
+                    _currentPtSyncUsers,
+                    sfNoteTagId
+                );
             }
         }
 
@@ -590,7 +598,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         biblicalTermNoteThreadDocs.AddRange(noteDocs.Where(n => n.Data?.BiblicalTermId != null));
 
         // If biblical terms is not enabled, we do not want to sync an empty list, as it will remove any biblical term notes
-        if (!_projectDoc.Data.BiblicalTermsConfig.BiblicalTermsEnabled && !biblicalTermNoteThreadDocs.Any())
+        if (!_projectDoc.Data.BiblicalTermsConfig.BiblicalTermsEnabled && biblicalTermNoteThreadDocs.Count == 0)
         {
             return;
         }
@@ -601,7 +609,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
             _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
                 _userSecret,
                 paratextId,
-                null,
                 biblicalTermNoteThreadDocs,
                 _userIdsToDisplayNames,
                 _currentPtSyncUsers,
@@ -1003,6 +1010,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _conn.BeginTransaction();
         _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
         _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.DataInSync);
+        _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.LastSyncSuccessful);
         _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
         if (!_projectDoc.IsLoaded)
         {
@@ -1239,7 +1247,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
                 if (diffDelta.Ops.Count > 0)
                 {
-                    tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
+                    tasks.Add(textDataDoc.SubmitOpAsync(diffDelta, OpSource.Paratext));
                     _syncMetrics.TextDocs.Updated++;
                 }
 
@@ -1693,11 +1701,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         }
 
-        // NOTE: This is executed outside of the transaction because it modifies "Sync.QueuedCount"
         await _projectDoc.SubmitJson0OpAsync(op =>
         {
-            op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
-
             // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
             // is known to be out of sync if the revision does not match the corresponding revision stored
             // on the project doc.
@@ -1708,29 +1713,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 Log($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
                 op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
                 op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
-                op.Set(pd => pd.Sync.DataInSync, true);
             }
             else
             {
                 Log(
                     $"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'."
                 );
-                op.Set(pd => pd.Sync.DataInSync, dataInSync);
-            }
-            // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
-            // an event for each individual op even if they are applied as a batch, so this needs to be set last,
-            // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
-            // complete.
-            if (_projectDoc.Data.Sync.QueuedCount > 0)
-            {
-                op.Inc(pd => pd.Sync.QueuedCount, -1);
-            }
-            else
-            {
-                Log(
-                    $"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly {_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing."
-                );
-                op.Set(pd => pd.Sync.QueuedCount, 0);
             }
 
             if (updateRoles)
@@ -1889,9 +1877,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Commit or rollback the transaction, depending on success
         if (successful)
         {
-            // Write the operations to the database
-            await _conn.CommitTransactionAsync();
-
             // Backup the repository
             if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
             {
@@ -1903,15 +1888,43 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                 if (!backupOutcome)
                 {
-                    Log($"CompleteSync: Failure backing up local PT repo.");
+                    Log("CompleteSync: Failure backing up local PT repo.");
                 }
             }
+
+            // Write the operations to the database
+            await _conn.CommitTransactionAsync();
         }
         else
         {
             // Rollback the operations (the repository was restored above)
             _conn.RollbackTransaction();
         }
+
+        // NOTE: This is executed outside the transaction because QueuedCount updates the frontend,
+        // and dataInSync must record the real value if a transaction fails.
+        await _projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Set(pd => pd.Sync.DataInSync, dataInSync);
+            op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
+
+            // The frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
+            // an event for each individual op even if they are applied as a batch, so this needs to be set last,
+            // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
+            // complete.
+            if (_projectDoc.Data.Sync.QueuedCount > 0)
+            {
+                op.Inc(pd => pd.Sync.QueuedCount, -1);
+            }
+            else
+            {
+                Log(
+                    $"CompleteSync: Warning: SF project id {_projectDoc.Id} QueuedCount is unexpectedly "
+                        + $"{_projectDoc.Data.Sync.QueuedCount}. Setting to 0 instead of decrementing."
+                );
+                op.Set(pd => pd.Sync.QueuedCount, 0);
+            }
+        });
 
         ReportRepoRevs("CompleteSync: ");
 

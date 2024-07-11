@@ -33,7 +33,7 @@ describe('TextDocService', () => {
     const env = new TestEnvironment();
     const newDelta: DeltaStatic = getCombinedVerseTextDoc(env.textDocId) as DeltaStatic;
 
-    env.textDocService.overwrite(env.textDocId, newDelta);
+    env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
     tick();
 
     expect(env.getTextDoc(env.textDocId).data?.ops).toEqual(newDelta.ops);
@@ -49,7 +49,21 @@ describe('TextDocService', () => {
       expect(emittedDiff.ops).toEqual(diff.ops);
     });
 
-    env.textDocService.overwrite(env.textDocId, newDelta);
+    env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
+    tick();
+  }));
+
+  it('should submit the source', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const newDelta: DeltaStatic = getPoetryVerseTextDoc(env.textDocId) as DeltaStatic;
+
+    const textDoc = env.getTextDoc(env.textDocId);
+    textDoc.adapter.changes$.subscribe(() => {
+      // overwrite() resets submitSource to false, so we check it when the op is submitted
+      expect(textDoc.adapter.submitSource).toBe(true);
+    });
+
+    env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
     tick();
   }));
 

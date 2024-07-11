@@ -2,15 +2,19 @@ import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic } from 'quill';
 import {
   getTextDocId,
+  TEXT_INDEX_PATHS,
   TextData,
   TEXTS_COLLECTION,
-  TextType,
-  TEXT_INDEX_PATHS
+  TextType
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
+import { RealtimeDocAdapter } from 'xforge-common/realtime-remote-store';
+import { RealtimeService } from 'xforge-common/realtime.service';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
+
+export type TextDocSource = 'Draft' | 'Editor' | 'History' | 'Paratext';
 
 /**
  * This class represents the different components for a text doc id. It can be converted to the actual text doc id
@@ -40,6 +44,11 @@ export class TextDocId {
 export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
+
+  constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
+    adapter.submitSource = true;
+    super(realtimeService, adapter);
+  }
 
   getSegmentCount(): { translated: number; blank: number } {
     let blank = 0;

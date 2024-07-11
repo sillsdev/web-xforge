@@ -15,6 +15,6 @@ public static class Json0Extensions
         var builder = new Json0OpBuilder<T>(doc.Data);
         build(builder);
         if (builder.Op.Count > 0)
-            await doc.SubmitOpAsync(builder.Op);
+            await doc.SubmitOpAsync(builder.Op, null);
     }
 }

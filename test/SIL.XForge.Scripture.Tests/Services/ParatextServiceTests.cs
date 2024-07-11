@@ -2638,7 +2638,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             noteThreadDocs,
             env.usernames,
             ptProjectUsers,
@@ -2717,7 +2716,6 @@ public class ParatextServiceTests
         var syncMetricsInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             paratextUsers,
@@ -2790,7 +2788,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -2888,7 +2885,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -2990,7 +2986,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3062,7 +3057,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3167,7 +3161,6 @@ public class ParatextServiceTests
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3263,7 +3256,6 @@ public class ParatextServiceTests
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3322,7 +3314,6 @@ public class ParatextServiceTests
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3395,7 +3386,6 @@ public class ParatextServiceTests
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             new[] { noteThreadDoc },
             env.usernames,
             ptProjectUsers,
@@ -3441,7 +3431,6 @@ public class ParatextServiceTests
         await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             paratextId,
-            40,
             emptyDocs,
             env.usernames,
             ptProjectUsers,
@@ -3487,7 +3476,6 @@ public class ParatextServiceTests
                 env.Service.UpdateParatextCommentsAsync(
                     userSecret,
                     paratextId,
-                    40,
                     new[] { noteThreadDoc },
                     env.usernames,
                     ptProjectUsers,
@@ -3816,11 +3804,14 @@ public class ParatextServiceTests
         ScrText sourceScrText = env.GetScrText(associatedPtUser, sourceProjectId);
         env.MockScrTextCollection.FindById(env.Username01, sourceProjectId).Returns(sourceScrText);
 
-        // Get the permissions, as the ScrText will be disposed in ShareChanges()
-        ComparableProjectPermissionManager sourceScrTextPermissions = (ComparableProjectPermissionManager)
-            sourceScrText.Permissions;
-        ComparableProjectPermissionManager targetScrTextPermissions = (ComparableProjectPermissionManager)
-            env.ProjectScrText.Permissions;
+        // The permissions will return a null user, so we will have the registry return the correct permissions
+        var permissionManager = new ParatextRegistryPermissionManager(env.Username01);
+        permissionManager.CreateFirstAdminUser();
+        env.MockSharingLogicWrapper.SearchForBestProjectUsersData(
+                Arg.Any<SharedRepositorySource>(),
+                Arg.Any<SharedProject>()
+            )
+            .Returns(permissionManager);
 
         ParatextProject targetProject = await env.Service.SendReceiveAsync(
             user01Secret,
@@ -3840,18 +3831,12 @@ public class ParatextServiceTests
         Assert.IsNotNull(sourceProject);
         // Below, we are checking also that the SharedProject has a
         // Permissions that is set from the SharedProject's ScrText.Permissions.
-        // Better may be to assert that each SharedProject.Permissions.GetUser()
-        // returns a desired PT username, if the test environment wasn't
-        // mired in mock.
         env.MockSharingLogicWrapper.Received(2)
             .ShareChanges(
                 Arg.Is<List<SharedProject>>(list =>
                     list.Count.Equals(1)
                     && (list[0].SendReceiveId.Id == targetProjectId || list[0].SendReceiveId.Id == sourceProjectId)
-                    && (
-                        sourceScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
-                        || targetScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
-                    )
+                    && list[0].Permissions.GetUser(null).UserName == env.Username01
                 ),
                 Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(),
@@ -3863,7 +3848,7 @@ public class ParatextServiceTests
         string newSourceProjectId = env.PTProjectIds[env.Project03].Id;
         string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
 
-        // Only set the the new source ScrText when it is "cloned" to the filesystem
+        // Only set the new source ScrText when it is "cloned" to the filesystem
         env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath))
             .Do(_ =>
             {
@@ -4927,17 +4912,14 @@ public class ParatextServiceTests
         // SUT
         bool historyExists = false;
         await foreach (
-            KeyValuePair<DateTime, string> revision in env.Service.GetRevisionHistoryAsync(
-                userSecret,
-                project.Id,
-                "MAT",
-                1
-            )
+            DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)
         )
         {
+            // NOTE: These values are defined in MemoryConnection.GetOpsAsync()
+            Assert.IsTrue(revision.Timestamp > DateTime.MinValue);
+            Assert.AreEqual(revision.UserId, env.User01);
+            Assert.AreEqual(revision.Source, OpSource.Draft);
             historyExists = true;
-            Assert.IsTrue(revision.Key > DateTime.MinValue);
-            Assert.IsFalse(string.IsNullOrWhiteSpace(revision.Value));
             break;
         }
 
@@ -5263,6 +5245,9 @@ public class ParatextServiceTests
                     Task.FromResult(new Tokens { AccessToken = accessToken1, RefreshToken = "refresh_token_1234" })
                 );
             MockFileSystemService.DirectoryExists(SyncDir).Returns(true);
+            MockSharingLogicWrapper
+                .SearchForBestProjectUsersData(Arg.Any<SharedRepositorySource>(), Arg.Any<SharedProject>())
+                .Returns(args => args.ArgAt<SharedProject>(1).Permissions);
             RegistryU.Implementation = new DotNetCoreRegistry();
             ScrTextCollection.Implementation = new SFScrTextCollection();
             AddProjectRepository();

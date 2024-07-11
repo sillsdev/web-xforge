@@ -290,7 +290,23 @@ public class ParatextService : DisposableBase, IParatextService
                     scrText,
                     sendReceiveRepository
                 );
-                List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
+
+                // If the current user is not in the shared project's permissions, use the Registry's permissions
+                ProjectUser? user = sharedProj.Permissions.GetUser();
+                if (user is null || user.Role == UserRoles.None)
+                {
+                    // As we expect the permission manager to come from the Registry, the default username will be from
+                    // the Paratext license for this machine, or incorrect if Paratext is installed. That will cause the
+                    // DefaultUser to be invalid if Paratext is not installed. To resolve this, we have a wrapper
+                    // implementation of PermissionManager that allows us to define the default username.
+                    PermissionManager permissionManager = SharingLogicWrapper.SearchForBestProjectUsersData(
+                        source.AsInternetSharedRepositorySource(),
+                        sharedProj
+                    );
+                    sharedProj.Permissions = new ParatextRegistryPermissionManager(username, permissionManager);
+                }
+
+                List<SharedProject> sharedPtProjectsToSr = [sharedProj];
 
                 // If we are in development, unlock the repo before we begin,
                 // just in case the repo is locked.
@@ -1315,7 +1331,6 @@ public class ParatextService : DisposableBase, IParatextService
     public async Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
@@ -1884,7 +1899,7 @@ public class ParatextService : DisposableBase, IParatextService
         return snapshot;
     }
 
-    public async IAsyncEnumerable<KeyValuePair<DateTime, string>> GetRevisionHistoryAsync(
+    public async IAsyncEnumerable<DocumentRevision> GetRevisionHistoryAsync(
         UserSecret userSecret,
         string sfProjectId,
         string book,
@@ -1914,19 +1929,22 @@ public class ParatextService : DisposableBase, IParatextService
 
         // Iterate over the ops in reverse order, returning a milestone at least every 15 minutes
         const int interval = 15;
-        const string status = "Updated in Scripture Forge";
         DateTime milestonePeriod = DateTime.MaxValue;
-        DateTime milestoneTimestamp = DateTime.UtcNow;
+        DocumentRevision documentRevision = new DocumentRevision { Timestamp = DateTime.UtcNow };
         int milestoneOps = 0;
         for (int i = ops.Length - 1; i >= 0; i--)
         {
             Op op = ops[i];
-            if (op.Metadata.Timestamp < milestonePeriod.AddMinutes(0 - interval))
+            if (
+                op.Metadata.Timestamp < milestonePeriod.AddMinutes(0 - interval)
+                || op.Metadata.Source != documentRevision.Source
+                || op.Metadata.UserId != documentRevision.UserId
+            )
             {
                 // If this is not the first op, emit the revision
                 if (milestoneOps > 0)
                 {
-                    yield return new KeyValuePair<DateTime, string>(milestoneTimestamp, status);
+                    yield return documentRevision;
                     milestoneOps = 1;
                 }
 
@@ -1937,8 +1955,13 @@ public class ParatextService : DisposableBase, IParatextService
                 milestonePeriod = milestonePeriod.AddSeconds(-milestonePeriod.Second);
                 milestonePeriod = milestonePeriod.AddMilliseconds(-milestonePeriod.Millisecond);
 
-                // As this is the latest op in the new period, its timestamp will be the milestone timestamp
-                milestoneTimestamp = op.Metadata.Timestamp;
+                // As this is the latest op in the new period, it will define the milestone
+                documentRevision = new DocumentRevision
+                {
+                    Source = op.Metadata.Source,
+                    Timestamp = op.Metadata.Timestamp,
+                    UserId = op.Metadata.UserId,
+                };
             }
 
             milestoneOps++;
@@ -1947,7 +1970,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Emit the last op(s), if not emitted already
         if (milestoneOps > 0)
         {
-            yield return new KeyValuePair<DateTime, string>(milestoneTimestamp, status);
+            yield return documentRevision;
         }
 
         // Get the earlier op's timestamp (UTC)
@@ -1956,6 +1979,12 @@ public class ParatextService : DisposableBase, IParatextService
         // Load the Paratext project
         string ptProjectId = projectDoc.Data.ParatextId;
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
+
+        // Get the Paratext users
+        Dictionary<string, string> paratextUsers = projectDoc.Data.ParatextUsers.ToDictionary(
+            user => user.Username,
+            user => user.SFUserId
+        );
 
         // Note: The following code is not testable due to ParatextData limitations
         // Iterate over the Paratext commits earlier than the earliest MongoOp
@@ -1979,10 +2008,13 @@ public class ParatextService : DisposableBase, IParatextService
             var changesForBook = revisionSummary.GetChangesForBook(bookNum);
             if (changesForBook.ChapterHasChange(chapter))
             {
-                yield return new KeyValuePair<DateTime, string>(
-                    revision.CommitTimeStamp.UtcDateTime,
-                    "Updated in Paratext"
-                );
+                paratextUsers.TryGetValue(revision.User, out string? userId);
+                yield return new DocumentRevision
+                {
+                    Source = OpSource.Paratext,
+                    Timestamp = revision.CommitTimeStamp.UtcDateTime,
+                    UserId = userId,
+                };
             }
         }
     }

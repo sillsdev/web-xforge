@@ -53,7 +53,6 @@ public interface IParatextService
     Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         IReadOnlyDictionary<string, string> userIdsToUsernames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
@@ -89,7 +88,7 @@ public interface IParatextService
         DateTime timestamp
     );
 
-    IAsyncEnumerable<KeyValuePair<DateTime, string>> GetRevisionHistoryAsync(
+    IAsyncEnumerable<DocumentRevision> GetRevisionHistoryAsync(
         UserSecret userSecret,
         string sfProjectId,
         string book,

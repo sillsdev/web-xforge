@@ -7,6 +7,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ParatextProject } from './models/paratext-project';
+import { TextDocSource } from './models/text-doc';
 
 /** Length of paratext ids for DBL resources. */
 export const RESOURCE_IDENTIFIER_LENGTH = 16;
@@ -15,10 +16,19 @@ export const RESOURCE_IDENTIFIER_LENGTH = 16;
  * A point-in-time revision of a document.
  */
 export interface Revision {
+  /**
+   * The source of the revision.
+   */
+  source?: TextDocSource;
+
   /** The date and time of the revision in UTC. */
-  key: string;
-  /** A brief summary of the revision. */
-  value: string;
+  timestamp: string;
+
+  /**
+   * The user who created the revision.
+   * This will null if the user is unknown.
+   */
+  userId?: string;
 }
 
 export interface SelectableProject {
