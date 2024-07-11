@@ -1,6 +1,6 @@
 import { Component, Inject } from '@angular/core';
 import { UntypedFormControl, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -16,6 +16,8 @@ export interface EditNameDialogResult {
   templateUrl: './edit-name-dialog.component.html'
 })
 export class EditNameDialogComponent extends SubscriptionDisposable {
+  static defaultMatDialogConfig: MatDialogConfig = { autoFocus: true };
+
   name: UntypedFormControl = new UntypedFormControl('');
   isOnline: boolean = true;
 
