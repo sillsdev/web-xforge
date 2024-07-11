@@ -51,6 +51,10 @@ jobs:
       url: "https://qa.scriptureforge.org"
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
       - uses: ./.github/workflows/release.yml
         with:
           dotnet_version: "8.0.x"
