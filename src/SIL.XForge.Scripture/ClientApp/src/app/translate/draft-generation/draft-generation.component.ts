@@ -204,7 +204,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   get isProjectAdmin(): boolean {
     const userId = this.authService.currentUserId;
-    if (userId) {
+    if (userId != null) {
       return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
     }
     return false;
