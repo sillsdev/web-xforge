@@ -35,8 +35,8 @@ jobs:
 
           latest_tag = utils.get_latest_tag(tag_prefix)
           next_version = utils.increment_staging_version(latest_tag, tag_prefix)
-          print(f'::set-output name=next_version::{next_version}')
+          with open(os.getenv('GITHUB_OUTPUT'),'a') as file:
+            file.write(f'next_version={next_version}')
           EOF
         env:
-          # temporarily hard code tag
-          TAG_PREFIX: "SF-QAv${{ github.event.inputs.tag_prefix }}"
+          TAG_PREFIX: "${{ github.event.inputs.tag_prefix }}"
