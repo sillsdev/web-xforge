@@ -1,3 +1,4 @@
+# Releases from sf-qa branch to Live production server.
 name: "Release to Live"
 
 env:
@@ -23,7 +24,7 @@ on:
         type: boolean
         default: false
       from-staging-version:
-        description: "QA version from which to release (eg '123'). Leave blank for latest."
+        description: "QA version from which to release (eg '123' or '234'). Leave blank for latest."
         required: false
         type: string
         default: ""
@@ -63,6 +64,9 @@ jobs:
     name: "Deploy to Live"
     uses: ./.github/workflows/release.yml
     needs: determine_version
+    environment:
+      name: "production"
+      url: "https://scriptureforge.org"
     with:
       dotnet_version: "8.0.x"
       node_version: "18.20.2"
@@ -78,15 +82,15 @@ jobs:
       project: "SIL.XForge.Scripture"
 
     secrets:
-      deploy_server: ${{secrets.live_deploy_server}}
-      deploy_known_hosts: ${{secrets.live_deploy_known_hosts}}
-      deploy_ssh_private_key: ${{secrets.live_deploy_ssh_private_key}}
-      auth_backend_secret: ${{ secrets.live_auth_backend_secret }}
-      auth_webhook_password: ${{ secrets.live_auth_webhook_password }}
-      paratext_client_id: ${{secrets.live_paratext_client_id}}
-      paratext_api_token: ${{ secrets.live_paratext_api_token }}
-      paratext_resource_password_base64: ${{ secrets.live_paratext_resource_password_base64 }}
-      paratext_resource_password_hash: ${{ secrets.live_paratext_resource_password_hash }}
-      serval_client_id: ${{secrets.live_serval_client_id}}
-      serval_client_secret: ${{ secrets.live_serval_client_secret }}
-      serval_webhook_secret: ${{ secrets.live_serval_webhook_secret }}
+      deploy_server: ${{secrets.deploy_server}}
+      deploy_known_hosts: ${{secrets.deploy_known_hosts}}
+      deploy_ssh_private_key: ${{secrets.deploy_ssh_private_key}}
+      auth_backend_secret: ${{ secrets.auth_backend_secret }}
+      auth_webhook_password: ${{ secrets.auth_webhook_password }}
+      paratext_client_id: ${{secrets.paratext_client_id}}
+      paratext_api_token: ${{ secrets.paratext_api_token }}
+      paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
+      paratext_resource_password_hash: ${{ secrets.paratext_resource_password_hash }}
+      serval_client_id: ${{secrets.serval_client_id}}
+      serval_client_secret: ${{ secrets.serval_client_secret }}
+      serval_webhook_secret: ${{ secrets.serval_webhook_secret }}
