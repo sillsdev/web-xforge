@@ -124,9 +124,6 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
-        currentUserRoles: [SystemRole.User]
-      });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
@@ -148,7 +145,7 @@ describe('DraftGenerationComponent', () => {
         'getGeneratedDraftUsfm',
         'getLastCompletedBuild'
       ]);
-      TestEnvironment.initProject('user01', false);
+      TestEnvironment.initProject('user01');
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
       mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
@@ -169,7 +166,7 @@ describe('DraftGenerationComponent', () => {
       spyOn(FileSaver, 'saveAs').and.stub();
     }
 
-    static initProject(currentUserId: string, initializeUser: boolean): void {
+    static initProject(currentUserId: string): void {
       const projectDoc = {
         id: projectId,
         data: createTestProjectProfile({
@@ -195,11 +192,10 @@ describe('DraftGenerationComponent', () => {
           }
         })
       } as SFProjectProfileDoc;
-      if (initializeUser)
-        mockAuthService = jasmine.createSpyObj<AuthService>([], {
-          currentUserId,
-          currentUserRoles: [SystemRole.User]
-        });
+      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
+        currentUserId,
+        currentUserRoles: [SystemRole.User]
+      });
       mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
         projectId: projectId,
         projectId$: of(projectId),
@@ -609,7 +605,7 @@ describe('DraftGenerationComponent', () => {
   describe('warnings', () => {
     describe('source text missing', () => {
       it('should show warning with settings link when source text is missing AND target language is supported, user is Paratext Admin', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
@@ -620,7 +616,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should show warning to contact Paratext Admin when source text is missing AND target language is supported, user is Translator', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user02', true));
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
@@ -649,7 +645,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('source and target text must be different', () => {
       it('should show warning with settings page link when source text is not missing AND source and target are same AND target language is supported, user is Paratext Admin', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
@@ -661,7 +657,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should show warning to contact Paratext Admin when source text is not missing AND source and target are same AND target language is supported, user is Translator', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user02', true));
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
@@ -756,7 +752,7 @@ describe('DraftGenerationComponent', () => {
 
     describe('source and additional training source language must be the same', () => {
       it('should show warning with link to settings page when source and additional training source are different AND target language is supported, user is Paratext Admin', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user01', true));
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
@@ -774,7 +770,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       it('should show warning to contact Paratext Admin when source and additional training source are different AND target language is supported, user is Translator', () => {
-        const env = new TestEnvironment(() => TestEnvironment.initProject('user02', true));
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
