@@ -50,7 +50,9 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         return combineLatest([
           of(projectDoc),
           of(isOnline),
-          isOnline ? this.draftGenerationService.getLastCompletedBuild(projectDoc.id) : of(undefined),
+          !isOnline || projectDoc.data == null || ParatextService.isResource(projectDoc.data.paratextId)
+            ? of(undefined)
+            : this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
           this.tabState.tabs$
         ]);
       }),
