@@ -44,7 +44,12 @@ jobs:
     needs: update_branch
     runs-on: ubuntu-latest
     steps:
-      - uses: ./.github/workflows/compute-next-stag-version.yml
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+      - name: Computer version
+        uses: ./.github/workflows/compute-next-stag-version.yml
         with:
           tag_prefix: "${{ env.vcs_tag_prefix }}"
 
