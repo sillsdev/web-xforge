@@ -25,8 +25,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
       - name: Compute next version
         id: compute_next_version
+        working-directory: .github/workflows
         run: |
           python3 << EOF
           import os
@@ -37,7 +40,8 @@ jobs:
 
           latest_tag = utils.get_latest_tag(tag_prefix)
           next_version = utils.increment_production_version(latest_tag, release_type, tag_prefix)
-          print(f'::set-output name=next_version::{next_version}')
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as file:
+            file.write(f'next_version={next_version}')
           EOF
         env:
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}

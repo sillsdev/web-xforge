@@ -100,9 +100,7 @@ on:
 jobs:
   deploy:
     name: "Deploy"
-    environment:
-      name: "${{inputs.environment}}"
-      url: "https://scriptureforge.org"
+    environment: "${{inputs.environment}}"
     runs-on: ${{inputs.os}}
     steps:
       - name: Place SSH deploy credentials
@@ -144,6 +142,7 @@ jobs:
       - name: "Deps: rsync"
         run: sudo apt-get install rsync
       - name: "Build and ship"
+        # TODO restore
         run: echo DEBUG scripts/build-and-ship;false
         env:
           ANGULAR_CONFIG: ${{inputs.angular_config}}
@@ -165,7 +164,6 @@ jobs:
           SERVAL_WEBHOOK_SECRET: ${{secrets.serval_webhook_secret}}
       - name: "Tag release"
         run: |
-          exit 2
           set -ueo pipefail
           git config --global user.name "ci"
           git config --global user.email "ci"

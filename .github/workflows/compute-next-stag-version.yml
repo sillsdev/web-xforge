@@ -35,7 +35,7 @@ jobs:
 
           latest_tag = utils.get_latest_tag(tag_prefix)
           next_version = utils.increment_staging_version(latest_tag, tag_prefix)
-          with open(os.getenv('GITHUB_OUTPUT'),'a') as file:
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as file:
             file.write(f'next_version={next_version}')
           EOF
         env:

@@ -1,12 +1,13 @@
 # Releases from sf-qa branch to Live production server.
 name: "Release__ to Live"
 
-env:
-  vcs_tag_prefix: "SFv"
-
 concurrency: deploy-prod
 
 on:
+  # TODO 'push' is temporary for testing.
+  push:
+    branches:
+      - task/gha-prod
   workflow_dispatch:
     inputs:
       release-type:
@@ -54,20 +55,20 @@ jobs:
 
   determine_version:
     name: "Determine version"
-    uses: ./.github/workflows/compute-next-prod-version.yml
     needs: update_branch
+    uses: ./.github/workflows/compute-next-prod-version.yml
     with:
       release-type: ${{ github.event.inputs.release-type }}
-      tag_prefix: "${{ env.vcs_tag_prefix }}"
+      tag_prefix: "SFv"
 
   deploy:
     name: "Deploy to Live"
-    uses: ./.github/workflows/release.yml
     needs: determine_version
-    environment:
-      name: "production"
-      url: "https://scriptureforge.org"
+    secrets: inherit
+    uses: ./.github/workflows/release.yml
     with:
+      environment: "production"
+
       dotnet_version: "8.0.x"
       node_version: "18.20.2"
       npm_version: "10.5.0"
@@ -77,20 +78,6 @@ jobs:
       app_name: "scriptureforge"
       app_suffix: ""
       version_number: "${{ needs.determine_version.outputs.next_version }}"
-      vcs_tag_prefix: "${{ env.vcs_tag_prefix }}"
+      vcs_tag_prefix: "SFv"
       node_options: "--max_old_space_size=4096"
       project: "SIL.XForge.Scripture"
-
-    secrets:
-      deploy_server: ${{secrets.deploy_server}}
-      deploy_known_hosts: ${{secrets.deploy_known_hosts}}
-      deploy_ssh_private_key: ${{secrets.deploy_ssh_private_key}}
-      auth_backend_secret: ${{ secrets.auth_backend_secret }}
-      auth_webhook_password: ${{ secrets.auth_webhook_password }}
-      paratext_client_id: ${{secrets.paratext_client_id}}
-      paratext_api_token: ${{ secrets.paratext_api_token }}
-      paratext_resource_password_base64: ${{ secrets.paratext_resource_password_base64 }}
-      paratext_resource_password_hash: ${{ secrets.paratext_resource_password_hash }}
-      serval_client_id: ${{secrets.serval_client_id}}
-      serval_client_secret: ${{ secrets.serval_client_secret }}
-      serval_webhook_secret: ${{ secrets.serval_webhook_secret }}
