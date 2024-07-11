@@ -54,7 +54,7 @@ jobs:
 
   determine_version:
     name: "Determine version"
-    uses: ./github/workflows/compute-next-prod-version.yml
+    uses: ./.github/workflows/compute-next-prod-version.yml
     needs: update_branch
     with:
       release-type: ${{ github.event.inputs.release-type }}

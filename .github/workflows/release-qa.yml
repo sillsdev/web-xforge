@@ -37,7 +37,7 @@ jobs:
 
   determine_version:
     name: "Determine version"
-    uses: ./github/workflows/compute-next-stag-version.yml
+    uses: ./.github/workflows/compute-next-stag-version.yml
     needs: update_branch
     with:
       tag_prefix: ${{ env.vcs_tag_prefix }}
