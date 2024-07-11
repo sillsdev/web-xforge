@@ -725,7 +725,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                 this.text.bookNum,
                 this._chapter
               );
-              if (!isEqual(this.source!.id, sourceId)) {
+              if (this.source != null && !isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
               }

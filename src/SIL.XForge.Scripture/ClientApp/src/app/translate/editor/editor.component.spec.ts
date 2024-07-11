@@ -3943,6 +3943,18 @@ describe('EditorComponent', () => {
           env.dispose();
         });
       }));
+
+      it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setProjectUserConfig();
+        env.wait();
+
+        env.component.source = undefined;
+
+        expect(() => env.updateFontSize('project01', 24)).not.toThrow();
+
+        env.dispose();
+      }));
     });
 
     describe('tab header tooltips', () => {
