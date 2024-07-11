@@ -4912,17 +4912,14 @@ public class ParatextServiceTests
         // SUT
         bool historyExists = false;
         await foreach (
-            KeyValuePair<DateTime, string> revision in env.Service.GetRevisionHistoryAsync(
-                userSecret,
-                project.Id,
-                "MAT",
-                1
-            )
+            DocumentRevision revision in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)
         )
         {
+            // NOTE: These values are defined in MemoryConnection.GetOpsAsync()
+            Assert.IsTrue(revision.Timestamp > DateTime.MinValue);
+            Assert.AreEqual(revision.UserId, env.User01);
+            Assert.AreEqual(revision.Source, OpSource.Draft);
             historyExists = true;
-            Assert.IsTrue(revision.Key > DateTime.MinValue);
-            Assert.IsFalse(string.IsNullOrWhiteSpace(revision.Value));
             break;
         }
 

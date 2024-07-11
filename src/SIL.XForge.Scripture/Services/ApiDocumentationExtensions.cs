@@ -10,6 +10,9 @@ public static class ApiDocumentationExtensions
 {
     public static IServiceCollection AddApiDocumentation(this IServiceCollection services)
     {
+        // Use JSON.NET's converters and configuration for types
+        services.AddSwaggerGenNewtonsoftSupport();
+
         // Generate the OpenAPI file at /swagger/v1/swagger.json
         services.AddSwaggerGen(options =>
         {

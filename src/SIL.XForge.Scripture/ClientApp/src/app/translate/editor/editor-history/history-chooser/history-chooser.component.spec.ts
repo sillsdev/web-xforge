@@ -120,7 +120,7 @@ describe('HistoryChooserComponent', () => {
     expect(env.component.selectedSnapshot).toBeDefined();
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedTextDocService.overwrite(anything(), anything())).never();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
   }));
 
   it('should not revert if the snapshot is missing', fakeAsync(() => {
@@ -135,7 +135,7 @@ describe('HistoryChooserComponent', () => {
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     verify(mockedNoticeService.showError(anything())).once();
-    verify(mockedTextDocService.overwrite(anything(), anything())).never();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
     expect(env.component.selectedSnapshot).toBeUndefined();
   }));
 
@@ -159,7 +159,7 @@ describe('HistoryChooserComponent', () => {
     expect(env.component.chapter).toBeDefined();
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    verify(mockedTextDocService.overwrite(anything(), anything())).once();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).once();
   }));
 
   class TestEnvironment {
@@ -180,9 +180,7 @@ describe('HistoryChooserComponent', () => {
         data: createTestProjectProfile()
       });
 
-      when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve([
-        { key: 'date_here', value: 'description_here' }
-      ]);
+      when(mockedParatextService.getRevisions('project01', 'MAT', 1)).thenResolve([{ timestamp: 'date_here' }]);
       when(mockedParatextService.getSnapshot('project01', 'MAT', 1, 'date_here')).thenResolve({
         data: { ops: [] },
         id: 'id',

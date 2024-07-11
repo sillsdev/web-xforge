@@ -88,7 +88,7 @@ public interface IParatextService
         DateTime timestamp
     );
 
-    IAsyncEnumerable<KeyValuePair<DateTime, string>> GetRevisionHistoryAsync(
+    IAsyncEnumerable<DocumentRevision> GetRevisionHistoryAsync(
         UserSecret userSecret,
         string sfProjectId,
         string book,

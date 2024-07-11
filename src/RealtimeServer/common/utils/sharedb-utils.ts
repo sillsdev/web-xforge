@@ -1,4 +1,4 @@
-import { Connection, Doc, OTType, Query } from 'sharedb/lib/client';
+import { Connection, Doc, OTType, Query, ShareDBSourceOptions } from 'sharedb/lib/client';
 import { Json0OpBuilder } from './json0-op-builder';
 
 export function docFetch(doc: Doc): Promise<void> {
@@ -25,9 +25,10 @@ export function docCreate(doc: Doc, data: any, type?: OTType): Promise<void> {
   });
 }
 
-export function docSubmitOp(doc: Doc, components: any): Promise<void> {
+export function docSubmitOp(doc: Doc, components: any, source: boolean | any | undefined = undefined): Promise<void> {
+  const options: ShareDBSourceOptions = source != null ? { source } : {};
   return new Promise<void>((resolve, reject) => {
-    doc.submitOp(components, undefined, err => {
+    doc.submitOp(components, options, err => {
       if (err != null) {
         reject(err);
       } else {

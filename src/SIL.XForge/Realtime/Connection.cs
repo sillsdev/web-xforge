@@ -144,7 +144,8 @@ public class Connection : DisposableBase, IConnection
                             queuedOperation.Handle,
                             queuedOperation.Collection,
                             queuedOperation.Id,
-                            queuedOperation.Op
+                            queuedOperation.Op,
+                            queuedOperation.Source
                         );
                         break;
                 }
@@ -378,6 +379,7 @@ public class Connection : DisposableBase, IConnection
     /// <param name="op">The operation.</param>
     /// <param name="currentDoc">The current document (only used when in a transaction).</param>
     /// <param name="currentVersion">The current version (only used when in a transaction).</param>
+    /// <param name="source">The source of the op. This is currently only used by text documents.</param>
     /// <returns>
     /// A snapshot of the document with the submitted operation from the realtime server.
     /// </returns>
@@ -386,7 +388,8 @@ public class Connection : DisposableBase, IConnection
         string id,
         object op,
         T currentDoc,
-        int currentVersion
+        int currentVersion,
+        OpSource? source
     )
     {
         if (_isTransaction)
@@ -402,7 +405,7 @@ public class Connection : DisposableBase, IConnection
                     {
                         // Do not return the submitted operation, as it will not include the queued ops,
                         // as SubmitOpAsync writes to then reads directly from the Realtime Server.
-                        _ = await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+                        _ = await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, source);
                         queueOperation = false;
                         break;
                     }
@@ -420,22 +423,21 @@ public class Connection : DisposableBase, IConnection
                         Handle = _handle,
                         Id = id,
                         Op = op,
+                        Source = source,
                     }
                 );
             }
 
             // Return the operation applied to the object
-            string otTypeName = op is IEnumerable<Json0Op> || op is Json0Op ? OTType.Json0 : OTType.RichText;
+            string otTypeName = op is IEnumerable<Json0Op> or Json0Op ? OTType.Json0 : OTType.RichText;
             return new Snapshot<T>
             {
                 Data = await _realtimeServer.ApplyOpAsync(otTypeName, currentDoc, op),
                 Version = ++currentVersion,
             };
         }
-        else
-        {
-            return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
-        }
+
+        return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, source);
     }
 
     public async ValueTask DisposeAsync()

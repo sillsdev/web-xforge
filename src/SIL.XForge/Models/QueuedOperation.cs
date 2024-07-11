@@ -1,3 +1,5 @@
+using SIL.XForge.Realtime;
+
 namespace SIL.XForge.Models;
 
 /// <summary>
@@ -86,4 +88,12 @@ internal class QueuedOperation
     /// See <see cref="Realtime.OTType" /> for allowed values.
     /// </remarks>
     public string OtTypeName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the source of the op.
+    /// </summary>
+    /// <value>
+    /// The op source.
+    /// </value>
+    public OpSource? Source { get; set; }
 }

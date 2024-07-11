@@ -24,5 +24,12 @@ public interface IConnection : IDisposable, IAsyncDisposable
     Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
         where T : IIdentifiable;
     void RollbackTransaction();
-    Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op, T currentDoc, int currentVersion);
+    Task<Snapshot<T>> SubmitOpAsync<T>(
+        string collection,
+        string id,
+        object op,
+        T currentDoc,
+        int currentVersion,
+        OpSource? source
+    );
 }

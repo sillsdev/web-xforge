@@ -82,7 +82,7 @@ public class ConnectionTests
         // Setup Queue
         env.Service.BeginTransaction();
         await env.Service.CreateDocAsync(collection, id, snapshot.Data, otTypeName);
-        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
+        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, null);
         await env.Service.DeleteDocAsync(collection, id);
 
         // Verify Queue
@@ -102,7 +102,13 @@ public class ConnectionTests
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
         await env
             .RealtimeService.Server.Received(1)
-            .SubmitOpAsync<object>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
+            .SubmitOpAsync<object>(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<OpSource?>()
+            );
     }
 
     [Test]
@@ -448,7 +454,7 @@ public class ConnectionTests
         // SUT
         env.Service.BeginTransaction();
         env.Service.ExcludePropertyFromTransaction<TestProject>(p => p.SyncDisabled);
-        var result = await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
+        var result = await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, null);
 
         Assert.AreEqual(expected.Version, result.Version);
         Assert.AreEqual(expected.Data, result.Data);
@@ -459,7 +465,13 @@ public class ConnectionTests
         // Verify that the call was passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
-            .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
+            .SubmitOpAsync<TestProject>(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<OpSource?>()
+            );
     }
 
     [Test]
@@ -486,7 +498,14 @@ public class ConnectionTests
 
         // SUT
         env.Service.BeginTransaction();
-        var result = await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
+        var result = await env.Service.SubmitOpAsync(
+            collection,
+            id,
+            op,
+            snapshot.Data,
+            snapshot.Version,
+            OpSource.Editor
+        );
 
         // Verify result
         Assert.AreEqual(result.Version, 2);
@@ -498,11 +517,18 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Action, QueuedAction.Submit);
         Assert.AreEqual(queuedOperation.Collection, collection);
         Assert.AreEqual(queuedOperation.Op, op);
+        Assert.AreEqual(queuedOperation.Source, OpSource.Editor);
 
         // Verify that the call was not passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(0)
-            .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
+            .SubmitOpAsync<TestProject>(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<OpSource?>()
+            );
     }
 
     [Test]
@@ -522,7 +548,7 @@ public class ConnectionTests
         List<Json0Op> op = builder.Op;
 
         // SUT
-        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
+        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, null);
 
         // Verify queue
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
@@ -530,7 +556,13 @@ public class ConnectionTests
         // Verify that the call was not passed to the underlying realtime server
         await env
             .RealtimeService.Server.Received(1)
-            .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
+            .SubmitOpAsync<TestProject>(
+                Arg.Any<int>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<object>(),
+                Arg.Any<OpSource?>()
+            );
     }
 
     [Test]
