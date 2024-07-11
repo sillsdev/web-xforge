@@ -19,6 +19,7 @@ jobs:
     steps:
       - name: Check inputs
         run: |
+          echo "event inputs: ${{ toJson(github.event.inputs)}}"
           echo "TAG_PREFIX=${{ github.event.inputs.tag_prefix }}"
 
   deploy:
