@@ -1829,6 +1829,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private async getSourceProjectDoc(): Promise<SFProjectProfileDoc | undefined> {
     // Only get the project doc if the user is on the project to avoid an error.
     if (this.sourceProjectId == null) return;
+    if (this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId) !== true) return;
     return await this.projectService.getProfile(this.sourceProjectId);
   }
 
