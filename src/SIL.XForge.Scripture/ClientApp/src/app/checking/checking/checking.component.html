@@ -94,16 +94,16 @@
                   <mat-icon class="mirror-rtl">post_add</mat-icon>
                   <span>{{ t("add_question") }}</span>
                 </button>
-                <button
-                  *ngIf="canCreateScriptureAudio"
-                  type="button"
-                  mat-icon-button
-                  [matTooltip]="t('manage_audio')"
-                  (click)="addAudioTimingData()"
-                >
-                  <mat-icon class="material-icons-outlined">audio_file</mat-icon>
-                </button>
               </ng-container>
+              <button
+                *ngIf="canCreateScriptureAudio"
+                type="button"
+                mat-icon-button
+                [matTooltip]="t('manage_audio')"
+                (click)="addAudioTimingData()"
+              >
+                <mat-icon class="material-icons-outlined">audio_file</mat-icon>
+              </button>
               <button
                 *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
                 type="button"
