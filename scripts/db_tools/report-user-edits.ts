@@ -327,14 +327,14 @@ class UserEditReport {
         description: 'Whether to log the word diff between snapshots'
       })
       .check(argv => {
-        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}$/;
+        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}(T\d{2}:\d{2}(:\d{2})?)?$/;
 
         if (argv.from && !dateFormatRegex.test(argv.from)) {
-          throw new Error("The 'from' date must be in the format YYYY-M-D");
+          throw new Error("The 'from' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
         if (argv.to && !dateFormatRegex.test(argv.to)) {
-          throw new Error("The 'to' date must be in the format YYYY-M-D");
+          throw new Error("The 'to' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
         if (argv.from && argv.to && new Date(argv.from) > new Date(argv.to)) {
