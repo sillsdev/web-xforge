@@ -1194,16 +1194,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
         const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
 
-        const userOnProject: boolean =
-          this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId!) === true;
-        if (projectSource != null && userOnProject) {
-          sourceTabGroup.addTab(
-            await this.editorTabFactory.createTab('project-source', {
-              projectId: projectSource.projectRef,
-              headerText: projectSource.shortName,
-              tooltip: projectSource.name
-            })
-          );
+        if (projectSource != null) {
+          const userOnSourceProject: boolean =
+            this.currentUser?.sites[environment.siteId].projects.includes(projectSource.projectRef) === true;
+          if (userOnSourceProject) {
+            sourceTabGroup.addTab(
+              await this.editorTabFactory.createTab('project-source', {
+                projectId: projectSource.projectRef,
+                headerText: projectSource.shortName,
+                tooltip: projectSource.name
+              })
+            );
+          }
         }
 
         targetTabGroup.addTab(

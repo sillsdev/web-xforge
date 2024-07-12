@@ -3816,9 +3816,11 @@ describe('EditorComponent', () => {
       }));
 
       it('should not add source tab group when user has no source permissions', fakeAsync(() => {
+        // setup the project so that users only have access to project01
         const env = new TestEnvironment(env => {
           env.setupUsers(['project01']);
-          env.setupProject({ userRoles: { user05: SFProjectRole.None } });
+          env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
+          env.setCurrentUser('user05');
         });
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         env.wait();
