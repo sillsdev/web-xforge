@@ -850,6 +850,26 @@ describe('CheckingComponent', () => {
       flush();
       discardPeriodicTasks();
     }));
+
+    it('should update question refs and question donut summary when archiving the last remaining visible question', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'MAT',
+        projectChapterRoute: 1,
+        questionScope: 'chapter'
+      });
+
+      env.selectQuestion(1);
+      env.archiveQuestionButton.nativeElement.click();
+
+      const spyUpdateQuestionRefs = spyOn<any>(env.component, 'updateQuestionRefs');
+      const spyRefreshSummary = spyOn<any>(env.component, 'refreshSummary');
+
+      env.waitForQuestionTimersToComplete();
+
+      expect(spyUpdateQuestionRefs).toHaveBeenCalledTimes(1);
+      expect(spyRefreshSummary).toHaveBeenCalledTimes(1);
+    }));
   });
 
   describe('Answers', () => {
