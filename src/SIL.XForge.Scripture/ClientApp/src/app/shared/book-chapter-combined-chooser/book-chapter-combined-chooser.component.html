@@ -1,0 +1,69 @@
+<ng-container *transloco="let t; read: 'book_chapter_combined_chooser'">
+  <button
+    #trigger="matMenuTrigger"
+    [matMenuTriggerFor]="menu"
+    mat-stroked-button
+    class="menu-trigger"
+    [class.menu-open]="trigger.menuOpen"
+    (menuOpened)="handleMenuOpened()"
+    (menuClosed)="handleMenuClosed()"
+  >
+    <span class="trigger-open-content-wrapper">
+      <input
+        #textInput
+        size="1"
+        (click)="handleTextInputClick($event)"
+        [placeholder]="bookNames.get(book!) + ' ' + chapter"
+        [ngModel]="inputValue$ | async"
+        (ngModelChange)="inputValue$.next($event)"
+        (keydown)="handleTextInputKeydown($event)"
+      />
+      <mat-icon iconPositionEnd>filter_list</mat-icon>
+    </span>
+    <span class="trigger-closed-content-wrapper">
+      {{ bookNames.get(book!) + " " + chapter }}
+      <mat-icon iconPositionEnd>expand_more</mat-icon>
+    </span>
+  </button>
+
+  <mat-menu
+    #menu="matMenu"
+    overlayPanelClass="book-chapter-combined-chooser-menu-overlay"
+    class="book-chapter-combined-chooser-menu"
+  >
+    <div class="menu-content" (keydown)="handleMenuKeydown($event)">
+      @if (expandedBook$ | async; as expandedBook) {
+        @for (bookItem of filteredBooks$ | async; track bookItem; let bookIndex = $index) {
+          <div
+            class="book-wrapper"
+            (mouseenter)="bookCursor$.next(bookIndex)"
+            [class.selected]="expandedBook === bookItem"
+          >
+            <button #bookButton class="book" (click)="selectBook($event, bookItem)">
+              {{ bookNames.get(bookItem) }}
+            </button>
+
+            @if (expandedBook === bookItem) {
+              <div class="chapter-display">
+                @for (chapterItem of chapters[expandedBook] ?? []; track chapterItem; let chapterIndex = $index) {
+                  <button
+                    #chapterButton
+                    (click)="selectChapter(chapterItem)"
+                    (mouseenter)="chapterCursor$.next(chapterIndex)"
+                    class="chapter"
+                    [class.selected]="book === bookItem && chapter === chapterItem"
+                    [class.cursor]="
+                      (chapterCursor$ | async) === chapterIndex && (bookCursor$ | async) === expandedBookIndex
+                    "
+                  >
+                    {{ chapterItem }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </mat-menu>
+</ng-container>
