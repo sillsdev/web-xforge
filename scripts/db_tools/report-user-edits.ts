@@ -136,31 +136,54 @@ class UserEditReport {
                               wordDeletes: 0
                             };
 
-                            const userBookChapterLastVersion =
-                              bookChapterData.versionOps[bookChapterData.versionOps.length - 1].v;
-
                             // Baseline is the first version for the user-book-chapter grouping
-                            const baselineVersion = bookChapterData.versionOps[0].v;
+                            let baselineVersion = bookChapterData.versionOps[0].v;
+                            let prevVersion = baselineVersion - 1;
 
+                            for (const versionOp of bookChapterData.versionOps) {
+                              // Sum the raw edit counts
+                              const { inserts, deletes } = this.parseRawEdits(versionOp);
+                              result.inserts += inserts;
+                              result.deletes += deletes;
+
+                              // Sum the net word edits when there is a gap in versions
+                              if (versionOp.v !== prevVersion + 1) {
+                                console.log(prevVersion, versionOp.v, user.userName, bookChapterData.bookChapter);
+
+                                const netWordEdits = await this.parseNetWordEdits(
+                                  conn,
+                                  bookChapterData.snapshotId,
+                                  baselineVersion,
+                                  prevVersion + 1, // Snapshot version is one more than op doc version
+                                  user.userName,
+                                  doc._id,
+                                  monthData.month
+                                );
+
+                                result.wordAdds += netWordEdits.inserts;
+                                result.wordDeletes += netWordEdits.deletes;
+
+                                // New baseline
+                                baselineVersion = versionOp.v;
+                              }
+
+                              prevVersion = versionOp.v;
+                            }
+
+                            // Sum the net word edits for the last version
+                            const lastVersion = bookChapterData.versionOps[bookChapterData.versionOps.length - 1].v;
                             const netWordEdits = await this.parseNetWordEdits(
                               conn,
                               bookChapterData.snapshotId,
                               baselineVersion,
-                              userBookChapterLastVersion + 1, // Snapshot version is one more than op doc version
+                              lastVersion + 1, // Snapshot version is one more than op doc version
                               user.userName,
                               doc._id,
                               monthData.month
                             );
 
-                            result.wordAdds = netWordEdits.inserts;
-                            result.wordDeletes = netWordEdits.deletes;
-
-                            // Sum the raw edit counts
-                            for (const versionOp of bookChapterData.versionOps) {
-                              const { inserts, deletes } = this.parseRawEdits(versionOp);
-                              result.inserts += inserts;
-                              result.deletes += deletes;
-                            }
+                            result.wordAdds += netWordEdits.inserts;
+                            result.wordDeletes += netWordEdits.deletes;
 
                             return result;
                           })
