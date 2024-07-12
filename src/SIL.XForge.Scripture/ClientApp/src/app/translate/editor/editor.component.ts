@@ -662,16 +662,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          if (this.sourceProjectId != null) {
-            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(
-              this.sourceProjectId
-            );
-            // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject
-              ? await this.projectService.getProfile(this.sourceProjectId)
-              : undefined;
-          }
-
+          this.sourceProjectDoc = await this.getSourceProjectDoc();
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
           }
@@ -1203,7 +1194,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
         const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
 
-        if (projectSource != null) {
+        const userOnProject: boolean =
+          this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId!) === true;
+        if (projectSource != null && userOnProject) {
           sourceTabGroup.addTab(
             await this.editorTabFactory.createTab('project-source', {
               projectId: projectSource.projectRef,
@@ -1831,6 +1824,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         })
       );
     }
+  }
+
+  private async getSourceProjectDoc(): Promise<SFProjectProfileDoc | undefined> {
+    // Only get the project doc if the user is on the project to avoid an error.
+    if (this.sourceProjectId == null) return;
+    return await this.projectService.getProfile(this.sourceProjectId);
   }
 
   private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {
