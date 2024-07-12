@@ -1,0 +1,171 @@
+@use 'sass:color';
+@use 'src/variables' as vars;
+
+$inputTextColor: #64748b;
+$selectedBookTextColor: vars.$blueMedium;
+$accentColor: color.scale($selectedBookTextColor, $lightness: 40%);
+$expandedBookBGColor: color.scale($selectedBookTextColor, $lightness: 95%);
+$selectedChapterBGColor: color.scale($selectedBookTextColor, $lightness: 80%);
+$menuFocusOutlineWidth: 2px;
+$chapterItemDim: 2.5em;
+
+:host {
+  display: inline-block;
+}
+
+button {
+  outline: 0;
+}
+
+.menu-trigger {
+  --mat-outlined-button-pressed-state-layer-opacity: 0;
+  --mat-outlined-button-state-layer-color: transparent;
+
+  &:focus-within {
+    outline: $menuFocusOutlineWidth solid $accentColor;
+  }
+
+  input {
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    width: 100%;
+    color: $inputTextColor;
+    font-weight: 500;
+
+    &::placeholder {
+      color: $inputTextColor;
+      font-weight: 500;
+    }
+  }
+
+  .trigger-open-content-wrapper {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+  }
+
+  &.menu-open {
+    .trigger-closed-content-wrapper {
+      visibility: hidden; // Keep space for sizing
+    }
+
+    .trigger-open-content-wrapper {
+      display: flex;
+      justify-content: space-between;
+    }
+  }
+
+  mat-icon {
+    font-size: 1.3em;
+    width: 1.3em;
+    height: 1.3em;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.trigger-closed-content-wrapper {
+  visibility: visible;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.book-wrapper {
+  border-radius: 0.3em;
+  overflow: hidden;
+
+  &.selected {
+    background: $expandedBookBGColor;
+
+    &:hover {
+      background: color.scale($expandedBookBGColor, $lightness: -4%);
+    }
+
+    .book {
+      font-weight: 600;
+      color: $selectedBookTextColor;
+      background-color: inherit;
+      cursor: default;
+    }
+  }
+}
+
+.book {
+  position: relative;
+  display: flex;
+  border: 0;
+  width: 100%;
+  font-size: 0.9em;
+  background-color: transparent;
+  padding: 0.5em 0.5em 0.5em 1.4em;
+
+  &:focus {
+    cursor: pointer;
+    background-color: #ebedf8;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 0.15em;
+    height: calc(100% - 1em);
+    background-color: $accentColor;
+    border-radius: 0.4em;
+    inset-inline-start: 0.7em;
+    top: 0.5em;
+  }
+}
+
+.chapter-display {
+  display: grid;
+
+  // Column count from config, row height is 1fr
+  grid-template-columns: repeat(var(--book-chapter-combined-chooser-column-count), 1fr);
+  grid-template-rows: 1fr;
+  padding: 0 0.5em 0.5em;
+
+  button {
+    border: 0.15em solid transparent;
+    border-radius: 5px;
+    background-color: inherit;
+    color: $selectedBookTextColor;
+    width: $chapterItemDim;
+    height: $chapterItemDim;
+    font-size: 0.8em;
+    font-weight: 300;
+    text-align: center;
+
+    &.selected {
+      background-color: $selectedChapterBGColor;
+      font-weight: 700;
+    }
+
+    &.cursor {
+      cursor: pointer;
+      border-color: $selectedBookTextColor;
+      font-weight: 700;
+    }
+  }
+}
+
+.mat-icon {
+  opacity: 0.5;
+}
+
+::ng-deep {
+  .book-chapter-combined-chooser-menu {
+    max-width: none !important;
+    max-height: 50vh;
+    padding: 0 0.2em;
+    position: relative;
+    top: $menuFocusOutlineWidth; // Push down to show input focus outline
+  }
+}
