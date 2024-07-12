@@ -34,7 +34,7 @@ import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
-import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 
 declare function gtag(...args: any): void;
@@ -57,7 +57,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private isLoggedInUserAnonymous: boolean = false;
   private _selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
-  private removedFromProjectSub?: Subscription;
+  private permissionsChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
 
   constructor(
@@ -263,18 +263,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
 
-      if (this.removedFromProjectSub != null) {
-        this.removedFromProjectSub.unsubscribe();
-      }
-      this.removedFromProjectSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
-        if (
-          this._selectedProjectDoc?.data != null &&
-          this.currentUserDoc != null &&
-          !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)
-        ) {
-          // The user has been removed from the project
-          this.showProjectDeletedDialog();
-          this.projectService.localDelete(this._selectedProjectDoc.id);
+      this.permissionsChangedSub?.unsubscribe();
+      this.permissionsChangedSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
+        if (this._selectedProjectDoc?.data != null) {
+          if (this.currentUserDoc != null && !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
+            // The user has been removed from the project
+            this.showProjectDeletedDialog();
+            this.projectService.localDelete(this._selectedProjectDoc.id);
+          }
+
+          if (this.permissionForPageRevoked()) {
+            this.router.navigate(['/projects', this._selectedProjectDoc.id]);
+          }
         }
       });
 
@@ -294,12 +294,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.selectedProjectDeleteSub != null) {
-      this.selectedProjectDeleteSub.unsubscribe();
-    }
-    if (this.removedFromProjectSub != null) {
-      this.removedFromProjectSub.unsubscribe();
-    }
+    this.selectedProjectDeleteSub?.unsubscribe();
+    this.permissionsChangedSub?.unsubscribe();
   }
 
   setLocale(locale: string): void {
@@ -364,7 +360,23 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   openFeatureFlagDialog(): void {
-    this.dialogService.openMatDialog(FeatureFlagsDialogComponent, { autoFocus: false });
+    this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
+  get appName(): string {
+    return environment.siteName;
+  }
+
+  private permissionForPageRevoked(): boolean {
+    const route: string = this.locationService.pathname;
+    if (this.selectedProjectRole == null) return false;
+    if (route.includes('translate') && !roleCanAccessTranslate(this.selectedProjectRole)) {
+      return true;
+    }
+    if (route.includes('checking') && !roleCanAccessCommunityChecking(this.selectedProjectRole)) {
+      return true;
+    }
+    return false;
   }
 
   private async showProjectDeletedDialog(): Promise<void> {

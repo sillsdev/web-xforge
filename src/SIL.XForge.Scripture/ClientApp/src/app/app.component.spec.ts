@@ -290,6 +290,19 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
+  it('response to project role changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+    env.setCurrentUser('user04');
+
+    expect(env.selectedProjectId).toEqual('project01');
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/translate');
+    env.changeUserRole('project01', 'user04', SFProjectRole.CommunityChecker);
+    expect(env.location.path()).toEqual('/projects/project01');
+    env.wait();
+  }));
+
   it('shows banner when update is available', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
@@ -747,6 +760,19 @@ class TestEnvironment {
   removeUserFromProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
+    this.wait();
+  }
+
+  addUserToProject(projectId: string): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
+    this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
+    this.wait();
+  }
+
+  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
     this.wait();
   }
 
