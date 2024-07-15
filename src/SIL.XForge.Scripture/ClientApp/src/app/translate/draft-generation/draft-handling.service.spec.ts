@@ -251,7 +251,7 @@ describe('DraftHandlingService', () => {
       const draftOps: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
       await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
-      verify(mockedTextDocService.overwrite(textDocId, anything())).once();
+      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
       expect().nothing();
     });
   });
@@ -267,7 +267,7 @@ describe('DraftHandlingService', () => {
       const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
       expect(result).toBe(true);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
-      verify(mockedTextDocService.overwrite(textDocId, anything())).once();
+      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
     });
 
     it('should not apply if user does not have permission', async () => {
@@ -280,7 +280,7 @@ describe('DraftHandlingService', () => {
       const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).never();
-      verify(mockedTextDocService.overwrite(textDocId, anything())).never();
+      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).never();
     });
 
     it('should not apply legacy USFM draft', async () => {
@@ -295,7 +295,7 @@ describe('DraftHandlingService', () => {
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).once();
-      verify(mockedTextDocService.overwrite(textDocId, anything())).never();
+      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).never();
     });
   });
 

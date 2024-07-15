@@ -171,7 +171,7 @@ export class DraftHandlingService {
    * @param draftDelta The draft delta to overwrite the current text document with.
    */
   async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: DeltaStatic): Promise<void> {
-    await this.textDocService.overwrite(textDocId, draftDelta);
+    await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
   }
 
   /**
@@ -197,7 +197,7 @@ export class DraftHandlingService {
           ops = draft;
         }
         const draftDelta: DeltaStatic = new Delta(ops);
-        await this.textDocService.overwrite(textDocId, draftDelta);
+        await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
         resolve(true);
       });
     });
