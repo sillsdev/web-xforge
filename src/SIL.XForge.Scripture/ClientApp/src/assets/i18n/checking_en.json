@@ -399,6 +399,7 @@
     "days_thirty": "30 days",
     "days_ninety": "90 days",
     "days_threesixtyfive": "1 year",
+    "error_language": "Please select a language",
     "expiration_description": "Change the lifetime of the link",
     "invitation_language": "Change invitation language",
     "invitation_link_type": "Change how the link can be used",

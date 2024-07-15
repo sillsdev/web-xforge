@@ -46,7 +46,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   };
 
   isProjectAdmin: boolean = false;
-  shareLocaleCode: Locale;
+  shareLocaleCode?: Locale = undefined;
   shareRole: SFProjectRole = this.data.defaultRole;
   shareLinkType: ShareLinkType = ShareLinkType.Anyone;
   shareExpiration: number = this.ShareExpiration.days_fourteen;
@@ -55,6 +55,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   private linkSharingKey: string | undefined;
   private linkSharingReady: boolean = false;
   private projectDoc?: SFProjectProfileDoc;
+  private _error: string | undefined;
 
   constructor(
     readonly dialogRef: MatDialogRef<ShareDialogComponent>,
@@ -89,7 +90,6 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       }
       this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateSharingKey());
     });
-    this.shareLocaleCode = this.i18n.locale;
   }
 
   get availableRoles(): SFProjectRole[] {
@@ -107,7 +107,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   get isLinkReady(): boolean {
-    return this.linkSharingReady && this.sharableLink != null;
+    return this.linkSharingReady && this.shareableLink != null;
   }
 
   get isRecipientOnlyLink(): boolean {
@@ -118,8 +118,15 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     return this.projectDoc?.data?.name ?? '';
   }
 
-  get sharableLink(): string | undefined {
+  get error(): string | undefined {
+    return this._error;
+  }
+
+  get shareableLink(): string {
     if (this.linkSharingKey == null) {
+      return '';
+    }
+    if (this.shareLocaleCode == null) {
       return '';
     }
     return this.projectService.generateSharingUrl(this.linkSharingKey, this.shareLocaleCode.canonicalTag);
@@ -158,13 +165,21 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   copyLink(): void {
-    this.navigator.clipboard.writeText(this.sharableLink!).then(async () => {
+    if (this.shareLocaleCode == null) {
+      this._error = 'no_language';
+      return;
+    }
+    this.navigator.clipboard.writeText(this.shareableLink).then(async () => {
       await this.noticeService.show(translate('share_control.link_copied'));
       await this.reserveShareLink();
     });
   }
 
   async shareLink(): Promise<void> {
+    if (this.shareLocaleCode == null) {
+      this._error = 'no_language';
+      return;
+    }
     const currentUser: UserDoc = await this.userService.getCurrentUser();
     if (!this.supportsShareAPI || this.projectDoc?.data == null || currentUser.data == null) {
       return;
@@ -177,7 +192,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     this.navigator
       .share({
         title: translate('share_control.share_title', params),
-        url: this.sharableLink,
+        url: this.shareableLink,
         text: translate(
           this.shareLinkType === ShareLinkType.Anyone
             ? 'share_control.share_text_anyone'
@@ -198,6 +213,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
 
   setLocale(locale: Locale): void {
     this.shareLocaleCode = locale;
+    this._error = undefined;
   }
 
   setRole(role: SFProjectRole): void {
