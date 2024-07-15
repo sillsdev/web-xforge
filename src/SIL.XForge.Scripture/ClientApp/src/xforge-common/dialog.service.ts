@@ -18,7 +18,6 @@ export class DialogService {
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
     const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };
-    console.log(hasObjectProp(component, 'defaultMatDialogConfig'));
     const dialogDefaults: MatDialogConfig = hasObjectProp(component, 'defaultMatDialogConfig')
       ? component.defaultMatDialogConfig
       : {};
