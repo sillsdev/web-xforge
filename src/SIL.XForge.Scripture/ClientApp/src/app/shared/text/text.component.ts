@@ -973,7 +973,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
             const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
             const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
             this.dialogService.openMatDialog(TextNoteDialogComponent, {
-              autoFocus: false,
               width: '600px',
               data: {
                 type: noteType,
