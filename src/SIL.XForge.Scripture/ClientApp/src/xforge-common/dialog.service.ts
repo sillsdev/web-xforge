@@ -2,6 +2,7 @@ import { ComponentType } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
+import { hasObjectProp } from '../type-utils';
 import {
   GenericDialogComponent,
   GenericDialogOptions,
@@ -16,7 +17,11 @@ export class DialogService {
   constructor(private readonly i18n: I18nService, private readonly matDialog: MatDialog) {}
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
-    return this.matDialog.open(component, { direction: this.i18n.direction, ...(config ?? {}) });
+    const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };
+    const dialogDefaults: MatDialogConfig = hasObjectProp(component, 'defaultMatDialogConfig')
+      ? component.defaultMatDialogConfig
+      : {};
+    return this.matDialog.open(component, { ...defaults, ...dialogDefaults, ...(config ?? {}) });
   }
 
   openGenericDialog<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {
