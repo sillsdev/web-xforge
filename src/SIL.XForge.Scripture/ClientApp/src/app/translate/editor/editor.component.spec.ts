@@ -3758,8 +3758,10 @@ describe('EditorComponent', () => {
         env.component['tabStateInitialized$'].next(true);
         expect(spyConsolidate).not.toHaveBeenCalled();
         env.component['targetEditorLoaded$'].next();
-        expect(spyConsolidate).toHaveBeenCalledTimes(1);
-        flush();
+        env.wait();
+        expect(spyConsolidate).toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toEqual('project02:MAT:1:target');
+        discardPeriodicTasks();
       }));
 
       it('should call deconsolidateTabGroups for large screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
@@ -3773,8 +3775,30 @@ describe('EditorComponent', () => {
         env.component['tabStateInitialized$'].next(true);
         expect(spyDeconsolidate).not.toHaveBeenCalled();
         env.component['targetEditorLoaded$'].next();
-        expect(spyDeconsolidate).toHaveBeenCalledTimes(1);
-        flush();
+        env.wait();
+        expect(spyDeconsolidate).toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toEqual('project02:MAT:1:target');
+        discardPeriodicTasks();
+      }));
+
+      it('should not set id on source tab if user does not have permission', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
+          env.setCurrentUser('user05');
+          env.setupUsers(['project01']);
+          env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
+        });
+        expect(env.component.source?.id?.toString()).toBeUndefined();
+        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
+
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['tabStateInitialized$'].next(true);
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toBeUndefined();
+        discardPeriodicTasks();
       }));
 
       it('should not consolidate if showSource is false', fakeAsync(() => {
@@ -3810,19 +3834,6 @@ describe('EditorComponent', () => {
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         delete env.testProjectProfile.translateConfig.source;
         env.setupProject();
-        env.wait();
-        expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
-        discardPeriodicTasks();
-      }));
-
-      it('should not add source tab group when user has no source permissions', fakeAsync(() => {
-        // setup the project so that users only have access to project01
-        const env = new TestEnvironment(env => {
-          env.setupUsers(['project01']);
-          env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
-          env.setCurrentUser('user05');
-        });
-        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         env.wait();
         expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
         discardPeriodicTasks();

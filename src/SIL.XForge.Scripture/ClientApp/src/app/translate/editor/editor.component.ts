@@ -542,6 +542,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.translateConfig.source?.projectRef;
   }
 
+  get visibleSourceProjectId(): string | undefined {
+    return this.hasSource ? this.sourceProjectId : undefined;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
@@ -1176,7 +1180,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * Returns an observable that can be piped from projectDoc changes, allowing a single call to `subscribe`,
    * avoiding potential NG0911 error 'View has already been destroyed'.
    */
-  initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
+  private initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
     // Set tab state from persisted tabs plus non-persisted tabs
     const storeToState$: Observable<any> = this.editorTabPersistenceService.persistedTabs$.pipe(
       take(1),
@@ -1195,17 +1199,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
 
         if (projectSource != null) {
-          const userOnSourceProject: boolean =
-            this.currentUser?.sites[environment.siteId].projects.includes(projectSource.projectRef) === true;
-          if (userOnSourceProject) {
-            sourceTabGroup.addTab(
-              await this.editorTabFactory.createTab('project-source', {
-                projectId: projectSource.projectRef,
-                headerText: projectSource.shortName,
-                tooltip: projectSource.name
-              })
-            );
-          }
+          sourceTabGroup.addTab(
+            await this.editorTabFactory.createTab('project-source', {
+              projectId: projectSource.projectRef,
+              headerText: projectSource.shortName,
+              tooltip: projectSource.name
+            })
+          );
         }
 
         targetTabGroup.addTab(
