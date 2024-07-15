@@ -242,7 +242,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.reportingService.addMeta({ isBrowserSupported });
     if (isNewlyLoggedIn && !isBrowserSupported) {
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, {
-        autoFocus: false,
         data: BrowserIssue.Upgrade
       });
     }

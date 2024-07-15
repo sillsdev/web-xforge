@@ -1046,7 +1046,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.openMatDialog<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
       SuggestionsSettingsDialogComponent,
       {
-        autoFocus: false,
         data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );
