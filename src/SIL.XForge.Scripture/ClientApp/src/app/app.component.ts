@@ -20,6 +20,7 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -28,14 +29,15 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
-import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
+import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
 
@@ -54,6 +56,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private isLoggedInUserAnonymous: boolean = false;
   private _selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
@@ -68,8 +71,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
-    private readonly userProjectsService: SFUserProjectsService,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly locationService: LocationService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -252,7 +255,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         return;
       }
       this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
-
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        this._selectedProjectDoc.id,
+        this.currentUserDoc!.id
+      );
       if (this.selectedProjectDeleteSub != null) {
         this.selectedProjectDeleteSub.unsubscribe();
       }
@@ -265,15 +271,21 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
       this.permissionsChangedSub?.unsubscribe();
       this.permissionsChangedSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
-        if (this._selectedProjectDoc?.data != null) {
-          if (this.currentUserDoc != null && !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
+        if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
+          if (!(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
             // The user has been removed from the project
             this.showProjectDeletedDialog();
             this.projectService.localDelete(this._selectedProjectDoc.id);
           }
 
-          if (this.permissionForPageRevoked()) {
-            this.router.navigate(['/projects', this._selectedProjectDoc.id]);
+          if (this.projectUserConfigDoc != null) {
+            checkAppAccess(
+              this._selectedProjectDoc,
+              this.currentUserDoc.id,
+              this.projectUserConfigDoc,
+              this.locationService.pathname,
+              this.router
+            );
           }
         }
       });
@@ -361,22 +373,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
-  }
-
-  get appName(): string {
-    return environment.siteName;
-  }
-
-  private permissionForPageRevoked(): boolean {
-    const route: string = this.locationService.pathname;
-    if (this.selectedProjectRole == null) return false;
-    if (route.includes('translate') && !roleCanAccessTranslate(this.selectedProjectRole)) {
-      return true;
-    }
-    if (route.includes('checking') && !roleCanAccessCommunityChecking(this.selectedProjectRole)) {
-      return true;
-    }
-    return false;
   }
 
   private async showProjectDeletedDialog(): Promise<void> {

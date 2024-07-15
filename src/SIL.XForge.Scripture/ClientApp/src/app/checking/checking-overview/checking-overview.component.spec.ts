@@ -375,24 +375,6 @@ describe('CheckingOverviewComponent', () => {
       env.setSeeOtherUserResponses(true);
       expect(env.likePanel).not.toBeNull();
     }));
-
-    it('responds to remote community checking disabled for checker', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setCurrentUser(env.checkerUser);
-      env.waitForQuestions();
-      env.setCheckingEnabled(false);
-      expect(env.location.path()).toBe('/projects/project01');
-      verify(mockedNoticeService.show(anything())).never();
-    }));
-
-    it('responds to remote community checking disabled for non-checkers', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setCurrentUser(env.translatorUser);
-      env.waitForQuestions();
-      env.setCheckingEnabled(false);
-      expect(env.location.path()).toBe('/projects/project01/translate');
-      verify(mockedNoticeService.show(anything())).once();
-    }));
   });
 
   describe('Archive Question', () => {

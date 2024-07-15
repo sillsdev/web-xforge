@@ -1,14 +1,7 @@
-import { Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { NoticeService } from 'xforge-common/notice.service';
-import { roleCanAccessTranslate } from '../core/models/sf-project-role-info';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
 /**
  * Detects if a string is in a format that can be used to parse audio timing for a verse of Scripture.
@@ -26,14 +19,6 @@ export interface AudioTextRef {
 export interface AudioHeadingRef {
   label: string;
   iteration: number;
-}
-
-export interface CheckingAccessInfo {
-  userId: string;
-  projectId: string;
-  project: SFProjectProfile;
-  bookId?: string;
-  projectUserConfigDoc: SFProjectUserConfigDoc;
 }
 
 export interface BookChapter {
@@ -73,22 +58,6 @@ export class CheckingUtils {
     return projectUserConfig != null && question != null
       ? projectUserConfig.questionRefsRead.includes(question.dataId)
       : false;
-  }
-
-  static onAppAccessRemoved(info: CheckingAccessInfo, router: Router, noticeService: NoticeService): void {
-    // Remove the record of the state of the checking app so clicking 'Project Home' will not redirect there
-    info.projectUserConfigDoc.submitJson0Op(op => {
-      op.unset(puc => puc.selectedTask!);
-      op.unset(puc => puc.selectedQuestionRef!);
-    });
-    let route = '/projects/' + info.projectId;
-    if (roleCanAccessTranslate(info.project.userRoles[info.userId] as SFProjectRole)) {
-      route = info.bookId == null ? route + '/translate' : route + '/translate/' + info.bookId;
-      router.navigateByUrl(route, { replaceUrl: true });
-      noticeService.show(translate('app.scripture_checking_not_available'));
-    } else {
-      router.navigateByUrl(route, { replaceUrl: true });
-    }
   }
 
   static parseAudioRef(ref: string): AudioTextRef | undefined {

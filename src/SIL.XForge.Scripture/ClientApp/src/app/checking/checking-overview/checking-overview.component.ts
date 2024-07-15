@@ -25,7 +25,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
+import { CheckingUtils } from '../checking.utils';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import {
   ImportQuestionsDialogComponent,
@@ -234,16 +234,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           if (this.projectDoc != null && this.projectDoc.data != null) {
             if (this.permissions.canAccessCommunityChecking(this.projectDoc)) {
               this.initTextsWithLoadingIndicator();
-            } else {
-              if (this.projectUserConfigDoc != null) {
-                const checkingAccessInfo: CheckingAccessInfo = {
-                  userId: this.userService.currentUserId,
-                  projectId: this.projectDoc.id,
-                  project: this.projectDoc.data,
-                  projectUserConfigDoc: this.projectUserConfigDoc
-                };
-                CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
-              }
             }
           }
         });

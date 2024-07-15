@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,6 +11,8 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, filter, firstValueFrom, Subject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
@@ -37,6 +39,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
@@ -290,17 +293,30 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
-  it('response to project role changed', fakeAsync(() => {
+  it('response to Commenter project role changed', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
-    env.init();
     env.setCurrentUser('user04');
+    env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
     when(mockedLocationService.pathname).thenReturn('/projects/project01/translate');
     env.changeUserRole('project01', 'user04', SFProjectRole.CommunityChecker);
     expect(env.location.path()).toEqual('/projects/project01');
     env.wait();
+  }));
+
+  it('response to Community Checker project role changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.setCurrentUser('user02');
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
+    env.changeUserRole('project01', 'user02', SFProjectRole.Viewer);
+    expect(env.location.path()).toEqual('/projects/project01');
+    discardPeriodicTasks();
   }));
 
   it('shows banner when update is available', fakeAsync(() => {
@@ -505,7 +521,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<AppComponent>;
   readonly router: Router;
   readonly location: Location;
-  // readonly questions: Question[];
   readonly ngZone: NgZone;
   readonly canInstall$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   readonly canSync$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -565,10 +580,19 @@ class TestEnvironment {
       { bookNum: 46, hasSource: true, chapters: [], permissions: {} },
       { bookNum: 47, hasSource: true, chapters: [], permissions: {} }
     ]);
+    this.addProjectUserConfig('project01', 'user01');
+    this.addProjectUserConfig('project01', 'user02');
+    this.addProjectUserConfig('project01', 'user03');
+    this.addProjectUserConfig('project01', 'user04');
 
     when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
+    when(mockedSFProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
+    );
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
+
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedIn).thenCall(() =>
@@ -807,6 +831,14 @@ class TestEnvironment {
         texts,
         paratextUsers: paratextUsersFromRoles(userRoles)
       })
+    });
+  }
+
+  private addProjectUserConfig(projectId: string, userId: string): void {
+    const projectUserConfigId = `${projectId}:${userId}`;
+    this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+      id: projectUserConfigId,
+      data: createTestProjectUserConfig({ ownerRef: userId, projectRef: projectId, selectedTask: 'checking' })
     });
   }
 
