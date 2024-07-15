@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
     function tryharderto() { i=0; until "$@"; do ((++i <= 3)); echo >&2 "Retrying ${i}"; sleep 2m; done }
 
     # Prepare canary
-    tee ~/Desktop/warning-not-provisioned.txt <<END
+    tee ~/Desktop/warning-not-provisioned.txt >/dev/null <<END
     The presence of this file means that the vagrant virtual machine did not
     finish provisioning correctly.
     The best way to get to a working machine state is to backup any data that
