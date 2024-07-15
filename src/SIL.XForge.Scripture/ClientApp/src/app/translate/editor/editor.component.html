@@ -89,7 +89,7 @@
                 <div class="text-container">
                   <app-text
                     #source
-                    [id]="sourceProjectId | textDocId : bookNum : chapter"
+                    [id]="visibleSourceProjectId | textDocId : bookNum : chapter"
                     [isReadOnly]="true"
                     [highlightSegment]="targetFocused"
                     (loaded)="onTextLoaded('source')"
