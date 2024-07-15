@@ -1,16 +1,31 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { RouterModule } from '@angular/router';
-import { TranslocoModule } from '@ngneat/transloco';
+import { MatDialogRef } from '@angular/material/dialog';
+import { Router, RouterModule } from '@angular/router';
+import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { map, Observable } from 'rxjs';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
+import { TextDocId } from '../../../core/models/text-doc';
+import { DraftAddDialogComponent } from '../draft-add-dialog/draft-add-dialog.component';
+import { DraftHandlingService } from '../draft-handling.service';
 
-interface BookWithDraft {
+export interface BookWithDraft {
   bookNumber: number;
-  firstChapterWithDraft: number;
+  canEdit: boolean;
+  chaptersWithDrafts: number[];
+}
+
+interface DraftAddDialogData {
+  bookName: string;
 }
 
 @Component({
@@ -18,7 +33,7 @@ interface BookWithDraft {
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
   standalone: true,
-  imports: [CommonModule, MatButtonModule, RouterModule, TranslocoModule]
+  imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
   booksWithDrafts$: Observable<BookWithDraft[]> = this.activatedProjectService.changes$.pipe(
@@ -26,19 +41,27 @@ export class DraftPreviewBooksComponent {
       if (projectDoc?.data == null) {
         return [];
       }
-      return projectDoc.data.texts
+      const draftBooks = projectDoc.data.texts
         .map(text => ({
           bookNumber: text.bookNum,
-          firstChapterWithDraft: text.chapters.find(chapter => chapter.hasDraft)?.number
+          canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
+          chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number)
         }))
         .sort((a, b) => a.bookNumber - b.bookNumber)
-        .filter(book => book.firstChapterWithDraft != null) as BookWithDraft[];
+        .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
+      return draftBooks;
     })
   );
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly i18nService: I18nService
+    private readonly i18n: I18nService,
+    private readonly userService: UserService,
+    private readonly draftHandlingService: DraftHandlingService,
+    private readonly noticeService: NoticeService,
+    private readonly dialogService: DialogService,
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly router: Router
   ) {}
 
   linkForBookAndChapter(bookNumber: number, chapterNumber: number): string[] {
@@ -56,6 +79,54 @@ export class DraftPreviewBooksComponent {
   }
 
   bookNumberToName(bookNumber: number): string {
-    return this.i18nService.localizeBook(bookNumber);
+    return this.i18n.localizeBook(bookNumber);
+  }
+
+  async applyBookDraftAsync(bookWithDraft: BookWithDraft): Promise<void> {
+    if (!bookWithDraft.canEdit) {
+      await this.dialogService.message(translate('draft_preview_books.no_permission_to_edit_book'));
+      return;
+    }
+
+    const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
+    const data: DraftAddDialogData = { bookName };
+    const dialogRef: MatDialogRef<DraftAddDialogComponent, boolean> = this.dialogService.openMatDialog(
+      DraftAddDialogComponent,
+      { data }
+    );
+    const result: boolean | undefined = await firstValueFrom(dialogRef.afterClosed());
+    if (result !== true) return;
+
+    const promises: Promise<boolean>[] = [];
+    const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
+    for (const chapter of bookWithDraft.chaptersWithDrafts) {
+      promises.push(
+        this.draftHandlingService.getAndApplyDraftAsync(
+          project,
+          new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter)
+        )
+      );
+    }
+
+    try {
+      const results: boolean[] = await Promise.all(promises);
+      if (results.some(result => !result)) {
+        // The draft is in the legacy format. This can only be applied chapter by chapter.
+        this.dialogService.message(translate('draft_preview_books.one_or_more_drafts_failed'));
+        return;
+      }
+      this.noticeService.show(translate('draft_preview_books.draft_successfully_applied', { bookName }));
+    } catch (error) {
+      // report the error to bugsnag
+      this.errorReportingService.silentError(
+        'Error while trying to apply a draft',
+        ErrorReportingService.normalizeError(error)
+      );
+      this.dialogService.message(translate('draft_preview_books.one_or_more_drafts_failed'));
+    }
+  }
+
+  navigate(book: BookWithDraft): void {
+    this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]));
   }
 }

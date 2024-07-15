@@ -1,0 +1,10 @@
+<ng-container *transloco="let t; read: 'draft_add_dialog'">
+  <h2 mat-dialog-title>{{ t("add_book_to_project", { bookName: data.bookName }) }}</h2>
+  <mat-dialog-content>{{ t("book_contents_will_be_overwritten", { bookName: data.bookName }) }}</mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-button class="cancel-button" [mat-dialog-close]="false">{{ t("cancel") }}</button>
+    <button mat-flat-button class="add-button" color="primary" [mat-dialog-close]="true">
+      {{ t("add_to_project") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

@@ -1,10 +1,14 @@
 import { Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
-import { isString } from '../../../../type-utils';
-import { TextDocId } from '../../../core/models/text-doc';
-import { getVerseRefFromSegmentRef, verseSlug } from '../../../shared/utils';
-import { DraftSegmentMap } from '../draft-generation';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { catchError, Observable, throwError } from 'rxjs';
+import { isString } from '../../../type-utils';
+import { Delta, TextDocId } from '../../core/models/text-doc';
+import { TextDocService } from '../../core/text-doc.service';
+import { getVerseRefFromSegmentRef, verseSlug } from '../../shared/utils';
+import { DraftSegmentMap } from './draft-generation';
+import { DraftGenerationService } from './draft-generation.service';
 
 export interface DraftMappingOptions {
   overwrite?: boolean;
@@ -18,7 +22,12 @@ export interface DraftDiff {
 @Injectable({
   providedIn: 'root'
 })
-export class DraftViewerService {
+export class DraftHandlingService {
+  constructor(
+    private readonly textDocService: TextDocService,
+    private readonly draftGenerationService: DraftGenerationService
+  ) {}
+
   /**
    * Whether draft has any pretranslation segments that are not already translated in target ops.
    * @param draft dictionary of segment refs to pretranslations
@@ -126,6 +135,75 @@ export class DraftViewerService {
   }
 
   /**
+   * Gets the generated draft of a chapter for a book. If unable to get the current draft delta format,
+   * it will automatically fallback to attempt to retrieve the legacy draft format.
+   * @param textDocId The text document identifier.
+   * @param param1 Whether to get the draft in the legacy format.
+   * @returns The draft data in the current delta operation format or the legacy segment map format.
+   */
+  getDraft(
+    textDocId: TextDocId,
+    { isDraftLegacy }: { isDraftLegacy: boolean }
+  ): Observable<DeltaOperation[] | DraftSegmentMap> {
+    return isDraftLegacy
+      ? // Fetch legacy draft
+        this.draftGenerationService
+          .getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
+          .pipe()
+      : // Fetch draft in USFM format (fallback to legacy)
+        this.draftGenerationService
+          .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
+          .pipe(
+            catchError(err => {
+              // If the corpus does not support USFM
+              if (err.status === 405) {
+                return this.getDraft(textDocId, { isDraftLegacy: true });
+              }
+
+              return throwError(() => err);
+            })
+          );
+  }
+
+  /**
+   * Applies the draft to the text document.
+   * @param textDocId The text doc identifier.
+   * @param draftDelta The draft delta to overwrite the current text document with.
+   */
+  async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: DeltaStatic): Promise<void> {
+    await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
+  }
+
+  /**
+   * Retrieves and applies the draft to the text document.
+   * @param textDocId The text doc identifier.
+   * @returns True if the draft was successfully applied, false if the draft was not applied i.e. the draft
+   * was in the legacy USFM format.
+   */
+  async getAndApplyDraftAsync(project: SFProjectProfile, textDocId: TextDocId): Promise<boolean> {
+    if (!this.textDocService.canEdit(project, textDocId.bookNum, textDocId.chapterNum)) {
+      return false;
+    }
+
+    return await new Promise<boolean>(resolve => {
+      this.getDraft(textDocId, { isDraftLegacy: false }).subscribe(async draft => {
+        let ops: DeltaOperation[] = [];
+        if (this.isDraftSegmentMap(draft)) {
+          // Do not support applying drafts for the legacy segment map format.
+          // This can be applied chapter by chapter.
+          resolve(false);
+          return;
+        } else {
+          ops = draft;
+        }
+        const draftDelta: DeltaStatic = new Delta(ops);
+        await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
+        resolve(true);
+      });
+    });
+  }
+
+  /**
    * Checks whether the ops have any content (text) in them. This is defined as any op having text content (verse
    * numbers and other format markers do not count as "content"). If the final op is a newline, it is not counted as
    * content since it appears most or all documents have a trailing newline at the end.
@@ -137,5 +215,17 @@ export class DraftViewerService {
     const onlyTextOpIsTrailingNewline = indexOfFirstText === ops.length - 1 && ops[indexOfFirstText].insert === '\n';
     const hasNoExistingText = indexOfFirstText === -1 || onlyTextOpIsTrailingNewline;
     return !hasNoExistingText;
+  }
+
+  draftDataToOps(ops: DeltaOperation[] | DraftSegmentMap, targetOps: DeltaOperation[]): DeltaOperation[] {
+    // Convert the legacy draft format to ops
+    if (this.isDraftSegmentMap(ops)) {
+      return this.toDraftOps(ops, targetOps);
+    }
+    return ops;
+  }
+
+  isDraftSegmentMap(draft: DeltaOperation[] | DraftSegmentMap): draft is DraftSegmentMap {
+    return !Array.isArray(draft);
   }
 }
