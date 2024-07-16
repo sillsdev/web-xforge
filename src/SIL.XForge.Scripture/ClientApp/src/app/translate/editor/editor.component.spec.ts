@@ -3815,6 +3815,19 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
+      it('should not add source tab group when user has no source permissions', fakeAsync(() => {
+        // setup the project so that users only have access to project01
+        const env = new TestEnvironment(env => {
+          env.setupUsers(['project01']);
+          env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
+          env.setCurrentUser('user05');
+        });
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
+        discardPeriodicTasks();
+      }));
+
       it('should add target tab group', fakeAsync(() => {
         const env = new TestEnvironment();
         const projectDoc = env.getProjectDoc('project01');
@@ -3942,6 +3955,18 @@ describe('EditorComponent', () => {
           expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
           env.dispose();
         });
+      }));
+
+      it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setProjectUserConfig();
+        env.wait();
+
+        env.component.source = undefined;
+
+        expect(() => env.updateFontSize('project01', 24)).not.toThrow();
+
+        env.dispose();
       }));
     });
 
@@ -4458,7 +4483,7 @@ class TestEnvironment {
     );
   }
 
-  setupUsers(): void {
+  setupUsers(projects?: string[]): void {
     for (const user of Object.keys(this.userRolesOnProject)) {
       const i: number = parseInt(user.substring(user.length - 2));
       this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -4467,7 +4492,7 @@ class TestEnvironment {
           {
             sites: {
               sf: {
-                projects: ['project01', 'project02', 'project03']
+                projects: projects ?? ['project01', 'project02', 'project03']
               }
             }
           },
@@ -4522,6 +4547,11 @@ class TestEnvironment {
     }
     if (data.texts != null) {
       projectProfileData.texts = merge(projectProfileData.texts, data.texts);
+    }
+    if (data.userRoles != null) {
+      for (const [userId, role] of Object.entries(data.userRoles)) {
+        projectProfileData.userRoles[userId] = role!;
+      }
     }
     if (id !== undefined) {
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

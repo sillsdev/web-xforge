@@ -1,7 +1,7 @@
 import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
-import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
@@ -262,8 +262,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
 
   openScriptureChooser(control: AbstractControl): void {
     const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
-      data: { booksAndChaptersToShow: this.data.textsByBookId },
-      autoFocus: false
+      data: { booksAndChaptersToShow: this.data.textsByBookId }
     };
 
     const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<
@@ -468,7 +467,6 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
 
     const data: MatDialogConfig<ImportQuestionsConfirmationDialogData> = {
       data: { questions: edits },
-      autoFocus: false,
       disableClose: true
     };
     const dialogRef = this.dialogService.openMatDialog(

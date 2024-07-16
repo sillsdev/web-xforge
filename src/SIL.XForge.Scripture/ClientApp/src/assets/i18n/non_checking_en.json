@@ -127,6 +127,12 @@
     "please_type_project_name": "Please type in the name of the project to confirm.",
     "project_name": "Project Name"
   },
+  "draft_add_dialog": {
+    "add_book_to_project": "Add {{ bookName }} to project",
+    "add_to_project": "Add to project",
+    "book_contents_will_be_overwritten": "Warning, this will overwrite any data in your project for the book of {{ bookName }}.",
+    "cancel": "Cancel"
+  },
   "draft_generation": {
     "back_from_stepper_button": "Back",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
@@ -203,7 +209,11 @@
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
   },
   "draft_preview_books": {
-    "no_books_have_drafts": " No books have any drafts."
+    "add_to_project": "Add to project",
+    "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
+    "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
+    "no_books_have_drafts": "No books have any drafts.",
+    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission."
   },
   "editor": {
     "add_comment": "Add Comment",

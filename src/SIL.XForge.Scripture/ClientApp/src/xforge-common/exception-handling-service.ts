@@ -269,7 +269,6 @@ export class ExceptionHandlingService {
       await ngZone.run(async () => {
         this.dialogOpen = true;
         const dialogRef = dialogService.openMatDialog(ErrorDialogComponent, {
-          autoFocus: false,
           data: this.alertQueue[this.alertQueue.length - 1]
         });
         await firstValueFrom(dialogRef.afterClosed());

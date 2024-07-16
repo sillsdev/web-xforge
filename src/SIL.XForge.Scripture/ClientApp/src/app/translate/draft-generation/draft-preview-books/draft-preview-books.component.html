@@ -1,11 +1,17 @@
 <ng-container *transloco="let t; read: 'draft_preview_books'">
   @for (book of booksWithDrafts$ | async; track book.bookNumber) {
-  <a
-    mat-stroked-button
-    [routerLink]="linkForBookAndChapter(book.bookNumber, book.firstChapterWithDraft)"
-    [queryParams]="{ 'draft-active': true }"
-  >
-    {{ bookNumberToName(book.bookNumber) }}
-  </a>
+  <mat-button-toggle-group class="draft-book-option">
+    <mat-button-toggle class="book-name" (click)="navigate(book)">{{
+      bookNumberToName(book.bookNumber)
+    }}</mat-button-toggle>
+    <mat-button-toggle class="book-more" [mat-menu-trigger-for]="menu">
+      <mat-icon>more_vert</mat-icon>
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="applyBookDraftAsync(book)">
+      <mat-icon>input</mat-icon>{{ t("add_to_project") }}
+    </button>
+  </mat-menu>
   } @empty { <strong>{{ t("no_books_have_drafts") }}</strong> }
 </ng-container>

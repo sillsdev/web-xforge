@@ -5,7 +5,6 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { DeltaOperation } from 'rich-text';
 import {
   asyncScheduler,
-  catchError,
   combineLatest,
   distinctUntilChanged,
   EMPTY,
@@ -17,8 +16,7 @@ import {
   Subject,
   switchMap,
   tap,
-  throttleTime,
-  throwError
+  throttleTime
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -31,9 +29,8 @@ import { Delta, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { TextComponent } from '../../../shared/text/text.component';
-import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
+import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 
 @Component({
   selector: 'app-editor-draft',
@@ -67,7 +64,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly destroyRef: DestroyRef,
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
-    private readonly draftViewerService: DraftViewerService,
+    private readonly draftHandlingService: DraftHandlingService,
     readonly fontService: FontService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -116,14 +113,24 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             distinctUntilChanged()
           );
         }),
-        switchMap(() => combineLatest([this.getTargetOps(), this.getDraft({ isDraftLegacy: false })])),
-        map(([targetOps, draft]) => ({
-          targetOps,
-          // Convert legacy draft to draft ops
-          draftOps: this.isDraftSegmentMap(draft)
-            ? this.draftViewerService.toDraftOps(draft, targetOps, { overwrite: true })
-            : draft
-        }))
+        switchMap(() =>
+          combineLatest([
+            this.getTargetOps(),
+            this.draftHandlingService.getDraft(this.textDocId!, { isDraftLegacy: false })
+          ])
+        ),
+        tap(([_, draft]) => {
+          if (this.draftHandlingService.isDraftSegmentMap(draft)) {
+            this.draftCheckState = 'draft-legacy';
+          }
+        }),
+        map(([targetOps, draft]) => {
+          return {
+            targetOps,
+            // Convert legacy draft to draft ops if necessary
+            draftOps: this.draftHandlingService.draftDataToOps(draft, targetOps)
+          };
+        })
       )
       .subscribe(({ targetOps, draftOps }) => {
         this.draftDelta = new Delta(draftOps);
@@ -143,6 +150,23 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       });
   }
 
+  async applyDraft(): Promise<void> {
+    if (this.draftDelta == null) {
+      throw new Error('No draft ops to apply.');
+    }
+
+    // Warn before overwriting existing text
+    if (this.hasContent(this.targetDelta?.ops)) {
+      const proceed: boolean = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
+      if (!proceed) {
+        return;
+      }
+    }
+
+    await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
+    this.isDraftApplied = true;
+  }
+
   private setInitialState(): void {
     this.draftCheckState = 'draft-unknown';
     this.bookChapterName = this.getLocalizedBookChapter();
@@ -154,44 +178,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftExists(): Observable<boolean> {
     // This method of checking for draft may be temporary until there is a better way supplied by serval
     return this.draftGenerationService.draftExists(this.projectId!, this.bookNum!, this.chapter!);
-  }
-
-  private getDraft({ isDraftLegacy }: { isDraftLegacy: boolean }): Observable<DeltaOperation[] | DraftSegmentMap> {
-    return isDraftLegacy
-      ? // Fetch legacy draft
-        this.draftGenerationService.getGeneratedDraft(this.projectId!, this.bookNum!, this.chapter!).pipe()
-      : // Fetch draft in USFM format (fallback to legacy)
-        this.draftGenerationService
-          .getGeneratedDraftDeltaOperations(this.projectId!, this.bookNum!, this.chapter!)
-          .pipe(
-            catchError(err => {
-              // If the corpus does not support USFM
-              if (err.status === 405) {
-                // Prompt the user to run a new build to use the new features
-                this.draftCheckState = 'draft-legacy';
-                return this.getDraft({ isDraftLegacy: true });
-              }
-
-              return throwError(() => err);
-            })
-          );
-  }
-
-  async applyDraft(): Promise<void> {
-    if (this.draftDelta == null) {
-      throw new Error('No draft ops to apply.');
-    }
-
-    // Warn before overwriting existing text
-    if (this.hasContent(this.targetDelta?.ops)) {
-      const proceed = await this.dialogService.confirm('editor_draft_tab.overwrite', 'editor_draft_tab.yes');
-      if (!proceed) {
-        return;
-      }
-    }
-
-    await this.textDocService.overwrite(this.textDocId!, this.draftDelta, 'Draft');
-    this.isDraftApplied = true;
   }
 
   private hasContent(delta?: DeltaOperation[]): boolean {
@@ -232,9 +218,5 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         )
       )
     );
-  }
-
-  private isDraftSegmentMap(draft: DeltaOperation[] | DraftSegmentMap): draft is DraftSegmentMap {
-    return !Array.isArray(draft);
   }
 }

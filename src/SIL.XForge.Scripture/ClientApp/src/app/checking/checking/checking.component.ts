@@ -11,7 +11,7 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -1156,6 +1156,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (!this.totalQuestions()) {
       this.visibleQuestions = [];
       this.totalVisibleQuestionsString = '0';
+      this.updateQuestionRefs();
+      this.refreshSummary();
       return;
     }
 
