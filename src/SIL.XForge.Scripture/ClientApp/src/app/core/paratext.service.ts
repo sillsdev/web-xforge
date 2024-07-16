@@ -111,6 +111,12 @@ export class ParatextService {
     );
   }
 
+  /** True if a Paratext project has a corresponding project in SF, whether or not any SF user is connected to the
+   * project. */
+  isParatextProjectInSF(project: ParatextProject): boolean {
+    return project.projectId != null;
+  }
+
   private get headers(): HttpHeaders {
     return new HttpHeaders({
       Accept: 'application/json',
