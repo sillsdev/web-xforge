@@ -22,13 +22,10 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import {
-  createTestProject,
-  createTestProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -142,7 +139,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId', component: MockComponent }
 ];
 
-fdescribe('CheckingComponent', () => {
+describe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
       AudioTimePipe,
@@ -285,25 +282,28 @@ fdescribe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('shows add audio button for paratext administrator', fakeAsync(() => {
+    it('shows add audio and shows add question button for paratext administrator', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       expect(env.addAudioButton).not.toBeNull();
+      expect(env.addQuestionButton).not.toBeNull();
       flush();
       discardPeriodicTasks();
     }));
 
-    it('shows add audio button for paratext translator (includes consultant, reviewer, archivist, and typesetter) when user has Audio permissions for project', fakeAsync(() => {
+    it('shows add audio and hides add question button for paratext translator (includes consultant, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
       const env = new TestEnvironment({ user: TRANSLATOR_USER, scriptureAudio: true });
       env.fixture.detectChanges();
       expect(env.addAudioButton).not.toBeNull();
+      expect(env.addQuestionButton).toBeNull();
       flush();
       discardPeriodicTasks();
     }));
 
-    it('hides add audio button for paratext consultant (includes translator, reviewer, archivist, and typesetter) when user does NOT have Audio permissions for project', fakeAsync(() => {
+    it('hides add audio and shows add question button for paratext consultant (includes translator, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
       const env = new TestEnvironment({ user: CONSULTANT_USER, scriptureAudio: true });
       env.fixture.detectChanges();
       expect(env.addAudioButton).toBeNull();
+      expect(env.addQuestionButton).not.toBeNull();
       flush();
       discardPeriodicTasks();
     }));
@@ -2386,8 +2386,6 @@ class TestEnvironment {
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
     when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(scriptureAudio));
-    // let hasRights = SF_PROJECT_RIGHTS.hasRight(this.testProject,user.id, SFProjectDomain.TextAudio, Operation.Create);
-    // //when(hasRights).thenReturn(true);
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
@@ -2641,8 +2639,17 @@ class TestEnvironment {
   }
 
   static generateTestProject(): SFProject {
-    let translatorPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
-    let userPermissions = { TRANSLATOR_USER: translatorPermissions, CONSULTANT_USER: [] };
+    let audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
+    let questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
+    let adminPermissions = [
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)
+    ];
+    let userPermissions = {
+      [TRANSLATOR_USER.id]: audioPermissions,
+      [CONSULTANT_USER.id]: questionPermissions,
+      [ADMIN_USER.id]: adminPermissions
+    };
     return createTestProject({
       name: 'project01',
       paratextId: 'project01',
@@ -3107,15 +3114,8 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 
-  private setupDefaultProjectData(user: UserInfo): void {
+  private setupDefaultProjectData(user: UserInfo, userPermissions: { [userRef: string]: string[] } = {}): void {
     const projectId = 'project01';
-    let userRoles = { [user.id]: user.role };
-    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: 'project01',
-      data: createTestProjectProfile({
-        userRoles
-      })
-    });
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
         id: projectId,
