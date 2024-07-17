@@ -3114,7 +3114,7 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 
-  private setupDefaultProjectData(user: UserInfo, userPermissions: { [userRef: string]: string[] } = {}): void {
+  private setupDefaultProjectData(user: UserInfo): void {
     const projectId = 'project01';
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
