@@ -12,6 +12,10 @@
   padding: 8px 4px;
 }
 
+.mat-mdc-card-title {
+  margin-block-end: 16px;
+}
+
 .tool-setting {
   display: flex;
   flex-direction: column;
@@ -26,12 +30,11 @@
   }
 
   > .tool-setting-field {
-    &:not(:last-child) {
-      padding-bottom: 16px;
-    }
+    display: flex;
     column-gap: 10px;
 
     > app-write-status {
+      min-width: 24px;
       @include media-breakpoint-up(sm) {
         margin-inline-start: 22px;
       }
@@ -40,9 +43,6 @@
 
   > .helper-text {
     font-size: 14px;
-    &.checkbox-helper-text {
-      margin: 0 0 0 24px;
-    }
   }
   .mat-mdc-form-field-error {
     margin-top: 10px;
@@ -55,6 +55,11 @@
   }
 }
 
+mat-hint {
+  margin-block-start: 8px;
+  margin-block-end: 16px;
+}
+
 a {
   color: $blueMedium;
 }
@@ -65,7 +70,7 @@ mat-icon {
 }
 
 .indent {
-  margin-block-start: 4px;
+  margin-block-start: 16px;
   margin-inline-start: 16px;
   display: flex;
   column-gap: 8px;
@@ -128,12 +133,10 @@ mat-radio-group.tool-setting {
 .mat-mdc-card-content {
   display: flex;
   flex-direction: column;
-  row-gap: 16px;
-  margin: 0;
-}
 
-.mat-mdc-card-title {
-  margin: 0;
+  .mat-mdc-form-field {
+    width: 100%;
+  }
 }
 
 .mat-mdc-card-content:not(:first-child) {
