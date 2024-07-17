@@ -54,3 +54,8 @@ export interface User extends UserProfile {
   authId: string;
   sites: { [key: string]: Site };
 }
+
+/** Do we understand the SF user to also be a PT user? */
+export function isPTUser(user: User) {
+  return user.paratextId != null;
+}

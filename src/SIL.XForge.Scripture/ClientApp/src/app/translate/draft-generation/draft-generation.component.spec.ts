@@ -7,6 +7,7 @@ import FileSaver from 'file-saver';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
@@ -123,9 +124,6 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
-        currentUserRoles: [SystemRole.User]
-      });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
@@ -147,34 +145,7 @@ describe('DraftGenerationComponent', () => {
         'getGeneratedDraftUsfm',
         'getLastCompletedBuild'
       ]);
-      const projectDoc = {
-        id: projectId,
-        data: createTestProjectProfile({
-          writingSystem: {
-            tag: 'en'
-          },
-          translateConfig: {
-            preTranslate: true,
-            projectType: ProjectType.BackTranslation,
-            source: {
-              projectRef: 'testSourceProjectId',
-              writingSystem: {
-                tag: 'es'
-              }
-            }
-          },
-          sync: {
-            lastSyncSuccessful: true
-          }
-        })
-      } as SFProjectProfileDoc;
-      mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
-        projectId: projectId,
-        projectId$: of(projectId),
-        projectDoc: projectDoc,
-        projectDoc$: of(projectDoc),
-        changes$: of(projectDoc)
-      });
+      TestEnvironment.initProject('user01');
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
       mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
@@ -195,6 +166,45 @@ describe('DraftGenerationComponent', () => {
       spyOn(FileSaver, 'saveAs').and.stub();
     }
 
+    static initProject(currentUserId: string): void {
+      const projectDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          writingSystem: {
+            tag: 'en'
+          },
+          translateConfig: {
+            preTranslate: true,
+            projectType: ProjectType.BackTranslation,
+            source: {
+              projectRef: 'testSourceProjectId',
+              writingSystem: {
+                tag: 'es'
+              }
+            }
+          },
+          userRoles: {
+            user01: SFProjectRole.ParatextAdministrator,
+            user02: SFProjectRole.ParatextTranslator
+          },
+          sync: {
+            lastSyncSuccessful: true
+          }
+        })
+      } as SFProjectProfileDoc;
+      mockAuthService = jasmine.createSpyObj<AuthService>(['requestParatextCredentialUpdate'], {
+        currentUserId,
+        currentUserRoles: [SystemRole.User]
+      });
+      mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
+        projectId: projectId,
+        projectId$: of(projectId),
+        projectDoc: projectDoc,
+        projectDoc$: of(projectDoc),
+        changes$: of(projectDoc)
+      });
+    }
+
     get downloadButton(): HTMLElement | null {
       return this.getElementByTestId('download-button');
     }
@@ -213,6 +223,10 @@ describe('DraftGenerationComponent', () => {
 
     getElementByTestId(testId: string): HTMLElement | null {
       return this.fixture.nativeElement.querySelector(`[data-test-id="${testId}"]`);
+    }
+
+    getElementByKey(key: string): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector(`[key="${key}"]`);
     }
   }
 
@@ -590,12 +604,26 @@ describe('DraftGenerationComponent', () => {
 
   describe('warnings', () => {
     describe('source text missing', () => {
-      it('should show warning when source text is missing AND target language is supported', () => {
-        let env = new TestEnvironment();
+      it('should show warning with settings link when source text is missing AND target language is supported, user is Paratext Admin', () => {
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
         env.component.isSourceProjectSet = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(true);
         expect(env.getElementByTestId('warning-source-text-missing')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_source_text_not_selected')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_source_text_not_selected')).toBe(null);
+      });
+
+      it('should show warning to contact Paratext Admin when source text is missing AND target language is supported, user is Translator', () => {
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
+        env.component.isSourceProjectSet = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toBe(false);
+        expect(env.getElementByTestId('warning-source-text-missing')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_source_text_not_selected')).toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_source_text_not_selected')).not.toBe(null);
       });
 
       it('should not show warning when target language is not supported', () => {
@@ -616,13 +644,30 @@ describe('DraftGenerationComponent', () => {
     });
 
     describe('source and target text must be different', () => {
-      it('should show warning when source text is not missing AND source and target are same AND target language is supported', () => {
-        let env = new TestEnvironment();
+      it('should show warning with settings page link when source text is not missing AND source and target are same AND target language is supported, user is Paratext Admin', () => {
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndTargetDifferent = false;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(true);
         expect(env.getElementByTestId('warning-source-target-same')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_same_source_and_target_language')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_same_source_and_target_language')).toBe(null);
+      });
+
+      it('should show warning to contact Paratext Admin when source text is not missing AND source and target are same AND target language is supported, user is Translator', () => {
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndTargetDifferent = false;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(false);
+        expect(env.getElementByTestId('warning-source-target-same')).not.toBe(null);
+        expect(env.getElementByKey('draft_generation.info_alert_same_source_and_target_language')).toBe(null);
+        expect(env.getElementByKey('draft_generation.non_pa_info_alert_same_source_and_target_language')).not.toBe(
+          null
+        );
       });
 
       it('should not show warning when target language is not supported', () => {
@@ -706,15 +751,40 @@ describe('DraftGenerationComponent', () => {
     });
 
     describe('source and additional training source language must be the same', () => {
-      it('should show warning when source and additional training source are different AND target language is supported', () => {
-        let env = new TestEnvironment();
+      it('should show warning with link to settings page when source and additional training source are different AND target language is supported, user is Paratext Admin', () => {
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user01'));
         env.component.isSourceProjectSet = true;
         env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
         env.component.isSourceAndTargetDifferent = true;
         env.component.isSourceAndTrainingSourceLanguageIdentical = true;
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(true);
         expect(env.getElementByTestId('warning-mix-source-different')).not.toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.info_alert_different_additional_training_and_source_language')
+        ).not.toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.non_pa_info_alert_different_additional_training_and_source_language')
+        ).toBe(null);
+      });
+
+      it('should show warning to contact Paratext Admin when source and additional training source are different AND target language is supported, user is Translator', () => {
+        const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
+        env.component.isSourceProjectSet = true;
+        env.component.isSourceAndAdditionalTrainingSourceLanguageIdentical = false;
+        env.component.isSourceAndTargetDifferent = true;
+        env.component.isSourceAndTrainingSourceLanguageIdentical = true;
+        env.component.isTargetLanguageSupported = true;
+        env.fixture.detectChanges();
+        expect(env.component.isProjectAdmin).toEqual(false);
+        expect(env.getElementByTestId('warning-mix-source-different')).not.toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.info_alert_different_additional_training_and_source_language')
+        ).toBe(null);
+        expect(
+          env.getElementByKey('draft_generation.non_pa_info_alert_different_additional_training_and_source_language')
+        ).not.toBe(null);
       });
 
       it('should not show warning when target language is not supported', () => {

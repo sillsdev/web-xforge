@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
@@ -9,12 +9,13 @@ import { UserDoc } from './models/user-doc';
 import { SubscriptionDisposable } from './subscription-disposable';
 import { UserService } from './user.service';
 
+/** Service that maintains an up-to-date set of SF project docs that the current user has access to. */
 @Injectable({
   providedIn: 'root'
 })
 export class SFUserProjectsService extends SubscriptionDisposable {
   private projectDocs: Map<string, SFProjectProfileDoc> = new Map();
-  private _projectDocs$ = new Subject<SFProjectProfileDoc[]>();
+  private _projectDocs$ = new BehaviorSubject<SFProjectProfileDoc[] | undefined>(undefined);
 
   constructor(
     private readonly userService: UserService,
@@ -25,7 +26,8 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     this.setup();
   }
 
-  get projectDocs$(): Observable<SFProjectProfileDoc[]> {
+  /** List of SF project docs the user is on. Or undefined if the information is not yet available. */
+  get projectDocs$(): Observable<SFProjectProfileDoc[] | undefined> {
     return this._projectDocs$;
   }
 
@@ -40,6 +42,8 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     });
   }
 
+  /** Updates our provided set of SF project docs for the current user based on the userdoc's list of SF projects the
+   * user is on. */
   private async updateProjectList(userDoc: UserDoc): Promise<void> {
     const currentProjectIds = userDoc.data!.sites[environment.siteId].projects;
 
@@ -59,7 +63,13 @@ export class SFUserProjectsService extends SubscriptionDisposable {
       }
     }
 
-    if (removedProjectsCount === 0 && docFetchPromises.length === 0) return;
+    if (removedProjectsCount === 0 && docFetchPromises.length === 0) {
+      if (currentProjectIds.length === 0) {
+        // Provide an initial empty set of projects if the user has no projects.
+        this._projectDocs$.next([]);
+      }
+      return;
+    }
 
     for (const newProjectDoc of await Promise.all(docFetchPromises)) {
       this.projectDocs.set(newProjectDoc.id, newProjectDoc);
