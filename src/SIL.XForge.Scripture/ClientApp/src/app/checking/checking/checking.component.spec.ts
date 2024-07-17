@@ -16,19 +16,16 @@ import { AngularSplitModule } from 'angular-split';
 import { cloneDeep } from 'lodash-es';
 import clone from 'lodash-es/clone';
 import { CookieService } from 'ngx-cookie-service';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import {
-  createTestProject,
-  createTestProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -142,7 +139,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId', component: MockComponent }
 ];
 
-fdescribe('CheckingComponent', () => {
+describe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
       AudioTimePipe,
@@ -285,25 +282,28 @@ fdescribe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('shows add audio button for paratext administrator', fakeAsync(() => {
+    it('shows add audio and shows add question button for paratext administrator', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       expect(env.addAudioButton).not.toBeNull();
+      expect(env.addQuestionButton).not.toBeNull();
       flush();
       discardPeriodicTasks();
     }));
 
-    it('shows add audio button for paratext translator (includes consultant, reviewer, archivist, and typesetter) when user has Audio permissions for project', fakeAsync(() => {
+    it('shows add audio and hides add question button for paratext translator (includes consultant, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
       const env = new TestEnvironment({ user: TRANSLATOR_USER, scriptureAudio: true });
       env.fixture.detectChanges();
       expect(env.addAudioButton).not.toBeNull();
+      expect(env.addQuestionButton).toBeNull();
       flush();
       discardPeriodicTasks();
     }));
 
-    it('hides add audio button for paratext consultant (includes translator, reviewer, archivist, and typesetter) when user does NOT have Audio permissions for project', fakeAsync(() => {
+    it('hides add audio and shows add question button for paratext consultant (includes translator, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
       const env = new TestEnvironment({ user: CONSULTANT_USER, scriptureAudio: true });
       env.fixture.detectChanges();
       expect(env.addAudioButton).toBeNull();
+      expect(env.addQuestionButton).not.toBeNull();
       flush();
       discardPeriodicTasks();
     }));
@@ -2386,8 +2386,6 @@ class TestEnvironment {
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
     when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(scriptureAudio));
-    // let hasRights = SF_PROJECT_RIGHTS.hasRight(this.testProject,user.id, SFProjectDomain.TextAudio, Operation.Create);
-    // //when(hasRights).thenReturn(true);
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
@@ -2641,9 +2639,21 @@ class TestEnvironment {
   }
 
   static generateTestProject(): SFProject {
-    let translatorPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
-    let userPermissions = { TRANSLATOR_USER: translatorPermissions, CONSULTANT_USER: [] };
+    let audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
+    let questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
+    let adminPermissions = [
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)
+    ];
+    let userPermissions = {
+      [TRANSLATOR_USER.id]: audioPermissions,
+      [CONSULTANT_USER.id]: questionPermissions,
+      [ADMIN_USER.id]: adminPermissions
+    };
     return createTestProject({
+      name: 'project01',
+      paratextId: 'project01',
+      shortName: 'project01',
       writingSystem: {
         tag: TestEnvironment.project01WritingSystemTag
       },
@@ -3104,20 +3114,15 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 
-  private setupDefaultProjectData(user: UserInfo): void {
-    let userRoles = { [user.id]: user.role };
-    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: 'project01',
-      data: createTestProjectProfile({
-        userRoles
-      })
-    });
+  private setupDefaultProjectData(user: UserInfo, userPermissions: { [userRef: string]: string[] } = {}): void {
+    const projectId = 'project01';
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
-        id: 'project01',
+        id: projectId,
         data: this.testProject
       }
     ]);
+
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
@@ -3127,27 +3132,27 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
       {
-        id: getSFProjectUserConfigDocId('project01', ADMIN_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, ADMIN_USER.id),
         data: this.adminProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', CHECKER_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, CHECKER_USER.id),
         data: this.checkerProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', CLEAN_CHECKER_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, CLEAN_CHECKER_USER.id),
         data: this.cleanCheckerProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', OBSERVER_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, OBSERVER_USER.id),
         data: this.observerProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', TRANSLATOR_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, TRANSLATOR_USER.id),
         data: this.translatorProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', CONSULTANT_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, CONSULTANT_USER.id),
         data: this.consultantProjectUserConfig
       }
     ]);
@@ -3157,17 +3162,17 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
-        id: getTextDocId('project01', 43, 1),
+        id: getTextDocId(projectId, 43, 1),
         data: this.createTextDataForChapter(1),
         type: RichText.type.name
       },
       {
-        id: getTextDocId('project01', 43, 2),
+        id: getTextDocId(projectId, 43, 2),
         data: this.createTextDataForChapter(2),
         type: RichText.type.name
       },
       {
-        id: getTextDocId('project01', 40, 1),
+        id: getTextDocId(projectId, 40, 1),
         data: this.createTextDataForChapter(1),
         type: RichText.type.name
       }
