@@ -2641,14 +2641,9 @@ class TestEnvironment {
   static generateTestProject(): SFProject {
     let audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
     let questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
-    let adminPermissions = [
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)
-    ];
     let userPermissions = {
       [TRANSLATOR_USER.id]: audioPermissions,
-      [CONSULTANT_USER.id]: questionPermissions,
-      [ADMIN_USER.id]: adminPermissions
+      [CONSULTANT_USER.id]: questionPermissions
     };
     return createTestProject({
       name: 'project01',
@@ -3114,7 +3109,7 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 
-  private setupDefaultProjectData(user: UserInfo, userPermissions: { [userRef: string]: string[] } = {}): void {
+  private setupDefaultProjectData(user: UserInfo): void {
     const projectId = 'project01';
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
