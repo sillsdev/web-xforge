@@ -8,13 +8,8 @@
     border-color: $borderColor;
   }
 
-  mat-icon {
-    color: $borderColor;
-  }
-
   .delete {
     color: variables.$border-color;
-    cursor: pointer;
 
     &:hover {
       color: $textColor;
