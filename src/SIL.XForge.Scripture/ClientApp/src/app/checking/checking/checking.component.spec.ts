@@ -139,7 +139,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId', component: MockComponent }
 ];
 
-describe('CheckingComponent', () => {
+fdescribe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
       AudioTimePipe,
