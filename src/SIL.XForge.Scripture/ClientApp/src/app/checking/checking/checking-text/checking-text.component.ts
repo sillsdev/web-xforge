@@ -48,7 +48,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
     this._activeVerse = verseRef;
     this.highlightActiveVerse();
-    this.scrollToVerse(this.activeVerse);
   }
 
   get activeVerse(): VerseRef | undefined {
@@ -89,7 +88,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse();
-    this.scrollToVerse(this.activeVerse);
   }
 
   setAudioTextRef(reference: string): void {
@@ -149,7 +147,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         this.id.chapterNum.toString(),
         verseStr
       );
-      this.scrollToVerse(verseRef);
       refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
     } else {
       refs.push(baseRef);
@@ -174,19 +171,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           }
         })
       );
-    }
-  }
-
-  private scrollToVerse(verseRef: VerseRef | undefined): void {
-    if (verseRef != null && this.textComponent.editor != null) {
-      const firstSegment: string = this.textComponent.getVerseSegments(verseRef)[0];
-      const editor: Element | null = this.textComponent.editor.container.querySelector('.ql-editor');
-      if (editor != null) {
-        const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
-        if (element != null) {
-          editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
-        }
-      }
     }
   }
 }
