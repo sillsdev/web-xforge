@@ -37,6 +37,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
@@ -108,7 +109,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   textDocId?: TextDocId;
   totalVisibleQuestionsString: string = '0';
   visibleQuestions: Readonly<QuestionDoc[] | undefined>;
-  showScriptureAudioPlayer: boolean = false;
   hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
@@ -157,6 +157,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
+  private _showScriptureAudioPlayer: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -241,6 +242,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
     const userId: string = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
+  }
+
+  get showScriptureAudioPlayer(): boolean {
+    return this._showScriptureAudioPlayer;
+  }
+
+  private set showScriptureAudioPlayer(value: boolean) {
+    this._showScriptureAudioPlayer = value;
   }
 
   get hideChapterText(): boolean {
@@ -900,7 +909,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (questionDoc != null) {
       this.updateActiveQuestionVerseRef(questionDoc);
       this.updateAdjacentQuestions(questionDoc);
-      this.calculateScriptureSliderPosition(true);
+      this.calculateScriptureSliderPosition(true, true);
       this.refreshSummary();
 
       if (this.onlineStatusService.isOnline) {
@@ -1017,6 +1026,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       return;
     }
     this.scripturePanel!.setAudioTextRef(segmentRef);
+    this.scrollToVerse(getVerseRefFromSegmentRef(this.book!, segmentRef));
   }
 
   isAudioPlaying(): boolean {
@@ -1346,11 +1356,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   /** Adjust the position of the splitter between Scripture text and answers. */
   // Group rapid-fire batches of these calls as one call
   private calculateScriptureSliderPosition = debounce(this._calculateScriptureSliderPosition, 50);
-  private _calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
+  private _calculateScriptureSliderPosition(
+    maximizeAnswerPanel: boolean = false,
+    scrollToActiveVerse: boolean = false
+  ): void {
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly.
     // 100 ms is a speculative value for waiting for elements to be loaded and updated in the DOM.
     const changeUpdateDelayMs: number = 100;
-    setTimeout(async () => {
+    setTimeout(() => {
       if (this.splitComponent == null || this.hideChapterText) {
         return;
       }
@@ -1360,11 +1373,47 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       } else {
         answerPanelHeight = this.answerPanelElementMinimumHeight;
       }
+
+      if (scrollToActiveVerse) {
+        const currentAnswerPanelHeight = this.splitComponent.displayedAreas[1].size;
+        // If the heights are different, onSplitterResized will handle scrolling
+        if (answerPanelHeight === currentAnswerPanelHeight) {
+          this.scrollToVerse(this.activeQuestionVerseRef);
+        }
+      }
+
       this.splitComponent.setVisibleAreaSizes([
         '*',
         this.showScriptureAudioPlayer ? this.scriptureAudioPlayerAreaHeight : answerPanelHeight
       ]);
     }, changeUpdateDelayMs);
+  }
+
+  private scrollToVerse(verseRef: VerseRef | undefined): void {
+    if (verseRef != null && this.scripturePanel?.textComponent != null) {
+      const firstSegment: string = this.scripturePanel.textComponent.getVerseSegments(verseRef)[0];
+      const element: HTMLElement = this.scripturePanel.textComponent.getSegmentElement(firstSegment) as HTMLElement;
+      if (element != null) {
+        this.scrollTo(element.offsetTop - 20);
+      }
+    }
+  }
+
+  private scrollTo(y: number): void {
+    const editor = this.scripturePanel?.textComponent?.editor?.container.querySelector('.ql-editor');
+    if (editor != null) {
+      editor.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }
+
+  onSplitterResized(): void {
+    if (this.showScriptureAudioPlayer) {
+      this.scrollTo(0);
+    } else if (!this.showScriptureAudioPlayer && this.activeQuestionVerseRef) {
+      const activeVerse = this.scripturePanel?.textComponent?.getVerseSegmentsNoHeadings(this.activeQuestionVerseRef);
+      this.scripturePanel?.textComponent?.highlight(activeVerse);
+      this.scrollToVerse(this.activeQuestionVerseRef);
+    }
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
