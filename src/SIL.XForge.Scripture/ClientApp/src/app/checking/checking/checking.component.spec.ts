@@ -282,7 +282,7 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
-    it('shows add audio and shows add question button for paratext administrator', fakeAsync(() => {
+    it('shows add audio and add question button for paratext administrator', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
@@ -2644,14 +2644,9 @@ class TestEnvironment {
   static generateTestProject(): SFProject {
     let audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
     let questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
-    let adminPermissions = [
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)
-    ];
     let userPermissions = {
       [TRANSLATOR_USER.id]: audioPermissions,
-      [CONSULTANT_USER.id]: questionPermissions,
-      [ADMIN_USER.id]: adminPermissions
+      [CONSULTANT_USER.id]: questionPermissions
     };
     return createTestProject({
       name: 'project01',
