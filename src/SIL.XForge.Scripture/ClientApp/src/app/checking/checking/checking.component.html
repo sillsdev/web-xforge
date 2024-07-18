@@ -134,6 +134,7 @@
             (dragEnd)="checkSliderPosition($event)"
             [useTransition]="true"
             [gutterSize]="showScriptureAudioPlayer ? 0 : 11"
+            (transitionEnd)="onSplitterResized()"
           >
             <!-- Splitter area sizes are controlled programmatically. -->
             <as-split-area size="*" [dir]="i18n.direction" [visible]="!hideChapterText" [order]="1">
