@@ -279,17 +279,16 @@ public class Startup
                     // see https://go.microsoft.com/fwlink/?linkid=864501
                     spa.Options.SourcePath = "ClientApp";
 
-                    int port = 4200;
                     switch (SpaDevServerStartup)
                     {
                         case SpaDevServerStartup.Start:
-                            spa.Options.DevServerPort = port;
                             string npmScript = "start";
                             Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
                             spa.UseAngularCliServer(npmScript);
                             break;
 
                         case SpaDevServerStartup.Listen:
+                            int port = 4200;
                             string ngServeUri = $"http://localhost:{port}";
                             Console.WriteLine($"Info: SF will use an existing angular server at {ngServeUri}.");
                             spa.UseProxyToSpaDevelopmentServer(ngServeUri);
