@@ -39,7 +39,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
+import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -506,23 +506,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 if (!(userId in roles)) {
                   this.onRemovedFromProject();
                 } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
-                  const currentBookId =
-                    this.questionsList == null || this.questionsList.activeQuestionBook == null
-                      ? undefined
-                      : Canon.bookNumberToId(this.questionsList.activeQuestionBook);
-
-                  if (this.projectUserConfigDoc != null) {
-                    const checkingAccessInfo: CheckingAccessInfo = {
-                      userId: this.userService.currentUserId,
-                      projectId: this.projectDoc.id,
-                      project: this.projectDoc.data,
-                      bookId: currentBookId,
-                      projectUserConfigDoc: this.projectUserConfigDoc!
-                    };
-
-                    CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
-                    this.onRemovedFromProject();
-                  }
+                  this.onRemovedFromProject();
                 }
               }
             });

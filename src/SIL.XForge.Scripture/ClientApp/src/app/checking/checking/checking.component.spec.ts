@@ -294,8 +294,6 @@ describe('CheckingComponent', () => {
       expect(projectUserConfig.selectedTask).toEqual('checking');
       expect(projectUserConfig.selectedQuestionRef).not.toBeNull();
       env.setCheckingEnabled(false);
-      expect(projectUserConfig.selectedTask).toBeUndefined();
-      expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
       env.waitForSliderUpdate();
     }));
@@ -305,7 +303,6 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: OBSERVER_USER, projectBookRoute: 'MAT', projectChapterRoute: 1 });
       env.selectQuestion(1);
       env.setCheckingEnabled(false);
-      expect(env.location.path()).toEqual('/projects/project01/translate/MAT');
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
