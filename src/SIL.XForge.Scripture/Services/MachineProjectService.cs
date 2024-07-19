@@ -1099,9 +1099,13 @@ public class MachineProjectService(
                 ?? throw new ArgumentNullException(nameof(project));
         }
 
-        return project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag
-            ?? project.TranslateConfig.Source?.WritingSystem.Tag
-            ?? throw new ArgumentNullException(nameof(project));
+        string alternateSourceLanguage = project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag;
+        bool useAlternateSourceLanguage =
+            project.TranslateConfig.DraftConfig.AlternateSourceEnabled
+            && !string.IsNullOrWhiteSpace(alternateSourceLanguage);
+        return useAlternateSourceLanguage
+            ? alternateSourceLanguage
+            : project.TranslateConfig.Source?.WritingSystem.Tag ?? throw new ArgumentNullException(nameof(project));
     }
 
     /// <summary>
