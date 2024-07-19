@@ -16,12 +16,14 @@ import { AngularSplitModule } from 'angular-split';
 import { cloneDeep } from 'lodash-es';
 import clone from 'lodash-es/clone';
 import { CookieService } from 'ngx-cookie-service';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
@@ -125,6 +127,8 @@ const ADMIN_USER: UserInfo = createUser(1, SFProjectRole.ParatextAdministrator);
 const CHECKER_USER: UserInfo = createUser(2, SFProjectRole.CommunityChecker);
 const CLEAN_CHECKER_USER: UserInfo = createUser(3, SFProjectRole.CommunityChecker, false);
 const OBSERVER_USER: UserInfo = createUser(4, SFProjectRole.ParatextObserver);
+const TRANSLATOR_USER: UserInfo = createUser(5, SFProjectRole.ParatextTranslator);
+const CONSULTANT_USER: UserInfo = createUser(6, SFProjectRole.ParatextTranslator);
 
 class MockComponent {}
 
@@ -267,6 +271,39 @@ describe('CheckingComponent', () => {
     it('hides add question button for community checker', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addQuestionButton).toBeNull();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('hides add audio button for community checker', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER, scriptureAudio: true });
+      expect(env.addAudioButton).toBeNull();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('shows add audio and shows add question button for paratext administrator', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      expect(env.addAudioButton).not.toBeNull();
+      expect(env.addQuestionButton).not.toBeNull();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('shows add audio and hides add question button for paratext translator (includes consultant, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
+      const env = new TestEnvironment({ user: TRANSLATOR_USER, scriptureAudio: true });
+      env.fixture.detectChanges();
+      expect(env.addAudioButton).not.toBeNull();
+      expect(env.addQuestionButton).toBeNull();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('hides add audio and shows add question button for paratext consultant (includes translator, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CONSULTANT_USER, scriptureAudio: true });
+      env.fixture.detectChanges();
+      expect(env.addAudioButton).toBeNull();
+      expect(env.addQuestionButton).not.toBeNull();
       flush();
       discardPeriodicTasks();
     }));
@@ -2295,6 +2332,16 @@ class TestEnvironment {
     selectedQuestionRef: 'project01:q5Id'
   });
 
+  private readonly translatorProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
+    ownerRef: TRANSLATOR_USER.id
+  });
+
+  private readonly consultantProjectUserConfig: SFProjectUserConfig = createTestProjectUserConfig({
+    projectRef: 'project01',
+    ownerRef: CONSULTANT_USER.id
+  });
+
   private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 
   constructor({
@@ -2406,6 +2453,10 @@ class TestEnvironment {
 
   get addQuestionButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.add-question-button'));
+  }
+
+  get addAudioButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.add-audio-button'));
   }
 
   get archiveQuestionButton(): DebugElement {
@@ -2588,7 +2639,16 @@ class TestEnvironment {
   }
 
   static generateTestProject(): SFProject {
+    let audioPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create)];
+    let questionPermissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create)];
+    let userPermissions = {
+      [TRANSLATOR_USER.id]: audioPermissions,
+      [CONSULTANT_USER.id]: questionPermissions
+    };
     return createTestProject({
+      name: 'project01',
+      paratextId: 'project01',
+      shortName: 'project01',
       writingSystem: {
         tag: TestEnvironment.project01WritingSystemTag
       },
@@ -2619,15 +2679,28 @@ class TestEnvironment {
           permissions: {}
         }
       ],
+      userPermissions,
       userRoles: {
         [ADMIN_USER.id]: ADMIN_USER.role,
         [CHECKER_USER.id]: CHECKER_USER.role,
         [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
-        [OBSERVER_USER.id]: OBSERVER_USER.role
+        [OBSERVER_USER.id]: OBSERVER_USER.role,
+        [TRANSLATOR_USER.id]: TRANSLATOR_USER.role,
+        [CONSULTANT_USER.id]: CONSULTANT_USER.role
       },
       paratextUsers: [
         { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
-        { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
+        { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` },
+        {
+          sfUserId: TRANSLATOR_USER.id,
+          username: TRANSLATOR_USER.user.name,
+          opaqueUserId: `opaque${TRANSLATOR_USER.id}`
+        },
+        {
+          sfUserId: CONSULTANT_USER.id,
+          username: CONSULTANT_USER.user.name,
+          opaqueUserId: `opaque${CONSULTANT_USER.id}`
+        }
       ]
     });
   }
@@ -3037,12 +3110,14 @@ class TestEnvironment {
   }
 
   private setupDefaultProjectData(user: UserInfo): void {
+    const projectId = 'project01';
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
-        id: 'project01',
+        id: projectId,
         data: this.testProject
       }
     ]);
+
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
@@ -3052,20 +3127,28 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
       {
-        id: getSFProjectUserConfigDocId('project01', ADMIN_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, ADMIN_USER.id),
         data: this.adminProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', CHECKER_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, CHECKER_USER.id),
         data: this.checkerProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', CLEAN_CHECKER_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, CLEAN_CHECKER_USER.id),
         data: this.cleanCheckerProjectUserConfig
       },
       {
-        id: getSFProjectUserConfigDocId('project01', OBSERVER_USER.id),
+        id: getSFProjectUserConfigDocId(projectId, OBSERVER_USER.id),
         data: this.observerProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId(projectId, TRANSLATOR_USER.id),
+        data: this.translatorProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId(projectId, CONSULTANT_USER.id),
+        data: this.consultantProjectUserConfig
       }
     ]);
     when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
@@ -3074,17 +3157,17 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
-        id: getTextDocId('project01', 43, 1),
+        id: getTextDocId(projectId, 43, 1),
         data: this.createTextDataForChapter(1),
         type: RichText.type.name
       },
       {
-        id: getTextDocId('project01', 43, 2),
+        id: getTextDocId(projectId, 43, 2),
         data: this.createTextDataForChapter(2),
         type: RichText.type.name
       },
       {
-        id: getTextDocId('project01', 40, 1),
+        id: getTextDocId(projectId, 40, 1),
         data: this.createTextDataForChapter(1),
         type: RichText.type.name
       }
@@ -3114,6 +3197,14 @@ class TestEnvironment {
       {
         id: CHECKER_USER.id,
         data: CHECKER_USER.user
+      },
+      {
+        id: TRANSLATOR_USER.id,
+        data: TRANSLATOR_USER.user
+      },
+      {
+        id: CONSULTANT_USER.id,
+        data: CONSULTANT_USER.user
       }
     ]);
     when(mockedUserService.getProfile(anything())).thenCall(id =>
