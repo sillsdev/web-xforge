@@ -639,6 +639,58 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_RecreatesTheProjectIfAlternateSourceLanguageDoesNotMatch()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { AlternateSourceEnabled = true, AlternateSourceConfigured = true }
+        );
+        env.SetDataInSync(Project02, preTranslate: true);
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        string newEngineId = TranslationEngine01;
+        string oldEngineId = TranslationEngine02;
+        await env
+            .TranslationEnginesClient.Received()
+            .StartBuildAsync(newEngineId, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient.Received().DeleteAsync(oldEngineId, CancellationToken.None);
+        await env
+            .TranslationEnginesClient.Received()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_DoesNotRecreateTheProjectIfSourceLanguageMatchesAndAlternateSourceDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { AlternateSourceEnabled = false, AlternateSourceConfigured = true }
+        );
+        env.SetDataInSync(Project02, preTranslate: true);
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env
+            .TranslationEnginesClient.Received()
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient.DidNotReceive().DeleteAsync(Arg.Any<string>(), CancellationToken.None);
+        await env
+            .TranslationEnginesClient.DidNotReceive()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
+    }
+
+    [Test]
     public async Task BuildProjectAsync_ClearsAssociatedCorporaReferencesIfTheTranslationEngineTypeIsIncorrect()
     {
         // Set up test environment
@@ -876,6 +928,7 @@ public class MachineProjectServiceTests
     [TestCase(" ")]
     public async Task BuildProjectAsync_SpecifiesNullScriptureRangeForAlternateTrainingSource(string? scriptureRange)
     {
+        // This looks at something
         // Set up test environment
         var env = new TestEnvironment(
             new TestEnvironmentOptions
@@ -2192,7 +2245,7 @@ public class MachineProjectServiceTests
                         new TranslationCorpus
                         {
                             Id = args.ArgAt<string>(1),
-                            SourceLanguage = "en",
+                            SourceLanguage = "en_GB",
                             TargetLanguage = "en_US",
                         }
                     )
@@ -2264,6 +2317,7 @@ public class MachineProjectServiceTests
                                     new ServalCorpus
                                     {
                                         PreTranslate = false,
+                                        // Why is alternate training source true?
                                         AlternateTrainingSource = false,
                                         SourceFiles =
                                         [
@@ -2347,11 +2401,21 @@ public class MachineProjectServiceTests
                             {
                                 AlternateSourceEnabled = options.AlternateSourceEnabled,
                                 AlternateSource = options.AlternateSourceConfigured
-                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
+                                    ? new TranslateSource
+                                    {
+                                        ProjectRef = Project01,
+                                        ParatextId = Paratext01,
+                                        WritingSystem = new WritingSystem { Tag = "en_GB" }
+                                    }
                                     : null,
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
                                 AlternateTrainingSource = options.AlternateTrainingSourceConfigured
-                                    ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
+                                    ? new TranslateSource
+                                    {
+                                        ProjectRef = Project01,
+                                        ParatextId = Paratext01,
+                                        WritingSystem = new WritingSystem { Tag = "en_GB" }
+                                    }
                                     : null,
                                 AdditionalTrainingSourceEnabled = options.AdditionalTrainingSourceConfigured,
                                 AdditionalTrainingSource = options.AdditionalTrainingSourceConfigured
