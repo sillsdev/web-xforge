@@ -3,7 +3,7 @@ import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
@@ -136,6 +136,8 @@ export class TextViewModel implements OnDestroy {
    * These elements are in addition to the text data i.e. Note threads
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
+
+  segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
 
   get segments(): IterableIterator<[string, Range]> {
     return this._segments.entries();
@@ -501,21 +503,25 @@ export class TextViewModel implements OnDestroy {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
         for (const attr of [
-          'insert-segment',
-          'delete-segment',
-          'highlight-segment',
-          'highlight-para',
-          'para-contents',
-          'question-segment',
-          'question-count',
-          'note-thread-segment',
-          'note-thread-count',
-          'text-anchor',
           'commenter-selection',
-          'initial',
-          'direction-segment',
+          'delete-segment',
           'direction-block',
-          'style-description'
+          'direction-segment',
+          'draft',
+          'highlight-para',
+          'highlight-segment',
+          'initial',
+          'insert-segment',
+          'lynx-insight-error',
+          'lynx-insight-info',
+          'lynx-insight-warning',
+          'note-thread-count',
+          'note-thread-segment',
+          'para-contents',
+          'question-count',
+          'question-segment',
+          'style-description',
+          'text-anchor'
         ]) {
           removeAttribute(modelOp, attr);
         }
@@ -665,6 +671,8 @@ export class TextViewModel implements OnDestroy {
       }
       convertDelta.retain(len, attrs);
     }
+
+    this.segments$.next(this._segments);
 
     return convertDelta.compose(fixDelta).chop();
   }
