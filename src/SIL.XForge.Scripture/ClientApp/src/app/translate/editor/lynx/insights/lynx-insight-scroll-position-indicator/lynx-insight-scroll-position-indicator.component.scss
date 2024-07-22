@@ -1,0 +1,50 @@
+// These are approximations
+$scrollButtonHeight: 16px;
+$trackWidth: 18px; // Width of the scrollbar track
+
+:host {
+  position: absolute;
+  z-index: 1;
+  top: $scrollButtonHeight;
+  bottom: $scrollButtonHeight;
+  inset-inline-end: 0;
+  width: $trackWidth;
+  box-sizing: border-box;
+  pointer-events: none; // Let clicks through to scrollbar
+}
+
+.indicator {
+  height: 2px;
+  width: 100%;
+  position: absolute;
+  background-color: blue;
+  top: var(--scroll-position-percent);
+  border-radius: 4px;
+}
+
+.info {
+  background-color: hsl(
+    var(--lynx-insights-info-color-h),
+    var(--lynx-insights-info-color-s),
+    var(--lynx-insights-info-color-l)
+  );
+  z-index: 1;
+}
+
+.warning {
+  background-color: hsl(
+    var(--lynx-insights-warning-color-h),
+    var(--lynx-insights-warning-color-s),
+    var(--lynx-insights-warning-color-l)
+  );
+  z-index: 2;
+}
+
+.error {
+  background-color: hsl(
+    var(--lynx-insights-error-color-h),
+    var(--lynx-insights-error-color-s),
+    var(--lynx-insights-error-color-l)
+  );
+  z-index: 3;
+}

@@ -154,6 +154,16 @@ app-copyright-banner,
   overflow: hidden;
 }
 
+.container-for-split {
+  flex-grow: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+as-split-area {
+  overflow: hidden !important;
+}
+
 .text-container {
   display: flex;
   position: relative;

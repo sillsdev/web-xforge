@@ -1,0 +1,45 @@
+<ng-container *transloco="let t; read: 'lynx_insights_panel'">
+  <app-lynx-insights-panel-header />
+
+  <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+    <!-- Template for leaf nodes -->
+    <mat-tree-node *matTreeNodeDef="let node" class="level-{{ node.level }}">
+      <!-- Use a disabled button to provide padding for tree leaf -->
+      <button
+        matRipple
+        [class.dismissed]="node.isDismissed"
+        class="tree-toggle leaf"
+        (click)="onNodeClick(node, $event)"
+      >
+        <div class="level-ref">
+          <li>
+            {{ node.name }}
+          </li>
+          <mat-icon [matTooltip]="t('restore')" (click)="restoreDismissedInsight(node.insight)" class="restore-icon">
+            visibility_on
+          </mat-icon>
+        </div>
+      </button>
+    </mat-tree-node>
+
+    <!-- Template for expandable nodes -->
+    <mat-tree-node *matTreeNodeDef="let node; when: hasChild" class="level-{{ node.level }}">
+      <button matTreeNodeToggle matRipple class="tree-toggle" (click)="onNodeClick(node, $event)">
+        <mat-icon class="tree-toggle-icon mat-icon-rtl-mirror">
+          {{ treeControl.isExpanded(node) ? "expand_more" : "chevron_right" }}
+        </mat-icon>
+
+        @switch (node.level) {
+          @case (0) {
+            <div class="level-code">
+              <mat-icon [svgIcon]="'lynx_' + node.type" [class.dismissed]="node.isDismissed" [class]="node.type" />
+              <span class="text">{{ node.name | insightCode: i18n.localeCode }}</span>
+              <span class="code">({{ node.name }})</span>
+              <span class="count">{{ node.count }}</span>
+            </div>
+          }
+        }
+      </button>
+    </mat-tree-node>
+  </mat-tree>
+</ng-container>

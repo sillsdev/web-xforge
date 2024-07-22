@@ -1,0 +1,11 @@
+@for (insight of insightCountsByType$ | async; track insight) {
+  <div class="type-count">
+    <mat-icon [svgIcon]="'lynx_' + insight.type" />
+    <span [class]="insight.type">{{ insight.count }}</span>
+  </div>
+} @empty {
+  <mat-icon class="check-icon" svgIcon="lynx_checkmark" />
+  @if (isFilterHidingInsights$ | async) {
+    <mat-icon class="hidden-indicator-icon">visibility_off</mat-icon>
+  }
+}

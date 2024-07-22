@@ -17,7 +17,8 @@ export function createTestProjectUserConfig(overrides?: RecursivePartial<SFProje
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: [],
-    editorTabsOpen: []
+    editorTabsOpen: [],
+    lynxInsightState: {}
   };
 
   return merge(defaultSFProjectUserConfig, overrides);

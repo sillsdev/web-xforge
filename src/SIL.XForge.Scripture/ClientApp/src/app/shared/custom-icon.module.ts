@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+import { lynxIcons } from './svg-icons/lynx-icons';
 
 // The Hebrew character Aleph
 const BIBLICAL_TERMS_ICON =
@@ -21,5 +22,9 @@ const BIBLICAL_TERMS_ICON =
 export class CustomIconModule {
   constructor(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
     iconRegistry.addSvgIconLiteral('biblical_terms', sanitizer.bypassSecurityTrustHtml(BIBLICAL_TERMS_ICON));
+
+    for (const [name, svg] of Object.entries(lynxIcons)) {
+      iconRegistry.addSvgIconLiteral(name, sanitizer.bypassSecurityTrustHtml(svg));
+    }
   }
 }
