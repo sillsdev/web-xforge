@@ -1,12 +1,13 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import cloneDeep from 'lodash-es/cloneDeep';
+import { cloneDeep } from 'lodash-es';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
+import { QuillFormatsService } from './quill-formats.service';
 import { getAttributesAtPosition, getRetainCount } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
@@ -137,6 +138,8 @@ export class TextViewModel implements OnDestroy {
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
+  segments$ = new BehaviorSubject<ReadonlyMap<string, Range>>(this._segments);
+
   get segments(): IterableIterator<[string, Range]> {
     return this._segments.entries();
   }
@@ -176,6 +179,8 @@ export class TextViewModel implements OnDestroy {
   private get embedPositions(): number[] {
     return this.embeddedElementPositions(Array.from(this._embeddedElements.values()));
   }
+
+  constructor(private readonly quillFormatsService: QuillFormatsService) {}
 
   ngOnDestroy(): void {
     this.unbind();
@@ -500,23 +505,7 @@ export class TextViewModel implements OnDestroy {
     if (delta.ops != null) {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
-        for (const attr of [
-          'insert-segment',
-          'delete-segment',
-          'highlight-segment',
-          'highlight-para',
-          'para-contents',
-          'question-segment',
-          'question-count',
-          'note-thread-segment',
-          'note-thread-count',
-          'text-anchor',
-          'commenter-selection',
-          'initial',
-          'direction-segment',
-          'direction-block',
-          'style-description'
-        ]) {
+        for (const attr of this.quillFormatsService.excludeFromDataModelFormatNames) {
           removeAttribute(modelOp, attr);
         }
         (modelDelta as any).push(modelOp);
@@ -663,6 +652,8 @@ export class TextViewModel implements OnDestroy {
       }
       convertDelta.retain(len, attrs);
     }
+
+    this.segments$.next(this._segments);
 
     return convertDelta.compose(fixDelta).chop();
   }
