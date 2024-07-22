@@ -1,0 +1,157 @@
+:root {
+  --lynx-insights-info-color-h: 221;
+  --lynx-insights-info-color-s: 93%;
+  --lynx-insights-info-color-l: 66%;
+  --lynx-insights-info-text-decoration: dashed underline;
+
+  --lynx-insights-warning-color-h: 42;
+  --lynx-insights-warning-color-s: 89%;
+  --lynx-insights-warning-color-l: 59%;
+  --lynx-insights-warning-text-decoration: wavy underline;
+
+  --lynx-insights-error-color-h: 356;
+  --lynx-insights-error-color-s: 94%;
+  --lynx-insights-error-color-l: 41%;
+  --lynx-insights-error-text-decoration: wavy underline;
+
+  --lynx-insights-status-indicator-bg-color: #fff;
+}
+
+$insightTypes: 'info', 'warning', 'error';
+
+@function insight-color($insight-type, $lightnessFactor: 1) {
+  @return hsl(
+    var(--lynx-insights-#{$insight-type}-color-h),
+    var(--lynx-insights-#{$insight-type}-color-s),
+    calc(var(--lynx-insights-#{$insight-type}-color-l) * $lightnessFactor)
+  );
+}
+
+@mixin insight-styles($insight-type, $bg-color-l: 93%) {
+  $color-h: var(--lynx-insights-#{$insight-type}-color-h);
+  $color-s: var(--lynx-insights-#{$insight-type}-color-s);
+  $color-l: var(--lynx-insights-#{$insight-type}-color-l);
+  $text-decoration: var(--lynx-insights-#{$insight-type}-text-decoration);
+  // $bgColor: hsl(var($color-h), var($color-s), $bg-color-l);
+  // $bgColor: hsla(var($color-h), var($color-s), var($color-s), 0.4);
+  $bgColor: hsla($color-h, $color-s, $color-l, 0.2);
+  $decorationColor: hsl($color-h, $color-s, $color-l);
+
+  text-decoration: $text-decoration;
+  text-decoration-color: $decorationColor;
+  text-decoration-thickness: 1.2px;
+  background-color: $bgColor;
+
+  // TODO: figure out cursor-active state?
+  // &.cursor-active {
+  //   // background-color: hsl(var($color-h), var($color-s), $bg-color-l - 10);
+  //   background-color: hsla(var($color-h), var($color-s), var($color-s), 0.8);
+  // }
+
+  // // TODO: use lightbulb at rail instead of next to text?
+  // &.prompt-active {
+  //   &::after {
+  //     // color: rgb(var($color));
+  //     // color: #fecc3b;
+  //     // background-color: rgba(255, 255, 255, 0.9);
+
+  //     // Invert the colors of the underlined range
+  //     color: $bgColor;
+  //     background-color: $decorationColor;
+  //   }
+  // }
+}
+
+.lynx-insight {
+  // Skipping ink breaks the underline, which can make a single indicator look like multiple
+  text-decoration-skip-ink: none;
+  position: relative;
+
+  // Round the borders of non-nested insights
+  &:not(.lynx-insight .lynx-insight) {
+    border-radius: 0.1em;
+  }
+
+  &.info {
+    @include insight-styles('info');
+    text-underline-offset: 9px;
+
+    .info {
+      background-color: transparent;
+    }
+  }
+
+  &.warning {
+    @include insight-styles('warning');
+    text-underline-offset: 4px;
+
+    .warning {
+      background-color: transparent;
+    }
+
+    .info {
+      background-color: transparent;
+    }
+  }
+
+  &.error {
+    @include insight-styles('error');
+    text-underline-offset: 2px;
+
+    .error {
+      background-color: transparent;
+    }
+
+    .warning {
+      background-color: transparent;
+    }
+
+    .info {
+      background-color: transparent;
+    }
+  }
+
+  &:hover {
+  }
+
+  // &.prompt-active {
+  //   &::after {
+  //     // Show overlaid mat 'warning' icon to the right
+  //     content: '\e79a';
+  //     // content: '\e002';
+  //     font-family: 'Material Icons';
+  //     position: absolute;
+  //     inset-inline-start: calc(100% - 1px);
+  //     top: 0;
+  //     bottom: 0;
+  //     border-radius: 2px;
+  //     text-align: center;
+  //     font-size: inherit;
+  //     padding: 0 3px;
+  //     z-index: 1;
+  //     cursor: pointer;
+  //   }
+  // }
+
+  &.action-menu-active {
+  }
+}
+
+// Dim all but the insight whose action menu is open
+.lynx-insight-attention {
+  .action-menu-active {
+    z-index: 2;
+  }
+
+  &::after {
+    content: '';
+    background-color: #fff;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.8;
+    z-index: 1;
+  }
+}

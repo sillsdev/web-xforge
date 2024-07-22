@@ -126,6 +126,7 @@ import {
 } from '../../shared/utils';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
+import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -216,6 +217,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
+  showInsights: boolean = true; // TODO: Where to get this value from?
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -295,7 +297,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly destroyRef: DestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
-    private readonly permissionsService: PermissionsService
+    private readonly permissionsService: PermissionsService,
+    readonly editorInsightState: LynxInsightStateService
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
