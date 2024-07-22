@@ -1,0 +1,138 @@
+@use 'sass:list';
+
+:root {
+  --lynx-insights-info-color-h: 221;
+  --lynx-insights-info-color-s: 93%;
+  --lynx-insights-info-color-l: 66%;
+  --lynx-insights-info-text-decoration: dotted underline;
+  --lynx-insights-info-text-decoration-thickness: 1.2px;
+  --lynx-insights-info-text-underline-offset: 9px;
+  --lynx-insights-info-icon-color: #578cff;
+
+  --lynx-insights-warning-color-h: 42;
+  --lynx-insights-warning-color-s: 89%;
+  --lynx-insights-warning-color-l: 59%;
+  --lynx-insights-warning-text-decoration: dashed underline;
+  --lynx-insights-warning-text-decoration-thickness: 1.2px;
+  --lynx-insights-warning-text-underline-offset: 7px;
+  --lynx-insights-warning-icon-color: #f5bc11;
+
+  --lynx-insights-error-color-h: 356;
+  --lynx-insights-error-color-s: 94%;
+  --lynx-insights-error-color-l: 41%;
+  --lynx-insights-error-text-decoration: wavy underline;
+  --lynx-insights-error-text-decoration-thickness: 1.2px;
+  --lynx-insights-error-text-underline-offset: 2px;
+  --lynx-insights-error-icon-color: #b00020;
+
+  --lynx-insights-status-indicator-bg-color: #fff;
+  --lynx-insights-status-indicator-offset: 19px;
+  --lynx-insights-checkmark-icon-color: #3bbf3b;
+
+  --lynx-insights-multi-insight-prompt-color: #483d8b; // Something different from the insight colors
+}
+
+$insightTypes: 'info', 'warning', 'error';
+$iconTypes: list.append($insightTypes, 'checkmark');
+
+@function insight-color($insight-type, $lightnessFactor: 1) {
+  @return hsl(
+    var(--lynx-insights-#{$insight-type}-color-h),
+    var(--lynx-insights-#{$insight-type}-color-s),
+    calc(var(--lynx-insights-#{$insight-type}-color-l) * $lightnessFactor)
+  );
+}
+
+@function insight-bg-color($insight-type, $bg-color-l: 93%, $alpha: 1) {
+  $color-h: var(--lynx-insights-#{$insight-type}-color-h);
+  $color-s: var(--lynx-insights-#{$insight-type}-color-s);
+  @return hsla($color-h, $color-s, $bg-color-l, $alpha);
+}
+
+@mixin insight-styles($insight-type, $bg-color-l: 93%) {
+  $color-h: var(--lynx-insights-#{$insight-type}-color-h);
+  $color-s: var(--lynx-insights-#{$insight-type}-color-s);
+  $color-l: var(--lynx-insights-#{$insight-type}-color-l);
+  $text-decoration: var(--lynx-insights-#{$insight-type}-text-decoration);
+  $text-decoration-thickness: var(--lynx-insights-#{$insight-type}-text-decoration-thickness);
+  $text-underline-offset: var(--lynx-insights-#{$insight-type}-text-underline-offset);
+
+  $decorationColor: hsl($color-h, $color-s, $color-l);
+  $bgColor: insight-bg-color($insight-type, $bg-color-l);
+
+  text-decoration: $text-decoration;
+  text-decoration-color: $decorationColor;
+  text-decoration-thickness: $text-decoration-thickness;
+  text-underline-offset: $text-underline-offset;
+  background-color: $bgColor;
+
+  // Use instead of ':hover', as insights can be represented by multiple elements when
+  // there are partially overlapping insight ranges.
+  &.cursor-active {
+    // Darken the background color on hover of insight
+    background-color: hsl($color-h, $color-s, $bg-color-l - 4%);
+  }
+}
+
+.lynx-insight {
+  // Skipping ink breaks the underline, which can make a single indicator look like multiple
+  text-decoration-skip-ink: none;
+  position: relative;
+
+  // Round the borders of non-nested insights
+  &:not(.lynx-insight .lynx-insight) {
+    border-radius: 0.1em;
+  }
+
+  &.info {
+    @include insight-styles('info');
+  }
+
+  &.warning {
+    @include insight-styles('warning');
+  }
+
+  &.error {
+    @include insight-styles('error');
+  }
+}
+
+// Insights should let more severe insights show through,
+// unless the child element is 'action-overlay-active' and the parent is not.
+:is(.warning, .error) .info:not(.action-overlay-active),
+:is(.warning, .error).action-overlay-active .info {
+  background-color: transparent;
+}
+.error .warning:not(.action-overlay-active),
+.error.action-overlay-active .warning {
+  background-color: transparent;
+}
+.lynx-insight.action-overlay-active .lynx-insight:not(.action-overlay-active) {
+  background-color: transparent;
+}
+
+// Dim all but the insight whose action overlay is open
+.lynx-insight-attention {
+  .action-overlay-active {
+    z-index: 2;
+  }
+
+  &::after {
+    content: '';
+    background-color: #fff;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.8;
+    z-index: 1;
+  }
+}
+
+// SVG icons fill set to 'currentColor', so they can be styled with 'color' property
+@each $iconType in $iconTypes {
+  mat-icon[data-mat-icon-name='lynx_#{$iconType}'] {
+    color: var(--lynx-insights-#{$iconType}-icon-color);
+  }
+}

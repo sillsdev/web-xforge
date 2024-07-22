@@ -112,6 +112,45 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
           },
           additionalProperties: false
         }
+      },
+      lynxInsightState: {
+        bsonType: 'object',
+        properties: {
+          panelData: {
+            bsonType: 'object',
+            required: ['isOpen', 'filter', 'sortOrder'],
+            properties: {
+              isOpen: {
+                bsonType: 'bool'
+              },
+              filter: {
+                bsonType: 'object',
+                required: ['types', 'scope'],
+                properties: {
+                  types: {
+                    bsonType: 'array',
+                    items: {
+                      bsonType: 'string'
+                    }
+                  },
+                  scope: {
+                    bsonType: 'string'
+                  }
+                }
+              },
+              sortOrder: {
+                bsonType: 'string'
+              }
+            }
+          },
+          dismissedInsightIds: {
+            bsonType: 'array',
+            items: {
+              bsonType: 'string'
+            }
+          }
+        },
+        additionalProperties: false
       }
     },
     additionalProperties: false
