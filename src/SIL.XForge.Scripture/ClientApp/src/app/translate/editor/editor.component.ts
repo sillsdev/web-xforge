@@ -75,6 +75,7 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -127,6 +128,7 @@ import {
 } from '../../shared/utils';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
+import { LynxInsightStateService } from './lynx/insights/lynx-insight-state.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -217,6 +219,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
+  showInsights = false;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -296,7 +299,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly destroyRef: DestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
-    private readonly permissionsService: PermissionsService
+    private readonly permissionsService: PermissionsService,
+    private readonly featureFlagService: FeatureFlagService,
+    readonly editorInsightState: LynxInsightStateService
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -663,6 +668,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         switchMap(doc => this.initEditorTabs(doc))
       )
       .subscribe();
+
+    this.featureFlagService.enableLynxInsights.enabled$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(enabled => (this.showInsights = enabled));
   }
 
   ngAfterViewInit(): void {

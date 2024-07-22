@@ -1,0 +1,107 @@
+:host {
+  display: flex;
+  align-items: center;
+  background-color: #e0e0e0;
+  gap: 2em;
+  padding: 0 0.5em;
+
+  &::ng-deep {
+    .mdc-tab {
+      padding: 0 1em;
+      min-width: auto;
+    }
+
+    // TODO: make responsive (tabs header is cut off on small screens)
+    .mat-mdc-tab-header {
+      --mdc-secondary-navigation-tab-container-height: 2.2em;
+      --mat-tab-header-label-text-size: 0.9em;
+      --mat-tab-header-label-text-weight: 400;
+      --mat-tab-header-active-label-text-color: var(--mat-app-text-color);
+      --mat-tab-header-inactive-label-text-color: var(--mat-app-text-color);
+      --mdc-tab-indicator-active-indicator-height: 3px;
+      --mdc-tab-indicator-active-indicator-color: #a3a3a3;
+      text-transform: capitalize;
+      border-bottom: 0;
+    }
+
+    .mat-mdc-tab-body-wrapper {
+      height: 0; // Prevent height glitch while animating tab change
+    }
+  }
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.9em;
+  font-weight: 700;
+
+  button {
+    min-width: 0;
+    height: auto;
+    padding: 0.3em;
+  }
+
+  mat-icon {
+    width: auto;
+    height: auto;
+    font-size: 1.2em;
+    margin: 0;
+
+    &.menu-arrow {
+      position: absolute;
+      right: -0.3em;
+      bottom: -0.2em;
+      transform: rotate(45deg);
+    }
+  }
+}
+
+.tab-header-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8em;
+}
+
+.scope-count {
+  color: #707070;
+  font-size: 0.85em;
+}
+
+// Filter menu
+
+h2 {
+  color: #a3a3a3;
+  margin: 0;
+  font-size: 0.8em;
+  font-weight: 400;
+  padding: 0 var(--mat-menu-item-with-icon-leading-spacing) 0.2em;
+
+  &:not(:first-of-type) {
+    margin-top: 0.5em;
+  }
+}
+
+.mat-mdc-menu-item {
+  min-height: auto;
+  --mat-menu-item-icon-size: auto;
+  --mat-menu-item-spacing: 0.5em;
+  --mat-menu-item-label-text-size: 0.9em;
+  padding-block: 0.1em;
+
+  &:not(.selected) {
+    mat-icon {
+      visibility: hidden;
+    }
+  }
+
+  mat-icon {
+    font-size: 0.9em;
+    font-weight: 700;
+  }
+}
+
+.mat-divider {
+  margin: 0.4em 0;
+}

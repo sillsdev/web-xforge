@@ -1,3 +1,7 @@
+@if (showInsights && editor != null) {
+  <app-lynx-insight-editor-objects [editor]="editor" />
+}
+
 <!-- translate="no" is to prevent tools like Google translate from editing the text -->
 <quill-editor
   #quillEditor
@@ -16,7 +20,8 @@
     ltr: isLtr,
     rtl: isRtl,
     'mark-invalid': markInvalid,
-    'selectable-verses': selectableVerses
+    'selectable-verses': selectableVerses,
+    'custom-local-cursor': showInsights
   }"
   [dir]="$any(textDirection)"
   [lang]="lang"
