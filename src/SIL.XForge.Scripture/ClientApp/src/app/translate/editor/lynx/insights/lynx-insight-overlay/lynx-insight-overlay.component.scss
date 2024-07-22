@@ -1,0 +1,236 @@
+@use 'sass:color';
+@use '../lynx-insights' as insights;
+
+$mainSectionBGColor: #343a32;
+$secondaryTextColor: #9b9b9b;
+$applyActionColor: #5485e7;
+$dismissActionColor: $applyActionColor;
+$borderRadius: 0.3em;
+
+:host {
+  max-width: 340px;
+  border-radius: $borderRadius;
+  overflow: hidden;
+}
+
+mat-icon {
+  width: auto;
+  height: auto;
+  cursor: pointer;
+}
+
+.main-section.focused,
+.more-info-section {
+  padding: 0.7em 0.8em 0.4em 1em;
+}
+
+.main-section {
+  background-color: $mainSectionBGColor;
+
+  // When prompt is for single insight, or insight is selected from multi-picker
+  &.focused {
+    > * {
+      animation: fade-in 0.3s;
+    }
+
+    // Color notch beside insight code header text
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0.5em;
+      height: 1.4em;
+      width: 0.5em;
+      border-start-end-radius: 0.2em;
+      border-end-end-radius: 0.2em;
+      inset-inline-start: 0;
+    }
+
+    @each $type in insights.$insightTypes {
+      &.#{$type} {
+        &::before {
+          background-color: insights.insight-color($type);
+        }
+      }
+    }
+
+    mat-icon:not(.apply-icon) {
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  // When prompt is for multiple insights, and one is not yet focused
+  &.list {
+    > h1 {
+      padding: 0.5em 0.8em;
+      color: #bdbdbd;
+      border-bottom: 1px solid #777;
+      font-size: 0.8em;
+    }
+
+    .insight-item {
+      position: relative;
+      padding: 0.3em 0.7em;
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+      cursor: pointer;
+
+      h1 {
+        font-size: 0.8em;
+      }
+
+      &:not(:last-child) {
+        border-bottom: 1px solid #555;
+      }
+
+      &:hover {
+        background-color: #06395c;
+      }
+
+      .severity-icon {
+        width: 1em;
+      }
+
+      @each $type in insights.$insightTypes {
+        &.#{$type} {
+          .severity-icon {
+            color: insights.insight-color($type);
+          }
+        }
+      }
+
+      .ellipsis-icon {
+        color: $secondaryTextColor;
+        margin-inline-start: auto; // Push to right
+        padding-inline-start: 1em;
+      }
+    }
+  }
+}
+
+.more-info-section {
+  padding: 0.8em 0.7em;
+  border: 1px solid #999;
+  border-width: 0 1px 1px 1px;
+  border-radius: 0 0 $borderRadius $borderRadius;
+}
+
+.more-info-section {
+  background-color: #fff;
+  font-size: 0.8em;
+}
+
+h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-size: 0.9em;
+  color: #fff;
+  margin: 0;
+  font-weight: 400;
+
+  .code {
+    color: $secondaryTextColor;
+    font-size: 0.9em;
+  }
+
+  .more-info-icon {
+    margin-inline-start: auto;
+    color: $secondaryTextColor;
+    font-size: 1.2em;
+    align-self: normal;
+    padding-inline-start: 1em;
+
+    &:hover {
+      color: color.adjust($secondaryTextColor, $lightness: 20%);
+    }
+  }
+}
+
+.primary-action {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+  font-size: 0.75em;
+  line-height: 2.5em;
+
+  a {
+    position: relative;
+    padding-inline-start: 2.3em;
+    color: $applyActionColor;
+    text-wrap: nowrap;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    .apply-icon {
+      position: absolute;
+      inset-inline-start: 0;
+      font-size: 1.7em;
+    }
+
+    &:hover {
+      text-decoration: underline;
+
+      .apply-icon {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  .shortcut {
+    color: $secondaryTextColor;
+    font-family: monospace;
+    font-size: 0.9em;
+    text-wrap: nowrap;
+  }
+}
+
+.secondary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.2em;
+
+  .action-menu-trigger {
+    color: $secondaryTextColor;
+
+    &:hover {
+      color: color.adjust($secondaryTextColor, $lightness: 20%);
+    }
+  }
+}
+
+.dismiss-icon {
+  color: $dismissActionColor;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+.menu-item-wrapper {
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    margin: 0;
+    font-size: 0.9em;
+    font-weight: 500;
+  }
+
+  span {
+    color: $secondaryTextColor;
+    font-size: 0.75em;
+    line-height: normal;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
