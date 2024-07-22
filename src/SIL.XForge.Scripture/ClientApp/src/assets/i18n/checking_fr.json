@@ -22,7 +22,6 @@
     "password_reset_email_sent": "Nous venons de vous envoyer un e-mail pour réinitialiser votre mot de passe.",
     "product_version": "Version du produit : v{{ version }}",
     "project_has_been_deleted": "Le projet a été supprimé ou n'est plus accessible.",
-    "project_home": "Accueil du projet",
     "questions_answers": "Questions & Réponses",
     "redirecting_in_moments": "Redirection dans quelques instants...",
     "refresh": "Rafraîchir",
@@ -203,6 +202,9 @@
     "save_answer": "Envoyer la réponse",
     "select_verses": "Sélectionner des versets",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
+    "tooltip_attach": "Joindre les écritures",
+    "tooltip_record": "Enregistrer l'audio",
+    "tooltip_stop": "Arrêter l'enregistrement",
     "tooltip_status_export": "Exporter vers Paratext si les paramètre sont configurés",
     "tooltip_status_resolve": "Marquer la réponse comme résolue",
     "your_answer": "Votre réponse"
@@ -271,7 +273,8 @@
     "my_progress": "Ma progression",
     "project_stats": "Statistiques du projet",
     "questions": "Questions",
-    "some_actions_unavailable_offline": "Certaines actions ne sont pas disponibles en mode déconnecté et nécessitent une connexion à Internet, comme la télétransmission ou la suppression de chapitres audio."
+    "some_actions_unavailable_offline": "Certaines actions ne sont pas disponibles en mode déconnecté et nécessitent une connexion à Internet, comme la télétransmission ou la suppression de chapitres audio.",
+    "tooltip_edit": "Modifier"
   },
   "checking_questions": {
     "listen_to_question": "Écoutez la question pour {{ referenceForDisplay }}",
@@ -349,8 +352,23 @@
     "cancel": "Annuler",
     "close": "Fermer"
   },
-  "navigation-project_selector": {
-    "connect_project": "Connecter un projet"
+  "my_projects": {
+    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected": "Connected",
+    "dbl_resource": "Digital Bible Library resource",
+    "dbl_resources": "Digital Bible Library resources",
+    "drafting": "Drafting",
+    "join": "Rejoindre",
+    "loading_more_pt_projects": "Loading additional Paratext projects ...",
+    "looking_for_another_project": "Looking for another project?",
+    "my_projects": "My projects",
+    "no_projects": "You have no projects.",
+    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
+    "not_connected": "Not connected",
+    "offline": "You will need to connect to the internet to get started with a project.",
+    "open": "Open",
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choisissez le livre",
@@ -390,19 +408,26 @@
     "anyone_can": "Tous ceux qui ont le lien peuvent",
     "change": "modifier",
     "copy_link": "Copier le lien",
+    "days_seven": "7 jours",
+    "days_fourteen": "14 days",
+    "days_thirty": "30 jours",
+    "days_ninety": "90 days",
+    "days_threesixtyfive": "1 année",
+    "error_language": "Please select a language",
+    "expiration_description": "Changer la durée de vie du lien",
     "invitation_language": "Modifier la langue d'invitation",
     "invitation_link_type": "Modifier la façon dont le lien peut être utilisé",
     "invitation_role": "Changer le rôle d'invitation",
     "invitation_shared_in_language": "L'invitation sera partagée dans",
     "link_can_be_used_by": "Le lien peut être utilisé par",
     "link_sharing_not_available_offline": "L'invitation des utilisateurs par partage de lien n'est pas disponible hors ligne.",
+    "recipient": "Un destinataire",
+    "recipient_can": "Le destinataire peut",
+    "recipient_only_notice": "Chaque lien ne peut être utilisé qu'une seule fois et expirera après {{ shareExpiration }} jours. Cliquez à nouveau sur le bouton pour générer et partager un nouveau lien.",
     "share": "Partager",
     "share_project": "Partager {{ project }}",
-    "share_with_others": "Partager avec d'autres"
-  },
-  "start": {
-    "connect_project": "Connecter un projet",
-    "not_connected_to_any_projects": "Il semble que vous ne soyez encore connecté à aucun projet."
+    "share_with_others": "Partager avec d'autres",
+    "will_expire_in": "Le lien expire dans [b]{{ count }} jours[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "L'enregistrement audio n'est pas pris en charge dans ce navigateur.",
