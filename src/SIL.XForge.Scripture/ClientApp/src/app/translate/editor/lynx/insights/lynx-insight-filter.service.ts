@@ -1,0 +1,47 @@
+import { Injectable } from '@angular/core';
+import { Canon } from '@sillsdev/scripture';
+import { RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
+import { LynxInsight, LynxInsightFilter, LynxInsightFilterScope } from './lynx-insight';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class LynxInsightFilterService {
+  constructor() {}
+
+  matchesFilter(insight: LynxInsight, filter: LynxInsightFilter, bookChapter: RouteBookChapter): boolean {
+    const routeBookNum: number | undefined = bookChapter.bookId ? Canon.bookIdToNumber(bookChapter.bookId) : undefined;
+    const routeChapter = bookChapter.chapter;
+
+    if (!filter.types.includes(insight.type)) {
+      return false;
+    }
+
+    if (filter.scope === 'project') {
+      return true;
+    }
+
+    if (filter.scope === 'book' && routeBookNum !== insight.book) {
+      return false;
+    }
+
+    if (filter.scope === 'chapter' && (routeBookNum !== insight.book || routeChapter !== insight.chapter)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  getScope(insight: LynxInsight, bookChapter: RouteBookChapter): LynxInsightFilterScope {
+    const routeBookNum: number | undefined = bookChapter.bookId ? Canon.bookIdToNumber(bookChapter.bookId) : undefined;
+    const routeChapter = bookChapter.chapter;
+
+    if (insight.book === routeBookNum && insight.chapter === routeChapter) {
+      return 'chapter';
+    } else if (insight.book === routeBookNum) {
+      return 'book';
+    } else {
+      return 'project';
+    }
+  }
+}

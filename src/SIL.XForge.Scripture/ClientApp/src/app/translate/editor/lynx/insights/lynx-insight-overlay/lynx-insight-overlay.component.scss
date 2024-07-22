@@ -1,0 +1,132 @@
+@use 'sass:color';
+
+$mainSectionBGColor: #343a32;
+$secondaryTextColor: #9b9b9b;
+$applyActionColor: #5485e7;
+$borderRadius: 0.2em;
+
+:host {
+  max-width: 300px;
+  border-radius: $borderRadius;
+  overflow: hidden;
+}
+
+.main-section,
+.more-info-section {
+  padding: 0.6em 0.7em;
+}
+
+.main-section {
+  background-color: $mainSectionBGColor;
+}
+
+.more-info-section {
+  padding: 0.8em 0.7em;
+  border: 1px solid #999;
+  border-width: 0 1px 1px 1px;
+  border-radius: 0 0 $borderRadius $borderRadius;
+}
+
+.more-info-section {
+  background-color: #fff;
+  font-size: 0.8em;
+}
+
+mat-icon {
+  cursor: pointer;
+  width: auto;
+  height: auto;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-size: 0.9em;
+  color: #fff;
+  margin: 0;
+  font-weight: 400;
+
+  .code {
+    color: $secondaryTextColor;
+    font-size: 0.9em;
+  }
+
+  .more-info-icon {
+    margin-inline-start: auto;
+    color: $secondaryTextColor;
+    font-size: 1.2em;
+    align-self: normal;
+
+    &:hover {
+      color: color.adjust($secondaryTextColor, $lightness: 20%);
+    }
+  }
+}
+
+.primary-action {
+  display: flex;
+  align-items: baseline;
+  gap: 1em;
+  font-size: 0.75em;
+  line-height: 1.5em;
+
+  a {
+    color: $applyActionColor;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .shortcut {
+    color: $secondaryTextColor;
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+}
+
+.secondary-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1.2em;
+
+  .apply-icon {
+    color: $applyActionColor;
+
+    &:hover {
+      color: color.adjust($applyActionColor, $lightness: 5%);
+    }
+  }
+
+  .action-menu-trigger {
+    color: $secondaryTextColor;
+
+    &:hover {
+      color: color.adjust($secondaryTextColor, $lightness: 20%);
+    }
+  }
+}
+
+.menu-item-wrapper {
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    margin: 0;
+    font-size: 0.9em;
+    font-weight: 500;
+  }
+
+  span {
+    color: $secondaryTextColor;
+    font-size: 0.75em;
+    line-height: normal;
+  }
+}
