@@ -1,0 +1,47 @@
+@use '../lynx-insights' as insights;
+
+:host {
+  position: absolute;
+  z-index: 3; // Above the semi-transparent editor 'attention' overlay
+  inset-inline-end: 0;
+}
+
+mat-icon {
+  font-size: 1.2em;
+  width: 0.9em;
+  height: 0.9em;
+  cursor: pointer;
+
+  @each $type in insights.$insightTypes {
+    &.#{$type} {
+      color: insights.insight-color($type);
+    }
+  }
+
+  &:hover {
+    scale: 1.2;
+  }
+}
+
+.multi-insight-prompt {
+  mat-icon {
+    width: auto;
+    height: auto;
+    color: var(--lynx-insights-multi-insight-prompt-color);
+
+    &.count-icon {
+      position: absolute;
+      inset-inline-start: 0.6em;
+      top: 0.5em;
+      font-size: 0.9em;
+      background-color: transparent;
+    }
+  }
+
+  // Scale both icons on hover of container
+  &:hover {
+    mat-icon {
+      scale: 1.2;
+    }
+  }
+}

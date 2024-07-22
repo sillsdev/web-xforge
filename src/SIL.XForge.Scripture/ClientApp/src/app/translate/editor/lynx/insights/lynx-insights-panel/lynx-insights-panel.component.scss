@@ -1,0 +1,134 @@
+@use 'src/variables' as vars;
+@use '../lynx-insights' as insights;
+
+$indentPadding: 2.5rem; // Per level indentation
+$restoreActionColor: #5485e7;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mat-tree {
+  height: 100%;
+  overflow: auto;
+}
+
+.mat-tree-node {
+  &:hover {
+    background-color: #eee;
+  }
+}
+
+.tree-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  height: 1.5rem;
+  width: 100%;
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tree-toggle-icon {
+  width: auto;
+  height: auto;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+// Increase indentation for deeper levels
+@for $i from 0 through 1 {
+  .level-#{$i} .tree-toggle {
+    padding-inline-start: $indentPadding * $i;
+  }
+}
+
+// Link to insight in editor
+.tree-toggle.leaf {
+  &:hover {
+    color: vars.$blueMedium;
+  }
+
+  .restore-icon {
+    display: none;
+  }
+
+  &.dismissed {
+    color: #999;
+    font-style: italic;
+
+    .restore-icon {
+      display: flex;
+    }
+  }
+}
+
+.level-ref {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.level-code {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: capitalize; // TODO: use i18n instead
+  overflow: hidden;
+  padding-inline-end: 0.5rem;
+
+  mat-icon {
+    width: 0.9rem;
+    flex-shrink: 0;
+
+    @each $type in insights.$insightTypes {
+      &.#{$type} {
+        color: insights.insight-color($type);
+      }
+    }
+
+    &.dismissed {
+      color: #999;
+    }
+  }
+
+  .text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .code {
+    color: #999;
+    font-family: monospace;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  .count {
+    color: #7a7a7a;
+    background-color: #f4f4f4;
+    flex-shrink: 0;
+    border-radius: 50%;
+    padding: 0.4rem;
+    font-size: 0.6rem;
+    width: 1.3rem;
+    height: 1.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.restore-icon {
+  color: $restoreActionColor;
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: auto;
+  display: flex;
+  align-items: center;
+}

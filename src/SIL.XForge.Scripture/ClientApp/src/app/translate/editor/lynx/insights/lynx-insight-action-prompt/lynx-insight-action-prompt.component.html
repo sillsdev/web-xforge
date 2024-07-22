@@ -1,0 +1,9 @@
+@if (activeInsights.length === 1) {
+  <mat-icon [svgIcon]="'lynx_' + activeInsights[0].type" (click)="onPromptClick($event)" />
+}
+@if (activeInsights.length > 1) {
+  <div class="multi-insight-prompt" (click)="onPromptClick($event)">
+    <mat-icon>tips_and_updates</mat-icon>
+    <mat-icon class="count-icon"> filter_{{ activeInsights.length < 10 ? activeInsights.length : "9_plus" }} </mat-icon>
+  </div>
+}
