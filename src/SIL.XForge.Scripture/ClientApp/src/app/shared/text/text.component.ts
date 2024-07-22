@@ -1270,7 +1270,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       // get currently selected segment ref
       const selection = this._editor.getSelection();
       if (selection != null) {
-        segmentRef = this.viewModel.getSegmentRef(selection);
+        segmentRef = this.viewModel.getSegmentRef(selection, this.segmentRef);
       }
     }
 
@@ -1348,7 +1348,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     if (focus) {
       const selection = this._editor.getSelection();
-      const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection);
+      const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection, this.segmentRef);
       if (selectedSegmentRef !== segmentRef) {
         const range = this.viewModel.getSegmentRange(segmentRef);
         if (range != null) {
