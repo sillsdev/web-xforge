@@ -1,4 +1,4 @@
-import Quill from 'quill';
+import Quill, { Delta, Range } from 'quill';
 import { DeltaOperation, StringMap } from 'rich-text';
 
 /**
@@ -42,4 +42,31 @@ export function getRetainCount(op: DeltaOperation): number | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * Compares two objects with a range based on their range index and length,
+ * with the most recent first (shortest range if  tied).
+ * @returns {number} negative if a is more recent, positive if b is more recent, 0 if they are the same
+ */
+export function rangeComparer(a: { range: Range }, b: { range: Range }): number {
+  const indexDifference = a.range.index - b.range.index;
+
+  if (indexDifference !== 0) {
+    return indexDifference;
+  }
+
+  return a.range.length - b.range.length;
+}
+
+/**
+ * Extracts text from a delta within a range.
+ */
+export function getText(delta: Delta, range: Range): string {
+  const { index, length } = range;
+  return delta
+    .slice(index, index + length)
+    .filter(op => typeof op.insert === 'string')
+    .map(op => op.insert)
+    .join('');
 }
