@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Paratext.Data;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -145,6 +146,20 @@ public class ParatextControllerTests
         ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
 
         Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetAsync_CannotConnectException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Throws<CannotConnectException>();
+
+        // SUT
+        ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
+
+        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
+        Assert.AreEqual(504, ((StatusCodeResult)actual.Result).StatusCode);
     }
 
     [Test]
