@@ -478,3 +478,15 @@ export const PTLoadUndefined: Story = {
 export const LayoutLengths: Story = {
   args: { ...AllProjectScenarios.args, projectNameLengthCheck: true }
 };
+
+export const LayoutLengthsMobile: Story = {
+  args: { ...LayoutLengths.args, projectNameLengthCheck: false },
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' }
+  }
+};
+
+export const RTL: Story = {
+  args: { ...AllProjectScenarios.args, projectNameLengthCheck: true },
+  parameters: { locale: 'ar' }
+};
