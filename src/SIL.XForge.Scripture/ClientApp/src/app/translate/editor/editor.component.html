@@ -158,79 +158,102 @@
                       {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
                     </app-notice>
                   }
-                  <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
-                    <app-text
-                      #target
-                      [id]="projectId | textDocId: bookNum : chapter"
-                      [isReadOnly]="!canEdit"
-                      (updated)="
-                        onTargetUpdated(
-                          $event.segment,
-                          $event.delta,
-                          $event.prevSegment,
-                          $event.affectedEmbeds,
-                          $event.isLocalUpdate
-                        )
-                      "
-                      (loaded)="onTextLoaded('target')"
-                      (focused)="targetFocused = $event"
-                      (segmentRefChange)="onSegmentRefChange($event)"
-                      (presenceChange)="onPresenceChange($event)"
-                      [highlightSegment]="targetFocused && canEdit"
-                      [enablePresence]="true"
-                      [markInvalid]="true"
-                      [isRightToLeft]="isTargetRightToLeft"
-                      [fontSize]="fontSize"
-                      [selectableVerses]="showAddCommentUI"
-                      [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
-                      [style.--project-font]="fontService.getFontFamilyFromProject(projectDoc)"
-                    ></app-text>
-                    <app-suggestions
-                      class="mat-elevation-z2"
-                      [show]="showSuggestions && translationSuggestionsEnabled"
-                      [suggestions]="suggestions"
-                      [text]="target"
-                      (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
-                      (showChange)="showSuggestions = $event"
-                    ></app-suggestions>
-                    <ng-template #fabBottomSheet>
-                      <div class="fab-bottom-sheet" [dir]="direction">
-                        <b>{{ currentSegmentReference }}</b>
-                        @if (!addingMobileNote && !hasEditRight) {
-                          <button mat-flat-button (click)="toggleAddingMobileNote()" color="accent">
-                            <mat-icon>add_comment</mat-icon>
-                            {{ t("add_comment") }}
-                          </button>
-                        }
-                        @if (addingMobileNote) {
-                          <form>
-                            <mat-form-field class="full-width" appearance="outline">
-                              <mat-label>{{ t("your_comment") }}</mat-label>
-                              <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
-                            </mat-form-field>
-                            <div class="fab-action-buttons">
-                              <button mat-button class="close-button" (click)="toggleAddingMobileNote()">
-                                {{ t("cancel") }}
-                              </button>
-                              <button mat-flat-button class="save-button" color="primary" (click)="saveMobileNote()">
-                                {{ t("save") }}
-                              </button>
+                  <div class="container-for-split">
+                    <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
+                    <as-split direction="vertical" [useTransition]="true">
+                      <as-split-area size="*" [minSize]="20" [order]="1" [dir]="i18n.direction">
+                        <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
+                          <app-text
+                            #target
+                            [id]="projectId | textDocId: bookNum : chapter"
+                            [isReadOnly]="!canEdit"
+                            (updated)="
+                              onTargetUpdated(
+                                $event.segment,
+                                $event.delta,
+                                $event.prevSegment,
+                                $event.affectedEmbeds,
+                                $event.isLocalUpdate
+                              )
+                            "
+                            (loaded)="onTextLoaded('target')"
+                            (focused)="targetFocused = $event"
+                            (segmentRefChange)="onSegmentRefChange($event)"
+                            (presenceChange)="onPresenceChange($event)"
+                            [highlightSegment]="targetFocused && canEdit"
+                            [enablePresence]="true"
+                            [markInvalid]="true"
+                            [showInsights]="showInsights"
+                            [isRightToLeft]="isTargetRightToLeft"
+                            [fontSize]="fontSize"
+                            [selectableVerses]="showAddCommentUI"
+                            [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
+                            [style.--project-font]="fontService.getFontFamilyFromProject(projectDoc)"
+                          ></app-text>
+                          <app-suggestions
+                            class="mat-elevation-z2"
+                            [show]="showSuggestions && translationSuggestionsEnabled"
+                            [suggestions]="suggestions"
+                            [text]="target"
+                            (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
+                            (showChange)="showSuggestions = $event"
+                          ></app-suggestions>
+                          <ng-template #fabBottomSheet>
+                            <div class="fab-bottom-sheet" [dir]="direction">
+                              <b>{{ currentSegmentReference }}</b>
+                              @if (!addingMobileNote && !hasEditRight) {
+                                <button mat-flat-button (click)="toggleAddingMobileNote()" color="accent">
+                                  <mat-icon>add_comment</mat-icon>
+                                  {{ t("add_comment") }}
+                                </button>
+                              }
+                              @if (addingMobileNote) {
+                                <form>
+                                  <mat-form-field class="full-width" appearance="outline">
+                                    <mat-label>{{ t("your_comment") }}</mat-label>
+                                    <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
+                                  </mat-form-field>
+                                  <div class="fab-action-buttons">
+                                    <button mat-button class="close-button" (click)="toggleAddingMobileNote()">
+                                      {{ t("cancel") }}
+                                    </button>
+                                    <button
+                                      mat-flat-button
+                                      class="save-button"
+                                      color="primary"
+                                      (click)="saveMobileNote()"
+                                    >
+                                      {{ t("save") }}
+                                    </button>
+                                  </div>
+                                </form>
+                              }
                             </div>
-                          </form>
-                        }
-                      </div>
-                    </ng-template>
-                    @if (canInsertNote) {
-                      <button
-                        #fabButton
-                        class="insert-note-fab"
-                        mat-mini-fab
-                        [title]="t('add_comment')"
-                        (click)="insertNote()"
+                          </ng-template>
+                          @if (canInsertNote) {
+                            <button
+                              #fabButton
+                              class="insert-note-fab"
+                              mat-mini-fab
+                              [title]="t('add_comment')"
+                              (click)="insertNote()"
+                            >
+                              <mat-icon>add_comment</mat-icon>
+                            </button>
+                          }
+                        </div>
+                      </as-split-area>
+
+                      <as-split-area
+                        *ngIf="showInsights"
+                        [visible]="(editorInsightState.insightPanelVisible$ | async) == true"
+                        [size]="20"
+                        [order]="2"
+                        [dir]="i18n.direction"
                       >
-                        <mat-icon>add_comment</mat-icon>
-                      </button>
-                    }
+                        <app-lynx-insights-panel />
+                      </as-split-area>
+                    </as-split>
                   </div>
                 </div>
               }
