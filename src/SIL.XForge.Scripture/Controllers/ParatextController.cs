@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Paratext.Data;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -101,7 +102,6 @@ public class ParatextController : ControllerBase
         Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
         if (!attempt.TryResult(out UserSecret userSecret))
             return NoContent();
-
         try
         {
             IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(userSecret);
@@ -114,6 +114,10 @@ public class ParatextController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Unauthorized();
+        }
+        catch (CannotConnectException)
+        {
+            return StatusCode(504);
         }
     }
 
@@ -225,6 +229,10 @@ public class ParatextController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Unauthorized();
+        }
+        catch (CannotConnectException)
+        {
+            return StatusCode(504);
         }
     }
 

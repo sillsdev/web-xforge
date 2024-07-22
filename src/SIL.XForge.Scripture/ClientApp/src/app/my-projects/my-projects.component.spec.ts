@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -217,7 +218,23 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // Trouble message is shown.
-    expect(env.messageTroubleGettingPTProjectList).not.toBeNull();
+    expect(env.messageTroubleGettingPTProjectList.nativeElement.textContent).toContain(
+      'There was a problem getting the list of available Paratext projects'
+    );
+    // Show the header above it as well to make the context clear.
+    expect(env.headerNotConnectedProjects).not.toBeNull();
+    // Not throwing an exception.
+  }));
+
+  it('trouble connecting to paratext registry is gracefully handled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedParatextService.getProjects()).thenReject(new HttpErrorResponse({ status: 504 }));
+    env.waitUntilLoaded();
+
+    // Trouble message is shown.
+    expect(env.messageTroubleGettingPTProjectList.nativeElement.textContent).toContain(
+      'There was a problem connecting to Paratext'
+    );
     // Show the header above it as well to make the context clear.
     expect(env.headerNotConnectedProjects).not.toBeNull();
     // Not throwing an exception.
