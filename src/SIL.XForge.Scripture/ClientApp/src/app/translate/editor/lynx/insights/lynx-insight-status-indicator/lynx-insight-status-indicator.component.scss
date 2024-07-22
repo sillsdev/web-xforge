@@ -1,0 +1,48 @@
+@use '../lynx-insights' as insights;
+
+:host {
+  position: absolute;
+  z-index: 1;
+  inset-inline-end: calc(
+    2px + var(--editor-scrollbar-width, 0px)
+  ); // Adjust for scrollbar width (css var set in component)
+  top: 0;
+  display: flex;
+  gap: 0.5em;
+  padding: 0.5em;
+  background-color: var(--lynx-insights-status-indicator-bg-color);
+  border-radius: 0 0 0.4em 0.4em;
+  box-shadow: 0 0 5px 0px #ccc;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 0 10px 0px #bbb;
+  }
+
+  &:active {
+    box-shadow: 0 0 5px 0px #bbb;
+  }
+}
+
+mat-icon {
+  width: auto;
+  height: auto;
+  font-size: 1.1em;
+}
+
+@each $type in insights.$insightTypes {
+  .#{$type}-icon {
+    color: insights.insight-color($type);
+  }
+}
+
+.type-count {
+  display: flex;
+  align-items: center;
+  gap: 0.1em;
+
+  span {
+    font-size: 0.75em;
+    font-weight: 500;
+  }
+}

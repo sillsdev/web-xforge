@@ -4,6 +4,8 @@
 // This creates css variables for common breakpoints (needed when using MediaBreakpointService with BreakpointObserver)
 @use 'src/xforge-common/media-breakpoints/css-vars';
 
+@use 'app/translate/editor/lynx/insights/lynx-insights';
+
 @import 'fonts';
 /* Only import relevant Bootstrap 4.x styles */
 @import 'bootstrap/scss/bootstrap-grid';
