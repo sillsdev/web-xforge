@@ -1,0 +1,109 @@
+@use 'src/variables' as vars;
+
+$indentPadding: 2.5rem; // Per level indentation
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mat-tree {
+  height: 100%;
+  overflow: auto;
+}
+
+.mat-tree-node {
+  &:hover {
+    background-color: #eee;
+  }
+}
+
+.tree-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  height: 1.5rem;
+  width: 100%;
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tree-toggle-icon {
+  width: auto;
+  height: auto;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+// Increase indentation for deeper levels
+@for $i from 0 through 1 {
+  .level-#{$i} .tree-toggle {
+    padding-inline-start: $indentPadding * $i;
+  }
+}
+
+// Link to insight in editor
+.tree-toggle.leaf {
+  &:hover {
+    color: vars.$blueMedium;
+  }
+}
+
+.level-code {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: capitalize; // TODO: use i18n instead
+  overflow: hidden;
+  padding-inline-end: 0.5rem;
+
+  mat-icon {
+    width: auto;
+    height: auto;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+
+    &.info {
+      color: hsl(
+        var(--lynx-insights-info-color-h),
+        var(--lynx-insights-info-color-s),
+        var(--lynx-insights-info-color-l)
+      );
+    }
+    &.warning {
+      color: hsl(
+        var(--lynx-insights-warning-color-h),
+        var(--lynx-insights-warning-color-s),
+        var(--lynx-insights-warning-color-l)
+      );
+    }
+    &.error {
+      color: hsl(
+        var(--lynx-insights-error-color-h),
+        var(--lynx-insights-error-color-s),
+        var(--lynx-insights-error-color-l)
+      );
+    }
+  }
+
+  .text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .code {
+    color: #999;
+    font-family: monospace;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  .count {
+    color: #999;
+    flex-shrink: 0;
+  }
+}

@@ -7,6 +7,7 @@ import Quill, {
   History,
   HistoryStackType,
   QuillOptionsStatic,
+  RangeStatic,
   StringMap
 } from 'quill';
 import QuillCursors from 'quill-cursors';
@@ -14,6 +15,21 @@ import { DragAndDrop } from './drag-and-drop';
 import { TextComponent } from './text.component';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
+
+/**
+ * Compares two objects with a range based on their range index and length,
+ * with the most recent first (shortest range if  tied).
+ * @returns {number} negative if a is more recent, positive if b is more recent, 0 if they are the same
+ */
+export function rangeComparer(a: { range: RangeStatic }, b: { range: RangeStatic }): number {
+  const indexDifference = a.range.index - b.range.index;
+
+  if (indexDifference !== 0) {
+    return indexDifference;
+  }
+
+  return a.range.length - b.range.length;
+}
 
 export function getAttributesAtPosition(editor: Quill, editorPosition: number): StringMap {
   // The format of the insertion point may only contain the block level formatting,
@@ -104,7 +120,12 @@ interface Unmatched {
   marker: string;
 }
 
-export function registerScripture(): string[] {
+export interface RegisteredFormatNames {
+  formatNames: string[];
+  excludeFromDataModelFormatNames: string[];
+}
+
+export function registerScripture(): RegisteredFormatNames {
   const QuillClipboard = Quill.import('modules/clipboard') as typeof Clipboard;
   const QuillHistory = Quill.import('modules/history') as typeof History;
   const QuillParchment = Quill.import('parchment') as typeof Parchment;
@@ -135,6 +156,7 @@ export function registerScripture(): string[] {
   class VerseEmbed extends Embed {
     static blotName = 'verse';
     static tagName = 'usx-verse';
+    static isDataModelAttr = true;
 
     static create(value: Verse): Node {
       const node = super.create(value) as HTMLElement;
@@ -166,6 +188,7 @@ export function registerScripture(): string[] {
   class BlankEmbed extends Embed {
     static blotName = 'blank';
     static tagName = 'usx-blank';
+    static isDataModelAttr = true;
 
     static create(value: boolean): Node {
       const node = super.create(value) as HTMLElement;
@@ -197,6 +220,7 @@ export function registerScripture(): string[] {
   class EmptyEmbed extends Embed {
     static blotName = 'empty';
     static tagName = 'usx-empty';
+    static isDataModelAttr = true;
 
     static create(value: boolean): Node {
       const node = super.create(value) as HTMLElement;
@@ -220,6 +244,7 @@ export function registerScripture(): string[] {
   class CharInline extends Inline {
     static blotName = 'char';
     static tagName = 'usx-char';
+    static isDataModelAttr = true;
 
     static create(value: UsxStyle | UsxStyle[]): Node {
       const node = super.create(value) as HTMLElement;
@@ -271,6 +296,7 @@ export function registerScripture(): string[] {
   class RefInline extends Inline {
     static blotName = 'ref';
     static tagName = 'usx-ref';
+    static isDataModelAttr = true;
 
     static create(value: Ref): Node {
       const node = super.create(value) as HTMLElement;
@@ -303,6 +329,7 @@ export function registerScripture(): string[] {
   class NoteEmbed extends Embed {
     static blotName = 'note';
     static tagName = 'usx-note';
+    static isDataModelAttr = true;
 
     static create(value: Note): Node {
       const node = super.create(value) as HTMLElement;
@@ -333,6 +360,7 @@ export function registerScripture(): string[] {
   class NoteThreadEmbed extends Embed {
     static blotName = 'note-thread-embed';
     static tagName = 'display-note';
+    static isDataModelAttr = true;
 
     static create(value: NoteThread): HTMLElement {
       const node = super.create(value) as HTMLElement;
@@ -372,6 +400,7 @@ export function registerScripture(): string[] {
   class OptBreakEmbed extends Embed {
     static blotName = 'optbreak';
     static tagName = 'usx-optbreak';
+    static isDataModelAttr = true;
 
     static create(value: UsxStyle): Node {
       const node = super.create(value) as HTMLElement;
@@ -389,6 +418,7 @@ export function registerScripture(): string[] {
   class FigureEmbed extends Embed {
     static blotName = 'figure';
     static tagName = 'usx-figure';
+    static isDataModelAttr = true;
 
     static create(value: Figure): Node {
       const node = super.create(value) as HTMLElement;
@@ -432,6 +462,7 @@ export function registerScripture(): string[] {
   class UnmatchedEmbed extends Embed {
     static blotName = 'unmatched';
     static tagName = 'usx-unmatched';
+    static isDataModelAttr = true;
 
     static create(value: Unmatched): Node {
       const node = super.create(value) as HTMLElement;
@@ -449,6 +480,7 @@ export function registerScripture(): string[] {
   class ParaBlock extends Block {
     static blotName = 'para';
     static tagName = 'usx-para';
+    static isDataModelAttr = true;
 
     static create(value: Para): Node {
       const node = super.create(value) as HTMLElement;
@@ -522,6 +554,7 @@ export function registerScripture(): string[] {
   class SegmentInline extends Inline {
     static blotName = 'segment';
     static tagName = 'usx-segment';
+    static isDataModelAttr = true;
 
     static create(value: string): Node {
       const node = super.create(value) as HTMLElement;
@@ -563,6 +596,7 @@ export function registerScripture(): string[] {
   class ChapterEmbed extends BlockEmbed {
     static blotName = 'chapter';
     static tagName = 'usx-chapter';
+    static isDataModelAttr = true;
 
     static create(value: Chapter): Node {
       const node = super.create(value) as HTMLElement;
@@ -662,12 +696,16 @@ export function registerScripture(): string[] {
   });
   formats.push(CommenterSelectedSegmentClass);
 
-  const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
+  const InvalidBlockClass = new (class extends ClassAttributor {
+    static isDataModelAttr = true;
+  })('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });
   formats.push(InvalidBlockClass);
 
-  const InvalidInlineClass = new ClassAttributor('invalid-inline', 'invalid-inline', {
+  const InvalidInlineClass = new (class extends ClassAttributor {
+    static isDataModelAttr = true;
+  })('invalid-inline', 'invalid-inline', {
     scope: Parchment.Scope.INLINE
   });
   formats.push(InvalidInlineClass);
@@ -843,17 +881,28 @@ export function registerScripture(): string[] {
   }
 
   const formatNames: string[] = [];
+  const excludeFromDataModelFormatNames: string[] = [];
+
   for (const format of formats) {
+    let name: string;
+
     if (typeof format === 'string') {
-      formatNames.push(format);
+      name = format;
     } else if (format.blotName != null) {
-      Quill.register(`blots/${format.blotName}`, format);
-      formatNames.push(format.blotName);
+      name = format.blotName;
+      Quill.register(`blots/${name}`, format);
     } else {
-      Quill.register(`formats/${format.attrName}`, format);
-      formatNames.push(format.attrName);
+      name = format.attrName;
+      Quill.register(`formats/${name}`, format);
+    }
+
+    formatNames.push(name);
+
+    if (typeof format === 'string' || !format.isDataModelAttr) {
+      excludeFromDataModelFormatNames.push(name);
     }
   }
+
   Quill.register('blots/scroll', Scroll, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
@@ -861,5 +910,8 @@ export function registerScripture(): string[] {
   Quill.register('modules/history', FixSelectionHistory, true);
   Quill.register('modules/dragAndDrop', DragAndDrop);
 
-  return formatNames;
+  return {
+    formatNames,
+    excludeFromDataModelFormatNames
+  };
 }

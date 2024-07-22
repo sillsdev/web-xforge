@@ -3,12 +3,10 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  ElementRef,
   EventEmitter,
   Input,
   OnDestroy,
-  Output,
-  ViewChild
+  Output
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -42,7 +40,8 @@ import {
   getVerseRefFromSegmentRef,
   getVerseStrFromSegmentRef
 } from '../utils';
-import { getAttributesAtPosition, registerScripture } from './quill-scripture';
+import { QuillFormatsService } from './quill-formats.service';
+import { getAttributesAtPosition } from './quill-scripture';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 import { EditorRange, TextViewModel } from './text-view-model';
@@ -50,8 +49,6 @@ import { EditorRange, TextViewModel } from './text-view-model';
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
 export const EDITOR_READY_TIMEOUT = 100;
-
-const USX_FORMATS = registerScripture();
 
 export interface TextUpdatedEvent {
   delta?: DeltaStatic;
@@ -96,22 +93,22 @@ export interface EmbedsByVerse {
   providers: [TextViewModel] // New instance for each text component
 })
 export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
-  @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() enablePresence: boolean = false;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
   @Input() selectableVerses: boolean = false;
+  @Input() showInsights: boolean = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
-  @Output() loaded = new EventEmitter(true);
+  @Output() loaded = new EventEmitter<boolean>(true);
   @Output() focused = new EventEmitter<boolean>(true);
   @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
   @Output() editorCreated = new EventEmitter<void>();
 
   lang: string = '';
   // only use USX formats and not default Quill formats
-  readonly allowedFormats: string[] = USX_FORMATS;
+  readonly allowedFormats: string[] = this.quillFormatsService.formatNames;
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
   readonly cursorColor: string;
@@ -256,15 +253,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
 
   constructor(
+    private readonly destroyRef: DestroyRef,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly transloco: TranslocoService,
     private readonly userService: UserService,
-    private readonly viewModel: TextViewModel,
-    private readonly destroyRef: DestroyRef,
-    private readonly textDocService: TextDocService
+    readonly viewModel: TextViewModel,
+    private readonly textDocService: TextDocService,
+    private readonly quillFormatsService: QuillFormatsService
   ) {
     super();
     let localCursorColor = localStorage.getItem(this.cursorColorStorageKey);
@@ -985,7 +983,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.bindQuill();
     });
 
-    this.loaded.emit();
+    this.loaded.emit(true);
     this.applyEditorStyles();
     // These refer to footnotes, cross-references, and end notes and not actual notes
     const elements = this.editor?.container.querySelectorAll('usx-note');
