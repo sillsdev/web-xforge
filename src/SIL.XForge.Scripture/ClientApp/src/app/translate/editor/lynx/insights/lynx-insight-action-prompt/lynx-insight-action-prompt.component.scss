@@ -1,0 +1,28 @@
+@use '../lynx-insights' as insights;
+
+:host {
+  position: absolute;
+  z-index: 3; // Above the semi-transparent editor 'attention' overlay
+  inset-inline-end: 0;
+}
+
+mat-icon {
+  width: auto;
+  height: auto;
+  font-size: 1.2rem;
+  cursor: pointer;
+
+  @each $type in insights.$insightTypes {
+    &.#{$type} {
+      color: insights.insight-color($type);
+
+      // &:hover {
+      //   color: insights.insight-color($type, 1.15);
+      // }
+    }
+  }
+
+  &:hover {
+    scale: 1.2;
+  }
+}
