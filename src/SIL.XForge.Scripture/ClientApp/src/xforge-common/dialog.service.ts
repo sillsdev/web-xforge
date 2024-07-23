@@ -46,11 +46,21 @@ export class DialogService {
     affirmative: I18nKey | Observable<string>,
     negative?: I18nKey | Observable<string>
   ): Promise<boolean> {
+    return await this.confirmWithOptions({ title: question, affirmative, negative });
+  }
+
+  async confirmWithOptions(options: {
+    title: I18nKey | Observable<string>;
+    message?: I18nKey | Observable<string>;
+    affirmative: I18nKey | Observable<string>;
+    negative?: I18nKey | Observable<string>;
+  }): Promise<boolean> {
     const result: boolean | undefined = await this.openGenericDialog({
-      title: this.ensureLocalized(question),
+      title: this.ensureLocalized(options.title),
+      message: options.message ? this.ensureLocalized(options.message) : undefined,
       options: [
-        { value: false, label: this.ensureLocalized(negative ?? 'dialog.cancel') },
-        { value: true, label: this.ensureLocalized(affirmative), highlight: true }
+        { value: false, label: this.ensureLocalized(options.negative ?? 'dialog.cancel') },
+        { value: true, label: this.ensureLocalized(options.affirmative), highlight: true }
       ]
     }).result;
     return result === true;
