@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { firstValueFrom, map, Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -15,17 +14,12 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { TextDocId } from '../../../core/models/text-doc';
-import { DraftAddDialogComponent } from '../draft-add-dialog/draft-add-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
 
 export interface BookWithDraft {
   bookNumber: number;
   canEdit: boolean;
   chaptersWithDrafts: number[];
-}
-
-interface DraftAddDialogData {
-  bookName: string;
 }
 
 @Component({
@@ -89,13 +83,13 @@ export class DraftPreviewBooksComponent {
     }
 
     const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
-    const data: DraftAddDialogData = { bookName };
-    const dialogRef: MatDialogRef<DraftAddDialogComponent, boolean> = this.dialogService.openMatDialog(
-      DraftAddDialogComponent,
-      { data }
-    );
-    const result: boolean | undefined = await firstValueFrom(dialogRef.afterClosed());
-    if (result !== true) return;
+    const confirmed = await this.dialogService.confirmWithOptions({
+      title: this.i18n.translate('draft_add_dialog.add_book_to_project', { bookName }),
+      message: this.i18n.translate('draft_add_dialog.book_contents_will_be_overwritten', { bookName }),
+      affirmative: 'draft_add_dialog.add_to_project'
+    });
+
+    if (!confirmed) return;
 
     const promises: Promise<boolean>[] = [];
     const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
