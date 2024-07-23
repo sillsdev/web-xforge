@@ -36,7 +36,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-import { NoticeComponent } from '../../shared/notice/notice.component';
+import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
@@ -59,7 +59,7 @@ describe('TranslateOverviewComponent', () => {
       HttpClientTestingModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NoticeComponent
+      FontUnsupportedMessageComponent
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },

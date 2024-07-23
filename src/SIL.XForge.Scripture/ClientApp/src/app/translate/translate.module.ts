@@ -22,6 +22,7 @@ import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component'
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
 import { SuggestionsComponent } from './editor/suggestions.component';
 import { EditorTabAddResourceDialogComponent } from './editor/tabs/editor-tab-add-resource-dialog/editor-tab-add-resource-dialog.component';
+import { FontUnsupportedMessageComponent } from './font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
@@ -55,7 +56,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TranslocoMarkupModule,
     AvatarComponent,
     SFTabsModule,
-    DraftPreviewBooksComponent
+    DraftPreviewBooksComponent,
+    FontUnsupportedMessageComponent
   ]
 })
 export class TranslateModule {}
