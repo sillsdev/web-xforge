@@ -1070,6 +1070,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
   }
 
+  onSplitterResized(): void {
+    if (this.showScriptureAudioPlayer) {
+      this.scrollTo(0);
+    } else if (!this.showScriptureAudioPlayer && this.activeQuestionVerseRef) {
+      const activeVerse = this.scripturePanel?.textComponent?.getVerseSegmentsNoHeadings(this.activeQuestionVerseRef);
+      this.scripturePanel?.textComponent?.highlight(activeVerse);
+      this.scrollToVerse(this.activeQuestionVerseRef);
+    }
+  }
+
   /**
    * Retrieves the adjacent question based on the active question and the direction.
    * Adjacent question might be outside the current filtered scope.
@@ -1400,19 +1410,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   private scrollTo(y: number): void {
-    const editor = this.scripturePanel?.textComponent?.editor?.container.querySelector('.ql-editor');
+    const editor: Element | undefined | null =
+      this.scripturePanel?.textComponent?.editor?.container.querySelector('.ql-editor');
     if (editor != null) {
       editor.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }
-
-  onSplitterResized(): void {
-    if (this.showScriptureAudioPlayer) {
-      this.scrollTo(0);
-    } else if (!this.showScriptureAudioPlayer && this.activeQuestionVerseRef) {
-      const activeVerse = this.scripturePanel?.textComponent?.getVerseSegmentsNoHeadings(this.activeQuestionVerseRef);
-      this.scripturePanel?.textComponent?.highlight(activeVerse);
-      this.scrollToVerse(this.activeQuestionVerseRef);
     }
   }
 
