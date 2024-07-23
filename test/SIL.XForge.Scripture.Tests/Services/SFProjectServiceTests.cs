@@ -2764,6 +2764,36 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task CreateProjectAsync_DirectoryExisting_Error()
+    {
+        var env = new TestEnvironment();
+        int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+        env.ParatextService.TryGetProjectRoleAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+        SFProject existingSfProject = env.GetProject(Project01);
+        string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
+        env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
+        Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
+        ApplicationException thrown = Assert.ThrowsAsync<ApplicationException>(
+            () =>
+                env.Service.CreateProjectAsync(
+                    User01,
+                    new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
+                )
+        );
+        Assert.That(thrown.Message, Does.Contain("The directory already exists."));
+        Assert.That(
+            env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+            Is.EqualTo(projectCount),
+            "should not have changed"
+        );
+    }
+
+    [Test]
     public void CreateProjectAsync_AlreadyExists_Error()
     {
         var env = new TestEnvironment();
