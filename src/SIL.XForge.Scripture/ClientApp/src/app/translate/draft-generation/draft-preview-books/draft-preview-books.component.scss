@@ -1,36 +1,17 @@
+@use '@angular/material' as mat;
+
 :host {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 
-  .draft-book-option {
-    display: flex;
-    align-items: center;
-    border: 1px solid lightgray;
-    border-radius: 4px;
-    padding: 4px 0 4px 8px;
+  @include mat.button-toggle-density(-3);
+}
 
-    .book-more {
-      padding: 0;
-    }
-  }
+mat-button-toggle {
+  --mat-standard-button-toggle-divider-color: transparent;
+}
 
-  .book-name {
-    ::ng-deep span {
-      line-height: 36px;
-      font-weight: 500;
-    }
-  }
-
-  .book-more {
-    border-left: none !important;
-
-    &.mat-button-toggle-checked {
-      background-color: white;
-    }
-    ::ng-deep span {
-      line-height: 36px;
-      padding: 0 6px;
-    }
-  }
+.book-more ::ng-deep .mat-button-toggle-label-content {
+  padding: 0;
 }
