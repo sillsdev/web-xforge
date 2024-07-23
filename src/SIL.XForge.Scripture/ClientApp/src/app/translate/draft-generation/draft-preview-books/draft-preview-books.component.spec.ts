@@ -53,9 +53,12 @@ describe('DraftPreviewBooks', () => {
     env.getBookButtonAtIndex(0).querySelector('button')!.click();
     tick();
     env.fixture.detectChanges();
-    verify(mockedRouter.navigate(anything())).once();
-    const [url] = capture(mockedRouter.navigate).first();
+    verify(mockedRouter.navigate(anything(), anything())).once();
+    const [url, extras] = capture(mockedRouter.navigate).first();
     expect(url).toEqual(['/projects', 'project01', 'translate', 'GEN', '1']);
+    expect(extras).toEqual({
+      queryParams: { 'draft-active': true }
+    });
   }));
 
   it('does not apply draft if user cancels', fakeAsync(() => {
