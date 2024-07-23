@@ -127,6 +127,8 @@ export class DraftPreviewBooksComponent {
   }
 
   navigate(book: BookWithDraft): void {
-    this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]));
+    this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]), {
+      queryParams: { 'draft-active': true }
+    });
   }
 }
