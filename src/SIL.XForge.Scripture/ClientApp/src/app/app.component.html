@@ -50,20 +50,28 @@
           <mat-icon class="mirror-rtl">help</mat-icon>
         </button>
         <mat-menu #helpMenu="matMenu" class="help-menu">
-          <a mat-menu-item target="_blank" [href]="urls.helps">{{ t("help") }}</a>
-          <a mat-menu-item target="_blank" [href]="urls.manual">{{ t("manual") }}</a>
-          <a mat-menu-item target="_blank" [href]="urls.communityAnnouncementPage">{{ t("announcements") }}</a>
-          <a mat-menu-item target="_blank" [href]="urls.communitySupport">{{ t("community_support") }}</a>
+          <a mat-menu-item target="_blank" [href]="urls.helps"><mat-icon>help</mat-icon> {{ t("help") }}</a>
+          <a mat-menu-item target="_blank" [href]="urls.manual"><mat-icon>book</mat-icon> {{ t("manual") }}</a>
+          <a mat-menu-item target="_blank" [href]="urls.communityAnnouncementPage">
+            <mat-icon>campaign</mat-icon> {{ t("announcements") }}
+          </a>
+          <a mat-menu-item target="_blank" [href]="urls.communitySupport">
+            <mat-icon>forum</mat-icon> {{ t("community_support") }}
+          </a>
           <a mat-menu-item target="_blank" [href]="issueMailTo" class="report-issue">
+            <mat-icon>mail</mat-icon>
             <div>{{ t("report_issue") }}</div>
             <div class="mat-hint">{{ t("report_issue_email", { email: issueEmail }) }}</div>
           </a>
-          <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">{{ t("open_source_licenses") }}</a>
+          <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">
+            <mat-icon>copyright</mat-icon> {{ t("open_source_licenses") }}
+          </a>
           <button
             *ngIf="versionNumberClickCount >= 7 || featureFlags.showFeatureFlags.enabled"
             mat-menu-item
             (click)="openFeatureFlagDialog()"
           >
+            <mat-icon>flag</mat-icon>
             Feature flags
           </button>
           <mat-divider></mat-divider>
