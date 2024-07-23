@@ -128,13 +128,13 @@
         <div id="split-container" #splitContainer>
           <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
           <as-split
+            #splitter
             direction="vertical"
             unit="pixel"
             [disabled]="!questionsList.activeQuestionDoc"
             (dragEnd)="checkSliderPosition($event)"
             [useTransition]="true"
             [gutterSize]="showScriptureAudioPlayer ? 0 : 11"
-            (transitionEnd)="onSplitterResized()"
           >
             <!-- Splitter area sizes are controlled programmatically. -->
             <as-split-area size="*" [dir]="i18n.direction" [visible]="!hideChapterText" [order]="1">
@@ -150,6 +150,7 @@
                     [isRightToLeft]="isRightToLeft"
                     [class.hidden]="hideChapterText"
                     [projectDoc]="projectDoc"
+                    [containingElement]="splitter"
                   ></app-checking-text>
                 </div>
               </div>

@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { IOutputAreaSizes } from 'angular-split';
 import clone from 'lodash-es/clone';
 import isEqual from 'lodash-es/isEqual';
-import { fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -16,9 +17,10 @@ import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shar
   templateUrl: './checking-text.component.html',
   styleUrls: ['./checking-text.component.scss']
 })
-export class CheckingTextComponent extends SubscriptionDisposable {
+export class CheckingTextComponent extends SubscriptionDisposable implements AfterViewInit {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
+  @Input() containingElement?: { transitionEnd: Observable<IOutputAreaSizes> };
   @Input() isRightToLeft: boolean = false;
   @Input() fontSize?: string;
   @Input() projectDoc?: SFProjectProfileDoc;
@@ -32,6 +34,12 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   constructor(readonly fontService: FontService) {
     super();
+  }
+
+  ngAfterViewInit(): void {
+    this.subscribe(this.containingElement!.transitionEnd, () => {
+      this.scrollToVerse(this.activeVerse);
+    });
   }
 
   @Input() set placeholder(value: string) {
@@ -48,6 +56,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
     this._activeVerse = verseRef;
     this.highlightActiveVerse();
+    this.scrollToVerse(this.activeVerse);
   }
 
   get activeVerse(): VerseRef | undefined {
@@ -88,6 +97,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse();
+    // this.scrollToVerse(this.activeVerse);
   }
 
   setAudioTextRef(reference: string): void {
@@ -147,6 +157,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         this.id.chapterNum.toString(),
         verseStr
       );
+      this.scrollToVerse(verseRef);
       refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
     } else {
       refs.push(baseRef);
@@ -171,6 +182,23 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           }
         })
       );
+    }
+  }
+
+  private scrollToVerse(verseRef: VerseRef | undefined): void {
+    if (verseRef != null && this.textComponent != null) {
+      const firstSegment: string = this.textComponent.getVerseSegments(verseRef)[0];
+      const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
+      if (element != null) {
+        this.scrollTo(element.offsetTop - 20);
+      }
+    }
+  }
+
+  private scrollTo(y: number): void {
+    const editor: Element | undefined | null = this.textComponent?.editor?.container.querySelector('.ql-editor');
+    if (editor != null) {
+      editor.scrollTo({ top: y, behavior: 'smooth' });
     }
   }
 }
