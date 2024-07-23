@@ -1,30 +1,7 @@
 <ng-container *transloco="let t; read: 'translate_overview'">
   <div class="title mat-headline-4">{{ t("translate_overview") }}</div>
 
-  <app-notice
-    *ngIf="isPTUser && !fontService.isFontFullySupported(selectedFont ?? '')"
-    type="warning"
-    mode="fill-dark"
-    class="font-warning"
-  >
-    {{ t("warn_font_unsupported", { selectedFont, fallbackFont: fontService.fontFallback(selectedFont ?? "") }) }}
-    {{ t(isPtProject ? "change_font_or_contact_for_help" : "contact_for_help") }}
-  </app-notice>
-
-  <app-notice
-    *ngIf="isPTUser && fontService.isGraphiteFont(selectedFont ?? '')"
-    type="warning"
-    mode="fill-dark"
-    class="font-warning"
-  >
-    {{
-      t("warn_font_requires_graphite", {
-        selectedFont,
-        fallbackFont: fontService.nonGraphiteFallback(selectedFont ?? "")
-      })
-    }}
-    {{ t(isPtProject ? "change_font_or_contact_for_help" : "contact_for_help") }}
-  </app-notice>
+  <app-font-unsupported-message *ngIf="isPTUser"></app-font-unsupported-message>
 
   <div class="card-wrapper">
     <mat-card class="books-card">
