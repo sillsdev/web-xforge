@@ -41,4 +41,8 @@ export class ExternalUrlService {
   get chapterAudioHelpPage(): string {
     return this.helps + '/community-checking#fd31ef9b6d74417099996e7dadb5068e';
   }
+
+  get graphite(): string {
+    return 'https://graphite.sil.org/';
+  }
 }

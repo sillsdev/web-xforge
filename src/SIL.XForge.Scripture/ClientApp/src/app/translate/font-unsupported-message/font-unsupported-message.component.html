@@ -1,0 +1,26 @@
+<ng-container *transloco="let t; read: 'font_unsupported_message'">
+  <app-notice
+    *ngIf="showUnsupportedFontWarning || showGraphiteWarning"
+    type="warning"
+    mode="fill-dark"
+    class="font-warning"
+  >
+    <ng-container *ngFor="let portion of i18n.interpolateVariables(warningI18nKey, { selectedFont, fallbackFont })">
+      <strong *ngIf="portion.id != null && portion.id !== 'graphite'">{{ portion.text }}</strong>
+      <a
+        *ngIf="portion.id === 'graphite'"
+        [href]="externalUrlService.graphite"
+        target="_blank"
+        rel="noopener noreferrer"
+        >{{ t("graphite") }}</a
+      >{{ portion.id == null ? portion.text : "" }}</ng-container
+    >
+
+    <ng-container *ngFor="let portion of i18n.interpolate(suggestedRemedyI18nKey)">
+      <a *ngIf="portion.id === 1" [href]="issueMailTo" target="_blank" rel="noopener noreferrer">
+        {{ portion.text }}
+      </a>
+      {{ portion.id == null ? portion.text : "" }}
+    </ng-container>
+  </app-notice>
+</ng-container>
