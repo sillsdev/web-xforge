@@ -1,5 +1,4 @@
-import { DestroyRef, Injectable } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef, Injectable, OnDestroy } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
@@ -123,7 +122,7 @@ class SegmentInfo {
  * See text.component.spec.ts for some unit tests.
  */
 @Injectable()
-export class TextViewModel {
+export class TextViewModel implements OnDestroy {
   editor?: Quill;
 
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
@@ -182,6 +181,10 @@ export class TextViewModel {
     return this.embeddedElementPositions(Array.from(this._embeddedElements.values()));
   }
 
+  ngOnDestroy(): void {
+    this.unbind();
+  }
+
   /** Associate the existing editor to a (single) specific textdoc. */
   bind(textDocId: TextDocId, textDoc: TextDoc, subscribeToUpdates: boolean): void {
     const editor = this.checkEditor();
@@ -195,15 +198,16 @@ export class TextViewModel {
     editor.history.clear();
 
     if (subscribeToUpdates) {
-      this.changesSub = merge(this.textDocService.getLocalSystemChanges$(textDocId), this.textDoc.remoteChanges$)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(ops => {
-          const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
-          editor.updateContents(deltaWithEmbeds, 'api');
-        });
+      this.changesSub = merge(
+        this.textDocService.getLocalSystemChanges$(textDocId),
+        this.textDoc.remoteChanges$
+      ).subscribe(ops => {
+        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
+        editor.updateContents(deltaWithEmbeds, 'api');
+      });
     }
 
-    this.onCreateSub = this.textDoc.create$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
         editor.setContents(textDoc.data as DeltaStatic);
       }

@@ -226,7 +226,7 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
             takeUntil(this.tabsConsolidated$.pipe(filter(consolidated => !consolidated))),
             takeUntilDestroyed(this.destroyRef)
           )
-          .subscribe(({ tabs }) => {
+          .subscribe(({ tabs, selectedAddTab }) => {
             const deconsolidationGroupTabs: readonly T[] = this.tabsToDeconsolidate!.get(group.groupId)!;
             const lastTab: T = deconsolidationGroupTabs[deconsolidationGroupTabs.length - 1];
             const updatedConsolidatedTabs: T[] = [...intoGroup.tabs];
@@ -243,7 +243,9 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
             group.setTabs(group.tabs.filter(t => !tabs.includes(t)));
 
             // Update selected index if necessary
-            if (intoGroup.selectedIndex >= insertAt) {
+            if (selectedAddTab != null) {
+              intoGroup.selectedIndex = updatedConsolidatedTabs.indexOf(selectedAddTab);
+            } else if (intoGroup.selectedIndex >= insertAt) {
               intoGroup.selectedIndex += tabs.length;
             }
 
