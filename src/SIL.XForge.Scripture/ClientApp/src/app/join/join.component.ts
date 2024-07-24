@@ -193,7 +193,7 @@ export class JoinComponent extends DataLoadingComponent {
     } else if (error instanceof CommandError) {
       knownErrorCode = this.getKnownErrorCode(error.message);
     }
-    knownErrorCode == null ? this.errorHandler.handleError(error) : this.showJoinError(knownErrorCode);
+    knownErrorCode == null ? this.errorHandler.handleError(error) : await this.showJoinError(knownErrorCode);
   }
 
   private getKnownErrorCode(code: any): ObjectPaths<typeof en.join> | undefined {
