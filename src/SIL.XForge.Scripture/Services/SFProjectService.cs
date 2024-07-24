@@ -251,7 +251,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 throw new ForbiddenException();
 
             ptProjectId = projectDoc.Data.ParatextId;
-            // delete the project first, so that users get notified about the deletion
             string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
             if (FileSystemService.DirectoryExists(projectDir))
                 FileSystemService.DeleteDirectory(projectDir);
