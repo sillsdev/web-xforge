@@ -9,9 +9,21 @@
 }
 
 mat-button-toggle {
-  --mat-standard-button-toggle-divider-color: transparent;
+  border-inline-start-width: 0 !important;
+}
+
+.book-name ::ng-deep .mat-button-toggle-label-content {
+  padding-inline-end: 4px;
 }
 
 .book-more ::ng-deep .mat-button-toggle-label-content {
   padding: 0;
+}
+
+mat-button-toggle-group
+  mat-button-toggle:first-child:hover
+  + mat-button-toggle
+  ::ng-deep
+  .mat-button-toggle-focus-overlay {
+  opacity: var(--mat-standard-button-toggle-hover-state-layer-opacity);
 }
