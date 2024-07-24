@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 export class TabGroup<TKey, T> {
   selectedIndex: number = 0;
 
-  tabsAdded$ = new Subject<{ tabs: T[] }>();
+  tabsAdded$ = new Subject<{ tabs: T[]; selectedAddTab?: T }>();
   tabRemoved$ = new Subject<{ index: number; tab: T }>();
 
   constructor(readonly groupId: TKey, public tabs: ReadonlyArray<T> = []) {}
@@ -24,7 +24,8 @@ export class TabGroup<TKey, T> {
       this.selectedIndex = this.tabs.length - 1;
     }
 
-    this.tabsAdded$.next({ tabs: [tab] });
+    // Only emit the selectedAddTab property if it is defined
+    this.tabsAdded$.next({ tabs: [tab], ...(selectTab ? { selectedAddTab: tab } : {}) });
   }
 
   removeTab(index: number): void {
