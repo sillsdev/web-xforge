@@ -37,6 +37,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseStrFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
@@ -813,7 +814,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.saveAnswer(answerAction.answer!, answerAction.questionDoc);
         break;
       case 'play-audio':
-        this.scripturePanel!.activeVerse = this.activeQuestionVerseRef;
+        break;
     }
     this.calculateScriptureSliderPosition(true);
   }
@@ -1020,11 +1021,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.calculateScriptureSliderPosition();
   }
 
-  handleAudioTextRefChanged(segmentRef: string): void {
+  /**
+   * Highlight segments based off of a base verse reference. If the reference is verse_1_3, this will
+   * highlight verse_1_3, verse_1_3/p1, verse_1_3/p2, etc.
+   */
+  highlightSegments(segmentRef: string): void {
     if (!this.isAudioPlaying()) {
       return;
     }
-    this.scripturePanel!.setAudioTextRef(segmentRef);
+
+    const verseStr: string | undefined = getVerseStrFromSegmentRef(segmentRef);
+    if (verseStr) {
+      const verseRef: VerseRef = new VerseRef(Canon.bookNumberToId(this.book!), this.chapter!.toString(), verseStr);
+      this.scripturePanel!.activeVerse = verseRef;
+    }
   }
 
   isAudioPlaying(): boolean {
@@ -1032,7 +1042,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   hideChapterAudio(): void {
-    this.showScriptureAudioPlayer = this.hideChapterText;
+    this.toggleAudio(true);
   }
 
   toggleAudio(forceStopAndHide: boolean = false): void {
@@ -1046,6 +1056,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         : forceStopAndHide
         ? false
         : !this.showScriptureAudioPlayer;
+
+    if (this.scripturePanel === undefined) return;
+
+    if (this.showScriptureAudioPlayer) {
+      this.scripturePanel.activeVerse = undefined;
+    } else {
+      this.scripturePanel.activeVerse = this.activeQuestionVerseRef;
+    }
   }
 
   /**

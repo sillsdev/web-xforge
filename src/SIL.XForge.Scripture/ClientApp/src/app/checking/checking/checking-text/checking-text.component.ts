@@ -1,16 +1,15 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
-import { Canon, VerseRef } from '@sillsdev/scripture';
+import { VerseRef } from '@sillsdev/scripture';
 import { IOutputAreaSizes } from 'angular-split';
 import clone from 'lodash-es/clone';
-import isEqual from 'lodash-es/isEqual';
 import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
-import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shared/utils';
+import { verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
   selector: 'app-checking-text',
@@ -20,14 +19,13 @@ import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shar
 export class CheckingTextComponent extends SubscriptionDisposable implements AfterViewInit {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
-  @Input() containingElement?: { transitionEnd: Observable<IOutputAreaSizes> };
+  @Input() resizableContainer?: { transitionEnd: Observable<IOutputAreaSizes> };
   @Input() isRightToLeft: boolean = false;
   @Input() fontSize?: string;
   @Input() projectDoc?: SFProjectProfileDoc;
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
-  private _editorLoaded = false;
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
@@ -37,9 +35,11 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.containingElement!.transitionEnd, () => {
-      this.scrollToVerse(this.activeVerse);
-    });
+    if (this.resizableContainer) {
+      this.subscribe(this.resizableContainer.transitionEnd, () => {
+        this.scrollToVerse(this.activeVerse);
+      });
+    }
   }
 
   @Input() set placeholder(value: string) {
@@ -55,26 +55,21 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
       return;
     }
     this._activeVerse = verseRef;
-    this.highlightActiveVerse();
-    this.scrollToVerse(this.activeVerse);
+    if (verseRef !== undefined) {
+      this.highlightActiveVerse();
+      this.scrollToVerse(this.activeVerse);
+    } else {
+      this.textComponent.highlight([]);
+      this.scrollTo(0);
+    }
   }
 
   get activeVerse(): VerseRef | undefined {
     return this._activeVerse;
   }
 
-  get isEditorLoaded(): boolean {
-    return this._editorLoaded;
-  }
-
   @Input() set id(textDocId: TextDocId | undefined) {
     if (textDocId) {
-      if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
-        this._editorLoaded = false;
-      }
-      if (this._activeVerse != null && this._id != null && !isEqual(this._id, textDocId)) {
-        this.activeVerse = undefined;
-      }
       this._id = textDocId;
     }
   }
@@ -94,14 +89,13 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
   }
 
   onLoaded(): void {
-    this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse();
-    // this.scrollToVerse(this.activeVerse);
+    this.scrollToVerse(this.activeVerse);
   }
 
-  setAudioTextRef(reference: string): void {
-    this.highlightSegments(reference);
+  private get isEditorLoaded(): boolean {
+    return this.textComponent.editor != null;
   }
 
   private get questionVersesInCurrentText(): VerseRef[] {
@@ -137,31 +131,6 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
 
     const refs: string[] =
       this._activeVerse != null ? this.textComponent.getVerseSegmentsNoHeadings(this._activeVerse) : [];
-    this.textComponent.highlight(refs);
-  }
-
-  /**
-   * Highlight segments based off of a base verse reference. If the reference is verse_1_3, this will
-   * highlight verse_1_3, verse_1_3/p1, verse_1_3/p2, etc.
-   */
-  private highlightSegments(baseRef: string): void {
-    if (!this.isEditorLoaded || this.id == null) {
-      return;
-    }
-
-    let refs: string[] = [];
-    const verseStr: string | undefined = getVerseStrFromSegmentRef(baseRef);
-    if (verseStr != null) {
-      const verseRef: VerseRef = new VerseRef(
-        Canon.bookNumberToId(this.id.bookNum),
-        this.id.chapterNum.toString(),
-        verseStr
-      );
-      this.scrollToVerse(verseRef);
-      refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
-    } else {
-      refs.push(baseRef);
-    }
     this.textComponent.highlight(refs);
   }
 

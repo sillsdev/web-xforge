@@ -150,7 +150,7 @@
                     [isRightToLeft]="isRightToLeft"
                     [class.hidden]="hideChapterText"
                     [projectDoc]="projectDoc"
-                    [containingElement]="splitter"
+                    [resizableContainer]="splitter"
                   ></app-checking-text>
                 </div>
               </div>
@@ -187,7 +187,7 @@
                   [timing]="chapterTextAudioTiming"
                   [textDocId]="textDocId"
                   [canClose]="!hideChapterText"
-                  (currentVerseChanged)="handleAudioTextRefChanged($event)"
+                  (currentVerseChanged)="highlightSegments($event)"
                   (closed)="hideChapterAudio()"
                 ></app-checking-scripture-audio-player>
               </div>
