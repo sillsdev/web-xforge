@@ -6,7 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
-import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -24,7 +24,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { JoinComponent } from './join.component';
+import { JoinComponent, KNOWN_ERROR_CODES } from './join.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedAnonymousService = mock(AnonymousService);
@@ -174,6 +174,25 @@ describe('JoinComponent', () => {
       verify(mockedDialogService.message(anything())).once();
       verify(mockedErrorHandler.handleError(anything())).never();
       verify(mockedLocationService.go('/')).once();
+      expect().nothing();
+    }));
+
+    it('redirect to home when using an invalid share link', fakeAsync(() => {
+      for (const errorCode of KNOWN_ERROR_CODES) {
+        resetCalls(mockedDialogService);
+        resetCalls(mockedLocationService);
+        const errorMessage = `Error invoking joinWithShareKey ${errorCode}`;
+        const callback = (_: TestEnvironment): void => {
+          when(mockedAnonymousService.checkShareKey(anything())).thenReject(
+            new CommandError(CommandErrorCode.NotFound, errorMessage)
+          );
+        };
+        new TestEnvironment({ callback });
+
+        verify(mockedDialogService.message(anything())).once();
+        verify(mockedErrorHandler.handleError(anything())).never();
+        verify(mockedLocationService.go('/')).once();
+      }
       expect().nothing();
     }));
 

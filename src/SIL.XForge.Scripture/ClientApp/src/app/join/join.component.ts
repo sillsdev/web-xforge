@@ -6,6 +6,7 @@ import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { CommandError } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -14,7 +15,6 @@ import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { CommandError } from 'xforge-common/command.service';
 import { ObjectPaths } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
 
@@ -25,6 +25,15 @@ export interface AnonymousShareKeyDetails {
 export interface AnonymousShareKeyResponse extends AnonymousShareKeyDetails {
   shareKey: string;
 }
+
+export const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
+  'error_occurred_login',
+  'key_already_used',
+  'key_expired',
+  'max_users_reached',
+  'role_not_found',
+  'project_link_is_invalid'
+];
 
 @Component({
   selector: 'app-join',
@@ -178,23 +187,22 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   private async handleJoiningError(error: any): Promise<void> {
-    const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
-      'error_occurred_login',
-      'key_already_used',
-      'key_expired',
-      'max_users_reached',
-      'role_not_found',
-      'project_link_is_invalid'
-    ];
-
-    const isKnownJoinError = (code: any): code is ObjectPaths<typeof en.join> => KNOWN_ERROR_CODES.includes(code);
-
-    if (error instanceof HttpErrorResponse && isKnownJoinError(error.error)) {
-      await this.showJoinError(error.error);
-    } else if (error instanceof CommandError && isKnownJoinError(error.message)) {
-      await this.showJoinError(error.message);
-    } else {
-      await this.errorHandler.handleError(error);
+    let knownErrorCode: ObjectPaths<typeof en.join> | undefined;
+    if (error instanceof HttpErrorResponse) {
+      knownErrorCode = this.getKnownErrorCode(error.error);
+    } else if (error instanceof CommandError) {
+      knownErrorCode = this.getKnownErrorCode(error.message);
     }
+    knownErrorCode == null ? this.errorHandler.handleError(error) : this.showJoinError(knownErrorCode);
+  }
+
+  private getKnownErrorCode(code: any): ObjectPaths<typeof en.join> | undefined {
+    if (KNOWN_ERROR_CODES.includes(code)) return code;
+    if (typeof code === 'string') {
+      for (const knownCode of KNOWN_ERROR_CODES) {
+        if (code.match(knownCode)) return knownCode;
+      }
+    }
+    return undefined;
   }
 }
