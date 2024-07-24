@@ -288,7 +288,7 @@ describe('TabStateService', () => {
         expect(service['tabsToDeconsolidate']?.get('source')).toEqual(sourceTabs.slice(0, 3));
       });
 
-      it('should add tab to restore list and consolidated group when tabs are added after consolidation and before deconsolidation', () => {
+      it('should add tabs to restore list and consolidated group when tabs are added after consolidation and before deconsolidation', () => {
         const tabsToAdd = [
           { type: 'type-c', headerText: 'added source Source Header 5', closeable: true, movable: true },
           { type: 'type-c', headerText: 'added source Source Header 6', closeable: true, movable: true }
@@ -302,6 +302,17 @@ describe('TabStateService', () => {
         expect(service['groups'].get('source')?.tabs).toEqual([]);
         expect(service['groups'].get('target')?.tabs).toEqual([...sourceTabs, ...tabsToAdd, ...targetTabs]);
         expect(service['groups'].get('target')?.selectedIndex).toEqual(selectedIndex + tabsToAdd.length);
+      });
+
+      it('should select added tab when tab with selection is added after consolidation and before deconsolidation', () => {
+        const tabToAdd = { type: 'type-c', headerText: 'added source Source Header 5', closeable: true, movable: true };
+
+        service.consolidateTabGroups('target');
+        service['groups'].get('source')?.addTab(tabToAdd);
+        const targetGroup = service['groups'].get('target');
+
+        expect(service['tabsToDeconsolidate']?.get('source')).toEqual(sourceTabs.concat(tabToAdd));
+        expect(targetGroup?.selectedIndex).toEqual(targetGroup?.tabs.indexOf(tabToAdd));
       });
 
       it('should deconsolidate tab groups', () => {
