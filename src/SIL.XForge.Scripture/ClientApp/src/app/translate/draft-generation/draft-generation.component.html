@@ -5,7 +5,10 @@
   </h1>
 
   <section>
-    <div *ngIf="isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild">
+    <div
+      *ngIf="isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild"
+      class="drafting-instructions"
+    >
       <div *ngIf="isBackTranslationMode">
         <p>
           <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
@@ -306,6 +309,39 @@
 
           <ng-container *ngIf="isPreviewSupported">
             <ng-container *ngIf="draftJob != null">
+              <section *ngIf="isDraftQueued(draftJob)">
+                <h3>{{ t("draft_queued_header") }}</h3>
+
+                <p *ngIf="!hasDraftQueueDepth(draftJob)">{{ t("draft_queued_detail") }}</p>
+                <p *ngIf="hasDraftQueueDepth(draftJob)">
+                  {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
+                </p>
+                <app-working-animated-indicator></app-working-animated-indicator>
+
+                <div class="button-strip">
+                  <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+                    <mat-icon>highlight_off</mat-icon>
+                    {{ t("cancel_generation_button") }}
+                  </button>
+                </div>
+              </section>
+
+              <section *ngIf="isDraftActive(draftJob)" class="progress-active">
+                <h3>{{ t("draft_active_header") }}</h3>
+
+                <div class="progress-text">
+                  <p>{{ t("draft_active_detail", { count: 8 }) }}</p>
+                </div>
+                <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
+
+                <div class="button-strip">
+                  <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+                    <mat-icon>highlight_off</mat-icon>
+                    {{ t("cancel_generation_button") }}
+                  </button>
+                </div>
+              </section>
+
               <section *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild" class="draft-complete">
                 <mat-card>
                   <mat-card-header>
@@ -350,39 +386,6 @@
                     </button>
                   </mat-card-actions>
                 </mat-card>
-              </section>
-
-              <section *ngIf="isDraftQueued(draftJob)">
-                <h3>{{ t("draft_queued_header") }}</h3>
-
-                <p *ngIf="!hasDraftQueueDepth(draftJob)">{{ t("draft_queued_detail") }}</p>
-                <p *ngIf="hasDraftQueueDepth(draftJob)">
-                  {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
-                </p>
-                <app-working-animated-indicator></app-working-animated-indicator>
-
-                <div class="button-strip">
-                  <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-                    <mat-icon>highlight_off</mat-icon>
-                    {{ t("cancel_generation_button") }}
-                  </button>
-                </div>
-              </section>
-
-              <section *ngIf="isDraftActive(draftJob)" class="progress-active">
-                <h3>{{ t("draft_active_header") }}</h3>
-
-                <div class="progress-text">
-                  <p>{{ t("draft_active_detail", { count: 8 }) }}</p>
-                </div>
-                <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
-
-                <div class="button-strip">
-                  <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-                    <mat-icon>highlight_off</mat-icon>
-                    {{ t("cancel_generation_button") }}
-                  </button>
-                </div>
               </section>
             </ng-container>
           </ng-container>
