@@ -14,11 +14,7 @@ import { SFProjectService } from './sf-project.service';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
-  constructor(
-    private readonly userService: UserService,
-    private readonly projectService: SFProjectService,
-    private readonly paratextService: ParatextService
-  ) {}
+  constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {}
 
   canAccessCommunityChecking(project: SFProjectProfileDoc, userId?: string): boolean {
     if (project.data == null) return false;
@@ -73,7 +69,7 @@ export class PermissionsService {
     const role: string = projectDoc.data.userRoles[userId ?? this.userService.currentUserId];
 
     // Any paratext user role can sync DBL resources
-    if (this.paratextService.isResource(projectDoc.data.paratextId)) {
+    if (ParatextService.isResource(projectDoc.data.paratextId)) {
       return isParatextRole(role);
     }
 

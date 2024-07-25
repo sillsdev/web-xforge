@@ -90,7 +90,7 @@ describe('SaUsersComponent', () => {
     expect(env.cellDisplayName(0, 1).innerText).toEqual('Test user 1');
     expect(env.cellName(0, 1).innerText).toEqual('Name of test user 1');
     expect(env.cellProjectLink(0, 2).text).toEqual('Project 01');
-    expect(env.removeUserButtonOnRow(0)).not.toBeNull();
+    expect(env.removeUserButtonOnRow(0)).toBeNull();
 
     expect(env.cellDisplayName(1, 1).innerText).toEqual('Test user 2');
     expect(env.cellName(1, 1).innerText).toEqual('Name of test user 2');
@@ -191,7 +191,7 @@ class TestEnvironment {
       const query = await this.realtimeService.onlineQuery<TestProjectDoc>(TestProjectDoc.COLLECTION, {});
       return query.docs;
     });
-
+    when(mockedUserService.currentUserId).thenReturn('user01');
     this.fixture = TestBed.createComponent(SaUsersComponent);
     this.component = this.fixture.componentInstance;
   }

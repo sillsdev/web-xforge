@@ -167,11 +167,10 @@ header {
 }
 
 .mat-toolbar .mat-mdc-icon-button {
-  width: 50px;
-  height: 50px;
+  margin-inline: 5px;
 
   &.user-menu-btn {
-    padding: 8px;
+    padding: 0 !important;
 
     .install-badge {
       position: absolute;
@@ -240,4 +239,32 @@ header {
   width: 100px;
   text-align: center;
   z-index: 10;
+}
+
+#sf-logo-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-name-wrapper {
+  display: flex;
+  flex-direction: column;
+  line-height: 1em;
+  max-width: 20em;
+  min-width: 0;
+  margin-inline-start: 4px;
+
+  .project-name {
+    font-size: 0.8em;
+  }
+
+  .project-short-name {
+    font-size: 0.6em;
+  }
+
+  > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

@@ -43,7 +43,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     protected IFileSystemService FileSystemService { get; }
     protected abstract string ProjectAdminRole { get; }
 
-    public async Task AddUserAsync(string curUserId, string projectId, string projectRole)
+    public async Task AddUserAsync(string curUserId, string projectId, string? projectRole)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
@@ -57,7 +57,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
                 throw new ForbiddenException();
         }
 
-        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole!);
     }
 
     /// <summary>
@@ -160,6 +160,16 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[idOfUserToUpdate], projectRole));
     }
 
+    /// <summary>
+    /// Saves the audio data to the file system, performing MP3 conversion if necessary
+    /// </summary>
+    /// <param name="curUserId">The user identifier</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="dataId">The data identifier.</param>
+    /// <param name="path">The path to the temporary file.</param>
+    /// <returns>The relative URL to the file.</returns>
+    /// <exception cref="ForbiddenException">The user does not have access to upload.</exception>
+    /// <exception cref="FormatException">The data id is not the correct format.</exception>
     public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string path)
     {
         if (!StringUtils.ValidateId(dataId))
@@ -203,8 +213,8 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         }
         string outputFileName = Path.GetFileName(outputPath);
         var uri = new Uri(
-            SiteOptions.Value.Origin,
-            $"assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}"
+            $"/assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}",
+            UriKind.Relative
         );
         return uri;
     }

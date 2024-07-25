@@ -117,6 +117,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.icon-button-theme($material-app-theme);
 @include mat.button-theme($material-app-theme);
 @include mat.button-toggle-theme($material-app-theme);
+@include mat.icon-button-density(-2);
 @include mat.card-theme($material-app-theme);
 @include mat.checkbox-theme($material-app-theme);
 @include mat.chips-theme($material-app-theme);
@@ -124,6 +125,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.dialog-typography($dialog-typography);
 @include mat.divider-theme($material-app-theme);
 @include mat.expansion-theme($material-app-theme);
+@include mat.fab-theme($material-app-theme);
 @include mat.form-field-theme($material-theme-accent-error);
 @include mat.icon-theme($material-app-theme);
 @include mat.input-theme($material-app-theme);

@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
+import { firstValueFrom } from 'rxjs';
 import versionData from '../../../version.json';
 import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import { environment } from '../environments/environment';
@@ -232,7 +233,7 @@ export class ExceptionHandlingService {
         // Don't show a dialog if this is a silent error that we just want sent to Bugsnag
         if (!silently) {
           const stack = hasStringProp(error, 'stack') ? error.stack : undefined;
-          this.handleAlert(ngZone, dialogService, { message, stack, eventId });
+          await this.handleAlert(ngZone, dialogService, { message, stack, eventId });
         }
       } finally {
         // add the pwa installed status here at the moment of reporting an error since the app can be
@@ -256,26 +257,24 @@ export class ExceptionHandlingService {
     });
   }
 
-  private handleAlert(ngZone: NgZone, dialogService: DialogService, error: ErrorAlertData): void {
+  private async handleAlert(ngZone: NgZone, dialogService: DialogService, error: ErrorAlertData): Promise<void> {
     if (!this.alertQueue.some(alert => alert.message === error.message)) {
       this.alertQueue.unshift(error);
-      this.showAlert(ngZone, dialogService);
+      await this.showAlert(ngZone, dialogService);
     }
   }
 
-  private showAlert(ngZone: NgZone, dialogService: DialogService): void {
+  private async showAlert(ngZone: NgZone, dialogService: DialogService): Promise<void> {
     if (!this.dialogOpen && this.alertQueue.length) {
-      ngZone.run(() => {
+      await ngZone.run(async () => {
         this.dialogOpen = true;
         const dialogRef = dialogService.openMatDialog(ErrorDialogComponent, {
-          autoFocus: false,
           data: this.alertQueue[this.alertQueue.length - 1]
         });
-        dialogRef.afterClosed().subscribe(() => {
-          this.alertQueue.pop();
-          this.dialogOpen = false;
-          this.showAlert(ngZone, dialogService);
-        });
+        await firstValueFrom(dialogRef.afterClosed());
+        this.alertQueue.pop();
+        this.dialogOpen = false;
+        await this.showAlert(ngZone, dialogService);
       });
     }
   }

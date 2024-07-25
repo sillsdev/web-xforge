@@ -1,25 +1,33 @@
 @use 'src/material-styles';
 
-:host {
-  display: block;
+::ng-deep .mdc-list-item__primary-text {
+  width: 100%;
+}
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  --mat-option-selected-state-layer-color: rgba(0, 0, 0, 0.12);
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    flex-grow: 1;
+  }
+
+  mat-icon {
+    margin: 0;
+  }
 }
 
 .toolbar {
   display: flex;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 
-  .history-select {
-    @include material-styles.dense_mat_select();
-  }
-
-  mat-form-field {
-    height: auto;
-  }
-
-  button {
-    margin-left: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+.history-select {
+  @include material-styles.dense_mat_select();
 }

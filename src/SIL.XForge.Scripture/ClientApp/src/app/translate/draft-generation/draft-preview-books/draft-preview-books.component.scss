@@ -2,4 +2,35 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+
+  .draft-book-option {
+    display: flex;
+    align-items: center;
+    border: 1px solid lightgray;
+    border-radius: 4px;
+    padding: 4px 0 4px 8px;
+
+    .book-more {
+      padding: 0;
+    }
+  }
+
+  .book-name {
+    ::ng-deep span {
+      line-height: 36px;
+      font-weight: 500;
+    }
+  }
+
+  .book-more {
+    border-left: none !important;
+
+    &.mat-button-toggle-checked {
+      background-color: white;
+    }
+    ::ng-deep span {
+      line-height: 36px;
+      padding: 0 6px;
+    }
+  }
 }

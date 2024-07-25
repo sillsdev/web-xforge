@@ -75,6 +75,7 @@ mat-nav-list .mdc-list-item {
   font-size: 1.4rem;
   inset-inline-end: -7px;
   top: -7px;
+  width: auto; // Fixes broken badge icon in Firefox
 }
 
 .navigation-header {

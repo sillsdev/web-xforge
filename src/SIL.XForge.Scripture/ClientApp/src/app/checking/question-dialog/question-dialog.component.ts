@@ -226,8 +226,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     }
 
     const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBookId, rangeStart },
-      autoFocus: false
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBookId, rangeStart }
     };
 
     const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<

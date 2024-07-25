@@ -22,7 +22,6 @@
     "password_reset_email_sent": "Kami baru saja mengirimi Anda surel untuk mengatur ulang kata sandi Anda.",
     "product_version": "Versi produk: v{{ version }}",
     "project_has_been_deleted": "Proyek telah dihapus atau tidak dapat diakses lagi.",
-    "project_home": "Beranda Proyek",
     "questions_answers": "Pertanyaan & jawaban",
     "redirecting_in_moments": "Mengalihkan dalam beberapa saat...",
     "refresh": "Muat Ulang",
@@ -203,6 +202,9 @@
     "save_answer": "Simpan Jawaban",
     "select_verses": "Pilih ayat-ayat",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
+    "tooltip_attach": "Attach scripture",
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Ekspor ke Paratext jika dikonfigurasi di Pengaturan",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
     "your_answer": "Jawaban Anda"
@@ -217,6 +219,7 @@
     "drag_and_drop_files": "Seret dan letakkan berkas suara dan pengaturan waktu di sini",
     "drag_and_drop_or_browse": "ATAU",
     "from_timing_past_to_timing": "Satu atau lebih nilai akhir berakhir sebelum nilai awalnya.",
+    "help": "Bantuan",
     "no_audio_file_uploaded": "Tidak ada berkas suara yang diunggah",
     "no_timing_data_uploaded": "Tidak ada data waktu yang diunggah",
     "not_upload_audio_offline": "File audio tidak dapat diunggah tanpa terhubung ke internet.",
@@ -270,7 +273,8 @@
     "my_progress": "Kemajuan Saya",
     "project_stats": "Statistik proyek",
     "questions": "Pertanyaan",
-    "some_actions_unavailable_offline": "Beberapa tindakan tidak tersedia saat luring dan memerlukan hubungan ke internet, seperti mengunggah atau menghapus pasal berkas suara."
+    "some_actions_unavailable_offline": "Beberapa tindakan tidak tersedia saat luring dan memerlukan hubungan ke internet, seperti mengunggah atau menghapus pasal berkas suara.",
+    "tooltip_edit": "Sunting"
   },
   "checking_questions": {
     "listen_to_question": "Dengarkan pertanyaannya untuk {{ referenceForDisplay }}",
@@ -348,8 +352,23 @@
     "cancel": "Batal",
     "close": "Tutup"
   },
-  "navigation-project_selector": {
-    "connect_project": "Menghubungkan proyek"
+  "my_projects": {
+    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected": "Connected",
+    "dbl_resource": "Digital Bible Library resource",
+    "dbl_resources": "Digital Bible Library resources",
+    "drafting": "Drafting",
+    "join": "Gabung",
+    "loading_more_pt_projects": "Loading additional Paratext projects ...",
+    "looking_for_another_project": "Looking for another project?",
+    "my_projects": "My projects",
+    "no_projects": "You have no projects.",
+    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
+    "not_connected": "Not connected",
+    "offline": "You will need to connect to the internet to get started with a project.",
+    "open": "Open",
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Pilih Kitab",
@@ -389,22 +408,26 @@
     "anyone_can": "Siapa pun yang memiliki tautan tersebut dapat",
     "change": "ganti",
     "copy_link": "Salin tautan",
+    "days_seven": "7 days",
+    "days_fourteen": "14 days",
+    "days_thirty": "30 days",
+    "days_ninety": "90 days",
+    "days_threesixtyfive": "1 year",
+    "error_language": "Please select a language",
+    "expiration_description": "Change the lifetime of the link",
     "invitation_language": "Mengubah bahasa undangan",
     "invitation_link_type": "Mengubah cara penggunaan tautan",
     "invitation_role": "Mengubah peran undangan",
     "invitation_shared_in_language": "Undangan akan dibagikan di",
     "link_can_be_used_by": "Tautan dapat digunakan oleh",
     "link_sharing_not_available_offline": "Mengundang pengguna dengan berbagi tautan tidak tersedia saat luring.",
-    "recipient": "Hanya penerima",
-    "recipient_can": "Hanya penerima yang dapat",
-    "recipient_only_notice": "Setiap tautan hanya dapat digunakan satu kali dan akan kedaluwarsa setelah 14 hari. Klik tombol sekali lagi untuk membuat dan membagikan tautan baru.",
+    "recipient": "One recipient",
+    "recipient_can": "The recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after {{ shareExpiration }} days. Click the button again to generate and share a new link.",
     "share": "Bagikan",
     "share_project": "Bagikan {{ project }}",
-    "share_with_others": "Bagikan dengan orang lain"
-  },
-  "start": {
-    "connect_project": "Menghubungkan proyek",
-    "not_connected_to_any_projects": "Sepertinya Anda belum terhubung di proyek apapun."
+    "share_with_others": "Bagikan dengan orang lain",
+    "will_expire_in": "Link expires in [b]{{ count }} days[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "Perekaman audio tidak didukung di browser/peramban ini.",

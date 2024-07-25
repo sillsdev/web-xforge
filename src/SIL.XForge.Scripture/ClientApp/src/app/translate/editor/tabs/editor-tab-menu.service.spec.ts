@@ -3,7 +3,7 @@ import { invert } from 'lodash-es';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of, take } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -24,7 +24,7 @@ let service: EditorTabMenuService;
 const userServiceMock = mock(UserService);
 const activatedProjectMock = mock(ActivatedProjectService);
 const draftGenerationServiceMock = mock(DraftGenerationService);
-const tabStateMock = mock(TabStateService);
+const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockAuthService = mock(AuthService);
 
@@ -115,6 +115,27 @@ describe('EditorTabMenuService', () => {
     });
   });
 
+  it('should get "project-resources" and "history", and not "draft" on resource projects', done => {
+    const projectDoc = {
+      id: 'resource01',
+      data: createTestProjectProfile({ paratextId: 'resource16char01', userRoles: TestEnvironment.rolesByUser })
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment(projectDoc);
+    env.setExistingTabs([]);
+    service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
+
+    verify(draftGenerationServiceMock.getLastCompletedBuild(anything())).never();
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(2);
+      expect(items[0].type).toBe('history');
+      expect(items[0].disabled).toBeFalsy();
+      expect(items[1].type).toBe('project-resource');
+      expect(items[1].disabled).toBeFalsy();
+      done();
+    });
+  });
+
   it('should get no menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
@@ -176,6 +197,19 @@ describe('EditorTabMenuService', () => {
         expect(service['canShowHistory'](env.projectDoc)).toBe(isParatextRole(role));
       });
     });
+
+    it('should return false if project is resource', () => {
+      const env = new TestEnvironment();
+      expect(service['canShowHistory'](env.projectDoc)).toBe(true);
+      const resourceProjectDoc = {
+        id: 'resource01',
+        data: createTestProjectProfile({
+          paratextId: 'resourceid16char',
+          userRoles: { user01: SFProjectRole.ParatextObserver }
+        })
+      } as SFProjectProfileDoc;
+      expect(service['canShowHistory'](resourceProjectDoc)).toBe(false);
+    });
   });
 
   describe('canShowResource', () => {
@@ -189,9 +223,7 @@ describe('EditorTabMenuService', () => {
 });
 
 class TestEnvironment {
-  readonly onlineStatus: TestOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
-
-  readonly rolesByUser = {
+  static readonly rolesByUser = {
     user01: SFProjectRole.ParatextConsultant,
     user02: SFProjectRole.ParatextTranslator,
     user03: SFProjectRole.ParatextAdministrator,
@@ -200,7 +232,8 @@ class TestEnvironment {
     user06: SFProjectRole.Viewer
   };
 
-  readonly usersByRole = invert(this.rolesByUser);
+  readonly onlineStatus: TestOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+  readonly usersByRole = invert(TestEnvironment.rolesByUser);
 
   readonly projectDoc = {
     id: 'project1',
@@ -208,12 +241,14 @@ class TestEnvironment {
       translateConfig: {
         preTranslate: true
       },
-      userRoles: this.rolesByUser
+      userRoles: TestEnvironment.rolesByUser
     })
   } as SFProjectProfileDoc;
 
-  constructor() {
-    when(activatedProjectMock.projectDoc$).thenReturn(of(this.projectDoc));
+  constructor(explicitProjectDoc?: SFProjectProfileDoc) {
+    const projectDoc: SFProjectProfileDoc = explicitProjectDoc ?? this.projectDoc;
+    when(activatedProjectMock.projectDoc$).thenReturn(of(projectDoc));
+    when(mockUserService.currentUserId).thenReturn('user01');
     service = TestBed.inject(EditorTabMenuService);
   }
 

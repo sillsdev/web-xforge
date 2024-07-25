@@ -30,7 +30,8 @@ describe('EditorTabAddRequestService', () => {
       id: `testId${index}`,
       data: createTestProject({
         paratextId: `testParatextId${index}`,
-        shortName: `testName${index}`
+        shortName: `testName${index}`,
+        name: `testFullName${index}`
       })
     } as SFProjectDoc;
   }
@@ -44,7 +45,7 @@ describe('EditorTabAddRequestService', () => {
     when(tabStateService.tabs$).thenReturn(of([]));
 
     service.handleTabAddRequest('project-resource').subscribe(result => {
-      expect(result).toEqual({ projectId: 'testId1', headerText: 'testName1' });
+      expect(result).toEqual({ projectId: 'testId1', headerText: 'testName1', tooltip: 'testFullName1' });
       done();
     });
   });

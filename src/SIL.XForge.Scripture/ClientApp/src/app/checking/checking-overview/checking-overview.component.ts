@@ -4,7 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
@@ -25,7 +25,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
+import { CheckingUtils } from '../checking.utils';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import {
   ImportQuestionsDialogComponent,
@@ -234,16 +234,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           if (this.projectDoc != null && this.projectDoc.data != null) {
             if (this.permissions.canAccessCommunityChecking(this.projectDoc)) {
               this.initTextsWithLoadingIndicator();
-            } else {
-              if (this.projectUserConfigDoc != null) {
-                const checkingAccessInfo: CheckingAccessInfo = {
-                  userId: this.userService.currentUserId,
-                  projectId: this.projectDoc.id,
-                  project: this.projectDoc.data,
-                  projectUserConfigDoc: this.projectUserConfigDoc
-                };
-                CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
-              }
             }
           }
         });
@@ -484,7 +474,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       userId: this.userService.currentUserId,
       textsByBookId: this.textsByBookId
     };
-    this.dialogService.openMatDialog(ImportQuestionsDialogComponent, { data, autoFocus: false });
+    this.dialogService.openMatDialog(ImportQuestionsDialogComponent, { data });
   }
 
   getBookName(text: TextInfo): string {

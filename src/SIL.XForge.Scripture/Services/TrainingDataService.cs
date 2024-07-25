@@ -117,15 +117,8 @@ public class TrainingDataService(
                 continue;
             }
 
-            // Get the file URL as an absolute URL
-            if (!Uri.TryCreate(trainingDataDoc.Data.FileUrl, UriKind.Absolute, out Uri uri))
-            {
-                // The file URL is relative, so make it absolute with the site URL
-                uri = new Uri(siteOptions.Value.Origin, trainingDataDoc.Data.FileUrl);
-            }
-
             // Get the filename
-            string fileName = Path.GetFileName(uri.LocalPath);
+            string fileName = Path.GetFileName(trainingDataDoc.Data.FileUrl);
             string path = Path.Combine(trainingDataDir, fileName);
             if (!fileSystemService.FileExists(path))
             {
@@ -183,7 +176,7 @@ public class TrainingDataService(
     /// <param name="projectId">The project identifier.</param>
     /// <param name="dataId">The data identifier.</param>
     /// <param name="path">The path to the temporary file.</param>
-    /// <returns>The URL to the file.</returns>
+    /// <returns>The relative URL to the file.</returns>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">The user does not have access to upload.</exception>
     /// <exception cref="FormatException">The data id or CSV file were not in the correct format.</exception>
@@ -217,8 +210,8 @@ public class TrainingDataService(
         // Return the URL to the file
         string outputFileName = Path.GetFileName(outputPath);
         var uri = new Uri(
-            siteOptions.Value.Origin,
-            $"assets/{DirectoryName}/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}"
+            $"/assets/{DirectoryName}/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}",
+            UriKind.Relative
         );
         return uri;
     }

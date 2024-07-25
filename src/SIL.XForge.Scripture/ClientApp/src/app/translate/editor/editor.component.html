@@ -54,7 +54,12 @@
       [selectedIndex]="tabGroup.value.selectedIndex"
       [connectedTo]="(tabState.groupIds$ | async) ?? []"
     >
-      <app-tab *ngFor="let tab of tabGroup.value.tabs" [closeable]="tab.closeable" [movable]="tab.movable">
+      <app-tab
+        *ngFor="let tab of tabGroup.value.tabs"
+        [closeable]="tab.closeable"
+        [movable]="tab.movable"
+        [tooltip]="tab.tooltip"
+      >
         <!-- TODO: Localize tab header text -->
         <ng-template sf-tab-header>
           <mat-icon *ngIf="tab.icon">{{ tab.icon }}</mat-icon>
@@ -84,6 +89,7 @@
                 <div class="text-container">
                   <app-text
                     #source
+                    [id]="visibleSourceProjectId | textDocId : bookNum : chapter"
                     [isReadOnly]="true"
                     [highlightSegment]="targetFocused"
                     (loaded)="onTextLoaded('source')"
@@ -158,6 +164,7 @@
                 <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
                   <app-text
                     #target
+                    [id]="projectId | textDocId : bookNum : chapter"
                     [isReadOnly]="!canEdit"
                     (updated)="
                       onTargetUpdated(
@@ -256,7 +263,7 @@
           [isRightToLeft]="isTargetRightToLeft"
           [fontSize]="fontSize"
           [diffText]="target"
-          (revisionSelect)="setHistoryTabRevisionLabel(tab, $event)"
+          (revisionSelect)="onHistoryTabRevisionSelect(tab, $event)"
         >
         </app-editor-history>
 

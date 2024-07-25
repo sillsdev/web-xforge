@@ -9,7 +9,7 @@ export class HistoryRevisionFormatPipe implements PipeTransform {
   constructor(private readonly i18n: I18nService) {}
 
   transform(revision: Revision | string): string {
-    const revisionKey = typeof revision === 'string' ? revision : revision.key;
+    const revisionKey = typeof revision === 'string' ? revision : revision.timestamp;
     return this.i18n.formatDate(new Date(revisionKey));
   }
 }

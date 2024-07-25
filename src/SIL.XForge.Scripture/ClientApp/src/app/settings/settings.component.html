@@ -28,7 +28,6 @@
               </div>
               <ng-container *ngIf="mainSettingsLoaded">
                 <p class="helper-text">{{ t("select_project_or_resource") }}</p>
-                <mat-hint>{{ t("translation_suggestions_require_source_text") }}</mat-hint>
                 <div class="tool-setting-field">
                   <app-project-select
                     id="sourceParatextId"
@@ -44,6 +43,7 @@
                     [state]="getControlState('sourceParatextId')"
                     [formGroup]="form"
                     id="based-on-status"
+                    style="margin-block-end: 18px"
                   ></app-write-status>
                 </div>
                 <mat-error *ngIf="projectLoadingFailed && resourceLoadingFailed">
@@ -57,8 +57,8 @@
                 </mat-error>
               </ng-container>
             </div>
-            <div class="tool-setting" *ngIf="isBasedOnProjectSet">
-              <div class="tool-setting-field checkbox-field">
+            <div class="tool-setting">
+              <div *ngIf="isBasedOnProjectSet" class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
                   {{ t("translation_suggestions") }}
                 </mat-checkbox>
@@ -69,26 +69,20 @@
                   id="translation-suggestions-status"
                 ></app-write-status>
               </div>
-              <mat-hint
-                class="helper-text checkbox-helper-text"
-                [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-              ></mat-hint>
+              <mat-hint *ngIf="!isBasedOnProjectSet">{{ t("translation_suggestions_require_source_text") }}</mat-hint>
             </div>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="biblicalTermsEnabled" id="checkbox-biblical-terms">
                   {{ t("biblical_terms") }}
                 </mat-checkbox>
+                <app-info [text]="t('biblical_terms_will_be_enabled')"></app-info>
                 <app-write-status
                   [state]="getControlState('biblicalTermsEnabled')"
                   [formGroup]="form"
                   id="biblical-terms-status"
                 ></app-write-status>
               </div>
-              <mat-hint
-                class="helper-text checkbox-helper-text"
-                [innerHTML]="i18n.translateAndInsertTags('settings.biblical_terms_will_be_enabled')"
-              ></mat-hint>
               <mat-error *ngIf="biblicalTermsMessage">
                 <app-info
                   *ngIf="biblicalTermsMessage"
@@ -102,9 +96,8 @@
           </mat-card-content>
           <mat-card-content *ngIf="showPreTranslationSettings">
             <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
-            <div class="tool-setting">
+            <div>
               <ng-container *ngIf="mainSettingsLoaded">
-                <p class="helper-text">{{ t("pre_translation_drafting_description") }}</p>
                 <div class="tool-setting">
                   <div class="tool-setting-field checkbox-field">
                     <mat-checkbox formControlName="alternateSourceEnabled" id="checkbox-alternate-source-enabled">{{
@@ -167,7 +160,10 @@
                     id="alternate-training-source-status"
                   ></app-write-status>
                 </div>
-                <div class="tool-setting">
+                <div
+                  *ngIf="isAdditionalTrainingSourceEnabled || featureFlags.allowAdditionalTrainingSource.enabled"
+                  class="tool-setting"
+                >
                   <div class="tool-setting-field checkbox-field">
                     <mat-checkbox
                       formControlName="additionalTrainingSourceEnabled"
@@ -266,6 +262,19 @@
                   ></app-write-status>
                 </div>
               </div>
+              <div class="tool-setting" *ngIf="featureFlags.scriptureAudio.enabled">
+                <div class="tool-setting-field checkbox-field">
+                  <mat-checkbox formControlName="hideCommunityCheckingText" id="checkbox-hide-community-checking-text">
+                    {{ t("hide_community_checking_text") }}
+                  </mat-checkbox>
+                  <app-info [text]="t('checkers_listen_to_scripture_audio')"></app-info>
+                  <app-write-status
+                    [state]="getControlState('hideCommunityCheckingText')"
+                    [formGroup]="form"
+                    id="hide-community-checking-text-status"
+                  ></app-write-status>
+                </div>
+              </div>
               <div>
                 <p class="helper-text">{{ t("export_checking_answers") }}</p>
                 <div class="tool-setting">
@@ -293,21 +302,6 @@
                       ></app-write-status>
                     </div>
                   </mat-radio-group>
-                </div>
-              </div>
-              <div class="tool-setting" *ngIf="featureFlags.scriptureAudio.enabled">
-                <div class="tool-setting-field checkbox-field">
-                  <mat-checkbox
-                    formControlName="hideCommunityCheckingText"
-                    id="checkbox-hide-community-checking-text"
-                    >{{ t("hide_community_checking_text") }}</mat-checkbox
-                  >
-                  <app-info [text]="t('checkers_listen_to_scripture_audio')"></app-info>
-                  <app-write-status
-                    [state]="getControlState('hideCommunityCheckingText')"
-                    [formGroup]="form"
-                    id="hide-community-checking-text-status"
-                  ></app-write-status>
                 </div>
               </div>
             </ng-container>

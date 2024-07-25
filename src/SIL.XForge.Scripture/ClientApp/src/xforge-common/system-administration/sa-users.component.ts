@@ -54,6 +54,10 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     super(noticeService);
   }
 
+  get currentUserId(): string {
+    return this.userService.currentUserId;
+  }
+
   ngOnInit(): void {
     this.loadingStarted();
     this.subscribe(

@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentType } from '@angular/cdk/portal';
 import {
   AfterViewInit,
@@ -57,6 +58,7 @@ import {
   asyncScheduler,
   BehaviorSubject,
   combineLatest,
+  firstValueFrom,
   fromEvent,
   merge,
   Observable,
@@ -85,6 +87,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -105,6 +108,7 @@ import { Revision } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { BuildDto } from '../../machine-api/build-dto';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TabFactoryService, TabGroup, TabMenuService, TabStateService } from '../../shared/sf-tab-group';
 import { TabAddRequestService } from '../../shared/sf-tab-group/base-services/tab-add-request.service';
@@ -125,6 +129,7 @@ import {
   verseRefFromMouseEvent,
   XmlUtils
 } from '../../shared/utils';
+import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { EditorHistoryService } from './editor-history/editor-history.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -237,6 +242,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private commenterSelectedVerseRef?: VerseRef;
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
+  private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
 
@@ -262,7 +268,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly editorTabFactory: EditorTabFactoryService,
     private readonly editorTabPersistenceService: EditorTabPersistenceService,
     private readonly textDocService: TextDocService,
-    private readonly destroyRef: DestroyRef
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly destroyRef: DestroyRef,
+    private readonly breakpointObserver: BreakpointObserver,
+    private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -533,6 +542,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.translateConfig.source?.projectRef;
   }
 
+  get visibleSourceProjectId(): string | undefined {
+    return this.hasSource ? this.sourceProjectId : undefined;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
@@ -653,16 +666,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          if (this.sourceProjectId != null) {
-            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(
-              this.sourceProjectId
-            );
-            // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject
-              ? await this.projectService.getProfile(this.sourceProjectId)
-              : undefined;
-          }
-
+          this.sourceProjectDoc = await this.getSourceProjectDoc();
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
           }
@@ -716,7 +720,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                 this.text.bookNum,
                 this._chapter
               );
-              if (!isEqual(this.source!.id, sourceId)) {
+              if (this.source != null && !isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
               }
@@ -755,6 +759,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .pipe(takeUntilDestroyed(this.destroyRef), throttleTime(100, asyncScheduler, { leading: true, trailing: true }))
       .subscribe(() => {
         this.syncScroll();
+      });
+
+    // Consolidate tab groups for small screen widths
+    combineLatest([
+      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.SM)),
+      this.tabStateInitialized$.pipe(filter(initialized => initialized)),
+      this.targetEditorLoaded$
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([breakpointState]) => {
+        if (breakpointState.matches && this.showSource) {
+          this.tabState.consolidateTabGroups('target');
+        } else {
+          this.tabState.deconsolidateTabGroups();
+        }
       });
   }
 
@@ -1031,7 +1050,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.openMatDialog<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
       SuggestionsSettingsDialogComponent,
       {
-        autoFocus: false,
         data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );
@@ -1138,11 +1156,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  setHistoryTabRevisionLabel(tab: EditorTabInfo, revision: Revision | undefined): void {
-    tab.headerText =
-      revision != null
-        ? `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.key)}`
-        : `${this.targetLabel} - History`;
+  onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): void {
+    if (revision != null) {
+      tab.headerText = `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
+      tab.tooltip = `${this.projectDoc?.data?.name} - ${this.editorHistoryService.formatTimestamp(
+        revision.timestamp,
+        true
+      )}`;
+    } else {
+      tab.headerText = `${this.targetLabel} - History`;
+      tab.tooltip = `${this.projectDoc?.data?.name} - History`;
+    }
+
+    this.changeDetector.detectChanges();
 
     // TODO: Respond to locale changes
   }
@@ -1153,9 +1179,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * Returns an observable that can be piped from projectDoc changes, allowing a single call to `subscribe`,
    * avoiding potential NG0911 error 'View has already been destroyed'.
    */
-  initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
-    const tabStateInitialized$ = new BehaviorSubject<boolean>(false);
-
+  private initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
     // Set tab state from persisted tabs plus non-persisted tabs
     const storeToState$: Observable<any> = this.editorTabPersistenceService.persistedTabs$.pipe(
       take(1),
@@ -1177,7 +1201,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           sourceTabGroup.addTab(
             await this.editorTabFactory.createTab('project-source', {
               projectId: projectSource.projectRef,
-              headerText: projectSource.shortName
+              headerText: projectSource.shortName,
+              tooltip: projectSource.name
             })
           );
         }
@@ -1185,14 +1210,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         targetTabGroup.addTab(
           await this.editorTabFactory.createTab('project-target', {
             projectId: projectDoc.id,
-            headerText: projectDoc.data?.shortName
+            headerText: projectDoc.data?.shortName,
+            tooltip: projectDoc?.data?.name
           })
         );
 
         for (const tabData of persistedTabs) {
           const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
             projectId: tabData.projectId,
-            headerText: tabData.projectDoc?.data?.shortName
+            headerText: tabData.projectDoc?.data?.shortName,
+            tooltip: tabData.projectDoc?.data?.name
           });
 
           if (tabData.groupId === 'source') {
@@ -1205,7 +1232,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.tabState.setTabGroups([sourceTabGroup, targetTabGroup]);
 
         // Notify to start tab persistence on tab state changes
-        tabStateInitialized$.next(true);
+        this.tabStateInitialized$.next(true);
 
         // View is initialized before the tab state is initialized, so re-run change detection
         this.changeDetector.detectChanges();
@@ -1215,7 +1242,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Persist tabs from tab state changes once tab state has been initialized
     const stateToStore$: Observable<any> = combineLatest([
       this.tabState.tabs$,
-      tabStateInitialized$.pipe(filter(initialized => initialized))
+      this.tabStateInitialized$.pipe(filter(initialized => initialized))
     ]).pipe(
       map(([tabs]) => {
         const tabsToPersist: EditorTabPersistData[] = [];
@@ -1324,17 +1351,31 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (hasDraft) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
+      const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
-      // Add to 'source' tab group if no draft tab
+      // Add to 'source' (or 'target' if showSource is false) tab group if no existing draft tab
       if (existingDraftTab == null) {
-        this.tabState.addTab('source', await this.editorTabFactory.createTab('draft'), urlDraftActive);
+        const draftBuild: BuildDto | undefined = await firstValueFrom(
+          this.draftGenerationService.getLastCompletedBuild(this.projectId!)
+        );
+
+        this.tabState.addTab(
+          groupIdToAddTo,
+          await this.editorTabFactory.createTab('draft', {
+            tooltip: `Draft - ${this.editorHistoryService.formatTimestamp(
+              draftBuild?.additionalInfo?.dateFinished,
+              true
+            )}`
+          }),
+          urlDraftActive
+        );
       }
 
       if (urlDraftActive) {
-        // Remove 'draft-active' query string from url when another tab from 'source' is selected
+        // Remove 'draft-active' query string from url when another tab from group is selected
         this.tabState.tabs$
           .pipe(
-            filter(tabs => tabs.some(tab => tab.groupId === 'source' && tab.type !== 'draft' && tab.isSelected)),
+            filter(tabs => tabs.some(tab => tab.groupId === groupIdToAddTo && tab.type !== 'draft' && tab.isSelected)),
             take(1)
           )
           .subscribe(() => {
@@ -1784,6 +1825,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         })
       );
     }
+  }
+
+  private async getSourceProjectDoc(): Promise<SFProjectProfileDoc | undefined> {
+    // Only get the project doc if the user is on the project to avoid an error.
+    if (this.sourceProjectId == null) return;
+    if (this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId) !== true) return;
+    return await this.projectService.getProfile(this.sourceProjectId);
   }
 
   private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {

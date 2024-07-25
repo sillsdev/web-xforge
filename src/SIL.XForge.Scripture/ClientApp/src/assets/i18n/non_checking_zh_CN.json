@@ -127,6 +127,12 @@
     "please_type_project_name": "Please type in the name of the project to confirm.",
     "project_name": "Project Name"
   },
+  "draft_add_dialog": {
+    "add_book_to_project": "Add {{ bookName }} to project",
+    "add_to_project": "Add to project",
+    "book_contents_will_be_overwritten": "Warning, this will overwrite any data in your project for the book of {{ bookName }}.",
+    "cancel": "取消"
+  },
   "draft_generation": {
     "back_from_stepper_button": "Back",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
@@ -141,7 +147,7 @@
     "dialog_confirm_draft_regeneration_title": "Are you done with the current draft?",
     "dialog_confirm_draft_regeneration_yes": "Continue",
     "download_draft": "Download draft",
-    "draft_active_detail": "Generating draft; this usually takes at least 8 hours.",
+    "draft_active_detail": "Generating draft; this usually takes at least {{ count }} hours.",
     "draft_active_header": "Draft in progress",
     "draft_is_ready": "Your draft is ready",
     "draft_queued_detail_multiple": "The translation draft generation is number {{ count }} in the queue, and will begin once the server is finished with other projects. Please check back later.",
@@ -162,7 +168,7 @@
     "info_alert_no_additional_training_source_access": "You do not have access to the additional training source project {{ name }}. Please contact your Paratext Administrator for access, then [link:connectProjectUrl]connect to this project[/link] before you can generate a draft.",
     "info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Select a different source text on the [link:projectSettingsUrl]settings page[/link].",
     "info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Select a source text on the [link:projectSettingsUrl]settings page[/link].",
-    "instructions_draft_process": "Generating a draft usually takes at least 8 hours.",
+    "instructions_draft_process": "Generating a draft usually takes at least {{ count }} hours.",
     "instructions_draft_process_subtext": "It can take much longer when the system is busy.",
     "instructions_help": "For more information, { 1 } see the help site{ 2 }.",
     "instructions_keep_in_mind": "The draft will contain mistakes.",
@@ -171,6 +177,10 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "If your team has already drafted one or more books and then back translated one or more of them, Scripture Forge can use the back translated books to generate a draft of the next book you are working on.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge can assist with drafting a translation.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "Based on your existing translation progress you can use the books you have already translated to generate a draft of the next book you are working on.",
+    "non_pa_info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Please have your Paratext Administrator select a different additional training text.",
+    "non_pa_info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Please have your Paratext Administrator select a different alternate training text.",
+    "non_pa_info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Please have your Paratext Administrator change the source before you can generate a draft.",
+    "non_pa_info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Please have your Paratext Administrator select a source before you can generate a draft.",
     "offline_message": "Draft generation is not available when offline.",
     "preview_draft_button": "Preview draft",
     "preview_last_draft_button": "Preview last draft",
@@ -203,7 +213,11 @@
     "unusable_target_books": "Can't find the book you're looking for? Be sure the book is created in Paratext, then sync your project."
   },
   "draft_preview_books": {
-    "no_books_have_drafts": " No books have any drafts."
+    "add_to_project": "Add to project",
+    "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
+    "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
+    "no_books_have_drafts": "No books have any drafts.",
+    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission."
   },
   "editor": {
     "add_comment": "Add Comment",
@@ -360,7 +374,9 @@
     "recording_stopped": "The recording for your question was automatically stopped.",
     "required_with_asterisk": "*Required",
     "save": "保存",
-    "scripture_reference": "Scripture reference"
+    "scripture_reference": "Scripture reference",
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "roles": {
     "allow_add_edit_questions": "Can add & edit questions",
@@ -424,7 +440,6 @@
     "pre_translation_alternate_source_info": "Select a different source for drafting, if your currently selected source is not to be used for pre-translation drafting.",
     "pre_translation_alternate_training_source_info": "Selecting a separate translation for training, such as a back translation, can improve drafting quality.",
     "pre_translation_alternate_training_source_text_placeholder": "Alternate training source text (optional)",
-    "pre_translation_drafting_description": "Configure options for generating translation drafts.",
     "pre_translation_additional_training_source_info": "Select another translation in the source language to combine with your training source",
     "pre_translation_additional_training_source_text_placeholder": "Additional training source text (optional)",
     "pre_translation_send_all_segments": "Pre-translate headings and non-verse material",
@@ -534,7 +549,11 @@
     "training": "Training...",
     "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
+    "translated_segments": "{{ translatedSegments }} of {{ total }} segments",
+    "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead.",
+    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support Graphite. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
+    "contact_for_help": "If this does not meet the needs of this project, please contact us for help.",
+    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or contact us for help."
   },
   "users": {
     "collaborators": "Collaborators",

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Paratext;
@@ -145,8 +146,50 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// </summary>
     public IEnumerable<ProjectMetadata> GetProjectsMetaData()
     {
-        JArray projects = GetJsonArray("my/projects");
+        JArray projects = GetJson<JArray>("my/projects");
         return projects?.Select(p => new ProjectMetadata((JObject)p)).ToList();
+    }
+
+    /// <summary>
+    /// Gets the licenses for the project if the current user is a member of it.
+    /// Sourced from <see cref="RegistryServer" />.
+    /// </summary>
+    /// <param name="paratextId">The project's Paratext identifier.</param>
+    /// <returns>
+    /// The <see cref="ProjectLicense"/>, or <c>null</c> if it could not be found.
+    /// </returns>
+    /// <remarks>
+    /// Null will typically be returned if a project uses another project's registration.
+    /// </remarks>
+    public ProjectLicense? GetLicenseForUserProject(string paratextId)
+    {
+        JObject? license = GetJson<JObject>($"projects/{paratextId}/license");
+        if (license is null)
+            return null;
+        var projectLicense = new ProjectLicense(license);
+        if (projectLicense.IsInvalid || projectLicense.IsExpired)
+            return null;
+        return projectLicense;
+    }
+
+    /// <summary>
+    /// Gets the metadata for the project if the current user is a member of it.
+    /// Sourced from <see cref="RegistryServer" />.
+    /// </summary>
+    /// <param name="paratextId">The project's Paratext identifier.</param>
+    /// <returns>
+    /// The <see cref="ProjectMetadata"/>, or <c>null</c> if it could not be found.
+    /// </returns>
+    /// <remarks>
+    /// Null will typically be returned if a project uses another project's registration.
+    /// </remarks>
+    public ProjectMetadata? GetProjectMetadata(string paratextId)
+    {
+        JObject metadata = GetJson<JObject>($"projects/{paratextId}");
+        if (metadata is null)
+            return null;
+        var projectMetadata = new ProjectMetadata(metadata);
+        return projectMetadata;
     }
 
     /// <summary>Gets the client.</summary>
@@ -159,7 +202,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     /// </summary>
     private List<ProjectLicense> GetLicensesForUserProjects()
     {
-        JArray licenses = GetJsonArray("my/licenses");
+        JArray licenses = GetJson<JArray>("my/licenses");
         if (licenses == null)
             return null;
         List<ProjectLicense> result = new List<ProjectLicense>();
@@ -173,7 +216,8 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         return result;
     }
 
-    private JArray GetJsonArray(string cgiCall)
+    private T? GetJson<T>(string cgiCall)
+        where T : JToken
     {
         DateTime startTime = DateTime.UtcNow;
         string projectData;
@@ -181,7 +225,14 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         {
             projectData = _registryClient.Get(cgiCall);
         }
-        catch (Paratext.Data.HttpException e)
+        catch (HttpException ex) when (ex.Response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogInformation(
+                $"external_api_request_timing pt_registry GET {cgiCall} returned 404 {(DateTime.UtcNow - startTime).Milliseconds} ms"
+            );
+            return null;
+        }
+        catch (HttpException e)
         {
             _logger.LogInformation(
                 e,
@@ -193,7 +244,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
             $"external_api_request_timing pt_registry GET {cgiCall} took {(DateTime.UtcNow - startTime).Milliseconds} ms"
         );
         if (!string.IsNullOrEmpty(projectData) && !projectData.Equals("null", StringComparison.OrdinalIgnoreCase))
-            return JArray.Parse(projectData);
+            return JToken.Parse(projectData) as T;
         return null;
     }
 

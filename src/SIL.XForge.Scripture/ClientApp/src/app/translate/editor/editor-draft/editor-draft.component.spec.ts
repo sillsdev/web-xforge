@@ -1,11 +1,10 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { cloneDeep } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Delta } from 'rich-text';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -22,12 +21,12 @@ import { SharedModule } from '../../../shared/shared.module';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftSegmentMap } from '../../draft-generation/draft-generation';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
-import { DraftViewerService } from '../../draft-generation/draft-viewer/draft-viewer.service';
+import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 import { EditorDraftComponent } from './editor-draft.component';
 
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
-const mockDraftViewerService = mock(DraftViewerService);
+const mockDraftHandlingService = mock(DraftHandlingService);
 const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
 const mockTextDocService = mock(TextDocService);
@@ -50,7 +49,7 @@ describe('EditorDraftComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
-      { provide: DraftViewerService, useMock: mockDraftViewerService },
+      { provide: DraftHandlingService, useMock: mockDraftHandlingService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockDialogService },
@@ -85,12 +84,9 @@ describe('EditorDraftComponent', () => {
 
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-    when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
-    when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
-    when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
-      // Force fallback to the legacy draft mode
-      throwError(() => new HttpErrorResponse({ status: 405 }))
-    );
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftMap));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(true);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     testOnlineStatus.setIsOnline(false);
@@ -114,28 +110,6 @@ describe('EditorDraftComponent', () => {
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
 
-  it('should use the legacy method USFM method fails', fakeAsync(() => {
-    const testProjectDoc: SFProjectProfileDoc = {
-      data: createTestProjectProfile()
-    } as SFProjectProfileDoc;
-    when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-    when(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 1)).thenReturn(
-      throwError(() => ({ status: 405 }))
-    );
-    when(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).thenReturn(of(draftMap));
-    when(mockDraftViewerService.toDraftOps(draftMap, targetDelta.ops!, anything())).thenReturn(draftDelta.ops!);
-    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
-
-    fixture.detectChanges();
-    tick(EDITOR_READY_TIMEOUT);
-
-    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).once();
-    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 1)).once();
-    expect(component.draftCheckState).toEqual('draft-legacy');
-    expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
-  }));
-
   it('should return ops and update the editor', fakeAsync(() => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()
@@ -143,15 +117,15 @@ describe('EditorDraftComponent', () => {
     when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
-    when(mockDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())).thenReturn(
-      of(cloneDeep(draftDelta.ops!))
-    );
+    when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(cloneDeep(draftDelta.ops!)));
+    when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
+    when(mockDraftHandlingService.isDraftSegmentMap(anything())).thenReturn(false);
 
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
 
-    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 1)).never();
-    verify(mockDraftGenerationService.getGeneratedDraftDeltaOperations('targetProjectId', 1, 1)).once();
+    verify(mockDraftHandlingService.getDraft(anything(), anything())).once();
+    verify(mockDraftHandlingService.draftDataToOps(anything(), anything())).once();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
   }));
@@ -165,7 +139,8 @@ describe('EditorDraftComponent', () => {
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
-      spyOn<any>(component, 'getDraft').and.returnValue(of(draftDelta.ops));
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
 
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -186,7 +161,8 @@ describe('EditorDraftComponent', () => {
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       spyOn<any>(component, 'getTargetOps').and.returnValue(of([]));
-      spyOn<any>(component, 'getDraft').and.returnValue(of(draftDelta.ops));
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
 
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -206,15 +182,16 @@ describe('EditorDraftComponent', () => {
       });
     }));
 
-    it('should apply draft using TextDocService.overwrite()', fakeAsync(() => {
+    it('should apply draft using draft viewer service', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile()
       } as SFProjectProfileDoc;
       when(mockDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      when(mockDraftHandlingService.getDraft(anything(), anything())).thenReturn(of(draftDelta.ops!));
+      when(mockDraftHandlingService.draftDataToOps(anything(), anything())).thenReturn(draftDelta.ops!);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
-      spyOn<any>(component, 'getDraft').and.returnValue(of(draftDelta.ops));
 
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -225,7 +202,7 @@ describe('EditorDraftComponent', () => {
       tick();
 
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
-      verify(mockTextDocService.overwrite(component.textDocId!, component['draftDelta']!)).once();
+      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
       expect(component.isDraftApplied).toBe(true);
     }));
   });

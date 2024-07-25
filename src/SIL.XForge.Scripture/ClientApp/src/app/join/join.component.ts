@@ -1,12 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, ErrorHandler } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -15,6 +14,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { CommandError } from 'xforge-common/command.service';
 import { ObjectPaths } from '../../type-utils';
 import { SFProjectService } from '../core/sf-project.service';
 
@@ -47,6 +47,7 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly reportingService: ErrorReportingService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly errorHandler: ErrorHandler,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -67,7 +68,7 @@ export class JoinComponent extends DataLoadingComponent {
       if (this.authService.currentUserId == null) {
         this.i18nService.setLocale(joining.locale, this.authService);
       }
-      this.checkShareKey(joining.shareKey);
+      this.initialize(joining.shareKey);
     });
     this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateOfflineJoiningStatus());
   }
@@ -114,7 +115,8 @@ export class JoinComponent extends DataLoadingComponent {
         this.name.enable();
       }
     } catch (e) {
-      await this.informInvalidShareLinkAndRedirect(e instanceof HttpErrorResponse ? e.error : undefined);
+      await this.handleJoiningError(e);
+      this.locationService.go(this.locationService.origin);
     }
     this.status = 'input';
   }
@@ -135,19 +137,12 @@ export class JoinComponent extends DataLoadingComponent {
       const projectId = await this.projectService.onlineJoinWithShareKey(shareKey);
       this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
     } catch (err) {
-      if (
-        err instanceof CommandError &&
-        (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
-      ) {
-        await this.informInvalidShareLinkAndRedirect(err.message);
-      } else {
-        throw err;
-      }
+      await this.handleJoiningError(err);
       this.router.navigateByUrl('/projects', { replaceUrl: true });
     }
   }
 
-  private async checkShareKey(shareKey: string): Promise<void> {
+  private async initialize(shareKey: string): Promise<void> {
     this.loadingStarted();
     const isLoggedIn: boolean = await this.authService.isLoggedIn;
     if (isLoggedIn) {
@@ -157,8 +152,9 @@ export class JoinComponent extends DataLoadingComponent {
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     try {
       this.joiningResponse = await this.anonymousService.checkShareKey(shareKey);
-    } catch (error) {
-      await this.informInvalidShareLinkAndRedirect(error instanceof HttpErrorResponse ? error.error : undefined);
+    } catch (e) {
+      await this.handleJoiningError(e);
+      this.locationService.go(this.locationService.origin);
     } finally {
       this.loadingFinished();
     }
@@ -177,17 +173,28 @@ export class JoinComponent extends DataLoadingComponent {
     }
   }
 
-  private async informInvalidShareLinkAndRedirect(error: string = 'project_link_is_invalid'): Promise<void> {
-    const key: ObjectPaths<typeof en.join> = [
+  private async showJoinError(key: ObjectPaths<typeof en.join>): Promise<void> {
+    await this.dialogService.message(`join.${key}`);
+  }
+
+  private async handleJoiningError(error: any): Promise<void> {
+    const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
       'error_occurred_login',
       'key_already_used',
       'key_expired',
       'max_users_reached',
-      'role_not_found'
-    ].includes(error)
-      ? (error as ObjectPaths<typeof en.join>)
-      : 'project_link_is_invalid';
-    await this.dialogService.message(`join.${key}`);
-    this.locationService.go(this.locationService.origin);
+      'role_not_found',
+      'project_link_is_invalid'
+    ];
+
+    const isKnownJoinError = (code: any): code is ObjectPaths<typeof en.join> => KNOWN_ERROR_CODES.includes(code);
+
+    if (error instanceof HttpErrorResponse && isKnownJoinError(error.error)) {
+      await this.showJoinError(error.error);
+    } else if (error instanceof CommandError && isKnownJoinError(error.message)) {
+      await this.showJoinError(error.message);
+    } else {
+      await this.errorHandler.handleError(error);
+    }
   }
 }

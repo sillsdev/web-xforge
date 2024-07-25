@@ -89,11 +89,11 @@ describe('EditorTabAddResourceDialogComponent', () => {
   });
 
   describe('confirmSelection', () => {
-    it('should call fetchProject when confirmSelection is called', fakeAsync(() => {
+    it('should call get or create the project when confirmSelection is called', fakeAsync(() => {
       const env = new TestEnvironment();
       env.component.confirmSelection();
       tick();
-      verify(mockSFProjectService.getOrCreateRealtimeProject(env.paratextId)).once();
+      verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
     }));
 
     it('should call syncProject and not close dialog if fetched project has no texts when confirmSelection is called', fakeAsync(() => {
@@ -128,10 +128,10 @@ describe('EditorTabAddResourceDialogComponent', () => {
 
     it('should set projectFetchFailed to true when fetchProject returns undefined', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(mockSFProjectService.getOrCreateRealtimeProject(env.paratextId)).thenReturn(Promise.resolve(undefined));
+      when(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).thenReturn(Promise.resolve(undefined));
       env.component.confirmSelection();
       tick();
-      verify(mockSFProjectService.getOrCreateRealtimeProject(env.paratextId)).once();
+      verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
       expect(env.component.projectFetchFailed).toBe(true);
     }));
 
@@ -145,6 +145,47 @@ describe('EditorTabAddResourceDialogComponent', () => {
       tick();
       expect(env.component.syncFailed).toBe(true);
       expect(env.component['cancelSync']).toHaveBeenCalled();
+    }));
+
+    it('should call onlineAddCurrentUser if the user is not in the project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const projects = [
+        env.createTestParatextProject(1, { paratextId: env.paratextId, projectId: env.projectId, isConnected: false })
+      ];
+      env.component.projects = projects;
+      when(mockPermissionsService.canSync(anything())).thenReturn(false);
+      env.setupProject({ texts: [{} as any] });
+      env.component.confirmSelection();
+      tick();
+      verify(mockSFProjectService.onlineAddCurrentUser(env.projectId)).once();
+      verify(mockMatDialogRef.close(anything())).once();
+    }));
+
+    it('should not call onlineAddCurrentUser if the user is connected to the project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const projects = [
+        env.createTestParatextProject(1, { paratextId: env.paratextId, projectId: env.projectId, isConnected: true })
+      ];
+      env.component.projects = projects;
+      when(mockPermissionsService.canSync(anything())).thenReturn(false);
+      env.setupProject({ texts: [{} as any] });
+      env.component.confirmSelection();
+      tick();
+      verify(mockSFProjectService.onlineAddCurrentUser(env.projectId)).never();
+      verify(mockMatDialogRef.close(anything())).once();
+    }));
+
+    it('should not call onlineAddCurrentUser if the project has not been connected to by anyone', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const projects = [env.createTestParatextProject(1, { paratextId: env.paratextId, projectId: undefined })];
+      env.component.projects = projects;
+      when(mockPermissionsService.canSync(anything())).thenReturn(false);
+      env.setupProject({ texts: [{} as any] });
+      env.component.confirmSelection();
+      tick();
+      verify(mockSFProjectService.onlineAddCurrentUser(env.projectId)).never();
+      verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).once();
+      verify(mockMatDialogRef.close(anything())).once();
     }));
   });
 
@@ -178,7 +219,7 @@ class TestEnvironment {
 
     when(mockParatextService.getProjects()).thenReturn(Promise.resolve(this.projects));
     when(mockParatextService.getResources()).thenReturn(Promise.resolve(this.resources));
-    when(mockSFProjectService.getOrCreateRealtimeProject(this.paratextId)).thenCall(() =>
+    when(mockSFProjectService.onlineCreateResourceProject(this.paratextId)).thenCall(() =>
       Promise.resolve(this.testProjectDoc.id)
     );
     when(mockSFProjectService.get(this.projectId)).thenCall(() => Promise.resolve(this.testProjectDoc));

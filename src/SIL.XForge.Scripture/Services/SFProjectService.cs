@@ -167,6 +167,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="paratextId">The paratext resource identifier.</param>
+    /// <param name="addUser">
+    /// If <c>true</c>, add the user to the project.
+    /// If the project already exists, no error is returned but the user is added to the project.
+    /// </param>
     /// <returns>SF project id of created project</returns>
     /// <remarks>
     /// This method will also work for a source project that has been deleted for some reason.
@@ -177,7 +181,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// The paratext project does not exist.
     /// </exception>
     /// <exception cref="InvalidOperationException"></exception>
-    public async Task<string> CreateResourceProjectAsync(string curUserId, string paratextId)
+    public async Task<string> CreateResourceProjectAsync(string curUserId, string paratextId, bool addUser)
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -191,7 +195,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (ptProject == null)
         {
             // If it is not a project, see if there is a matching resource
-            IReadOnlyList<ParatextResource> resources = await this._paratextService.GetResourcesAsync(curUserId);
+            IReadOnlyList<ParatextResource> resources = await _paratextService.GetResourcesAsync(curUserId);
             ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             if (ptProject == null)
             {
@@ -199,7 +203,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        return await CreateResourceProjectInternalAsync(curUserId, ptProject);
+        if (addUser)
+        {
+            // See if the project exists to add the user to it
+            SFProject? project = await RealtimeService
+                .QuerySnapshots<SFProject>()
+                .FirstOrDefaultAsync(sfProject => sfProject.ParatextId == ptProject.ParatextId);
+            if (project is not null)
+            {
+                // Add the user, if they are not already on the project
+                if (!project.UserRoles.ContainsKey(curUserId))
+                {
+                    await AddUserAsync(curUserId, project.Id, projectRole: null);
+                }
+
+                return project.Id;
+            }
+        }
+
+        // Create the project, as it does not already exist, and add the user if we should
+        string projectId = await CreateResourceProjectInternalAsync(curUserId, ptProject);
+        if (addUser)
+        {
+            await AddUserAsync(curUserId, projectId, projectRole: null);
+        }
+
+        return projectId;
     }
 
     public async Task DeleteProjectAsync(string curUserId, string projectId)
@@ -573,7 +602,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await _syncService.CancelSyncAsync(curUserId, projectId);
     }
 
-    public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role)
+    public async Task<bool> InviteAsync(
+        string curUserId,
+        string projectId,
+        string email,
+        string locale,
+        string role,
+        Uri websiteUrl
+    )
     {
         SFProject project = await GetProjectAsync(projectId);
         if (!CanUserShareRole(curUserId, project, role))
@@ -627,6 +663,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ExpirationTime = expTime,
                         ProjectRole = role,
                         ShareLinkType = ShareLinkType.Recipient,
+                        CreatedByAdmin = isAdmin
                     }
                 )
         );
@@ -645,7 +682,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
         }
         string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-        string url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}&locale={locale}";
+        Uri url = new Uri(websiteUrl, $"projects/{projectId}?sharing=true&shareKey={key}&locale={locale}");
         string linkExpires = _localizer[SharedResource.Keys.InviteLinkExpires];
 
         User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
@@ -670,7 +707,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         string projectId,
         string role,
-        string shareLinkType
+        string shareLinkType,
+        int daysBeforeExpiration
     )
     {
         SFProject project = await GetProjectAsync(projectId);
@@ -695,24 +733,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
-        SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
-        // Link sharing keys have Email set to null and ExpirationTime set to null.
-        string key = projectSecret
-            .ShareKeys.FirstOrDefault(sk =>
-                sk.Email == null
-                && sk.ProjectRole == role
-                && sk.ShareLinkType == shareLinkType
-                && sk.RecipientUserId == null
-                && sk.Reserved == null
-                && sk.ExpirationTime == null
-                && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
-            )
-            ?.Key;
-        if (!string.IsNullOrEmpty(key))
-            return key;
-
         // Generate a new link sharing key for the given role
-        key = _securityService.GenerateKey();
+        string key = _securityService.GenerateKey();
 
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
@@ -724,13 +746,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         Key = key,
                         ProjectRole = role,
                         ShareLinkType = shareLinkType,
+                        ExpirationTime = DateTime.UtcNow.AddDays(daysBeforeExpiration),
+                        CreatedByAdmin = isProjectAdmin
                     }
                 )
         );
         return key;
     }
 
-    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
+    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey, int daysBeforeExpiration)
     {
         ProjectSecret projectSecret =
             ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
@@ -746,7 +770,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             update =>
                 update
                     .Set(p => p.ShareKeys[index].Reserved, true)
-                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(14))
+                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(daysBeforeExpiration))
         );
     }
 
@@ -886,25 +910,37 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         throw new DataNotFoundException("project_link_is_invalid");
     }
 
+    /// <summary> Check that a share link is valid and return the corresponding secret key. </summary>
     public async Task<ValidShareKey> CheckShareKeyValidity(string shareKey)
     {
         SFProjectSecret projectSecret = GetProjectSecretByShareKey(shareKey);
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        SFProject project = await GetProjectAsync(projectSecret.Id);
 
+        // If the key isn't complete
         if (string.IsNullOrWhiteSpace(projectSecretShareKey?.ProjectRole))
         {
             throw new DataNotFoundException("role_not_found");
         }
-
-        SFProject project = await GetProjectAsync(projectSecret.Id);
-        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
+        // If the key is expired
+        if (projectSecretShareKey.ExpirationTime < DateTime.UtcNow)
+        {
+            throw new DataNotFoundException("key_expired");
+        }
+        // If the desired role is community checker but community checking is disabled
+        if (
+            projectSecretShareKey.ProjectRole == SFProjectRole.CommunityChecker
+            && !project.CheckingConfig.CheckingEnabled
+        )
+        {
+            throw new DataNotFoundException("role_not_found");
+        }
+        // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
+        if (!projectSecretShareKey.CreatedByAdmin)
         {
             string[] availableRoles = new Dictionary<string, bool>
             {
-                {
-                    SFProjectRole.CommunityChecker,
-                    project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
-                },
+                { SFProjectRole.CommunityChecker, project.CheckingConfig.ShareEnabled },
                 { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
                 { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
             }
@@ -917,13 +953,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 throw new DataNotFoundException("role_not_found");
             }
         }
-        else if (
-            projectSecretShareKey.ExpirationTime < DateTime.UtcNow
-            && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
-        )
-        {
-            throw new DataNotFoundException("key_expired");
-        }
+
         return new ValidShareKey()
         {
             Project = project,
@@ -1161,7 +1191,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // in order to query the PT roles and DBL permissions of other SF project/resource users.
         if ((await TryGetProjectRoleAsync(projectDoc.Data, userDoc.Id)).Success)
         {
-            await UpdatePermissionsAsync(userDoc.Id, projectDoc, CancellationToken.None);
+            await UpdatePermissionsAsync(userDoc.Id, projectDoc);
         }
 
         // Add to the source project, if required
@@ -1194,7 +1224,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// Note that this method is not necessarily applying permissions for user `curUserId`, but rather using that
     /// user to perform PT queries and set values in the SF DB.
     /// </summary>
-    public async Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token)
+    public async Task UpdatePermissionsAsync(
+        string curUserId,
+        IDocument<SFProject> projectDoc,
+        IReadOnlyList<ParatextProjectUser>? users = null,
+        CancellationToken token = default
+    )
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
@@ -1203,12 +1238,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         string paratextId = projectDoc.Data.ParatextId;
-        HashSet<int> booksInProject = new HashSet<int>(_paratextService.GetBookList(userSecret, paratextId));
-        IReadOnlyDictionary<string, string> ptUsernameMapping = await _paratextService.GetParatextUsernameMappingAsync(
-            userSecret,
-            projectDoc.Data,
-            token
-        );
+        HashSet<int> booksInProject = [.. _paratextService.GetBookList(userSecret, paratextId)];
+        users ??= await _paratextService.GetParatextUsersAsync(userSecret, projectDoc.Data, token);
+        IReadOnlyDictionary<string, string> ptUsernameMapping = users
+            .Where(u => !string.IsNullOrWhiteSpace(u.Id) && !string.IsNullOrWhiteSpace(u.Username))
+            .ToDictionary(u => u.Id, u => u.Username);
         bool isResource = _paratextService.IsResource(paratextId);
         // Place to collect all chapter permissions to record in the project.
         var projectChapterPermissions =
@@ -1510,7 +1544,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         else
         {
-            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId);
+            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId, addUser: false);
             projectCreated = true;
         }
 

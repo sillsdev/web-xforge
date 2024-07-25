@@ -683,13 +683,35 @@ describe('SettingsComponent', () => {
         expect(env.additionalTrainingSourceSelect).toBeNull();
       }));
 
-      it('should not display when the feature flag is disabled', fakeAsync(() => {
+      it('should not display when the nmt drafting feature flag is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
         env.wait();
         env.wait();
         expect(env.additionalTrainingSourceSelect).toBeNull();
+      }));
+
+      it('should not display when the additional training source feature flag is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(false));
+        env.wait();
+        expect(env.additionalTrainingSourceCheckbox).toBeNull();
+      }));
+
+      it('should display when the feature flag is disabled and the additional source is enabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          preTranslate: true,
+          draftConfig: {
+            additionalTrainingSourceEnabled: true
+          } as DraftConfig
+        });
+        when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(false));
+        env.wait();
+        expect(env.additionalTrainingSourceCheckbox).not.toBeNull();
+        expect(env.inputElement(env.additionalTrainingSourceCheckbox).checked).toBe(true);
       }));
 
       it('should not display for forward translations when not approved', fakeAsync(() => {
@@ -1274,6 +1296,7 @@ class TestEnvironment {
     ]);
     when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(true));
     when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
+    when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
 
     when(mockedSFProjectService.queryAudioText(anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {

@@ -21,27 +21,9 @@
         </mat-selection-list>
       </mat-menu>
     </div>
-    <div class="configuration-option">
-      <mat-icon>translate</mat-icon>
-      <div>
-        {{ t("invitation_shared_in_language") }} <b>{{ shareLocaleCode.localName }}</b>
-        <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}">({{ t("change") }})</a>
-      </div>
-      <mat-menu #langMenu>
-        <mat-selection-list [multiple]="false" hideSingleSelectionIndicator>
-          <mat-list-option
-            *ngFor="let locale of i18n.locales"
-            [selected]="locale === shareLocaleCode"
-            (click)="setLocale(locale)"
-          >
-            {{ locale.localName }}
-          </mat-list-option>
-        </mat-selection-list>
-      </mat-menu>
-    </div>
     <ng-container *ngIf="canUserChangeLinkUsage">
       <div class="configuration-option configuration-link-type">
-        <mat-icon>groups</mat-icon>
+        <mat-icon>{{ shareLinkType === "anyone" ? "groups" : "person" }}</mat-icon>
         <div>
           {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
           <a
@@ -63,10 +45,57 @@
           </mat-selection-list>
         </mat-menu>
       </div>
-      <app-notice *ngIf="isRecipientOnlyLink" icon="info">
-        {{ t("recipient_only_notice") }}
-      </app-notice>
+      <div class="configuration-option">
+        <mat-icon>schedule</mat-icon>
+        <div>
+          <transloco key="share_dialog.will_expire_in" [params]="{ count: shareExpiration }"></transloco>
+          <a
+            [matMenuTriggerFor]="expireMenu"
+            *ngIf="linkExpirationOptions.length > 1"
+            title="{{ t('expiration_description') }}"
+          >
+            ({{ t("change") }})
+          </a>
+        </div>
+        <mat-menu #expireMenu>
+          <mat-selection-list [multiple]="false" *ngIf="linkExpirationOptions.length > 1" hideSingleSelectionIndicator>
+            <mat-list-option
+              *ngFor="let key of linkExpirationOptions"
+              [selected]="ShareExpiration[key] === shareExpiration"
+              (click)="setLinkExpiration(key)"
+            >
+              {{ t(key) }}
+            </mat-list-option>
+          </mat-selection-list>
+        </mat-menu>
+      </div>
     </ng-container>
+    <div class="configuration-option">
+      <mat-icon>translate</mat-icon>
+      <div>
+        <div>
+          {{ t("invitation_shared_in_language") }}
+          <b *ngIf="shareLocaleCode?.localName">{{ shareLocaleCode?.localName }}</b>
+          <b *ngIf="!shareLocaleCode?.localName" class="empty-field" [ngClass]="{ error: error }"> ________________ </b>
+          <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}"> ({{ t("change") }}) </a>
+        </div>
+        <span class="error help-text" [ngClass]="{ hidden: !error }">{{ t("error_language") }}</span>
+      </div>
+      <mat-menu #langMenu>
+        <mat-selection-list [multiple]="false" hideSingleSelectionIndicator>
+          <mat-list-option
+            *ngFor="let locale of i18n.locales"
+            [selected]="locale === shareLocaleCode"
+            (click)="setLocale(locale)"
+          >
+            {{ locale.localName }}
+          </mat-list-option>
+        </mat-selection-list>
+      </mat-menu>
+    </div>
+    <app-notice *ngIf="isRecipientOnlyLink" icon="info">
+      {{ t("recipient_only_notice", { shareExpiration: shareExpiration }) }}
+    </app-notice>
     <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">
       {{ t("link_sharing_not_available_offline") }}
     </app-notice>

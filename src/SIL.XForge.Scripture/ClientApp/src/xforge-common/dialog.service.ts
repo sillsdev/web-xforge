@@ -2,6 +2,7 @@ import { ComponentType } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
+import { hasObjectProp } from '../type-utils';
 import {
   GenericDialogComponent,
   GenericDialogOptions,
@@ -16,7 +17,11 @@ export class DialogService {
   constructor(private readonly i18n: I18nService, private readonly matDialog: MatDialog) {}
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
-    return this.matDialog.open(component, { direction: this.i18n.direction, ...(config ?? {}) });
+    const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };
+    const dialogDefaults: MatDialogConfig = hasObjectProp(component, 'defaultMatDialogConfig')
+      ? component.defaultMatDialogConfig
+      : {};
+    return this.matDialog.open(component, { ...defaults, ...dialogDefaults, ...(config ?? {}) });
   }
 
   openGenericDialog<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {
@@ -41,11 +46,21 @@ export class DialogService {
     affirmative: I18nKey | Observable<string>,
     negative?: I18nKey | Observable<string>
   ): Promise<boolean> {
+    return await this.confirmWithOptions({ title: question, affirmative, negative });
+  }
+
+  async confirmWithOptions(options: {
+    title: I18nKey | Observable<string>;
+    message?: I18nKey | Observable<string>;
+    affirmative: I18nKey | Observable<string>;
+    negative?: I18nKey | Observable<string>;
+  }): Promise<boolean> {
     const result: boolean | undefined = await this.openGenericDialog({
-      title: this.ensureLocalized(question),
+      title: this.ensureLocalized(options.title),
+      message: options.message == null ? undefined : this.ensureLocalized(options.message),
       options: [
-        { value: false, label: this.ensureLocalized(negative ?? 'dialog.cancel') },
-        { value: true, label: this.ensureLocalized(affirmative), highlight: true }
+        { value: false, label: this.ensureLocalized(options.negative ?? 'dialog.cancel') },
+        { value: true, label: this.ensureLocalized(options.affirmative), highlight: true }
       ]
     }).result;
     return result === true;

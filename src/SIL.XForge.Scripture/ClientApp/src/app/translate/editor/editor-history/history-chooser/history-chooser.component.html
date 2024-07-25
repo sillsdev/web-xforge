@@ -6,8 +6,17 @@
         (selectionChange)="onSelectionChanged($event)"
         panelWidth="''"
         [disabled]="isSelectDisabled$ | async"
+        hideSingleSelectionIndicator
       >
-        <mat-option *ngFor="let r of historyRevisions" [value]="r">{{ r | revisionFormat }}</mat-option>
+        <mat-select-trigger>
+          {{ selectedRevision ?? "" | revisionFormat }}
+        </mat-select-trigger>
+        <mat-option *ngFor="let r of historyRevisions" [value]="r">
+          <div class="option-content">
+            <span>{{ r | revisionFormat }}</span>
+            <mat-icon>{{ r.source === "Draft" ? "auto_awesome" : r.source === "History" ? "history" : "" }}</mat-icon>
+          </div>
+        </mat-option>
       </mat-select>
     </mat-form-field>
 
@@ -31,7 +40,7 @@
       (click)="revertToSnapshot()"
       matTooltip="{{ t('revert_details') }}"
     >
-      <mat-icon class="material-icons-outlined">restore_page</mat-icon>
+      <mat-icon class="material-icons-outlined">undo</mat-icon>
       {{ t("revert") }}
     </button>
   </div>

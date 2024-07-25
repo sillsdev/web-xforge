@@ -9,6 +9,7 @@ DEPLOY_PATH="/var/www/${APP_NAME}.org${APP_SUFFIX}"
 SERVICE_UNIT_SUFFIX=""
 # Relative to repo root
 ERROR_PAGES_PATH="src/SIL.XForge.Scripture/ErrorPages"
+ALTERNATE_DOMAIN="${ALTERNATE_DOMAIN-}"
 
 scriptDir="$(dirname "$0")"
 "${scriptDir}"/build-production "$@"
@@ -31,6 +32,9 @@ cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
   "Auth": {
     "BackendClientSecret": "${AUTH_BACKEND_SECRET}",
     "WebhookPassword": "${AUTH_WEBHOOK_PASSWORD}"
+  },
+  "Site": {
+    "Origin": "https://${HOSTNAME};${ALTERNATE_DOMAIN}",
   }
 }
 EOF

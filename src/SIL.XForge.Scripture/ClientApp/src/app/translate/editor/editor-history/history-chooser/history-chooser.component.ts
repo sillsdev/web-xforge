@@ -154,7 +154,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     // Revert to the snapshot
     const delta: DeltaStatic = new Delta(this.selectedSnapshot.data.ops);
     const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
-    await this.textDocService.overwrite(textDocId, delta);
+    await this.textDocService.overwrite(textDocId, delta, 'History');
 
     // Force the history editor to reload
     this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });
@@ -175,10 +175,12 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     this.selectedSnapshot = undefined;
 
     // Get the snapshot from the paratext service
-    await this.paratextService.getSnapshot(this.projectId, this.bookId, this.chapter, revision.key).then(snapshot => {
-      // Remember the snapshot so we can apply it
-      this.selectedSnapshot = snapshot;
-      this.revisionSelect.emit({ revision, snapshot });
-    });
+    await this.paratextService
+      .getSnapshot(this.projectId, this.bookId, this.chapter, revision.timestamp)
+      .then(snapshot => {
+        // Remember the snapshot so we can apply it
+        this.selectedSnapshot = snapshot;
+        this.revisionSelect.emit({ revision, snapshot });
+      });
   }
 }

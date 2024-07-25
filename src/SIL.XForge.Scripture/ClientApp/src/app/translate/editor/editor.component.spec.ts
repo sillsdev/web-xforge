@@ -1,9 +1,13 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MediaObserver } from '@angular/flex-layout';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
@@ -112,6 +116,7 @@ const mockedCookieService = mock(CookieService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedMediaObserver = mock(MediaObserver);
+const mockedBreakpointObserver = mock(BreakpointObserver);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedParatextService = mock(ParatextService);
@@ -172,6 +177,7 @@ describe('EditorComponent', () => {
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: MediaObserver, useMock: mockedMediaObserver },
+      { provide: BreakpointObserver, useMock: mockedBreakpointObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ParatextService, useMock: mockedParatextService },
@@ -1151,6 +1157,11 @@ describe('EditorComponent', () => {
     }));
 
     it('user has no resource access', fakeAsync(() => {
+      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
+        id: 'resource01',
+        data: createTestProjectProfile()
+      } as SFProjectProfileDoc);
+
       const env = new TestEnvironment();
       env.setupProject({
         translateConfig: {
@@ -3452,6 +3463,11 @@ describe('EditorComponent', () => {
     }));
 
     it('user has no resource access', fakeAsync(() => {
+      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
+        id: 'resource01',
+        data: createTestProjectProfile()
+      } as SFProjectProfileDoc);
+
       const env = new TestEnvironment();
       env.setupProject({
         translateConfig: {
@@ -3729,113 +3745,270 @@ describe('EditorComponent', () => {
     discardPeriodicTasks();
   }));
 
-  describe('initEditorTabs', () => {
-    it('should add source tab group when source is defined', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const projectDoc = env.getProjectDoc('project01');
-      const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
-      env.wait();
-      expect(spyCreateTab).toHaveBeenCalledWith('project-source', {
-        projectId: projectDoc.data?.translateConfig.source?.projectRef,
-        headerText: projectDoc.data?.translateConfig.source?.shortName
-      });
-      discardPeriodicTasks();
-    }));
+  describe('tabs', () => {
+    describe('tab group consolidation', () => {
+      it('should call consolidateTabGroups for small screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
 
-    it('should not add source tab group when source is undefined', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
-      delete env.testProjectProfile.translateConfig.source;
-      env.setupProject();
-      env.wait();
-      expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
-      discardPeriodicTasks();
-    }));
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['tabStateInitialized$'].next(true);
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+        expect(spyConsolidate).toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toEqual('project02:MAT:1:target');
+        discardPeriodicTasks();
+      }));
 
-    it('should add target tab group', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const projectDoc = env.getProjectDoc('project01');
-      const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
-      env.wait();
-      expect(spyCreateTab).toHaveBeenCalledWith('project-target', {
-        projectId: projectDoc.id,
-        headerText: projectDoc.data?.shortName
-      });
-      discardPeriodicTasks();
-    }));
-  });
+      it('should call deconsolidateTabGroups for large screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: false } as any));
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        const spyDeconsolidate = spyOn(env.component.tabState, 'deconsolidateTabGroups');
 
-  describe('updateAutoDraftTabVisibility', () => {
-    beforeEach(() => {});
-    it('should add auto draft tab when available', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.wait();
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
-      env.wait();
+        expect(spyDeconsolidate).not.toHaveBeenCalled();
+        env.component['tabStateInitialized$'].next(true);
+        expect(spyDeconsolidate).not.toHaveBeenCalled();
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+        expect(spyDeconsolidate).toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toEqual('project02:MAT:1:target');
+        discardPeriodicTasks();
+      }));
 
-      const tabGroup = env.component.tabState.getTabGroup('source');
-      expect(tabGroup?.tabs[1].type).toEqual('draft');
+      it('should not set id on source tab if user does not have permission', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
+          env.setCurrentUser('user05');
+          env.setupUsers(['project01']);
+          env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
+        });
+        expect(env.component.source?.id?.toString()).toBeUndefined();
+        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
 
-      env.dispose();
-    }));
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['tabStateInitialized$'].next(true);
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toBeUndefined();
+        discardPeriodicTasks();
+      }));
 
-    it('should hide auto draft tab when switching to chapter with no draft', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
-      env.wait();
+      it('should not consolidate if showSource is false', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
 
-      const tabGroup = env.component.tabState.getTabGroup('source');
-      expect(tabGroup?.tabs[1].type).toEqual('draft');
-      expect(env.component.chapter).toBe(1);
+        env.component['tabStateInitialized$'].next(true);
+        env.component['targetEditorLoaded$'].next();
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        flush();
+      }));
+    });
 
-      env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
-      env.wait();
+    describe('initEditorTabs', () => {
+      it('should add source tab group when source is defined', fakeAsync(() => {
+        const env = new TestEnvironment();
+        const projectDoc = env.getProjectDoc('project01');
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).toHaveBeenCalledWith('project-source', {
+          projectId: projectDoc.data?.translateConfig.source?.projectRef,
+          headerText: projectDoc.data?.translateConfig.source?.shortName,
+          tooltip: projectDoc.data?.translateConfig.source?.name
+        });
+        discardPeriodicTasks();
+      }));
 
-      expect(tabGroup?.tabs[1]).toBeUndefined();
-      expect(env.component.chapter).toBe(2);
+      it('should not add source tab group when source is undefined', fakeAsync(() => {
+        const env = new TestEnvironment();
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        delete env.testProjectProfile.translateConfig.source;
+        env.setupProject();
+        env.wait();
+        expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', jasmine.any(Object));
+        discardPeriodicTasks();
+      }));
 
-      env.dispose();
-    }));
+      it('should add target tab group', fakeAsync(() => {
+        const env = new TestEnvironment();
+        const projectDoc = env.getProjectDoc('project01');
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).toHaveBeenCalledWith('project-target', {
+          projectId: projectDoc.id,
+          headerText: projectDoc.data?.shortName,
+          tooltip: projectDoc.data?.name
+        });
+        discardPeriodicTasks();
+      }));
+    });
 
-    it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      env.wait();
+    describe('updateAutoDraftTabVisibility', () => {
+      it('should add auto draft tab to source when available and "showSource" is true', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.wait();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
 
-      env.component.tabState.addTab('target', await env.tabFactory.createTab('draft'));
-      const addTab = spyOn(env.component.tabState, 'addTab');
+        const tabGroup = env.component.tabState.getTabGroup('source');
+        expect(tabGroup?.tabs[1].type).toEqual('draft');
 
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
-      env.wait();
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1]).toBeUndefined();
 
-      expect(addTab).not.toHaveBeenCalled();
-      env.dispose();
-    }));
-
-    it('should select the draft tab if url query param is set', fakeAsync(() => {
-      const env = new TestEnvironment();
-      when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
-      env.wait();
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
-      env.wait();
-
-      env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
-        expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(true);
         env.dispose();
-      });
-    }));
+      }));
 
-    it('should not select the draft tab if url query param is not set', fakeAsync(() => {
-      const env = new TestEnvironment();
-      when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
-      env.wait();
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
-      env.wait();
+      it('should add auto draft tab to target when available and "showSource" is false', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        env.wait();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
 
-      env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
-        expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1].type).toEqual('draft');
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+
         env.dispose();
-      });
-    }));
+      }));
+
+      it('should hide source auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1].type).toEqual('draft');
+        expect(env.component.chapter).toBe(1);
+
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.wait();
+
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(2);
+
+        env.dispose();
+      }));
+
+      it('should hide target auto draft tab when switching to chapter with no draft', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1].type).toEqual('draft');
+        expect(env.component.chapter).toBe(1);
+
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.wait();
+
+        expect(targetTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(2);
+
+        env.dispose();
+      }));
+
+      it('should not add draft tab if draft exists and draft tab is already present', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        env.wait();
+
+        env.component.tabState.addTab('target', await env.tabFactory.createTab('draft'));
+        const addTab = spyOn(env.component.tabState, 'addTab');
+
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        expect(addTab).not.toHaveBeenCalled();
+        env.dispose();
+      }));
+
+      it('should select the draft tab if url query param is set', fakeAsync(() => {
+        const env = new TestEnvironment();
+        when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
+        env.wait();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
+          expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(true);
+          env.dispose();
+        });
+      }));
+
+      it('should not select the draft tab if url query param is not set', fakeAsync(() => {
+        const env = new TestEnvironment();
+        when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
+        env.wait();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        env.component.tabState.tabs$.pipe(take(1)).subscribe(tabs => {
+          expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
+          env.dispose();
+        });
+      }));
+
+      it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setProjectUserConfig();
+        env.wait();
+
+        env.component.source = undefined;
+
+        expect(() => env.updateFontSize('project01', 24)).not.toThrow();
+
+        env.dispose();
+      }));
+    });
+
+    describe('tab header tooltips', () => {
+      it('should show source tab header tooltip', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const tooltipHarness = await env.harnessLoader.getHarness(
+          MatTooltipHarness.with({ selector: '#source-text-area .tab-header-content' })
+        );
+        const sourceProjectDoc = env.getProjectDoc('project02');
+        env.wait();
+        await tooltipHarness.show();
+        expect(await tooltipHarness.getTooltipText()).toBe(sourceProjectDoc.data?.translateConfig.source?.name!);
+        tooltipHarness.hide();
+        env.dispose();
+      }));
+
+      it('should show target tab header tooltip', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const tooltipHarness = await env.harnessLoader.getHarness(
+          MatTooltipHarness.with({ selector: '#target-text-area .tab-header-content' })
+        );
+
+        const targetProjectDoc = env.getProjectDoc('project01');
+        env.wait();
+        await tooltipHarness.show();
+        expect(await tooltipHarness.getTooltipText()).toBe(targetProjectDoc.data?.name!);
+        tooltipHarness.hide();
+        env.dispose();
+      }));
+    });
   });
 });
 
@@ -3858,10 +4031,9 @@ class TestEnvironment {
   readonly mockNoteDialogRef;
   readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly ngZone: NgZone;
-  readonly tabFactory = TestBed.inject(EditorTabFactoryService);
-  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
-    OnlineStatusService
-  ) as TestOnlineStatusService;
+  readonly tabFactory: EditorTabFactoryService;
+  readonly harnessLoader: HarnessLoader;
+  readonly testOnlineStatusService: TestOnlineStatusService;
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -3875,7 +4047,7 @@ class TestEnvironment {
   private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
   private tokenizer = new LatinWordTokenizer();
   private detokenizer = new LatinWordDetokenizer();
-  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  private readonly realtimeService: TestRealtimeService;
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
   private textInfoPermissions = {
@@ -4023,23 +4195,11 @@ class TestEnvironment {
     noteTags: this.noteTags
   });
 
-  constructor() {
+  constructor(preInit?: (env: TestEnvironment) => void) {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
-    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'), 'source', false, true);
-    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'), 'target', false, true);
-    this.addTextDoc(new TextDocId('project02', 40, 2, 'target'), 'source');
-    this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
-    this.addTextDoc(new TextDocId('project02', 41, 1, 'target'), 'source');
-    this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
-    this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 1, 'target'));
-    this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 42, 3, 'target'), 'target', true);
-    this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
-    this.setupUsers();
-    this.setCurrentUser('user01');
     when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
@@ -4049,13 +4209,6 @@ class TestEnvironment {
     when(mockedTranslationEngineService.createInteractiveTranslatorFactory(anything())).thenReturn(
       new InteractiveTranslatorFactory(instance(this.mockedRemoteTranslationEngine), this.tokenizer, this.detokenizer)
     );
-    this.setupProject();
-    this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
-    this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
-    this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 20, length: 7 }, ['user01']);
-    this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 20, length: 5 }, ['user01']);
-    this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 28, length: 9 }, ['user01']);
-    this.addParatextNoteThread(6, 'MAT 1:5', 'resolved note', { start: 0, length: 0 }, ['user01'], NoteStatus.Resolved);
     when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
     when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
       Promise.resolve(this.createWordGraph(segment))
@@ -4119,9 +4272,7 @@ class TestEnvironment {
       })
     );
 
-    this.fixture = TestBed.createComponent(EditorComponent);
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
-    this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
     when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
       this.openNoteDialogs.push(this.mockNoteDialogRef);
       return this.mockNoteDialogRef;
@@ -4143,13 +4294,47 @@ class TestEnvironment {
       of([])
     );
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: false } as any));
+
+    this.realtimeService = TestBed.inject(TestRealtimeService);
+
+    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'), 'source', false, true);
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'), 'target', false, true);
+    this.addTextDoc(new TextDocId('project02', 40, 2, 'target'), 'source');
+    this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
+    this.addTextDoc(new TextDocId('project02', 41, 1, 'target'), 'source');
+    this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
+    this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 1, 'target'));
+    this.addCombinedVerseTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 3, 'target'), 'target', true);
+    this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
+
+    this.setupUsers();
+    this.setCurrentUser('user01');
+    this.setupProject();
+    this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
+    this.addParatextNoteThread(2, 'MAT 1:3', 'target: chapter 1, verse 3.', { start: 0, length: 0 }, ['user01']);
+    this.addParatextNoteThread(3, 'MAT 1:3', 'verse 3', { start: 20, length: 7 }, ['user01']);
+    this.addParatextNoteThread(4, 'MAT 1:3', 'verse', { start: 20, length: 5 }, ['user01']);
+    this.addParatextNoteThread(5, 'MAT 1:4', 'Paragraph', { start: 28, length: 9 }, ['user01']);
+    this.addParatextNoteThread(6, 'MAT 1:5', 'resolved note', { start: 0, length: 0 }, ['user01'], NoteStatus.Resolved);
 
     this.activatedProjectService = TestBed.inject(ActivatedProjectService);
+    this.tabFactory = TestBed.inject(EditorTabFactoryService);
+    this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
     this.ngZone = TestBed.inject(NgZone);
+
     this.fixture = TestBed.createComponent(EditorComponent);
+    this.harnessLoader = TestbedHarnessEnvironment.loader(this.fixture);
+    this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
     this.component = this.fixture.componentInstance;
+
+    if (preInit) {
+      preInit(this);
+    }
+
     this.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
   }
 
@@ -4309,7 +4494,7 @@ class TestEnvironment {
     );
   }
 
-  setupUsers(): void {
+  setupUsers(projects?: string[]): void {
     for (const user of Object.keys(this.userRolesOnProject)) {
       const i: number = parseInt(user.substring(user.length - 2));
       this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -4318,7 +4503,7 @@ class TestEnvironment {
           {
             sites: {
               sf: {
-                projects: ['project01', 'project02', 'project03']
+                projects: projects ?? ['project01', 'project02', 'project03']
               }
             }
           },
@@ -4373,6 +4558,11 @@ class TestEnvironment {
     }
     if (data.texts != null) {
       projectProfileData.texts = merge(projectProfileData.texts, data.texts);
+    }
+    if (data.userRoles != null) {
+      for (const [userId, role] of Object.entries(data.userRoles)) {
+        projectProfileData.userRoles[userId] = role!;
+      }
     }
     if (id !== undefined) {
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

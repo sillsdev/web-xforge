@@ -1,8 +1,13 @@
+import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { DeltaOperation } from 'rich-text';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref
@@ -158,6 +163,31 @@ export function attributeFromMouseEvent(event: MouseEvent, nodeName: string, att
     return target?.attributes[attribute].value;
   }
   return;
+}
+
+export function checkAppAccess(
+  projectDoc: SFProjectProfileDoc,
+  userId: string,
+  projectUserConfigDoc: SFProjectUserConfigDoc,
+  pathname: string,
+  router: Router
+): void {
+  if (projectDoc.data == null) return;
+  // Remove the record of the selected task so 'Project Home' will not redirect there
+  projectUserConfigDoc.submitJson0Op(op => {
+    op.unset(puc => puc.selectedTask!);
+    op.unset(puc => puc.selectedQuestionRef!);
+  });
+  const projectRole = projectDoc.data.userRoles[userId] as SFProjectRole;
+  let route = '/projects/' + projectDoc.id;
+
+  if (pathname.includes('translate') && !roleCanAccessTranslate(projectRole)) {
+    router.navigateByUrl(route, { replaceUrl: true });
+    return;
+  }
+  if (pathname.includes('checking') && !roleCanAccessCommunityChecking(projectRole)) {
+    router.navigateByUrl(route, { replaceUrl: true });
+  }
 }
 
 export function projectLabel(project: SelectableProject | undefined): string {

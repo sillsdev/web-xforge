@@ -9,14 +9,26 @@
     <span class="site-admin" *ngIf="isLive && isSystemAdmin">site admin</span>
     <mat-toolbar color="primary">
       <mat-toolbar-row>
-        <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
+        <button
+          id="hamburger-menu-button"
+          mat-icon-button
+          *ngIf="!isDrawerPermanent && isProjectSelected"
+          (click)="toggleDrawer()"
+        >
           <mat-icon>menu</mat-icon>
         </button>
-        <span (click)="goHome()" class="title">
-          <img src="/assets/images/sf_logo_with_name.svg" height="40" class="hide-lt-sm" />
-          <button mat-icon-button class="hide-gt-sm">
-            <img src="/assets/images/sf.svg" height="38" />
-          </button>
+        @if (isLoggedIn | async) {
+        <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" routerLink="/projects">
+          <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
+        </a>
+        } @else {
+        <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" href="/">
+          <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
+        </a>
+        }
+        <span class="project-name-wrapper hide-lt-sm" *ngIf="isProjectSelected">
+          <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
+          <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
         </span>
         <span class="toolbar-spacer"></span>
         <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu" *ngIf="isAppOnline">
@@ -95,6 +107,7 @@
             [disabled]="!isAppOnline"
             appRouterLink="/system-administration"
           >
+            <mat-icon>admin_panel_settings</mat-icon>
             {{ t("system_administration") }}
           </button>
           <button
@@ -104,19 +117,22 @@
             [disabled]="!isAppOnline"
             appRouterLink="/serval-administration"
           >
+            <mat-icon>tune</mat-icon>
             {{ t("serval_administration") }}
           </button>
-          <button mat-menu-item appRouterLink="/projects" id="project-home-link">{{ t("project_home") }}</button>
+          <button mat-menu-item appRouterLink="/projects" id="project-home-link">
+            <mat-icon>home</mat-icon> {{ "my_projects.my_projects" | transloco }}
+          </button>
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
+            <mat-icon>vpn_key</mat-icon>
             {{ t("change_password") }}
           </button>
           <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()">
-            <div class="install-button">
-              {{ t("install_on_device") }}
-              <mat-icon>install_mobile</mat-icon>
-            </div>
+            <div class="install-button"><mat-icon>install_mobile</mat-icon> {{ t("install_on_device") }}</div>
           </button>
-          <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
+          <button mat-menu-item (click)="logOut()" id="log-out-link">
+            <mat-icon>logout</mat-icon> {{ t("log_out") }}
+          </button>
           <mat-divider></mat-divider>
           <div class="pseudo-menu-item online-status">
             <ng-container *ngIf="isAppOnline">
@@ -145,13 +161,9 @@
       *ngIf="isProjectSelected"
       [opened]="isExpanded || isDrawerPermanent"
       (closed)="drawerCollapsed()"
+      autoFocus="false"
     >
-      <app-navigation-project-selector
-        [projectDocs]="projectDocs"
-        [selected]="selectedProjectDoc"
-        (changed)="projectChanged($event)"
-      ></app-navigation-project-selector>
-      <app-navigation (menuItemClicked)="itemSelected()"></app-navigation>
+      <app-navigation></app-navigation>
     </mat-drawer>
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
     <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">

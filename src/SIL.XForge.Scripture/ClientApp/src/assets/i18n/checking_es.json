@@ -22,7 +22,6 @@
     "password_reset_email_sent": "Acabamos de enviarle un correo electrónico para restablecer su contraseña.",
     "product_version": "Versión del producto: v{{ version }}",
     "project_has_been_deleted": "El proyecto ha sido borrado o ya no es accesible.",
-    "project_home": "Página de inicio del proyecto",
     "questions_answers": "Preguntas y respuestas",
     "redirecting_in_moments": "Redirigiendo en unos momentos...",
     "refresh": "Actualizar",
@@ -203,6 +202,9 @@
     "save_answer": "Guardar respuesta",
     "select_verses": "Seleccionar versículos",
     "show_more_unread": "Mostrar {{ count }} más respuestas no leídas",
+    "tooltip_attach": "Attach scripture",
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Exportar a Paratext si se ha configurado en Configuración",
     "tooltip_status_resolve": "Marcar la respuesta como resuelta",
     "your_answer": "Su respuesta"
@@ -217,6 +219,7 @@
     "drag_and_drop_files": "Arrastre y suelte aquí los archivos de audio y sincronización",
     "drag_and_drop_or_browse": "O",
     "from_timing_past_to_timing": "Uno o más valores finales terminan antes que sus valores iniciales.",
+    "help": "Ayuda",
     "no_audio_file_uploaded": "No se ha cargado ningún archivo de audio",
     "no_timing_data_uploaded": "No se han cargado datos de sincronización",
     "not_upload_audio_offline": "Los archivos de audio no pueden cargarse sin conectarse a Internet.",
@@ -270,7 +273,8 @@
     "my_progress": "Mi progreso",
     "project_stats": "Estadísticas del proyecto",
     "questions": "Preguntas",
-    "some_actions_unavailable_offline": "Algunas acciones no están disponibles sin conexión y requieren conectarse a Internet, como cargar o borrar el audio de un capítulo."
+    "some_actions_unavailable_offline": "Algunas acciones no están disponibles sin conexión y requieren conectarse a Internet, como cargar o borrar el audio de un capítulo.",
+    "tooltip_edit": "Editar"
   },
   "checking_questions": {
     "listen_to_question": "Escucha la pregunta para {{ referenceForDisplay }}",
@@ -348,8 +352,23 @@
     "cancel": "Cancelar",
     "close": "Cerrar"
   },
-  "navigation-project_selector": {
-    "connect_project": "Conectar el proyecto"
+  "my_projects": {
+    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected": "Connected",
+    "dbl_resource": "Digital Bible Library resource",
+    "dbl_resources": "Digital Bible Library resources",
+    "drafting": "Drafting",
+    "join": "Unirse",
+    "loading_more_pt_projects": "Loading additional Paratext projects ...",
+    "looking_for_another_project": "Looking for another project?",
+    "my_projects": "My projects",
+    "no_projects": "You have no projects.",
+    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
+    "not_connected": "Not connected",
+    "offline": "You will need to connect to the internet to get started with a project.",
+    "open": "Open",
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Elegir libro",
@@ -389,22 +408,26 @@
     "anyone_can": "Cualquiera que tenga el enlace puede",
     "change": "cambiar",
     "copy_link": "Copiar enlace",
+    "days_seven": "7 days",
+    "days_fourteen": "14 days",
+    "days_thirty": "30 days",
+    "days_ninety": "90 days",
+    "days_threesixtyfive": "1 year",
+    "error_language": "Please select a language",
+    "expiration_description": "Change the lifetime of the link",
     "invitation_language": "Cambiar el idioma de la invitación",
     "invitation_link_type": "Cambiar la forma de utilizar el enlace",
     "invitation_role": "Cambiar el rol de la invitación",
     "invitation_shared_in_language": "La invitación se compartirá en",
     "link_can_be_used_by": "El enlace puede ser utilizado por",
     "link_sharing_not_available_offline": "Invitar a usuarios compartiendo enlaces no está disponible mientras no se está conectado.",
-    "recipient": "Sólo el destinatario",
-    "recipient_can": "Sólo el destinatario puede",
-    "recipient_only_notice": "Cada enlace sólo puede utilizarse una vez y caducará a los 14 días. Vuelve a pulsar el botón para generar y compartir un nuevo enlace.",
+    "recipient": "One recipient",
+    "recipient_can": "The recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after {{ shareExpiration }} days. Click the button again to generate and share a new link.",
     "share": "Compartir",
     "share_project": "Compartir {{ project }}",
-    "share_with_others": "Compartir con otros"
-  },
-  "start": {
-    "connect_project": "Conectar el proyecto",
-    "not_connected_to_any_projects": "Parece que aún no estás conectado a ningún proyecto."
+    "share_with_others": "Compartir con otros",
+    "will_expire_in": "Link expires in [b]{{ count }} days[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "La grabación de audio no es compatible con este navegador.",

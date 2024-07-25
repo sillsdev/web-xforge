@@ -156,8 +156,11 @@ public class ParatextControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<IAsyncEnumerable<KeyValuePair<DateTime, string>>> actual =
-            await env.Controller.GetRevisionHistoryAsync(Project01, Book, Chapter);
+        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = await env.Controller.GetRevisionHistoryAsync(
+            Project01,
+            Book,
+            Chapter
+        );
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -170,8 +173,11 @@ public class ParatextControllerTests
         env.UserAccessor.UserId.Returns("invalid_user");
 
         // SUT
-        ActionResult<IAsyncEnumerable<KeyValuePair<DateTime, string>>> actual =
-            await env.Controller.GetRevisionHistoryAsync(Project01, Book, Chapter);
+        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = await env.Controller.GetRevisionHistoryAsync(
+            Project01,
+            Book,
+            Chapter
+        );
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -185,8 +191,11 @@ public class ParatextControllerTests
             .Throws(new DataNotFoundException("Not Found"));
 
         // SUT
-        ActionResult<IAsyncEnumerable<KeyValuePair<DateTime, string>>> actual =
-            await env.Controller.GetRevisionHistoryAsync(Project01, Book, Chapter);
+        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = await env.Controller.GetRevisionHistoryAsync(
+            Project01,
+            Book,
+            Chapter
+        );
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -198,13 +207,16 @@ public class ParatextControllerTests
         var env = new TestEnvironment();
 
         // SUT
-        ActionResult<IAsyncEnumerable<KeyValuePair<DateTime, string>>> actual =
-            await env.Controller.GetRevisionHistoryAsync(Project01, Book, Chapter);
+        ActionResult<IAsyncEnumerable<DocumentRevision>> actual = await env.Controller.GetRevisionHistoryAsync(
+            Project01,
+            Book,
+            Chapter
+        );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         bool historyExists = false;
-        var history = (IAsyncEnumerable<KeyValuePair<DateTime, string>>)((OkObjectResult)actual.Result!).Value!;
-        await foreach (KeyValuePair<DateTime, string> revision in history)
+        var history = (IAsyncEnumerable<DocumentRevision>)((OkObjectResult)actual.Result!).Value!;
+        await foreach (DocumentRevision revision in history)
         {
             historyExists = true;
             Assert.AreEqual(env.TestRevision, revision);
@@ -353,13 +365,14 @@ public class ParatextControllerTests
             {
                 Name = "Resource 01",
                 ParatextId = "res01",
-                ShortName = "res"
-            }
+                ShortName = "res",
+            },
         ];
-        public readonly KeyValuePair<DateTime, string> TestRevision = new KeyValuePair<DateTime, string>(
-            Timestamp,
-            "Test Data"
-        );
+        public readonly DocumentRevision TestRevision = new DocumentRevision
+        {
+            Timestamp = Timestamp,
+            Source = OpSource.History,
+        };
 
         public readonly Snapshot<TextData> TestSnapshot = new Snapshot<TextData>
         {
@@ -418,7 +431,7 @@ public class ParatextControllerTests
         public IParatextService ParatextService { get; }
         public IUserAccessor UserAccessor { get; }
 
-        private async IAsyncEnumerable<KeyValuePair<DateTime, string>> RevisionHistory()
+        private async IAsyncEnumerable<DocumentRevision> RevisionHistory()
         {
             yield return TestRevision;
             await Task.CompletedTask;
