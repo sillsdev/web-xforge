@@ -44,7 +44,7 @@ on:
         type: string
         required: true
       node_options:
-        description: ""
+        description: "Node-related options when building RealtimeServer."
         type: string
         required: true
       project:
