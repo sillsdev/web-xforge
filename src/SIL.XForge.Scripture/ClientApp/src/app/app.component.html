@@ -161,6 +161,7 @@
       *ngIf="isProjectSelected"
       [opened]="isExpanded || isDrawerPermanent"
       (closed)="drawerCollapsed()"
+      autoFocus="false"
     >
       <app-navigation></app-navigation>
     </mat-drawer>
