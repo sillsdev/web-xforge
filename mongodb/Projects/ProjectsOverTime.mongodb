@@ -2,8 +2,12 @@ use('xforge')
 
 // This query prints the time when each project in the database was created, in chronological order.
 // This is useful for graphing the number of projects over time.
+// Excludes DBL resources and test/demo projects as much as possible.
 
-db.sf_projects.find({}, {
+db.sf_projects.find({
+  paratextId: /^.{40}$/,
+  name: { $not: /demo|training|test/i }
+}, {
   _id: 0,
   "_m.ctime": 1
 })

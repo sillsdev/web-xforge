@@ -3758,8 +3758,10 @@ describe('EditorComponent', () => {
         env.component['tabStateInitialized$'].next(true);
         expect(spyConsolidate).not.toHaveBeenCalled();
         env.component['targetEditorLoaded$'].next();
-        expect(spyConsolidate).toHaveBeenCalledTimes(1);
-        flush();
+        env.wait();
+        expect(spyConsolidate).toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toEqual('project02:MAT:1:target');
+        discardPeriodicTasks();
       }));
 
       it('should call deconsolidateTabGroups for large screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
@@ -3773,8 +3775,30 @@ describe('EditorComponent', () => {
         env.component['tabStateInitialized$'].next(true);
         expect(spyDeconsolidate).not.toHaveBeenCalled();
         env.component['targetEditorLoaded$'].next();
-        expect(spyDeconsolidate).toHaveBeenCalledTimes(1);
-        flush();
+        env.wait();
+        expect(spyDeconsolidate).toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toEqual('project02:MAT:1:target');
+        discardPeriodicTasks();
+      }));
+
+      it('should not set id on source tab if user does not have permission', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
+          env.setCurrentUser('user05');
+          env.setupUsers(['project01']);
+          env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
+        });
+        expect(env.component.source?.id?.toString()).toBeUndefined();
+        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
+
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['tabStateInitialized$'].next(true);
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        expect(env.component.source?.id?.toString()).toBeUndefined();
+        discardPeriodicTasks();
       }));
 
       it('should not consolidate if showSource is false', fakeAsync(() => {
@@ -3942,6 +3966,18 @@ describe('EditorComponent', () => {
           expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
           env.dispose();
         });
+      }));
+
+      it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setProjectUserConfig();
+        env.wait();
+
+        env.component.source = undefined;
+
+        expect(() => env.updateFontSize('project01', 24)).not.toThrow();
+
+        env.dispose();
       }));
     });
 
@@ -4458,7 +4494,7 @@ class TestEnvironment {
     );
   }
 
-  setupUsers(): void {
+  setupUsers(projects?: string[]): void {
     for (const user of Object.keys(this.userRolesOnProject)) {
       const i: number = parseInt(user.substring(user.length - 2));
       this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -4467,7 +4503,7 @@ class TestEnvironment {
           {
             sites: {
               sf: {
-                projects: ['project01', 'project02', 'project03']
+                projects: projects ?? ['project01', 'project02', 'project03']
               }
             }
           },
@@ -4522,6 +4558,11 @@ class TestEnvironment {
     }
     if (data.texts != null) {
       projectProfileData.texts = merge(projectProfileData.texts, data.texts);
+    }
+    if (data.userRoles != null) {
+      for (const [userId, role] of Object.entries(data.userRoles)) {
+        projectProfileData.userRoles[userId] = role!;
+      }
     }
     if (id !== undefined) {
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

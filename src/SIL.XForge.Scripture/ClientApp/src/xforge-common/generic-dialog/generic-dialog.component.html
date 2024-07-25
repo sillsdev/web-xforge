@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ title$ | async }}</h2>
+<h2 mat-dialog-title *ngIf="title$ | async as title">{{ title }}</h2>
 <div mat-dialog-content *ngIf="message$ | async as message">{{ message }}</div>
 <div mat-dialog-actions align="end">
   <ng-container *ngFor="let option of options">

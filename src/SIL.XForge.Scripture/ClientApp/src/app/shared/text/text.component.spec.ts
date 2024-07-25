@@ -37,8 +37,8 @@ import { getAttributesAtPosition } from './quill-scripture';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 import {
   EDITOR_READY_TIMEOUT,
-  PresenceData,
   PRESENCE_EDITOR_ACTIVE_TIMEOUT,
+  PresenceData,
   RemotePresences,
   TextComponent
 } from './text.component';
@@ -284,6 +284,31 @@ describe('TextComponent', () => {
     expect(contents.ops![0].insert).toEqual(pasteText + 'target: ');
 
     TestEnvironment.waitForPresenceTimer();
+  }));
+
+  it('"select all" adjusts selection to current segment', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const testSegmentRefs = ['verse_1_1', 'verse_1_3'];
+
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+
+    for (const ref of testSegmentRefs) {
+      const range: RangeStatic = env.component.getSegmentRange(ref)!;
+
+      // Set segment as current segment
+      env.component.editor?.setSelection(range.index, 0, 'user');
+      expect(env.component.segmentRef).toEqual(ref);
+
+      // Select all text
+      env.component.editor?.setSelection(0, env.component.editor?.getLength());
+      tick();
+
+      const result = env.component.editor?.getSelection();
+      expect(result!.index).toEqual(range.index);
+      expect(result!.length).toEqual(range.length);
+    }
   }));
 
   describe('MultiCursor Presence', () => {
@@ -573,7 +598,7 @@ describe('TextComponent', () => {
       const startContainer: Node = targetElement!.childNodes[0] as Node;
       // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
-        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
+        ({ startOffset: desiredIndexInSegment, startContainer }) as Range;
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
@@ -1520,7 +1545,7 @@ class TestEnvironment {
 
     // eslint-disable-next-line deprecation/deprecation
     document.caretRangeFromPoint = (_x: number, _y: number) =>
-      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node }) as Range;
 
     const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
       dataTransfer,

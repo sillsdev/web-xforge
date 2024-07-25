@@ -110,7 +110,10 @@ class SegmentInfo {
     return this.isVerseNext && (!this.ref.startsWith('verse') || this.ref.includes('/'));
   }
 
-  constructor(public ref: string, public index: number) {}
+  constructor(
+    public ref: string,
+    public index: number
+  ) {}
 }
 
 /**
@@ -134,7 +137,10 @@ export class TextViewModel {
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
-  constructor(private readonly destroyRef: DestroyRef, private readonly textDocService: TextDocService) {}
+  constructor(
+    private readonly destroyRef: DestroyRef,
+    private readonly textDocService: TextDocService
+  ) {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
@@ -395,19 +401,33 @@ export class TextViewModel {
     return range == null ? undefined : editor.getContents(range.index, range.length);
   }
 
-  getSegmentRef(range: RangeStatic): string | undefined {
+  /**
+   * Returns the segment reference with the most overlap of given range.
+   * Preference is given to the specified segment if it is wholly contained within the range.
+   */
+  getSegmentRef(range: RangeStatic, preferRef?: string): string | undefined {
     let segmentRef: string | undefined;
     let maxOverlap = -1;
+
     if (range != null) {
       for (const [ref, segmentRange] of this.segments) {
         const segEnd = segmentRange.index + segmentRange.length;
+
         if (range.index <= segEnd) {
           const rangeEnd = range.index + range.length;
           const overlap = Math.min(rangeEnd, segEnd) - Math.max(range.index, segmentRange.index);
+
+          // Prefer the specified segment if it is wholly within the selection range.
+          // This way actions like 'select all' will select the current segment, not the longest segment.
+          if (preferRef != null && overlap === segmentRange.length && preferRef === ref) {
+            return ref;
+          }
+
           if (overlap > maxOverlap) {
             segmentRef = ref;
             maxOverlap = overlap;
           }
+
           if (rangeEnd <= segEnd) {
             break;
           }

@@ -45,7 +45,10 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 
-  constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
+  constructor(
+    protected readonly realtimeService: RealtimeService,
+    public readonly adapter: RealtimeDocAdapter
+  ) {
     adapter.submitSource = true;
     super(realtimeService, adapter);
   }

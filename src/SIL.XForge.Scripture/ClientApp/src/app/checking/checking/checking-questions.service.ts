@@ -42,7 +42,10 @@ export class CheckingQuestionsService {
    */
   afterQuestionCreated$ = new Subject<QuestionDoc>();
 
-  constructor(private readonly realtimeService: RealtimeService, private readonly fileService: FileService) {}
+  constructor(
+    private readonly realtimeService: RealtimeService,
+    private readonly fileService: FileService
+  ) {}
 
   /**
    * Query project questions that match the supplied criteria.

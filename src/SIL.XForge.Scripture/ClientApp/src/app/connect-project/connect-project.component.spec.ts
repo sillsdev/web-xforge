@@ -156,8 +156,10 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
     expect(env.component.paratextIdControl.errors!.required).toBe(true);
 
+    when(mockedParatextService.isParatextProjectInSF(anything())).thenReturn(true);
     env.changeSelectValue(env.projectSelect, 'pt03');
 
+    // The project is already in SF, so do not present settings to configure.
     expect(env.settingsCard).toBeNull();
     env.clickElement(env.submitButton);
 
@@ -371,6 +373,18 @@ describe('ConnectProjectComponent', () => {
     };
     verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
+  }));
+
+  it('knows what PT project id the prior page asked to connect to', fakeAsync(() => {
+    when(mockedRouter.getCurrentNavigation()).thenReturn({
+      extras: { state: { ptProjectId: 'requested-pt-project-id' } }
+    } as any);
+    const env = new TestEnvironment();
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+    expect(env.component.incomingPTProjectId).toEqual('requested-pt-project-id');
+    expect(env.component.paratextIdControl.value).toEqual('requested-pt-project-id');
   }));
 
   it('should display the Paratext credentials update prompt when get projects throws a forbidden error', fakeAsync(() => {

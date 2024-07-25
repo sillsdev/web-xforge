@@ -973,7 +973,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
             const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
             const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
             this.dialogService.openMatDialog(TextNoteDialogComponent, {
-              autoFocus: false,
               width: '600px',
               data: {
                 type: noteType,
@@ -1188,7 +1187,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       // If the avatar src is empty ('') then it generates one with the same background and cursor color
       // Do this for email/password accounts
       const authType: AuthType = getAuthType(this.currentUserDoc.data?.authId ?? '');
-      const avatarUrl: string = authType === AuthType.Unknown ? '' : this.currentUserDoc.data?.avatarUrl ?? '';
+      const avatarUrl: string = authType === AuthType.Unknown ? '' : (this.currentUserDoc.data?.avatarUrl ?? '');
       presenceData = {
         viewer: {
           displayName: this.currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
@@ -1271,7 +1270,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       // get currently selected segment ref
       const selection = this._editor.getSelection();
       if (selection != null) {
-        segmentRef = this.viewModel.getSegmentRef(selection);
+        segmentRef = this.viewModel.getSegmentRef(selection, this.segmentRef);
       }
     }
 
@@ -1349,7 +1348,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     if (focus) {
       const selection = this._editor.getSelection();
-      const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection);
+      const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection, this.segmentRef);
       if (selectedSegmentRef !== segmentRef) {
         const range = this.viewModel.getSegmentRange(segmentRef);
         if (range != null) {

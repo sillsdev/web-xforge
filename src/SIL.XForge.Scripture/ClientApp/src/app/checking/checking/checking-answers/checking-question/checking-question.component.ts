@@ -48,7 +48,10 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   private projectId?: string;
   private _versesListenedTo = new Set<string>();
 
-  constructor(private readonly projectService: SFProjectService, private readonly i18n: I18nService) {
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly i18n: I18nService
+  ) {
     super();
   }
 
@@ -99,10 +102,10 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     return this._questionDoc.data.text
       ? this._questionDoc.data.text
       : this._questionDoc.data.audioUrl != null
-      ? translate('checking_questions.listen_to_question', {
-          referenceForDisplay: this.referenceForDisplay
-        })
-      : '';
+        ? translate('checking_questions.listen_to_question', {
+            referenceForDisplay: this.referenceForDisplay
+          })
+        : '';
   }
 
   get questionAudioUrl(): string | undefined {

@@ -67,8 +67,8 @@ class Row {
 
   get term(): string {
     return this.projectUserConfigDoc?.data?.transliterateBiblicalTerms
-      ? this.biblicalTermDoc.data?.transliteration ?? ''
-      : this.biblicalTermDoc.data?.termId ?? '';
+      ? (this.biblicalTermDoc.data?.transliteration ?? '')
+      : (this.biblicalTermDoc.data?.termId ?? '');
   }
 
   get category(): string {

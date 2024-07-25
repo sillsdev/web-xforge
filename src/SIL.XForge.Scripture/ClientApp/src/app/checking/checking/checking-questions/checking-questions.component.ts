@@ -385,8 +385,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     return questionDoc.data.text
       ? questionDoc.data.text
       : questionDoc.data.audioUrl != null
-      ? this.referenceForDisplay(questionDoc)
-      : '';
+        ? this.referenceForDisplay(questionDoc)
+        : '';
   }
 
   questionVerseRef(questionDoc: QuestionDoc): string {

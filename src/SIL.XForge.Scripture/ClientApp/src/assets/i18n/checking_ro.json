@@ -22,7 +22,6 @@
     "password_reset_email_sent": "Tocmai v-am trimis un e-mail pentru a vă reseta parola.",
     "product_version": "Versiune produs: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
-    "project_home": "Pagina principală a proiectului",
     "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecționare în câteva momente...",
     "refresh": "Reîncarcă",
@@ -203,6 +202,9 @@
     "save_answer": "Salvează răspunsul",
     "select_verses": "Selectare versete",
     "show_more_unread": "Arată încă {{ count }} răspuns(uri) necitit(e)",
+    "tooltip_attach": "Attach scripture",
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Răspunsul dvs."
@@ -271,7 +273,8 @@
     "my_progress": "My progress",
     "project_stats": "Project stats",
     "questions": "Întrebări",
-    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio."
+    "some_actions_unavailable_offline": "Some actions are not available while offline and require connecting to the internet, such as uploading or deleting chapter audio.",
+    "tooltip_edit": "Editare"
   },
   "checking_questions": {
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
@@ -349,8 +352,23 @@
     "cancel": "Renunță",
     "close": "Închide"
   },
-  "navigation-project_selector": {
-    "connect_project": "Conectează proiectul"
+  "my_projects": {
+    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected": "Connected",
+    "dbl_resource": "Digital Bible Library resource",
+    "dbl_resources": "Digital Bible Library resources",
+    "drafting": "Drafting",
+    "join": "Join",
+    "loading_more_pt_projects": "Loading additional Paratext projects ...",
+    "looking_for_another_project": "Looking for another project?",
+    "my_projects": "My projects",
+    "no_projects": "You have no projects.",
+    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
+    "not_connected": "Not connected",
+    "offline": "You will need to connect to the internet to get started with a project.",
+    "open": "Open",
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Alegeți cartea",
@@ -390,19 +408,26 @@
     "anyone_can": "Anyone with the link can",
     "change": "change",
     "copy_link": "Copiază linkul",
+    "days_seven": "7 days",
+    "days_fourteen": "14 days",
+    "days_thirty": "30 days",
+    "days_ninety": "90 days",
+    "days_threesixtyfive": "1 year",
+    "error_language": "Please select a language",
+    "expiration_description": "Change the lifetime of the link",
     "invitation_language": "Change invitation language",
     "invitation_link_type": "Change how the link can be used",
     "invitation_role": "Change invitation role",
     "invitation_shared_in_language": "Invitation will be shared in",
     "link_can_be_used_by": "Link can be used by",
     "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
+    "recipient": "One recipient",
+    "recipient_can": "The recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after {{ shareExpiration }} days. Click the button again to generate and share a new link.",
     "share": "Distribuire",
     "share_project": "Share {{ project }}",
-    "share_with_others": "Distribuiți altora"
-  },
-  "start": {
-    "connect_project": "Conectează proiectul",
-    "not_connected_to_any_projects": "Se pare că nu sunteți conectat la niciun proiect încă."
+    "share_with_others": "Distribuiți altora",
+    "will_expire_in": "Link expires in [b]{{ count }} days[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "Înregistrarea audio nu este posibilă cu acest browser.",

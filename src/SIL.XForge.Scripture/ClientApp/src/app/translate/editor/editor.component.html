@@ -89,7 +89,7 @@
                 <div class="text-container">
                   <app-text
                     #source
-                    [id]="sourceProjectId | textDocId : bookNum : chapter"
+                    [id]="visibleSourceProjectId | textDocId: bookNum : chapter"
                     [isReadOnly]="true"
                     [highlightSegment]="targetFocused"
                     (loaded)="onTextLoaded('source')"
@@ -164,7 +164,7 @@
                 <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
                   <app-text
                     #target
-                    [id]="projectId | textDocId : bookNum : chapter"
+                    [id]="projectId | textDocId: bookNum : chapter"
                     [isReadOnly]="!canEdit"
                     (updated)="
                       onTargetUpdated(

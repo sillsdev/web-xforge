@@ -14,7 +14,10 @@ import { SFProjectService } from './sf-project.service';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
-  constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly projectService: SFProjectService
+  ) {}
 
   canAccessCommunityChecking(project: SFProjectProfileDoc, userId?: string): boolean {
     if (project.data == null) return false;

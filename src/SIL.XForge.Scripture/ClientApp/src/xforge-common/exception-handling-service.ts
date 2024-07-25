@@ -23,7 +23,10 @@ export interface BreadcrumbSelector {
 }
 
 export class AppError extends Error {
-  constructor(message: string, private readonly data?: any) {
+  constructor(
+    message: string,
+    private readonly data?: any
+  ) {
     super(message);
     if (Bugsnag.isStarted()) Bugsnag.leaveBreadcrumb(message, this.data, 'log');
     console.error(message, this.data);
@@ -269,7 +272,6 @@ export class ExceptionHandlingService {
       await ngZone.run(async () => {
         this.dialogOpen = true;
         const dialogRef = dialogService.openMatDialog(ErrorDialogComponent, {
-          autoFocus: false,
           data: this.alertQueue[this.alertQueue.length - 1]
         });
         await firstValueFrom(dialogRef.afterClosed());

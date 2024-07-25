@@ -18,7 +18,10 @@ import { SFProjectService } from './sf-project.service';
 export class TextDocService {
   private localSystemTextDocChangesMap = new Map<string, Subject<TextData>>();
 
-  constructor(private readonly projectService: SFProjectService, private readonly userService: UserService) {}
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly userService: UserService
+  ) {}
 
   /**
    * Overwrites the specified text doc with the specified delta and then notifies listeners of the changes.

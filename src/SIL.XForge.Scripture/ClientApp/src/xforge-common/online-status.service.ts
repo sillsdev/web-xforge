@@ -15,7 +15,10 @@ export class OnlineStatusService extends SubscriptionDisposable {
   protected windowOnLineStatus$: BehaviorSubject<boolean>;
   private webSocketStatus$: BehaviorSubject<boolean | null> = new BehaviorSubject<boolean | null>(null);
 
-  constructor(protected readonly http: HttpClient, @Inject(NAVIGATOR) protected readonly navigator: Navigator) {
+  constructor(
+    protected readonly http: HttpClient,
+    @Inject(NAVIGATOR) protected readonly navigator: Navigator
+  ) {
     super();
     this.appOnlineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);
     this.windowOnLineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);

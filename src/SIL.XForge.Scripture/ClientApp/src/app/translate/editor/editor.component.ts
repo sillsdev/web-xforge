@@ -542,6 +542,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.translateConfig.source?.projectRef;
   }
 
+  get visibleSourceProjectId(): string | undefined {
+    return this.hasSource ? this.sourceProjectId : undefined;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
@@ -662,16 +666,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          if (this.sourceProjectId != null) {
-            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(
-              this.sourceProjectId
-            );
-            // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject
-              ? await this.projectService.getProfile(this.sourceProjectId)
-              : undefined;
-          }
-
+          this.sourceProjectDoc = await this.getSourceProjectDoc();
           if (this.projectUserConfigChangesSub != null) {
             this.projectUserConfigChangesSub.unsubscribe();
           }
@@ -725,7 +720,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                 this.text.bookNum,
                 this._chapter
               );
-              if (!isEqual(this.source!.id, sourceId)) {
+              if (this.source != null && !isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
               }
@@ -1055,7 +1050,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.openMatDialog<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
       SuggestionsSettingsDialogComponent,
       {
-        autoFocus: false,
         data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );
@@ -1137,8 +1131,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showCopyrightNotice(textType: TextType): void {
     let copyrightNotice: string =
       textType === 'source'
-        ? this.sourceProjectDoc?.data?.copyrightNotice ?? ''
-        : this.projectDoc?.data?.copyrightNotice ?? '';
+        ? (this.sourceProjectDoc?.data?.copyrightNotice ?? '')
+        : (this.projectDoc?.data?.copyrightNotice ?? '');
 
     // If we do not have a copyright notice, just use the copyright banner
     if (copyrightNotice === '') {
@@ -1185,7 +1179,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * Returns an observable that can be piped from projectDoc changes, allowing a single call to `subscribe`,
    * avoiding potential NG0911 error 'View has already been destroyed'.
    */
-  initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
+  private initEditorTabs(projectDoc: SFProjectProfileDoc): Observable<any> {
     // Set tab state from persisted tabs plus non-persisted tabs
     const storeToState$: Observable<any> = this.editorTabPersistenceService.persistedTabs$.pipe(
       take(1),
@@ -1644,9 +1638,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const translator: InteractiveTranslator | undefined = await this.interactiveTranslatorFactory?.create(
-      sourceSegment
-    );
+    const translator: InteractiveTranslator | undefined =
+      await this.interactiveTranslatorFactory?.create(sourceSegment);
     if (translator == null) {
       this.translator = undefined;
       return;
@@ -1833,6 +1826,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  private async getSourceProjectDoc(): Promise<SFProjectProfileDoc | undefined> {
+    // Only get the project doc if the user is on the project to avoid an error.
+    if (this.sourceProjectId == null) return;
+    if (this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId) !== true) return;
+    return await this.projectService.getProfile(this.sourceProjectId);
+  }
+
   private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {
     this.noteThreadQuery?.dispose();
     this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId, bookNum, chapterNum);
@@ -1931,8 +1931,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       threadDoc.data.biblicalTermId != null
         ? defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON)
         : otherAssigned
-        ? threadDoc.getIconGrayed(this.noteTags)
-        : threadDoc.getIcon(this.noteTags);
+          ? threadDoc.getIconGrayed(this.noteTags)
+          : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,

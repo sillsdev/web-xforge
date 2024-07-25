@@ -11,7 +11,7 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -39,7 +39,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
+import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -506,23 +506,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 if (!(userId in roles)) {
                   this.onRemovedFromProject();
                 } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
-                  const currentBookId =
-                    this.questionsList == null || this.questionsList.activeQuestionBook == null
-                      ? undefined
-                      : Canon.bookNumberToId(this.questionsList.activeQuestionBook);
-
-                  if (this.projectUserConfigDoc != null) {
-                    const checkingAccessInfo: CheckingAccessInfo = {
-                      userId: this.userService.currentUserId,
-                      projectId: this.projectDoc.id,
-                      project: this.projectDoc.data,
-                      bookId: currentBookId,
-                      projectUserConfigDoc: this.projectUserConfigDoc!
-                    };
-
-                    CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
-                    this.onRemovedFromProject();
-                  }
+                  this.onRemovedFromProject();
                 }
               }
             });
@@ -1052,8 +1036,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.hideChapterText || this._scriptureAudioPlayer?.isPlaying
         ? true
         : forceStopAndHide
-        ? false
-        : !this.showScriptureAudioPlayer;
+          ? false
+          : !this.showScriptureAudioPlayer;
   }
 
   /**
@@ -1156,6 +1140,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (!this.totalQuestions()) {
       this.visibleQuestions = [];
       this.totalVisibleQuestionsString = '0';
+      this.updateQuestionRefs();
+      this.refreshSummary();
       return;
     }
 

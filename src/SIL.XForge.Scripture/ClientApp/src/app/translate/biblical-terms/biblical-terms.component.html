@@ -16,7 +16,7 @@
         }}
       </caption>
       <ng-container
-        *ngFor="let column of columnsToDisplay | slice : 0 : columnsToDisplay.length - 1"
+        *ngFor="let column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1"
         [matColumnDef]="column"
       >
         <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t(column) }}</th>

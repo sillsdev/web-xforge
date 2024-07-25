@@ -59,10 +59,14 @@
     <!-- Only show warnings if target language is supported -->
     <ng-container *ngIf="isTargetLanguageSupported">
       <app-notice *ngIf="!isSourceProjectSet" type="warning" icon="warning" data-test-id="warning-source-text-missing">
-        <transloco
-          key="draft_generation.info_alert_source_text_not_selected"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_source_text_not_selected"
+            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          ></transloco>
+        } @else {
+          <transloco key="draft_generation.non_pa_info_alert_source_text_not_selected"></transloco>
+        }
       </app-notice>
 
       <app-notice
@@ -71,10 +75,17 @@
         icon="warning"
         data-test-id="warning-source-target-same"
       >
-        <transloco
-          key="draft_generation.info_alert_same_source_and_target_language"
-          [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_same_source_and_target_language"
+            [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
+          ></transloco>
+        } @else {
+          <transloco
+            key="draft_generation.non_pa_info_alert_same_source_and_target_language"
+            [params]="{ targetLanguageDisplayName }"
+          ></transloco>
+        }
       </app-notice>
 
       <app-notice
@@ -83,14 +94,24 @@
         icon="warning"
         data-test-id="warning-source-training-different"
       >
-        <transloco
-          key="draft_generation.info_alert_different_training_and_source_language"
-          [params]="{
-            alternateTrainingSourceLanguageDisplayName,
-            sourceLanguageDisplayName,
-            projectSettingsUrl: { route: projectSettingsUrl }
-          }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_different_training_and_source_language"
+            [params]="{
+              alternateTrainingSourceLanguageDisplayName,
+              sourceLanguageDisplayName,
+              projectSettingsUrl: { route: projectSettingsUrl }
+            }"
+          ></transloco>
+        } @else {
+          <transloco
+            key="draft_generation.non_pa_info_alert_different_training_and_source_language"
+            [params]="{
+              alternateTrainingSourceLanguageDisplayName,
+              sourceLanguageDisplayName
+            }"
+          ></transloco>
+        }
       </app-notice>
 
       <app-notice
@@ -104,14 +125,24 @@
         icon="warning"
         data-test-id="warning-mix-source-different"
       >
-        <transloco
-          key="draft_generation.info_alert_different_additional_training_and_source_language"
-          [params]="{
-            additionalTrainingSourceLanguageDisplayName,
-            alternateTrainingSourceLanguageDisplayName,
-            projectSettingsUrl: { route: projectSettingsUrl }
-          }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_different_additional_training_and_source_language"
+            [params]="{
+              additionalTrainingSourceLanguageDisplayName,
+              alternateTrainingSourceLanguageDisplayName,
+              projectSettingsUrl: { route: projectSettingsUrl }
+            }"
+          ></transloco>
+        } @else {
+          <transloco
+            key="draft_generation.non_pa_info_alert_different_additional_training_and_source_language"
+            [params]="{
+              additionalTrainingSourceLanguageDisplayName,
+              alternateTrainingSourceLanguageDisplayName
+            }"
+          ></transloco>
+        }
       </app-notice>
 
       <app-notice
@@ -152,7 +183,7 @@
           key="draft_generation.info_alert_no_alternate_source_access"
           [params]="{
             connectProjectUrl: { route: '/connect-project' },
-            name: alternateSource?.name,
+            name: alternateSource?.name
           }"
         ></transloco>
       </app-notice>
@@ -175,7 +206,7 @@
           key="draft_generation.info_alert_no_alternate_training_source_access"
           [params]="{
             connectProjectUrl: { route: '/connect-project' },
-            name: alternateTrainingSource?.name,
+            name: alternateTrainingSource?.name
           }"
         ></transloco>
       </app-notice>
@@ -297,14 +328,15 @@
                       data-test-id="download-button"
                     >
                       <mat-icon *ngIf="downloadProgress === 0" class="material-icons-outlined">cloud_download</mat-icon>
-                      <mat-spinner
-                        *ngIf="downloadProgress > 0"
-                        diameter="20"
-                        [value]="downloadProgress"
-                        mode="determinate"
-                        color="accent"
-                        data-test-id="download-spinner"
-                      ></mat-spinner>
+                      <mat-icon *ngIf="downloadProgress > 0">
+                        <mat-spinner
+                          diameter="18"
+                          [value]="downloadProgress"
+                          mode="determinate"
+                          color="accent"
+                          data-test-id="download-spinner"
+                        ></mat-spinner>
+                      </mat-icon>
                       <span>{{ t("download_draft") }}</span>
                     </button>
                     <button

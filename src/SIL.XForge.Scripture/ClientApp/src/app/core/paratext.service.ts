@@ -50,7 +50,10 @@ export class ParatextService {
     return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
   }
 
-  constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService
+  ) {}
 
   linkParatext(returnUrl: string): void {
     this.authService.linkParatext(returnUrl);
@@ -109,6 +112,12 @@ export class ParatextService {
         }
       )
     );
+  }
+
+  /** True if a Paratext project has a corresponding project in SF, whether or not any SF user is connected to the
+   * project. */
+  isParatextProjectInSF(project: ParatextProject): boolean {
+    return project.projectId != null;
   }
 
   private get headers(): HttpHeaders {

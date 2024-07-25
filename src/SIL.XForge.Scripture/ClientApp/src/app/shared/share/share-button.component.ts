@@ -15,7 +15,10 @@ export class ShareButtonComponent implements OnInit {
 
   private projectId?: string;
 
-  constructor(private readonly dialogService: DialogService, private readonly activatedRoute: ActivatedRoute) {}
+  constructor(
+    private readonly dialogService: DialogService,
+    private readonly activatedRoute: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
     this.activatedRoute.params.pipe(map(params => params['projectId'] as string)).subscribe(async projectId => {
@@ -26,7 +29,6 @@ export class ShareButtonComponent implements OnInit {
   openDialog(): void {
     this.dialogService.openMatDialog(ShareDialogComponent, {
       width: '480px',
-      autoFocus: false,
       data: {
         projectId: this.projectId,
         defaultRole: this.defaultRole

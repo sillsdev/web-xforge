@@ -8,7 +8,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { combineLatest, Observable, Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -29,18 +29,17 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
+import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
-
-export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
 @Component({
   selector: 'app-root',
@@ -54,27 +53,26 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isExpanded: boolean = false;
   versionNumberClickCount = 0;
 
-  projectDocs?: SFProjectProfileDoc[];
   hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private isLoggedInUserAnonymous: boolean = false;
   private _selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
-  private removedFromProjectSub?: Subscription;
+  private permissionsChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
 
   constructor(
     private readonly router: Router,
     private readonly authService: AuthService,
-    private readonly locationService: LocationService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
-    private readonly userProjectsService: SFUserProjectsService,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly locationService: LocationService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -170,8 +168,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  get isLoggedIn(): Promise<boolean> {
-    return this.authService.isLoggedIn;
+  get isLoggedIn(): Observable<boolean> {
+    return this.authService.loggedInState$.pipe(map(state => state.loggedIn));
   }
 
   get isAppLoading(): boolean {
@@ -198,7 +196,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get selectedProjectDoc(): SFProjectProfileDoc | undefined {
-    return this._selectedProjectDoc;
+    return this.activatedProjectService.projectDoc;
   }
 
   get selectedProjectId(): string | undefined {
@@ -206,7 +204,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isProjectSelected(): boolean {
-    return this.selectedProjectId != null;
+    return this.activatedProjectService.projectId != null;
   }
 
   get selectedProjectRole(): SFProjectRole | undefined {
@@ -217,6 +215,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get texts(): TextInfo[] {
     return this._selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
+  }
+
+  get appName(): string {
+    return environment.siteName;
   }
 
   async ngOnInit(): Promise<void> {
@@ -242,80 +244,70 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.reportingService.addMeta({ isBrowserSupported });
     if (isNewlyLoggedIn && !isBrowserSupported) {
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, {
-        autoFocus: false,
         data: BrowserIssue.Upgrade
       });
     }
 
-    const projectDocs$ = this.userProjectsService.projectDocs$;
-
-    // select the current project
-    this.subscribe(
-      combineLatest([projectDocs$, this.activatedProjectService.projectId$]),
-      async ([projectDocs, projectId]) => {
-        this.projectDocs = projectDocs;
-        const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
-
-        if (this.selectedProjectDeleteSub != null) {
-          this.selectedProjectDeleteSub.unsubscribe();
-          this.selectedProjectDeleteSub = undefined;
-        }
-
-        // check if the currently selected project has been deleted
-        if (
-          projectId != null &&
-          this.currentUserDoc != null &&
-          projectId === this.userService.currentProjectId(this.currentUserDoc) &&
-          (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)
-        ) {
-          await this.userService.setCurrentProjectId(this.currentUserDoc, undefined);
-          this.navigateToStart();
-          return;
-        }
-
-        this._selectedProjectDoc = selectedProjectDoc;
-        if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
-          return;
-        }
-        this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
-
+    // Monitor current project
+    this.subscribe(this.activatedProjectService.projectDoc$, async (selectedProjectDoc?: SFProjectProfileDoc) => {
+      this._selectedProjectDoc = selectedProjectDoc;
+      if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
+        return;
+      }
+      this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        this._selectedProjectDoc.id,
+        this.currentUserDoc!.id
+      );
+      if (this.selectedProjectDeleteSub != null) {
+        this.selectedProjectDeleteSub.unsubscribe();
+      }
+      this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
         // handle remotely deleted project
-        this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
-          if (this.userService.currentProjectId != null) {
-            this.showProjectDeletedDialog();
-          }
-        });
-
-        if (this.removedFromProjectSub != null) {
-          this.removedFromProjectSub.unsubscribe();
+        if (this.userService.currentProjectId != null) {
+          this.showProjectDeletedDialog();
         }
-        this.removedFromProjectSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
-          if (
-            this._selectedProjectDoc?.data != null &&
-            this.currentUserDoc != null &&
-            !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)
-          ) {
+      });
+
+      this.permissionsChangedSub?.unsubscribe();
+      this.permissionsChangedSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
+        if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
+          if (!(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
             // The user has been removed from the project
             this.showProjectDeletedDialog();
             this.projectService.localDelete(this._selectedProjectDoc.id);
           }
-        });
 
-        this.checkDeviceStorage();
+          if (this.projectUserConfigDoc != null) {
+            checkAppAccess(
+              this._selectedProjectDoc,
+              this.currentUserDoc.id,
+              this.projectUserConfigDoc,
+              this.locationService.pathname,
+              this.router
+            );
+          }
+        }
+      });
+
+      this.checkDeviceStorage();
+    });
+
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        // Any time we navigate somewhere, the drawer shouldn't still be expanded (which will only be noticeable on
+        // smaller screens where the drawer is not permanent).
+        this.isExpanded = false;
       }
-    );
+    });
 
     this.loadingFinished();
   }
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.selectedProjectDeleteSub != null) {
-      this.selectedProjectDeleteSub.unsubscribe();
-    }
-    if (this.removedFromProjectSub != null) {
-      this.removedFromProjectSub.unsubscribe();
-    }
+    this.selectedProjectDeleteSub?.unsubscribe();
+    this.permissionsChangedSub?.unsubscribe();
   }
 
   setLocale(locale: string): void {
@@ -359,31 +351,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.authService.logOut();
   }
 
-  async goHome(): Promise<void> {
-    if (await this.isLoggedIn) {
-      this.router.navigateByUrl('/projects');
-    } else {
-      this.locationService.go('/');
-    }
-  }
-
-  projectChanged(value: string): void {
-    if (value === CONNECT_PROJECT_OPTION) {
-      if (!this.isDrawerPermanent) {
-        this.collapseDrawer();
-      }
-      this.router.navigateByUrl('/connect-project');
-    } else if (value !== '' && this._selectedProjectDoc != null && value !== this._selectedProjectDoc.id) {
-      this.router.navigate(['/projects', value]);
-    }
-  }
-
-  itemSelected(): void {
-    if (!this.isDrawerPermanent) {
-      this.collapseDrawer();
-    }
-  }
-
   collapseDrawer(): void {
     this.isExpanded = false;
   }
@@ -406,10 +373,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
-  }
-
-  get appName(): string {
-    return environment.siteName;
   }
 
   private async showProjectDeletedDialog(): Promise<void> {

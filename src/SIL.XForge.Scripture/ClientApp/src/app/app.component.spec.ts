@@ -1,6 +1,7 @@
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
@@ -10,9 +11,10 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { BehaviorSubject, filter, firstValueFrom, Subject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
@@ -35,12 +37,12 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
+import { AppComponent } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
-import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 import { NavigationComponent } from './navigation/navigation.component';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
@@ -62,6 +64,7 @@ const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedMediaObserver = mock(MediaObserver);
 const mockedPermissions = mock(PermissionsService);
 
 @Component({
@@ -92,7 +95,6 @@ describe('AppComponent', () => {
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      NavigationProjectSelectorComponent,
       AvatarComponent
     ],
     providers: [
@@ -112,6 +114,7 @@ describe('AppComponent', () => {
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: MediaObserver, useMock: mockedMediaObserver },
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
@@ -151,32 +154,6 @@ describe('AppComponent', () => {
     verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
   }));
 
-  it('change project', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project01');
-    env.selectProject('project02');
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project02');
-    expect(env.location.path()).toEqual('/projects/project02');
-    verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
-  }));
-
-  it('connect project', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project01');
-    env.selectProject(CONNECT_PROJECT_OPTION);
-    expect(env.isDrawerVisible).toEqual(false);
-    expect(env.location.path()).toEqual('/connect-project');
-  }));
-
   it('close menu when navigating to a non-project route', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/my-account']);
@@ -184,6 +161,64 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.component.selectedProjectId).toBeUndefined();
+  }));
+
+  it('drawer disappears as appropriate in small viewport', fakeAsync(() => {
+    // The user goes to a project. They are using an sm size viewport.
+    const env = new TestEnvironment();
+    env.media.next([{ mqAlias: 'sm' } as MediaChange]);
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
+    env.navigateFully(['/projects', 'project01']);
+    // (And we are not here calling env.init(), which would open the drawer.)
+
+    // With a smaller viewport, at a project page, the drawer should not be visible. Although it is in the dom.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    // But the hamburger menu button will be visible.
+    expect(env.hamburgerMenuButton).not.toBeNull();
+
+    // The user clicks the hamburger button, revealing the drawer.
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.hamburgerMenuButton).not.toBeNull();
+
+    // Clicking the hamburger button again makes the drawer disappear (but is still in the dom.)
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+
+    // The user opens the drawer again.
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.component.isExpanded).toBe(true);
+    // The user clicks to navigate to the translate overview page.
+    env.click(env.menuListItems[1]);
+    // The drawer disappears, but is still in the dom.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.component.isExpanded).toBe(false);
+
+    // The user opens the drawer.
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.component.isExpanded).toBe(true);
+    // The user navigates to the My projects page by clicking the SF logo in the
+    // toolbar (or from the My projects item in the avatar menu).
+    env.click(env.sfLogoButton);
+    // The drawer disappears, even from the dom. The hamburger menu icon is also gone.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).toBeNull();
+    expect(env.hamburgerMenuButton).toBeNull();
+    expect(env.component.isExpanded).toBe(false);
+    // The user clicks in the My projects component to open another project.
+    env.navigateFully(['projects', 'project02']);
+    // The drawer should not be showing, but is in the dom.
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.component.isExpanded).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.hamburgerMenuButton).not.toBeNull();
   }));
 
   it('does not set user locale when stored locale matches the browsing session', fakeAsync(() => {
@@ -232,13 +267,16 @@ describe('AppComponent', () => {
   }));
 
   it('response to remote project deletion when no project selected', fakeAsync(() => {
+    // If we are at the My Projects list at /projects, and a project is deleted, we should still be at the /projects
+    // page. Note that one difference between some other project being deleted, vs the _current_ project being deleted,
+    // is that AppComponent listens to the current project for its deletion.
     const env = new TestEnvironment();
-    env.deleteProject('project01', false);
-    env.navigate(['/projects', 'project01']);
+    env.navigate(['/projects']);
     env.init();
 
+    env.deleteProject('project01', false);
+    // The drawer is not visible because we will be showing the project list.
     expect(env.isDrawerVisible).toEqual(false);
-    verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -253,6 +291,32 @@ describe('AppComponent', () => {
     // Get past setTimeout to navigation
     tick();
     expect(env.location.path()).toEqual('/projects');
+  }));
+
+  it('response to Commenter project role changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.setCurrentUser('user04');
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/translate');
+    env.changeUserRole('project01', 'user04', SFProjectRole.CommunityChecker);
+    expect(env.location.path()).toEqual('/projects/project01');
+    env.wait();
+  }));
+
+  it('response to Community Checker project role changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.setCurrentUser('user02');
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
+    env.changeUserRole('project01', 'user02', SFProjectRole.Viewer);
+    expect(env.location.path()).toEqual('/projects/project01');
+    discardPeriodicTasks();
   }));
 
   it('shows banner when update is available', fakeAsync(() => {
@@ -303,18 +367,6 @@ describe('AppComponent', () => {
     expect(env.installBadge).not.toBeNull();
 
     env.showHideUserMenu();
-  }));
-
-  it('user added to project after init', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects']);
-    env.init();
-
-    env.addUserToProject('project04');
-    env.navigate(['/projects', 'project04']);
-    env.wait();
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project04');
   }));
 
   it('user data is set for Bugsnag', fakeAsync(() => {
@@ -469,7 +521,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<AppComponent>;
   readonly router: Router;
   readonly location: Location;
-  // readonly questions: Question[];
   readonly ngZone: NgZone;
   readonly canInstall$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   readonly canSync$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -485,6 +536,7 @@ class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
+  readonly media: BehaviorSubject<MediaChange[]> = new BehaviorSubject<MediaChange[]>([]);
   readonly comesOnline$: Subject<void> = new Subject<void>();
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -528,14 +580,23 @@ class TestEnvironment {
       { bookNum: 46, hasSource: true, chapters: [], permissions: {} },
       { bookNum: 47, hasSource: true, chapters: [], permissions: {} }
     ]);
+    this.addProjectUserConfig('project01', 'user01');
+    this.addProjectUserConfig('project01', 'user02');
+    this.addProjectUserConfig('project01', 'user03');
+    this.addProjectUserConfig('project01', 'user04');
 
     when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
+    when(mockedSFProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
+    );
+    when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
+
     when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedIn).thenCall(() =>
-      firstValueFrom(this.loggedInState$.pipe(filter(state => state.loggedIn)))
+      firstValueFrom(this.loggedInState$.pipe(filter((state: any) => state.loggedIn)))
     );
     when(mockedAuthService.loggedInState$).thenReturn(this.loggedInState$);
     if (isLoggedIn) {
@@ -564,6 +625,7 @@ class TestEnvironment {
     when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
+    when(mockedMediaObserver.asObservable()).thenReturn(this.media.asObservable());
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
     when(mockedPwaService.canInstall$).thenReturn(this.canInstall$);
 
@@ -628,7 +690,15 @@ class TestEnvironment {
   }
 
   get isDrawerVisible(): boolean {
-    return this.menuDrawer != null;
+    return this.menuDrawer?.componentInstance.opened ?? false;
+  }
+
+  get hamburgerMenuButton(): DebugElement {
+    return this.getElement('#hamburger-menu-button');
+  }
+
+  get sfLogoButton(): DebugElement {
+    return this.getElement('#sf-logo-button');
   }
 
   get currentUserDoc(): UserDoc {
@@ -673,11 +743,18 @@ class TestEnvironment {
     this.ngZone.run(() => this.router.navigate(commands)).then();
   }
 
-  selectProject(projectId: string): void {
-    this.ngZone.run(() => {
-      this.component.projectChanged(projectId);
-    });
-    this.wait();
+  navigateFully(commands: any[]): void {
+    this.ngZone.run(() => this.router.navigate(commands)).then();
+    flush();
+    this.fixture.detectChanges();
+    flush();
+  }
+
+  click(element: DebugElement): void {
+    element.nativeElement.click();
+    tick();
+    this.fixture.detectChanges();
+    flush();
   }
 
   clickEditDisplayName(): void {
@@ -717,6 +794,12 @@ class TestEnvironment {
     this.wait();
   }
 
+  changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
+    this.wait();
+  }
+
   showHideUserMenu(): void {
     this.avatarIcon.nativeElement.click();
     this.wait();
@@ -749,5 +832,17 @@ class TestEnvironment {
         paratextUsers: paratextUsersFromRoles(userRoles)
       })
     });
+  }
+
+  private addProjectUserConfig(projectId: string, userId: string): void {
+    const projectUserConfigId = `${projectId}:${userId}`;
+    this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+      id: projectUserConfigId,
+      data: createTestProjectUserConfig({ ownerRef: userId, projectRef: projectId, selectedTask: 'checking' })
+    });
+  }
+
+  private getElement(query: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(query));
   }
 }

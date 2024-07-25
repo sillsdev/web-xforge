@@ -127,6 +127,12 @@
     "please_type_project_name": "Veuillez saisir le nom du projet pour confirmer.",
     "project_name": "Nom du projet"
   },
+  "draft_add_dialog": {
+    "add_book_to_project": "Add {{ bookName }} to project",
+    "add_to_project": "Ajouter au Projet",
+    "book_contents_will_be_overwritten": "Warning, this will overwrite any data in your project for the book of {{ bookName }}.",
+    "cancel": "Annuler"
+  },
   "draft_generation": {
     "back_from_stepper_button": "Retour",
     "back_translation_requirement": "Les ébauches de retraduction ne peuvent être générés que dans les quelque 200 [link:supporttedLanguagesUrl]langues[/link] prises en charge.",
@@ -171,6 +177,10 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "Si votre équipe a déjà rédigé un ou plusieurs livres et retraduit un ou plusieurs d'entre eux, Scripture Forge peut utiliser les livres retraduits pour générer un brouillon du prochain livre sur lequel vous travaillez.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge peut vous aider à ébaucher une traduction.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "En fonction de votre progression de traduction existante, vous pouvez utiliser les livres que vous avez déjà traduits pour générer un brouillon du prochain livre sur lequel vous travaillez.",
+    "non_pa_info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Please have your Paratext Administrator select a different additional training text.",
+    "non_pa_info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Please have your Paratext Administrator select a different alternate training text.",
+    "non_pa_info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Please have your Paratext Administrator change the source before you can generate a draft.",
+    "non_pa_info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Please have your Paratext Administrator select a source before you can generate a draft.",
     "offline_message": "La génération de brouillon n'est pas disponible hors connexion.",
     "preview_draft_button": "Prévisualiser le brouillon",
     "preview_last_draft_button": "Prévisualiser le dernier brouillon",
@@ -203,7 +213,11 @@
     "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet."
   },
   "draft_preview_books": {
-    "no_books_have_drafts": " Aucun livre n'a de brouillons."
+    "add_to_project": "Ajouter au Projet",
+    "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
+    "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
+    "no_books_have_drafts": " Aucun livre n'a de brouillons.",
+    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission."
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -360,7 +374,9 @@
     "recording_stopped": "L'enregistrement de votre question a été arrêté automatiquement.",
     "required_with_asterisk": "*Requis",
     "save": "Enregistrer",
-    "scripture_reference": "Référence biblique"
+    "scripture_reference": "Référence biblique",
+    "tooltip_record": "Enregistrer l'audio",
+    "tooltip_stop": "Arrêter l'enregistrement"
   },
   "roles": {
     "allow_add_edit_questions": "Peut ajouter & modifier des questions",
@@ -424,7 +440,6 @@
     "pre_translation_alternate_source_info": "Sélectionnez une autre source pour la rédaction, si la source actuellement sélectionnée ne doit pas être utilisée pour la pré-traduction.",
     "pre_translation_alternate_training_source_info": "Sélectionner une traduction séparée à des fins d'entraînement, telle qu'une retraduction, peut améliorer la qualité de la rédaction.",
     "pre_translation_alternate_training_source_text_placeholder": "Texte source d'entraînement alternatif (optionnel)",
-    "pre_translation_drafting_description": "Configurer les options de génération de brouillons.",
     "pre_translation_additional_training_source_info": "Sélectionnez une autre traduction dans la langue source à combiner avec votre source de formation",
     "pre_translation_additional_training_source_text_placeholder": "Texte source supplémentaire de la formation (facultatif)",
     "pre_translation_send_all_segments": "Pré-traduire les titres et le matériel non-verse",
@@ -534,7 +549,11 @@
     "training": "Formation...",
     "training_unavailable": "La formation est temporairement indisponible",
     "translate_overview": "Vue d'ensemble de la traduction",
-    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}"
+    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}",
+    "warn_font_unsupported": "La police sélectionnée pour ce projet, {{ selectedFont }}, n'est pas prise en charge. {{ fallbackFont }} est utilisé à la place.",
+    "warn_font_requires_graphite": "La police sélectionnée pour ce projet, {{ selectedFont }}, ne peut être rendue que par les navigateurs web qui prennent en charge Graphite. Cela signifie qu'il ne fonctionnera que dans Firefox, sauf sur les appareils iOS, où il ne fonctionnera pas même dans Firefox. Dans les navigateurs qui ne prennent pas en charge Graphite, {{ fallbackFont }} est utilisé à la place.",
+    "contact_for_help": "Si cela ne répond pas aux besoins de ce projet, veuillez nous contacter pour obtenir de l'aide.",
+    "change_font_or_contact_for_help": "Si cela ne répond pas aux besoins de ce projet, veuillez sélectionner une police différente dans les paramètres du projet Paratext, ou contactez-nous pour obtenir de l'aide."
   },
   "users": {
     "collaborators": "Collaborateurs",

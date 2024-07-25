@@ -2,7 +2,7 @@
   <mat-progress-bar *ngIf="draftCheckState === 'draft-unknown'" mode="indeterminate" color="accent"></mat-progress-bar>
 
   <app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary" mode="outline">
-    {{ "editor_draft_tab.no_draft_notice" | transloco : { bookChapterName } }}
+    {{ "editor_draft_tab.no_draft_notice" | transloco: { bookChapterName } }}
     <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
     <app-draft-preview-books></app-draft-preview-books>
   </app-notice>

@@ -144,7 +144,7 @@ export class TrainingDataUploadDialogComponent extends SubscriptionDisposable im
       dataId,
       fileUrl,
       mimeType: 'text/csv',
-      skipRows: this.skipFirstRow?.checked ?? false ? 1 : 0,
+      skipRows: (this.skipFirstRow?.checked ?? false) ? 1 : 0,
       title: this.trainingDataFile!.fileName!
     };
     await this.trainingDataService.createTrainingDataAsync(trainingData);
