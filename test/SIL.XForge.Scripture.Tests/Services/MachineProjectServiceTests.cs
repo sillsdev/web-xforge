@@ -645,7 +645,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment(
             new TestEnvironmentOptions { AlternateSourceEnabled = true, AlternateSourceConfigured = true }
         );
-        env.SetDataInSync(Project02, preTranslate: true);
+        await env.SetDataInSync(Project02, preTranslate: true);
         // SUT
         await env.Service.BuildProjectAsync(
             User01,
@@ -672,7 +672,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment(
             new TestEnvironmentOptions { AlternateSourceEnabled = false, AlternateSourceConfigured = true }
         );
-        env.SetDataInSync(Project02, preTranslate: true);
+        await env.SetDataInSync(Project02, preTranslate: true);
         // SUT
         await env.Service.BuildProjectAsync(
             User01,
@@ -928,7 +928,6 @@ public class MachineProjectServiceTests
     [TestCase(" ")]
     public async Task BuildProjectAsync_SpecifiesNullScriptureRangeForAlternateTrainingSource(string? scriptureRange)
     {
-        // This looks at something
         // Set up test environment
         var env = new TestEnvironment(
             new TestEnvironmentOptions
@@ -2317,7 +2316,6 @@ public class MachineProjectServiceTests
                                     new ServalCorpus
                                     {
                                         PreTranslate = false,
-                                        // Why is alternate training source true?
                                         AlternateTrainingSource = false,
                                         SourceFiles =
                                         [
