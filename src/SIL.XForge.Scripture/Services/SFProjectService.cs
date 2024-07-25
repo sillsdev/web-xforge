@@ -86,7 +86,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", settings.ParatextId);
         if (FileSystemService.DirectoryExists(projectDir))
-            throw new ApplicationException("The directory already exists.");
+            throw new InvalidOperationException("A directory for this project already exists.");
 
         IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
 
