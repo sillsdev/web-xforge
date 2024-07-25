@@ -4,31 +4,41 @@
     <div>
       <div class="userName">
         <span>{{ data.userProfile.displayName }}</span>
-        <img *ngIf="isParatextUser()" src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
+        @if (isParatextUser()) {
+          <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
+        }
       </div>
       <span class="userRole">{{ t(isParatextUser() ? "user_pt" : "user_sf") }}</span>
     </div>
   </div>
   <mat-dialog-content [formGroup]="form">
-    <app-notice *ngIf="isParatextUser()" icon="live_help">
-      <div class="help-message">
-        {{ t("roles_from_pt_cannot_be_changed") }}
-        <a mat-flat-button [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
-      </div>
-    </app-notice>
-    <span class="offline-text" *ngIf="form.disabled">{{ t("offline") }}</span>
+    @if (isParatextUser()) {
+      <app-notice icon="live_help">
+        <div class="help-message">
+          {{ t("roles_from_pt_cannot_be_changed") }}
+          <a mat-flat-button [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+        </div>
+      </app-notice>
+    }
+    @if (form.disabled) {
+      <span class="offline-text">{{ t("offline") }}</span>
+    }
     <h3>{{ t("roles") }}</h3>
     <mat-radio-group class="roleOptions" formControlName="roles">
-      <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role">
-        <span class="roleName">{{ i18n.localizeRole(role) }}</span>
-        <span class="roleDescription">{{ i18n.localizeRoleDescription(role) }}</span>
-      </mat-radio-button>
+      @for (role of roleOptions; track role) {
+        <mat-radio-button class="roleButton" [value]="role">
+          <span class="roleName">{{ i18n.localizeRole(role) }}</span>
+          <span class="roleDescription">{{ i18n.localizeRoleDescription(role) }}</span>
+        </mat-radio-button>
+      }
     </mat-radio-group>
-    <div *ngIf="isParatextUser()" class="permissions">
-      <h3>{{ t("permissions") }}</h3>
-      <mat-checkbox formControlName="canAddEditQuestions">{{ t("allow_add_edit_questions") }}</mat-checkbox>
-      <mat-checkbox formControlName="canManageAudio">{{ t("allow_manage_audio") }}</mat-checkbox>
-    </div>
+    @if (isParatextUser()) {
+      <div class="permissions">
+        <h3>{{ t("permissions") }}</h3>
+        <mat-checkbox formControlName="canAddEditQuestions">{{ t("allow_add_edit_questions") }}</mat-checkbox>
+        <mat-checkbox formControlName="canManageAudio">{{ t("allow_manage_audio") }}</mat-checkbox>
+      </div>
+    }
   </mat-dialog-content>
   <mat-dialog-actions [align]="'end'">
     <button mat-button mat-dialog-close type="button">

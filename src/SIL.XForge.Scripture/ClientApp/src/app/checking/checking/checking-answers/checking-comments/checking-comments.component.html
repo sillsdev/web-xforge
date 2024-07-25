@@ -1,64 +1,47 @@
 <ng-container *transloco="let t; read: 'checking_comments'">
-  <div *ngFor="let comment of getSortedComments(); index as i">
-    <div
-      class="comment"
-      [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }"
-      *ngIf="
+  @for (comment of getSortedComments(); track comment; let i = $index) {
+    <div>
+      @if (
         (activeComment == null || (commentFormVisible && activeComment?.dataId !== comment.dataId)) &&
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
-      "
-    >
-      <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
-      <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
-      <div class="actions">
-        <button
-          *ngIf="canEditComment(comment)"
-          mat-button
-          type="button"
-          (click)="editComment(comment)"
-          class="comment-edit"
-        >
-          {{ t("edit") }}
-        </button>
-        <button
-          *ngIf="canDeleteComment(comment)"
-          mat-button
-          type="button"
-          (click)="deleteCommentClicked(comment)"
-          class="comment-delete"
-        >
-          {{ t("delete") }}
-        </button>
-      </div>
+      ) {
+        <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }">
+          <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
+          <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
+          <div class="actions">
+            @if (canEditComment(comment)) {
+              <button mat-button type="button" (click)="editComment(comment)" class="comment-edit">
+                {{ t("edit") }}
+              </button>
+            }
+            @if (canDeleteComment(comment)) {
+              <button mat-button type="button" (click)="deleteCommentClicked(comment)" class="comment-delete">
+                {{ t("delete") }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+      @if (commentFormVisible && activeComment?.dataId === comment.dataId) {
+        <app-checking-comment-form
+          (save)="submit($event)"
+          (cancel)="hideCommentForm()"
+          [text]="comment.text"
+        ></app-checking-comment-form>
+      }
     </div>
-    <app-checking-comment-form
-      *ngIf="commentFormVisible && activeComment?.dataId === comment.dataId"
-      (save)="submit($event)"
-      (cancel)="hideCommentForm()"
-      [text]="comment.text"
-    ></app-checking-comment-form>
-  </div>
-  <app-checking-comment-form
-    *ngIf="commentFormVisible && activeComment == null"
-    (save)="submit($event)"
-    (cancel)="hideCommentForm()"
-  ></app-checking-comment-form>
-  <button
-    *ngIf="!commentFormVisible && commentCount > maxCommentsToShow && !showAllComments"
-    mat-button
-    type="button"
-    (click)="showComments()"
-    class="show-all-comments"
-  >
-    {{ showMoreCommentsLabel }}
-  </button>
-  <button
-    *ngIf="!commentFormVisible && (commentCount <= maxCommentsToShow || showAllComments) && canAddComment"
-    mat-button
-    type="button"
-    (click)="showCommentForm()"
-    class="add-comment"
-  >
-    {{ t("add_a_comment") }}
-  </button>
+  }
+  @if (commentFormVisible && activeComment == null) {
+    <app-checking-comment-form (save)="submit($event)" (cancel)="hideCommentForm()"></app-checking-comment-form>
+  }
+  @if (!commentFormVisible && commentCount > maxCommentsToShow && !showAllComments) {
+    <button mat-button type="button" (click)="showComments()" class="show-all-comments">
+      {{ showMoreCommentsLabel }}
+    </button>
+  }
+  @if (!commentFormVisible && (commentCount <= maxCommentsToShow || showAllComments) && canAddComment) {
+    <button mat-button type="button" (click)="showCommentForm()" class="add-comment">
+      {{ t("add_a_comment") }}
+    </button>
+  }
 </ng-container>

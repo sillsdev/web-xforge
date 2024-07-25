@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -90,7 +89,7 @@ class Row {
   templateUrl: './serval-projects.component.html',
   styleUrls: ['./serval-projects.component.scss'],
   standalone: true,
-  imports: [CommonModule, UICommonModule]
+  imports: [UICommonModule]
 })
 export class ServalProjectsComponent extends DataLoadingComponent implements OnInit {
   columnsToDisplay: string[] = ['name', 'preTranslate', 'source', 'alternateSource', 'alternateTrainingSource'];
