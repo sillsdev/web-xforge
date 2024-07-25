@@ -2261,6 +2261,44 @@ describe('CheckingComponent', () => {
       expect(env.questionNoAudioWarning).not.toBeNull();
     }));
 
+    it('can highlight segments of varying formats', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        scriptureAudio: true
+      });
+      env.selectQuestion(1);
+
+      env.component.toggleAudio();
+      env.mockScriptureAudioAndPlay();
+      env.fixture.detectChanges();
+      expect(env.component.isAudioPlaying()).toBe(true);
+
+      env.component.highlightSegments('verse_1_2-3');
+      env.waitForSliderUpdate();
+      env.fixture.detectChanges();
+      expect(env.isSegmentHighlighted(1, 1)).toBe(false);
+      expect(env.isSegmentHighlighted(1, 2)).toBe(true);
+      expect(env.isSegmentHighlighted(1, 3)).toBe(true);
+
+      env.component.highlightSegments('verse_1_4a');
+      env.waitForSliderUpdate();
+      env.fixture.detectChanges();
+      expect(env.isSegmentHighlighted(1, 1)).toBe(false);
+      expect(env.isSegmentHighlighted(1, 2)).toBe(false);
+      expect(env.isSegmentHighlighted(1, 3)).toBe(false);
+      expect(env.isSegmentHighlighted(1, '4/p_1')).toBe(true);
+
+      env.component.highlightSegments('verse_1_5,6');
+      env.waitForSliderUpdate();
+      env.fixture.detectChanges();
+      expect(env.isSegmentHighlighted(1, 1)).toBe(false);
+      expect(env.isSegmentHighlighted(1, 2)).toBe(false);
+      expect(env.isSegmentHighlighted(1, 3)).toBe(false);
+      expect(env.isSegmentHighlighted(1, '4/p_1')).toBe(false);
+      expect(env.isSegmentHighlighted(1, 5)).toBe(true);
+      expect(env.isSegmentHighlighted(1, 6)).toBe(true);
+    }));
+
     // TODO: Get this test working
     xit('pauses audio on reload (changing book)', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, questionScope: 'book', scriptureAudio: true });
@@ -2905,17 +2943,17 @@ class TestEnvironment {
     return this.getAnswer(answerIndex).query(By.css('.show-all-comments'));
   }
 
-  getVerse(chapter: number, verse: number): Element {
+  getVerse(chapter: number, verse: number | string): Element {
     return this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
   }
 
-  isSegmentHighlighted(chapter: number, verse: number): boolean {
+  isSegmentHighlighted(chapter: number, verse: number | string): boolean {
     const segment = this.getVerse(chapter, verse);
     return segment != null && segment.classList.contains('highlight-segment');
   }
 
   segmentHasQuestion(chapter: number, verse: number): boolean {
-    const segment = this.getVerse(chapter, verse);
+    const segment = this.getVerse(chapter, verse.toString());
     return segment != null && segment.classList.contains('question-segment');
   }
 
