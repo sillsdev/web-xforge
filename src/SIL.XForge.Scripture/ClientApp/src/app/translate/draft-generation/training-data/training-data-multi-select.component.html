@@ -8,7 +8,7 @@
       >
         <mat-chip-option [value]="trainingData.value" [selected]="trainingData.selected">
           {{ trainingData.value.title }}
-          @if (canDeleteTrainingData(trainingData.value)) {
+          @if (canDeleteTrainingData(trainingData.value) | async) {
             <button matChipRemove (click)="deleteTrainingData(trainingData.value)">
               <mat-icon>cancel</mat-icon>
             </button>

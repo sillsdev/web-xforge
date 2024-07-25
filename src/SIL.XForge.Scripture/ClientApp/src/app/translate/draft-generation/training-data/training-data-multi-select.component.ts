@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -29,7 +30,7 @@ export interface TrainingDataOption {
   selector: 'app-training-data-multi-select',
   templateUrl: './training-data-multi-select.component.html',
   standalone: true,
-  imports: [MatButtonModule, MatChipsModule, MatIconModule, SharedModule, TranslocoModule],
+  imports: [MatButtonModule, MatChipsModule, MatIconModule, CommonModule, SharedModule, TranslocoModule],
   styleUrls: ['./training-data-multi-select.component.scss']
 })
 export class TrainingDataMultiSelectComponent extends SubscriptionDisposable implements OnChanges, OnInit {
