@@ -2778,14 +2778,14 @@ public class SFProjectServiceTests
         string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
-        ApplicationException thrown = Assert.ThrowsAsync<ApplicationException>(
+        InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
             () =>
                 env.Service.CreateProjectAsync(
                     User01,
                     new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
                 )
         );
-        Assert.That(thrown.Message, Does.Contain("The directory already exists."));
+        Assert.That(thrown.Message, Does.Contain("A directory for this project already exists."));
         Assert.That(
             env.RealtimeService.GetRepository<SFProject>().Query().Count(),
             Is.EqualTo(projectCount),
