@@ -17,7 +17,12 @@
     mode="fill-dark"
     class="font-warning"
   >
-    {{ t("warn_font_requires_graphite", { selectedFont, fallbackFont: fontService.nonGraphiteFallback(selectedFont ?? "") }) }}
+    {{
+      t("warn_font_requires_graphite", {
+        selectedFont,
+        fallbackFont: fontService.nonGraphiteFallback(selectedFont ?? "")
+      })
+    }}
     {{ t(isPtProject ? "change_font_or_contact_for_help" : "contact_for_help") }}
   </app-notice>
 

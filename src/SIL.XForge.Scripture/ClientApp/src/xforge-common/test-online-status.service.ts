@@ -9,7 +9,10 @@ import { OnlineStatusService } from './online-status.service';
   providedIn: 'root'
 })
 export class TestOnlineStatusService extends OnlineStatusService {
-  constructor(public readonly httpClient: HttpClient, public readonly mockedNavigator: Navigator) {
+  constructor(
+    public readonly httpClient: HttpClient,
+    public readonly mockedNavigator: Navigator
+  ) {
     super(httpClient, instance(mockedNavigator));
     this.setIsOnline(true);
     this.setRealtimeServerSocketIsOnline(true);

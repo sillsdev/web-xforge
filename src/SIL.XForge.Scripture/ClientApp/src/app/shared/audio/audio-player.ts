@@ -25,7 +25,10 @@ export class AudioPlayer extends SubscriptionDisposable {
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
   readonly timeUpdated$: Subject<void> = new Subject<void>();
 
-  constructor(source: string, private readonly onlineStatusService: OnlineStatusService) {
+  constructor(
+    source: string,
+    private readonly onlineStatusService: OnlineStatusService
+  ) {
     super();
     // Loaded metadata works best for blobs
     this.audio.addEventListener('loadedmetadata', () => {

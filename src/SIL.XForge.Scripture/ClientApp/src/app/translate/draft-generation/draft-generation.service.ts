@@ -178,9 +178,9 @@ export class DraftGenerationService {
       return of([]);
     }
     return this.httpClient
-      .get<Snapshot<TextData> | undefined>(
-        `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`
-      )
+      .get<
+        Snapshot<TextData> | undefined
+      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`)
       .pipe(
         map(res => res.data?.data.ops ?? []),
         catchError(err => {

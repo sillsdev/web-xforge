@@ -35,11 +35,15 @@
     align-items: center;
     max-height: 100px;
 
-    transition: border-width 0.1s, border-color 0.1s;
+    transition:
+      border-width 0.1s,
+      border-color 0.1s;
   }
   .invalid {
     border-color: #b00020;
-    transition: border-width 0s, border-color 0s;
+    transition:
+      border-width 0s,
+      border-color 0s;
   }
   .borderless {
     border-width: 0px;

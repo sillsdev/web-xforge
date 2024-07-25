@@ -13,7 +13,10 @@ import {
   providedIn: 'root'
 })
 export class ChapterAudioDialogService {
-  constructor(private readonly dialogService: DialogService, private readonly projectService: SFProjectService) {}
+  constructor(
+    private readonly dialogService: DialogService,
+    private readonly projectService: SFProjectService
+  ) {}
 
   async openDialog(config: ChapterAudioDialogData): Promise<void> {
     const dialogConfig: MatDialogConfig<ChapterAudioDialogData> = {

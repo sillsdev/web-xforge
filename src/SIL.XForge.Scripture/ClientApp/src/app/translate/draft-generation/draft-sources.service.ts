@@ -98,16 +98,16 @@ export class DraftSourcesService {
         return from(
           Promise.all([
             sourceProjectId
-              ? sourceProject ?? this.projectService.getProfile(sourceProjectId)
+              ? (sourceProject ?? this.projectService.getProfile(sourceProjectId))
               : Promise.resolve(undefined),
             alternateSourceProjectId
-              ? alternateSourceProject ?? this.projectService.getProfile(alternateSourceProjectId)
+              ? (alternateSourceProject ?? this.projectService.getProfile(alternateSourceProjectId))
               : Promise.resolve(undefined),
             alternateTrainingSourceProjectId
-              ? alternateTrainingSourceProject ?? this.projectService.getProfile(alternateTrainingSourceProjectId)
+              ? (alternateTrainingSourceProject ?? this.projectService.getProfile(alternateTrainingSourceProjectId))
               : Promise.resolve(undefined),
             additionalTrainingSourceProjectId
-              ? additionalTrainingSourceProject ?? this.projectService.getProfile(additionalTrainingSourceProjectId)
+              ? (additionalTrainingSourceProject ?? this.projectService.getProfile(additionalTrainingSourceProjectId))
               : Promise.resolve(undefined)
           ])
         ).pipe(

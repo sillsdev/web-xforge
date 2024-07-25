@@ -14,7 +14,10 @@ import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 abstract class RouterGuard {
-  constructor(protected authGuard: AuthGuard, protected projectService: SFProjectService) {}
+  constructor(
+    protected authGuard: AuthGuard,
+    protected projectService: SFProjectService
+  ) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     const projectId = 'projectId' in next.params ? next.params['projectId'] : '';
@@ -39,7 +42,11 @@ abstract class RouterGuard {
   providedIn: 'root'
 })
 export class SettingsAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService
+  ) {
     super(authGuard, projectService);
   }
 
@@ -55,7 +62,11 @@ export class SettingsAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class UsersAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService
+  ) {
     super(authGuard, projectService);
   }
 
@@ -71,7 +82,11 @@ export class UsersAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class SyncAuthGuard extends RouterGuard {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService
+  ) {
     super(authGuard, projectService);
   }
 

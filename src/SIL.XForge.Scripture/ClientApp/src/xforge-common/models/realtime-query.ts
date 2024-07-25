@@ -21,7 +21,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _remoteDocChanges$ = new Subject<any>();
   private readonly _docs$ = new BehaviorSubject<T[]>([]);
 
-  constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
+  constructor(
+    private readonly realtimeService: RealtimeService,
+    public readonly adapter: RealtimeQueryAdapter
+  ) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
     this.adapter.remoteChanges$
       .pipe(takeUntil(this.unsubscribe$))

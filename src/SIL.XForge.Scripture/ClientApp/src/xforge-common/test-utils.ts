@@ -141,7 +141,10 @@ export function arrayOfIntsFromOne(size: number): number[] {
 export class MockTranslocoDirective {
   @Input() translocoRead?: string;
 
-  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {
+  constructor(
+    private templateRef: TemplateRef<any>,
+    private viewContainer: ViewContainerRef
+  ) {
     this.viewContainer.createEmbeddedView(this.templateRef, {
       $implicit: (s: string) => s
     });

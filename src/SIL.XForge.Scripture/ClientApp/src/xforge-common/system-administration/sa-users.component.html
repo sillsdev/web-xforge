@@ -35,10 +35,10 @@
       </ng-container>
       <ng-container matColumnDef="remove">
         <td mat-cell *matCellDef="let userRow" class="remove-cell">
-          @if(currentUserId !== userRow.id) {
-          <button mat-icon-button class="remove-user" (click)="removeUser(userRow.id, userRow.user)">
-            <mat-icon>close</mat-icon>
-          </button>
+          @if (currentUserId !== userRow.id) {
+            <button mat-icon-button class="remove-user" (click)="removeUser(userRow.id, userRow.user)">
+              <mat-icon>close</mat-icon>
+            </button>
           }
         </td>
       </ng-container>

@@ -39,7 +39,11 @@ export interface JsonRpcError {
 }
 
 export class CommandError extends Error {
-  constructor(public readonly code: CommandErrorCode, message: string, public readonly data?: unknown) {
+  constructor(
+    public readonly code: CommandErrorCode,
+    message: string,
+    public readonly data?: unknown
+  ) {
     super(message);
     // this restores the prototype chain, so that the class can properly inherit from the built-in Error class
     Object.setPrototypeOf(this, new.target.prototype);
@@ -55,7 +59,10 @@ export class CommandError extends Error {
   providedIn: 'root'
 })
 export class CommandService {
-  constructor(private readonly http: HttpClient, private readonly bugsnagService: BugsnagService) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly bugsnagService: BugsnagService
+  ) {}
 
   async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;

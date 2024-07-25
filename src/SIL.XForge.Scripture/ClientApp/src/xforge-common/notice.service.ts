@@ -12,7 +12,10 @@ export class NoticeService {
   private loadingCount: number = 0;
   private messageOnDisplay?: string;
 
-  constructor(private readonly snackBar: MatSnackBar, private readonly i18n: I18nService) {}
+  constructor(
+    private readonly snackBar: MatSnackBar,
+    private readonly i18n: I18nService
+  ) {}
 
   get isAppLoading(): boolean {
     return this._isAppLoading;

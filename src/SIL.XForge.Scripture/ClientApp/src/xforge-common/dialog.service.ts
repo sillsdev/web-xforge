@@ -14,7 +14,10 @@ import { I18nKey, I18nService } from './i18n.service';
   providedIn: 'root'
 })
 export class DialogService {
-  constructor(private readonly i18n: I18nService, private readonly matDialog: MatDialog) {}
+  constructor(
+    private readonly i18n: I18nService,
+    private readonly matDialog: MatDialog
+  ) {}
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
     const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };

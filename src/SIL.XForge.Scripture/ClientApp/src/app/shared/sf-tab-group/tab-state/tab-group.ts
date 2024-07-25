@@ -6,7 +6,10 @@ export class TabGroup<TKey, T> {
   tabsAdded$ = new Subject<{ tabs: T[] }>();
   tabRemoved$ = new Subject<{ index: number; tab: T }>();
 
-  constructor(readonly groupId: TKey, public tabs: ReadonlyArray<T> = []) {}
+  constructor(
+    readonly groupId: TKey,
+    public tabs: ReadonlyArray<T> = []
+  ) {}
 
   setTabs(tabs: Iterable<T>): void {
     this.tabs = [...tabs];

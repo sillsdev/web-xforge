@@ -23,7 +23,10 @@ export interface BreadcrumbSelector {
 }
 
 export class AppError extends Error {
-  constructor(message: string, private readonly data?: any) {
+  constructor(
+    message: string,
+    private readonly data?: any
+  ) {
     super(message);
     if (Bugsnag.isStarted()) Bugsnag.leaveBreadcrumb(message, this.data, 'log');
     console.error(message, this.data);
