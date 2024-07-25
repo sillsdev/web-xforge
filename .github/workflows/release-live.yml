@@ -1,0 +1,80 @@
+# Releases from sf-qa branch to Live production server.
+name: "Release to Live"
+
+concurrency: deploy-prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-level:
+        description: "The level of release. This will bump the major.minor.patch version number accordingly."
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+      skip-branch-update:
+        description: "Don't update the branch, and release from its current commit. For example, when releasing a hotfix that has already been pushed to the branch. If this is set, 'from-staging-version' is ignored."
+        required: false
+        type: boolean
+        default: false
+      from-staging-version:
+        description: "QA version from which to release (eg '123' or '234'). Leave blank for latest."
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  update_branch:
+    name: "Update branch"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+      - name: Set branch
+        # Note that just the step is conditional, not the entire job, so that subsequent jobs can still depend on this
+        # job either finishing or being basically skipped.
+        if: ${{ !github.event.inputs.skip-branch-update }}
+        env:
+          FROM_STAGING_VERSION: ${{ github.event.inputs.from-staging-version }}
+        run: |
+          set -ueo pipefail
+          if [[ -z "${FROM_STAGING_VERSION}" ]]; then
+            git push --force origin origin/sf-qa:sf-live
+          else
+            git push --force origin $(git rev-list -1 "SF-QAv${FROM_STAGING_VERSION}"):sf-live
+          fi
+
+  determine_version:
+    name: "Determine version"
+    needs: update_branch
+    uses: ./.github/workflows/compute-next-version.yml
+    with:
+      versioning-system: "production"
+      release-level: ${{ github.event.inputs.release-level }}
+      tag_prefix: "SFv"
+
+  deploy:
+    name: "Deploy to Live"
+    needs: determine_version
+    secrets: inherit
+    uses: ./.github/workflows/release.yml
+    with:
+      environment: "production"
+
+      dotnet_version: "8.0.x"
+      node_version: "18.20.2"
+      npm_version: "10.5.0"
+      os: "ubuntu-20.04"
+
+      angular_config: "production"
+      app_name: "scriptureforge"
+      app_suffix: ""
+      version_number: "${{ needs.determine_version.outputs.next_version }}"
+      vcs_tag_prefix: "SFv"
+      node_options: "--max_old_space_size=4096"
+      project: "SIL.XForge.Scripture"

@@ -1,0 +1,44 @@
+name: "Compute next version"
+
+on:
+  workflow_call:
+    inputs:
+      versioning-system:
+        description: "The type of versioning system. Options: production, staging."
+        required: true
+        type: string
+      release-level:
+        description: "The level of release, if production. This will bump the major.minor.patch version number accordingly. Options: major, minor, patch. Default: patch."
+        required: false
+        type: string
+        default: "patch"
+      tag_prefix:
+        description: "The prefix of the VCS tags, such as 'ABCv' or 'DEFv'."
+        required: true
+        type: string
+    outputs:
+      next_version:
+        description: "The next version number."
+        value: ${{ jobs.deploy.outputs.next_version }}
+
+jobs:
+  deploy:
+    name: "Compute next version"
+    runs-on: ubuntu-latest
+    outputs:
+      next_version: ${{ steps.compute_next_version.outputs.next_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+      - name: Compute next version
+        id: compute_next_version
+        working-directory: .github/workflows
+        run: |
+          set -xueo pipefail
+          next_version="$(python3 compute-next-version.py \
+            --versioning-system ${{ inputs.versioning-system }} \
+            --release-level ${{ inputs.release-level }} \
+            --tag-prefix ${{ inputs.tag_prefix }})"
+          echo "next_version=${next_version}" >> $GITHUB_OUTPUT
