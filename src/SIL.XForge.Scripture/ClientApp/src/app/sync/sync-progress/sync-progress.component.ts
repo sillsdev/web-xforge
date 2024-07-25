@@ -11,7 +11,10 @@ import { ProjectNotificationService } from '../../core/project-notification.serv
 import { SFProjectService } from '../../core/sf-project.service';
 
 export class ProgressState {
-  constructor(public progressValue: number, public progressString?: string) {}
+  constructor(
+    public progressValue: number,
+    public progressString?: string
+  ) {}
 }
 
 @Component({

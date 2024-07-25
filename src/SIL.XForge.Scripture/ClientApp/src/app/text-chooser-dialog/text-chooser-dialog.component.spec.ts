@@ -414,7 +414,7 @@ class TestEnvironment {
               endOffset: ranges[index].end,
               startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`)!.firstChild,
               endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)!.firstChild
-            } as any),
+            }) as any,
           containsNode: (node: Node): boolean => {
             const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment]'));
             let startingSegmentReached = false;
@@ -431,7 +431,7 @@ class TestEnvironment {
             }
             return false;
           }
-        } as Selection)
+        }) as Selection
     );
 
     when(mockedDocument.addEventListener('selectionchange', anything(), anything())).thenCall(

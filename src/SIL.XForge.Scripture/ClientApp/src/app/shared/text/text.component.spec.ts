@@ -598,7 +598,7 @@ describe('TextComponent', () => {
       const startContainer: Node = targetElement!.childNodes[0] as Node;
       // eslint-disable-next-line deprecation/deprecation
       document.caretRangeFromPoint = (_x: number, _y: number) =>
-        ({ startOffset: desiredIndexInSegment, startContainer } as Range);
+        ({ startOffset: desiredIndexInSegment, startContainer }) as Range;
 
       // SUT
       const cancelled = !env.component.editor?.container.dispatchEvent(dragEvent);
@@ -1545,7 +1545,7 @@ class TestEnvironment {
 
     // eslint-disable-next-line deprecation/deprecation
     document.caretRangeFromPoint = (_x: number, _y: number) =>
-      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node } as Range);
+      ({ startOffset: dropDistanceIn, startContainer: specificNodeDropTarget as Node }) as Range;
 
     const dragstartEvent: MockDragEvent = new MockDragEvent('dragstart', {
       dataTransfer,

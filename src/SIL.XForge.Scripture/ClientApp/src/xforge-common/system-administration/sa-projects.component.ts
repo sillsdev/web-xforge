@@ -15,7 +15,10 @@ import { UserService } from '../user.service';
 class Row {
   isUpdatingRole: boolean = false;
 
-  constructor(public readonly projectDoc: SFProjectDoc, public projectRole: ProjectRoleInfo) {}
+  constructor(
+    public readonly projectDoc: SFProjectDoc,
+    public projectRole: ProjectRoleInfo
+  ) {}
 
   get id(): string {
     return this.projectDoc.id;

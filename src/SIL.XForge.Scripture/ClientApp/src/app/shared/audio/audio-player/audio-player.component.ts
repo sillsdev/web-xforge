@@ -10,7 +10,10 @@ import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base
   styleUrls: ['./audio-player.component.scss']
 })
 export class AudioPlayerComponent extends AudioPlayerBaseComponent {
-  constructor(onlineStatusService: OnlineStatusService, readonly i18n: I18nService) {
+  constructor(
+    onlineStatusService: OnlineStatusService,
+    readonly i18n: I18nService
+  ) {
     super(onlineStatusService);
   }
 

@@ -266,7 +266,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
             user: { email: invitee.email },
             role: invitee.role,
             inviteeStatus: invitee
-          } as Row)
+          }) as Row
       );
       this._userRows = userRows.concat(invitees);
     } catch {

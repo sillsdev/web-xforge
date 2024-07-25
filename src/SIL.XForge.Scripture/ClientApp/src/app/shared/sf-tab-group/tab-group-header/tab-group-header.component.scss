@@ -43,7 +43,9 @@
 
 app-tab-scroll-button {
   max-width: 30px; // Something wider than scroll buttons (for width animation)
-  transition: opacity 0.5s, max-width 0.5s;
+  transition:
+    opacity 0.5s,
+    max-width 0.5s;
 }
 
 .tabs {

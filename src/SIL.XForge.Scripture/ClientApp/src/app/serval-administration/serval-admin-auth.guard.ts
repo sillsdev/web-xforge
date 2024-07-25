@@ -10,7 +10,10 @@ import { AuthService } from 'xforge-common/auth.service';
   providedIn: 'root'
 })
 export class ServalAdminAuthGuard {
-  constructor(private readonly authGuard: AuthGuard, private readonly authService: AuthService) {}
+  constructor(
+    private readonly authGuard: AuthGuard,
+    private readonly authService: AuthService
+  ) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.authGuard.canActivate(next, state).pipe(switchMap(() => this.allowTransition()));

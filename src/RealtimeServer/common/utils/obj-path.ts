@@ -39,7 +39,10 @@ export class ObjPathBuilder<T> {
  * This class represents the generic template for a path to a property in an object.
  */
 export class ObjPathTemplate {
-  constructor(public readonly template: PathItem[] = [], public readonly inherit: boolean = true) {}
+  constructor(
+    public readonly template: PathItem[] = [],
+    public readonly inherit: boolean = true
+  ) {}
 
   matches(path: Readonly<PathItem[]>): boolean {
     if (

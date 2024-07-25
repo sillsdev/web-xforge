@@ -155,7 +155,10 @@ class FeatureFlagFromStorage implements ObservableFeatureFlag {
 class StaticFeatureFlagStore implements IFeatureFlagStore {
   private readonly = false;
 
-  constructor(private enabled: boolean, config?: { readonly: boolean }) {
+  constructor(
+    private enabled: boolean,
+    config?: { readonly: boolean }
+  ) {
     if (config != null) {
       this.readonly = config.readonly;
     }

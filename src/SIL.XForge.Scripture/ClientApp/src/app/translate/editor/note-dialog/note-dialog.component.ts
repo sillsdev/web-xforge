@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { sortBy } from 'lodash-es';
@@ -13,7 +13,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -438,9 +438,9 @@ export class NoteDialogComponent implements OnInit {
     ) {
       return this.userService.currentUserId === ownerDoc.id
         ? translate('checking.me') // "Me", i.e. the current user
-        : ownerDoc.data?.displayName ?? // Another user
+        : (ownerDoc.data?.displayName ?? // Another user
             syncUser?.username ?? // Fallback to the sync user
-            translate('checking.unknown_author'); // An "unknown author" (there is no sync user)
+            translate('checking.unknown_author')); // An "unknown author" (there is no sync user)
     }
 
     // The note was created in Paratext, so see if we have a profile for the sync user
@@ -448,8 +448,7 @@ export class NoteDialogComponent implements OnInit {
       syncUser.sfUserId == null ? undefined : await this.userService.getProfile(syncUser.sfUserId);
     return this.userService.currentUserId === syncUserProfile?.id
       ? translate('checking.me') // "Me", i.e. the current user
-      : syncUserProfile?.data?.displayName ?? // Another user
-          syncUser.username; // Fallback to the sync user
+      : (syncUserProfile?.data?.displayName ?? syncUser.username); // Another user, or fallback to the sync user
   }
 
   private isNoteEditable(note: Note): boolean {

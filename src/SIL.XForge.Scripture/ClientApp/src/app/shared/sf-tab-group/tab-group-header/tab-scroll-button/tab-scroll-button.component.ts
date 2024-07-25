@@ -20,7 +20,10 @@ export class TabScrollButtonComponent implements OnInit {
   isMouseDown = false;
   scroll$ = new BehaviorSubject(false);
 
-  constructor(private readonly destroyRef: DestroyRef, @Inject(DOCUMENT) private readonly document: Document) {}
+  constructor(
+    private readonly destroyRef: DestroyRef,
+    @Inject(DOCUMENT) private readonly document: Document
+  ) {}
 
   ngOnInit(): void {
     // Stop button scrolling on mouseup or when mouse leaves the document

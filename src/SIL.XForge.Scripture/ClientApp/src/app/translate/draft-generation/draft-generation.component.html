@@ -59,13 +59,13 @@
     <!-- Only show warnings if target language is supported -->
     <ng-container *ngIf="isTargetLanguageSupported">
       <app-notice *ngIf="!isSourceProjectSet" type="warning" icon="warning" data-test-id="warning-source-text-missing">
-        @if(isProjectAdmin) {
-        <transloco
-          key="draft_generation.info_alert_source_text_not_selected"
-          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_source_text_not_selected"
+            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+          ></transloco>
         } @else {
-        <transloco key="draft_generation.non_pa_info_alert_source_text_not_selected"></transloco>
+          <transloco key="draft_generation.non_pa_info_alert_source_text_not_selected"></transloco>
         }
       </app-notice>
 
@@ -75,16 +75,16 @@
         icon="warning"
         data-test-id="warning-source-target-same"
       >
-        @if(isProjectAdmin) {
-        <transloco
-          key="draft_generation.info_alert_same_source_and_target_language"
-          [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_same_source_and_target_language"
+            [params]="{ targetLanguageDisplayName, projectSettingsUrl: { route: projectSettingsUrl } }"
+          ></transloco>
         } @else {
-        <transloco
-          key="draft_generation.non_pa_info_alert_same_source_and_target_language"
-          [params]="{ targetLanguageDisplayName }"
-        ></transloco>
+          <transloco
+            key="draft_generation.non_pa_info_alert_same_source_and_target_language"
+            [params]="{ targetLanguageDisplayName }"
+          ></transloco>
         }
       </app-notice>
 
@@ -94,23 +94,23 @@
         icon="warning"
         data-test-id="warning-source-training-different"
       >
-        @if(isProjectAdmin) {
-        <transloco
-          key="draft_generation.info_alert_different_training_and_source_language"
-          [params]="{
-            alternateTrainingSourceLanguageDisplayName,
-            sourceLanguageDisplayName,
-            projectSettingsUrl: { route: projectSettingsUrl }
-          }"
-        ></transloco>
+        @if (isProjectAdmin) {
+          <transloco
+            key="draft_generation.info_alert_different_training_and_source_language"
+            [params]="{
+              alternateTrainingSourceLanguageDisplayName,
+              sourceLanguageDisplayName,
+              projectSettingsUrl: { route: projectSettingsUrl }
+            }"
+          ></transloco>
         } @else {
-        <transloco
-          key="draft_generation.non_pa_info_alert_different_training_and_source_language"
-          [params]="{
-            alternateTrainingSourceLanguageDisplayName,
-            sourceLanguageDisplayName
-          }"
-        ></transloco>
+          <transloco
+            key="draft_generation.non_pa_info_alert_different_training_and_source_language"
+            [params]="{
+              alternateTrainingSourceLanguageDisplayName,
+              sourceLanguageDisplayName
+            }"
+          ></transloco>
         }
       </app-notice>
 
@@ -126,22 +126,22 @@
         data-test-id="warning-mix-source-different"
       >
         @if (isProjectAdmin) {
-        <transloco
-          key="draft_generation.info_alert_different_additional_training_and_source_language"
-          [params]="{
-          additionalTrainingSourceLanguageDisplayName,
-          alternateTrainingSourceLanguageDisplayName,
-          projectSettingsUrl: { route: projectSettingsUrl }
-        }"
-        ></transloco>
+          <transloco
+            key="draft_generation.info_alert_different_additional_training_and_source_language"
+            [params]="{
+              additionalTrainingSourceLanguageDisplayName,
+              alternateTrainingSourceLanguageDisplayName,
+              projectSettingsUrl: { route: projectSettingsUrl }
+            }"
+          ></transloco>
         } @else {
-        <transloco
-          key="draft_generation.non_pa_info_alert_different_additional_training_and_source_language"
-          [params]="{
-            additionalTrainingSourceLanguageDisplayName,
-            alternateTrainingSourceLanguageDisplayName
-          }"
-        ></transloco>
+          <transloco
+            key="draft_generation.non_pa_info_alert_different_additional_training_and_source_language"
+            [params]="{
+              additionalTrainingSourceLanguageDisplayName,
+              alternateTrainingSourceLanguageDisplayName
+            }"
+          ></transloco>
         }
       </app-notice>
 
@@ -183,7 +183,7 @@
           key="draft_generation.info_alert_no_alternate_source_access"
           [params]="{
             connectProjectUrl: { route: '/connect-project' },
-            name: alternateSource?.name,
+            name: alternateSource?.name
           }"
         ></transloco>
       </app-notice>
@@ -206,7 +206,7 @@
           key="draft_generation.info_alert_no_alternate_training_source_access"
           [params]="{
             connectProjectUrl: { route: '/connect-project' },
-            name: alternateTrainingSource?.name,
+            name: alternateTrainingSource?.name
           }"
         ></transloco>
       </app-notice>

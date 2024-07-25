@@ -39,7 +39,10 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   showAllComments: boolean = false;
   private initUserCommentRefsRead: string[] = [];
 
-  constructor(private readonly dialogService: DialogService, private userService: UserService) {
+  constructor(
+    private readonly dialogService: DialogService,
+    private userService: UserService
+  ) {
     super();
   }
 

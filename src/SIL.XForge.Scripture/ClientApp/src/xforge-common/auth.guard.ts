@@ -9,7 +9,10 @@ import { LocationService } from './location.service';
   providedIn: 'root'
 })
 export class AuthGuard {
-  constructor(private readonly authService: AuthService, private readonly locationService: LocationService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly locationService: LocationService
+  ) {}
 
   canActivate(route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): Observable<boolean> {
     return this.allowTransition().pipe(

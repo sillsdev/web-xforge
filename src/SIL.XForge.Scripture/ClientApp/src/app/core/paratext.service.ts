@@ -50,7 +50,10 @@ export class ParatextService {
     return paratextId.length === RESOURCE_IDENTIFIER_LENGTH;
   }
 
-  constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService
+  ) {}
 
   linkParatext(returnUrl: string): void {
     this.authService.linkParatext(returnUrl);

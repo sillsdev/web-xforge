@@ -1131,8 +1131,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showCopyrightNotice(textType: TextType): void {
     let copyrightNotice: string =
       textType === 'source'
-        ? this.sourceProjectDoc?.data?.copyrightNotice ?? ''
-        : this.projectDoc?.data?.copyrightNotice ?? '';
+        ? (this.sourceProjectDoc?.data?.copyrightNotice ?? '')
+        : (this.projectDoc?.data?.copyrightNotice ?? '');
 
     // If we do not have a copyright notice, just use the copyright banner
     if (copyrightNotice === '') {
@@ -1638,9 +1638,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const translator: InteractiveTranslator | undefined = await this.interactiveTranslatorFactory?.create(
-      sourceSegment
-    );
+    const translator: InteractiveTranslator | undefined =
+      await this.interactiveTranslatorFactory?.create(sourceSegment);
     if (translator == null) {
       this.translator = undefined;
       return;
@@ -1932,8 +1931,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       threadDoc.data.biblicalTermId != null
         ? defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON)
         : otherAssigned
-        ? threadDoc.getIconGrayed(this.noteTags)
-        : threadDoc.getIcon(this.noteTags);
+          ? threadDoc.getIconGrayed(this.noteTags)
+          : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,

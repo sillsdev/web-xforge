@@ -75,8 +75,8 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
 
   private getTermDefinition(): string {
     const term: string = this.projectUserConfigDoc?.data?.transliterateBiblicalTerms
-      ? this.biblicalTermDoc?.data?.transliteration ?? ''
-      : this.biblicalTermDoc?.data?.termId ?? '';
+      ? (this.biblicalTermDoc?.data?.transliteration ?? '')
+      : (this.biblicalTermDoc?.data?.termId ?? '');
     let gloss: string;
     let notes: string;
     if (this.biblicalTermDoc?.data?.definitions.hasOwnProperty(this.i18n.localeCode)) {
