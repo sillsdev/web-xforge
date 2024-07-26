@@ -315,7 +315,8 @@ describe('MyProjectsComponent', () => {
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.onlineStatus = false;
     const sfProjectId = 'testProject1';
-    env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!.paratextId;
+    const ptProjectId = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!
+      .paratextId;
     env.waitUntilLoaded();
 
     // The message is shown that tells the user about needing to be online.
