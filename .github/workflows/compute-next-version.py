@@ -3,10 +3,10 @@ import re
 import subprocess
 
 
-def get_latest_tag(tag_prefix: str) -> str:
+def get_latest_tag(tag_prefix: str, from_commit: str) -> str:
     """Get the latest tag starting with tag_prefix."""
     result: str = subprocess.check_output(
-        ["git", "describe", "--match", f"{tag_prefix}?*", "--abbrev=0"], text=True
+        ["git", "describe", "--match", f"{tag_prefix}?*", "--abbrev=0", from_commit], text=True
     )
     return result.strip()
 
@@ -50,12 +50,13 @@ def increment_staging_version(tag: str, tag_prefix: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--from-commit", required=True)
     parser.add_argument("--versioning-system", required=True)
     parser.add_argument("--release-level", required=False)
     parser.add_argument("--tag-prefix", required=True)
     args = parser.parse_args()
 
-    latest_tag = get_latest_tag(args.tag_prefix)
+    latest_tag = get_latest_tag(args.tag_prefix, args.from_commit)
 
     if args.versioning_system == "production":
         if not args.release_level:

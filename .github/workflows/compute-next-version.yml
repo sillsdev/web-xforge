@@ -3,6 +3,14 @@ name: "Compute next version"
 on:
   workflow_call:
     inputs:
+      app_commit:
+        description: "The commit from which to run the computation code. (Since the release branch may not have the latest or best version of compute-next-version.py.)"
+        required: true
+        type: string
+      release_branch:
+        description: "The release branch on which to look for prior tags."
+        required: true
+        type: string
       versioning-system:
         description: "The type of versioning system. Options: production, staging."
         required: true
@@ -31,6 +39,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.app_commit }}
           fetch-depth: "0"
       - name: Compute next version
         id: compute_next_version
@@ -38,6 +47,7 @@ jobs:
         run: |
           set -xueo pipefail
           next_version="$(python3 compute-next-version.py \
+            --from-commit origin/${{ inputs.release_branch }} \
             --versioning-system ${{ inputs.versioning-system }} \
             --release-level ${{ inputs.release-level }} \
             --tag-prefix ${{ inputs.tag_prefix }})"
