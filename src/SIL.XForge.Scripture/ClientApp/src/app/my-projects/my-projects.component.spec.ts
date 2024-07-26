@@ -324,6 +324,8 @@ describe('MyProjectsComponent', () => {
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
     // Not throwing an exception.
+    expect(env.goButtonForProject(ptProjectId).nativeNode.ariaDisabled).toEqual('true');
+    // Connected project 'Open' button is disabled.
   }));
 
   it('fetch PT projects list if online', fakeAsync(() => {
