@@ -12,6 +12,14 @@
     <h2 id="header-connected-projects" *ngIf="userConnectedProjects.length > 0 || initialLoadingSFProjects">
       {{ t("connected") }}
     </h2>
+    <app-notice
+      id="message-offline"
+      icon="cloud_off"
+      [type]="userHasProjects ? 'info' : 'error'"
+      *ngIf="(isOnline | async) === false && userIsPTUser"
+    >
+      {{ t("offline") }}
+    </app-notice>
     <mat-card
       *ngFor="let projectDoc of userConnectedProjects"
       [class.active-project]="isLastSelectedProject(projectDoc)"
@@ -27,7 +35,13 @@
           {{ projectTypeDescription(projectDoc) }}
         </span>
       </div>
-      <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
+      <a
+        appRouterLink="/projects/{{ projectDoc.id }}"
+        mat-flat-button
+        [disabled]="(isOnline | async) === false"
+        color="primary"
+        >{{ t("open") }}</a
+      >
     </mat-card>
     <mat-card id="sf-loading-card" *ngIf="initialLoadingSFProjects" class="loading-card">
       <div>
