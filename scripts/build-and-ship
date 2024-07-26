@@ -47,4 +47,4 @@ rsync -progzlt --chmod=Dug=rwx,Fug=rwx,o-rwx --delete-during --stats --rsync-pat
 rsync -vaz --rsync-path="sudo rsync" --rsh="ssh -v -i ${DEPLOY_CREDENTIALS}" \
   "${ERROR_PAGES_PATH}/" root@"${DEPLOY_DESTINATION}:${DEPLOY_PATH}/htdocs"
 
-ssh root@"${DEPLOY_DESTINATION}" "systemctl restart ${APP_NAME}-web-app${SERVICE_UNIT_SUFFIX}"
+ssh -v -i "${DEPLOY_CREDENTIALS}" root@"${DEPLOY_DESTINATION}" "systemctl restart ${APP_NAME}-web-app${SERVICE_UNIT_SUFFIX}"
