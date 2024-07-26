@@ -314,15 +314,13 @@ describe('MyProjectsComponent', () => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.onlineStatus = false;
-    const sfProjectId = 'testProject1';
-    env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!.paratextId;
     env.waitUntilLoaded();
 
     // The message is shown that tells the user about needing to be online.
     expect(env.messageOffline).not.toBeNull();
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
-    // Not throwing an exception.
+    // Not throwing an exception..
   }));
 
   it('fetch PT projects list if online', fakeAsync(() => {
