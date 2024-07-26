@@ -318,7 +318,8 @@ describe('MyProjectsComponent', () => {
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.onlineStatus = false;
     const sfProjectId = 'testProject1';
-    env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!.paratextId;
+    const ptProjectId = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!
+      .paratextId;
     env.waitUntilLoaded();
 
     // The message is shown that tells the user about needing to be online.
@@ -326,6 +327,8 @@ describe('MyProjectsComponent', () => {
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
     // Not throwing an exception.
+    expect(env.goButtonForProject(ptProjectId).nativeNode.ariaDisabled).toEqual('true');
+    // Connected project 'Open' button is disabled.
   }));
 
   it('fetch PT projects list if online', fakeAsync(() => {
