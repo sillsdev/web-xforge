@@ -8,6 +8,7 @@ import { Router, RouterModule } from '@angular/router';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -21,11 +22,11 @@ import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
-
 @Component({ template: '' })
 class EmptyComponent {}
 
@@ -284,6 +285,8 @@ describe('MyProjectsComponent', () => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReject(new Error('test error'));
     env.onlineStatus = false;
+    const sfProjectId = 'testProject1';
+    env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === sfProjectId)!.data!.paratextId;
     env.waitUntilLoaded();
 
     // The message is shown that tells the user about needing to be online.
@@ -444,6 +447,8 @@ class TestEnvironment {
   /** PT projects the user has access to. */
   userParatextProjects: ParatextProject[] = [];
 
+  userConfigDocs: SFProjectUserConfigDoc[] = [];
+
   constructor({
     userHasAnyProjects = true,
     isKnownPTUser = true
@@ -501,6 +506,17 @@ class TestEnvironment {
           isConnected: false
         }
       ] as ParatextProject[];
+      this.userConfigDocs = [
+        {
+          id: 'sf-user-id',
+          data: createTestProjectUserConfig({
+            ownerRef: 'sf-user-id',
+            projectRef: 'testProject1',
+            selectedBookNum: 40,
+            selectedChapterNum: 1
+          })
+        }
+      ] as SFProjectUserConfigDoc[];
 
       this.projectProfileDocs.forEach((projectProfileDoc: SFProjectProfileDoc) => {
         this.userParatextProjects.push({
@@ -516,6 +532,8 @@ class TestEnvironment {
 
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
+    when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(this.userConfigDocs));
+
     when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
 
     const user: User = createTestUser({
@@ -591,6 +609,10 @@ class TestEnvironment {
     return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-project"]`);
   }
 
+  connectedProjectCardProjectDescription(ptProjectId: string): DebugElement {
+    return this.getElement(`#user-connected-project-card-${ptProjectId} > span.project-description`);
+  }
+
   cardForUserConnectedResource(ptProjectId: string): DebugElement {
     return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-resource"]`);
   }
@@ -600,7 +622,7 @@ class TestEnvironment {
   }
 
   waitUntilLoaded(): void {
-    // Two cycles can to be needed to finish working through loadParatextProjects().
+    // Two cycles can be needed to finish working through loadParatextProjects().
     flush();
     this.fixture.detectChanges();
     flush();
