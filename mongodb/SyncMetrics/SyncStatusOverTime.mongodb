@@ -1,0 +1,73 @@
+use('xforge')
+
+// A project is considered active for 30 days from when it attempts to sync
+const activePeriod = Infinity;
+
+const firstSyncMetricStartTime = db.sync_metrics.find({
+  dateStarted: { $exists: true }
+}).sort({ dateStarted: 1 }).limit(1).next().dateStarted;
+const firstSyncMetricStartDate = new Date(firstSyncMetricStartTime).toISOString().slice(0, 10);
+
+// Time series data is collected in 1 day intervals
+// This array starts blank and is used as a template
+const startDate = new Date(firstSyncMetricStartDate);
+const endDate = new Date();
+const msPerDay = 1000 * 60 * 60 * 24;
+const totalDays = Math.ceil((endDate - startDate) / msPerDay);
+const timeSlots = new Array(totalDays);
+
+// a map of statuses to an array of dates counting how many projects were in that status on that date
+const results = {};
+
+function dateToIndex(date) {
+  return Math.floor((date - startDate) / msPerDay);
+}
+
+const metrics = db.sync_metrics.aggregate([
+  {
+    $group: {
+      _id: '$projectRef',
+      count: { $sum: 1 },
+      status: {
+        $push: {
+          status: '$status',
+          date: '$dateStarted'
+        }
+      }
+    }
+  }
+]).toArray();
+
+for (const project of metrics) {
+  const statuses = [...timeSlots];
+
+  for (const event of project.status) {
+    const index = dateToIndex(event.date);
+    for (let i = index; i > 0 && i < statuses.length && i < index + activePeriod; i++) {
+      statuses[i] = event.status;
+    }
+  }
+
+  for (const [index, status] of Object.entries(statuses)) {
+    if (status == null) continue;
+
+    if (!results[status]) {
+      results[status] = new Array(totalDays).fill(0);
+    }
+
+    results[status][index]++;
+  }
+}
+
+function indexToDate(index) {
+  return new Date(startDate.getTime() + index * msPerDay);
+}
+
+const statusKeys = Object.keys(results);
+
+console.log(['Date', ...statusKeys].join('\t'));
+for (let i = 0; i < totalDays; i++) {
+  const date = indexToDate(i).toISOString().slice(0, 10);
+  const row = [date, ...statusKeys.map(key => results[key][i])];
+  console.log(row.join('\t'));
+}
