@@ -84,11 +84,16 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!userSecretAttempt.TryResult(out UserSecret userSecret))
             throw new DataNotFoundException("The user does not exist.");
 
+        string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", settings.ParatextId);
+        if (FileSystemService.DirectoryExists(projectDir))
+            throw new InvalidOperationException("A directory for this project already exists.");
+
         IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
 
         ParatextProject ptProject =
             ptProjects.SingleOrDefault(p => p.ParatextId == settings.ParatextId)
             ?? throw new DataNotFoundException("The paratext project does not exist.");
+
         var project = new SFProject
         {
             IsRightToLeft = ptProject.IsRightToLeft,
@@ -246,7 +251,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 throw new ForbiddenException();
 
             ptProjectId = projectDoc.Data.ParatextId;
-            // delete the project first, so that users get notified about the deletion
+            string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
+            if (FileSystemService.DirectoryExists(projectDir))
+                FileSystemService.DeleteDirectory(projectDir);
+            string audioDir = GetAudioDir(projectId);
+            if (FileSystemService.DirectoryExists(audioDir))
+                FileSystemService.DeleteDirectory(audioDir);
+            string trainingDataDir = Path.Combine(
+                SiteOptions.Value.SiteDir,
+                TrainingDataService.DirectoryName,
+                ptProjectId
+            );
+            if (FileSystemService.DirectoryExists(trainingDataDir))
+                FileSystemService.DeleteDirectory(trainingDataDir);
+
             string[] projectUserIds = projectDoc.Data.UserRoles.Keys.ToArray();
             await projectDoc.DeleteAsync();
             async Task removeUser(string projectUserId)
@@ -269,6 +287,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             await Task.WhenAll(tasks);
         }
 
+        await RealtimeService.DeleteProjectAsync(projectId);
+
         // The machine service requires the project secrets, so call it before removing them
         await _machineProjectService.RemoveProjectAsync(
             curUserId,
@@ -283,20 +303,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             CancellationToken.None
         );
         await ProjectSecrets.DeleteAsync(projectId);
-        await RealtimeService.DeleteProjectAsync(projectId);
-        string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
-        if (FileSystemService.DirectoryExists(projectDir))
-            FileSystemService.DeleteDirectory(projectDir);
-        string audioDir = GetAudioDir(projectId);
-        if (FileSystemService.DirectoryExists(audioDir))
-            FileSystemService.DeleteDirectory(audioDir);
-        string trainingDataDir = Path.Combine(
-            SiteOptions.Value.SiteDir,
-            TrainingDataService.DirectoryName,
-            ptProjectId
-        );
-        if (FileSystemService.DirectoryExists(trainingDataDir))
-            FileSystemService.DeleteDirectory(trainingDataDir);
     }
 
     public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
