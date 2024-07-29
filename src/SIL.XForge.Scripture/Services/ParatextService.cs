@@ -2869,7 +2869,8 @@ public class ParatextService : DisposableBase, IParatextService
         out string xml
     )
     {
-        string equivalentCommentContent = GetCommentContentsFromNote(note, displayNames, ptProjectUsers);
+        string equivalentCommentContent =
+            GetCommentContentsFromNote(note, displayNames, ptProjectUsers) ?? string.Empty;
         string contents = comment.Contents?.InnerXml ?? string.Empty;
         string updatedContent = GetUpdatedContentIfChanged(contents, equivalentCommentContent);
         if (updatedContent is not null)
@@ -2885,12 +2886,14 @@ public class ParatextService : DisposableBase, IParatextService
     /// Convert the note content to its comment equivalent. The primary use case
     /// is to add the SF user label to the content.
     /// </summary>
-    private string GetCommentContentsFromNote(
+    private string? GetCommentContentsFromNote(
         Note note,
         IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
+        if (note.Content == null)
+            return null;
         string ownerId = note.OwnerRef;
         // if the user is a paratext user, keep the note content as is
         if (
