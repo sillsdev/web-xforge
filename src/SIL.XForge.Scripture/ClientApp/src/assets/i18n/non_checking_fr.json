@@ -264,6 +264,12 @@
     "default_resource_tab_header": "Ressource",
     "draft_tab_header": "Brouillon automatique"
   },
+  "font_unsupported_message": {
+    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
+    "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",
+    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support {{ graphite }}. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
+    "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead."
+  },
   "history_chooser": {
     "confirm_revert": "Êtes-vous sûr de vouloir restaurer ce chapitre à la révision sélectionnée ?",
     "confirm_yes": "Restaurer",
@@ -549,11 +555,7 @@
     "training": "Formation...",
     "training_unavailable": "La formation est temporairement indisponible",
     "translate_overview": "Vue d'ensemble de la traduction",
-    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}",
-    "warn_font_unsupported": "La police sélectionnée pour ce projet, {{ selectedFont }}, n'est pas prise en charge. {{ fallbackFont }} est utilisé à la place.",
-    "warn_font_requires_graphite": "La police sélectionnée pour ce projet, {{ selectedFont }}, ne peut être rendue que par les navigateurs web qui prennent en charge Graphite. Cela signifie qu'il ne fonctionnera que dans Firefox, sauf sur les appareils iOS, où il ne fonctionnera pas même dans Firefox. Dans les navigateurs qui ne prennent pas en charge Graphite, {{ fallbackFont }} est utilisé à la place.",
-    "contact_for_help": "Si cela ne répond pas aux besoins de ce projet, veuillez nous contacter pour obtenir de l'aide.",
-    "change_font_or_contact_for_help": "Si cela ne répond pas aux besoins de ce projet, veuillez sélectionner une police différente dans les paramètres du projet Paratext, ou contactez-nous pour obtenir de l'aide."
+    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}"
   },
   "users": {
     "collaborators": "Collaborateurs",

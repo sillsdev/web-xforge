@@ -264,6 +264,12 @@
     "default_resource_tab_header": "Resource",
     "draft_tab_header": "Auto Draft"
   },
+  "font_unsupported_message": {
+    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
+    "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",
+    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support {{ graphite }}. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
+    "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead."
+  },
   "history_chooser": {
     "confirm_revert": "Are you sure you want to restore this chapter to the selected revision?",
     "confirm_yes": "Restore",
@@ -549,11 +555,7 @@
     "training": "Instruire...",
     "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Prezentare generală a progresului",
-    "translated_segments": "{{ translatedSegments }} din {{ total }} segmente",
-    "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead.",
-    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support Graphite. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
-    "contact_for_help": "If this does not meet the needs of this project, please contact us for help.",
-    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or contact us for help."
+    "translated_segments": "{{ translatedSegments }} din {{ total }} segmente"
   },
   "users": {
     "collaborators": "Colaboratori",
