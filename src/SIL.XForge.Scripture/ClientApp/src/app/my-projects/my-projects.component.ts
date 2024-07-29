@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
@@ -98,7 +98,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       }
       this.userUnconnectedParatextProjects = userPTProjects.filter(project => !project.isConnected);
     } catch (err) {
-      if (err instanceof HttpErrorResponse && err.status === 504) {
+      if (err instanceof HttpErrorResponse && err.status === HttpStatusCode.ServiceUnavailable) {
         this.errorMessage = 'failed_to_connect_to_pt_server';
       }
       this.problemGettingPTProjects = true;

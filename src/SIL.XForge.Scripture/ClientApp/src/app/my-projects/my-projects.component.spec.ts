@@ -1,4 +1,4 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -228,7 +228,9 @@ describe('MyProjectsComponent', () => {
 
   it('trouble connecting to paratext registry is gracefully handled', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReject(new HttpErrorResponse({ status: 504 }));
+    when(mockedParatextService.getProjects()).thenReject(
+      new HttpErrorResponse({ status: HttpStatusCode.ServiceUnavailable })
+    );
     env.waitUntilLoaded();
 
     // Trouble message is shown.

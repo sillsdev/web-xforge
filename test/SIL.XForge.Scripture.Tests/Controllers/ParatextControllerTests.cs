@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -158,8 +159,8 @@ public class ParatextControllerTests
         // SUT
         ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
 
-        Assert.IsInstanceOf<StatusCodeResult>(actual.Result);
-        Assert.AreEqual(504, ((StatusCodeResult)actual.Result).StatusCode);
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, ((ObjectResult)actual.Result).StatusCode);
     }
 
     [Test]
@@ -341,6 +342,20 @@ public class ParatextControllerTests
         ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
 
         Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task ResourcesAsync_CannotConnectException()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ParatextService.GetResourcesAsync(User01).Throws<CannotConnectException>();
+
+        // SUT
+        ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
+
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, ((ObjectResult)actual.Result).StatusCode);
     }
 
     [Test]
