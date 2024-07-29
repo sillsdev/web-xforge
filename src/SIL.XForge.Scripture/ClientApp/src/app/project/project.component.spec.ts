@@ -20,6 +20,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { DialogService } from '../../xforge-common/dialog.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
@@ -35,6 +36,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPermissions = mock(PermissionsService);
 const mockResumeCheckingService = mock(ResumeCheckingService);
+const mockedDialogService = mock(DialogService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -47,7 +49,8 @@ describe('ProjectComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: PermissionsService, useMock: mockedPermissions },
-      { provide: ResumeCheckingService, useMock: mockResumeCheckingService }
+      { provide: ResumeCheckingService, useMock: mockResumeCheckingService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -207,6 +210,8 @@ class TestEnvironment {
 
     // Just mock the response.  Testing of the actual service functionality can be in the service spec.
     when(mockResumeCheckingService.checkingLink$).thenReturn(of(['projects', 'project1', 'checking', 'JHN', '1']));
+
+    when(mockedDialogService.message(anything())).thenResolve();
 
     this.fixture = TestBed.createComponent(ProjectComponent);
     this.component = this.fixture.componentInstance;
