@@ -1,14 +1,17 @@
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
+import { en } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
+import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -28,6 +31,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   userUnconnectedParatextProjects: ParatextProject[] = [];
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
+  errorMessage: ObjectPaths<typeof en.my_projects> = 'problem_getting_pt_list';
   loadingPTProjects: boolean = false;
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
@@ -93,7 +97,10 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
         return;
       }
       this.userUnconnectedParatextProjects = userPTProjects.filter(project => !project.isConnected);
-    } catch {
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === HttpStatusCode.ServiceUnavailable) {
+        this.errorMessage = 'failed_to_connect_to_pt_server';
+      }
       this.problemGettingPTProjects = true;
     } finally {
       this.loadingPTProjects = false;

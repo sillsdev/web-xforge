@@ -6,7 +6,9 @@ using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Paratext.Data;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -25,6 +27,8 @@ namespace SIL.XForge.Scripture.Controllers;
 [Authorize]
 public class ParatextController : ControllerBase
 {
+    private const string ParatextUnavailable = "Could not connect to Paratext";
+
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IMachineProjectService _machineProjectService;
     private readonly IParatextService _paratextService;
@@ -95,13 +99,13 @@ public class ParatextController : ControllerBase
     /// <response code="200">The projects were successfully retrieved.</response>
     /// <response code="204">The user does not have permission to access Paratext.</response>
     /// <response code="401">The user's Paratext tokens have expired, and the user must log in again.</response>
+    /// <response code="503">The Paratext registry is unavailable.</response>
     [HttpGet("projects")]
     public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
     {
         Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
         if (!attempt.TryResult(out UserSecret userSecret))
             return NoContent();
-
         try
         {
             IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(userSecret);
@@ -114,6 +118,10 @@ public class ParatextController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Unauthorized();
+        }
+        catch (CannotConnectException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ParatextUnavailable);
         }
     }
 
@@ -206,6 +214,7 @@ public class ParatextController : ControllerBase
     /// </response>
     /// <response code="204">The user does not have permission to access Paratext.</response>
     /// <response code="401">The user's Paratext tokens have expired, and the user must log in again.</response>
+    /// <response code="503">The Paratext registry is unavailable.</response>
     [HttpGet("resources")]
     public async Task<ActionResult<Dictionary<string, string[]>>> ResourcesAsync()
     {
@@ -225,6 +234,10 @@ public class ParatextController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Unauthorized();
+        }
+        catch (CannotConnectException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ParatextUnavailable);
         }
     }
 

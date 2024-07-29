@@ -76,7 +76,7 @@
       }}
     </h2>
     <app-notice id="message-trouble-getting-pt-project-list" icon="error" type="error" *ngIf="problemGettingPTProjects">
-      {{ t("problem_getting_pt_list") }}
+      {{ t(errorMessage) }}
     </app-notice>
 
     <mat-card
