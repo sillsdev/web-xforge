@@ -1,4 +1,4 @@
-import { DestroyRef, Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
@@ -109,10 +109,7 @@ class SegmentInfo {
     return this.isVerseNext && (!this.ref.startsWith('verse') || this.ref.includes('/'));
   }
 
-  constructor(
-    public ref: string,
-    public index: number
-  ) {}
+  constructor(public ref: string, public index: number) {}
 }
 
 /**
@@ -136,10 +133,7 @@ export class TextViewModel implements OnDestroy {
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
-  constructor(
-    private readonly destroyRef: DestroyRef,
-    private readonly textDocService: TextDocService
-  ) {}
+  constructor(private readonly textDocService: TextDocService) {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
