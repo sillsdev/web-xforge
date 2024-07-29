@@ -357,6 +357,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                   hasDraft: {
                     bsonType: 'bool'
                   },
+                  draftApplied: {
+                    bsonType: 'bool'
+                  },
                   isValid: {
                     bsonType: 'bool'
                   },
