@@ -7,6 +7,14 @@ on:
         description: "The GitHub environment to deploy to."
         required: true
         type: string
+      build_commit:
+        description: "The VCS commit from which to deploy."
+        required: true
+        type: string
+      release_branch:
+        description: "The branch that will be made to point to the released commit after deploying."
+        required: true
+        type: string
 
       # Build environment
       dotnet_version:
@@ -55,6 +63,10 @@ on:
         description: "The prefix to use for the VCS tag."
         type: string
         required: true
+      server_domain_name:
+        description: "The domain name that will be hosting the application."
+        type: string
+        required: true
 
 jobs:
   deploy:
@@ -64,12 +76,15 @@ jobs:
     steps:
       - name: Place SSH deploy credentials
         run: |
-          set -ueo pipefail
+          set -xueo pipefail
           install --mode=700 --directory ~/.ssh
           install --mode=600 /dev/stdin ~/.ssh/known_hosts <<< "${{secrets.deploy_known_hosts}}"
           install --mode=600 /dev/stdin ~/.ssh/deploy_key <<< "${{secrets.deploy_ssh_private_key}}"
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{inputs.build_commit}}
+          fetch-depth: "0"
       - name: "Deps: .NET"
         uses: actions/setup-dotnet@v4
         with:
@@ -109,6 +124,7 @@ jobs:
           BUILD_NUMBER: ${{inputs.version_number}}
           DEPLOY_DESTINATION: ${{secrets.deploy_server}}
           DEPLOY_CREDENTIALS: ~/.ssh/deploy_key
+          HOSTNAME: ${{inputs.server_domain_name}}
           NODE_OPTIONS: ${{inputs.node_options}}
           PARATEXT_CLIENT_ID: ${{secrets.paratext_client_id}}
           PROJECT: ${{inputs.project}}
@@ -120,9 +136,11 @@ jobs:
           PARATEXT_RESOURCE_PASSWORD_HASH: ${{secrets.paratext_resource_password_hash}}
           SERVAL_CLIENT_SECRET: ${{secrets.serval_client_secret}}
           SERVAL_WEBHOOK_SECRET: ${{secrets.serval_webhook_secret}}
+      - name: Update release branch
+        run: git push --force origin ${{ inputs.build_commit }}:${{ inputs.release_branch }}
       - name: "Tag release"
         run: |
-          set -ueo pipefail
+          set -xueo pipefail
           git config --global user.name "ci"
           git config --global user.email "ci"
           tag="${{inputs.vcs_tag_prefix}}${{inputs.version_number}}"
