@@ -1355,6 +1355,73 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         });
     }
 
+    /// <summary>
+    /// Sets the draft applied flag for the specified text.
+    /// </summary>
+    /// <param name="userId">The user identifier</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="book">The book number.</param>
+    /// <param name="chapter">The chapter number.</param>
+    /// <param name="draftApplied"><c>true</c> if the draft is applied; otherwise, <c>false</c>.</param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="DataNotFoundException">
+    /// The project does not exist.
+    /// </exception>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to set this flag for the specified text.
+    /// </exception>
+    public async Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Ensure that the user has a paratext role, and the project is not a resource
+        if (_paratextService.IsResource(projectDoc.Data.ParatextId) || !HasParatextRole(projectDoc.Data, userId))
+        {
+            throw new ForbiddenException();
+        }
+
+        // Get the index to the book
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        if (textIndex == -1)
+        {
+            throw new DataNotFoundException("The book does not exist.");
+        }
+
+        // Get the index to the chapter
+        int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
+        if (chapterIndex == -1)
+        {
+            throw new DataNotFoundException("The chapter does not exist.");
+        }
+
+        // Ensure the user has permission for this chapter
+        if (
+            !projectDoc
+                .Data.Texts[textIndex]
+                .Chapters[chapterIndex]
+                .Permissions.TryGetValue(userId, out string permission)
+        )
+        {
+            throw new ForbiddenException();
+        }
+
+        // Ensure the user can write to this chapter
+        if (permission != TextInfoPermission.Write)
+        {
+            throw new ForbiddenException();
+        }
+
+        // Update the draft applied flag
+        await projectDoc.SubmitJson0OpAsync(op =>
+            op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].DraftApplied, draftApplied)
+        );
+    }
+
     protected override async Task RemoveUserFromProjectAsync(
         IConnection conn,
         IDocument<SFProject> projectDoc,

@@ -356,6 +356,7 @@ public class PreTranslationService(
 
                     // Update the has draft value for the chapter
                     op.Set(p => p.Texts[textIndex].Chapters[chapterIndex].HasDraft, hasDraft);
+                    op.Unset(p => p.Texts[textIndex].Chapters[chapterIndex].DraftApplied);
                 }
             }
         });
