@@ -27,7 +27,7 @@ public class Note : Comment
     /// Content of note. Contains XML. Corresponds to `Contents` element, which is not always present in the
     /// Notes XML file.
     /// </summary>
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
     /// <summary>
     /// Change difference accepted from a conflict, if any. Contains encoded XML. Not always present, in

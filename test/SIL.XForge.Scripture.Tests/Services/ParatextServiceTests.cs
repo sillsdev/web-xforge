@@ -3354,6 +3354,55 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task UpdateParatextComments_HandlesCommentsWithNoContent()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string threadId = "thread1";
+        string dataId = "dataId1";
+        ThreadNoteComponents[] threadNotes =
+        {
+            new ThreadNoteComponents { ownerRef = env.User05 },
+            new ThreadNoteComponents { ownerRef = env.User05, forceNullContent = true }
+        };
+        ThreadComponents components = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 2,
+            username = env.Username01,
+            notes = threadNotes,
+            editable = true,
+            deletedNotes = new[] { false, true },
+        };
+        env.AddNoteThreadData(new[] { components });
+        env.AddParatextComments(new[] { components });
+        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Not.Null);
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
+
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+        }.ToDictionary(u => u.Username);
+        var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            paratextId,
+            new[] { noteThreadDoc },
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+        thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Not.Null);
+    }
+
+    [Test]
     public async Task UpdateParatextComments_DoesNotDeleteNonEditableComment()
     {
         var env = new TestEnvironment();
@@ -4252,9 +4301,10 @@ public class ParatextServiceTests
         public string[] tagsAdded;
         public string assignedPTUser;
         public bool duplicate;
-        public string content;
+        public string? content;
         public bool? editable;
         public int? versionNumber;
+        public bool? forceNullContent;
     }
 
     [Test]
@@ -5661,7 +5711,12 @@ public class ParatextServiceTests
                     if (comp.notes != null)
                         noteComponent = comp.notes[i - 1];
                     noteComponent.ownerRef ??= User05;
-                    noteComponent.content ??= comp.isEdited ? $"{threadId} note {i}: EDITED." : $"{threadId} note {i}.";
+                    if (noteComponent.forceNullContent != true)
+                    {
+                        noteComponent.content ??= comp.isEdited
+                            ? $"{threadId} note {i}: EDITED."
+                            : $"{threadId} note {i}.";
+                    }
                     Note note = new Note
                     {
                         DataId = $"n{i}on{threadId}",
