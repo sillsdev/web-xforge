@@ -200,7 +200,7 @@ export class JoinComponent extends DataLoadingComponent {
     if (KNOWN_ERROR_CODES.includes(code)) return code;
     if (typeof code === 'string') {
       for (const knownCode of KNOWN_ERROR_CODES) {
-        if (code.match(knownCode)) return knownCode;
+        if (code.includes(knownCode)) return knownCode;
       }
     }
     return undefined;
