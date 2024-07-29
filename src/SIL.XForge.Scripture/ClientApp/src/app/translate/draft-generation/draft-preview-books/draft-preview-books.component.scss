@@ -27,3 +27,8 @@ mat-button-toggle-group
   .mat-button-toggle-focus-overlay {
   opacity: var(--mat-standard-button-toggle-hover-state-layer-opacity);
 }
+
+.book-more ::ng-deep mat-icon {
+  // it's not entirely clear why, but this is needed to vertically align the icon with the book name
+  margin-bottom: 3px;
+}
