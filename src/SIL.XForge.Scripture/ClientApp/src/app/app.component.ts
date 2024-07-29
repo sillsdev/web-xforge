@@ -168,6 +168,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
+  get lastSelectedProjectId(): string | undefined {
+    return this.currentUser?.sites[environment.siteId].currentProjectId;
+  }
+
+  get appIconLink(): string[] {
+    return this.router.url === '/projects' ? ['/projects', this.lastSelectedProjectId ?? ''] : ['/projects'];
+  }
+
   get isLoggedIn(): Observable<boolean> {
     return this.authService.loggedInState$.pipe(map(state => state.loggedIn));
   }
