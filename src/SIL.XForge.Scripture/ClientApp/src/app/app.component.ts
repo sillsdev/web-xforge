@@ -264,7 +264,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
       this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
         // handle remotely deleted project
-        if (this.userService.currentProjectId != null) {
+        const userDoc = this.currentUserDoc;
+        if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
           this.showProjectDeletedDialog();
         }
       });
