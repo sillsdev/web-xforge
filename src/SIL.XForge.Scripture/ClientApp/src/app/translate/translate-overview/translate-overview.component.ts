@@ -18,11 +18,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
-import { FontService } from '../../../xforge-common/font.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
-import { ParatextService } from '../../core/paratext.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -76,8 +73,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly authService: AuthService,
     private readonly onlineStatusService: OnlineStatusService,
     noticeService: NoticeService,
-    readonly activatedProjectService: ActivatedProjectService,
-    readonly fontService: FontService,
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
@@ -127,14 +122,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   get projectId(): string | undefined {
     return this.projectDoc?.id;
-  }
-
-  get selectedFont(): string | undefined {
-    return this.activatedProjectService.projectDoc?.data?.defaultFont;
-  }
-
-  get isPtProject(): boolean {
-    return this.projectDoc?.data != null && !ParatextService.isResource(this.projectDoc?.data?.paratextId);
   }
 
   ngOnInit(): void {

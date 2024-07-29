@@ -293,7 +293,7 @@ export class I18nService {
    * view, or a link for the email address.
    */
   interpolateVariables(key: I18nKey, params: object = {}): { text: string; id?: string }[] {
-    const translation: string = this.transloco.getTranslation(this.transloco.getActiveLang())[key];
+    const translation = this.getTranslation(key);
 
     // find instances of "Some {{ variable }} text"
     const regex = /\{\{\s*(\w+)\s*\}\}/g;
@@ -368,5 +368,12 @@ export class I18nService {
       // Some language codes are unsupported in some browsers. For example, Firefox 122 errors on nsk-Cans-CA-x-nasksyl
       return languageCode;
     }
+  }
+
+  private getTranslation(key: I18nKey): string {
+    return (
+      this.transloco.getTranslation(this.transloco.getActiveLang())[key] ??
+      this.transloco.getTranslation(I18nService.defaultLocale.canonicalTag)[key]
+    );
   }
 }
