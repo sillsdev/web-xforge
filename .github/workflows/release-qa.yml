@@ -78,7 +78,6 @@ jobs:
     if: ${{ needs.stop_if_already_built.outputs.already_built == 'false' || github.event.inputs.re-release == 'true' }}
     uses: ./.github/workflows/compute-next-version.yml
     with:
-      app_commit: ${{ needs.determine_build_commit.outputs.build_commit }}
       versioning-system: "staging"
       tag_prefix: "SF-QAv"
       release_branch: "sf-qa"
