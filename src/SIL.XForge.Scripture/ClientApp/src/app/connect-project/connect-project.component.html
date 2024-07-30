@@ -15,35 +15,13 @@
         <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
       </mat-card-content>
     </mat-card>
+    <ng-container *ngIf="projects.length > 0">
+      <div class="project-title">
+        <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
+        {{ projectTitle }}
+      </div>
+    </ng-container>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-      <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
-        <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
-          {{ t("only_paratext_admins_can_start") }}
-        </p>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t("paratext_project") }}</mat-label>
-          <mat-select #projectSelect id="project-select" disableOptionCentering formControlName="paratextId">
-            <mat-option
-              *ngFor="let project of projects"
-              [value]="project.paratextId"
-              [disabled]="!project.isConnectable"
-            >
-              {{ projectLabel(project) }}
-              <ng-container *ngIf="!project.isConnectable && project.isConnected">
-                &nbsp;{{ t("already_connected") }}
-              </ng-container>
-              <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-container>
-      <ng-template #noProjectMsg>
-        <p
-          *ngIf="state !== 'loading'"
-          id="no-projects-msg"
-          [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
-        ></p>
-      </ng-template>
       <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
         <mat-card-title>{{ t("project_settings") }}</mat-card-title>
         <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
@@ -55,7 +33,7 @@
             placeholder="{{ t('source_text_placeholder') }}"
             [projects]="projects"
             [resources]="resources"
-            [hiddenParatextIds]="[paratextIdControl.value]"
+            [hiddenParatextIds]="[ptProjectId]"
           ></app-project-select>
           <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
           <ng-container *ngIf="isBasedOnProjectSet">

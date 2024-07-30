@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ErrorHandler, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
@@ -17,7 +17,6 @@ import { SFProjectService } from '../core/sf-project.service';
 import { compareProjectsForSorting, projectLabel } from '../shared/utils';
 
 interface ConnectProjectFormValues {
-  paratextId: string;
   settings: {
     checking: boolean;
     translationSuggestions: boolean;
@@ -46,7 +45,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
   /** The Paratext project id of what was requested to connect. */
-  incomingPTProjectId?: string;
+  ptProjectId: string;
 
   projectLabel = projectLabel;
 
@@ -67,7 +66,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
-    this.incomingPTProjectId = this.router.getCurrentNavigation()?.extras.state?.ptProjectId;
+    this.ptProjectId = this.router.getCurrentNavigation()?.extras.state?.ptProjectId;
   }
 
   get hasConnectableProjects(): boolean {
@@ -83,17 +82,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._isAppOnline;
   }
 
-  get paratextIdControl(): AbstractControl<any, any> {
-    return this.connectProjectForm.controls.paratextId;
-  }
-
   get showSettings(): boolean {
     if (this.state !== 'input' || this._projects == null) {
       return false;
     }
-    const paratextId: string = this.paratextIdControl.value;
-    const project = this._projects.find(p => p.paratextId === paratextId);
-    return project != null && !this.paratextService.isParatextProjectInSF(project);
+    return this.project != null && !this.paratextService.isParatextProjectInSF(this.project);
   }
 
   get submitDisabled(): boolean {
@@ -123,24 +116,20 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.connectProjectForm.controls.settings as UntypedFormGroup;
   }
 
-  ngOnInit(): void {
-    this.subscribe(this.paratextIdControl.valueChanges, () => {
-      if (this.state !== 'input') {
-        return;
-      }
-      if (this.showSettings) {
-        this.settings.enable();
-      } else {
-        this.settings.disable();
-      }
-      if (!this.isBasedOnProjectSet) {
-        const translationSuggestions = this.settings.controls.translationSuggestions;
-        translationSuggestions.reset();
-        translationSuggestions.disable();
-      }
-    });
+  get projectTitle(): string {
+    return `${this.project?.shortName} - ${this.project?.name}`;
+  }
 
+  private get project(): ParatextProject | undefined {
+    return this._projects?.find(p => p.paratextId === this.ptProjectId);
+  }
+
+  ngOnInit(): void {
     this.state = 'loading';
+    if (this.ptProjectId == null) {
+      this.router.navigate(['/projects']);
+    }
+
     this.subscribe(this.settings.controls.sourceParatextId.valueChanges, (value: boolean) => {
       const translationSuggestions = this.settings.controls.translationSuggestions;
       if (value) {
@@ -163,8 +152,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         this.state = 'offline';
       }
     });
-
-    if (this.incomingPTProjectId != null) this.paratextIdControl.setValue(this.incomingPTProjectId);
   }
 
   logInWithParatext(): void {
@@ -172,23 +159,17 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   async submit(): Promise<void> {
-    // Set the validator when the user tries to submit the form to prevent the select immediately being invalid
-    // when the user clicks it. Marking it untouched does not appear to work.
-    this.paratextIdControl.setValidators(Validators.required);
-    this.paratextIdControl.updateValueAndValidity();
     if (!this.connectProjectForm.valid || this._projects == null) {
       return;
     }
     const values = this.connectProjectForm.value as ConnectProjectFormValues;
-    const project = this._projects.find(p => p.paratextId === values.paratextId);
-    if (project == null) {
-      return;
-    }
+    if (this.project == null) return;
     this.state = 'connecting';
-    if (project.projectId == null) {
-      this.connectProjectName = project.name;
+
+    if (this.project.projectId == null) {
+      this.connectProjectName = this.project.name;
       const settings: SFProjectCreateSettings = {
-        paratextId: project.paratextId,
+        paratextId: this.project.paratextId,
         checkingEnabled: values.settings.checking,
         translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
         sourceParatextId: values.settings.sourceParatextId
@@ -210,8 +191,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       }
       this.projectDoc = await this.projectService.get(projectId);
     } else {
-      await this.projectService.onlineAddCurrentUser(project.projectId);
-      this.router.navigate(['/projects', project.projectId]);
+      await this.projectService.onlineAddCurrentUser(this.project.projectId);
+      this.router.navigate(['/projects', this.project.projectId]);
     }
   }
 
@@ -229,8 +210,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.state = 'loading';
     this.loadingStarted();
     try {
-      const resourceFetchPromise = this.fetchResources();
-      const projects = await this.paratextService.getProjects();
+      const resourceFetchPromise: Promise<void> = this.fetchResources();
+      const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
 
       if (projects == null) {
         this.state = 'login';
