@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       skip-branch-update:
-        description: "Don't update the release branch, and release from its current commit. For example, when releasing a hotfix that has already been pushed to the branch."
+        description: "Skip updating the release branch, and just release the tip of the branch as it currently exists. This can be used to release a hotfix, provided you've already pushed it to the release branch."
         required: true
         type: boolean
         default: false
