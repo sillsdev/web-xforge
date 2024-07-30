@@ -864,6 +864,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
 
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        SFProject project = projectDoc.Data;
+        if (project.UserRoles.ContainsKey(curUserId))
+            return projectId;
+
         if (projectSecretShareKey.RecipientUserId != null)
         {
             if (projectSecretShareKey.RecipientUserId == curUserId)
@@ -872,11 +877,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
             throw new DataNotFoundException("key_already_used");
         }
-
-        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
-        SFProject project = projectDoc.Data;
-        if (project.UserRoles.ContainsKey(curUserId))
-            return projectId;
 
         IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
         // Attempt to get the role for the user from the Paratext registry
