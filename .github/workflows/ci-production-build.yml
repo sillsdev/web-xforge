@@ -31,6 +31,6 @@ jobs:
       - name: Upgrade npm
         run: npm install -g npm@${{ matrix.npm_version }}
       - name: Build Realtime server dependencies for Angular
-        run: cd src/RealtimeServer && npm ci
+        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
       - name: Angular Frontend Production Build
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci && npm run build
+        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci)) && npm run build
