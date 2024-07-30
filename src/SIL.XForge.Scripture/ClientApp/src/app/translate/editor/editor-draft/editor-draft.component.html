@@ -1,37 +1,48 @@
-<ng-container *ngIf="onlineStatusService.onlineStatus$ | async; else offline">
-  <mat-progress-bar *ngIf="draftCheckState === 'draft-unknown'" mode="indeterminate" color="accent"></mat-progress-bar>
+@if (onlineStatusService.onlineStatus$ | async) {
+  @if (draftCheckState === "draft-unknown") {
+    <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+  } @else if (draftCheckState === "draft-empty") {
+    <app-notice icon="info" type="primary" mode="outline">
+      {{ "editor_draft_tab.no_draft_notice" | transloco: { bookChapterName } }}
+      <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
+      <app-draft-preview-books></app-draft-preview-books>
+    </app-notice>
+  } @else if (draftCheckState === "draft-legacy") {
+    <app-notice type="warning" icon="warning">
+      <transloco
+        key="editor_draft_tab.draft_legacy_warning"
+        [params]="{ generateDraftUrl: { route: generateDraftUrl } }"
+      ></transloco>
+    </app-notice>
+  }
 
-  <app-notice *ngIf="draftCheckState === 'draft-empty'" icon="info" type="primary" mode="outline">
-    {{ "editor_draft_tab.no_draft_notice" | transloco: { bookChapterName } }}
-    <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
-    <app-draft-preview-books></app-draft-preview-books>
+  @if (isDraftReady) {
+    <div class="toolbar">
+      <div class="apply-draft-button-container">
+        @if (userAppliedDraft) {
+          <span class="draft-indicator">
+            <mat-icon class="check-icon">check</mat-icon>
+            <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
+          </span>
+        }
+        @if (canApplyDraft) {
+          <button mat-flat-button color="primary" (click)="applyDraft()">
+            <mat-icon>auto_awesome</mat-icon>
+            @if (isDraftApplied) {
+              <transloco key="editor_draft_tab.reapply_to_project"></transloco>
+            } @else {
+              <transloco key="editor_draft_tab.apply_to_project"></transloco>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+} @else {
+  <app-notice icon="warning" type="warning">
+    {{ "editor_draft_tab.offline_notice" | transloco }}
   </app-notice>
-
-  <app-notice *ngIf="draftCheckState === 'draft-legacy'" type="warning" icon="warning">
-    <transloco
-      key="editor_draft_tab.draft_legacy_warning"
-      [params]="{ generateDraftUrl: { route: generateDraftUrl } }"
-    ></transloco>
-  </app-notice>
-</ng-container>
-
-<div class="toolbar" *ngIf="isDraftReady">
-  <div class="apply-draft-button-container">
-    <span *ngIf="isDraftApplied && isDraftReady" class="draft-indicator">
-      <mat-icon class="check-icon">check</mat-icon>
-      <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
-    </span>
-    <button
-      *ngIf="!isDraftApplied && isDraftReady && canApplyDraft"
-      mat-flat-button
-      color="primary"
-      (click)="applyDraft()"
-    >
-      <mat-icon>auto_awesome</mat-icon>
-      <transloco key="editor_draft_tab.apply_to_project"></transloco>
-    </button>
-  </div>
-</div>
+}
 
 <app-text
   [isReadOnly]="true"
@@ -41,9 +52,3 @@
   [ngClass]="draftCheckState"
   [style.--project-font]="fontService.getFontFamilyFromProject(targetProject)"
 ></app-text>
-
-<ng-template #offline>
-  <app-notice *ngIf="draftCheckState !== 'draft-present'" icon="warning" type="warning">
-    {{ "editor_draft_tab.offline_notice" | transloco }}
-  </app-notice>
-</ng-template>

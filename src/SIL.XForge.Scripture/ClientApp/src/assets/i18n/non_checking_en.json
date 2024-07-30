@@ -248,6 +248,7 @@
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Auto draft is not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "reapply_to_project": "Re-add to project",
     "yes": "Overwrite chapter"
   },
   "editor_history_tab": {

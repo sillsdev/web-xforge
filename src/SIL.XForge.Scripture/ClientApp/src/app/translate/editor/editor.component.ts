@@ -1345,12 +1345,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private async updateAutoDraftTabVisibility(): Promise<void> {
     const chapter: Chapter | undefined = this.text?.chapters.find(c => c.number === this._chapter);
     const hasDraft: boolean = chapter?.hasDraft ?? false;
+    const draftApplied: boolean = chapter?.draftApplied ?? false;
     const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
       this.tabState.getFirstTabOfTypeIndex('draft');
 
-    if (hasDraft) {
+    const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
+    if (hasDraft && (!draftApplied || urlDraftActive)) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
-      const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
       // Add to 'source' (or 'target' if showSource is false) tab group if no existing draft tab
