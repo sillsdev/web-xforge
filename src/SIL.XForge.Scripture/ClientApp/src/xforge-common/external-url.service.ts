@@ -9,7 +9,7 @@ export class ExternalUrlService {
   paratext = 'https://paratext.org/';
   transcelerator = 'https://software.sil.org/transcelerator/';
   communitySupport = 'https://community.scripture.software.sil.org/c/scripture-forge/19';
-  communityAnnouncementPage = 'https://community.scripture.software.sil.org/t/scripture-forge-announcements/1776';
+  announcementPage = 'https://software.sil.org/scriptureforge/news/';
 
   constructor(private readonly i18n: I18nService) {}
 
