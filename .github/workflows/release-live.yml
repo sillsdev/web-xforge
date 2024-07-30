@@ -16,7 +16,7 @@ on:
           - "minor"
           - "major"
       skip-branch-update:
-        description: "Don't update the release branch, and release from its current commit. For example, when releasing a hotfix that has already been pushed to the release branch. If this is set, 'from-staging-version' is ignored."
+        description: "Skip updating the release branch, and just release the tip of the branch as it currently exists. This can be used to release a hotfix, provided you've already pushed it to the release branch. If this is set, the 'version from which to release' is ignored."
         required: true
         type: boolean
         default: false
