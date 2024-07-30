@@ -10,6 +10,20 @@
   margin-bottom: 32px;
 }
 
+.project-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 8px;
+  color: $pt-button-green;
+  font-size: 26px;
+
+  img {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 .offline-text {
   padding-bottom: 16px;
 }
