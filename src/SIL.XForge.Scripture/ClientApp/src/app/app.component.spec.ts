@@ -609,7 +609,7 @@ class TestEnvironment {
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
     when(mockedI18nService.localeCode).thenReturn('en');
     when(mockedUrlService.helps).thenReturn('helps');
-    when(mockedUrlService.communityAnnouncementPage).thenReturn('community-announcements');
+    when(mockedUrlService.announcementPage).thenReturn('community-announcements');
     when(mockedUrlService.communitySupport).thenReturn('community-support');
     when(mockedUrlService.manual).thenReturn('manual');
 
