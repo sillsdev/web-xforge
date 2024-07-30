@@ -82,5 +82,12 @@
     "englishName": "Western Kayah Li",
     "tags": ["kyu", "kyu-Kali"],
     "production": true
+  },
+  {
+    "localName": "Deutsch",
+    "englishName": "German",
+    "tags": ["de", "de-DE"],
+    "production": false,
+    "helps": "en"
   }
 ]
