@@ -275,4 +275,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       servalConfig
     });
   }
+
+  async onlineSetDraftApplied(projectId: string, book: number, chapter: number, draftApplied: boolean): Promise<void> {
+    return await this.onlineInvoke('setDraftApplied', {
+      projectId,
+      book,
+      chapter,
+      draftApplied
+    });
+  }
 }

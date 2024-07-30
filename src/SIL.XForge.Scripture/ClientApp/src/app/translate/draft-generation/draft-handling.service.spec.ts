@@ -5,11 +5,13 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { DraftSegmentMap } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
 
+const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedSFProject = mock(SFProjectProfileDoc);
@@ -19,6 +21,7 @@ describe('DraftHandlingService', () => {
 
   configureTestingModule(() => ({
     providers: [
+      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
     ]
@@ -252,6 +255,9 @@ describe('DraftHandlingService', () => {
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
       await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
+      verify(
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
+      ).once();
       expect().nothing();
     });
   });
@@ -268,6 +274,9 @@ describe('DraftHandlingService', () => {
       expect(result).toBe(true);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
+      verify(
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
+      ).once();
     });
 
     it('should not apply if user does not have permission', async () => {
