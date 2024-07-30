@@ -55,7 +55,6 @@ jobs:
     needs: determine_build_commit
     uses: ./.github/workflows/compute-next-version.yml
     with:
-      app_commit: "${{ needs.determine_build_commit.outputs.build_commit }}"
       versioning-system: "production"
       release-level: ${{ github.event.inputs.release-level }}
       tag_prefix: "SFv"
