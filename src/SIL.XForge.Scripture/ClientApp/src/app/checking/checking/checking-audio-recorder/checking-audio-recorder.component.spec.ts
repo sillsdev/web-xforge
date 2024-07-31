@@ -14,7 +14,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
@@ -65,7 +65,7 @@ describe('CheckingAudioRecorderComponent', () => {
     expect(env.stopRecordingButton).toBeFalsy();
     env.clickButton(env.recordButton);
     // Record for more than 2 seconds in order to test the duration of blob files
-    // which can fail with certain recording types i.e. RecordRTC.MediaStreamRecorder
+    // which can fail with certain recording types
     await env.waitForRecorder(2400);
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();

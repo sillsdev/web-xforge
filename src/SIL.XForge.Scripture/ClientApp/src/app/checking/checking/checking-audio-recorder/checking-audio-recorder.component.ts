@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
-import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -49,7 +48,8 @@ export class CheckingAudioRecorderComponent
 
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
-  private recordRTC?: RecordRTC;
+  private mediaRecorder?: MediaRecorder;
+  private recordedChunks: Blob[] = [];
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
 
@@ -78,7 +78,7 @@ export class CheckingAudioRecorderComponent
   }
 
   get isRecording(): boolean {
-    return this.recordRTC != null && this.recordRTC.state === 'recording';
+    return this.mediaRecorder != null && this.mediaRecorder.state === 'recording';
   }
 
   ngOnDestroy(): void {
@@ -88,19 +88,20 @@ export class CheckingAudioRecorderComponent
   }
 
   async ngOnInit(): Promise<void> {
-    this.mediaDevicesUnsupported = this.navigator.mediaDevices?.getUserMedia == null;
+    this.mediaDevicesUnsupported =
+      this.navigator.mediaDevices?.getUserMedia == null && typeof MediaRecorder !== 'undefined';
   }
 
-  processAudio(audioVideoWebMURL: string): void {
-    if (this.recordRTC == null) {
+  processAudio(): void {
+    if (this.mediaRecorder == null) {
       return;
     }
 
-    this.recordRTC.getDataURL(() => {});
+    const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
     this.audio = {
-      url: audioVideoWebMURL,
+      url: URL.createObjectURL(blob),
       status: 'processed',
-      blob: this.recordRTC.getBlob(),
+      blob: blob,
       fileName: objectId() + '.webm'
     };
     this._onTouched.emit();
@@ -108,6 +109,7 @@ export class CheckingAudioRecorderComponent
 
   resetRecording(): void {
     this.audio = { status: 'reset' };
+    this.recordedChunks = [];
     this._onTouched.emit();
   }
 
@@ -124,11 +126,11 @@ export class CheckingAudioRecorderComponent
   }
 
   async stopRecording(): Promise<void> {
-    if (this.recordRTC == null || this.stream == null) {
+    if (this.mediaRecorder == null || this.stream == null) {
       return;
     }
 
-    this.recordRTC.stopRecording(this.processAudio.bind(this));
+    this.mediaRecorder.stop();
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.audio = { status: 'stopped' };
     // Additional promise for when the audio has been processed and is available
@@ -158,16 +160,22 @@ export class CheckingAudioRecorderComponent
     }
   }
 
+  private dataAvailableCallback(event: BlobEvent): void {
+    if (event.data.size > 0) {
+      this.recordedChunks.push(event.data);
+    }
+  }
+
   private successCallback(stream: MediaStream): void {
-    const options = {
-      disableLogs: true,
-      type: 'audio',
-      mimeType: 'audio/webm',
-      recorderType: RecordRTC.StereoAudioRecorder
+    const options: MediaRecorderOptions = {
+      mimeType: 'audio/webm'
     };
     this.stream = stream;
-    this.recordRTC = RecordRTC(stream, options);
-    this.recordRTC.startRecording();
+    this.recordedChunks = [];
+    this.mediaRecorder = new MediaRecorder(stream, options);
+    this.mediaRecorder.ondataavailable = event => this.dataAvailableCallback(event);
+    this.mediaRecorder.onstop = () => this.processAudio();
+    this.mediaRecorder.start();
     this.audio = { status: 'recording' };
   }
 }
