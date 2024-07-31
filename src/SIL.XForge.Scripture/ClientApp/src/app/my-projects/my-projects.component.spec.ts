@@ -75,6 +75,23 @@ describe('MyProjectsComponent', () => {
     expect(env.router.url).toEqual('/connect-project');
     // Passes PT project id to connect project component.
     expect(env.router.lastSuccessfulNavigation?.extras.state?.ptProjectId).toEqual('pt-notConnToSF');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.projectId).toBeUndefined();
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.name).toEqual('Not connected at all to SF');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.shortName).toEqual('NCAA');
+  }));
+
+  it('click Join, passes PT project id and SF project id', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+
+    env.click(env.goButtonForProject('pt-connButNotThisUser'));
+    // Navigates to the connect project component.
+    expect(env.router.url).toEqual('/connect-project');
+    // Passes PT project id to connect project component.
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.ptProjectId).toEqual('pt-connButNotThisUser');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.projectId).toEqual('sf-cbntt');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.name).toEqual('Connected but not to this SF user');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.shortName).toEqual('CBNTT');
   }));
 
   it('lists my connected projects', fakeAsync(() => {
