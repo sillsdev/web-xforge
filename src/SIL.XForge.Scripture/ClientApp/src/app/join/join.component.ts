@@ -191,13 +191,8 @@ export class JoinComponent extends DataLoadingComponent {
 
     if (error instanceof HttpErrorResponse && isKnownJoinError(error.error)) {
       await this.showJoinError(error.error);
-    } else if (error instanceof CommandError) {
-      let errorMessage = error.message.split(' ').at(-1);
-      if (isKnownJoinError(errorMessage)) {
-        await this.showJoinError(errorMessage);
-      } else {
-        await this.errorHandler.handleError(error);
-      }
+    } else if (error instanceof CommandError && isKnownJoinError(error.message)) {
+      await this.showJoinError(error.message);
     } else {
       await this.errorHandler.handleError(error);
     }

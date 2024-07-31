@@ -869,7 +869,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (project.UserRoles.ContainsKey(curUserId))
             return projectId;
 
-        if (projectSecretShareKey.RecipientUserId != null)
+        if (projectSecretShareKey?.RecipientUserId != null)
         {
             if (projectSecretShareKey.RecipientUserId == curUserId)
             {
@@ -883,14 +883,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
         if (attempt.TryResult(out string projectRole))
         {
-            await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey.Key);
+            await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey?.Key);
             return projectId;
         }
 
         // Ensure the share key is valid for everyone else
         await CheckShareKeyValidity(shareKey);
 
-        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
+        if (projectSecretShareKey?.ShareLinkType == ShareLinkType.Anyone)
         {
             await AddUserToProjectAsync(
                 conn,
@@ -902,7 +902,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             return projectId;
         }
         // Look for a valid specific user share key.
-        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient)
+        if (projectSecretShareKey?.ShareLinkType == ShareLinkType.Recipient)
         {
             await AddUserToProjectAsync(
                 conn,

@@ -496,7 +496,7 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
-        Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
+        Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(2));
         Assert.ThrowsAsync<ForbiddenException>(
             async () =>
                 await env.Service.GetLinkSharingKeyAsync(
@@ -508,7 +508,7 @@ public class SFProjectServiceTests
                 )
         );
         projectSecret = env.ProjectSecrets.Get(Project01);
-        Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
+        Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(2));
     }
 
     [Test]
@@ -712,6 +712,21 @@ public class SFProjectServiceTests
             invitees.Select(i => i.Email),
             Is.EquivalentTo(new[] { "bob@example.com", "expired@example.com", "bill@example.com" })
         );
+    }
+
+    [Test]
+    public async Task JoinWithShareKeyAsync_SpecificSharingLingExpired_ExistingUserSuccess()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.JoinWithShareKeyAsync(User01, "onetimekeyalreadyused");
+        SFProject project = env.GetProject(Project01);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+
+        var oneTimeKeyUsed = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == "onetimekeyalreadyused");
+
+        Assert.That((oneTimeKeyUsed?.RecipientUserId ?? User01) != User01, Is.True, "setup");
+        Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "User should have been added to project");
     }
 
     [Test]
@@ -4148,6 +4163,14 @@ public class SFProjectServiceTests
                                 ShareLinkType = ShareLinkType.Recipient,
                                 CreatedByAdmin = true
                             },
+                            new ShareKey
+                            {
+                                Key = "onetimekeyalreadyused",
+                                ProjectRole = SFProjectRole.Viewer,
+                                ShareLinkType = ShareLinkType.Recipient,
+                                CreatedByAdmin = true,
+                                RecipientUserId = User03,
+                            }
                         ],
                     },
                     new SFProjectSecret
