@@ -94,7 +94,12 @@
       <a
         *ngIf="ptProject.isConnectable"
         appRouterLink="/connect-project"
-        [state]="{ ptProjectId: ptProject.paratextId }"
+        [state]="{
+          ptProjectId: ptProject.paratextId,
+          projectId: ptProject.projectId,
+          name: ptProject.name,
+          shortName: ptProject.shortName
+        }"
         mat-flat-button
         color="primary"
       >

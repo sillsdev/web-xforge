@@ -11,16 +11,14 @@
     </div>
     <mat-card *ngSwitchCase="'connecting'" class="progress-container card-outline">
       <mat-card-content>
-        <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
+        <div class="progress-label">{{ t("connecting_to_project", { projectName: projectTitle }) }}</div>
         <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
       </mat-card-content>
     </mat-card>
-    <ng-container *ngIf="projects.length > 0">
-      <div class="project-title">
-        <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
-        {{ projectTitle }}
-      </div>
-    </ng-container>
+    <div class="project-title" *ngIf="state !== 'connecting'">
+      <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
+      {{ projectTitle }}
+    </div>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
         <mat-card-title>{{ t("project_settings") }}</mat-card-title>
