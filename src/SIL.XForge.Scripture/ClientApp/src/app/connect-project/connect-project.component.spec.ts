@@ -50,7 +50,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedErrorHandler = mock(ErrorHandler);
 
-fdescribe('ConnectProjectComponent', () => {
+describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
     imports: [
       HttpClientTestingModule,
