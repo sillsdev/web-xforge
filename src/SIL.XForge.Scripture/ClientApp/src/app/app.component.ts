@@ -272,6 +272,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.permissionsChangedSub?.unsubscribe();
       this.permissionsChangedSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
         if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
+          // If the user is in the Serval administration page, do not check access,
+          // as they will be modifying the project's properties
+          if (
+            this.locationService.pathname.includes('serval-administration') &&
+            this.currentUser?.roles.includes(SystemRole.ServalAdmin)
+          ) {
+            return;
+          }
+          // See if the user was removed from the project
           if (!(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)) {
             // The user has been removed from the project
             this.showProjectDeletedDialog();
