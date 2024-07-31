@@ -715,7 +715,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task JoinWithShareKeyAsync_SpecificSharingLingExpired_ExistingUserSuccess()
+    public async Task JoinWithShareKeyAsync_SpecificSharingLinkExpired_ExistingUser_Success()
     {
         var env = new TestEnvironment();
 
@@ -723,10 +723,10 @@ public class SFProjectServiceTests
         SFProject project = env.GetProject(Project01);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
 
-        var oneTimeKeyUsed = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == "onetimekeyalreadyused");
+        ShareKey oneTimeKeyUsed = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == "onetimekeyalreadyused");
 
-        Assert.That((oneTimeKeyUsed?.RecipientUserId ?? User01) != User01, Is.True, "setup");
-        Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "User should have been added to project");
+        Assert.That(oneTimeKeyUsed?.RecipientUserId != User01, Is.True, "setup");
+        Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "Existing users should have access to project.");
     }
 
     [Test]
