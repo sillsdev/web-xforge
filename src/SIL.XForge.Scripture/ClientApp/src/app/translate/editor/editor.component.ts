@@ -225,6 +225,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private text?: TextInfo;
   private sourceText?: TextInfo;
   sourceProjectDoc?: SFProjectProfileDoc;
+  private _invalidTags?: string[];
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
@@ -509,6 +510,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get isUsfmValid(): boolean {
     return this.textDocService.isUsfmValidForText(this.text, this.chapter);
+  }
+
+  invalidTags(): string[] {
+    return this._invalidTags?.map(tag => '\\' + tag) ?? [];
   }
 
   get dataInSync(): boolean {
@@ -926,7 +931,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  onTextLoaded(textType: TextType): void {
+  async onTextLoaded(textType: TextType): Promise<void> {
     switch (textType) {
       case 'source':
         this.sourceLoaded = true;
@@ -937,6 +942,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetScrollContainer = this.target?.editor?.scrollingContainer;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
+
+        this._invalidTags = await this.projectService.getInvalidTags(
+          this.userService.currentUserId,
+          this.projectDoc?.id!,
+          this.bookNum!,
+          this.chapter!
+        );
 
         if (this.target?.editor != null && this.targetScrollContainer != null) {
           this.positionInsertNoteFab();
