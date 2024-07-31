@@ -298,7 +298,7 @@
     "csv_instructions": "Erstelle eine Tabelle mit einer Spalte für die Referenz und einer Spalte für die Frage, wie unten gezeigt:\nExportiere oder speichere die Tabelle als CSV- oder TSV-Datei.\nKlicke unten auf {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} und wähle die Datei aus.",
     "csv_questions_duplicates": "Bemerkung: Einige der ausgewählten Fragen sind exakte Duplikate von Fragen, die bereits in Deinem Projekt enthalten sind. Sie werden nicht erneut importiert.",
     "filter_questions": "Fragen filtern",
-    "help_options": "Wenn Du bei einer dieser Importmethoden Hilfe benötigst, stelle eine Frage auf { 1 }, der Community-Support-Seite{ 2 }, oder wende Dich an das Team unter { 3 }{ 4 }.",
+    "help_options": "Wenn Du bei einer dieser Importmethoden Hilfe benötigst, stelle eine Frage auf, { 1 }der Community-Support-Seite{ 2 }, oder wende Dich an das Team unter { 3 }{ 4 }.",
     "import_count_questions": "{{ count }} Ausgewählte Fragen importieren",
     "import_from_csv_file": "Aus Tabelle importieren",
     "import_from_spreadsheet": "Aus Tabelle importieren",
