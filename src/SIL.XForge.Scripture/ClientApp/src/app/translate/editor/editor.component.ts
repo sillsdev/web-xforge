@@ -226,6 +226,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private _targetFocused: boolean = false;
   private _chapter?: number;
   private _verse: string = '0';
+  private _unsupportedTags = new Set<string>();
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private onTargetDeleteSub?: Subscription;
@@ -505,6 +506,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get isUsfmValid(): boolean {
     return this.textDocService.isUsfmValidForText(this.text, this.chapter);
+  }
+
+  get unsupportedTags(): string[] {
+    return [...this._unsupportedTags].map(tag => '\\' + tag);
   }
 
   get dataInSync(): boolean {
@@ -929,6 +934,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetScrollContainer = this.target?.editor?.scrollingContainer;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
+
+        // Retrieve unsupported tags from ops
+        this._unsupportedTags.clear();
+        if (!this.isUsfmValid) {
+          const ops: DeltaOperation[] = this.target?.editor?.getContents().ops ?? [];
+          const findUnsupportedTags = (data: any): void => {
+            if (!data || typeof data !== 'object') return;
+            if (Array.isArray(data)) {
+              data.forEach(findUnsupportedTags);
+            } else if (data && typeof data === 'object') {
+              if (data.attributes?.char && data.attributes['invalid-inline'] === true) {
+                this._unsupportedTags.add(data.attributes.char.style);
+              }
+              Object.values(data).forEach(findUnsupportedTags);
+            }
+          };
+          ops.forEach(findUnsupportedTags);
+        }
 
         if (this.target?.editor != null && this.targetScrollContainer != null) {
           this.positionInsertNoteFab();
