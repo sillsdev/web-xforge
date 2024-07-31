@@ -89,5 +89,11 @@
     "tags": ["de", "de-DE"],
     "production": false,
     "helps": "en"
+  },
+  {
+    "localName": "नेपाली",
+    "englishName": "Nepali",
+    "tags": ["npi", "npi-NP"],
+    "production": false
   }
 ]

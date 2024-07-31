@@ -1,36 +1,34 @@
+@use '@angular/material' as mat;
+
 :host {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 
-  .draft-book-option {
-    display: flex;
-    align-items: center;
-    border: 1px solid lightgray;
-    border-radius: 4px;
-    padding: 4px 0 4px 8px;
+  @include mat.button-toggle-density(-3);
+}
 
-    .book-more {
-      padding: 0;
-    }
-  }
+mat-button-toggle {
+  border-inline-start-width: 0 !important;
+}
 
-  .book-name {
-    ::ng-deep span {
-      line-height: 36px;
-      font-weight: 500;
-    }
-  }
+.book-name ::ng-deep .mat-button-toggle-label-content {
+  padding-inline-end: 4px;
+}
 
-  .book-more {
-    border-left: none !important;
+.book-more ::ng-deep .mat-button-toggle-label-content {
+  padding: 0;
+}
 
-    &.mat-button-toggle-checked {
-      background-color: white;
-    }
-    ::ng-deep span {
-      line-height: 36px;
-      padding: 0 6px;
-    }
-  }
+mat-button-toggle-group
+  mat-button-toggle:first-child:hover
+  + mat-button-toggle
+  ::ng-deep
+  .mat-button-toggle-focus-overlay {
+  opacity: var(--mat-standard-button-toggle-hover-state-layer-opacity);
+}
+
+.book-more ::ng-deep mat-icon {
+  // it's not entirely clear why, but this is needed to vertically align the icon with the book name
+  margin-bottom: 3px;
 }
