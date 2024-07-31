@@ -127,12 +127,20 @@
             </div>
           </app-notice>
           <app-notice
-            *ngIf="!isUsfmValid && hasEditRight"
+            *ngIf="!isUsfmValid && hasEditRight && invalidTags().length === 0"
             type="warning"
             icon="warning"
             class="formatting-invalid-warning"
           >
-            {{ t("cannot_edit_chapter_formatting_invalid") }}
+            <span [innerHTML]="t('cannot_edit_chapter_formatting_invalid')"></span>
+          </app-notice>
+          <app-notice
+            *ngIf="!isUsfmValid && hasEditRight && invalidTags().length > 0"
+            type="warning"
+            icon="warning"
+            class="formatting-invalid-warning"
+          >
+            <span [innerHTML]="t('cannot_edit_chapter_unsupported_usfm', { tags: invalidTags().join(', ') })"></span>
           </app-notice>
           <app-notice *ngIf="!dataInSync && hasEditRight" type="warning" icon="warning" class="out-of-sync-warning">
             {{ t("project_data_out_of_sync") }}

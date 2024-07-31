@@ -17,6 +17,7 @@ public interface ISFProjectService : IProjectService
     Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
     Task<string> SyncAsync(string curUserId, string projectId);
     Task CancelSyncAsync(string curUserId, string projectId);
+    Task<ChapterDelta> GetChapterDelta(string curUserId, string projectId, int bookNum, int chapterNum);
     Task<bool> InviteAsync(
         string curUserId,
         string projectId,

@@ -2074,6 +2074,19 @@ public class ParatextService : DisposableBase, IParatextService
         return _deltaUsxMapper.ToChapterDeltas(usxDoc).First().Delta;
     }
 
+    public async Task<ChapterDelta> GetChapterDelta(string curUserId, string paratextId, int bookNum, int chapterNum)
+    {
+        // Load the user secret
+        if (!(await _userSecretRepository.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user secret cannot be found.");
+        }
+
+        var usx = GetBookText(userSecret, paratextId, bookNum);
+        XDocument usxDoc = XDocument.Parse(usx);
+        return _deltaUsxMapper.ToChapterDeltas(usxDoc).First(cd => cd.Number == chapterNum);
+    }
+
     private ScrText GetScrText(UserSecret userSecret, string paratextId)
     {
         string? ptUsername = GetParatextUsername(userSecret);

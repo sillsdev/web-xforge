@@ -79,6 +79,7 @@ public interface IParatextService
     string GetLanguageId(UserSecret userSecret, string paratextId);
     void ClearParatextDataCaches(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
+    Task<ChapterDelta> GetChapterDelta(string curUserId, string paratextId, int bookNum, int chapterNum);
 
     Task<Snapshot<TextData>> GetSnapshotAsync(
         UserSecret userSecret,
