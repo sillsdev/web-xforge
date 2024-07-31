@@ -14,10 +14,11 @@
     "helps": ""
   },
   {
-    "localName": "简体中文",
-    "englishName": "Chinese (Simplified)",
-    "tags": ["zh-CN", "zh"],
-    "production": true
+    "localName": "français",
+    "englishName": "French",
+    "tags": ["fr", "fr-FR"],
+    "production": true,
+    "helps": "fr"
   },
   {
     "localName": "Español",
@@ -25,33 +26,6 @@
     "tags": ["es", "es-ES"],
     "production": true,
     "helps": "es"
-  },
-  {
-    "localName": "العربية",
-    "englishName": "Arabic",
-    "tags": ["ar", "ar-SA"],
-    "direction": "rtl",
-    "production": true
-  },
-  {
-    "localName": "Русский",
-    "englishName": "Russian",
-    "tags": ["ru", "ru-RU"],
-    "production": true
-  },
-  {
-    "localName": "Português",
-    "englishName": "Portuguese",
-    "tags": ["pt-BR"],
-    "production": true,
-    "helps": "pt-br"
-  },
-  {
-    "localName": "français",
-    "englishName": "French",
-    "tags": ["fr", "fr-FR"],
-    "production": true,
-    "helps": "fr"
   },
   {
     "localName": "Bahasa Indonesia",
@@ -66,9 +40,41 @@
     "production": true
   },
   {
+    "localName": "Português",
+    "englishName": "Portuguese",
+    "tags": ["pt-BR"],
+    "production": true,
+    "helps": "pt-br"
+  },
+  {
+    "localName": "简体中文",
+    "englishName": "Chinese (Simplified)",
+    "tags": ["zh-CN", "zh"],
+    "production": true
+  },
+  {
+    "localName": "العربية",
+    "englishName": "Arabic",
+    "tags": ["ar", "ar-SA"],
+    "direction": "rtl",
+    "production": true
+  },
+  {
     "localName": "Azərbaycanca",
     "englishName": "Azerbaijani",
     "tags": ["az", "az-AZ"],
+    "production": true
+  },
+  {
+    "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬ (W. Kayah Li)",
+    "englishName": "Western Kayah Li",
+    "tags": ["kyu", "kyu-Kali"],
+    "production": true
+  },
+  {
+    "localName": "Русский",
+    "englishName": "Russian",
+    "tags": ["ru", "ru-RU"],
     "production": true
   },
   {
@@ -78,9 +84,10 @@
     "production": true
   },
   {
-    "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬ (W. Kayah Li)",
-    "englishName": "Western Kayah Li",
-    "tags": ["kyu", "kyu-Kali"],
-    "production": true
+    "localName": "Deutsch",
+    "englishName": "German",
+    "tags": ["de", "de-DE"],
+    "production": false,
+    "helps": "en"
   }
 ]
