@@ -1158,8 +1158,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): void {
     if (revision != null) {
-      tab.headerText = `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
-      tab.tooltip = `${this.projectDoc?.data?.name} - ${this.editorHistoryService.formatTimestamp(
+      const separator: string = this.i18n.isRtl ? '\u200E - \u200F' : ' - ';
+      tab.headerText = `${this.targetLabel}${separator}${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
+      tab.tooltip = `${this.projectDoc?.data?.name}${separator}${this.editorHistoryService.formatTimestamp(
         revision.timestamp,
         true
       )}`;
