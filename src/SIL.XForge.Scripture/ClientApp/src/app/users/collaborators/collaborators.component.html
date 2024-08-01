@@ -5,7 +5,9 @@
     }}</span>
     <app-notice icon="live_help">
       <div class="help-message">
-        {{ t("uses_roles_to_access_project") }}
+        {{ t("member_role_info") }}
+        <br /><br />
+        {{ t("guest_role_info") }}
         <a mat-flat-button [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
       </div>
     </app-notice>
