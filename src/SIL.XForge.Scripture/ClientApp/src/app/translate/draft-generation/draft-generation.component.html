@@ -40,7 +40,7 @@
           {{ t("instructions_draft_process_subtext") }}
         </p>
         <p>
-          @for (i of i18n.interpolate("draft_generation.instructions_help"); track i) {
+          @for (i of draftHelp; track i) {
             @if (i.id == null) {
               {{ i.text }}
             }
