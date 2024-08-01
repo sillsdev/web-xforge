@@ -13,28 +13,27 @@
         </ng-container>
       </div>
       <div class="wrapper wrapper-training-data-file" [ngClass]="{ valid: hasBeenUploaded }">
-        <ng-container *ngIf="hasBeenUploaded">
-          <app-info
-            *ngIf="showFilenameExists"
-            [text]="t('filename_already_exists')"
-            icon="warning"
-            type="warning"
-          ></app-info>
+        @if (hasBeenUploaded) {
+          @if (showFilenameExists) {
+            <app-info [text]="t('filename_already_exists')" icon="warning" type="warning"></app-info>
+          }
           <span>{{ trainingDataFilename }}</span>
           <mat-icon (click)="deleteTrainingData()" class="delete">delete</mat-icon>
-        </ng-container>
-        <ng-container *ngIf="!hasBeenUploaded">
+        }
+        @if (!hasBeenUploaded) {
           <mat-icon>file_download_off</mat-icon>
           <span>{{ t("no_training_data_file_uploaded") }}</span>
-        </ng-container>
+        }
       </div>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions>
-    <div class="uploading" *ngIf="isUploading">
-      <span>{{ t("uploading") }}</span>
-      <mat-spinner diameter="24"></mat-spinner>
-    </div>
+    @if (isUploading) {
+      <div class="uploading">
+        <span>{{ t("uploading") }}</span>
+        <mat-spinner diameter="24"></mat-spinner>
+      </div>
+    }
     <button mat-button [mat-dialog-close]="'close'" type="button" id="upload-cancel-btn">
       {{ t("cancel") }}
     </button>

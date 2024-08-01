@@ -1,7 +1,9 @@
 <ng-container *transloco="let t; read: 'translate_overview'">
   <div class="title mat-headline-4">{{ t("translate_overview") }}</div>
 
-  <app-font-unsupported-message *ngIf="isPTUser"></app-font-unsupported-message>
+  @if (isPTUser) {
+    <app-font-unsupported-message></app-font-unsupported-message>
+  }
 
   <div class="card-wrapper">
     <mat-card class="books-card">
@@ -20,70 +22,78 @@
         </mat-card-title>
       </mat-card-header>
       <mat-divider></mat-divider>
-      <mat-list *ngIf="texts != null" role="list">
-        <mat-list-item
-          role="listitem"
-          *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
-          [appRouterLink]="['./', getBookId(textProgress.text)]"
-        >
-          <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
-          <span matListItemTitle>{{ getBookName(textProgress.text) }}</span>
-          <span matListItemLine>{{
-            t("translated_segments", { translatedSegments: textProgress.translated, total: textProgress.total })
-          }}</span>
-          <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
-            <app-donut-chart
-              [colors]="['#b8d332', 'transparent']"
-              [data]="[textProgress.translated, textProgress.blank]"
-              backgroundColor="#ececec"
-              [innerThicknessDelta]="0"
-              [thickness]="22"
-            ></app-donut-chart>
-          </div>
-        </mat-list-item>
-      </mat-list>
+      @if (texts != null) {
+        <mat-list role="list">
+          @for (textProgress of texts; track trackTextByBookNum($index, textProgress)) {
+            <mat-list-item role="listitem" [appRouterLink]="['./', getBookId(textProgress.text)]">
+              <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
+              <span matListItemTitle>{{ getBookName(textProgress.text) }}</span>
+              <span matListItemLine>{{
+                t("translated_segments", { translatedSegments: textProgress.translated, total: textProgress.total })
+              }}</span>
+              <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
+                <app-donut-chart
+                  [colors]="['#b8d332', 'transparent']"
+                  [data]="[textProgress.translated, textProgress.blank]"
+                  backgroundColor="#ececec"
+                  [innerThicknessDelta]="0"
+                  [thickness]="22"
+                ></app-donut-chart>
+              </div>
+            </mat-list-item>
+          }
+        </mat-list>
+      }
     </mat-card>
 
-    <mat-card *ngIf="translationSuggestionsEnabled && canEditTexts" class="engine-card">
-      <mat-progress-bar
-        id="training-progress-bar"
-        [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
-        [class.mat-progress-bar--closed]="!isTraining"
-        [value]="trainingPercentage"
-      ></mat-progress-bar>
-      <mat-card-header>
-        <mat-card-title class="engine-card-title">{{ t("suggestion_engine") }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content class="engine-card-content">
-        <div class="engine-card-quality">
-          <div class="engine-card-quality-stars mirror-rtl" [title]="engineConfidence + ' BLEU'">
-            <mat-icon *ngFor="let star of engineQualityStars">{{
-              engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
-            }}</mat-icon>
+    @if (translationSuggestionsEnabled && canEditTexts) {
+      <mat-card class="engine-card">
+        <mat-progress-bar
+          id="training-progress-bar"
+          [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
+          [class.mat-progress-bar--closed]="!isTraining"
+          [value]="trainingPercentage"
+        ></mat-progress-bar>
+        <mat-card-header>
+          <mat-card-title class="engine-card-title">{{ t("suggestion_engine") }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="engine-card-content">
+          <div class="engine-card-quality">
+            <div class="engine-card-quality-stars mirror-rtl" [title]="engineConfidence + ' BLEU'">
+              @for (star of engineQualityStars; track star) {
+                <mat-icon>{{
+                  engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
+                }}</mat-icon>
+              }
+            </div>
+            <div class="engine-card-quality-subtitle">{{ t("quality") }}</div>
           </div>
-          <div class="engine-card-quality-subtitle">{{ t("quality") }}</div>
-        </div>
-        <div class="engine-card-segments">
-          <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
-          ><span>{{ t("trained_segments") }}</span>
-        </div>
-        <div *ngIf="showCannotTrainEngineMessage || !canTrainSuggestions" class="translation-suggestions-info">
-          {{ showCannotTrainEngineMessage ? t("cannot_train_suggestion_engine") : t("not_enough_verses_translated") }}
-        </div>
-      </mat-card-content>
-      <mat-divider></mat-divider>
-      <mat-card-actions>
-        <button
-          id="retrain-button"
-          mat-button
-          [disabled]="isTraining || !isOnline"
-          type="button"
-          (click)="startTraining()"
-        >
-          {{ isTraining ? t("training") : t("retrain") }}
-        </button>
-      </mat-card-actions>
-    </mat-card>
+          <div class="engine-card-segments">
+            <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
+            ><span>{{ t("trained_segments") }}</span>
+          </div>
+          @if (showCannotTrainEngineMessage || !canTrainSuggestions) {
+            <div class="translation-suggestions-info">
+              {{
+                showCannotTrainEngineMessage ? t("cannot_train_suggestion_engine") : t("not_enough_verses_translated")
+              }}
+            </div>
+          }
+        </mat-card-content>
+        <mat-divider></mat-divider>
+        <mat-card-actions>
+          <button
+            id="retrain-button"
+            mat-button
+            [disabled]="isTraining || !isOnline"
+            type="button"
+            (click)="startTraining()"
+          >
+            {{ isTraining ? t("training") : t("retrain") }}
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
   </div>
   <app-training-progress [projectId]="projectId"></app-training-progress>
 </ng-container>

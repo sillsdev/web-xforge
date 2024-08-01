@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'app'">
   <mat-nav-list id="tools-menu-list" (click)="clickWithinNavList($event)">
-    <ng-container *ngIf="isTranslateEnabled">
+    @if (isTranslateEnabled) {
       <mat-list-item disableRipple class="navigation-header">
         {{ t("translate") }}
       </mat-list-item>
@@ -12,54 +12,67 @@
         <mat-icon>edit_note</mat-icon>
         {{ t("edit_review") }}
       </a>
-      <a *ngIf="canGenerateDraft$ | async" mat-list-item [appRouterLink]="draftGenerationLink">
-        <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
-        {{ t("generate_draft") }} <span class="nav-label">{{ t("beta") }}</span>
-      </a>
-    </ng-container>
-    <ng-container *ngIf="isCheckingEnabled">
+      @if (canGenerateDraft$ | async) {
+        <a mat-list-item [appRouterLink]="draftGenerationLink">
+          <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
+          {{ t("generate_draft") }} <span class="nav-label">{{ t("beta") }}</span>
+        </a>
+      }
+    }
+    @if (isCheckingEnabled) {
       <mat-list-item disableRipple class="navigation-header">
         {{ t("community_checking") }}
       </mat-list-item>
-      <a *ngIf="canManageQuestions" mat-list-item [appRouterLink]="getProjectLink('checking')">
-        <mat-icon class="mirror-rtl">list</mat-icon>
-        {{ t("manage_questions") }}
-      </a>
-      <a *ngIf="!canManageQuestions" mat-list-item [appRouterLink]="getProjectLink('checking')">
-        <mat-icon class="mirror-rtl">bar_chart</mat-icon>
-        {{ t("my_progress") }}
-      </a>
+      @if (canManageQuestions) {
+        <a mat-list-item [appRouterLink]="getProjectLink('checking')">
+          <mat-icon class="mirror-rtl">list</mat-icon>
+          {{ t("manage_questions") }}
+        </a>
+      }
+      @if (!canManageQuestions) {
+        <a mat-list-item [appRouterLink]="getProjectLink('checking')">
+          <mat-icon class="mirror-rtl">bar_chart</mat-icon>
+          {{ t("my_progress") }}
+        </a>
+      }
       <a mat-list-item [appRouterLink]="(answerQuestionsLink$ | async) ?? ['']" [class.active]="answerQuestionsActive">
         <mat-icon class="mirror-rtl">question_answer</mat-icon>
         {{ t("questions_answers") }}
       </a>
-    </ng-container>
+    }
   </mat-nav-list>
-  <mat-nav-list
-    [class.disabled-offline]="!isAppOnline"
-    id="admin-pages-menu-list"
-    *ngIf="canSeeAdminPages$ | async"
-    (click)="clickWithinNavList($event)"
-  >
-    <mat-divider></mat-divider>
-    <a *ngIf="canSync$ | async" mat-list-item [appRouterLink]="getProjectLink('sync')">
-      <mat-icon
-        aria-hidden="false"
-        matBadge="error"
-        [matBadgeHidden]="!lastSyncFailed || syncInProgress"
-        [class.sync-in-progress]="syncInProgress && !featureFlags.stillness.enabled"
-        id="sync-icon"
-        >sync</mat-icon
-      >
-      {{ t("synchronize") }}
-    </a>
-    <a *ngIf="canSeeUsers$ | async" mat-list-item [appRouterLink]="getProjectLink('users')">
-      <mat-icon class="mirror-rtl">people</mat-icon>
-      {{ t("users") }}
-    </a>
-    <a *ngIf="canSeeSettings$ | async" mat-list-item [appRouterLink]="getProjectLink('settings')">
-      <mat-icon>settings</mat-icon>
-      {{ t("settings") }}
-    </a>
-  </mat-nav-list>
+  @if (canSeeAdminPages$ | async) {
+    <mat-nav-list
+      [class.disabled-offline]="!isAppOnline"
+      id="admin-pages-menu-list"
+      (click)="clickWithinNavList($event)"
+    >
+      <mat-divider></mat-divider>
+      @if (canSync$ | async) {
+        <a mat-list-item [appRouterLink]="getProjectLink('sync')">
+          <mat-icon
+            aria-hidden="false"
+            matBadge="error"
+            [matBadgeHidden]="!lastSyncFailed || syncInProgress"
+            [class.sync-in-progress]="syncInProgress && !featureFlags.stillness.enabled"
+            id="sync-icon"
+            >sync</mat-icon
+          >
+          {{ t("synchronize") }}
+        </a>
+      }
+      @if (canSeeUsers$ | async) {
+        <a mat-list-item [appRouterLink]="getProjectLink('users')">
+          <mat-icon class="mirror-rtl">people</mat-icon>
+          {{ t("users") }}
+        </a>
+      }
+      @if (canSeeSettings$ | async) {
+        <a mat-list-item [appRouterLink]="getProjectLink('settings')">
+          <mat-icon>settings</mat-icon>
+          {{ t("settings") }}
+        </a>
+      }
+    </mat-nav-list>
+  }
 </ng-container>
