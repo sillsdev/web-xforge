@@ -69,7 +69,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
-  draftHelp: { text: string; id?: number }[];
+  draftHelp: { text: string; id?: number }[] = this.i18n.interpolate('draft_generation.instructions_help');
 
   additionalTrainingSourceLanguage?: string;
   additionalTrainingSourceLanguageDisplayName?: string;
@@ -145,7 +145,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService
   ) {
     super(noticeService);
-    this.draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
   }
 
   get downloadProgress(): number {
