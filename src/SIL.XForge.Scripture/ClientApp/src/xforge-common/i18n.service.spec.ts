@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
+import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -111,18 +112,21 @@ describe('I18nService', () => {
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
 
-  it('should interpolate translations around and within numbered template tags', () => {
-    when(mockedTranslocoService.translate<string>('app.settings', anything())).thenReturn(
-      'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
+  it('should interpolate translations around and within numbered template tags', done => {
+    when(mockedTranslocoService.selectTranslate<string>('app.settings', anything())).thenReturn(
+      of('A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.')
     );
     const service = getI18nService();
-    expect(service.interpolate('app.settings')).toEqual([
-      { text: 'A quick brown ' },
-      { text: 'fox', id: 1 },
-      { text: ' jumps over the lazy ' },
-      { text: 'dog', id: 3 },
-      { text: '.' }
-    ]);
+    service.interpolate('app.settings').subscribe(value => {
+      expect(value).toEqual([
+        { text: 'A quick brown ' },
+        { text: 'fox', id: 1 },
+        { text: ' jumps over the lazy ' },
+        { text: 'dog', id: 3 },
+        { text: '.' }
+      ]);
+      done();
+    });
   });
 
   it('should interpolate translations around template variables', () => {
