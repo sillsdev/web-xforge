@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
@@ -26,7 +27,7 @@ export interface BookWithDraft {
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
   standalone: true,
-  imports: [UICommonModule, RouterModule, TranslocoModule]
+  imports: [CommonModule, UICommonModule, RouterModule, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
   booksWithDrafts$: Observable<BookWithDraft[]> = this.activatedProjectService.changes$.pipe(

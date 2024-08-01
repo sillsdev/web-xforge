@@ -23,7 +23,7 @@
             <mat-card>
               <mat-card-title>{{ t("import_from_transcelerator") }}</mat-card-title>
               <mat-card-content>
-                @for (i of i18n.interpolate("import_questions_dialog.transcelerator_paratext"); track i) {
+                @for (i of transceleratorInfo | async; track i) {
                   {{ i.id == null ? i.text : "" }}
                   @if (i.id === 1) {
                     <a [href]="urls.transcelerator" target="_blank">{{ i.text }}</a>
@@ -100,10 +100,9 @@
             </mat-card>
           </div>
           <div class="support-message">
-            @for (i of i18n.interpolate("import_questions_dialog.help_options"); track i) {
-              @if (i.id == null) {
-                {{ i.text }}
-              }
+            @for (i of helpInstructions | async; track i) {
+              <!-- prettier-ignore -->
+              @if (i.id == null) {{{ i.text }}}
               @if (i.id === 1) {
                 <a [href]="urls.communitySupport" target="_blank">{{ i.text }}</a>
               }

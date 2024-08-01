@@ -11,7 +11,7 @@
         @if (portion.id == null) {{{ portion.text }}}
       }
 
-      @for (portion of i18n.interpolate(suggestedRemedyI18nKey); track portion.text) {
+      @for (portion of suggestedRemedy | async; track portion.text) {
         @if (portion.id === 1) {
           <a [href]="issueMailTo" target="_blank" rel="noreferrer">{{ portion.text }}</a>
         } @else if (portion.id == null) {
