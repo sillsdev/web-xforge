@@ -3,7 +3,9 @@
     <mat-form-field appearance="outline">
       <mat-label>{{ t("your_comment") }}</mat-label>
       <input matInput type="text" appAutofocus formControlName="commentText" />
-      <mat-error *ngIf="showValidationError">{{ t("comment_cannot_be_blank") }}</mat-error>
+      @if (showValidationError) {
+        <mat-error>{{ t("comment_cannot_be_blank") }}</mat-error>
+      }
     </mat-form-field>
     <div class="form-actions">
       <button mat-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>

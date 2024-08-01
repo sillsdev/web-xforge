@@ -6,17 +6,16 @@
   ></mat-progress-bar>
   <header [class.overlay-drawer]="!isDrawerPermanent" [dir]="i18n.direction">
     <!-- site admin notice is deliberately only shown on live site, as a warning that actions impact live projects -->
-    <span class="site-admin" *ngIf="isLive && isSystemAdmin">site admin</span>
+    @if (isLive && isSystemAdmin) {
+      <span class="site-admin">site admin</span>
+    }
     <mat-toolbar color="primary">
       <mat-toolbar-row>
-        <button
-          id="hamburger-menu-button"
-          mat-icon-button
-          *ngIf="!isDrawerPermanent && isProjectSelected"
-          (click)="toggleDrawer()"
-        >
-          <mat-icon>menu</mat-icon>
-        </button>
+        @if (!isDrawerPermanent && isProjectSelected) {
+          <button id="hamburger-menu-button" mat-icon-button (click)="toggleDrawer()">
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
         @if (isLoggedIn | async) {
           <a id="sf-logo-button" mat-icon-button class="hide-lt-sm" [routerLink]="appIconLink">
             <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
@@ -26,24 +25,29 @@
             <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
           </a>
         }
-        <span class="project-name-wrapper hide-lt-sm" *ngIf="isProjectSelected">
-          <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
-          <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
-        </span>
+        @if (isProjectSelected) {
+          <span class="project-name-wrapper hide-lt-sm">
+            <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
+            <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
+          </span>
+        }
         <span class="toolbar-spacer"></span>
-        <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu" *ngIf="isAppOnline">
-          <mat-icon>translate</mat-icon>
-        </button>
-        <mat-menu #localeMenu="matMenu" class="locale-menu">
-          <button
-            mat-menu-item
-            *ngFor="let locale of i18n.locales"
-            [class.active-locale]="locale.canonicalTag === i18n.localeCode"
-            (click)="setLocale(locale.canonicalTag)"
-          >
-            <mat-icon>check</mat-icon>
-            <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+        @if (isAppOnline) {
+          <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu">
+            <mat-icon>translate</mat-icon>
           </button>
+        }
+        <mat-menu #localeMenu="matMenu" class="locale-menu">
+          @for (locale of i18n.locales; track locale) {
+            <button
+              mat-menu-item
+              [class.active-locale]="locale.canonicalTag === i18n.localeCode"
+              (click)="setLocale(locale.canonicalTag)"
+            >
+              <mat-icon>check</mat-icon>
+              <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+            </button>
+          }
         </mat-menu>
 
         <button mat-icon-button title="{{ t('help') }}" [matMenuTriggerFor]="helpMenu">
@@ -66,14 +70,12 @@
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">
             <mat-icon>copyright</mat-icon> {{ t("open_source_licenses") }}
           </a>
-          <button
-            *ngIf="versionNumberClickCount >= 7 || featureFlags.showFeatureFlags.enabled"
-            mat-menu-item
-            (click)="openFeatureFlagDialog()"
-          >
-            <mat-icon>flag</mat-icon>
-            Feature flags
-          </button>
+          @if (versionNumberClickCount >= 7 || featureFlags.showFeatureFlags.enabled) {
+            <button mat-menu-item (click)="openFeatureFlagDialog()">
+              <mat-icon>flag</mat-icon>
+              Feature flags
+            </button>
+          }
           <mat-divider></mat-divider>
           <div
             mat-menu-item
@@ -85,18 +87,23 @@
           </div>
         </mat-menu>
 
-        <button
-          *ngIf="currentUser"
-          mat-icon-button
-          title="{{ currentUser.displayName }}"
-          [matMenuTriggerFor]="userMenu"
-          (click)="dismissInstallIcon()"
-          class="user-menu-btn"
-        >
-          <mat-icon *ngIf="showInstallIconOnAvatar$ | async" class="install-badge">install_mobile</mat-icon>
-          <app-avatar id="avatarId" [user]="currentUser"></app-avatar>
-          <mat-icon class="offline-indicator" *ngIf="!isAppOnline"> cloud_off</mat-icon>
-        </button>
+        @if (currentUser) {
+          <button
+            mat-icon-button
+            title="{{ currentUser.displayName }}"
+            [matMenuTriggerFor]="userMenu"
+            (click)="dismissInstallIcon()"
+            class="user-menu-btn"
+          >
+            @if (showInstallIconOnAvatar$ | async) {
+              <mat-icon class="install-badge">install_mobile</mat-icon>
+            }
+            <app-avatar id="avatarId" [user]="currentUser"></app-avatar>
+            @if (!isAppOnline) {
+              <mat-icon class="offline-indicator"> cloud_off</mat-icon>
+            }
+          </button>
+        }
         <mat-menu #userMenu="matMenu" class="user-menu">
           <div class="pseudo-menu-item user-info">
             <div>{{ t("logged_in_as") }}</div>
@@ -108,76 +115,87 @@
             </div>
           </div>
           <mat-divider></mat-divider>
-          <button
-            mat-menu-item
-            *ngIf="isSystemAdmin"
-            id="system-admin-btn"
-            [disabled]="!isAppOnline"
-            appRouterLink="/system-administration"
-          >
-            <mat-icon>admin_panel_settings</mat-icon>
-            {{ t("system_administration") }}
-          </button>
-          <button
-            mat-menu-item
-            *ngIf="isServalAdmin"
-            id="serval-admin-btn"
-            [disabled]="!isAppOnline"
-            appRouterLink="/serval-administration"
-          >
-            <mat-icon>tune</mat-icon>
-            {{ t("serval_administration") }}
-          </button>
+          @if (isSystemAdmin) {
+            <button
+              mat-menu-item
+              id="system-admin-btn"
+              [disabled]="!isAppOnline"
+              appRouterLink="/system-administration"
+            >
+              <mat-icon>admin_panel_settings</mat-icon>
+              {{ t("system_administration") }}
+            </button>
+          }
+          @if (isServalAdmin) {
+            <button
+              mat-menu-item
+              id="serval-admin-btn"
+              [disabled]="!isAppOnline"
+              appRouterLink="/serval-administration"
+            >
+              <mat-icon>tune</mat-icon>
+              {{ t("serval_administration") }}
+            </button>
+          }
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">
             <mat-icon>home</mat-icon> {{ "my_projects.my_projects" | transloco }}
           </button>
-          <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
-            <mat-icon>vpn_key</mat-icon>
-            {{ t("change_password") }}
-          </button>
-          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()">
-            <div class="install-button"><mat-icon>install_mobile</mat-icon> {{ t("install_on_device") }}</div>
-          </button>
+          @if (canChangePassword) {
+            <button mat-menu-item (click)="changePassword()" [disabled]="!isAppOnline">
+              <mat-icon>vpn_key</mat-icon>
+              {{ t("change_password") }}
+            </button>
+          }
+          @if (canInstallOnDevice$ | async) {
+            <button mat-menu-item (click)="installOnDevice()">
+              <div class="install-button"><mat-icon>install_mobile</mat-icon> {{ t("install_on_device") }}</div>
+            </button>
+          }
           <button mat-menu-item (click)="logOut()" id="log-out-link">
             <mat-icon>logout</mat-icon> {{ t("log_out") }}
           </button>
           <mat-divider></mat-divider>
           <div class="pseudo-menu-item online-status">
-            <ng-container *ngIf="isAppOnline">
+            @if (isAppOnline) {
               <mat-icon>cloud</mat-icon>
               {{ t("online") }}
-            </ng-container>
-            <ng-container *ngIf="!isAppOnline">
+            }
+            @if (!isAppOnline) {
               <mat-icon>cloud_off</mat-icon>
               {{ t("offline") }}
-            </ng-container>
+            }
           </div>
         </mat-menu>
       </mat-toolbar-row>
-      <mat-toolbar-row *ngIf="hasUpdate" class="update-banner">
-        <span class="refresh-message">{{ t("update_is_available") }}</span>
-        <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
-      </mat-toolbar-row>
+      @if (hasUpdate) {
+        <mat-toolbar-row class="update-banner">
+          <span class="refresh-message">{{ t("update_is_available") }}</span>
+          <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
+        </mat-toolbar-row>
+      }
     </mat-toolbar>
   </header>
 
   <mat-drawer-container class="top-app-bar-adjust" [class.top-app-bar-adjust-double]="hasUpdate" [dir]="i18n.direction">
-    <mat-drawer
-      #drawer
-      id="menu-drawer"
-      [mode]="isDrawerPermanent ? 'side' : 'over'"
-      *ngIf="isProjectSelected"
-      [opened]="isExpanded || isDrawerPermanent"
-      (closed)="drawerCollapsed()"
-      autoFocus="false"
-    >
-      <app-navigation></app-navigation>
-    </mat-drawer>
+    @if (isProjectSelected) {
+      <mat-drawer
+        #drawer
+        id="menu-drawer"
+        [mode]="isDrawerPermanent ? 'side' : 'over'"
+        [opened]="isExpanded || isDrawerPermanent"
+        (closed)="drawerCollapsed()"
+        autoFocus="false"
+      >
+        <app-navigation></app-navigation>
+      </mat-drawer>
+    }
     <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
     <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">
       <div>
         <router-outlet></router-outlet>
-        <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
+        @if (showCheckingDisabled) {
+          <p class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
+        }
       </div>
     </div>
   </mat-drawer-container>

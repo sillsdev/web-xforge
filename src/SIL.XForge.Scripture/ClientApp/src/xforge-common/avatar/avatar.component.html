@@ -4,15 +4,20 @@
   [style.--avatar-color]="avatarColorFromDisplayName"
   [style.--avatar-border-color]="borderColor"
 >
-  <img
-    *ngIf="avatarUrl && mode === 'image'"
-    [src]="avatarUrl"
-    [alt]="name"
-    [width]="size"
-    [height]="size"
-    (error)="onImageError()"
-    referrerpolicy="no-referrer"
-  />
-  <mat-icon *ngIf="mode === 'user_icon'" class="user-icon">account_circle</mat-icon>
-  <div *ngIf="mode === 'initials'" class="initials">{{ initials }}</div>
+  @if (avatarUrl && mode === "image") {
+    <img
+      [src]="avatarUrl"
+      [alt]="name"
+      [width]="size"
+      [height]="size"
+      (error)="onImageError()"
+      referrerpolicy="no-referrer"
+    />
+  }
+  @if (mode === "user_icon") {
+    <mat-icon class="user-icon">account_circle</mat-icon>
+  }
+  @if (mode === "initials") {
+    <div class="initials">{{ initials }}</div>
+  }
 </div>

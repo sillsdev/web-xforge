@@ -1,90 +1,106 @@
 <ng-container *transloco="let t; read: 'connect_project'">
   <div class="title mat-headline-4">{{ t("connect_paratext_project") }}</div>
-  <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_connect_project") }} </span>
-  <div class="content" [ngSwitch]="state">
-    <div *ngSwitchCase="'login'" class="paratext-login-container">
-      <div>{{ t("you_must_be_logged_in_to_paratext") }}</div>
-      <button mat-flat-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
-        <mat-icon><img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" /></mat-icon>
-        {{ t("log_in_with_paratext") }}
-      </button>
-    </div>
-    <mat-card *ngSwitchCase="'connecting'" class="progress-container card-outline">
-      <mat-card-content>
-        <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
-        <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
-      </mat-card-content>
-    </mat-card>
-    <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-      <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
-        <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
-          {{ t("only_paratext_admins_can_start") }}
-        </p>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ t("paratext_project") }}</mat-label>
-          <mat-select #projectSelect id="project-select" disableOptionCentering formControlName="paratextId">
-            <mat-option
-              *ngFor="let project of projects"
-              [value]="project.paratextId"
-              [disabled]="!project.isConnectable"
-            >
-              {{ projectLabel(project) }}
-              <ng-container *ngIf="!project.isConnectable && project.isConnected">
-                &nbsp;{{ t("already_connected") }}
-              </ng-container>
-              <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-container>
-      <ng-template #noProjectMsg>
-        <p
-          *ngIf="state !== 'loading'"
-          id="no-projects-msg"
-          [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
-        ></p>
-      </ng-template>
-      <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
-        <mat-card-title>{{ t("project_settings") }}</mat-card-title>
-        <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
-        <mat-card-content class="card-content">
-          <p>{{ t("select_project_or_resource") }}</p>
-          <p>{{ t("translation_suggestions_require_source_text") }}</p>
-          <app-project-select
-            formControlName="sourceParatextId"
-            placeholder="{{ t('source_text_placeholder') }}"
-            [projects]="projects"
-            [resources]="resources"
-            [hiddenParatextIds]="[paratextIdControl.value]"
-          ></app-project-select>
-          <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
-          <ng-container *ngIf="isBasedOnProjectSet">
-            <div fxLayout="row" fxLayoutAlign="start center">
-              <div fxLayout="column" fxFlex="grow">
-                <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                  {{ t("enable_translation_suggestions") }}
-                </mat-checkbox>
-                <p
-                  class="helper-text"
-                  [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                ></p>
-              </div>
-            </div>
-          </ng-container>
-        </mat-card-content>
-        <mat-divider></mat-divider>
-        <mat-card-content class="card-content">
-          <div>
-            <mat-checkbox formControlName="checking" id="checking-checkbox">
-              {{ t("enable_community_checking") }}
-            </mat-checkbox>
-          </div>
-          <p class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</p>
-        </mat-card-content>
-      </mat-card>
-      <button mat-flat-button type="submit" id="connect-submit-button" [disabled]="submitDisabled">
-        {{ t("connect") }}
-      </button>
-    </form>
+  @if (!isAppOnline) {
+    <span class="offline-text"> {{ t("connect_network_to_connect_project") }} </span>
+  }
+  <div class="content">
+    @switch (state) {
+      @case ("login") {
+        <div class="paratext-login-container">
+          <div>{{ t("you_must_be_logged_in_to_paratext") }}</div>
+          <button mat-flat-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
+            <mat-icon><img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" /></mat-icon>
+            {{ t("log_in_with_paratext") }}
+          </button>
+        </div>
+      }
+      @case ("connecting") {
+        <mat-card class="progress-container card-outline">
+          <mat-card-content>
+            <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
+            <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
+          </mat-card-content>
+        </mat-card>
+      }
+      @default {
+        <form [formGroup]="connectProjectForm" (ngSubmit)="submit()">
+          @if (projects.length > 0 || state === "offline") {
+            @if (hasNonAdministratorProject && !showSettings && isAppOnline) {
+              <p id="connect-non-admin-msg">
+                {{ t("only_paratext_admins_can_start") }}
+              </p>
+            }
+            <mat-form-field appearance="outline">
+              <mat-label>{{ t("paratext_project") }}</mat-label>
+              <mat-select #projectSelect id="project-select" disableOptionCentering formControlName="paratextId">
+                @for (project of projects; track project) {
+                  <mat-option [value]="project.paratextId" [disabled]="!project.isConnectable">
+                    {{ projectLabel(project) }}
+                    @if (!project.isConnectable && project.isConnected) {
+                      &nbsp;{{ t("already_connected") }}
+                    }
+                    @if (!project.isConnectable && !project.isConnected) {
+                      &nbsp;**
+                    }
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          } @else {
+            @if (state !== "loading") {
+              <p
+                id="no-projects-msg"
+                [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
+              ></p>
+            }
+          }
+          @if (showSettings) {
+            <mat-card id="settings-card" class="card-outline" formGroupName="settings">
+              <mat-card-title>{{ t("project_settings") }}</mat-card-title>
+              <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
+              <mat-card-content class="card-content">
+                <p>{{ t("select_project_or_resource") }}</p>
+                <p>{{ t("translation_suggestions_require_source_text") }}</p>
+                <app-project-select
+                  formControlName="sourceParatextId"
+                  placeholder="{{ t('source_text_placeholder') }}"
+                  [projects]="projects"
+                  [resources]="resources"
+                  [hiddenParatextIds]="[paratextIdControl.value]"
+                ></app-project-select>
+                @if (showResourcesLoadingFailedMessage) {
+                  <mat-error>{{ t("error_fetching_resources") }}</mat-error>
+                }
+                @if (isBasedOnProjectSet) {
+                  <div fxLayout="row" fxLayoutAlign="start center">
+                    <div fxLayout="column" fxFlex="grow">
+                      <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
+                        {{ t("enable_translation_suggestions") }}
+                      </mat-checkbox>
+                      <p
+                        class="helper-text"
+                        [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
+                      ></p>
+                    </div>
+                  </div>
+                }
+              </mat-card-content>
+              <mat-divider></mat-divider>
+              <mat-card-content class="card-content">
+                <div>
+                  <mat-checkbox formControlName="checking" id="checking-checkbox">
+                    {{ t("enable_community_checking") }}
+                  </mat-checkbox>
+                </div>
+                <p class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</p>
+              </mat-card-content>
+            </mat-card>
+          }
+          <button mat-flat-button type="submit" id="connect-submit-button" [disabled]="submitDisabled">
+            {{ t("connect") }}
+          </button>
+        </form>
+      }
+    }
   </div>
 </ng-container>

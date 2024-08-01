@@ -1,8 +1,9 @@
-<mat-spinner
-  *ngIf="state === ElementState.Submitting && !formGroup?.errors"
-  diameter="15"
-  class="update-button-spinner"
-  aria-label="Update in progress"
-></mat-spinner>
-<mat-icon *ngIf="state === ElementState.Submitted && !formGroup?.errors" class="check-icon">done</mat-icon>
-<mat-icon *ngIf="state === ElementState.Error && !formGroup?.errors" class="error-icon" color="warn">error</mat-icon>
+@if (state === ElementState.Submitting && !formGroup?.errors) {
+  <mat-spinner diameter="15" class="update-button-spinner" aria-label="Update in progress"></mat-spinner>
+}
+@if (state === ElementState.Submitted && !formGroup?.errors) {
+  <mat-icon class="check-icon">done</mat-icon>
+}
+@if (state === ElementState.Error && !formGroup?.errors) {
+  <mat-icon class="error-icon" color="warn">error</mat-icon>
+}

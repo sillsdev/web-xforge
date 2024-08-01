@@ -2,7 +2,9 @@
   <h2>{{ t("invite_people") }}</h2>
   <p class="mat-hint">{{ t("invite_people_intro") }}</p>
   <p class="mat-hint">{{ t("email_sharing") }}</p>
-  <div *ngIf="!isAppOnline" class="offline-text">{{ t("share_not_available_offline") }}</div>
+  @if (!isAppOnline) {
+    <div class="offline-text">{{ t("share_not_available_offline") }}</div>
+  }
   <div fxLayout="column" fxLayoutGap="20px">
     <div class="invite-by-email">
       <h3>{{ t("send_a_link") }}</h3>
@@ -11,9 +13,11 @@
           <mat-form-field id="email">
             <mat-label>{{ t("email") }}</mat-label>
             <input matInput type="email" formControlName="email" (input)="onEmailInput()" />
-            <mat-error *ngIf="email.hasError('pattern') || email.hasError('required')">
-              {{ t("email_invalid") }}
-            </mat-error>
+            @if (email.hasError("pattern") || email.hasError("required")) {
+              <mat-error>
+                {{ t("email_invalid") }}
+              </mat-error>
+            }
           </mat-form-field>
           <mat-form-field id="invitation-role">
             <mat-label>{{ t("invitation_role") }}</mat-label>
@@ -21,21 +25,29 @@
               <mat-select-trigger>
                 {{ roleControl.value ? i18n.localizeRole(roleControl.value) : "" }}
               </mat-select-trigger>
-              <mat-option *ngFor="let roleInfo of availableRolesInfo" [value]="roleInfo.role">
-                <div class="role-name">{{ i18n.localizeRole(roleInfo.role) }}</div>
-                <div class="role-description">{{ i18n.localizeRoleDescription(roleInfo.role) }}</div>
-              </mat-option>
+              @for (roleInfo of availableRolesInfo; track roleInfo) {
+                <mat-option [value]="roleInfo.role">
+                  <div class="role-name">{{ i18n.localizeRole(roleInfo.role) }}</div>
+                  <div class="role-description">{{ i18n.localizeRoleDescription(roleInfo.role) }}</div>
+                </mat-option>
+              }
             </mat-select>
-            <mat-error *ngIf="roleControl.hasError('required')">{{ t("select_invitation_role") }}</mat-error>
+            @if (roleControl.hasError("required")) {
+              <mat-error>{{ t("select_invitation_role") }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field id="invitation-language">
             <mat-label>{{ t("invitation_language") }}</mat-label>
             <mat-select formControlName="locale" panelClass="locale-fonts" [hideSingleSelectionIndicator]="true">
-              <mat-option *ngFor="let locale of i18n.locales" [value]="locale.canonicalTag">
-                {{ locale.localName }}
-              </mat-option>
+              @for (locale of i18n.locales; track locale) {
+                <mat-option [value]="locale.canonicalTag">
+                  {{ locale.localName }}
+                </mat-option>
+              }
             </mat-select>
-            <mat-error *ngIf="localeControl.hasError('required')">{{ t("select_invitation_language") }}</mat-error>
+            @if (localeControl.hasError("required")) {
+              <mat-error>{{ t("select_invitation_language") }}</mat-error>
+            }
           </mat-form-field>
           <button
             id="send-btn"
@@ -51,10 +63,12 @@
         </form>
       </div>
     </div>
-    <div *ngIf="isLinkSharingEnabled" class="invite-by-link">
-      <h3>{{ t("share_a_link") }}</h3>
-      <p class="mat-hint">{{ t("link_sharing") }}</p>
-      <app-share-button [iconOnlyButton]="false"></app-share-button>
-    </div>
+    @if (isLinkSharingEnabled) {
+      <div class="invite-by-link">
+        <h3>{{ t("share_a_link") }}</h3>
+        <p class="mat-hint">{{ t("link_sharing") }}</p>
+        <app-share-button [iconOnlyButton]="false"></app-share-button>
+      </div>
+    }
   </div>
 </ng-container>

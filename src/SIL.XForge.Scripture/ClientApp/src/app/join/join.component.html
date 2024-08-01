@@ -1,8 +1,10 @@
 <ng-container *transloco="let t; read: 'join'">
-  <ng-container *ngIf="!isLoading">
+  @if (!isLoading) {
     <h1>{{ t("join_a_project") }}</h1>
     <p [innerHTML]="inviteText"></p>
-    <app-notice *ngIf="!isOnline" type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>
+    @if (!isOnline) {
+      <app-notice type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>
+    }
     <form>
       <mat-form-field appearance="fill">
         <mat-label>{{ t("your_name") }}</mat-label>
@@ -14,5 +16,5 @@
     </form>
     <a (click)="logIn()" [innerHtml]="i18nService.translateAndInsertTags('join.login_existing_account')"></a>
     <mat-spinner diameter="50" color="#fff" [fxHide]="!isJoining"></mat-spinner>
-  </ng-container>
+  }
 </ng-container>

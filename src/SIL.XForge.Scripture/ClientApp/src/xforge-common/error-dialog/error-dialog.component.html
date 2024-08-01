@@ -3,18 +3,26 @@
   <mat-dialog-content>
     <p>{{ data.message }}</p>
     <p [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></p>
-    <p *ngIf="browserUnsupported" class="unsupported-browser" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
+    @if (browserUnsupported) {
+      <p class="unsupported-browser" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
+    }
     <p>
-      <ng-container *ngFor="let portion of i18n.interpolateVariables('error.error_id', { errorId: data.eventId })">
-        <ng-container *ngIf="portion.id == null">{{ portion.text }}</ng-container>
-        <span *ngIf="portion.id === 'errorId'" class="error-id">{{ portion.text }}</span>
-      </ng-container>
+      @for (portion of i18n.interpolateVariables("error.error_id", { errorId: data.eventId }); track portion) {
+        @if (portion.id == null) {
+          {{ portion.text }}
+        }
+        @if (portion.id === "errorId") {
+          <span class="error-id">{{ portion.text }}</span>
+        }
+      }
     </p>
 
-    <ng-container *ngIf="data.stack">
+    @if (data.stack) {
       <a (click)="this.showDetails = !this.showDetails">{{ showDetails ? t("hide_details") : t("show_details") }}</a>
-      <pre *ngIf="showDetails" dir="ltr">{{ data.stack }}</pre>
-    </ng-container>
+      @if (showDetails) {
+        <pre dir="ltr">{{ data.stack }}</pre>
+      }
+    }
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-flat-button mat-dialog-close color="primary" cdkFocusRegionStart>{{ t("close") }}</button>

@@ -1,14 +1,20 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
   <div class="audio-area">
     <div class="player" dir="ltr">
-      <div *ngIf="isAudioAvailable">
-        <button *ngIf="!isPlaying()" mat-icon-button type="button" (click)="play()" class="play">
-          <mat-icon>play_arrow</mat-icon>
-        </button>
-        <button *ngIf="isPlaying()" mat-icon-button type="button" (click)="pause()" class="pause">
-          <mat-icon>pause</mat-icon>
-        </button>
-      </div>
+      @if (isAudioAvailable) {
+        <div>
+          @if (!isPlaying()) {
+            <button mat-icon-button type="button" (click)="play()" class="play">
+              <mat-icon>play_arrow</mat-icon>
+            </button>
+          }
+          @if (isPlaying()) {
+            <button mat-icon-button type="button" (click)="pause()" class="pause">
+              <mat-icon>pause</mat-icon>
+            </button>
+          }
+        </div>
+      }
       <app-audio-player #audioPlayer [source]="source"></app-audio-player>
     </div>
   </div>

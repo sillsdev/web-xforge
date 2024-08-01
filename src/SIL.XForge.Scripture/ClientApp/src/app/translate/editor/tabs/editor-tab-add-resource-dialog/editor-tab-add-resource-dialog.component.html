@@ -1,9 +1,9 @@
-<mat-progress-bar *ngIf="isLoading && !isSyncActive" mode="indeterminate" color="accent"></mat-progress-bar>
-<app-sync-progress
-  *ngIf="isSyncActive"
-  [projectDoc]="selectedProjectDoc"
-  (inProgress)="onSyncProgress($event)"
-></app-sync-progress>
+@if (isLoading && !isSyncActive) {
+  <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+}
+@if (isSyncActive) {
+  <app-sync-progress [projectDoc]="selectedProjectDoc" (inProgress)="onSyncProgress($event)"></app-sync-progress>
+}
 
 <ng-container *transloco="let t; read: 'editor_add_tab_resource_dialog'">
   <h1 mat-dialog-title>{{ t("dialog_title") }}</h1>
@@ -25,22 +25,32 @@
       ></app-project-select>
     </div>
 
-    <div *ngIf="isSyncActive" class="loading-message">
-      {{ t("loading") }} {{ selectedProjectDoc?.data?.shortName }}{{ animatedEllipsis$ | async }}
-    </div>
+    @if (isSyncActive) {
+      <div class="loading-message">
+        {{ t("loading") }} {{ selectedProjectDoc?.data?.shortName }}{{ animatedEllipsis$ | async }}
+      </div>
+    }
 
-    <mat-error *ngIf="projectLoadingFailed && resourceLoadingFailed">
-      {{ t("error_fetching_projects_resources") }}
-    </mat-error>
-    <mat-error *ngIf="projectLoadingFailed && !resourceLoadingFailed">
-      {{ t("error_fetching_projects") }}
-    </mat-error>
-    <mat-error *ngIf="resourceLoadingFailed && !projectLoadingFailed">
-      {{ t("error_fetching_resources") }}
-    </mat-error>
-    <mat-error *ngIf="projectFetchFailed || syncFailed">
-      {{ t("error_loading_resource") }}
-    </mat-error>
+    @if (projectLoadingFailed && resourceLoadingFailed) {
+      <mat-error>
+        {{ t("error_fetching_projects_resources") }}
+      </mat-error>
+    }
+    @if (projectLoadingFailed && !resourceLoadingFailed) {
+      <mat-error>
+        {{ t("error_fetching_projects") }}
+      </mat-error>
+    }
+    @if (resourceLoadingFailed && !projectLoadingFailed) {
+      <mat-error>
+        {{ t("error_fetching_resources") }}
+      </mat-error>
+    }
+    @if (projectFetchFailed || syncFailed) {
+      <mat-error>
+        {{ t("error_loading_resource") }}
+      </mat-error>
+    }
   </mat-dialog-content>
 
   <mat-dialog-actions>
