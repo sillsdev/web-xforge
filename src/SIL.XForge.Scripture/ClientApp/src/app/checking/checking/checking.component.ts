@@ -71,7 +71,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsList?: CheckingQuestionsComponent;
   @ViewChild('splitter') splitComponent?: SplitComponent;
-  @ViewChild('splitContainer') splitContainerElement?: ElementRef; //todo revisit
+  @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
   @ViewChild(CheckingScriptureAudioPlayerComponent) set scriptureAudioPlayer(
     newValue: CheckingScriptureAudioPlayerComponent
@@ -1031,7 +1031,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
 
     const verseStr: string | undefined = getVerseStrFromSegmentRef(segmentRef);
-    if (verseStr) {
+    if (verseStr != null) {
       const verseRef: VerseRef = new VerseRef(Canon.bookNumberToId(this.book!), this.chapter!.toString(), verseStr);
       this.scripturePanel!.activeVerse = verseRef;
     }

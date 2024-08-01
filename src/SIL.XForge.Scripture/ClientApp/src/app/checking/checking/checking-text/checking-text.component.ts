@@ -35,7 +35,7 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
   }
 
   ngAfterViewInit(): void {
-    if (this.resizableContainer) {
+    if (this.resizableContainer != null) {
       this.subscribe(this.resizableContainer.transitionEnd, () => {
         this.scrollToVerse(this.activeVerse);
       });
