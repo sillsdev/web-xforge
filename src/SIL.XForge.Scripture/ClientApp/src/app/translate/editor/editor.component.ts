@@ -124,6 +124,7 @@ import {
   canInsertNote,
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
+  RIGHT_TO_LEFT_MARK,
   threadIdFromMouseEvent,
   VERSE_REGEX,
   verseRefFromMouseEvent,
@@ -1158,8 +1159,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): void {
     if (revision != null) {
-      tab.headerText = `${this.targetLabel} - ${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
-      tab.tooltip = `${this.projectDoc?.data?.name} - ${this.editorHistoryService.formatTimestamp(
+      const separator: string = this.i18n.isRtl ? `${RIGHT_TO_LEFT_MARK} - ` : ' - ';
+      tab.headerText = `${this.targetLabel}${separator}${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
+      tab.tooltip = `${this.projectDoc?.data?.name}${separator}${this.editorHistoryService.formatTimestamp(
         revision.timestamp,
         true
       )}`;
