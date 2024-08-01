@@ -27,17 +27,20 @@ import {
     `
   ],
   template: `
-    <app-tab-group
-      *ngFor="let tabGroup of tabState.tabGroups$ | async | keyvalue"
-      [groupId]="tabGroup.key"
-      [selectedIndex]="tabGroup.value.selectedIndex"
-      [connectedTo]="tabState.groupIds$ | async"
-    >
-      <app-tab *ngFor="let tab of tabGroup.value.tabs" [closeable]="tab.closeable" [movable]="tab.movable">
-        <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
-        <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
-      </app-tab>
-    </app-tab-group>
+    @for (tabGroup of tabState.tabGroups$ | async | keyvalue; track tabGroup) {
+      <app-tab-group
+        [groupId]="tabGroup.key"
+        [selectedIndex]="tabGroup.value.selectedIndex"
+        [connectedTo]="tabState.groupIds$ | async"
+      >
+        @for (tab of tabGroup.value.tabs; track tab) {
+          <app-tab [closeable]="tab.closeable" [movable]="tab.movable">
+            <ng-template sf-tab-header><div [innerHTML]="tab.headerText"></div></ng-template>
+            <p><span [innerHTML]="tab.headerText"></span> in {{ tabGroup.key }}</p>
+          </app-tab>
+        }
+      </app-tab-group>
+    }
   `
 })
 class SFTabGroupStoriesComponent implements OnChanges {

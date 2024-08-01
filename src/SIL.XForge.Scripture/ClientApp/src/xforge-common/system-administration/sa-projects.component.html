@@ -4,15 +4,16 @@
     <input matInput (keyup)="updateSearchTerm($event.target)" id="project-filter" />
   </mat-form-field>
 </div>
-<ng-container *ngIf="!isLoading">
-  <ng-container *ngIf="length > 0">
+@if (!isLoading) {
+  @if (length > 0) {
     <table mat-table id="projects-table" [dataSource]="rows">
       <ng-container matColumnDef="name">
         <td mat-cell *matCellDef="let row">
-          <a *ngIf="row.isMember; else nonmember" [appRouterLink]="['/projects', row.id]">
+          @if (row.isMember) {
+            <a [appRouterLink]="['/projects', row.id]"> {{ row.shortName }} - {{ row.name }} </a>
+          } @else {
             {{ row.shortName }} - {{ row.name }}
-          </a>
-          <ng-template #nonmember>{{ row.shortName }} - {{ row.name }}</ng-template>
+          }
         </td>
       </ng-container>
       <ng-container matColumnDef="tasks">
@@ -30,9 +31,11 @@
               (selectionChange)="updateRole(row, $event.value)"
               [hideSingleSelectionIndicator]="true"
             >
-              <mat-option *ngFor="let projectRole of projectRoles" [value]="projectRole">
-                {{ i18n.localizeRole(projectRole.role) }}
-              </mat-option>
+              @for (projectRole of projectRoles; track projectRole) {
+                <mat-option [value]="projectRole">
+                  {{ i18n.localizeRole(projectRole.role) }}
+                </mat-option>
+              }
             </mat-select>
           </mat-form-field>
         </td>
@@ -51,10 +54,8 @@
           </mat-checkbox>
         </td>
       </ng-container>
-
       <tr mat-row *matRowDef="let row; columns: ['name', 'tasks', 'role', 'syncDisabled', 'preTranslate']"></tr>
     </table>
-
     <mat-paginator
       [pageIndex]="pageIndex"
       [length]="length"
@@ -63,6 +64,8 @@
       (page)="updatePage($event.pageIndex, $event.pageSize)"
     >
     </mat-paginator>
-  </ng-container>
-  <div *ngIf="length === 0" class="no-projects-label">No projects found</div>
-</ng-container>
+  }
+  @if (length === 0) {
+    <div class="no-projects-label">No projects found</div>
+  }
+}

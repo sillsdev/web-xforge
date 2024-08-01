@@ -30,13 +30,12 @@
 </app-notice>
 <div class="table-container">
   <table mat-table [dataSource]="rows">
-    <ng-container
-      *ngFor="let column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1"
-      [matColumnDef]="column"
-    >
-      <th mat-header-cell *matHeaderCellDef>{{ headingsToDisplay[column] }}</th>
-      <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
-    </ng-container>
+    @for (column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1; track column) {
+      <ng-container [matColumnDef]="column">
+        <th mat-header-cell *matHeaderCellDef>{{ headingsToDisplay[column] }}</th>
+        <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+      </ng-container>
+    }
 
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef></th>

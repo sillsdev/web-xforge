@@ -5,9 +5,13 @@
     'layout-inline': !layoutStacked
   }"
 >
-  <div class="avatar" *ngIf="includeAvatar"><app-avatar [user]="owner" [size]="32"></app-avatar></div>
+  @if (includeAvatar) {
+    <div class="avatar"><app-avatar [user]="owner" [size]="32"></app-avatar></div>
+  }
   <div class="owner-text">
     <div class="name">{{ name }}</div>
-    <small class="date-time" *ngIf="dateTime">{{ i18n.formatDate(date) }}</small>
+    @if (dateTime) {
+      <small class="date-time">{{ i18n.formatDate(date) }}</small>
+    }
   </div>
 </div>
