@@ -16,9 +16,11 @@
         <mat-icon>skip_next</mat-icon>
       </button>
     </div>
-    <button *ngIf="canClose" mat-icon-button class="close-button" (click)="close()">
-      <mat-icon>close</mat-icon>
-    </button>
+    @if (canClose) {
+      <button mat-icon-button class="close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
   </div>
   <app-audio-player #audioPlayer [source]="audioSource"></app-audio-player>
   <span class="verse-label">{{ verseLabel }}</span>

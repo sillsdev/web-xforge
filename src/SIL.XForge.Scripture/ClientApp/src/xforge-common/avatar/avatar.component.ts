@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
@@ -10,7 +9,7 @@ type AvatarMode = 'image' | 'initials' | 'user_icon';
   templateUrl: './avatar.component.html',
   styleUrls: ['./avatar.component.scss'],
   standalone: true,
-  imports: [CommonModule, MatIconModule]
+  imports: [MatIconModule]
 })
 export class AvatarComponent implements OnChanges {
   @Input() size: number = 32;

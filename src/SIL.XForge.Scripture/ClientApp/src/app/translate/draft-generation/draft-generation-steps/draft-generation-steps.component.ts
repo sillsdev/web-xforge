@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { MatStepper } from '@angular/material/stepper';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -37,7 +36,6 @@ export interface DraftGenerationStepsResult {
   styleUrls: ['./draft-generation-steps.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
     SharedModule,
     UICommonModule,
     TranslocoModule,

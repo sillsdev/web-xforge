@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
@@ -51,7 +50,6 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   styleUrls: ['./draft-generation.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
     UICommonModule,
     RouterModule,
     TranslocoModule,

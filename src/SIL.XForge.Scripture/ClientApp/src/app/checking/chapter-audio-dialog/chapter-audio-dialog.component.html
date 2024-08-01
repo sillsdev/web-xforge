@@ -8,20 +8,21 @@
     </div>
     <div class="data-blocks">
       <div class="wrapper wrapper-book-chapter valid">
-        <mat-icon *ngIf="!selectionHasAudioAlready || inEditState">book</mat-icon>
-        <app-info
-          *ngIf="selectionHasAudioAlready && !inEditState"
-          [text]="t('audio_already_exists')"
-          icon="warning"
-          type="warning"
-        ></app-info>
+        @if (!selectionHasAudioAlready || inEditState) {
+          <mat-icon>book</mat-icon>
+        }
+        @if (selectionHasAudioAlready && !inEditState) {
+          <app-info [text]="t('audio_already_exists')" icon="warning" type="warning"></app-info>
+        }
         <mat-select
           [(value)]="book"
           [disabled]="inEditState"
           class="book-select-menu"
           [hideSingleSelectionIndicator]="true"
         >
-          <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
+          @for (b of books; track b) {
+            <mat-option [value]="b">{{ bookName(b) }}</mat-option>
+          }
         </mat-select>
         <div class="divider"></div>
         <mat-select
@@ -31,11 +32,13 @@
           [hideSingleSelectionIndicator]="true"
           [panelWidth]="80"
         >
-          <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
+          @for (c of chapters; track c) {
+            <mat-option [value]="c">{{ c }}</mat-option>
+          }
         </mat-select>
       </div>
       <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: isAudioInvalid }">
-        <ng-container *ngIf="hasAudioBeenUploaded">
+        @if (hasAudioBeenUploaded) {
           <app-single-button-audio-player
             #chapterAudio
             id="chapterAudio"
@@ -44,43 +47,61 @@
           >
             <mat-icon>{{ chapterAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
           </app-single-button-audio-player>
-          <span *ngIf="hasAudioBeenUploaded && !hasAudioDataError">{{ audioFilename }}</span>
-          <mat-icon *ngIf="hasAudioBeenUploaded" (click)="deleteAudioData()" class="delete">delete</mat-icon>
-        </ng-container>
-        <ng-container *ngIf="!hasAudioBeenUploaded">
+          @if (hasAudioBeenUploaded && !hasAudioDataError) {
+            <span>{{ audioFilename }}</span>
+          }
+          @if (hasAudioBeenUploaded) {
+            <mat-icon (click)="deleteAudioData()" class="delete">delete</mat-icon>
+          }
+        }
+        @if (!hasAudioBeenUploaded) {
           <mat-icon>play_disabled</mat-icon>
-          <span *ngIf="!hasAudioDataError">{{ t("no_audio_file_uploaded") }}</span>
-          <span *ngIf="hasAudioDataError">{{ t(audioErrorMessageKey) }}</span>
-        </ng-container>
+          @if (!hasAudioDataError) {
+            <span>{{ t("no_audio_file_uploaded") }}</span>
+          }
+          @if (hasAudioDataError) {
+            <span>{{ t(audioErrorMessageKey) }}</span>
+          }
+        }
       </div>
       <div
         class="wrapper wrapper-timing"
         [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessageKey !== '' }"
       >
         <mat-icon class="material-icons-outlined">timer</mat-icon>
-        <span *ngIf="hasTimingBeenUploaded && !hasTimingDataError">
-          {{ t("segments_found", { segments: numberOfTimingSegments }) }}
-        </span>
-        <span *ngIf="!hasTimingBeenUploaded && !hasTimingDataError">{{ t("no_timing_data_uploaded") }}</span>
-        <span *ngIf="hasTimingDataError">{{ t(timingErrorMessageKey) }}</span>
-        <mat-icon *ngIf="hasTimingBeenUploaded && !hasTimingDataError" (click)="deleteTimingData()" class="delete"
-          >delete</mat-icon
-        >
+        @if (hasTimingBeenUploaded && !hasTimingDataError) {
+          <span>
+            {{ t("segments_found", { segments: numberOfTimingSegments }) }}
+          </span>
+        }
+        @if (!hasTimingBeenUploaded && !hasTimingDataError) {
+          <span>{{ t("no_timing_data_uploaded") }}</span>
+        }
+        @if (hasTimingDataError) {
+          <span>{{ t(timingErrorMessageKey) }}</span>
+        }
+        @if (hasTimingBeenUploaded && !hasTimingDataError) {
+          <mat-icon (click)="deleteTimingData()" class="delete">delete</mat-icon>
+        }
       </div>
     </div>
-    <app-notice id="offline-error" *ngIf="!isOnline" type="error" icon="cloud_off">
-      {{ t("not_upload_audio_offline") }}
-    </app-notice>
+    @if (!isOnline) {
+      <app-notice id="offline-error" type="error" icon="cloud_off">
+        {{ t("not_upload_audio_offline") }}
+      </app-notice>
+    }
   </mat-dialog-content>
   <mat-dialog-actions>
     <a mat-button [href]="externalUrlService.chapterAudioHelpPage" target="_blank">
       <mat-icon>help</mat-icon> {{ t("help") }}
     </a>
     <span class="flex-spacer"></span>
-    <div class="uploading" *ngIf="isLoadingAudio">
-      <span>{{ t("uploading") }}</span>
-      <mat-spinner diameter="24"></mat-spinner>
-    </div>
+    @if (isLoadingAudio) {
+      <div class="uploading">
+        <span>{{ t("uploading") }}</span>
+        <mat-spinner diameter="24"></mat-spinner>
+      </div>
+    }
     <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
       {{ t("cancel") }}
     </button>

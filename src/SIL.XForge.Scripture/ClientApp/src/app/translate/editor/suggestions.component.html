@@ -1,18 +1,15 @@
-<div class="loading-indicator" *ngIf="isLoading"><span></span> <span></span> <span></span></div>
-<mat-selection-list
-  *ngIf="!isLoading"
-  #list
-  dense
-  [multiple]="false"
-  (click)="selectAll($event)"
-  hideSingleSelectionIndicator
->
-  <ng-container *ngFor="let suggestion of suggestions; let i = index">
-    <mat-list-option [selected]="suggestion && i === 0">
-      <div class="suggestion">
-        {{ suggestion.words.join(" ") }}
-        <span class="suggestion-confidence">{{ getPercentage(suggestion.confidence) }}%</span>
-      </div>
-    </mat-list-option>
-  </ng-container>
-</mat-selection-list>
+@if (isLoading) {
+  <div class="loading-indicator"><span></span> <span></span> <span></span></div>
+}
+@if (!isLoading) {
+  <mat-selection-list #list dense [multiple]="false" (click)="selectAll($event)" hideSingleSelectionIndicator>
+    @for (suggestion of suggestions; track suggestion; let i = $index) {
+      <mat-list-option [selected]="suggestion && i === 0">
+        <div class="suggestion">
+          {{ suggestion.words.join(" ") }}
+          <span class="suggestion-confidence">{{ getPercentage(suggestion.confidence) }}%</span>
+        </div>
+      </mat-list-option>
+    }
+  </mat-selection-list>
+}

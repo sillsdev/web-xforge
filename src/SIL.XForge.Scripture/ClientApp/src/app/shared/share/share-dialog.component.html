@@ -8,97 +8,98 @@
       <mat-icon>public</mat-icon>
       <div>
         {{ t(shareLinkType + "_can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
-        <a [matMenuTriggerFor]="roleMenu" title="{{ t('invitation_role') }}" *ngIf="canUserChangeRole"
-          >({{ t("change") }})</a
-        >
+        @if (canUserChangeRole) {
+          <a [matMenuTriggerFor]="roleMenu" title="{{ t('invitation_role') }}">({{ t("change") }})</a>
+        }
       </div>
       <mat-menu #roleMenu>
         <mat-selection-list [multiple]="false" class="share-selection-role" hideSingleSelectionIndicator>
-          <mat-list-option *ngFor="let role of availableRoles" [selected]="role === shareRole" (click)="setRole(role)">
-            <div class="role-name">{{ i18n.localizeRole(role) }}</div>
-            <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
-          </mat-list-option>
+          @for (role of availableRoles; track role) {
+            <mat-list-option [selected]="role === shareRole" (click)="setRole(role)">
+              <div class="role-name">{{ i18n.localizeRole(role) }}</div>
+              <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
+            </mat-list-option>
+          }
         </mat-selection-list>
       </mat-menu>
     </div>
-    <ng-container *ngIf="canUserChangeLinkUsage">
+    @if (canUserChangeLinkUsage) {
       <div class="configuration-option configuration-link-type">
         <mat-icon>{{ shareLinkType === "anyone" ? "groups" : "person" }}</mat-icon>
         <div>
           {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
-          <a
-            [matMenuTriggerFor]="linkUsageMenu"
-            title="{{ t('invitation_link_type') }}"
-            *ngIf="shareLinkUsageOptions.length > 1"
-            >({{ t("change") }})</a
-          >
+          @if (shareLinkUsageOptions.length > 1) {
+            <a [matMenuTriggerFor]="linkUsageMenu" title="{{ t('invitation_link_type') }}">({{ t("change") }})</a>
+          }
         </div>
         <mat-menu #linkUsageMenu>
-          <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1" hideSingleSelectionIndicator>
-            <mat-list-option
-              *ngFor="let option of shareLinkUsageOptions"
-              [selected]="option === shareLinkType"
-              (click)="setLinkType(option)"
-            >
-              {{ t(option) }}
-            </mat-list-option>
-          </mat-selection-list>
+          @if (shareLinkUsageOptions.length > 1) {
+            <mat-selection-list [multiple]="false" hideSingleSelectionIndicator>
+              @for (option of shareLinkUsageOptions; track option) {
+                <mat-list-option [selected]="option === shareLinkType" (click)="setLinkType(option)">
+                  {{ t(option) }}
+                </mat-list-option>
+              }
+            </mat-selection-list>
+          }
         </mat-menu>
       </div>
       <div class="configuration-option">
         <mat-icon>schedule</mat-icon>
         <div>
           <transloco key="share_dialog.will_expire_in" [params]="{ count: shareExpiration }"></transloco>
-          <a
-            [matMenuTriggerFor]="expireMenu"
-            *ngIf="linkExpirationOptions.length > 1"
-            title="{{ t('expiration_description') }}"
-          >
-            ({{ t("change") }})
-          </a>
+          @if (linkExpirationOptions.length > 1) {
+            <a [matMenuTriggerFor]="expireMenu" title="{{ t('expiration_description') }}"> ({{ t("change") }}) </a>
+          }
         </div>
         <mat-menu #expireMenu>
-          <mat-selection-list [multiple]="false" *ngIf="linkExpirationOptions.length > 1" hideSingleSelectionIndicator>
-            <mat-list-option
-              *ngFor="let key of linkExpirationOptions"
-              [selected]="ShareExpiration[key] === shareExpiration"
-              (click)="setLinkExpiration(key)"
-            >
-              {{ t(key) }}
-            </mat-list-option>
-          </mat-selection-list>
+          @if (linkExpirationOptions.length > 1) {
+            <mat-selection-list [multiple]="false" hideSingleSelectionIndicator>
+              @for (key of linkExpirationOptions; track key) {
+                <mat-list-option [selected]="ShareExpiration[key] === shareExpiration" (click)="setLinkExpiration(key)">
+                  {{ t(key) }}
+                </mat-list-option>
+              }
+            </mat-selection-list>
+          }
         </mat-menu>
       </div>
-    </ng-container>
+    }
     <div class="configuration-option">
       <mat-icon>translate</mat-icon>
       <div>
         <div>
           {{ t("invitation_shared_in_language") }}
-          <b *ngIf="shareLocaleCode?.localName">{{ shareLocaleCode?.localName }}</b>
-          <b *ngIf="!shareLocaleCode?.localName" class="empty-field" [ngClass]="{ error: error }"> ________________ </b>
+          @if (shareLocaleCode?.localName) {
+            <b>{{ shareLocaleCode?.localName }}</b>
+          }
+          @if (!shareLocaleCode?.localName) {
+            <b class="empty-field" [ngClass]="{ error: error }"> ________________ </b>
+          }
           <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}"> ({{ t("change") }}) </a>
         </div>
         <span class="error help-text" [ngClass]="{ hidden: !error }">{{ t("error_language") }}</span>
       </div>
       <mat-menu #langMenu>
         <mat-selection-list [multiple]="false" hideSingleSelectionIndicator>
-          <mat-list-option
-            *ngFor="let locale of i18n.locales"
-            [selected]="locale === shareLocaleCode"
-            (click)="setLocale(locale)"
-          >
-            {{ locale.localName }}
-          </mat-list-option>
+          @for (locale of i18n.locales; track locale) {
+            <mat-list-option [selected]="locale === shareLocaleCode" (click)="setLocale(locale)">
+              {{ locale.localName }}
+            </mat-list-option>
+          }
         </mat-selection-list>
       </mat-menu>
     </div>
-    <app-notice *ngIf="isRecipientOnlyLink" icon="info">
-      {{ t("recipient_only_notice", { shareExpiration: shareExpiration }) }}
-    </app-notice>
-    <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">
-      {{ t("link_sharing_not_available_offline") }}
-    </app-notice>
+    @if (isRecipientOnlyLink) {
+      <app-notice icon="info">
+        {{ t("recipient_only_notice", { shareExpiration: shareExpiration }) }}
+      </app-notice>
+    }
+    @if (showLinkSharingUnavailable) {
+      <app-notice type="error" icon="cloud_off">
+        {{ t("link_sharing_not_available_offline") }}
+      </app-notice>
+    }
   </div>
   <div mat-dialog-actions>
     <button
@@ -110,15 +111,10 @@
     >
       <mat-icon>content_copy</mat-icon>{{ t("copy_link") }}
     </button>
-    <button
-      id="share-btn"
-      mat-flat-button
-      color="primary"
-      *ngIf="supportsShareAPI"
-      (click)="shareLink()"
-      [disabled]="!isLinkReady"
-    >
-      <mat-icon>share</mat-icon>{{ t("share") }}
-    </button>
+    @if (supportsShareAPI) {
+      <button id="share-btn" mat-flat-button color="primary" (click)="shareLink()" [disabled]="!isLinkReady">
+        <mat-icon>share</mat-icon>{{ t("share") }}
+      </button>
+    }
   </div>
 </ng-container>

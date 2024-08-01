@@ -28,8 +28,10 @@
   </mat-dialog-content>
   <mat-dialog-actions>
     <button mat-button mat-dialog-close>{{ t(canEdit() ? "cancel" : "close") }}</button>
-    <button *ngIf="canEdit()" mat-flat-button class="save-button" color="primary" (click)="submit()">
-      {{ t("save") }}
-    </button>
+    @if (canEdit()) {
+      <button mat-flat-button class="save-button" color="primary" (click)="submit()">
+        {{ t("save") }}
+      </button>
+    }
   </mat-dialog-actions>
 </ng-container>

@@ -1,37 +1,44 @@
 <ng-container *transloco="let t; read: 'book_select'">
-  <div *ngIf="availableBooks.length > 0 && !readonly">
-    <mat-card class="bulk-select">
-      <mat-card-content>
-        <div>
-          <span>{{ t("select") }}:</span>
-          <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
-            <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
-              {{ t("old_testament") }}
-            </mat-button-toggle>
-            <mat-button-toggle value="NT" [disabled]="!isNewTestamentAvailable()">
-              {{ t("new_testament") }}
-            </mat-button-toggle>
-            <mat-button-toggle value="DC" *ngIf="isDeuterocanonAvailable()">
-              {{ t("deuterocanon") }}
-            </mat-button-toggle>
-          </mat-button-toggle-group>
-          <button mat-button *ngIf="selectedBooks.length > 0" (click)="clear()">{{ t("clear") }}</button>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+  @if (availableBooks.length > 0 && !readonly) {
+    <div>
+      <mat-card class="bulk-select">
+        <mat-card-content>
+          <div>
+            <span>{{ t("select") }}:</span>
+            <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
+              <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
+                {{ t("old_testament") }}
+              </mat-button-toggle>
+              <mat-button-toggle value="NT" [disabled]="!isNewTestamentAvailable()">
+                {{ t("new_testament") }}
+              </mat-button-toggle>
+              @if (isDeuterocanonAvailable()) {
+                <mat-button-toggle value="DC">
+                  {{ t("deuterocanon") }}
+                </mat-button-toggle>
+              }
+            </mat-button-toggle-group>
+            @if (selectedBooks.length > 0) {
+              <button mat-button (click)="clear()">{{ t("clear") }}</button>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
   <div class="flex-row">
-    <mat-chip-listbox
-      *ngFor="let book of bookOptions"
-      hideSingleSelectionIndicator
-      [selectable]="!readonly"
-      class="book-multi-select"
-      [disabled]="readonly"
-      (change)="onChipListChange(book)"
-    >
-      <mat-chip-option [value]="book" [selected]="book.selected">
-        {{ "canon.book_names." + book.bookId | transloco }}
-      </mat-chip-option>
-    </mat-chip-listbox>
+    @for (book of bookOptions; track book) {
+      <mat-chip-listbox
+        hideSingleSelectionIndicator
+        [selectable]="!readonly"
+        class="book-multi-select"
+        [disabled]="readonly"
+        (change)="onChipListChange(book)"
+      >
+        <mat-chip-option [value]="book" [selected]="book.selected">
+          {{ "canon.book_names." + book.bookId | transloco }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    }
   </div>
 </ng-container>

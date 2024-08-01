@@ -28,10 +28,11 @@
           </button>
           <mat-error id="question-scripture-end-helper-text">
             {{ scriptureInputErrorMessages.endError }}
-            <span
-              *ngIf="versesForm.hasError('verseBeforeStart')"
-              [innerHTML]="i18n.translateAndInsertTags('question_dialog.must_be_after_scripture_reference')"
-            ></span>
+            @if (versesForm.hasError("verseBeforeStart")) {
+              <span
+                [innerHTML]="i18n.translateAndInsertTags('question_dialog.must_be_after_scripture_reference')"
+              ></span>
+            }
           </mat-error>
         </mat-form-field>
       </div>
@@ -47,36 +48,32 @@
       <app-text-and-audio #input [input]="question" [textLabel]="t('question')"></app-text-and-audio>
       <div class="attachments">
         <div class="add-audio">
-          <button
-            mat-icon-button
-            *ngIf="!input.input?.audioUrl && input.audioAttachment.status !== 'recording'"
-            (click)="startRecording()"
-            [matTooltip]="t('tooltip_record')"
-          >
-            <mat-icon>mic</mat-icon>
-          </button>
-          <button
-            mat-icon-button
-            *ngIf="input.audioAttachment.status === 'recording'"
-            (click)="stopRecording()"
-            [matTooltip]="t('tooltip_stop')"
-          >
-            <mat-icon class="stop-recording">stop</mat-icon>
-          </button>
+          @if (!input.input?.audioUrl && input.audioAttachment.status !== "recording") {
+            <button mat-icon-button (click)="startRecording()" [matTooltip]="t('tooltip_record')">
+              <mat-icon>mic</mat-icon>
+            </button>
+          }
+          @if (input.audioAttachment.status === "recording") {
+            <button mat-icon-button (click)="stopRecording()" [matTooltip]="t('tooltip_stop')">
+              <mat-icon class="stop-recording">stop</mat-icon>
+            </button>
+          }
         </div>
-        <div class="audio-added" *ngIf="input.input?.audioUrl">
-          <app-single-button-audio-player
-            #audio
-            [source]="input.input?.audioUrl"
-            (click)="toggleAudio()"
-            theme="secondary"
-          >
-            <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
-          </app-single-button-audio-player>
-          <button mat-icon-button (click)="deleteAudio()" class="clear">
-            <mat-icon>clear</mat-icon>
-          </button>
-        </div>
+        @if (input.input?.audioUrl) {
+          <div class="audio-added">
+            <app-single-button-audio-player
+              #audio
+              [source]="input.input?.audioUrl"
+              (click)="toggleAudio()"
+              theme="secondary"
+            >
+              <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
+            </app-single-button-audio-player>
+            <button mat-icon-button (click)="deleteAudio()" class="clear">
+              <mat-icon>clear</mat-icon>
+            </button>
+          </div>
+        }
       </div>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">
