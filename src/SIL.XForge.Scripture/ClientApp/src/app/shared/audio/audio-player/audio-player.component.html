@@ -1,16 +1,22 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
-  <div *ngIf="!hasProblem" class="content" dir="ltr">
-    <div class="current-time">{{ audio?.currentTime ?? 0 | audioTime }}</div>
-    <mat-slider class="slider" [disabled]="!isAudioAvailable" [min]="0" [max]="100">
-      <input matSliderThumb [value]="seek" (dragEnd)="onSeek($event)" />
-    </mat-slider>
-    <div class="duration">{{ duration | audioTime }}</div>
-  </div>
-  <div *ngIf="hasProblem" class="audio-not-available">
-    <mat-icon>volume_off</mat-icon>
-    <span>{{ t("audio_unavailable") }}</span>
-    <div *ngIf="audio?.hasErrorState">
-      <app-info id="error-load" [text]="t(audioStatus)"></app-info>
+  @if (!hasProblem) {
+    <div class="content" dir="ltr">
+      <div class="current-time">{{ audio?.currentTime ?? 0 | audioTime }}</div>
+      <mat-slider class="slider" [disabled]="!isAudioAvailable" [min]="0" [max]="100">
+        <input matSliderThumb [value]="seek" (dragEnd)="onSeek($event)" />
+      </mat-slider>
+      <div class="duration">{{ duration | audioTime }}</div>
     </div>
-  </div>
+  }
+  @if (hasProblem) {
+    <div class="audio-not-available">
+      <mat-icon>volume_off</mat-icon>
+      <span>{{ t("audio_unavailable") }}</span>
+      @if (audio?.hasErrorState) {
+        <div>
+          <app-info id="error-load" [text]="t(audioStatus)"></app-info>
+        </div>
+      }
+    </div>
+  }
 </ng-container>

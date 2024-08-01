@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -15,7 +14,7 @@ export interface BookOption {
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
   standalone: true,
-  imports: [CommonModule, UICommonModule, MatChipsModule, TranslocoModule],
+  imports: [UICommonModule, MatChipsModule, TranslocoModule],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {

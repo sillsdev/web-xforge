@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -13,7 +12,7 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 @Component({
   selector: 'app-font-unsupported-message',
   standalone: true,
-  imports: [CommonModule, NoticeComponent, TranslocoModule],
+  imports: [NoticeComponent, TranslocoModule],
   templateUrl: './font-unsupported-message.component.html',
   styleUrl: './font-unsupported-message.component.scss'
 })

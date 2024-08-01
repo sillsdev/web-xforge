@@ -8,7 +8,9 @@
       panelWidth="200"
       panelClass="book-select-menu"
     >
-      <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
+      @for (b of books; track b) {
+        <mat-option [value]="b">{{ bookName(b) }}</mat-option>
+      }
     </mat-select>
   </mat-form-field>
   <mat-form-field appearance="outline" id="chapter-select">
@@ -20,10 +22,12 @@
       panelClass="chapter-select-menu"
       [panelWidth]="chapters.length < 100 ? 70 : 80"
     >
-      <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
+      @for (c of chapters; track c) {
+        <mat-option [value]="c">{{ c }}</mat-option>
+      }
     </mat-select>
   </mat-form-field>
-  <ng-container *ngIf="!prevNextHidden">
+  @if (!prevNextHidden) {
     <button
       mat-icon-button
       (click)="prevChapter()"
@@ -42,5 +46,5 @@
     >
       <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
     </button>
-  </ng-container>
+  }
 </ng-container>

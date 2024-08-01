@@ -1,47 +1,50 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  <ng-container *ngIf="availableTranslateBooks && availableTranslateBooks.length > 0">
+  @if (availableTranslateBooks && availableTranslateBooks.length > 0) {
     <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
       <mat-step [completed]="userSelectedTranslateBooks.length > 0">
         <ng-template matStepLabel>
           {{ t("choose_books_to_translate") }}
         </ng-template>
-
         <app-book-multi-select
           [availableBooks]="availableTranslateBooks"
           [selectedBooks]="initialSelectedTranslateBooks"
           (bookSelect)="onTranslateBookSelect($event)"
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
-
-        <app-notice *ngIf="unusableTranslateTargetBooks.length">
-          <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-        </app-notice>
-
-        <app-notice *ngIf="unusableTranslateSourceBooks.length">
-          <h4 *ngIf="unusableTranslateSourceBooks.length">
-            <transloco
-              key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
-              [params]="{ draftingSourceProjectName }"
-            ></transloco>
-          </h4>
-          <app-book-multi-select
-            *ngIf="unusableTranslateSourceBooks.length"
-            [availableBooks]="unusableTranslateSourceBooks"
-            [readonly]="true"
-          ></app-book-multi-select>
-        </app-notice>
-
-        <app-notice *ngIf="showBookSelectionError" type="error">
-          {{ t("choose_books_to_translate_error") }}
-        </app-notice>
-
+        @if (unusableTranslateTargetBooks.length) {
+          <app-notice>
+            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
+          </app-notice>
+        }
+        @if (unusableTranslateSourceBooks.length) {
+          <app-notice>
+            @if (unusableTranslateSourceBooks.length) {
+              <h4>
+                <transloco
+                  key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
+                  [params]="{ draftingSourceProjectName }"
+                ></transloco>
+              </h4>
+            }
+            @if (unusableTranslateSourceBooks.length) {
+              <app-book-multi-select
+                [availableBooks]="unusableTranslateSourceBooks"
+                [readonly]="true"
+              ></app-book-multi-select>
+            }
+          </app-notice>
+        }
+        @if (showBookSelectionError) {
+          <app-notice type="error">
+            {{ t("choose_books_to_translate_error") }}
+          </app-notice>
+        }
         <div class="button-strip">
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ t("next") }}
           </button>
         </div>
       </mat-step>
-
       <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
         <ng-template matStepLabel>
           <div class="stepper-multi-header">
@@ -49,37 +52,40 @@
             <h3>{{ t("choose_books_for_training_subheader") }}</h3>
           </div>
         </ng-template>
-
         <app-book-multi-select
           [availableBooks]="availableTrainingBooks"
           [selectedBooks]="initialSelectedTrainingBooks"
           (bookSelect)="onTrainingBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
-
-        <app-notice *ngIf="unusableTranslateTargetBooks.length">
-          <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-        </app-notice>
-
-        <app-notice *ngIf="unusableTrainingSourceBooks.length">
-          <h4>
-            <transloco
-              *ngIf="unusableTrainingSourceBooks.length"
-              key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
-              [params]="{ trainingSourceProjectName }"
-            ></transloco>
-          </h4>
-          <app-book-multi-select
-            *ngIf="unusableTrainingSourceBooks.length"
-            [availableBooks]="unusableTrainingSourceBooks"
-            [readonly]="true"
-          ></app-book-multi-select>
-        </app-notice>
-
-        <app-notice *ngIf="showBookSelectionError" type="error">
-          {{ t("choose_books_for_training_error") }}
-        </app-notice>
-
+        @if (unusableTranslateTargetBooks.length) {
+          <app-notice>
+            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
+          </app-notice>
+        }
+        @if (unusableTrainingSourceBooks.length) {
+          <app-notice>
+            <h4>
+              @if (unusableTrainingSourceBooks.length) {
+                <transloco
+                  key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
+                  [params]="{ trainingSourceProjectName }"
+                ></transloco>
+              }
+            </h4>
+            @if (unusableTrainingSourceBooks.length) {
+              <app-book-multi-select
+                [availableBooks]="unusableTrainingSourceBooks"
+                [readonly]="true"
+              ></app-book-multi-select>
+            }
+          </app-notice>
+        }
+        @if (showBookSelectionError) {
+          <app-notice type="error">
+            {{ t("choose_books_for_training_error") }}
+          </app-notice>
+        }
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
@@ -87,60 +93,60 @@
           </button>
         </div>
       </mat-step>
-
-      <mat-step *ngIf="trainingDataFilesAvailable" [completed]="true">
-        <ng-template matStepLabel>
-          <div class="stepper-multi-header">
-            <h2>{{ t("choose_additional_training_data_files") }}</h2>
-            <h3>{{ t("choose_additional_training_data_files_subheader") }}</h3>
+      @if (trainingDataFilesAvailable) {
+        <mat-step [completed]="true">
+          <ng-template matStepLabel>
+            <div class="stepper-multi-header">
+              <h2>{{ t("choose_additional_training_data_files") }}</h2>
+              <h3>{{ t("choose_additional_training_data_files_subheader") }}</h3>
+            </div>
+          </ng-template>
+          <app-training-data-multi-select
+            [availableTrainingData]="availableTrainingData"
+            [selectedTrainingDataIds]="selectedTrainingDataIds"
+            (trainingDataSelect)="onTrainingDataSelect($event)"
+            data-test-id="draft-stepper-training-data-files"
+          ></app-training-data-multi-select>
+          <div class="button-strip">
+            <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+              {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
+            </button>
           </div>
-        </ng-template>
-
-        <app-training-data-multi-select
-          [availableTrainingData]="availableTrainingData"
-          [selectedTrainingDataIds]="selectedTrainingDataIds"
-          (trainingDataSelect)="onTrainingDataSelect($event)"
-          data-test-id="draft-stepper-training-data-files"
-        ></app-training-data-multi-select>
-
-        <div class="button-strip">
-          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
-            {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
-          </button>
-        </div>
-      </mat-step>
-
-      <mat-step *ngIf="featureFlags.allowFastTraining.enabled" [completed]="true">
-        <ng-template matStepLabel>
-          <div class="stepper-multi-header">
-            <h2>{{ t("configure_advanced_settings") }}</h2>
+        </mat-step>
+      }
+      @if (featureFlags.allowFastTraining.enabled) {
+        <mat-step [completed]="true">
+          <ng-template matStepLabel>
+            <div class="stepper-multi-header">
+              <h2>{{ t("configure_advanced_settings") }}</h2>
+            </div>
+          </ng-template>
+          <div>
+            <mat-checkbox [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
           </div>
-        </ng-template>
-        <div>
-          <mat-checkbox [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
-        </div>
-        <app-notice *ngIf="fastTraining" icon="warning" type="warning" class="warning">{{
-          t("fast_training_warning")
-        }}</app-notice>
-        <div class="button-strip">
-          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
-            {{ t("generate_draft") }}
-          </button>
-        </div>
-      </mat-step>
+          @if (fastTraining) {
+            <app-notice icon="warning" type="warning" class="warning">{{ t("fast_training_warning") }}</app-notice>
+          }
+          <div class="button-strip">
+            <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+            <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+              {{ t("generate_draft") }}
+            </button>
+          </div>
+        </mat-step>
+      }
     </mat-stepper>
-  </ng-container>
+  }
 
-  <ng-container *ngIf="availableTranslateBooks && availableTranslateBooks.length <= 0">
+  @if (availableTranslateBooks && availableTranslateBooks.length <= 0) {
     <p>{{ t("no_available_books") }}</p>
-  </ng-container>
+  }
 
-  <ng-container *ngIf="availableTranslateBooks == null">
+  @if (availableTranslateBooks == null) {
     <div class="loading">
       <mat-spinner diameter="20" color="primary"></mat-spinner>
       <div>{{ t("loading") }}</div>
     </div>
-  </ng-container>
+  }
 </ng-container>

@@ -4,7 +4,9 @@
     These settings are for developers and testers of Scripture Forge. Do not use them for real projects. Doing so will
     cause unexpected problems and errors.
   </app-notice>
-  <mat-checkbox *ngFor="let flag of featureFlags.featureFlags" [(ngModel)]="flag.enabled" [disabled]="flag.readonly">
-    {{ flag.description }}
-  </mat-checkbox>
+  @for (flag of featureFlags.featureFlags; track flag) {
+    <mat-checkbox [(ngModel)]="flag.enabled" [disabled]="flag.readonly">
+      {{ flag.description }}
+    </mat-checkbox>
+  }
 </mat-dialog-content>

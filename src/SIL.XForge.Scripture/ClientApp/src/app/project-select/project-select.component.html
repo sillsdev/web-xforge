@@ -16,14 +16,20 @@
       (opened)="autocompleteOpened()"
       class="project-select"
     >
-      <mat-optgroup label="{{ t('projects') }}" *ngIf="nullableLength(projects$ | async) > 0">
-        <mat-option *ngFor="let project of projects$ | async" [value]="project">{{ projectLabel(project) }}</mat-option>
-      </mat-optgroup>
-      <mat-optgroup label="{{ t('resources') }}" *ngIf="nullableLength(resources$ | async) > 0">
-        <mat-option *ngFor="let resource of resources$ | async" [value]="resource">{{
-          projectLabel(resource)
-        }}</mat-option>
-      </mat-optgroup>
+      @if (nullableLength(projects$ | async) > 0) {
+        <mat-optgroup label="{{ t('projects') }}">
+          @for (project of projects$ | async; track project) {
+            <mat-option [value]="project">{{ projectLabel(project) }}</mat-option>
+          }
+        </mat-optgroup>
+      }
+      @if (nullableLength(resources$ | async) > 0) {
+        <mat-optgroup label="{{ t('resources') }}">
+          @for (resource of resources$ | async; track resource) {
+            <mat-option [value]="resource">{{ projectLabel(resource) }}</mat-option>
+          }
+        </mat-optgroup>
+      }
     </mat-autocomplete>
   </mat-form-field>
 </ng-container>

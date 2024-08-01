@@ -1,8 +1,12 @@
 <ng-container *transloco="let t; read: 'share'">
-  <button *ngIf="iconOnlyButton" (click)="openDialog()" mat-icon-button [matTooltip]="t('share')" id="share-btn">
-    <mat-icon class="mirror-rtl">person_add</mat-icon>
-  </button>
-  <button *ngIf="!iconOnlyButton" mat-flat-button (click)="openDialog()" color="primary" class="button-with-text">
-    <mat-icon class="mirror-rtl">person_add</mat-icon> {{ t("share") }}
-  </button>
+  @if (iconOnlyButton) {
+    <button (click)="openDialog()" mat-icon-button [matTooltip]="t('share')" id="share-btn">
+      <mat-icon class="mirror-rtl">person_add</mat-icon>
+    </button>
+  }
+  @if (!iconOnlyButton) {
+    <button mat-flat-button (click)="openDialog()" color="primary" class="button-with-text">
+      <mat-icon class="mirror-rtl">person_add</mat-icon> {{ t("share") }}
+    </button>
+  }
 </ng-container>
