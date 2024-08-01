@@ -16,14 +16,9 @@
         <div class="question-meta">
           <span class="question-verse">{{ questionVerseRef(questionDoc) }}</span>
           <a *ngIf="getUnreadAnswers(questionDoc) > 0" class="view-answers" title="{{ t('view_answers') }}">
-            <mat-icon
-              aria-hidden="false"
-              class="mirror-rtl"
-              [matBadge]="getUnreadAnswers(questionDoc)"
-              matBadgePosition="before"
-              matBadgeSize="small"
-              >forum</mat-icon
-            >
+            <div [matBadge]="getUnreadAnswers(questionDoc)" matBadgePosition="before" matBadgeSize="small">
+              <mat-icon aria-hidden="false" class="mirror-rtl">forum</mat-icon>
+            </div>
           </a>
         </div>
       </div>
