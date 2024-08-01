@@ -77,7 +77,7 @@
     <mat-dialog-actions fxLayoutAlign="end">
       <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
       @if (canInsertNote) {
-        <mat-button-toggle-group>
+        <mat-button-toggle-group hideSingleSelectionIndicator="true">
           <mat-button-toggle class="save-button save-options" (click)="submit()">{{
             t(saveOption === "save" ? "save" : "resolve")
           }}</mat-button-toggle>

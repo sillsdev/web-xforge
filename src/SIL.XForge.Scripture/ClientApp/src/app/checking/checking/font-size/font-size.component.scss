@@ -31,6 +31,8 @@
     // Trims the top and bottom off the default mat menu
     > .mat-mdc-menu-content {
       padding: 0;
+      --mat-menu-item-with-icon-leading-spacing: 0;
+      --mat-menu-item-with-icon-trailing-spacing: 0;
     }
 
     .mat-mdc-menu-item {
