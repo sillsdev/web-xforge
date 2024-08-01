@@ -349,6 +349,7 @@ describe('QuestionDialogComponent', () => {
   it('disables end-reference if start-reference is invalid', fakeAsync(() => {
     env = new TestEnvironment();
     flush();
+    tick(EDITOR_READY_TIMEOUT);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
     env.inputValue(env.scriptureStartInput, 'LUK 99:1');
@@ -448,6 +449,7 @@ describe('QuestionDialogComponent', () => {
       dateModified: ''
     });
     flush();
+    tick(EDITOR_READY_TIMEOUT);
     expect(env.component.scriptureStart.value).toBe('LUK 1:3');
     env.component.scriptureEnd.setValue('MAT 1:2');
     env.component.scriptureEnd.markAsTouched();
@@ -471,6 +473,7 @@ describe('QuestionDialogComponent', () => {
       dateModified: ''
     });
     flush();
+    tick(EDITOR_READY_TIMEOUT);
     env.component.scriptureStart.setValue('MAT 1:2');
     env.component.scriptureStart.markAsTouched();
     expect(env.component.versesForm.errors!.verseDifferentBookOrChapter).toBe(true);

@@ -1,37 +1,45 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
-import { Canon, VerseRef } from '@sillsdev/scripture';
+import { VerseRef } from '@sillsdev/scripture';
+import { IOutputAreaSizes } from 'angular-split';
 import clone from 'lodash-es/clone';
-import isEqual from 'lodash-es/isEqual';
-import { fromEvent, Subscription } from 'rxjs';
+import { fromEvent, Observable, Subscription } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
-import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shared/utils';
+import { verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
   selector: 'app-checking-text',
   templateUrl: './checking-text.component.html',
   styleUrls: ['./checking-text.component.scss']
 })
-export class CheckingTextComponent extends SubscriptionDisposable {
+export class CheckingTextComponent extends SubscriptionDisposable implements AfterViewInit {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
+  @Input() resizableContainer?: { transitionEnd: Observable<IOutputAreaSizes> };
   @Input() isRightToLeft: boolean = false;
   @Input() fontSize?: string;
   @Input() projectDoc?: SFProjectProfileDoc;
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
-  private _editorLoaded = false;
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
 
   constructor(readonly fontService: FontService) {
     super();
+  }
+
+  ngAfterViewInit(): void {
+    if (this.resizableContainer != null) {
+      this.subscribe(this.resizableContainer.transitionEnd, () => {
+        this.scrollToVerse(this.activeVerse);
+      });
+    }
   }
 
   @Input() set placeholder(value: string) {
@@ -47,26 +55,21 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       return;
     }
     this._activeVerse = verseRef;
-    this.highlightActiveVerse();
-    this.scrollToVerse(this.activeVerse);
+    if (verseRef !== undefined) {
+      this.highlightActiveVerse();
+      this.scrollToVerse(this.activeVerse);
+    } else {
+      this.textComponent.highlight([]);
+      this.scrollTo(0);
+    }
   }
 
   get activeVerse(): VerseRef | undefined {
     return this._activeVerse;
   }
 
-  get isEditorLoaded(): boolean {
-    return this._editorLoaded;
-  }
-
   @Input() set id(textDocId: TextDocId | undefined) {
     if (textDocId) {
-      if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
-        this._editorLoaded = false;
-      }
-      if (this._activeVerse != null && this._id != null && !isEqual(this._id, textDocId)) {
-        this.activeVerse = undefined;
-      }
       this._id = textDocId;
     }
   }
@@ -86,14 +89,13 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   onLoaded(): void {
-    this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse();
     this.scrollToVerse(this.activeVerse);
   }
 
-  setAudioTextRef(reference: string): void {
-    this.highlightSegments(reference);
+  private get isEditorLoaded(): boolean {
+    return this.textComponent.editor != null;
   }
 
   private get questionVersesInCurrentText(): VerseRef[] {
@@ -132,31 +134,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.textComponent.highlight(refs);
   }
 
-  /**
-   * Highlight segments based off of a base verse reference. If the reference is verse_1_3, this will
-   * highlight verse_1_3, verse_1_3/p1, verse_1_3/p2, etc.
-   */
-  private highlightSegments(baseRef: string): void {
-    if (!this.isEditorLoaded || this.id == null) {
-      return;
-    }
-
-    let refs: string[] = [];
-    const verseStr: string | undefined = getVerseStrFromSegmentRef(baseRef);
-    if (verseStr != null) {
-      const verseRef: VerseRef = new VerseRef(
-        Canon.bookNumberToId(this.id.bookNum),
-        this.id.chapterNum.toString(),
-        verseStr
-      );
-      this.scrollToVerse(verseRef);
-      refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
-    } else {
-      refs.push(baseRef);
-    }
-    this.textComponent.highlight(refs);
-  }
-
   private subscribeClickEvents(segments: string[]): void {
     for (const segment of segments) {
       const element: Element | null = this.textComponent.getSegmentElement(segment);
@@ -178,15 +155,19 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   private scrollToVerse(verseRef: VerseRef | undefined): void {
-    if (verseRef != null && this.textComponent.editor != null) {
+    if (verseRef != null && this.textComponent != null) {
       const firstSegment: string = this.textComponent.getVerseSegments(verseRef)[0];
-      const editor: Element | null = this.textComponent.editor.container.querySelector('.ql-editor');
-      if (editor != null) {
-        const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
-        if (element != null) {
-          editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
-        }
+      const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
+      if (element != null) {
+        this.scrollTo(element.offsetTop - 20);
       }
+    }
+  }
+
+  private scrollTo(y: number): void {
+    const editor: Element | undefined | null = this.textComponent?.editor?.container.querySelector('.ql-editor');
+    if (editor != null) {
+      editor.scrollTo({ top: y, behavior: 'smooth' });
     }
   }
 }

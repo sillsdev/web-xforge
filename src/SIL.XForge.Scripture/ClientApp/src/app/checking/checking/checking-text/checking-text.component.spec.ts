@@ -126,18 +126,12 @@ describe('CheckingTextComponent', () => {
     expect(env.getSegmentElement('s_2')!.classList).not.toContain('question-segment');
   }));
 
-  it('highlights audio verse when set', fakeAsync(() => {
+  it('highlights all segments of active verse', fakeAsync(() => {
     const env = new TestEnvironment();
     env.component.id = new TextDocId('project01', 41, 1);
     env.component.questionVerses = [new VerseRef('MRK', '1', '1')];
-    env.component.activeVerse = new VerseRef('MRK', '1', '1');
-    env.wait();
-    expect(env.isSegmentHighlighted('verse_1_1')).toBe(true);
-    env.component.setAudioTextRef('verse_1_2-3');
-    env.wait();
-    expect(env.isSegmentHighlighted('verse_1_1')).toBe(false);
-    expect(env.isSegmentHighlighted('verse_1_2-3')).toBe(true);
-    env.component.setAudioTextRef('verse_1_6');
+
+    env.component.activeVerse = new VerseRef('MRK', '1', '6');
     env.wait();
     expect(env.isSegmentHighlighted('verse_1_6a')).toBe(true);
     // highlight both segments of verse 6
