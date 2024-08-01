@@ -32,6 +32,7 @@
             [projects]="projects"
             [resources]="resources"
             [hiddenParatextIds]="[ptProjectId]"
+            [isDisabled]="projects.length === 0"
           ></app-project-select>
           <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
           <ng-container *ngIf="isBasedOnProjectSet">
