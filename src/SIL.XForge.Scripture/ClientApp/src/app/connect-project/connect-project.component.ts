@@ -47,7 +47,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   });
   resources?: SelectableProject[];
   showResourcesLoadingFailedMessage = false;
-  state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
+  state: 'connecting' | 'input' | 'login' | 'offline' = 'input';
   projectDoc?: SFProjectDoc;
 
   projectLabel = projectLabel;
@@ -87,14 +87,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get showSettings(): boolean {
-    if (this.state !== 'input' || this.projectsFromParatext == null) {
-      return false;
-    }
-    return this.projectToConnect != null;
+    return this.state === 'input' && this.projectMetadata?.projectId == null;
   }
 
   get submitDisabled(): boolean {
-    return this.state !== 'input' || !this.isAppOnline;
+    return (this.projectsFromParatext == null && this.projectMetadata?.projectId == null) || !this.isAppOnline;
   }
 
   get isBasedOnProjectSet(): boolean {
@@ -122,12 +119,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return `${this.projectMetadata.shortName} - ${this.projectMetadata.name}`;
   }
 
-  private get projectToConnect(): ParatextProject | undefined {
-    return this.projectsFromParatext?.find(p => p.paratextId === this.ptProjectId);
-  }
-
   ngOnInit(): void {
-    this.state = 'loading';
+    this.state = 'input';
     if (this.ptProjectId === '') {
       this.router.navigate(['/projects']);
     }
@@ -206,7 +199,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   private async populateProjectList(): Promise<void> {
-    this.state = 'loading';
+    this.state = 'input';
     this.loadingStarted();
 
     try {
@@ -217,7 +210,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         this.state = 'login';
       } else {
         this.projectsFromParatext = projects.sort(compareProjectsForSorting);
-        this.state = 'input';
         if (this.projectMetadata?.projectId == null) {
           // do not wait for resources to load
           this.fetchResources();
