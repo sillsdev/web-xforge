@@ -40,10 +40,9 @@
           {{ t("instructions_draft_process_subtext") }}
         </p>
         <p>
-          @for (i of i18n.interpolate("draft_generation.instructions_help"); track i) {
-            @if (i.id == null) {
-              {{ i.text }}
-            }
+          @for (i of draftHelp | async; track i) {
+            <!-- prettier-ignore -->
+            @if (i.id == null) {{{ i.text }}}
             @if (i.id === 1) {
               <a [href]="urlService.autoDrafts" target="_blank">{{ i.text }}</a>
             }
