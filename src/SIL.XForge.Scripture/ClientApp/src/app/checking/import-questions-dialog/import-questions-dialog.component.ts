@@ -99,6 +99,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   transceleratorRequest: RetryingRequest<TransceleratorQuestion[]>;
   promiseForTransceleratorQuestions: Promise<TransceleratorQuestion[] | undefined>;
   promiseForQuestionDocQuery: Promise<RealtimeQuery<QuestionDoc>>;
+  helpInstructions: { text: string; id?: number }[];
+  transceleratorInfo: { text: string; id?: number }[];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
@@ -131,6 +133,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       this.updateSelectAllCheckbox();
     });
 
+    this.helpInstructions = this.i18n.interpolate('import_questions_dialog.help_options');
+    this.transceleratorInfo = this.i18n.interpolate('import_questions_dialog.transcelerator_paratext');
     this.transceleratorRequest = projectService.transceleratorQuestions(this.data.projectId, this.ngUnsubscribe);
 
     this.promiseForTransceleratorQuestions = this.transceleratorRequest.promiseForResult.catch((error: unknown) => {

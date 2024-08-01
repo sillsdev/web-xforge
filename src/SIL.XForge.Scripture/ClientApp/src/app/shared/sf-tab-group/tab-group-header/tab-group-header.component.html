@@ -16,22 +16,21 @@
   [cdkDropListSortPredicate]="movablePredicate.bind(this)"
   (cdkDropListDropped)="onTabDrop($event)"
 >
-  @for (tab of tabs; track tab; let i = $index) {
-    <app-tab-header
-      [closeable]="tab.closeable"
-      [movable]="tab.movable"
-      [tooltip]="tab.tooltip"
-      [active]="i === selectedIndex"
-      (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
-      (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"
-      (closeClick)="closeClick.next(i)"
-      cdkDrag
-      [cdkDragDisabled]="!tab.movable"
-      [cdkDragData]="tab"
-    >
-      <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
-    </app-tab-header>
-  }
+  <app-tab-header
+    *ngFor="let tab of tabs; let i = index"
+    [closeable]="tab.closeable"
+    [movable]="tab.movable"
+    [tooltip]="tab.tooltip"
+    [active]="i === selectedIndex"
+    (tabPress)="tabPress.next({ index: i, pointerEvent: $event })"
+    (tabClick)="tabClick.next({ index: i, pointerEvent: $event })"
+    (closeClick)="closeClick.next(i)"
+    cdkDrag
+    [cdkDragDisabled]="!tab.movable"
+    [cdkDragData]="tab"
+  >
+    <ng-container *ngTemplateOutlet="tab.tabHeaderTemplate"></ng-container>
+  </app-tab-header>
 
   <app-tab-header
     #menuTrigger="matMenuTrigger"
