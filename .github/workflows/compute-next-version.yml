@@ -51,3 +51,16 @@ jobs:
             --release-level ${{ inputs.release-level }} \
             --tag-prefix ${{ inputs.tag_prefix }})"
           echo "next_version=${next_version}" >> $GITHUB_OUTPUT
+      - name: Details on chosen version
+        run: |
+          set -u
+          echo "Using next_version: ${{ steps.compute_next_version.outputs.next_version }}"
+          echo " "
+          echo "Considered the prior tag history from commit:"
+          git log --decorate=short --oneline --abbrev=9 --max-count 1 origin/${{ inputs.release_branch }}
+          echo " "
+          echo "All existing tags pointing at that commit are:"
+          git tag --points-at origin/${{ inputs.release_branch }}
+          echo " "
+          echo "Some recently created tags are:"
+          git for-each-ref --sort=-creatordate --format '%(refname:strip=2) %(creatordate:iso8601)' refs/tags | head --line=14
