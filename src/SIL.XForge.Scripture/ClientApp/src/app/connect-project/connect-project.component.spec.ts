@@ -123,13 +123,15 @@ describe('ConnectProjectComponent', () => {
     verify(mockedRouter.navigate(deepEqual(['/projects']))).once();
   }));
 
-  it('should display loading when getting PT projects', fakeAsync(() => {
+  it('page is instantly available without waiting for projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProjectsResources([], []);
+    env.setupProjectsResources(env.paratextProjects, []);
     env.fixture.detectChanges();
 
-    expect(env.component.state).toEqual('loading');
+    expect(env.component.state).toEqual('input');
     verify(mockedNoticeService.loadingStarted()).once();
+    expect(env.component.showSettings).toBe(true);
+    expect(env.component.projects.length).toEqual(0);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
     tick();
@@ -137,6 +139,8 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
+    expect(env.component.projects.length).toEqual(env.paratextProjects.length);
+    expect(env.submitButton.nativeElement.disabled).toBe(false);
     verify(mockedNoticeService.loadingFinished()).once();
   }));
 
@@ -317,7 +321,7 @@ describe('ConnectProjectComponent', () => {
 
     verify(mockedParatextService.getProjects()).once();
     verify(mockedAuthService.requestParatextCredentialUpdate(anything())).once();
-    expect(env.component.state).toEqual('loading');
+    expect(env.component.state).toEqual('input');
   }));
 });
 
@@ -328,8 +332,7 @@ class TestEnvironment {
     OnlineStatusService
   ) as TestOnlineStatusService;
 
-  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private paratextProjects: ParatextProject[] = [
+  paratextProjects: ParatextProject[] = [
     {
       paratextId: 'pt01',
       name: 'English',
@@ -375,6 +378,7 @@ class TestEnvironment {
     },
     { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
   ];
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(params: TestEnvironmentParams = {}) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
