@@ -3,9 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
-import { merge, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
-import { TextDocService } from '../../core/text-doc.service';
 import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
@@ -137,10 +136,7 @@ export class TextViewModel {
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
-  constructor(
-    private readonly destroyRef: DestroyRef,
-    private readonly textDocService: TextDocService
-  ) {}
+  constructor(private readonly destroyRef: DestroyRef) {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
@@ -195,12 +191,10 @@ export class TextViewModel {
     editor.history.clear();
 
     if (subscribeToUpdates) {
-      this.changesSub = merge(this.textDocService.getLocalSystemChanges$(textDocId), this.textDoc.remoteChanges$)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(ops => {
-          const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
-          editor.updateContents(deltaWithEmbeds, 'api');
-        });
+      this.changesSub = this.textDoc.remoteChanges$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(ops => {
+        const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
+        editor.updateContents(deltaWithEmbeds, 'api');
+      });
     }
 
     this.onCreateSub = this.textDoc.create$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {

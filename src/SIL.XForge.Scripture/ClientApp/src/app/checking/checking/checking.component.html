@@ -128,6 +128,7 @@
         <div id="split-container" #splitContainer>
           <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
           <as-split
+            #splitter
             direction="vertical"
             unit="pixel"
             [disabled]="!questionsList.activeQuestionDoc"
@@ -149,6 +150,7 @@
                     [isRightToLeft]="isRightToLeft"
                     [class.hidden]="hideChapterText"
                     [projectDoc]="projectDoc"
+                    [resizableContainer]="splitter"
                   ></app-checking-text>
                 </div>
               </div>
@@ -185,7 +187,7 @@
                   [timing]="chapterTextAudioTiming"
                   [textDocId]="textDocId"
                   [canClose]="!hideChapterText"
-                  (currentVerseChanged)="handleAudioTextRefChanged($event)"
+                  (currentVerseChanged)="highlightSegments($event)"
                   (closed)="hideChapterAudio()"
                 ></app-checking-scripture-audio-player>
               </div>

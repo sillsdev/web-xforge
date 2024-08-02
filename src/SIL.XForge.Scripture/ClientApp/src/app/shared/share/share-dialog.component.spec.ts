@@ -191,6 +191,7 @@ describe('ShareDialogComponent', () => {
 
     env.component.setLinkExpiration('days_ninety');
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything(), 90)).once();
+    expect(env.component.shareExpiration).toEqual(90);
   }));
 
   it('community checker users can only share the community checker role', fakeAsync(() => {
@@ -333,6 +334,7 @@ describe('ShareDialogComponent', () => {
     env.clickElement(env.shareButton);
     verify(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything(), anything())).thrice();
     verify(mockedProjectService.onlineReserveLinkSharingKey(anything(), anything())).twice();
+    expect(env.component.shareableLink).toContain('/join/linkSharing01/en');
   }));
 });
 

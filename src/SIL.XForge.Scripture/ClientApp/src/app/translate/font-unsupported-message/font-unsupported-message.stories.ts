@@ -3,7 +3,7 @@ import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { RESOURCE_IDENTIFIER_LENGTH } from '../../core/paratext.service';
 import { FontUnsupportedMessageComponent } from './font-unsupported-message.component';

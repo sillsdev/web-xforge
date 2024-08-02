@@ -22,7 +22,6 @@
     "password_reset_email_sent": "हामीले भर्खरै तपाइँलाई तपाइँको पासवर्ड रिसेट गर्न एउटा इमेल पठाएका छौँ।",
     "product_version": "उत्पादन संस्करण: v{{ version }}",
     "project_has_been_deleted": "यस प्रोजेक्‍ट हटाइएको छ वा अब उप्रान्त उपलब्‍ध छैन।",
-    "project_home": "प्रोजेक्‍टको गृह पृष्‍ठ",
     "questions_answers": "प्रश्‍नहरू र जवाफहरू",
     "redirecting_in_moments": "केही क्षणमा पुनः निर्देशित गर्दै...",
     "refresh": "रिफ्रेस",
@@ -203,6 +202,9 @@
     "save_answer": "जवाफ सेभ गर्नुहोस्",
     "select_verses": "पदहरू चयन",
     "show_more_unread": "थप {{ count }} नपढिएका जवाफहरू देखाउनुहोस्",
+    "tooltip_attach": "Attach scripture",
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "यदि सेटिङहरूमा कन्‍फिगर गरिएको छ भने प्‍याराटेक्‍स्‍टमा निर्यात गर्नुहोस्\n",
     "tooltip_status_resolve": "समाधान भएको भनेर जवाफलाई अंकित गर्नुहोस्",
     "your_answer": "तपाइँकाे जवाफ"
@@ -217,6 +219,7 @@
     "drag_and_drop_files": "अडियो र समय फाइलहरू यहाँ तानेर ल्याइ छोड्नुहोस्",
     "drag_and_drop_or_browse": "अथवा",
     "from_timing_past_to_timing": "एक वा एकभन्दा धेरै अन्तिम मानहरू तिनीहरूको सुरुका मानहरू भन्दा अघि समाप्त हुन्छन्।",
+    "help": "मद्दत",
     "no_audio_file_uploaded": "कुनै अडियो फाइल अपलोड गरिएको छैन",
     "no_timing_data_uploaded": "कुनै समय फाइल अपलोड गरिएको छैन",
     "not_upload_audio_offline": "इन्टरनेटमा नजोडिइकन अडियो फाइलहरू अपलोड गर्न सकिँदैन।",
@@ -270,7 +273,8 @@
     "my_progress": "मेरो प्रगति",
     "project_stats": "प्रोजेक्‍ट तथ्याङ्क",
     "questions": "प्रश्‍नहरू",
-    "some_actions_unavailable_offline": "केही कार्यहरू अफलाइन हुँदा उपलब्ध हुँदैनन् त्यसैले इन्टरनेटमा जोडिनु आवश्यक छ, जस्तै अध्यायको अडियो अपलोड गर्न वा हटाउन।"
+    "some_actions_unavailable_offline": "केही कार्यहरू अफलाइन हुँदा उपलब्ध हुँदैनन् त्यसैले इन्टरनेटमा जोडिनु आवश्यक छ, जस्तै अध्यायको अडियो अपलोड गर्न वा हटाउन।",
+    "tooltip_edit": "सम्पादन गर्नुहोस्"
   },
   "checking_questions": {
     "listen_to_question": "{{ referenceForDisplay }} को लागि प्रश्‍न सुन्‍नुहोस्",
@@ -305,8 +309,8 @@
   },
   "error_messages": {
     "error_occurred_login": "लगइन गर्दा त्रुटि भयो।",
-    "failed_to_update_avatar": "तपाईंको अवतार तस्बिर अद्यावधिक गर्न सकिएन।",
     "failed_to_retrieve_suggestions": "अनुवाद सुझावहरू प्राप्त गर्न सकिएन।",
+    "failed_to_update_avatar": "तपाईंको अवतार तस्बिर अद्यावधिक गर्न सकिएन।",
     "suggestion_engine_requires_retrain": "अनुवादको लागि सुझावहरू प्राप्त भएन। कृपया संक्षिप्‍त विवरण पृष्ठमा दिइएको सुझावहरूलाई पुनः तालिम दिनुहोस्।",
     "go_to_retrain": "संक्षिप्‍त विवरणमा जानुहोस्",
     "try_again": "पुन: प्रयास गर्नुहोस्"
@@ -326,9 +330,8 @@
     "text_size": "टेक्‍स्‍टको आकार"
   },
   "issue_email": {
-    "body": "समस्या रिपोर्ट गर्नुभएकोमा धन्यवाद!\nयदि तपाइँले तलका केही जानकारीहरू भर्नुभयो भने यसले हामीलाई सहायता गर्नेछ, धेरै भर्न नसके तापनि कृपया तपाइँले पेश गर्नुहोस्।\nयदि तपाइँले फिचर वा विषेशतामा परिवर्तन अनुरोध गर्दै हुनुहुन्छ भने यस्ता कुराहरू लागू नहुन सक्छन्।\nतपाइँको बग रिपोर्ट सार्वजनिक रूपमा उपलब्ध हुनेछन् भनी सचेत हुनुहोस्। पासवर्ड वा अन्य गोप्य कुराहरू कहिल्यै पेश नगर्नुहोस्।\n\nबग रिपोर्ट\nबग के हो भन्नबारे स्पष्ट र संक्षिप्त विवरण।\n\nउदाहरणका लागि:\n\n१. मा जानुहोस्...\n२. क्लिक गर्नुहोस्...\n३. तल स्क्रोल गर्नुहोस्...\n४. त्रुटि हेर्नुहोस्\n\nवास्‍तविक स्‍थिति\nकृपया तपाइँले अवलोकन गरिरहनुभएको समस्‍याको वास्‍तविक स्‍थितिको बारेमा वर्णन गर्नुहोस्।\n\nअपेक्षित स्‍थिति\nतपाइँले के हुने अपेक्षा राख्‍नुभयो भन्‍नेबारे स्‍पष्‍ट र संक्षिप्‍त विवरण लेख्‍नुहोस्।\n\nस्क्रिनसटहरू\nयदि लागू हुन्छ भने, तपाईंको समस्या व्याख्या गर्न मद्दत गर्न स्क्रिनसटहरू थप्‍नुहोस्।\n\nथप सन्‍दर्भ\nसमस्याको अन्‍य सन्‍दर्भ यहाँ थप्‍नुहोस्।\n\nसम्‍भावित समाधान\nसमस्याको सम्‍भावित समाधानहरू यहाँ थप्‍नुहोस्।\n\nतपाइँको सिस्‍टम वातावरण:\nसफ्टवेयर                  संस्करण\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nसाइट: {{ url }} \nत्रुटि आईडी: {{ errorId }}",
-    "not_applicable": "लागू हुँदैन",
-    "subject": "{{ siteName }} को समस्‍या",
+    "heading": "Please explain the problem.",
+    "technical_details": "Technical details",
     "unknown": "अज्ञात"
   },
   "join": {
@@ -349,8 +352,24 @@
     "cancel": "रद्द गर्नुहोस्",
     "close": "बन्द गर्नुहोस्"
   },
-  "navigation-project_selector": {
-    "connect_project": "प्रोजेक्‍टलाई जोडिनुहोस्"
+  "my_projects": {
+    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
+    "connect_a_project_to_get_started": "Connect a project to get started",
+    "connected": "Connected",
+    "dbl_resource": "Digital Bible Library resource",
+    "dbl_resources": "Digital Bible Library resources",
+    "drafting": "Drafting",
+    "failed_to_connect_to_pt_server": "There was a problem connecting to Paratext to get your projects. Please try again later. If the problem persists after several hours, please report the issue for help.",
+    "join": "जोडिनुहोस्",
+    "loading_more_pt_projects": "Loading additional Paratext projects ...",
+    "looking_for_another_project": "Looking for another project?",
+    "my_projects": "My projects",
+    "no_projects": "You have no projects.",
+    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
+    "not_connected": "Not connected",
+    "offline": "You will need to connect to the internet to get started with a project.",
+    "open": "Open",
+    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
   "scripture_chooser_dialog": {
     "choose_book": "पुस्‍तक चयन गर्नुहोस्",
@@ -390,22 +409,26 @@
     "anyone_can": "लिङ्क भएको जो कोहीले पनि",
     "change": "परिवर्तन",
     "copy_link": "लिङ्क कपि गर्नुहोस्",
+    "days_seven": "7 days",
+    "days_fourteen": "14 days",
+    "days_thirty": "30 days",
+    "days_ninety": "90 days",
+    "days_threesixtyfive": "1 year",
+    "error_language": "Please select a language",
+    "expiration_description": "Change the lifetime of the link",
     "invitation_language": "निमन्त्रणाको भाषा परिवर्तन गर्नुहोस्",
     "invitation_link_type": "लिङ्क कसरी प्रयोग गर्ने बारे परिवर्तन गर्नुहोस्",
     "invitation_role": "निमन्त्रणाको भूमिका परिवर्तन गर्नुहोस्",
     "invitation_shared_in_language": "मा निमन्त्रणा सेयर गरिनेछ",
     "link_can_be_used_by": "द्वारा लिङ्क प्रयोग गर्न सकिन्छ",
     "link_sharing_not_available_offline": "लिङ्क साझेदारी मार्फत प्रयोगकर्ताहरूलाई निमन्त्रणा गर्न अफलाइन हुँदा मिल्दैँन।",
-    "recipient": "केवल प्राप्तकर्ता",
-    "recipient_can": "केवल प्राप्तकर्ताले मात्र",
-    "recipient_only_notice": "प्रत्येक लिङ्क एक पटक मात्र प्रयोग गर्न सकिन्छ र १४ दिन पछि यसको म्याद सकिन्छ। नयाँ लिङ्क सिर्जना गर्न र साझेदारी गर्न बटनमा पुनः क्लिक गर्नुहोस्।",
+    "recipient": "One recipient",
+    "recipient_can": "The recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after {{ shareExpiration }} days. Click the button again to generate and share a new link.",
     "share": "सेयर गर्नुहोस्",
     "share_project": "{{ project }} सेयर गर्नुहोस्",
-    "share_with_others": "अरूसँग साझेदारी गर्नुहोस्"
-  },
-  "start": {
-    "connect_project": "प्रोजेक्‍टसँग जोडिनुहोस्",
-    "not_connected_to_any_projects": "तपाइँ अहिलेसम्म कुनै पनि प्रोजेक्टहरूसँग जोडिनुभएको छैन जस्तो देखिन्छ।"
+    "share_with_others": "अरूसँग साझेदारी गर्नुहोस्",
+    "will_expire_in": "Link expires in [b]{{ count }} days[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "यस ब्राउजरमा अडियो रेकर्डिङ गर्न सकिदैँन।",

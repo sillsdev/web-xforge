@@ -11,7 +11,6 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
-import { PermissionsService } from 'src/app/core/permissions.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -20,6 +19,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';

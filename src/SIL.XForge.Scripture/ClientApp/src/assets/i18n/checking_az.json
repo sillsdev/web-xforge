@@ -309,8 +309,8 @@
   },
   "error_messages": {
     "error_occurred_login": "Giriş edəndə bir səhv baş verdi.",
-    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
+    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
     "go_to_retrain": "Go to Overview",
     "try_again": "Yenidən çalışın"
@@ -359,6 +359,7 @@
     "dbl_resource": "Digital Bible Library resource",
     "dbl_resources": "Digital Bible Library resources",
     "drafting": "Drafting",
+    "failed_to_connect_to_pt_server": "There was a problem connecting to Paratext to get your projects. Please try again later. If the problem persists after several hours, please report the issue for help.",
     "join": "Join",
     "loading_more_pt_projects": "Loading additional Paratext projects ...",
     "looking_for_another_project": "Looking for another project?",

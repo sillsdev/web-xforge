@@ -82,7 +82,9 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId/checking', component: MockComponent },
   { path: 'projects', component: MockComponent },
   { path: 'my-account', component: MockComponent },
-  { path: 'connect-project', component: MockComponent }
+  { path: 'connect-project', component: MockComponent },
+  { path: 'serval-administration', component: MockComponent },
+  { path: 'serval-administration/:projectId', component: MockComponent }
 ];
 
 describe('AppComponent', () => {
@@ -291,6 +293,18 @@ describe('AppComponent', () => {
     // Get past setTimeout to navigation
     tick();
     expect(env.location.path()).toEqual('/projects');
+  }));
+
+  it('response to remote project change for serval admin', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser('user05');
+    env.navigate(['/serval-administration', 'project01']);
+    when(mockedLocationService.pathname).thenReturn('/serval-administration/project01');
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    env.updatePreTranslate('project01');
+    verify(mockedDialogService.message(anything())).never();
   }));
 
   it('response to Commenter project role changed', fakeAsync(() => {
@@ -553,6 +567,7 @@ class TestEnvironment {
     this.addUser('user02', 'User 02', 'auth0|user02');
     this.addUser('user03', 'User 03', 'sms|user03');
     this.addUser('user04', 'User 04', 'sms|user04');
+    this.addUser('user05', 'User 05', 'paratext|user05', SystemRole.ServalAdmin);
 
     this.addProject(
       'project01',
@@ -787,6 +802,12 @@ class TestEnvironment {
     this.wait();
   }
 
+  updatePreTranslate(projectId: string): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.translateConfig.preTranslate, true), false);
+    this.wait();
+  }
+
   addUserToProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
@@ -805,12 +826,13 @@ class TestEnvironment {
     this.wait();
   }
 
-  private addUser(userId: string, name: string, authId: string): void {
+  private addUser(userId: string, name: string, authId: string, systemRole: SystemRole = SystemRole.User): void {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: userId,
       data: createTestUser({
         name,
         authId,
+        roles: [systemRole],
         sites: {
           sf: {
             projects: ['project01', 'project02', 'project03']

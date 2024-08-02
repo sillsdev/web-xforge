@@ -37,6 +37,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseStrFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
@@ -69,7 +70,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsList?: CheckingQuestionsComponent;
-  @ViewChild(SplitComponent) splitComponent?: SplitComponent;
+  @ViewChild('splitter') splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
   @ViewChild(CheckingScriptureAudioPlayerComponent) set scriptureAudioPlayer(
@@ -108,7 +109,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   textDocId?: TextDocId;
   totalVisibleQuestionsString: string = '0';
   visibleQuestions: Readonly<QuestionDoc[] | undefined>;
-  showScriptureAudioPlayer: boolean = false;
   hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
@@ -157,6 +157,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
+  private _showScriptureAudioPlayer: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -241,6 +242,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
     const userId: string = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
+  }
+
+  get showScriptureAudioPlayer(): boolean {
+    return this._showScriptureAudioPlayer;
+  }
+
+  private set showScriptureAudioPlayer(value: boolean) {
+    this._showScriptureAudioPlayer = value;
   }
 
   get hideChapterText(): boolean {
@@ -805,7 +814,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.saveAnswer(answerAction.answer!, answerAction.questionDoc);
         break;
       case 'play-audio':
-        this.scripturePanel!.activeVerse = this.activeQuestionVerseRef;
+        break;
     }
     this.calculateScriptureSliderPosition(true);
   }
@@ -1012,11 +1021,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.calculateScriptureSliderPosition();
   }
 
-  handleAudioTextRefChanged(segmentRef: string): void {
+  /**
+   * Highlight segments based off of a base verse reference. If the reference is verse_1_3, this will
+   * highlight verse_1_3, verse_1_3/p1, verse_1_3/p2, etc.
+   */
+  highlightSegments(segmentRef: string): void {
     if (!this.isAudioPlaying()) {
       return;
     }
-    this.scripturePanel!.setAudioTextRef(segmentRef);
+
+    const verseStr: string | undefined = getVerseStrFromSegmentRef(segmentRef);
+    if (verseStr != null) {
+      const verseRef: VerseRef = new VerseRef(Canon.bookNumberToId(this.book!), this.chapter!.toString(), verseStr);
+      this.scripturePanel!.activeVerse = verseRef;
+    }
   }
 
   isAudioPlaying(): boolean {
@@ -1024,7 +1042,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   hideChapterAudio(): void {
-    this.showScriptureAudioPlayer = this.hideChapterText;
+    this.toggleAudio(true);
   }
 
   toggleAudio(forceStopAndHide: boolean = false): void {
@@ -1038,6 +1056,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         : forceStopAndHide
           ? false
           : !this.showScriptureAudioPlayer;
+
+    if (this.scripturePanel === undefined) return;
+
+    if (this.showScriptureAudioPlayer) {
+      this.scripturePanel.activeVerse = undefined;
+    } else {
+      this.scripturePanel.activeVerse = this.activeQuestionVerseRef;
+    }
   }
 
   /**
@@ -1350,7 +1376,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly.
     // 100 ms is a speculative value for waiting for elements to be loaded and updated in the DOM.
     const changeUpdateDelayMs: number = 100;
-    setTimeout(async () => {
+    setTimeout(() => {
       if (this.splitComponent == null || this.hideChapterText) {
         return;
       }
@@ -1360,6 +1386,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       } else {
         answerPanelHeight = this.answerPanelElementMinimumHeight;
       }
+
       this.splitComponent.setVisibleAreaSizes([
         '*',
         this.showScriptureAudioPlayer ? this.scriptureAudioPlayerAreaHeight : answerPanelHeight

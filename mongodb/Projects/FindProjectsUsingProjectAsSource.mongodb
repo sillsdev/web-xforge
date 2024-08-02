@@ -1,0 +1,20 @@
+use('xforge')
+
+// Query to find what project is using a project as a source (and therefore preventing the specified project from being
+// deleted). This is a re-implementation of the logic in SFProjectService.IsSourceProject
+
+const shortName = '';
+
+const id = db.sf_projects.findOne({ shortName })._id
+
+db.sf_projects.find({
+  $or: [{
+    'translateConfig.source.projectRef': id
+  }, {
+    'translateConfig.draftConfig.alternateSource.projectRef': id
+  }, {
+    'translateConfig.draftConfig.alternateTrainingSource.projectRef': id
+  }, {
+    'translateConfig.draftConfig.additionalTrainingSource.projectRef': id
+  }]
+})
