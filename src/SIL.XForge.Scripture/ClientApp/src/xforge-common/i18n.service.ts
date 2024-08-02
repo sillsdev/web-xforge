@@ -330,25 +330,28 @@ export class I18nService {
    * view, or a link for the text "fox" or "dog". This system has the advantage of being able to handle translations
    * that reorder "fox" and "dog".
    */
-  interpolate(key: I18nKey, params?: HashMap): { text: string; id?: number }[] {
-    const translation: string = this.transloco.translate(key, params);
-    // find instances of "{ 1 } text { 2 }"
-    const regex = /\{\s*\d+\s*\}(.*?)\{\s*\d+\s*\}/g;
+  interpolate(key: I18nKey, params?: HashMap): Observable<{ text: string; id?: number }[]> {
+    return this.transloco.selectTranslate(key, params).pipe(
+      map(translation => {
+        // find instances of "{ 1 } text { 2 }"
+        const regex = /\{\s*\d+\s*\}(.*?)\{\s*\d+\s*\}/g;
 
-    const sections: { text: string; id?: number }[] = [];
-    let i = 0;
-    for (const match of translation.matchAll(regex)) {
-      const fullMatchText = match[0];
-      const matchInnerText = match[1];
-      sections.push({ text: translation.substring(i, match.index) });
-      const id = Number.parseInt(fullMatchText.match(/\d+/)![0], 10);
-      sections.push({ text: matchInnerText, id });
-      // The index on a match can only be undefined when calling String.prototype.match with a non-global regex
-      i = match.index! + fullMatchText.length;
-    }
-    sections.push({ text: translation.substring(i) });
-
-    return sections;
+        const sections: { text: string; id?: number }[] = [];
+        let i = 0;
+        for (const match of translation.matchAll(regex)) {
+          const fullMatchText = match[0];
+          const matchInnerText = match[1];
+          sections.push({ text: translation.substring(i, match.index) });
+          const id = Number.parseInt(fullMatchText.match(/\d+/)![0], 10);
+          sections.push({ text: matchInnerText, id });
+          // The index on a match can only be undefined when calling String.prototype.match with a non-global regex
+          i = match.index! + fullMatchText.length;
+        }
+        sections.push({ text: translation.substring(i) });
+        console.log(sections);
+        return sections;
+      })
+    );
   }
 
   /**

@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
@@ -50,6 +51,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
   styleUrls: ['./draft-generation.component.scss'],
   standalone: true,
   imports: [
+    CommonModule,
     UICommonModule,
     RouterModule,
     TranslocoModule,
@@ -69,7 +71,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
-  draftHelp: { text: string; id?: number }[] = this.i18n.interpolate('draft_generation.instructions_help');
+  draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
   additionalTrainingSourceLanguage?: string;
   additionalTrainingSourceLanguageDisplayName?: string;

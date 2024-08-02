@@ -40,7 +40,7 @@
           {{ t("instructions_draft_process_subtext") }}
         </p>
         <p>
-          @for (i of draftHelp; track i) {
+          @for (i of draftHelp | async; track i) {
             @if (i.id == null) {
               {{ i.text }}
             }
