@@ -16,7 +16,7 @@ import * as fs from 'fs';
 import { AbstractCursor, Db, MongoClient } from 'mongodb';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { colored, colors, ConnectionSettings, createWS, databaseConfigs } from './utils';
+import { colored, colors, ConnectionSettings, databaseConfigs } from './utils';
 
 interface ScriptArgs {
   env?: string;
@@ -84,7 +84,6 @@ class UserCommentReport {
     console.log(`Connecting to ${this.env} at ${this.connectionConfig.dbLocation}`);
 
     const client = new MongoClient(this.connectionConfig.dbLocation);
-    const ws = createWS(this.connectionConfig);
 
     try {
       await client.connect();
@@ -111,7 +110,6 @@ class UserCommentReport {
 
       this.writeFile();
     } finally {
-      ws.close();
       await client.close();
     }
   }
