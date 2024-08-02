@@ -864,7 +864,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
 
-        if (projectSecretShareKey.RecipientUserId != null)
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        SFProject project = projectDoc.Data;
+        if (project.UserRoles.ContainsKey(curUserId))
+            return projectId;
+
+        if (projectSecretShareKey?.RecipientUserId != null)
         {
             if (projectSecretShareKey.RecipientUserId == curUserId)
             {
@@ -873,24 +878,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new DataNotFoundException("key_already_used");
         }
 
-        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
-        SFProject project = projectDoc.Data;
-        if (project.UserRoles.ContainsKey(curUserId))
-            return projectId;
-
         IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
         // Attempt to get the role for the user from the Paratext registry
         Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
         if (attempt.TryResult(out string projectRole))
         {
-            await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey.Key);
+            await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey?.Key);
             return projectId;
         }
 
         // Ensure the share key is valid for everyone else
         await CheckShareKeyValidity(shareKey);
 
-        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
+        if (projectSecretShareKey?.ShareLinkType == ShareLinkType.Anyone)
         {
             await AddUserToProjectAsync(
                 conn,
@@ -902,7 +902,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             return projectId;
         }
         // Look for a valid specific user share key.
-        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient)
+        if (projectSecretShareKey?.ShareLinkType == ShareLinkType.Recipient)
         {
             await AddUserToProjectAsync(
                 conn,
