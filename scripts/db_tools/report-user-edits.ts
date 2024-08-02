@@ -12,6 +12,7 @@
  *        --log-diff [true|false] (default: false)
  */
 
+import { Canon } from '@sillsdev/scripture';
 import diff from 'fast-diff';
 import * as fs from 'fs';
 import { AbstractCursor, Db, MongoClient } from 'mongodb';
@@ -60,11 +61,14 @@ interface UserEditReportUserData {
 }
 
 interface UserEditReportBookChapterData {
+  snapshotId: string;
   bookChapter: string;
   inserts: number;
   deletes: number;
   wordAdds: number;
   wordDeletes: number;
+  baselineVersion: number;
+  prevVersion: number;
 }
 
 interface VersionOp {
@@ -114,87 +118,106 @@ class UserEditReport {
       const cursor = await this.queryDB(client.db());
 
       for await (const doc of cursor) {
-        summary.years.push({
-          year: doc._id,
-          months: await Promise.all(
-            (doc.months as []).map(
-              async (monthData: any) =>
-                ({
-                  month: monthData.month,
-                  users: await Promise.all(
-                    (monthData.users as []).map(async (user: any) => {
-                      return {
-                        userId: user.userId,
-                        userName: user.userName,
-                        bookChapters: await Promise.all(
-                          (user.bookChapters as []).map(async (bookChapterData: any) => {
-                            const result: UserEditReportBookChapterData = {
-                              bookChapter: bookChapterData.bookChapter,
-                              inserts: 0,
-                              deletes: 0,
-                              wordAdds: 0,
-                              wordDeletes: 0
-                            };
+        let yearData = summary.years.find(y => y.year === doc.year);
 
-                            // Baseline is the first version for the user-book-chapter grouping
-                            let baselineVersion = bookChapterData.versionOps[0].v;
-                            let prevVersion = baselineVersion - 1;
+        if (yearData == null) {
+          yearData = { year: doc.year, months: [] };
+          summary.years.push(yearData);
+        }
 
-                            for (const versionOp of bookChapterData.versionOps) {
-                              // Sum the raw edit counts
-                              const { inserts, deletes } = this.parseRawEdits(versionOp);
-                              result.inserts += inserts;
-                              result.deletes += deletes;
+        let monthData = yearData.months.find(m => m.month === doc.month);
 
-                              // Sum the net word edits when there is a gap in versions
-                              if (versionOp.v !== prevVersion + 1) {
-                                console.log(prevVersion, versionOp.v, user.userName, bookChapterData.bookChapter);
+        if (monthData == null) {
+          monthData = { month: doc.month, users: [] };
+          yearData.months.push(monthData);
+        }
 
-                                const netWordEdits = await this.parseNetWordEdits(
-                                  conn,
-                                  bookChapterData.snapshotId,
-                                  baselineVersion,
-                                  prevVersion + 1, // Snapshot version is one more than op doc version
-                                  user.userName,
-                                  doc._id,
-                                  monthData.month
-                                );
+        let userData = monthData.users.find(u => u.userId === doc.userId);
 
-                                result.wordAdds += netWordEdits.inserts;
-                                result.wordDeletes += netWordEdits.deletes;
+        if (userData == null) {
+          userData = { userId: doc.userId, userName: doc.userName, bookChapters: [] };
+          monthData.users.push(userData);
+        }
 
-                                // New baseline
-                                baselineVersion = versionOp.v;
-                              }
+        let bookChapterData = userData.bookChapters.find(bc => bc.bookChapter === doc.bookChapter);
 
-                              prevVersion = versionOp.v;
-                            }
+        if (bookChapterData == null) {
+          bookChapterData = {
+            snapshotId: doc.snapshotId,
+            bookChapter: doc.bookChapter,
+            inserts: 0,
+            deletes: 0,
+            wordAdds: 0,
+            wordDeletes: 0,
+            baselineVersion: 0,
+            prevVersion: 0
+          };
+          userData.bookChapters.push(bookChapterData);
+        }
 
-                            // Sum the net word edits for the last version
-                            const lastVersion = bookChapterData.versionOps[bookChapterData.versionOps.length - 1].v;
-                            const netWordEdits = await this.parseNetWordEdits(
-                              conn,
-                              bookChapterData.snapshotId,
-                              baselineVersion,
-                              lastVersion + 1, // Snapshot version is one more than op doc version
-                              user.userName,
-                              doc._id,
-                              monthData.month
-                            );
+        // Sum the raw edit counts
+        const { inserts, deletes } = this.parseRawEdits(doc.op.ops);
+        bookChapterData.inserts += inserts;
+        bookChapterData.deletes += deletes;
 
-                            result.wordAdds += netWordEdits.inserts;
-                            result.wordDeletes += netWordEdits.deletes;
+        // Baseline is the first version for the user-book-chapter grouping
+        if (bookChapterData.baselineVersion === 0) {
+          bookChapterData.baselineVersion = doc.v;
+          bookChapterData.prevVersion = doc.v - 1;
+        }
 
-                            return result;
-                          })
-                        )
-                      } as UserEditReportUserData;
-                    })
-                  )
-                }) as UserEditReportMonthData
-            )
-          )
-        } as UserEditReportYearData);
+        // Sum the net word edits when there is a gap in versions
+        if (doc.v !== bookChapterData.prevVersion + 1) {
+          const netWordEdits = await this.parseNetWordEdits(
+            conn,
+            doc.snapshotId,
+            bookChapterData.baselineVersion,
+            bookChapterData.prevVersion + 1, // Snapshot version is one more than op doc version
+            doc.userName,
+            doc.year,
+            doc.month
+          );
+
+          bookChapterData.wordAdds += netWordEdits.inserts;
+          bookChapterData.wordDeletes += netWordEdits.deletes;
+
+          // New baseline
+          bookChapterData.baselineVersion = doc.v;
+        }
+
+        bookChapterData.prevVersion = doc.v;
+      }
+
+      // Sort the finished data by year, month, user, book:chapter (sorting in db query is too expensive)
+      summary.years.sort((a, b) => a.year - b.year);
+
+      for (const yearData of summary.years) {
+        yearData.months.sort((a, b) => a.month - b.month);
+
+        for (const monthData of yearData.months) {
+          monthData.users.sort((a, b) => a.userName.localeCompare(b.userName));
+
+          for (const userData of monthData.users) {
+            userData.bookChapters.sort((a, b) => this.sortCompareBookChapters(a.bookChapter, b.bookChapter));
+
+            for (const bookChapterData of userData.bookChapters) {
+              // Sum the net word edits for the last version
+              const lastVersion = bookChapterData.prevVersion;
+              const netWordEdits = await this.parseNetWordEdits(
+                conn,
+                bookChapterData.snapshotId,
+                bookChapterData.baselineVersion,
+                lastVersion + 1, // Snapshot version is one more than op doc version
+                userData.userName,
+                yearData.year,
+                monthData.month
+              );
+
+              bookChapterData.wordAdds += netWordEdits.inserts;
+              bookChapterData.wordDeletes += netWordEdits.deletes;
+            }
+          }
+        }
       }
 
       this.writeFile(summary);
@@ -295,13 +318,13 @@ class UserEditReport {
   /**
    * Parses the user raw insert/delete counts.
    */
-  private parseRawEdits(versionOp: VersionOp): { inserts: number; deletes: number } {
+  private parseRawEdits(ops: DeltaOperation[]): { inserts: number; deletes: number } {
     const result = {
       inserts: 0,
       deletes: 0
     };
 
-    for (const op of versionOp.op.ops) {
+    for (const op of ops) {
       if (typeof op.insert === 'string') {
         result.inserts += op.insert.length;
       } else if (op.delete) {
@@ -310,6 +333,22 @@ class UserEditReport {
     }
 
     return result;
+  }
+
+  private sortCompareBookChapters(bookChapterA: string, bookChapterB: string): number {
+    const bookATokens = bookChapterA.split(':');
+    const bookBTokens = bookChapterB.split(':');
+    const bookA = bookATokens[0];
+    const bookB = bookBTokens[0];
+
+    if (bookA !== bookB) {
+      return Canon.bookIdToNumber(bookA) - Canon.bookIdToNumber(bookB);
+    }
+
+    const chapterA = bookATokens[1];
+    const chapterB = bookBTokens[1];
+
+    return parseInt(chapterA) - parseInt(chapterB);
   }
 
   private processArgs(): ScriptArgs {
@@ -370,6 +409,10 @@ class UserEditReport {
       .parseSync();
   }
 
+  /**
+   * Queries the database for the user edits within the given time range.
+   * Grouping and sorting are done post-query to avoid potential out-of-memory mongodb issues.
+   */
   private async queryDB(db: Db): Promise<AbstractCursor> {
     console.log(
       `Querying edits for project "${blue(this.projectShortName)}" from ${blue(this.fromPretty)} to ${blue(
@@ -448,7 +491,8 @@ class UserEditReport {
       },
       {
         $project: {
-          d: 1,
+          _id: 0,
+          snapshotId: '$d',
           v: 1,
           op: 1,
           userId: 1,
@@ -456,100 +500,6 @@ class UserEditReport {
           year: { $year: '$timestampDate' },
           month: { $month: '$timestampDate' },
           bookChapter: 1
-        }
-      },
-      {
-        // Group by year, month, user, and book chapter to collect version ops
-        $group: {
-          _id: {
-            year: '$year',
-            month: '$month',
-            userId: '$userId',
-            userName: '$userName',
-            bookChapter: '$bookChapter',
-            snapshotId: '$d'
-          },
-          versionOps: {
-            $push: {
-              v: '$v',
-              op: '$op'
-            }
-          }
-        }
-      },
-      {
-        $sort: {
-          '_id.year': 1,
-          '_id.month': 1,
-          '_id.userName': 1,
-          '_id.bookChapter': 1
-        }
-      },
-      {
-        // Regroup the documents by year, month, and user name to collect book chapters and their version ops
-        $group: {
-          _id: {
-            year: '$_id.year',
-            month: '$_id.month',
-            userId: '$_id.userId',
-            userName: '$_id.userName'
-          },
-          bookChapters: {
-            $push: {
-              bookChapter: '$_id.bookChapter',
-              snapshotId: '$_id.snapshotId',
-              versionOps: '$versionOps'
-            }
-          }
-        }
-      },
-      {
-        // Sort the regrouped results by year, month, and user name
-        $sort: {
-          '_id.year': 1,
-          '_id.month': 1,
-          '_id.userName': 1
-        }
-      },
-      {
-        // Group by year and month, pushing user details and their book chapters into an array
-        $group: {
-          _id: {
-            year: '$_id.year',
-            month: '$_id.month'
-          },
-          users: {
-            $push: {
-              userId: '$_id.userId',
-              userName: '$_id.userName',
-              bookChapters: '$bookChapters'
-            }
-          }
-        }
-      },
-      {
-        // Sort the regrouped results by year and month
-        $sort: {
-          '_id.year': 1,
-          '_id.month': 1
-        }
-      },
-      {
-        // Group by year to collect all months, including the users and their book chapters for each month
-        $group: {
-          _id: '$_id.year',
-          months: {
-            $push: {
-              month: '$_id.month',
-              users: '$users'
-            }
-          }
-        }
-      },
-      {
-        // Sort the final output by year
-        $sort: {
-          _id: 1
         }
       }
     ];
