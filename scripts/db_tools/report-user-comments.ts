@@ -224,7 +224,7 @@ class UserCommentReport {
           throw new Error("The 'to' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
-        if (argv.from && argv.to && new Date(argv.from) > new Date(argv.to)) {
+        if (argv.from && argv.to && new Date(argv.from) >= new Date(argv.to)) {
           throw new Error('Start date must be before end date');
         }
 
