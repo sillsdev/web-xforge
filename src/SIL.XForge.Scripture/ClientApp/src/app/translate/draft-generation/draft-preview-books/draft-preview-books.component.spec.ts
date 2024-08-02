@@ -1,4 +1,7 @@
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatMenuHarness } from '@angular/material/menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -58,6 +61,20 @@ describe('DraftPreviewBooks', () => {
     expect(extras).toEqual({
       queryParams: { 'draft-active': true }
     });
+  }));
+
+  it('opens more menu with options', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    const moreButton: HTMLElement = env.getBookButtonAtIndex(0).querySelector('.book-more')!;
+    moreButton.click();
+    tick();
+    env.fixture.detectChanges();
+    const harness: MatMenuHarness = await env.moreMenuHarness();
+    const items = await harness.getItems();
+    expect(items.length).toEqual(2);
+    harness.close();
+    tick();
+    env.fixture.detectChanges();
   }));
 
   it('does not apply draft if user cancels', fakeAsync(() => {
@@ -151,6 +168,7 @@ describe('DraftPreviewBooks', () => {
 class TestEnvironment {
   component: DraftPreviewBooksComponent;
   fixture: ComponentFixture<DraftPreviewBooksComponent>;
+  loader: HarnessLoader;
   mockProjectDoc: SFProjectProfileDoc = {
     data: createTestProjectProfile({
       texts: [
@@ -204,6 +222,7 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);
     this.component = this.fixture.componentInstance;
+    this.loader = TestbedHarnessEnvironment.loader(this.fixture);
     tick();
     this.fixture.detectChanges();
   }
@@ -214,5 +233,9 @@ class TestEnvironment {
 
   getBookButtonAtIndex(index: number): HTMLElement {
     return this.fixture.nativeElement.querySelectorAll('.draft-book-option')[index];
+  }
+
+  async moreMenuHarness(): Promise<MatMenuHarness> {
+    return await this.loader.getHarness(MatMenuHarness.with({ selector: '.book-more' }));
   }
 }

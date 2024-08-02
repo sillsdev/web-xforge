@@ -213,6 +213,7 @@
   },
   "draft_preview_books": {
     "add_to_project": "Add to project",
+    "add_to_different_project": "Add to a different project",
     "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
     "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
     "no_books_have_drafts": "No books have any drafts.",
