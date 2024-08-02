@@ -99,10 +99,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   transceleratorRequest: RetryingRequest<TransceleratorQuestion[]>;
   promiseForTransceleratorQuestions: Promise<TransceleratorQuestion[] | undefined>;
   promiseForQuestionDocQuery: Promise<RealtimeQuery<QuestionDoc>>;
-  helpInstructions: { text: string; id?: number }[] = this.i18n.interpolate('import_questions_dialog.help_options');
-  transceleratorInfo: { text: string; id?: number }[] = this.i18n.interpolate(
-    'import_questions_dialog.transcelerator_paratext'
-  );
+  helpInstructions = this.i18n.interpolate('import_questions_dialog.help_options');
+  transceleratorInfo = this.i18n.interpolate('import_questions_dialog.transcelerator_paratext');
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,

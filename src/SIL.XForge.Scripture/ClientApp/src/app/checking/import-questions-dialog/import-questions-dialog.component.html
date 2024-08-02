@@ -23,7 +23,7 @@
             <mat-card>
               <mat-card-title>{{ t("import_from_transcelerator") }}</mat-card-title>
               <mat-card-content>
-                @for (i of transceleratorInfo; track i) {
+                @for (i of transceleratorInfo | async; track i) {
                   {{ i.id == null ? i.text : "" }}
                   @if (i.id === 1) {
                     <a [href]="urls.transcelerator" target="_blank">{{ i.text }}</a>
@@ -100,7 +100,7 @@
             </mat-card>
           </div>
           <div class="support-message">
-            @for (i of helpInstructions; track i) {
+            @for (i of helpInstructions | async; track i) {
               @if (i.id == null) {
                 {{ i.text }}
               }
