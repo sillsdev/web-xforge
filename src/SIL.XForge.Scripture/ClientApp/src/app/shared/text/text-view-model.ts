@@ -135,8 +135,6 @@ export class TextViewModel implements OnDestroy {
    */
   private _embeddedElements: Map<string, EmbedPosition> = new Map<string, EmbedPosition>();
 
-  constructor(private readonly textDocService: TextDocService) {}
-
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
   }
@@ -194,10 +192,7 @@ export class TextViewModel implements OnDestroy {
     editor.history.clear();
 
     if (subscribeToUpdates) {
-      this.changesSub = merge(
-        this.textDocService.getLocalSystemChanges$(textDocId),
-        this.textDoc.remoteChanges$
-      ).subscribe(ops => {
+      this.changesSub = this.textDoc.remoteChanges$.subscribe(ops => {
         const deltaWithEmbeds: DeltaStatic = this.addEmbeddedElementsToDelta(ops as DeltaStatic);
         editor.updateContents(deltaWithEmbeds, 'api');
       });
