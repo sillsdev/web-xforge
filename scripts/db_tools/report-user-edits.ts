@@ -9,8 +9,10 @@
  *        --from [YYYY-MM-DD] (optional)
  *        --to [YYYY-MM-DD] (optional)
  *        --outfile [filename] (default: [project]_[report]_([dateFrom]_to_[dateTo]).tsv)
+ *        --log-diff [true|false] (default: false)
  */
 
+import { Canon } from '@sillsdev/scripture';
 import diff from 'fast-diff';
 import * as fs from 'fs';
 import { AbstractCursor, Db, MongoClient } from 'mongodb';
@@ -20,22 +22,58 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { colored, colors, ConnectionSettings, createWS, databaseConfigs, fetchSnapshotByVersion } from './utils';
 
+function getColorFunc(color: number) {
+  return colored.bind(null, color);
+}
+
+const yellow = getColorFunc(colors.yellow);
+const blue = getColorFunc(colors.lightBlue);
+const green = getColorFunc(colors.lightGreen);
+const red = getColorFunc(colors.orange);
+
 interface ScriptArgs {
-  env?: string;
+  env: string;
   project: string;
   from?: string;
   to?: string;
-  outfile?: string;
+  outfile: string;
+  logDiff: boolean;
 }
 
-interface UserEditData {
+interface UserEditReportData {
+  years: UserEditReportYearData[];
+}
+
+interface UserEditReportYearData {
+  year: number;
+  months: UserEditReportMonthData[];
+}
+
+interface UserEditReportMonthData {
+  month: number;
+  users: UserEditReportUserData[];
+}
+
+interface UserEditReportUserData {
   userId: string;
-  userDisplayName: string;
+  userName: string;
+  bookChapters: UserEditReportBookChapterData[];
+}
+
+interface UserEditReportBookChapterData {
+  snapshotId: string;
   bookChapter: string;
   inserts: number;
   deletes: number;
   wordAdds: number;
   wordDeletes: number;
+  baselineVersion: number;
+  prevVersion: number;
+}
+
+interface VersionOp {
+  v: number;
+  op: { ops: DeltaOperation[] };
 }
 
 class UserEditReport {
@@ -46,22 +84,22 @@ class UserEditReport {
   from?: Date;
   to?: Date;
   outfile: string;
+  logDiff: boolean;
 
   fromPretty: string;
   toPretty: string;
-
-  summary?: Map<string, UserEditData>;
 
   readonly reportName = 'user-edit-counts';
 
   constructor() {
     const args: ScriptArgs = this.processArgs();
-    this.env = args.env!;
+    this.env = args.env;
     this.connectionConfig = databaseConfigs.get(this.env)!;
     this.projectShortName = args.project;
-    this.from = args.from ? new Date(`${this.normalizeDateString(args.from)}T00:00`) : undefined; // Start of day
-    this.to = args.to ? new Date(`${this.normalizeDateString(args.to)}T23:59:59`) : undefined; // End of day
-    this.outfile = args.outfile!;
+    this.from = this.toDate(args.from, 'start-of-day'); // Use start of day for 'from' date if time not specified
+    this.to = this.toDate(args.to, 'end-of-day'); // Use end of day for 'to' date if time not specified
+    this.outfile = args.outfile;
+    this.logDiff = args.logDiff;
 
     this.fromPretty = this.formatDate(this.from) ?? 'beginning';
     this.toPretty = this.formatDate(this.to ?? new Date())!;
@@ -70,7 +108,7 @@ class UserEditReport {
   async run() {
     console.log(`Connecting to ${this.env} at ${this.connectionConfig.dbLocation}`);
 
-    this.summary = new Map<string, UserEditData>();
+    const summary: UserEditReportData = { years: [] };
     const client = new MongoClient(this.connectionConfig.dbLocation);
     const ws = createWS(this.connectionConfig);
 
@@ -78,42 +116,111 @@ class UserEditReport {
       await client.connect();
       const conn = new Connection(ws);
       const cursor = await this.queryDB(client.db());
-      let baselineSnapshotVersion = 0;
-      let prevKey: string | null = null;
-      let prevDoc: any = null;
 
       for await (const doc of cursor) {
-        const isLastDoc = !(await cursor.hasNext());
-        const key = this.initSummaryKey(doc);
+        let yearData = summary.years.find(y => y.year === doc.year);
 
-        // Get initial key for comparison and get baseline from the version previous to the first queried doc
-        if (prevKey == null) {
-          baselineSnapshotVersion = doc.v;
-          prevKey = key;
+        if (yearData == null) {
+          yearData = { year: doc.year, months: [] };
+          summary.years.push(yearData);
         }
 
-        // Calc word count edits when the user or book/chapter changes
-        if (key !== prevKey) {
-          // Snapshot version is one more than op doc version
-          await this.parseNetWordEdits(conn, prevDoc.d, baselineSnapshotVersion, prevDoc.v + 1, prevKey);
+        let monthData = yearData.months.find(m => m.month === doc.month);
 
-          // Update baseline for comparison to next user changes
-          baselineSnapshotVersion = doc.v;
-          prevKey = key;
+        if (monthData == null) {
+          monthData = { month: doc.month, users: [] };
+          yearData.months.push(monthData);
         }
 
-        if (isLastDoc) {
-          // Calculate last doc word count edits
-          await this.parseNetWordEdits(conn, doc.d, baselineSnapshotVersion, doc.v + 1, key);
+        let userData = monthData.users.find(u => u.userId === doc.userId);
+
+        if (userData == null) {
+          userData = { userId: doc.userId, userName: doc.userName, bookChapters: [] };
+          monthData.users.push(userData);
         }
 
-        // Add the raw edit counts to the summary
-        this.parseRawEdits(doc, key);
+        let bookChapterData = userData.bookChapters.find(bc => bc.bookChapter === doc.bookChapter);
 
-        prevDoc = doc;
+        if (bookChapterData == null) {
+          bookChapterData = {
+            snapshotId: doc.snapshotId,
+            bookChapter: doc.bookChapter,
+            inserts: 0,
+            deletes: 0,
+            wordAdds: 0,
+            wordDeletes: 0,
+            baselineVersion: 0,
+            prevVersion: 0
+          };
+          userData.bookChapters.push(bookChapterData);
+        }
+
+        // Sum the raw edit counts
+        const { inserts, deletes } = this.parseRawEdits(doc.op.ops);
+        bookChapterData.inserts += inserts;
+        bookChapterData.deletes += deletes;
+
+        // Baseline is the first version for the user-book-chapter grouping
+        if (bookChapterData.baselineVersion === 0) {
+          bookChapterData.baselineVersion = doc.v;
+          bookChapterData.prevVersion = doc.v - 1;
+        }
+
+        // Sum the net word edits when there is a gap in versions
+        if (doc.v !== bookChapterData.prevVersion + 1) {
+          const netWordEdits = await this.parseNetWordEdits(
+            conn,
+            doc.snapshotId,
+            bookChapterData.baselineVersion,
+            bookChapterData.prevVersion + 1, // Snapshot version is one more than op doc version
+            doc.userName,
+            doc.year,
+            doc.month
+          );
+
+          bookChapterData.wordAdds += netWordEdits.inserts;
+          bookChapterData.wordDeletes += netWordEdits.deletes;
+
+          // New baseline
+          bookChapterData.baselineVersion = doc.v;
+        }
+
+        bookChapterData.prevVersion = doc.v;
       }
 
-      this.writeFile();
+      // Sort the finished data by year, month, user, book:chapter (sorting in db query is too expensive)
+      summary.years.sort((a, b) => a.year - b.year);
+
+      for (const yearData of summary.years) {
+        yearData.months.sort((a, b) => a.month - b.month);
+
+        for (const monthData of yearData.months) {
+          monthData.users.sort((a, b) => a.userName.localeCompare(b.userName));
+
+          for (const userData of monthData.users) {
+            userData.bookChapters.sort((a, b) => this.sortCompareBookChapters(a.bookChapter, b.bookChapter));
+
+            for (const bookChapterData of userData.bookChapters) {
+              // Sum the net word edits for the last version
+              const lastVersion = bookChapterData.prevVersion;
+              const netWordEdits = await this.parseNetWordEdits(
+                conn,
+                bookChapterData.snapshotId,
+                bookChapterData.baselineVersion,
+                lastVersion + 1, // Snapshot version is one more than op doc version
+                userData.userName,
+                yearData.year,
+                monthData.month
+              );
+
+              bookChapterData.wordAdds += netWordEdits.inserts;
+              bookChapterData.wordDeletes += netWordEdits.deletes;
+            }
+          }
+        }
+      }
+
+      this.writeFile(summary);
     } finally {
       ws.close();
       await client.close();
@@ -127,8 +234,13 @@ class UserEditReport {
     return date?.toLocaleDateString('en-CA', { year: 'numeric', month: 'numeric', day: 'numeric' });
   }
 
-  private getColorFunc(color: number) {
-    return colored.bind(null, color);
+  /**
+   * Returns the name of the month given its number (1-12).
+   */
+  getMonthName(month: number): string {
+    const date = new Date();
+    date.setMonth(month - 1); // Months are 0-indexed
+    return date.toLocaleString('default', { month: 'long' });
   }
 
   private getOutfileName(): string {
@@ -140,40 +252,35 @@ class UserEditReport {
   }
 
   /**
-   * Get or create a key that represents the user and book/chapter.
+   * Converts a date string from 'YYYY-M-D' to 'YYYY-MM-DD'.  Time is preserved if present.
    */
-  private initSummaryKey(doc: any): string {
-    if (this.summary == null) {
-      throw new Error('Summary not initialized.');
-    }
+  private normalizeDateString(date: string): string {
+    const [dateToken, timeToken] = date.split('T');
+    const [year, month, day] = dateToken.split('-').map(Number);
 
-    const userId = doc.userId;
-    const userDisplayName = doc.userDisplayName;
+    let normalizedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const timeSuffix = timeToken ? `T${timeToken}` : '';
 
-    const [_, book, chapter] = doc.d.split(':');
-    const key = `${userId}|${book}|${chapter}`;
-
-    if (!this.summary[key]) {
-      this.summary[key] = {
-        userId,
-        userDisplayName,
-        bookChapter: `${book}:${chapter}`,
-        inserts: 0,
-        deletes: 0,
-        wordAdds: 0,
-        wordDeletes: 0
-      };
-    }
-
-    return key;
+    return normalizedDate + timeSuffix;
   }
 
   /**
-   * Converts a date string from 'YYYY-M-D' to 'YYYY-MM-DD'.
+   * Converts the date string to a Date object. 'time' specifies the time to use if time not present in the date string.
    */
-  private normalizeDateString(date: string): string {
-    const [year, month, day] = date.split('-').map(Number);
-    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  private toDate(dateString: string | undefined, time: 'start-of-day' | 'end-of-day'): Date | undefined {
+    if (dateString == null) {
+      return undefined;
+    }
+
+    const normalizedDateString: string = this.normalizeDateString(dateString);
+    let timeString: string = '';
+
+    // Add time if not already present in date string
+    if (!normalizedDateString.includes('T')) {
+      timeString = `T${time === 'start-of-day' ? '00:00' : '23:59:59'}`;
+    }
+
+    return new Date(this.normalizeDateString(normalizedDateString) + timeString);
   }
 
   /**
@@ -184,44 +291,64 @@ class UserEditReport {
     docId: any,
     versionA: number,
     versionB: number,
-    key: string
-  ): Promise<void> {
-    if (this.summary == null) {
-      throw new Error('Summary not initialized.');
-    }
-
+    userName: string,
+    year: number,
+    month: number
+  ): Promise<{ inserts: number; deletes: number }> {
     if (versionA === versionB) {
       throw new Error('Versions must be different.');
     }
-
-    const user = this.summary[key].userDisplayName;
-    const bookChapter = this.summary[key].bookChapter;
-    const yellow = this.getColorFunc(colors.yellow);
-    console.log(`\n${yellow(user)} - Net word edits for ${yellow(bookChapter)} v${versionA} -> v${versionB}`);
-
     const snapshotA = await fetchSnapshotByVersion(conn, 'texts', docId, versionA);
     const snapshotB = await fetchSnapshotByVersion(conn, 'texts', docId, versionB);
-    const { inserts, deletes } = SnapshotDiffer.diffDocs(snapshotA.data.ops, snapshotB.data.ops);
 
-    this.summary[key].wordAdds += inserts;
-    this.summary[key].wordDeletes += deletes;
+    console.log(`\n${yellow(`${this.getMonthName(month)} ${year}`)}`);
+    console.log(`${yellow(userName)} - Net word edits for ${yellow(docId)} v${versionA} -> v${versionB}`);
+
+    const results = SnapshotDiffer.diffDocs(snapshotA.data.ops, snapshotB.data.ops, this.logDiff);
+
+    console.log(
+      `${yellow('===')}  ${green(results.inserts.toString())} words added, ${red(
+        results.deletes.toString()
+      )} words deleted.\n`
+    );
+
+    return results;
   }
 
   /**
-   * Parses the user raw insert/delete counts in a projection from an o_text doc and adds it to the summary map.
+   * Parses the user raw insert/delete counts.
    */
-  private parseRawEdits(doc: any, key: string): void {
-    if (this.summary == null) {
-      throw new Error('Summary not initialized.');
-    }
+  private parseRawEdits(ops: DeltaOperation[]): { inserts: number; deletes: number } {
+    const result = {
+      inserts: 0,
+      deletes: 0
+    };
 
-    for (const op of doc.op.ops) {
+    for (const op of ops) {
       if (typeof op.insert === 'string') {
-        this.summary[key].inserts += op.insert.length;
+        result.inserts += op.insert.length;
       } else if (op.delete) {
-        this.summary[key].deletes += op.delete;
+        result.deletes += op.delete;
       }
     }
+
+    return result;
+  }
+
+  private sortCompareBookChapters(bookChapterA: string, bookChapterB: string): number {
+    const bookATokens = bookChapterA.split(':');
+    const bookBTokens = bookChapterB.split(':');
+    const bookA = bookATokens[0];
+    const bookB = bookBTokens[0];
+
+    if (bookA !== bookB) {
+      return Canon.bookIdToNumber(bookA) - Canon.bookIdToNumber(bookB);
+    }
+
+    const chapterA = bookATokens[1];
+    const chapterB = bookBTokens[1];
+
+    return parseInt(chapterA) - parseInt(chapterB);
   }
 
   private processArgs(): ScriptArgs {
@@ -255,18 +382,24 @@ class UserEditReport {
         requiresArg: true,
         description: 'File path to write report to'
       })
+      .option('log-diff', {
+        type: 'boolean',
+        default: false,
+        requiresArg: false,
+        description: 'Whether to log the word diff between snapshots'
+      })
       .check(argv => {
-        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}$/;
+        const dateFormatRegex = /^\d{4}-\d{1,2}-\d{1,2}(T\d{2}:\d{2}(:\d{2})?)?$/;
 
         if (argv.from && !dateFormatRegex.test(argv.from)) {
-          throw new Error("The 'from' date must be in the format YYYY-M-D");
+          throw new Error("The 'from' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
         if (argv.to && !dateFormatRegex.test(argv.to)) {
-          throw new Error("The 'to' date must be in the format YYYY-M-D");
+          throw new Error("The 'to' date must be in the format YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS");
         }
 
-        if (argv.from && argv.to && new Date(argv.from) > new Date(argv.to)) {
+        if (argv.from && argv.to && new Date(argv.from) >= new Date(argv.to)) {
           throw new Error('Start date must be before end date');
         }
 
@@ -276,9 +409,11 @@ class UserEditReport {
       .parseSync();
   }
 
+  /**
+   * Queries the database for the user edits within the given time range.
+   * Grouping and sorting are done post-query to avoid potential out-of-memory mongodb issues.
+   */
   private async queryDB(db: Db): Promise<AbstractCursor> {
-    const blue = this.getColorFunc(colors.lightBlue);
-
     console.log(
       `Querying edits for project "${blue(this.projectShortName)}" from ${blue(this.fromPretty)} to ${blue(
         this.toPretty
@@ -323,6 +458,19 @@ class UserEditReport {
       {
         $match: query
       },
+      {
+        // Convert the dateModified field from ms to date object for each text op
+        $addFields: {
+          timestampDate: { $toDate: '$m.ts' },
+          bookChapter: {
+            $concat: [
+              { $arrayElemAt: [{ $split: ['$d', ':'] }, 1] }, // Gets the 'book' part
+              ':',
+              { $arrayElemAt: [{ $split: ['$d', ':'] }, 2] } // Gets the 'chapter' part
+            ]
+          }
+        }
+      },
       // Join users collection to get user display name
       {
         $lookup: {
@@ -337,17 +485,21 @@ class UserEditReport {
       },
       {
         $addFields: {
-          userDisplayName: '$user.name',
+          userName: '$user.name',
           userId: '$m.uId'
         }
       },
       {
         $project: {
-          d: 1,
+          _id: 0,
+          snapshotId: '$d',
           v: 1,
           op: 1,
           userId: 1,
-          userDisplayName: 1
+          userName: 1,
+          year: { $year: '$timestampDate' },
+          month: { $month: '$timestampDate' },
+          bookChapter: 1
         }
       }
     ];
@@ -356,20 +508,12 @@ class UserEditReport {
   }
 
   /**
-   * Stringifies a UserEditData object to a TSV row.
+   * Converts UserEditReportData object to a TSV string.
    */
-  private toDataRow(data: UserEditData): string {
-    return [data.userDisplayName, data.bookChapter, data.inserts, data.deletes, data.wordAdds, data.wordDeletes].join(
-      '\t'
-    );
-  }
-
-  /**
-   * Converts a map of UserEditData objects to a TSV string.
-   */
-  private toTsv(summary: Map<string, UserEditData>): string {
-    const title = `User edits on ${this.env} for project "${this.projectShortName} (${this.projectId})" from ${this.fromPretty} to ${this.toPretty}`;
+  private toTsv(summary: UserEditReportData): string {
     const header: string[] = [
+      'Year',
+      'Month',
       'User Name',
       'Book:Chapter',
       'Raw Insertions',
@@ -377,21 +521,38 @@ class UserEditReport {
       'Net Word Insertions',
       'Net Word Deletions'
     ];
-    const dataRows: string[] = Object.values(summary).map(this.toDataRow);
 
-    return [title + '\n', header.join('\t'), ...dataRows].join('\n');
-  }
+    const dataRows = [];
 
-  private writeFile() {
-    if (this.summary == null) {
-      throw new Error('Summary not initialized.');
+    for (const yearData of summary.years) {
+      dataRows.push(yearData.year);
+
+      for (const monthData of yearData.months) {
+        dataRows.push(`\t${this.getMonthName(monthData.month)}`);
+
+        for (const userData of monthData.users) {
+          dataRows.push(`\t\t${userData.userName}`);
+
+          for (const bookChapterData of userData.bookChapters) {
+            const countsColumns = `${bookChapterData.inserts}\t${bookChapterData.deletes}\t${bookChapterData.wordAdds}\t${bookChapterData.wordDeletes}`;
+            dataRows.push(`\t\t\t${bookChapterData.bookChapter}\t${countsColumns}`);
+            console.log(
+              `${yearData.year}/${monthData.month} - ${userData.userName} - ${bookChapterData.bookChapter} - ${countsColumns}`
+            );
+          }
+        }
+      }
     }
 
+    return [header.join('\t'), ...dataRows].join('\n');
+  }
+
+  private writeFile(summary: UserEditReportData) {
     const outfile = this.getOutfileName();
 
     console.log(`\nWriting summary to "${outfile}"`);
     const encoder = new TextEncoder();
-    fs.writeFileSync(outfile, encoder.encode(this.toTsv(this.summary)));
+    fs.writeFileSync(outfile, encoder.encode(this.toTsv(summary)));
   }
 }
 
@@ -399,9 +560,9 @@ class SnapshotDiffer {
   /**
    * Gets the word count number of inserts and deletes between two snapshots.
    */
-  static diffDocs(opsA: DeltaOperation[], opsB: DeltaOperation[]): { inserts: number; deletes: number } {
+  static diffDocs(opsA: DeltaOperation[], opsB: DeltaOperation[], log: boolean): { inserts: number; deletes: number } {
     const rawDiff = this.createRawDiff(opsA, opsB);
-    return this.processRawDiff(rawDiff);
+    return this.processRawDiff(rawDiff, log);
   }
 
   private static countWords(text: string) {
@@ -416,7 +577,7 @@ class SnapshotDiffer {
     return diff(aStr, bStr, undefined, true);
   }
 
-  private static processRawDiff(diffArr: [number, string][]): { inserts: number; deletes: number } {
+  private static processRawDiff(diffArr: [number, string][], log: boolean): { inserts: number; deletes: number } {
     const result = {
       inserts: 0,
       deletes: 0
@@ -426,10 +587,16 @@ class SnapshotDiffer {
       const wordsChanged = this.countWords(text);
 
       if (i === 1) {
-        console.log(`+${wordsChanged}`, colored(colors.lightGreen, text));
+        if (log) {
+          console.log(`+${wordsChanged}`, green(text));
+        }
+
         result.inserts += wordsChanged;
       } else if (i === -1) {
-        console.log(`-${wordsChanged}`, colored(colors.orange, text));
+        if (log) {
+          console.log(`-${wordsChanged}`, red(text));
+        }
+
         result.deletes += wordsChanged;
       }
     }
