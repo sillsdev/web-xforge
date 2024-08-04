@@ -1,0 +1,96 @@
+use('xforge')
+
+// This query finds the most recent sync metric for each project that failed its most recent sync, and then counts how
+// frequent that error message is. Any errors that are not in the knownErrorMessages list will be printed at the end.
+
+// Find the most recent sync metric for each project that failed its most recent sync
+const metrics = db.sync_metrics.aggregate([
+  {
+    $group: {
+      _id: '$projectRef',
+      lastSyncMetric: { $last: '$$ROOT' }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      projectRef: '$lastSyncMetric.projectRef',
+      status: '$lastSyncMetric.status',
+      errorDetails: '$lastSyncMetric.errorDetails',
+      dateStarted: '$lastSyncMetric.dateStarted',
+    }
+  },
+  {
+    $match: {
+      status: "Failed",
+    }
+  },
+  {
+    $sort: {
+      dateStarted: -1
+    }
+  }
+]).toArray()
+
+// This list will need to be updated as new errors are encountered
+const knownErrorMessages = [
+  'Object reference not set to an instance of an object',
+  'Could not find user secrets for SF user id',
+  'PT projects with the following PT ids were requested but without access or they don\'t exist',
+  'Sequence contains no matching element',
+  'Sequence contains more than one matching element',
+  'ToUsx() had a problem',
+  'POST https://registry.paratext.org/api8/token',
+  '429: TooManyRequests',
+  'Could not find file',
+  'Cannot create comment manager',
+  'HgUnknownRevisionException',
+  '500: InternalServerError',
+  'Can not obtain a write lock for a read-only project',
+  'User does not have permission to edit',
+  'Document was deleted',
+  'Errors occurred while performing the sync with the Paratext Server',
+  'GET https://registry.paratext.org/api8/projects/',
+  "System.ArgumentNullException: Value cannot be null. (Parameter 'userName')",
+  'GET https://login.languagetechnology.org/api/v2/users/'
+]
+
+// Count how often each known error message occurred
+const errorMessagesByCount = knownErrorMessages.map((message) => {
+  const count = metrics.filter((metric) => metric.errorDetails.includes(message)).length
+  return { message, count }
+});
+
+// Print known error messages in order of frequency
+console.log('Failures\tDate last seen\tProject last seen\tError message')
+let total = 0;
+for (const { message, count } of errorMessagesByCount.sort((a, b) => b.count - a.count)) {
+  total += count;
+  const mostRecent = metrics.filter((metric) => metric.errorDetails.includes(message)).sort(
+    (a, b) => b.dateStarted - a.dateStarted
+  )[0];
+  if (mostRecent != null) {
+    const lastSeenString = new Date(mostRecent.dateStarted).toISOString().slice(0, -1);
+    console.log(`${count}\t${lastSeenString}\t${mostRecent.projectRef}\t${message}`);
+  }
+}
+
+console.log(`${total} have failed with known errors, out of ${metrics.length} total failed syncs`)
+
+// make sure no failed syncs match multiple known error messages
+for (const metric of metrics) {
+  const matchingMessages = knownErrorMessages.filter((message) => metric.errorDetails.includes(message))
+  if (matchingMessages.length > 1) {
+    console.log(`Failed sync matches multiple known error messages: ${matchingMessages.join(', ')}`)
+    console.log(metric.errorDetails)
+  }
+}
+
+console.log('Failed syncs with unknown errors:')
+for (const metric of metrics) {
+  if (!knownErrorMessages.some((message) => metric.errorDetails.includes(message))) {
+    console.log(`${metric.errorDetails}`)
+  }
+}
+
+metrics
