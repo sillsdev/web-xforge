@@ -74,7 +74,6 @@
     "quill-cursors": "^3.1.2",
     "realtime-server": "file:../../RealtimeServer",
     "reconnecting-websocket": "^4.4.0",
-    "recordrtc": "^5.6.2",
     "rich-text": "^4.1.0",
     "rxjs": "^7.8.1",
     "sharedb": "^1.9.2",
