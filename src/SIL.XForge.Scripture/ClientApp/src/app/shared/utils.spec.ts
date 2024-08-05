@@ -5,6 +5,7 @@ import { SelectableProject } from '../core/paratext.service';
 import {
   compareProjectsForSorting,
   getBookFileNameDigits,
+  getUnsupportedTags,
   getVerseNumbers,
   isBadDelta,
   projectLabel,
@@ -187,6 +188,47 @@ describe('shared utils', () => {
     it('returns C and the ones place value for numbers between 120 and 129', () => {
       expect(getBookFileNameDigits(120)).toEqual('C0');
       expect(getBookFileNameDigits(129)).toEqual('C9');
+    });
+  });
+
+  describe('getUnsupportedTags', () => {
+    it('valid returns empty', () => {
+      expect(getUnsupportedTags({ insert: 'some text' })).toEqual([]);
+    });
+
+    it('can find invalid-block', () => {
+      expect(getUnsupportedTags({ attributes: { 'invalid-block': true, char: { style: 'bad' } } })).toEqual(['bad']);
+    });
+
+    it('can find invalid-line', () => {
+      expect(getUnsupportedTags({ attributes: { 'invalid-inline': true, char: { style: 'bad' } } })).toEqual(['bad']);
+    });
+
+    it('can find nested invalid content', () => {
+      expect(
+        getUnsupportedTags({
+          attributes: { segment: 'verse_1' },
+          insert: { note: { contents: { ops: [{ attributes: { 'invalid-inline': true, char: { style: 'bad' } } }] } } }
+        })
+      ).toEqual(['bad']);
+    });
+
+    it('can find multiple tags', () => {
+      expect(
+        getUnsupportedTags({
+          attributes: { segment: 'verse_1', 'invalid-block': true, char: { style: 'bad2' } },
+          insert: { note: { contents: { ops: [{ attributes: { 'invalid-inline': true, char: { style: 'bad' } } }] } } }
+        })
+      ).toEqual(['bad2', 'bad']);
+    });
+
+    it('does not return duplicates', () => {
+      expect(
+        getUnsupportedTags({
+          attributes: { segment: 'verse_1', 'invalid-block': true, char: { style: 'bad' } },
+          insert: { note: { contents: { ops: [{ attributes: { 'invalid-inline': true, char: { style: 'bad' } } }] } } }
+        })
+      ).toEqual(['bad']);
     });
   });
 });
