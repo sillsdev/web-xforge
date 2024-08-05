@@ -305,12 +305,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await ProjectSecrets.DeleteAsync(projectId);
     }
 
-    public async Task<ChapterDelta> GetChapterDelta(string curUserId, string projectId, int bookNum, int chapterNum)
-    {
-        var project = await GetProjectAsync(projectId);
-        return await _paratextService.GetChapterDelta(curUserId, project.ParatextId, bookNum, chapterNum);
-    }
-
     public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);

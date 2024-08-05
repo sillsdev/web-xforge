@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
 
@@ -54,40 +52,5 @@ public static class DeltaUsxExtensions
         }
 
         return delta.Insert(embed, attributes);
-    }
-
-    public static IEnumerable<string> InvalidTags(this Delta delta)
-    {
-        var invalidTags = new HashSet<string>();
-        foreach (var op in delta.Ops.Where(t => t.OpType() == Delta.InsertType))
-        {
-            invalidTags.UnionWith(CheckToken(op));
-        }
-
-        return invalidTags;
-    }
-
-    private static List<string> CheckToken(JToken token)
-    {
-        var invalidTags = new List<string>();
-        if (
-            token.SelectToken("attributes.invalid-block") != null
-            || token.SelectToken("attributes.invalid-inline") != null
-        )
-        {
-            var style = token.SelectToken("attributes.*.style");
-            if (style != null)
-            {
-                invalidTags.Add(style.Value<string>());
-            }
-        }
-
-        foreach (var child in token.Children())
-        {
-            var childTags = CheckToken(child);
-            invalidTags.AddRange(childTags);
-        }
-
-        return invalidTags;
     }
 }

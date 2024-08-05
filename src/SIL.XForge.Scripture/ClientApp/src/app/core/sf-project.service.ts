@@ -112,15 +112,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId);
   }
 
-  async getInvalidTags(userId: string, sfProjectId: string, bookNum: number, chapterNum: number): Promise<string[]> {
-    return (await this.onlineInvoke<string[]>('getInvalidTags', {
-      curUserId: userId,
-      projectId: sfProjectId,
-      bookNum: bookNum,
-      chapterNum: chapterNum
-    }))!;
-  }
-
   async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {
     const docId: string = getNoteThreadDocId(projectId, noteThread.dataId);
     await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);

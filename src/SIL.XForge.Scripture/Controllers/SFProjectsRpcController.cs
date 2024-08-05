@@ -163,30 +163,6 @@ public class SFProjectsRpcController(
         }
     }
 
-    public async Task<IRpcMethodResult> GetInvalidTags(string curUserId, string projectId, int bookNum, int chapterNum)
-    {
-        try
-        {
-            var chapter = await projectService.GetChapterDelta(curUserId, projectId, bookNum, chapterNum);
-            var invalidTags = chapter.Delta.InvalidTags();
-            return Ok(invalidTags);
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "GetInvalidTags" },
-                    { "curUserId", curUserId },
-                    { "projectId", projectId },
-                    { "bookNum", bookNum.ToString() },
-                    { "chapterNum", chapterNum.ToString() },
-                }
-            );
-            throw;
-        }
-    }
-
     public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole)
     {
         try

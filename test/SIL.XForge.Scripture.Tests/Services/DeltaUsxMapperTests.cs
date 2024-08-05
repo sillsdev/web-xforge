@@ -1683,7 +1683,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(2));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -1708,7 +1707,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(2));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -1748,7 +1746,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(2));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -1773,7 +1770,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -1953,7 +1949,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -2011,8 +2006,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Contains.Item("bad"));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags().Count, Is.EqualTo(1));
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -2081,7 +2074,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -2420,8 +2412,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Contains.Item("bad"));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags().Count(), Is.EqualTo(1));
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -2622,8 +2612,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Contains.Item("xt"));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags().Count(), Is.EqualTo(1));
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -2708,7 +2696,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -2998,8 +2985,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(3));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Contains.Item("bad"));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags().Count(), Is.EqualTo(1));
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -3331,10 +3316,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[2].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[2].IsValid, Is.True);
         Assert.IsTrue(chapterDeltas[2].Delta.DeepEquals(expectedChapter3));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Contains.Item("bad"));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags().Count(), Is.EqualTo(1));
-        Assert.That(chapterDeltas[1].Delta.InvalidTags(), Is.Empty);
-        Assert.That(chapterDeltas[2].Delta.InvalidTags(), Is.Empty);
     }
 
     [Test]
@@ -3391,10 +3372,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[2].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[2].IsValid, Is.True);
         Assert.IsTrue(chapterDeltas[2].Delta.DeepEquals(expectedChapter3));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
-        Assert.That(chapterDeltas[1].Delta.InvalidTags(), Contains.Item("bad"));
-        Assert.That(chapterDeltas[1].Delta.InvalidTags().Count(), Is.EqualTo(1));
-        Assert.That(chapterDeltas[2].Delta.InvalidTags(), Is.Empty);
     }
 
     [Test]
@@ -3451,10 +3428,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[2].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[2].IsValid, Is.False);
         Assert.IsTrue(chapterDeltas[2].Delta.DeepEquals(expectedChapter3));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
-        Assert.That(chapterDeltas[1].Delta.InvalidTags(), Is.Empty);
-        Assert.That(chapterDeltas[2].Delta.InvalidTags(), Contains.Item("bad"));
-        Assert.That(chapterDeltas[2].Delta.InvalidTags().Count(), Is.EqualTo(1));
     }
 
     [Test]
@@ -3479,8 +3452,6 @@ public class DeltaUsxMapperTests
 
         Assert.That(chapterDeltas.Count, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Contains.Item("s"));
-        Assert.That(chapterDeltas[0].Delta.InvalidTags().Count(), Is.EqualTo(1));
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
@@ -3519,8 +3490,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas.Count, Is.EqualTo(2));
         Assert.That(chapterDeltas[0].IsValid, Is.False);
         Assert.That(chapterDeltas[1].IsValid, Is.False);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
-        Assert.That(chapterDeltas[1].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected[0]));
         Assert.IsTrue(chapterDeltas[1].Delta.DeepEquals(expected[1]));
     }
@@ -3583,7 +3552,6 @@ public class DeltaUsxMapperTests
         Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
         Assert.That(chapterDeltas[0].IsValid, Is.True);
-        Assert.That(chapterDeltas[0].Delta.InvalidTags(), Is.Empty);
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
