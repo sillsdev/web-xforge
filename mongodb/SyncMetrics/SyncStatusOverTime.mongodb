@@ -1,6 +1,7 @@
 use('xforge')
 
-// A project is considered active for 30 days from when it attempts to sync
+// A project is considered active for a given number of days from when it attempts to sync, and stops being counted
+// once it has not attempted to sync for that many days.
 const activePeriod = Infinity;
 
 const firstSyncMetricStartTime = db.sync_metrics.find({
@@ -63,7 +64,7 @@ function indexToDate(index) {
   return new Date(startDate.getTime() + index * msPerDay);
 }
 
-const statusKeys = Object.keys(results);
+const statusKeys = Object.keys(results).sort();
 
 console.log(['Date', ...statusKeys].join('\t'));
 for (let i = 0; i < totalDays; i++) {
