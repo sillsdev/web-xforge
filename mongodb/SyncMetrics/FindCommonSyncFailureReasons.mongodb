@@ -3,8 +3,10 @@ use('xforge')
 // This query finds the most recent sync metric for each project that failed its most recent sync, and then counts how
 // frequent that error message is. Any errors that are not in the knownErrorMessages list will be printed at the end.
 
+const daysOfHistory = Infinity;
+
 // Find the most recent sync metric for each project that failed its most recent sync
-const metrics = db.sync_metrics.aggregate([
+let metrics = db.sync_metrics.aggregate([
   {
     $group: {
       _id: '$projectRef',
@@ -32,6 +34,11 @@ const metrics = db.sync_metrics.aggregate([
   }
 ]).toArray()
 
+const filterStartTimeTs = new Date().getTime() - daysOfHistory * 24 * 60 * 60 * 1000;
+metrics = metrics.filter(metric => {
+  return new Date(metric.dateStarted).getTime() > filterStartTimeTs;
+})
+
 // This list will need to be updated as new errors are encountered
 const knownErrorMessages = [
   'Object reference not set to an instance of an object',
@@ -52,7 +59,8 @@ const knownErrorMessages = [
   'Errors occurred while performing the sync with the Paratext Server',
   'GET https://registry.paratext.org/api8/projects/',
   "System.ArgumentNullException: Value cannot be null. (Parameter 'userName')",
-  'GET https://login.languagetechnology.org/api/v2/users/'
+  'GET https://login.languagetechnology.org/api/v2/users/',
+  'An error occurred while parsing EntityName'
 ]
 
 // Count how often each known error message occurred
