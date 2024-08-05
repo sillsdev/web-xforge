@@ -244,7 +244,6 @@ export function canInsertNote(project: SFProjectProfile, userId: string): boolea
 export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
   const invalidTags: string[] = [];
 
-  if (!deltaOp || typeof deltaOp !== 'object') return invalidTags;
   if (Array.isArray(deltaOp)) {
     deltaOp.forEach(t => getUnsupportedTags(t).forEach(s => invalidTags.push(s)));
   } else if (deltaOp && typeof deltaOp === 'object') {
