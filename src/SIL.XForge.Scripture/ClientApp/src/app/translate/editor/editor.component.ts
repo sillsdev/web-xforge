@@ -9,8 +9,10 @@ import {
   Inject,
   OnDestroy,
   OnInit,
+  QueryList,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  ViewChildren
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MediaObserver } from '@angular/flex-layout';
@@ -195,12 +197,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   sourceSplitHeight: string = '';
   targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
+  target: TextComponent | undefined;
 
   @ViewChild('source') source?: TextComponent;
-  @ViewChild('target') target?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
+  @ViewChildren('target') targetTextComponent?: QueryList<TextComponent>;
 
   private sourceScrollContainer: Element | undefined;
   private targetScrollContainer: Element | undefined;
@@ -634,8 +637,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
 
     this.subscribe(
-      this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
-      async params => {
+      combineLatest([
+        this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
+        this.targetTextComponent!.changes
+      ]),
+      async ([params, components]) => {
+        this.target = components.first;
         this.showSuggestions = false;
         this.sourceLoaded = false;
         this.targetLoaded = false;
