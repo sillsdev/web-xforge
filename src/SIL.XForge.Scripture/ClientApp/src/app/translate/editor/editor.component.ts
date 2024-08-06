@@ -706,7 +706,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.updateVerseNumber();
 
         // Set chapter from route if provided
-        this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
+        if (this.target == null) {
+          // If the target is not initialized, we need to wait one tick, which triggers a new change-detection cycle.
+          // See https://v17.angular.io/guide/lifecycle-hooks#wait-before-updating-the-view
+          setTimeout(() => this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined));
+        } else {
+          this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
+        }
 
         if (this.projectDoc.id !== prevProjectId) {
           this.setupTranslationEngine();
