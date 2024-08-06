@@ -24,13 +24,6 @@ interface ConnectProjectFormValues {
   };
 }
 
-interface ConnectProjectMetadata {
-  ptProjectId: string;
-  projectId?: string;
-  name: string;
-  shortName: string;
-}
-
 @Component({
   selector: 'app-connect-project',
   templateUrl: './connect-project.component.html',
@@ -54,7 +47,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
   private _isAppOnline: boolean = false;
   private projectsFromParatext?: ParatextProject[];
-  private projectMetadata?: ConnectProjectMetadata;
+  private projectMetadata?: SelectableProject;
 
   constructor(
     private readonly authService: AuthService,
@@ -70,8 +63,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     super(noticeService);
     this.connectProjectForm.disable();
     this.projectMetadata = {
-      ptProjectId: this.router.getCurrentNavigation()?.extras.state?.ptProjectId ?? '',
-      projectId: this.router.getCurrentNavigation()?.extras.state?.projectId,
+      paratextId: this.router.getCurrentNavigation()?.extras.state?.paratextId ?? '',
       name: this.router.getCurrentNavigation()?.extras.state?.name ?? '',
       shortName: this.router.getCurrentNavigation()?.extras.state?.shortName ?? ''
     };
@@ -87,11 +79,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get showSettings(): boolean {
-    return this.state === 'input' && this.projectMetadata?.projectId == null;
+    return this.state === 'input';
   }
 
   get submitDisabled(): boolean {
-    return (this.projectsFromParatext == null && this.projectMetadata?.projectId == null) || !this.isAppOnline;
+    return this.projectsFromParatext == null || !this.isAppOnline;
   }
 
   get isBasedOnProjectSet(): boolean {
@@ -99,11 +91,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get projects(): ParatextProject[] {
-    return this.projectsFromParatext != null ? this.projectsFromParatext : [];
-  }
-
-  get translationSuggestionsEnabled(): boolean {
-    return this.settings.controls.translationSuggestions.value;
+    return this.projectsFromParatext ?? [];
   }
 
   get settings(): UntypedFormGroup {
@@ -111,12 +99,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get ptProjectId(): string {
-    return this.projectMetadata?.ptProjectId ?? '';
+    return this.projectMetadata?.paratextId ?? '';
   }
 
   get projectTitle(): string {
     if (this.projectMetadata == null) return '';
-    return `${this.projectMetadata.shortName} - ${this.projectMetadata.name}`;
+    return projectLabel(this.projectMetadata);
   }
 
   ngOnInit(): void {
@@ -159,37 +147,28 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
     const values = this.connectProjectForm.value as ConnectProjectFormValues;
     this.state = 'connecting';
-    if (this.projectMetadata?.projectId == null) {
-      const settings: SFProjectCreateSettings = {
-        paratextId: this.ptProjectId,
-        checkingEnabled: values.settings.checking,
-        translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
-        sourceParatextId: values.settings.sourceParatextId
-      };
+    const settings: SFProjectCreateSettings = {
+      paratextId: this.ptProjectId,
+      checkingEnabled: values.settings.checking,
+      translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
+      sourceParatextId: values.settings.sourceParatextId
+    };
 
-      let projectId: string = '';
-      try {
-        projectId = await this.projectService.onlineCreate(settings);
-      } catch (err) {
-        if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
-          throw err;
-        }
-
-        err.message = this.translocoService.translate('connect_project.problem_already_connected');
-        this.errorHandler.handleError(err);
-        this.state = 'input';
-        this.populateProjectList();
-        return;
+    let projectId: string = '';
+    try {
+      projectId = await this.projectService.onlineCreate(settings);
+    } catch (err) {
+      if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
+        throw err;
       }
-      this.projectDoc = await this.projectService.get(projectId);
-    } else {
-      await this.projectService.onlineAddCurrentUser(this.projectMetadata.projectId);
-      this.router.navigate(['/projects', this.projectMetadata.projectId]);
-    }
-  }
 
-  translateFromSettings(key: string): string {
-    return this.translocoService.translate(`settings.${key}`);
+      err.message = this.translocoService.translate('connect_project.problem_already_connected');
+      this.errorHandler.handleError(err);
+      this.state = 'input';
+      this.populateProjectList();
+      return;
+    }
+    this.projectDoc = await this.projectService.get(projectId);
   }
 
   updateStatus(inProgress: boolean): void {
@@ -203,17 +182,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.loadingStarted();
 
     try {
-      const projects: ParatextProject[] | undefined =
-        this.projectMetadata?.projectId == null ? await this.paratextService.getProjects() : [];
+      const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
 
       if (projects == null) {
         this.state = 'login';
       } else {
         this.projectsFromParatext = projects.sort(compareProjectsForSorting);
-        if (this.projectMetadata?.projectId == null) {
-          // do not wait for resources to load
-          this.fetchResources();
-        }
+        // do not wait for resources to load
+        this.fetchResources();
       }
     } catch (error: any) {
       if (error instanceof HttpErrorResponse && error.status === 401) {

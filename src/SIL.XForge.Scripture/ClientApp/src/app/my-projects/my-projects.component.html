@@ -92,19 +92,27 @@
         {{ t("not_admin_cannot_connect_project") }}
       </span>
       <a
-        *ngIf="ptProject.isConnectable"
+        *ngIf="ptProject.isConnectable && ptProject.projectId == null"
         appRouterLink="/connect-project"
         [state]="{
-          ptProjectId: ptProject.paratextId,
-          projectId: ptProject.projectId,
+          paratextId: ptProject.paratextId,
           name: ptProject.name,
           shortName: ptProject.shortName
         }"
         mat-flat-button
         color="primary"
       >
-        {{ paratextService.isParatextProjectInSF(ptProject) ? t("join") : ("connect_project.connect" | transloco) }}
+        {{ "connect_project.connect" | transloco }}
       </a>
+      <button
+        *ngIf="ptProject.isConnectable && ptProject.projectId != null"
+        mat-flat-button
+        color="primary"
+        (click)="joinProject(ptProject.projectId)"
+        [disabled]="joinDisabledProjects.includes(ptProject.projectId)"
+      >
+        {{ t("join") }}
+      </button>
     </mat-card>
     <mat-card id="pt-loading-card" *ngIf="loadingPTProjects" class="loading-card">
       <div class="loading-project-name"></div>
