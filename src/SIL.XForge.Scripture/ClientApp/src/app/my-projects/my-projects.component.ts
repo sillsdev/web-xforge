@@ -1,11 +1,13 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
 import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Observable } from 'rxjs';
 import { en } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -15,6 +17,7 @@ import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
+import { SFProjectService } from '../core/sf-project.service';
 
 /** Presents user with list of available projects to open or connect to. */
 @Component({
@@ -35,12 +38,16 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   loadingPTProjects: boolean = false;
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
+  joinDisabledProjects: string[] = [];
 
   constructor(
+    private readonly projectService: SFProjectService,
     private readonly userProjectsService: SFUserProjectsService,
     readonly paratextService: ParatextService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly noticeService: NoticeService,
+    private readonly router: Router
   ) {
     super();
   }
@@ -80,6 +87,14 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     const drafting = translate('my_projects.drafting');
     const checking = sfProject.data?.checkingConfig?.checkingEnabled ? ' • ' + translate('app.community_checking') : '';
     return `${drafting}${checking}`;
+  }
+
+  async joinProject(projectId: string): Promise<void> {
+    this.noticeService.loadingStarted();
+    this.joinDisabledProjects.push(projectId);
+    await this.projectService.onlineAddCurrentUser(projectId);
+    this.noticeService.loadingFinished();
+    this.router.navigate(['projects', projectId]);
   }
 
   private async loadUser(): Promise<void> {

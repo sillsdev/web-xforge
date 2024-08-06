@@ -2,8 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { AbstractControl } from '@angular/forms';
-import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -36,8 +34,7 @@ import { ConnectProjectComponent } from './connect-project.component';
 
 interface TestEnvironmentParams {
   hasConnection?: boolean;
-  paratextId?: string;
-  useUndefinedParatextId?: boolean;
+  paratextId?: string | null;
 }
 
 const mockedAuthService = mock(AuthService);
@@ -116,7 +113,7 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('should redirect to my projects if missing paratext id in params', fakeAsync(() => {
-    const env = new TestEnvironment({ useUndefinedParatextId: true });
+    const env = new TestEnvironment({ paratextId: undefined });
     env.setupProjectsResources();
     env.waitForProjectsResponse();
     expect(env.component.ptProjectId).toEqual('');
@@ -142,23 +139,6 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.projects.length).toEqual(env.paratextProjects.length);
     expect(env.submitButton.nativeElement.disabled).toBe(false);
     verify(mockedNoticeService.loadingFinished()).once();
-  }));
-
-  it('should join when existing project is selected', fakeAsync(() => {
-    const env = new TestEnvironment({ paratextId: 'pt03' });
-    env.setupDefaultProjectData();
-    env.waitForProjectsResponse();
-    expect(env.component.state).toEqual('input');
-
-    // The project is already in SF, so do not present settings to configure.
-    expect(env.settingsCard).toBeNull();
-    env.clickElement(env.submitButton);
-
-    verify(mockedSFProjectService.onlineAddCurrentUser('project03')).once();
-    verify(mockedRouter.navigate(deepEqual(['/projects', 'project03']))).once();
-    verify(mockedSFProjectService.onlineCreate(anything())).never();
-    verify(mockedParatextService.getProjects()).never();
-    verify(mockedParatextService.getResources()).never();
   }));
 
   it('disables page if offline', fakeAsync(() => {
@@ -380,7 +360,7 @@ class TestEnvironment {
   ];
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(params: TestEnvironmentParams = {}) {
+  constructor(params: TestEnvironmentParams = { paratextId: null }) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
       const newProject: SFProject = createTestProject({
         paratextId: settings.paratextId,
@@ -412,16 +392,15 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    if (params.useUndefinedParatextId) {
+    if (params.paratextId === undefined) {
       when(mockedRouter.getCurrentNavigation()).thenReturn({ extras: {} } as any);
     } else {
       const paratextId = params.paratextId ?? 'pt01';
-      const projectId: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.projectId;
       const name: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.name;
       const shortName: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.shortName;
 
       when(mockedRouter.getCurrentNavigation()).thenReturn({
-        extras: { state: { ptProjectId: paratextId, projectId, name, shortName } }
+        extras: { state: { paratextId, name, shortName } }
       } as any);
     }
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
@@ -462,10 +441,6 @@ class TestEnvironment {
 
   get sourceProjectSelect(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-project-select'));
-  }
-
-  get sourceParatextIdControl(): AbstractControl {
-    return this.component.settings.controls.sourceParatextId;
   }
 
   get progressBar(): DebugElement {
@@ -521,16 +496,6 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
-  }
-
-  getMenuItems(menu: DebugElement): DebugElement[] {
-    const matSelect: MatSelect = menu.componentInstance;
-    matSelect.open();
-    this.waitForProjectsResponse();
-    const options = menu.queryAll(By.css('mat-option'));
-    matSelect.close();
-    this.waitForProjectsResponse();
-    return options;
   }
 
   inputElement(element: DebugElement): HTMLInputElement {
