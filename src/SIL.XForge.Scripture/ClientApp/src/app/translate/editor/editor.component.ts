@@ -932,7 +932,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  async onTextLoaded(textType: TextType): Promise<void> {
+  onTextLoaded(textType: TextType): void {
     switch (textType) {
       case 'source':
         this.sourceLoaded = true;
