@@ -190,9 +190,9 @@ class TestEnvironment {
   } as SFProjectProfileDoc;
 
   booksWithDrafts: BookWithDraft[] = [
-    { bookNumber: 1, canEdit: true, chaptersWithDrafts: [1, 2] },
-    { bookNumber: 2, canEdit: true, chaptersWithDrafts: [1] },
-    { bookNumber: 3, canEdit: false, chaptersWithDrafts: [1, 2] }
+    { bookNumber: 1, canEdit: true, chaptersWithDrafts: [1, 2], draftApplied: false },
+    { bookNumber: 2, canEdit: true, chaptersWithDrafts: [1], draftApplied: false },
+    { bookNumber: 3, canEdit: false, chaptersWithDrafts: [1, 2], draftApplied: false }
   ];
 
   constructor() {
