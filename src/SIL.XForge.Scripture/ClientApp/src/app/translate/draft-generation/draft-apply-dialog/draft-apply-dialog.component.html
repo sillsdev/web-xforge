@@ -1,0 +1,49 @@
+@if (isLoading) {
+  <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+}
+
+<ng-container *transloco="let t; read: 'draft_apply_dialog'">
+  <div mat-dialog-content>
+    <form [formGroup]="addToProjectForm">
+      <p>{{ t("select_alternate_project") }}</p>
+      <app-project-select
+        [projects]="projects"
+        [placeholder]="t('choose_project')"
+        (projectSelect)="projectSelectedAsync($event.paratextId)"
+      ></app-project-select>
+      @if (!canEditProject) {
+        <div class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</div>
+      }
+      <div class="unlisted-project-message">
+        <p>
+          <span [innerHTML]="connectOtherProject?.before"></span>
+          <!-- TODO: Get page to open in new tab -->
+          <a target="_blank" [appRouterLink]="['projects']">{{ connectOtherProject?.templateTagText }}</a>
+          <span>{{ connectOtherProject?.after }}</span>
+        </p>
+      </div>
+      @if (targetProject$ | async; as project) {
+        @if (targetChapters$ | async; as chapters) {
+          <div class="target-project-content">
+            @if (chapters === 0) {
+              <mat-icon>check</mat-icon>
+              {{ t("book_is_empty", { bookName, projectName: project.name }) }}
+            } @else {
+              <mat-icon>warning</mat-icon>
+              {{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
+            }
+          </div>
+        }
+        <mat-checkbox class="overwrite-content" formControlName="overwrite">{{
+          t("i_understand_overwrite_book", { projectName: project.name, bookName })
+        }}</mat-checkbox>
+      }
+    </form>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button class="cancel-button" [mat-dialog-close]="false">{{ t("cancel") }}</button>
+    <button mat-raised-button class="add-button" color="primary" (click)="addToProject()" [disabled]="addDisabled">
+      {{ t("add_to_project") }}
+    </button>
+  </div>
+</ng-container>

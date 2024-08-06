@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { map, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -13,7 +15,9 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
+import { DraftApplyDialogComponent, DraftApplyDialogResult } from '../draft-apply-dialog/draft-apply-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
 
 export interface BookWithDraft {
@@ -60,6 +64,13 @@ export class DraftPreviewBooksComponent {
     private readonly router: Router
   ) {}
 
+  get isProjectAdmin$(): Observable<boolean> {
+    return this.activatedProjectService.changes$.pipe(
+      filterNullish(),
+      map(p => p.data?.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator)
+    );
+  }
+
   linkForBookAndChapter(bookNumber: number, chapterNumber: number): string[] {
     return [
       '/projects',
@@ -78,7 +89,19 @@ export class DraftPreviewBooksComponent {
     return this.i18n.localizeBook(bookNumber);
   }
 
-  async applyBookDraftAsync(bookWithDraft: BookWithDraft): Promise<void> {
+  async chooseAlternateProjectToAddDraft(bookWithDraft: BookWithDraft): Promise<void> {
+    const dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult> = this.dialogService.openMatDialog(
+      DraftApplyDialogComponent,
+      { data: { bookNum: bookWithDraft.bookNumber }, disableClose: true, width: '600px' }
+    );
+    const result: DraftApplyDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
+    if (result == null || result.projectId == null) {
+      return;
+    }
+    await this.applyBookDraftAsync(bookWithDraft, result.projectId);
+  }
+
+  async confirmAndAddToProjectAsync(bookWithDraft: BookWithDraft): Promise<void> {
     if (!bookWithDraft.canEdit) {
       await this.dialogService.message(translate('draft_preview_books.no_permission_to_edit_book'));
       return;
@@ -95,15 +118,21 @@ export class DraftPreviewBooksComponent {
 
     if (!confirmed) return;
 
+    await this.applyBookDraftAsync(bookWithDraft);
+  }
+
+  private async applyBookDraftAsync(bookWithDraft: BookWithDraft, alternateProjectId?: string): Promise<void> {
     const promises: Promise<boolean>[] = [];
+    const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
     const project: SFProjectProfile = this.activatedProjectService.projectDoc!.data!;
     for (const chapter of bookWithDraft.chaptersWithDrafts) {
-      promises.push(
-        this.draftHandlingService.getAndApplyDraftAsync(
-          project,
-          new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter)
-        )
+      const draftTextDocId = new TextDocId(this.activatedProjectService.projectId!, bookWithDraft.bookNumber, chapter);
+      const targetTextDocId = new TextDocId(
+        alternateProjectId ?? this.activatedProjectService.projectId!,
+        bookWithDraft.bookNumber,
+        chapter
       );
+      promises.push(this.draftHandlingService.getAndApplyDraftAsync(project, draftTextDocId, targetTextDocId));
     }
 
     try {

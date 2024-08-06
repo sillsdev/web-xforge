@@ -132,6 +132,17 @@
     "readd_book_to_project": "Re-add {{ bookName }} to project",
     "readd_to_project": "Re-add to project"
   },
+  "draft_apply_dialog": {
+    "add_to_project": "Add to project",
+    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty",
+    "cancel": "Cancel",
+    "choose_project": "Choose project",
+    "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
+    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first",
+    "no_write_permission": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
+    "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
+    "select_alternate_project": "Select the project you want to add the draft to"
+  },
   "draft_generation": {
     "back_from_stepper_button": "Back",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",

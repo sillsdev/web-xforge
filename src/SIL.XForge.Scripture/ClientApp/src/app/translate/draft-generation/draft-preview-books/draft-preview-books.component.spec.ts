@@ -1,6 +1,7 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -8,7 +9,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { of } from 'rxjs';
-import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -18,6 +19,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { DraftApplyDialogComponent } from '../draft-apply-dialog/draft-apply-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
@@ -82,11 +84,11 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     when(mockedDialogService.confirmWithOptions(anything())).thenResolve(false);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.applyBookDraftAsync(bookWithDraft);
+    env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.confirmWithOptions(anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).never();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     verify(mockedNoticeService.show(anything())).never();
   }));
 
@@ -94,13 +96,15 @@ describe('DraftPreviewBooks', () => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).thenReject(new Error('Draft error'));
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenReject(
+      new Error('Draft error')
+    );
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.applyBookDraftAsync(bookWithDraft);
+    env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.confirmWithOptions(anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).times(2);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(2);
     verify(mockedNoticeService.show(anything())).never();
     verify(mockedDialogService.message(anything())).once();
     verify(mockedErrorReportingService.silentError(anything(), anything())).once();
@@ -111,11 +115,11 @@ describe('DraftPreviewBooks', () => {
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[2];
     when(mockedDialogService.message(anything())).thenResolve();
     expect(env.getBookButtonAtIndex(2).querySelector('.book-more')).toBeTruthy();
-    env.component.applyBookDraftAsync(bookWithDraft);
+    env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.confirmWithOptions(anything())).never();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).never();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     verify(mockedNoticeService.show(anything())).never();
     verify(mockedDialogService.message(anything())).once();
     verify(mockedErrorReportingService.silentError(anything(), anything())).never();
@@ -125,13 +129,13 @@ describe('DraftPreviewBooks', () => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).thenResolve(true);
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve(true);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.applyBookDraftAsync(bookWithDraft);
+    env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.confirmWithOptions(anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).times(2);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(2);
     verify(mockedNoticeService.show(anything())).once();
   }));
 
@@ -139,27 +143,74 @@ describe('DraftPreviewBooks', () => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[1];
     when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).thenResolve(true);
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve(true);
     expect(env.getBookButtonAtIndex(1).querySelector('.book-more')).toBeTruthy();
-    env.component.applyBookDraftAsync(bookWithDraft);
+    env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.confirmWithOptions(anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).times(1);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(1);
     verify(mockedNoticeService.show(anything())).once();
+  }));
+
+  it('can open dialog to apply draft to a different project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
+    const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
+    when(mockedDialogRef.afterClosed()).thenReturn(of({ projectId: 'project01' }));
+    when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
+      instance(mockedDialogRef)
+    );
+    env.component.chooseAlternateProjectToAddDraft(env.booksWithDrafts[0]);
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(
+      env.booksWithDrafts[0].chaptersWithDrafts.length
+    );
+  }));
+
+  it('does not show add draft to different project option if user is not an admin', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    when(mockedUserService.currentUserId).thenReturn('user02');
+    const moreButton: HTMLElement = env.getBookButtonAtIndex(0).querySelector('.book-more')!;
+    moreButton.click();
+    tick();
+    env.fixture.detectChanges();
+    const harness: MatMenuHarness = await env.moreMenuHarness();
+    const items = await harness.getItems();
+    expect(items.length).toEqual(1);
+    harness.close();
+    tick();
+    env.fixture.detectChanges();
+  }));
+
+  it('does not apply draft if user cancels applying to a different project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const mockedDialogRef: MatDialogRef<DraftApplyDialogComponent> = mock(MatDialogRef<DraftApplyDialogComponent>);
+    when(mockedDialogRef.afterClosed()).thenReturn(of(undefined));
+    when(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).thenReturn(
+      instance(mockedDialogRef)
+    );
+    env.component.chooseAlternateProjectToAddDraft(env.booksWithDrafts[0]);
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedDialogService.openMatDialog(DraftApplyDialogComponent, anything())).once();
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
+    expect().nothing();
   }));
 
   it('shows message to generate a new draft if legacy USFM draft', fakeAsync(() => {
     const env = new TestEnvironment();
     const bookWithDraft: BookWithDraft = env.booksWithDrafts[0];
     when(mockedDialogService.confirmWithOptions(anything())).thenResolve(true);
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).thenResolve(false);
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve(false);
     expect(env.getBookButtonAtIndex(0).querySelector('.book-more')).toBeTruthy();
-    env.component.applyBookDraftAsync(bookWithDraft);
+    env.component.confirmAndAddToProjectAsync(bookWithDraft);
     tick();
     env.fixture.detectChanges();
     verify(mockedDialogService.confirmWithOptions(anything())).once();
-    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).times(2);
+    verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).times(2);
     verify(mockedNoticeService.show(anything())).never();
     verify(mockedDialogService.message(anything())).once();
   }));
@@ -200,7 +251,7 @@ class TestEnvironment {
           permissions: { user01: TextInfoPermission.Read }
         }
       ],
-      userRoles: { user01: SFProjectRole.ParatextAdministrator },
+      userRoles: { user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextTranslator },
       translateConfig: {
         source: { projectRef: 'test' }
       }
@@ -217,7 +268,7 @@ class TestEnvironment {
     when(mockedActivatedProjectService.changes$).thenReturn(of(this.mockProjectDoc));
     when(mockedActivatedProjectService.projectDoc).thenReturn(this.mockProjectDoc);
     when(mockedI18nService.localizeBook(1)).thenReturn('Genesis');
-    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything())).thenResolve();
+    when(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).thenResolve();
     when(mockedActivatedProjectService.projectId).thenReturn('project01');
     when(mockedUserService.currentUserId).thenReturn('user01');
     this.fixture = TestBed.createComponent(DraftPreviewBooksComponent);

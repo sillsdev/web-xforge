@@ -270,7 +270,7 @@ describe('DraftHandlingService', () => {
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
-      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
       expect(result).toBe(true);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
@@ -286,7 +286,7 @@ describe('DraftHandlingService', () => {
         mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
       ).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(false);
-      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).never();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).never();
@@ -300,7 +300,7 @@ describe('DraftHandlingService', () => {
       ).thenReturn(throwError(() => ({ status: 405 })));
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of(draft));
       when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
-      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId);
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).once();
