@@ -171,7 +171,7 @@ export const Administrator: Story = {
       'Generate draft',
       'Manage questions',
       'Questions & answers',
-      'Synchronize',
+      'Sync with Paratext',
       'Users',
       'Settings'
     ]);
@@ -187,7 +187,7 @@ export const Translator: Story = {
       'Generate draft',
       'My progress',
       'Questions & answers',
-      'Synchronize'
+      'Sync with Paratext'
     ]);
   }
 };
@@ -258,7 +258,7 @@ export const CheckingDisabled: Story = {
       'Overview',
       'Edit & review',
       'Generate draft',
-      'Synchronize',
+      'Sync with Paratext',
       'Users',
       'Settings'
     ]);
@@ -310,7 +310,7 @@ export const CheckingAnswerQuestionsActive: Story = {
 export const SyncPageActive: Story = {
   args: { ...Administrator.args, path: 'sync' },
   play: async ({ canvasElement }) => {
-    expect(activeMenuItemText(canvasElement)).toBe('Synchronize');
+    expect(activeMenuItemText(canvasElement)).toBe('Sync with Paratext');
   }
 };
 

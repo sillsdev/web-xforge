@@ -88,7 +88,7 @@ describe('SyncComponent', () => {
     const env = new TestEnvironment();
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton).toBeNull();
-    expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
+    expect(env.syncButton.nativeElement.textContent).toContain('Sync with Paratext');
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
   }));
 
