@@ -10,6 +10,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { delay, of } from 'rxjs';
 import { instance, mock, objectContaining, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
@@ -19,6 +20,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
+import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 
@@ -27,9 +29,11 @@ class EmptyComponent {}
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
+const mockedSFProjectService = mock(SFProjectService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
+const mockedNoticeService = mock(NoticeService);
 
 interface ProjectScenario {
   code: string;
@@ -184,11 +188,13 @@ const meta: Meta = {
       declarations: [MyProjectsComponent],
       providers: [
         provideAnimations(),
+        { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         { provide: UserService, useValue: instance(mockedUserService) },
         { provide: ParatextService, useValue: instance(mockedParatextService) },
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
-        { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) }
+        { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
+        { provide: NoticeService, useValue: instance(mockedNoticeService) }
       ]
     }),
     (story, context) => {
