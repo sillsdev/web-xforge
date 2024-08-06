@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, DoCheck, Input, OnChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 
@@ -11,7 +11,7 @@ type AvatarMode = 'image' | 'initials' | 'user_icon';
   standalone: true,
   imports: [MatIconModule]
 })
-export class AvatarComponent implements OnChanges {
+export class AvatarComponent implements DoCheck, OnChanges {
   @Input() size: number = 32;
   @Input() user?: UserProfile;
   @Input() borderColor: string = 'transparent';
@@ -22,6 +22,12 @@ export class AvatarComponent implements OnChanges {
   initials?: string;
   mode: AvatarMode = 'user_icon';
   imageLoadFailed: boolean = false;
+
+  ngDoCheck(): void {
+    if (this.name !== this.user?.displayName || this.avatarUrl !== this.user?.avatarUrl) {
+      this.ngOnChanges();
+    }
+  }
 
   ngOnChanges(): void {
     this.name = this.user?.displayName;
