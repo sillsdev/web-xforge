@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, HostBinding, Input, OnChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ICONS_TO_MIRROR_RTL } from '../utils';
@@ -9,7 +8,7 @@ import { NoticeMode, NoticeType } from './notice.types';
   templateUrl: './notice.component.html',
   styleUrls: ['./notice.component.scss'],
   standalone: true,
-  imports: [CommonModule, MatIconModule]
+  imports: [MatIconModule]
 })
 export class NoticeComponent implements OnChanges {
   @Input() type: NoticeType = 'primary';

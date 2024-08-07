@@ -1,47 +1,52 @@
 <ng-container *transloco="let t; read: 'history_chooser'">
-  <div class="toolbar" *ngIf="historyRevisions.length > 0">
-    <mat-form-field class="history-select" appearance="outline">
-      <mat-select
-        [value]="selectedRevision"
-        (selectionChange)="onSelectionChanged($event)"
-        panelWidth="''"
-        [disabled]="isSelectDisabled$ | async"
-        hideSingleSelectionIndicator
+  @if (historyRevisions.length > 0) {
+    <div class="toolbar">
+      <mat-form-field class="history-select" appearance="outline">
+        <mat-select
+          [value]="selectedRevision"
+          (selectionChange)="onSelectionChanged($event)"
+          panelWidth="''"
+          [disabled]="isSelectDisabled$ | async"
+          hideSingleSelectionIndicator
+        >
+          <mat-select-trigger>
+            {{ selectedRevision ?? "" | revisionFormat }}
+          </mat-select-trigger>
+          @for (r of historyRevisions; track r) {
+            <mat-option [value]="r">
+              <div class="option-content">
+                <span>{{ r | revisionFormat }}</span>
+                <mat-icon>{{
+                  r.source === "Draft" ? "auto_awesome" : r.source === "History" ? "history" : ""
+                }}</mat-icon>
+              </div>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button
+        class="show-diff"
+        mat-button
+        appBlurOnClick
+        type="button"
+        (click)="toggleDiff()"
+        matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
       >
-        <mat-select-trigger>
-          {{ selectedRevision ?? "" | revisionFormat }}
-        </mat-select-trigger>
-        <mat-option *ngFor="let r of historyRevisions" [value]="r">
-          <div class="option-content">
-            <span>{{ r | revisionFormat }}</span>
-            <mat-icon>{{ r.source === "Draft" ? "auto_awesome" : r.source === "History" ? "history" : "" }}</mat-icon>
-          </div>
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <button
-      class="show-diff"
-      mat-button
-      appBlurOnClick
-      type="button"
-      (click)="toggleDiff()"
-      matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
-    >
-      <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
-      {{ showDiff ? t("hide_changes") : t("show_changes") }}
-    </button>
-
-    <button
-      *ngIf="canRestoreSnapshot"
-      class="revert-history"
-      mat-button
-      type="button"
-      (click)="revertToSnapshot()"
-      matTooltip="{{ t('revert_details') }}"
-    >
-      <mat-icon class="material-icons-outlined">undo</mat-icon>
-      {{ t("revert") }}
-    </button>
-  </div>
+        <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
+        {{ showDiff ? t("hide_changes") : t("show_changes") }}
+      </button>
+      @if (canRestoreSnapshot) {
+        <button
+          class="revert-history"
+          mat-button
+          type="button"
+          (click)="revertToSnapshot()"
+          matTooltip="{{ t('revert_details') }}"
+        >
+          <mat-icon class="material-icons-outlined">undo</mat-icon>
+          {{ t("revert") }}
+        </button>
+      }
+    </div>
+  }
 </ng-container>

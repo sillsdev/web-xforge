@@ -11,6 +11,8 @@
   (tabMove)="moveTab($event)"
 ></app-tab-group-header>
 
-<app-tab-body *ngFor="let tab of tabs; let i = index" [active]="selectedIndex === i">
-  <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
-</app-tab-body>
+@for (tab of tabs; track tab; let i = $index) {
+  <app-tab-body [active]="selectedIndex === i">
+    <ng-container *ngTemplateOutlet="tab.contentTemplate"></ng-container>
+  </app-tab-body>
+}

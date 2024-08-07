@@ -1,2 +1,4 @@
-<mat-icon *ngIf="icon" [class.mirror-rtl]="mirrorRtl">{{ icon }}</mat-icon>
+@if (icon) {
+  <mat-icon [class.mirror-rtl]="mirrorRtl">{{ icon }}</mat-icon>
+}
 <span class="notice-content"><ng-content></ng-content></span>

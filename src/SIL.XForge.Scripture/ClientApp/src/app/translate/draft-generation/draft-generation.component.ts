@@ -71,6 +71,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   projectSettingsUrl?: string;
   // This component url, but with a hash for opening a dialog
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
+  draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
   additionalTrainingSourceLanguage?: string;
   additionalTrainingSourceLanguageDisplayName?: string;

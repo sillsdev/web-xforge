@@ -1,34 +1,47 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
-  <mat-list *ngIf="hasQuestions">
-    <mat-list-item
-      *ngFor="let questionDoc of questionDocs"
-      (click)="activateQuestion(questionDoc)"
-      [ngClass]="{
-        'question-read': hasUserReadQuestion(questionDoc),
-        'question-unread': !hasUserReadQuestion(questionDoc),
-        'question-answered': hasUserAnswered(questionDoc),
-        'question-has-answers': getUnreadAnswers(questionDoc),
-        selected: activeQuestionDoc?.id === questionDoc.id
-      }"
-    >
-      <div class="question-item">
-        <div class="question-text">{{ questionText(questionDoc) }}</div>
-        <div class="question-meta">
-          <span class="question-verse">{{ questionVerseRef(questionDoc) }}</span>
-          <a *ngIf="getUnreadAnswers(questionDoc) > 0" class="view-answers" title="{{ t('view_answers') }}">
-            <div [matBadge]="getUnreadAnswers(questionDoc)" matBadgePosition="before" matBadgeSize="small">
-              <mat-icon aria-hidden="false" class="mirror-rtl">forum</mat-icon>
+  @if (hasQuestions) {
+    <mat-list>
+      @for (questionDoc of questionDocs; track questionDoc) {
+        <mat-list-item
+          (click)="activateQuestion(questionDoc)"
+          [ngClass]="{
+            'question-read': hasUserReadQuestion(questionDoc),
+            'question-unread': !hasUserReadQuestion(questionDoc),
+            'question-answered': hasUserAnswered(questionDoc),
+            'question-has-answers': getUnreadAnswers(questionDoc),
+            selected: activeQuestionDoc?.id === questionDoc.id
+          }"
+        >
+          <div class="question-item">
+            <div class="question-text">{{ questionText(questionDoc) }}</div>
+            <div class="question-meta">
+              <span class="question-verse">{{ questionVerseRef(questionDoc) }}</span>
+              @if (getUnreadAnswers(questionDoc) > 0) {
+                <a class="view-answers" title="{{ t('view_answers') }}">
+                  <div [matBadge]="getUnreadAnswers(questionDoc)" matBadgePosition="before" matBadgeSize="small">
+                    <mat-icon aria-hidden="false" class="mirror-rtl">forum</mat-icon>
+                  </div>
+                </a>
+              }
             </div>
-          </a>
-        </div>
-      </div>
-    </mat-list-item>
-  </mat-list>
-  <div *ngIf="!hasQuestions && haveQuestionsLoaded" class="no-questions-found">
-    <ng-container *ngIf="isFiltered">{{ t("no_questions_found_filtered") }}</ng-container>
-    <ng-container *ngIf="!isFiltered">{{ t("no_questions_found_unfiltered") }}</ng-container>
-  </div>
-  <div *ngIf="!haveQuestionsLoaded" class="loading-text">
-    {{ t("loading") }}
-  </div>
+          </div>
+        </mat-list-item>
+      }
+    </mat-list>
+  }
+  @if (!hasQuestions && haveQuestionsLoaded) {
+    <div class="no-questions-found">
+      @if (isFiltered) {
+        {{ t("no_questions_found_filtered") }}
+      }
+      @if (!isFiltered) {
+        {{ t("no_questions_found_unfiltered") }}
+      }
+    </div>
+  }
+  @if (!haveQuestionsLoaded) {
+    <div class="loading-text">
+      {{ t("loading") }}
+    </div>
+  }
 </ng-container>

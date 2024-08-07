@@ -25,6 +25,8 @@ export class FontUnsupportedMessageComponent {
     readonly externalUrlService: ExternalUrlService
   ) {}
 
+  suggestedRemedy = this.i18n.interpolate(this.suggestedRemedyI18nKey);
+
   get showUnsupportedFontWarning(): boolean {
     return !this.fontService.isFontFullySupported(this.selectedFont ?? '');
   }

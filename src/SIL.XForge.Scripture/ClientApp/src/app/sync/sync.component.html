@@ -1,58 +1,60 @@
 <ng-container *transloco="let t; read: 'sync'">
   <div class="base-container">
     <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
-    <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
-    <span *ngIf="syncDisabled" id="sync-disabled-message" [innerHTML]="syncDisabledMessage"> </span>
-    <span
-      *ngIf="showSyncFailureSupportMessage"
-      id="sync-failure-support-message"
-      [innerHTML]="syncFailureSupportMessage"
-    ></span>
+    @if (!isAppOnline) {
+      <span class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
+    }
+    @if (syncDisabled) {
+      <span id="sync-disabled-message" [innerHTML]="syncDisabledMessage"> </span>
+    }
+    @if (showSyncFailureSupportMessage) {
+      <span id="sync-failure-support-message" [innerHTML]="syncFailureSupportMessage"></span>
+    }
     <mat-card class="sync-card">
       <div class="card-content">
-        <button
-          *ngIf="showParatextLogin && isAppOnline"
-          mat-flat-button
-          type="button"
-          (click)="logInWithParatext()"
-          id="btn-log-in"
-        >
-          <mat-icon><img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" /></mat-icon>
-          {{ t("log_in_to_paratext") }}
-        </button>
-        <ng-container *ngIf="isLoggedIntoParatext || isLoading || !isAppOnline">
-          <button
-            *ngIf="!syncActive"
-            mat-flat-button
-            color="primary"
-            type="button"
-            (click)="syncProject()"
-            [disabled]="isLoading || !isAppOnline || syncDisabled"
-            id="btn-sync"
-          >
-            <mat-icon>sync</mat-icon>
-            {{ t("synchronize") }}
+        @if (showParatextLogin && isAppOnline) {
+          <button mat-flat-button type="button" (click)="logInWithParatext()" id="btn-log-in">
+            <mat-icon><img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" /></mat-icon>
+            {{ t("log_in_to_paratext") }}
           </button>
-          <mat-hint *ngIf="syncActive" id="sync-message">{{ t("your_project_is_being_synchronized") }}</mat-hint>
-          <app-sync-progress
-            *ngIf="syncActive"
-            [projectDoc]="projectDoc"
-            (inProgress)="syncActive = $event"
-          ></app-sync-progress>
-          <button
-            *ngIf="syncActive"
-            mat-button
-            type="button"
-            (click)="cancelSync()"
-            [disabled]="isLoading || !isAppOnline || syncDisabled"
-            id="btn-cancel-sync"
-          >
-            {{ t("cancel") }}
-          </button>
-          <mat-hint *ngIf="!syncActive" [title]="lastSyncDisplayDate" id="date-last-sync">
-            {{ lastSyncNotice }}
-          </mat-hint>
-        </ng-container>
+        }
+        @if (isLoggedIntoParatext || isLoading || !isAppOnline) {
+          @if (!syncActive) {
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="syncProject()"
+              [disabled]="isLoading || !isAppOnline || syncDisabled"
+              id="btn-sync"
+            >
+              <mat-icon>sync</mat-icon>
+              {{ t("synchronize") }}
+            </button>
+          }
+          @if (syncActive) {
+            <mat-hint id="sync-message">{{ t("your_project_is_being_synchronized") }}</mat-hint>
+          }
+          @if (syncActive) {
+            <app-sync-progress [projectDoc]="projectDoc" (inProgress)="syncActive = $event"></app-sync-progress>
+          }
+          @if (syncActive) {
+            <button
+              mat-button
+              type="button"
+              (click)="cancelSync()"
+              [disabled]="isLoading || !isAppOnline || syncDisabled"
+              id="btn-cancel-sync"
+            >
+              {{ t("cancel") }}
+            </button>
+          }
+          @if (!syncActive) {
+            <mat-hint [title]="lastSyncDisplayDate" id="date-last-sync">
+              {{ lastSyncNotice }}
+            </mat-hint>
+          }
+        }
       </div>
     </mat-card>
   </div>

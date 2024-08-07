@@ -1,22 +1,21 @@
 <ng-container *transloco="let t; read: 'training_data_multi_select'">
   <div class="flex-row">
-    <mat-chip-listbox
-      *ngFor="let trainingData of trainingDataOptions"
-      class="training-data-multi-select"
-      hideSingleSelectionIndicator
-      (change)="onChipListChange(trainingData)"
-    >
-      <mat-chip-option [value]="trainingData.value" [selected]="trainingData.selected">
-        {{ trainingData.value.title }}
-        <button
-          *ngIf="canDeleteTrainingData(trainingData.value)"
-          matChipRemove
-          (click)="deleteTrainingData(trainingData.value)"
-        >
-          <mat-icon>cancel</mat-icon>
-        </button>
-      </mat-chip-option>
-    </mat-chip-listbox>
+    @for (trainingData of trainingDataOptions; track trainingData) {
+      <mat-chip-listbox
+        class="training-data-multi-select"
+        hideSingleSelectionIndicator
+        (change)="onChipListChange(trainingData)"
+      >
+        <mat-chip-option [value]="trainingData.value" [selected]="trainingData.selected">
+          {{ trainingData.value.title }}
+          @if (canDeleteTrainingData(trainingData.value) | async) {
+            <button matChipRemove (click)="deleteTrainingData(trainingData.value)">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          }
+        </mat-chip-option>
+      </mat-chip-listbox>
+    }
     <button mat-flat-button (click)="openUploadDialog()" color="accent">
       <mat-icon matChipAvatar>file_upload</mat-icon>
       {{ t("upload_csv") }}
