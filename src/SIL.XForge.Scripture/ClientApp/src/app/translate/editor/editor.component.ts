@@ -1164,7 +1164,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): void {
+  async onHistoryTabRevisionSelect(tab: EditorTabInfo, revision: Revision | undefined): Promise<void> {
     if (revision != null) {
       const separator: string = this.i18n.isRtl ? `${RIGHT_TO_LEFT_MARK} - ` : ' - ';
       tab.headerText = `${this.targetLabel}${separator}${this.editorHistoryService.formatTimestamp(revision.timestamp)}`;
@@ -1173,13 +1173,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         true
       )}`;
     } else {
-      tab.headerText = `${this.targetLabel} - History`;
-      tab.tooltip = `${this.projectDoc?.data?.name} - History`;
+      const historyDefaultTabHeader: string = await firstValueFrom(
+        this.i18n.translate('editor_tab_factory.default_history_tab_header')
+      );
+      tab.headerText = `${this.targetLabel} - ${historyDefaultTabHeader}`;
+      tab.tooltip = `${this.projectDoc?.data?.name} - ${historyDefaultTabHeader}`;
     }
 
     this.changeDetector.detectChanges();
-
-    // TODO: Respond to locale changes
   }
 
   /**
