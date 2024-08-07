@@ -1,0 +1,25 @@
+.countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  height: 100px;
+  width: 100px;
+  &.animate {
+    animation: countdown 1s 3;
+  }
+  &:not(.animate) {
+    opacity: 0;
+  }
+}
+
+@keyframes countdown {
+  0% {
+    font-size: 100px;
+    transform: scale(1.2);
+  }
+  100% {
+    font-size: 90px;
+    transform: scale(1);
+  }
+}
