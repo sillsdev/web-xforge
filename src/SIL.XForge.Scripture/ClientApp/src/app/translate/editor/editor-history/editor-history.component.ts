@@ -1,8 +1,19 @@
-import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeltaStatic } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { Delta, TextDoc } from '../../../core/models/text-doc';
@@ -17,7 +28,7 @@ import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/
   templateUrl: './editor-history.component.html',
   styleUrls: ['./editor-history.component.scss']
 })
-export class EditorHistoryComponent implements OnChanges, AfterViewInit {
+export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit {
   @Input() projectId?: string;
   @Input() bookNum?: number;
   @Input() chapter?: number;
@@ -35,10 +46,11 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
 
   constructor(
     private readonly destroyRef: DestroyRef,
-    private readonly projectService: SFProjectService,
     private readonly editorHistoryService: EditorHistoryService,
     readonly fontService: FontService,
-    readonly onlineStatusService: OnlineStatusService
+    private readonly i18nService: I18nService,
+    readonly onlineStatusService: OnlineStatusService,
+    private readonly projectService: SFProjectService
   ) {}
 
   ngOnChanges(): void {
@@ -49,6 +61,13 @@ export class EditorHistoryComponent implements OnChanges, AfterViewInit {
     if (this.isViewInitialized) {
       this.revisionSelect.emit(undefined);
     }
+  }
+
+  ngOnInit(): void {
+    // When the locale changes, emit the loaded Revision again, as the date formatting will need to update
+    this.i18nService.locale$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.revisionSelect.emit(this.loadedRevision));
   }
 
   ngAfterViewInit(): void {
