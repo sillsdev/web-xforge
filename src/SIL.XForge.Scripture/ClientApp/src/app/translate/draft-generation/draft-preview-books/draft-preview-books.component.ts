@@ -41,7 +41,7 @@ export class DraftPreviewBooksComponent {
           bookNumber: text.bookNum,
           canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
           chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
-          draftApplied: text.chapters.filter(chapter => chapter.hasDraft && chapter.draftApplied).length > 0
+          draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
         }))
         .sort((a, b) => a.bookNumber - b.bookNumber)
         .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
