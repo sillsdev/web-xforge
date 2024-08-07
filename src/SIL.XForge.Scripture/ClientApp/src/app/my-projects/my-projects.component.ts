@@ -38,7 +38,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   loadingPTProjects: boolean = false;
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
-  joinDisabledProjects: string[] = [];
+  joiningProjects: string[] = [];
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -68,7 +68,9 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   async ngOnInit(): Promise<void> {
     this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
       if (projects == null) return;
-      this.userConnectedProjects = projects.filter(project => project.data != null && !isResource(project.data));
+      this.userConnectedProjects = projects.filter(
+        project => project.data != null && !isResource(project.data) && !this.joiningProjects.includes(project.id)
+      );
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
@@ -91,7 +93,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
   async joinProject(projectId: string): Promise<void> {
     this.noticeService.loadingStarted();
-    this.joinDisabledProjects.push(projectId);
+    this.joiningProjects.push(projectId);
     await this.projectService.onlineAddCurrentUser(projectId);
     this.noticeService.loadingFinished();
     this.router.navigate(['projects', projectId]);

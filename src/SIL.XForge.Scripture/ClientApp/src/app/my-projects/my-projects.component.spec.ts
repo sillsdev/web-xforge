@@ -85,7 +85,7 @@ describe('MyProjectsComponent', () => {
     expect(env.router.lastSuccessfulNavigation?.extras.state?.shortName).toEqual('NCAA');
   }));
 
-  it('click Join, passes PT project id and SF project id', fakeAsync(() => {
+  it('click Join, user added to the project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
 
@@ -93,6 +93,7 @@ describe('MyProjectsComponent', () => {
     verify(mockedNoticeService.loadingStarted()).once();
     verify(mockedSFProjectService.onlineAddCurrentUser('sf-cbntt')).once();
     expect(env.joinButtonForProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
+    expect(env.component.joiningProjects).toEqual(['sf-cbntt']);
     // Navigates to the connect project component.
     expect(env.router.url).toEqual('/projects/sf-cbntt');
   }));
