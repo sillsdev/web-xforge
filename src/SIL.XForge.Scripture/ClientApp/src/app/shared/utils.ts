@@ -241,6 +241,25 @@ export function canInsertNote(project: SFProjectProfile, userId: string): boolea
   return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.SFNoteThreads, Operation.Create);
 }
 
+export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
+  const invalidTags = new Set<string>();
+
+  if (Array.isArray(deltaOp)) {
+    deltaOp.forEach(t => getUnsupportedTags(t).forEach(s => invalidTags.add(s)));
+  } else if (deltaOp && typeof deltaOp === 'object') {
+    if (deltaOp.attributes?.['invalid-block'] !== undefined || deltaOp.attributes?.['invalid-inline'] !== undefined) {
+      const style = deltaOp.attributes?.char?.style;
+      if (style !== undefined) {
+        invalidTags.add(style);
+      }
+    }
+
+    Object.values(deltaOp).forEach(v => getUnsupportedTags(v).forEach(s => invalidTags.add(s)));
+  }
+
+  return [...invalidTags];
+}
+
 export class XmlUtils {
   /** Encode text to be valid xml text node. Escape reserved xml characters such as & and < >. */
   static encodeForXml(text: string): string {

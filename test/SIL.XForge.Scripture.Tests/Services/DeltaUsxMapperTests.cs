@@ -1953,6 +1953,63 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToDelta_Note_InvalidContent()
+    {
+        XDocument usxDoc = Usx(
+            "PHM",
+            Chapter("1"),
+            Para(
+                "p",
+                Verse("1"),
+                "This is a verse with a footnote",
+                Note(
+                    "f",
+                    "+",
+                    Char("bad", "1.1: "),
+                    Char("ft", "Refers to "),
+                    Char("fq", "a footnote"),
+                    ". ",
+                    Char("xt", "John 1:1"),
+                    " and ",
+                    Char("xt", "Mark 1:1")
+                ),
+                ", so that we can test it."
+            )
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+        var expected = Delta
+            .New()
+            .InsertChapter("1")
+            .InsertBlank("p_1")
+            .InsertVerse("1")
+            .InsertText("This is a verse with a footnote", "verse_1_1")
+            .InsertNote(
+                Delta
+                    .New()
+                    .InsertChar("1.1: ", "bad", _testGuidService.Generate(), invalid: true)
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
+                    .Insert(". ")
+                    .InsertChar("John 1:1", "xt", _testGuidService.Generate())
+                    .Insert(" and ")
+                    .InsertChar("Mark 1:1", "xt", _testGuidService.Generate()),
+                "f",
+                "+",
+                "verse_1_1"
+            )
+            .InsertText(", so that we can test it.", "verse_1_1")
+            .InsertPara("p");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].IsValid, Is.False);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+    }
+
+    [Test]
     public void ToDelta_Figure()
     {
         XDocument usxDoc = Usx(
