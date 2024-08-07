@@ -29,16 +29,30 @@ describe('TextNoteDialogComponent', () => {
     expect(env.text).toBe(text);
   }));
 
-  it('Displays cross-references', fakeAsync(() => {
+  it('Displays extended footnotes', fakeAsync(() => {
+    const text = 'Footnote text';
+    env = new TestEnvironment({ type: TextNoteType.ExtendedFootnote, text, isRightToLeft: false });
+    expect(env.title).toBe('text_note_dialog.footnote');
+    expect(env.text).toBe(text);
+  }));
+
+  it('Displays end notes', fakeAsync(() => {
     const text = 'End note text';
     env = new TestEnvironment({ type: TextNoteType.EndNote, text, isRightToLeft: false });
     expect(env.title).toBe('text_note_dialog.end_note');
     expect(env.text).toBe(text);
   }));
 
-  it('Displays end notes', fakeAsync(() => {
+  it('Displays cross-references', fakeAsync(() => {
     const text = 'Cross-reference text';
     env = new TestEnvironment({ type: TextNoteType.CrossReference, text, isRightToLeft: false });
+    expect(env.title).toBe('text_note_dialog.cross_reference');
+    expect(env.text).toBe(text);
+  }));
+
+  it('Displays extended cross-references', fakeAsync(() => {
+    const text = 'Cross-reference text';
+    env = new TestEnvironment({ type: TextNoteType.ExtendedCrossReference, text, isRightToLeft: false });
     expect(env.title).toBe('text_note_dialog.cross_reference');
     expect(env.text).toBe(text);
   }));
