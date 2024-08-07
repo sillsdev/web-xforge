@@ -76,6 +76,11 @@ mat-card {
 .loading-project-name {
   grid-area: project-name;
   word-break: break-word;
+  text-decoration: none;
+  color: inherit;
+  // Adding this margin does not have any visible effect, but prevents the element from being stretched to fill its grid
+  // areas, which makes the clickable area identical to the text area, which aligns with user expectations.
+  margin-inline-end: auto;
 }
 
 .project-description,
@@ -85,7 +90,6 @@ mat-card {
   align-self: center;
 }
 
-mat-card a,
 .loading-action {
   grid-area: button;
   justify-self: end;

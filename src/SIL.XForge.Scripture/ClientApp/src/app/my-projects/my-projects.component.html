@@ -18,9 +18,9 @@
     attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
     data-project-type="user-connected-project"
   >
-    <span class="project-name">
+    <a class="project-name" appRouterLink="/projects/{{ projectDoc.id }}">
       <b>{{ projectDoc.data?.shortName }}</b> - {{ projectDoc.data?.name }}
-    </span>
+    </a>
     <span class="project-description">
       {{ projectTypeDescription(projectDoc) }}
     </span>
@@ -50,9 +50,9 @@
     attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
     data-project-type="user-connected-resource"
   >
-    <span class="project-name">
+    <a class="project-name" appRouterLink="/projects/{{ projectDoc.id }}">
       <b>{{ projectDoc.data?.shortName }}</b> - {{ projectDoc.data?.name }}
-    </span>
+    </a>
     <span class="project-description">{{ t("dbl_resource") }}</span>
     <a appRouterLink="/projects/{{ projectDoc.id }}" mat-flat-button color="primary">{{ t("open") }}</a>
   </mat-card>
