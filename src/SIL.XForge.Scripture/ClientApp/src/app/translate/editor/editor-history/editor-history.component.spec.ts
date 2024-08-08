@@ -4,6 +4,7 @@ import Quill from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -22,6 +23,7 @@ describe('EditorHistoryComponent', () => {
   let component: EditorHistoryComponent;
   let fixture: ComponentFixture<EditorHistoryComponent>;
   const mockSFProjectService = mock(SFProjectService);
+  const mockI18nService = mock(I18nService);
   const mockEditorHistoryService = mock(EditorHistoryService);
   const mockHistoryChooserComponent = mock(HistoryChooserComponent);
 
@@ -35,6 +37,7 @@ describe('EditorHistoryComponent', () => {
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockSFProjectService },
+      { provide: I18nService, useMock: mockI18nService },
       { provide: EditorHistoryService, useMock: mockEditorHistoryService },
       { provide: HistoryChooserComponent, useMock: mockHistoryChooserComponent }
     ]

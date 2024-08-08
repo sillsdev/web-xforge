@@ -3,7 +3,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { Revision } from '../../../../core/paratext.service';
 
 @Pipe({
-  name: 'revisionFormat'
+  name: 'revisionFormat',
+  pure: false
 })
 export class HistoryRevisionFormatPipe implements PipeTransform {
   constructor(private readonly i18n: I18nService) {}
