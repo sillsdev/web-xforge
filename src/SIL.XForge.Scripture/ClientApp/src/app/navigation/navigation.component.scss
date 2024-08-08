@@ -73,8 +73,7 @@ mat-nav-list .mdc-list-item {
   color: variables.$errorColor;
   font-weight: normal;
   font-size: 1.4rem;
-  inset-inline-end: -7px;
-  top: -7px;
+  top: 4px;
   width: auto; // Fixes broken badge icon in Firefox
 }
 

@@ -164,6 +164,8 @@ html,
 .mat-mdc-menu-item-text {
   letter-spacing: initial;
   --mat-menu-item-label-text-tracking: initial;
+  --mdc-text-button-label-text-tracking: initial;
+  --mdc-filled-button-label-text-tracking: initial;
 }
 
 mat-list-item {

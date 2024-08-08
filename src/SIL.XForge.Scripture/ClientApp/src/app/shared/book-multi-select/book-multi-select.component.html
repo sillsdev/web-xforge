@@ -5,7 +5,11 @@
         <mat-card-content>
           <div>
             <span>{{ t("select") }}:</span>
-            <mat-button-toggle-group (change)="select($event.value)" [(ngModel)]="selection">
+            <mat-button-toggle-group
+              (change)="select($event.value)"
+              [(ngModel)]="selection"
+              hideSingleSelectionIndicator="true"
+            >
               <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
                 {{ t("old_testament") }}
               </mat-button-toggle>
