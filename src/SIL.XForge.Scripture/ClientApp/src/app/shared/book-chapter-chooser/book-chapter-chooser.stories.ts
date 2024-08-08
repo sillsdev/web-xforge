@@ -5,8 +5,8 @@ import { userEvent, within } from '@storybook/testing-library';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { getOverlay } from '../../../../.storybook/story-utils';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
+import { getOverlay } from '../../../../.storybook/util/mat-dialog-launch';
 
 const CANON_SIZE = 66; // all books we currently localize
 
