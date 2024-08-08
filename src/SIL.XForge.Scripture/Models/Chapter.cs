@@ -16,4 +16,5 @@ public class Chapter
     public Dictionary<string, string> Permissions { get; set; } = new Dictionary<string, string>();
     public bool? HasAudio { get; set; }
     public bool? HasDraft { get; set; }
+    public bool? DraftApplied { get; set; }
 }

@@ -5,6 +5,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { catchError, Observable, throwError } from 'rxjs';
 import { isString } from '../../../type-utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { getVerseRefFromSegmentRef, verseSlug } from '../../shared/utils';
 import { DraftSegmentMap } from './draft-generation';
@@ -24,6 +25,7 @@ export interface DraftDiff {
 })
 export class DraftHandlingService {
   constructor(
+    private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly draftGenerationService: DraftGenerationService
   ) {}
@@ -171,6 +173,7 @@ export class DraftHandlingService {
    * @param draftDelta The draft delta to overwrite the current text document with.
    */
   async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: DeltaStatic): Promise<void> {
+    await this.projectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
     await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
   }
 
@@ -197,7 +200,7 @@ export class DraftHandlingService {
           ops = draft;
         }
         const draftDelta: DeltaStatic = new Delta(ops);
-        await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
+        await this.applyChapterDraftAsync(textDocId, draftDelta);
         resolve(true);
       });
     });

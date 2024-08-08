@@ -2779,7 +2779,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CreateProjectAsync_DirectoryExisting_Error()
+    public void CreateProjectAsync_DirectoryExisting_Error()
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
@@ -3575,12 +3575,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.SetServalConfigAsync(
-            User01,
-            new string[] { SystemRole.SystemAdmin },
-            Project01,
-            servalConfig: null
-        );
+        await env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig: null);
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3595,13 +3590,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<JsonReaderException>(
-            () =>
-                env.Service.SetServalConfigAsync(
-                    User01,
-                    new string[] { SystemRole.SystemAdmin },
-                    Project01,
-                    servalConfig
-                )
+            () => env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig)
         );
     }
 
@@ -3612,12 +3601,7 @@ public class SFProjectServiceTests
         const string servalConfig = "  ";
 
         // SUT
-        await env.Service.SetServalConfigAsync(
-            User01,
-            new string[] { SystemRole.SystemAdmin },
-            Project01,
-            servalConfig
-        );
+        await env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig);
 
         // Verify project document
         SFProject project = env.GetProject(Project01);
@@ -3632,13 +3616,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.SetServalConfigAsync(
-                    User01,
-                    new string[] { SystemRole.SystemAdmin },
-                    "invalid_project",
-                    servalConfig
-                )
+            () => env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], "invalid_project", servalConfig)
         );
     }
 
@@ -3653,12 +3631,7 @@ public class SFProjectServiceTests
         Assert.IsNotNull(project.TranslateConfig.DraftConfig);
 
         // SUT
-        await env.Service.SetServalConfigAsync(
-            User01,
-            new string[] { SystemRole.SystemAdmin },
-            Project01,
-            servalConfig
-        );
+        await env.Service.SetServalConfigAsync(User01, [SystemRole.SystemAdmin], Project01, servalConfig);
 
         // Verify project document
         project = env.GetProject(Project01);
@@ -3673,7 +3646,143 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetServalConfigAsync(User01, new string[] { SystemRole.User }, Project01, servalConfig)
+            () => env.Service.SetServalConfigAsync(User01, [SystemRole.User], Project01, servalConfig)
+        );
+    }
+
+    [Test]
+    public void SetDraftAppliedAsync_BookMustBeInProject()
+    {
+        var env = new TestEnvironment();
+        const int book = 39;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
+        );
+    }
+
+    [Test]
+    public void SetDraftAppliedAsync_ChapterMustBeInBook()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 2;
+        const bool draftApplied = true;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
+        );
+    }
+
+    [Test]
+    public void SetDraftAppliedAsync_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetDraftAppliedAsync(User01, "invalid_project", book, chapter, draftApplied)
+        );
+    }
+
+    [Test]
+    public void SetDraftAppliedAsync_ProjectMustNotBeResource()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetDraftAppliedAsync(User01, Resource01, book, chapter, draftApplied)
+        );
+    }
+
+    [Test]
+    public async Task SetDraftAppliedAsync_Success()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // Grant User01 write permission
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project01,
+                u =>
+                    u.Set(
+                        p => p.Texts[0].Chapters[0].Permissions,
+                        new Dictionary<string, string> { { User01, TextInfoPermission.Write } }
+                    )
+            );
+
+        // SUT
+        await env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied);
+
+        Assert.IsTrue(env.GetProject(Project01).Texts[0].Chapters[0].DraftApplied);
+    }
+
+    [Test]
+    public void SetDraftAppliedAsync_UserMustHaveParatextRole()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetDraftAppliedAsync(User02, Project01, book, chapter, draftApplied)
+        );
+    }
+
+    [Test]
+    public void SetDraftAppliedAsync_UserMustHavePermissionRecord()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
+        );
+    }
+
+    [Test]
+    public async Task SetDraftAppliedAsync_UserMustHaveWritePermission()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool draftApplied = true;
+
+        // Grant User01 read permission
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project01,
+                u =>
+                    u.Set(
+                        p => p.Texts[0].Chapters[0].Permissions,
+                        new Dictionary<string, string> { { User01, TextInfoPermission.Read } }
+                    )
+            );
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied)
         );
     }
 

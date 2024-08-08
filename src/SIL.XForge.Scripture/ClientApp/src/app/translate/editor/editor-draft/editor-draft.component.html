@@ -1,15 +1,13 @@
 @if (onlineStatusService.onlineStatus$ | async) {
   @if (draftCheckState === "draft-unknown") {
     <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-  }
-  @if (draftCheckState === "draft-empty") {
+  } @else if (draftCheckState === "draft-empty") {
     <app-notice icon="info" type="primary" mode="outline">
       {{ "editor_draft_tab.no_draft_notice" | transloco: { bookChapterName } }}
       <p>{{ "editor_draft_tab.click_book_to_preview" | transloco }}</p>
       <app-draft-preview-books></app-draft-preview-books>
     </app-notice>
-  }
-  @if (draftCheckState === "draft-legacy") {
+  } @else if (draftCheckState === "draft-legacy") {
     <app-notice type="warning" icon="warning">
       <transloco
         key="editor_draft_tab.draft_legacy_warning"
@@ -17,31 +15,33 @@
       ></transloco>
     </app-notice>
   }
-} @else {
-  @if (draftCheckState !== "draft-present") {
-    <app-notice icon="warning" type="warning">
-      {{ "editor_draft_tab.offline_notice" | transloco }}
-    </app-notice>
-  }
-}
 
-@if (isDraftReady) {
-  <div class="toolbar">
-    <div class="apply-draft-button-container">
-      @if (isDraftApplied && isDraftReady) {
-        <span class="draft-indicator">
-          <mat-icon class="check-icon">check</mat-icon>
-          <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
-        </span>
-      }
-      @if (!isDraftApplied && isDraftReady && canApplyDraft) {
-        <button mat-flat-button color="primary" (click)="applyDraft()">
-          <mat-icon>auto_awesome</mat-icon>
-          <transloco key="editor_draft_tab.apply_to_project"></transloco>
-        </button>
-      }
+  @if (isDraftReady) {
+    <div class="toolbar">
+      <div class="apply-draft-button-container">
+        @if (userAppliedDraft) {
+          <span class="draft-indicator">
+            <mat-icon class="check-icon">check</mat-icon>
+            <transloco key="editor_draft_tab.draft_indicator_applied"></transloco>
+          </span>
+        }
+        @if (canApplyDraft) {
+          <button mat-flat-button color="primary" (click)="applyDraft()">
+            <mat-icon>auto_awesome</mat-icon>
+            @if (isDraftApplied) {
+              <transloco key="editor_draft_tab.reapply_to_project"></transloco>
+            } @else {
+              <transloco key="editor_draft_tab.apply_to_project"></transloco>
+            }
+          </button>
+        }
+      </div>
     </div>
-  </div>
+  }
+} @else {
+  <app-notice icon="warning" type="warning">
+    {{ "editor_draft_tab.offline_notice" | transloco }}
+  </app-notice>
 }
 
 <app-text

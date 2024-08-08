@@ -20,6 +20,7 @@ export interface BookWithDraft {
   bookNumber: number;
   canEdit: boolean;
   chaptersWithDrafts: number[];
+  draftApplied: boolean;
 }
 
 @Component({
@@ -39,7 +40,8 @@ export class DraftPreviewBooksComponent {
         .map(text => ({
           bookNumber: text.bookNum,
           canEdit: text.permissions[this.userService.currentUserId] === TextInfoPermission.Write,
-          chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number)
+          chaptersWithDrafts: text.chapters.filter(chapter => chapter.hasDraft).map(chapter => chapter.number),
+          draftApplied: text.chapters.filter(chapter => chapter.hasDraft).every(chapter => chapter.draftApplied)
         }))
         .sort((a, b) => a.bookNumber - b.bookNumber)
         .filter(book => book.chaptersWithDrafts.length > 0) as BookWithDraft[];
@@ -84,9 +86,11 @@ export class DraftPreviewBooksComponent {
 
     const bookName: string = this.bookNumberToName(bookWithDraft.bookNumber);
     const confirmed = await this.dialogService.confirmWithOptions({
-      title: this.i18n.translate('draft_add_dialog.add_book_to_project', { bookName }),
+      title: bookWithDraft.draftApplied
+        ? this.i18n.translate('draft_add_dialog.readd_book_to_project', { bookName })
+        : this.i18n.translate('draft_add_dialog.add_book_to_project', { bookName }),
       message: this.i18n.translate('draft_add_dialog.book_contents_will_be_overwritten', { bookName }),
-      affirmative: 'draft_add_dialog.add_to_project'
+      affirmative: bookWithDraft.draftApplied ? 'draft_add_dialog.readd_to_project' : 'draft_add_dialog.add_to_project'
     });
 
     if (!confirmed) return;

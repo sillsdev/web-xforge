@@ -5,6 +5,7 @@ export interface Chapter {
   permissions: { [userRef: string]: string };
   hasAudio?: boolean;
   hasDraft?: boolean;
+  draftApplied?: boolean;
 }
 
 /** Documents in the texts collection in the database represent the metadata

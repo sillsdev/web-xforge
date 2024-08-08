@@ -35,7 +35,7 @@ describe('EditorTabFactoryService', () => {
     expect(tab.type).toEqual('draft');
     expect(tab.icon).toEqual('auto_awesome');
     expect(tab.headerText).toEqual('Test Header Text');
-    expect(tab.closeable).toEqual(false);
+    expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
     expect(tab.unique).toEqual(true);
   });

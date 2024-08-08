@@ -34,7 +34,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             type: 'draft',
             icon: 'auto_awesome',
             headerText: await firstValueFrom(this.i18n.translate('editor_tab_factory.draft_tab_header')),
-            closeable: false,
+            closeable: true,
             movable: true,
             unique: true
           },

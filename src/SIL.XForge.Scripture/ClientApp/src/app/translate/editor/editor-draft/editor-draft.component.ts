@@ -54,6 +54,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   textDocId?: TextDocId;
   isDraftReady = false;
   isDraftApplied = false;
+  userAppliedDraft = false;
   canApplyDraft = false;
 
   private draftDelta?: DeltaStatic;
@@ -140,7 +141,9 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         this.draftText.setContents(this.draftDelta, 'api');
         this.draftText.applyEditorStyles();
 
-        this.isDraftApplied = this.draftDelta.diff(this.targetDelta).length() === 0;
+        this.isDraftApplied =
+          this.targetProject?.texts.find(t => t.bookNum === this.bookNum)?.chapters.find(c => c.number === this.chapter)
+            ?.draftApplied ?? false;
 
         if (this.draftCheckState !== 'draft-legacy') {
           this.draftCheckState = 'draft-present';
@@ -165,6 +168,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
     await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
     this.isDraftApplied = true;
+    this.userAppliedDraft = true;
   }
 
   private setInitialState(): void {
@@ -172,6 +176,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.bookChapterName = this.getLocalizedBookChapter();
     this.isDraftReady = false;
     this.isDraftApplied = false;
+    this.userAppliedDraft = false;
     this.canApplyDraft = false;
   }
 
