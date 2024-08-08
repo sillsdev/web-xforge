@@ -5,8 +5,10 @@ import { LocaleDirection } from 'xforge-common/models/i18n-locale';
 
 export enum TextNoteType {
   Footnote = 'f',
+  ExtendedFootnote = 'ef',
   EndNote = 'fe',
-  CrossReference = 'x'
+  CrossReference = 'x',
+  ExtendedCrossReference = 'ex'
 }
 
 export interface NoteDialogData {
@@ -37,12 +39,14 @@ export class TextNoteDialogComponent {
     let translateKey = this.data.type.toString();
     switch (this.data.type) {
       case TextNoteType.Footnote:
+      case TextNoteType.ExtendedFootnote:
         translateKey = 'footnote';
         break;
       case TextNoteType.EndNote:
         translateKey = 'end_note';
         break;
       case TextNoteType.CrossReference:
+      case TextNoteType.ExtendedCrossReference:
         translateKey = 'cross_reference';
     }
     return this.translocoService.translate(`text_note_dialog.${translateKey}`);
