@@ -11,8 +11,7 @@
         >
           <mat-icon>mic</mat-icon>
         </button>
-      }
-      @if (isRecording) {
+      } @else {
         <button
           mat-button
           (click)="stopRecording()"

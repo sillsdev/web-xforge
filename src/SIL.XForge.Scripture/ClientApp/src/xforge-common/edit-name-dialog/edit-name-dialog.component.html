@@ -12,8 +12,7 @@
     <form id="name-form">
       @if (data.isConfirmation) {
         <p>{{ t("confirm_name") }}</p>
-      }
-      @if (!data.isConfirmation) {
+      } @else {
         <p>{{ t("enter_name") }}</p>
       }
       <mat-form-field appearance="fill">

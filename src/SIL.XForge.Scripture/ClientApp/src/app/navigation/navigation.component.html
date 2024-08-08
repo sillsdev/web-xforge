@@ -28,8 +28,7 @@
           <mat-icon class="mirror-rtl">list</mat-icon>
           {{ t("manage_questions") }}
         </a>
-      }
-      @if (!canManageQuestions) {
+      } @else {
         <a mat-list-item [appRouterLink]="getProjectLink('checking')">
           <mat-icon class="mirror-rtl">bar_chart</mat-icon>
           {{ t("my_progress") }}

@@ -80,8 +80,7 @@
                     id="translation-suggestions-status"
                   ></app-write-status>
                 </div>
-              }
-              @if (!isBasedOnProjectSet) {
+              } @else {
                 <mat-hint>{{ t("translation_suggestions_require_source_text") }}</mat-hint>
               }
             </div>
