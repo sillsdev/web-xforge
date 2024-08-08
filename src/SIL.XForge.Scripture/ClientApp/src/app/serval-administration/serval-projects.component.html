@@ -18,8 +18,7 @@
         <td mat-cell *matCellDef="let row">
           @if (row.preTranslate) {
             <strong>Enabled</strong>
-          }
-          @if (!row.preTranslate) {
+          } @else {
             <span>Disabled</span>
           }
         </td>
@@ -29,8 +28,7 @@
         <td mat-cell *matCellDef="let row">
           @if (row.sourceId != null) {
             <a [appRouterLink]="['/serval-administration', row.sourceId]">{{ row.source }}</a>
-          }
-          @if (row.sourceId == null) {
+          } @else {
             <span>{{ row.source }}</span>
           }
         </td>
@@ -40,8 +38,7 @@
         <td mat-cell *matCellDef="let row">
           @if (row.alternateSourceId != null) {
             <a [appRouterLink]="['/serval-administration', row.alternateSourceId]">{{ row.alternateSource }}</a>
-          }
-          @if (row.alternateSourceId == null) {
+          } @else {
             <span>{{ row.alternateSource }}</span>
           }
         </td>
@@ -53,8 +50,7 @@
             <a [appRouterLink]="['/serval-administration', row.alternateTrainingSourceId]">{{
               row.alternateTrainingSource
             }}</a>
-          }
-          @if (row.alternateTrainingSourceId == null) {
+          } @else {
             <span>{{ row.alternateTrainingSource }}</span>
           }
         </td>

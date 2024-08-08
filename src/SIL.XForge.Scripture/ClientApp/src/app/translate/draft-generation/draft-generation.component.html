@@ -1,8 +1,7 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
   @if (isBackTranslationMode) {
     <h1 class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
-  }
-  @if (!isBackTranslationMode) {
+  } @else {
     <h1 class="mat-headline-4">
       {{ t("generate_forward_translation_drafts_header") }}
     </h1>
@@ -19,8 +18,7 @@
               {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
             </p>
           </div>
-        }
-        @if (!isBackTranslationMode) {
+        } @else {
           <div>
             <p>
               <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
@@ -86,8 +84,7 @@
             <transloco key="draft_generation.non_pa_info_alert_source_text_not_selected"></transloco>
           }
         </app-notice>
-      }
-      @if (isSourceProjectSet && !isSourceAndTargetDifferent) {
+      } @else if (!isSourceAndTargetDifferent) {
         <app-notice type="warning" icon="warning" data-test-id="warning-source-target-same">
           @if (isProjectAdmin) {
             <transloco
@@ -101,8 +98,7 @@
             ></transloco>
           }
         </app-notice>
-      }
-      @if (isSourceProjectSet && isSourceAndTargetDifferent && !isSourceAndTrainingSourceLanguageIdentical) {
+      } @else if (!isSourceAndTrainingSourceLanguageIdentical) {
         <app-notice type="warning" icon="warning" data-test-id="warning-source-training-different">
           @if (isProjectAdmin) {
             <transloco
@@ -123,13 +119,7 @@
             ></transloco>
           }
         </app-notice>
-      }
-      @if (
-        isSourceProjectSet &&
-        isSourceAndTargetDifferent &&
-        isSourceAndTrainingSourceLanguageIdentical &&
-        !isSourceAndAdditionalTrainingSourceLanguageIdentical
-      ) {
+      } @else if (!isSourceAndAdditionalTrainingSourceLanguageIdentical) {
         <app-notice type="warning" icon="warning" data-test-id="warning-mix-source-different">
           @if (isProjectAdmin) {
             <transloco
@@ -150,14 +140,7 @@
             ></transloco>
           }
         </app-notice>
-      }
-      @if (
-        isSourceProjectSet &&
-        isSourceAndTargetDifferent &&
-        isSourceAndTrainingSourceLanguageIdentical &&
-        isSourceAndAdditionalTrainingSourceLanguageIdentical &&
-        !canAccessDraftSourceIfAvailable(source)
-      ) {
+      } @else if (!canAccessDraftSourceIfAvailable(source)) {
         <app-notice type="warning" icon="warning" data-test-id="warning-source-no-access">
           <transloco
             key="draft_generation.info_alert_no_source_access"
@@ -167,15 +150,7 @@
             }"
           ></transloco>
         </app-notice>
-      }
-      @if (
-        isSourceProjectSet &&
-        isSourceAndTargetDifferent &&
-        isSourceAndTrainingSourceLanguageIdentical &&
-        isSourceAndAdditionalTrainingSourceLanguageIdentical &&
-        canAccessDraftSourceIfAvailable(source) &&
-        !canAccessDraftSourceIfAvailable(alternateSource)
-      ) {
+      } @else if (!canAccessDraftSourceIfAvailable(alternateSource)) {
         <app-notice type="warning" icon="warning" data-test-id="warning-alternate-source-no-access">
           <transloco
             key="draft_generation.info_alert_no_alternate_source_access"
@@ -185,16 +160,7 @@
             }"
           ></transloco>
         </app-notice>
-      }
-      @if (
-        isSourceProjectSet &&
-        isSourceAndTargetDifferent &&
-        isSourceAndTrainingSourceLanguageIdentical &&
-        isSourceAndAdditionalTrainingSourceLanguageIdentical &&
-        canAccessDraftSourceIfAvailable(source) &&
-        canAccessDraftSourceIfAvailable(alternateSource) &&
-        !canAccessDraftSourceIfAvailable(alternateTrainingSource)
-      ) {
+      } @else if (!canAccessDraftSourceIfAvailable(alternateTrainingSource)) {
         <app-notice type="warning" icon="warning" data-test-id="warning-alternate-training-source-no-access">
           <transloco
             key="draft_generation.info_alert_no_alternate_training_source_access"
@@ -204,17 +170,7 @@
             }"
           ></transloco>
         </app-notice>
-      }
-      @if (
-        isSourceProjectSet &&
-        isSourceAndTargetDifferent &&
-        isSourceAndTrainingSourceLanguageIdentical &&
-        isSourceAndAdditionalTrainingSourceLanguageIdentical &&
-        canAccessDraftSourceIfAvailable(source) &&
-        canAccessDraftSourceIfAvailable(alternateSource) &&
-        canAccessDraftSourceIfAvailable(alternateTrainingSource) &&
-        !canAccessDraftSourceIfAvailable(additionalTrainingSource)
-      ) {
+      } @else if (!canAccessDraftSourceIfAvailable(additionalTrainingSource)) {
         <app-notice type="warning" icon="warning" data-test-id="warning-mix-source-no-access">
           <transloco
             key="draft_generation.info_alert_no_additional_training_source_access"
@@ -241,9 +197,7 @@
     <section>
       <p class="offline-text">{{ t("offline_message") }}</p>
     </section>
-  }
-
-  @if (isOnline) {
+  } @else {
     <mat-tab-group>
       <mat-tab>
         @if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
@@ -306,8 +260,7 @@
                     <h3>{{ t("draft_queued_header") }}</h3>
                     @if (!hasDraftQueueDepth(draftJob)) {
                       <p>{{ t("draft_queued_detail") }}</p>
-                    }
-                    @if (hasDraftQueueDepth(draftJob)) {
+                    } @else {
                       <p>
                         {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
                       </p>
@@ -322,8 +275,7 @@
                       }
                     </div>
                   </section>
-                }
-                @if (isDraftActive(draftJob)) {
+                } @else if (isDraftActive(draftJob)) {
                   <section class="progress-active">
                     <h3>{{ t("draft_active_header") }}</h3>
                     <div class="progress-text">
@@ -366,8 +318,7 @@
                           >
                             @if (downloadProgress === 0) {
                               <mat-icon class="material-icons-outlined">cloud_download</mat-icon>
-                            }
-                            @if (downloadProgress > 0) {
+                            } @else if (downloadProgress > 0) {
                               <mat-icon>
                                 <mat-spinner
                                   diameter="18"

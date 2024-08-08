@@ -12,8 +12,7 @@
         <div class="text">
           @if (!isNewNote || isBiblicalTermNote) {
             <div class="note-text" [innerHTML]="getNoteContextText()"></div>
-          }
-          @if (isNewNote && !isBiblicalTermNote) {
+          } @else {
             <div class="note-text" [innerHTML]="segmentText"></div>
           }
           @if (showSegmentText) {
@@ -91,8 +90,7 @@
               <button mat-menu-item (click)="saveOption = 'save'">
                 <span>{{ t("save") }}</span>
               </button>
-            }
-            @if (saveOption === "save") {
+            } @else if (saveOption === "save") {
               <button mat-menu-item (click)="saveOption = 'resolve'">
                 <span>{{ t("resolve") }}</span>
               </button>
