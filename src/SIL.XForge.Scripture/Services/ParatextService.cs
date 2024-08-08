@@ -1263,7 +1263,9 @@ public class ParatextService : DisposableBase, IParatextService
             IEnumerable<string> newCommentIds = ptCommentIds.Except(matchedCommentIds);
             foreach (string commentId in newCommentIds)
             {
-                Paratext.Data.ProjectComments.Comment comment = existingThread.Comments.Single(c => c.Id == commentId);
+                // If there are duplicates, we only retrieve the first, although Paratext displays both
+                // Actions (like Delete) performed on duplicates in Paratext affect both duplicates.
+                Paratext.Data.ProjectComments.Comment comment = existingThread.Comments.First(c => c.Id == commentId);
                 CommentTag commentIconTag = GetCommentTag(existingThread, comment, commentTags);
                 threadChange.AddChange(
                     CreateNoteFromComment(_guidService.NewObjectId(), comment, commentIconTag, ptProjectUsers),
