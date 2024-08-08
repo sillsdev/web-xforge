@@ -82,11 +82,11 @@
     "connect_network_to_manage_users": "La gestion des utilisateurs est désactivée en mode hors connexion. Veuillez vous connecter à Internet pour gérer les utilisateurs.",
     "edit_roles_and_permissions": "Modifier les rôles et autorisations",
     "filter_users": "Filtrer les utilisateurs...",
-    "guest_role_info": "Invited guests will have the roles you assign them in Scripture Forge.",
+    "guest_role_info": "Les invités auront les rôles que vous leur avez attribués dans Scripture Forge.",
     "invitation_expired": "L'invitation a expiré pour{{ newLine }}{{ email }}",
     "learn_more": "En savoir plus",
     "me": "moi",
-    "member_role_info": "Project members will have the same roles in both Scripture Forge and Paratext.",
+    "member_role_info": "Les membres du projet auront les mêmes rôles dans Scripture Forge et Paratext.",
     "no_users_found": "Aucun utilisateur trouvé",
     "paratext_members": "Membres de Paratext",
     "problem_loading_invited_users": "Un problème est survenu lors du chargement de la liste des utilisateurs invités.",
@@ -129,14 +129,16 @@
     "project_name": "Nom du projet"
   },
   "draft_add_dialog": {
-    "add_book_to_project": "Add {{ bookName }} to project",
+    "add_book_to_project": "Ajouter {{ bookName }} au projet",
     "add_to_project": "Ajouter au Projet",
-    "book_contents_will_be_overwritten": "Warning, this will overwrite any data in your project for the book of {{ bookName }}.",
-    "cancel": "Annuler"
+    "book_contents_will_be_overwritten": "Attention, cela écrasera toutes les données de votre projet pour le livre de {{ bookName }}.",
+    "cancel": "Annuler",
+    "readd_book_to_project": "Re-add {{ bookName }} to project",
+    "readd_to_project": "Re-add to project"
   },
   "draft_generation": {
     "back_from_stepper_button": "Retour",
-    "back_translation_requirement": "Les ébauches de retraduction ne peuvent être générés que dans les quelque 200 [link:supporttedLanguagesUrl]langues[/link] prises en charge.",
+    "back_translation_requirement": "Les ébauches de retraduction ne peuvent être générés que dans les quelque 200 [link:supportedLanguagesUrl]langues prises en charge[/link].",
     "cancel_generation_button": "Annuler",
     "criteria_project_language_not_in_nllb_with_language": "La langue de votre projet [em]\"{{ targetLanguageDisplayName }}\"[/em] n'est pas une langue prise en charge.",
     "dialog_confirm_draft_cancellation_message": "Canceling will reset progress for this draft request. Any previously generated draft will still be accessible.",
@@ -218,7 +220,8 @@
     "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
     "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
     "no_books_have_drafts": " Aucun livre n'a de brouillons.",
-    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission."
+    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission.",
+    "readd_to_project": "Re-add to project"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
@@ -249,6 +252,7 @@
     "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
     "offline_notice": "Le brouillon automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout du brouillon écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
+    "reapply_to_project": "Re-add to project",
     "yes": "Écraser le chapitre"
   },
   "editor_history_tab": {
