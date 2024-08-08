@@ -1551,6 +1551,81 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetNoteThreadChanges_DuplicateCommentsToExistingThread()
+    {
+        var env = new TestEnvironment();
+        var associatedPTUser = new SFParatextUser(env.Username01);
+        string projectId = env.SetupProject(env.Project01, associatedPTUser);
+        var userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        ThreadNoteComponents[] sfNoteComponents =
+        [
+            new ThreadNoteComponents
+            {
+                status = NoteStatus.Todo,
+                tagsAdded = ["1"],
+                assignedPTUser = CommentThread.unassignedUser,
+            },
+        ];
+
+        ThreadNoteComponents[] ptNoteComponents =
+        [
+            .. sfNoteComponents,
+            new ThreadNoteComponents
+            {
+                status = NoteStatus.Todo,
+                tagsAdded = ["1"],
+                assignedPTUser = CommentThread.unassignedUser,
+                duplicate = true,
+            },
+        ];
+        env.AddNoteThreadData(
+            [
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    notes = sfNoteComponents,
+                },
+            ]
+        );
+        env.AddParatextComments(
+            [
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 2,
+                    notes = ptNoteComponents,
+                    username = env.Username01,
+                },
+            ]
+        );
+
+        var commentThread = env.ProjectCommentManager.FindThread("thread1");
+        string commentId1 = commentThread.Comments[0].Id;
+        Assert.That(commentThread.Comments.Where(c => c.Id == commentId1).Count, Is.EqualTo(1));
+        string commentId2 = commentThread.Comments[1].Id;
+        Assert.That(commentThread.Comments.Where(c => c.Id == commentId2).Count, Is.EqualTo(2));
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
+            conn,
+            ["dataId1"]
+        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
+        }.ToDictionary(u => u.Username);
+        List<NoteThreadChange> changes = env
+            .Service.GetNoteThreadChanges(userSecret, projectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
+            .ToList();
+
+        Assert.That(changes.Count, Is.EqualTo(1));
+        Assert.That(changes[0].NotesAdded.Count, Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task GetNoteThreadChanges_UpdateTriggeredFromConflictTypeChange()
     {
         var env = new TestEnvironment();
