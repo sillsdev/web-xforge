@@ -9,8 +9,9 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { mock, objectContaining, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -21,15 +22,18 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
+import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 
 @Component({ template: '' })
 class EmptyComponent {}
 
+const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
+const mockedNoticeService = mock(NoticeService);
 
 describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -47,10 +51,12 @@ describe('MyProjectsComponent', () => {
     ],
     providers: [
       provideAnimations(),
+      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: SFUserProjectsService, useMock: mockedUserProjectsService }
+      { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -74,7 +80,22 @@ describe('MyProjectsComponent', () => {
     // Navigates to the connect project component.
     expect(env.router.url).toEqual('/connect-project');
     // Passes PT project id to connect project component.
-    expect(env.router.lastSuccessfulNavigation?.extras.state?.ptProjectId).toEqual('pt-notConnToSF');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.paratextId).toEqual('pt-notConnToSF');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.name).toEqual('Not connected at all to SF');
+    expect(env.router.lastSuccessfulNavigation?.extras.state?.shortName).toEqual('NCAA');
+  }));
+
+  it('click Join, user added to the project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+
+    env.click(env.joinButtonForProject('pt-connButNotThisUser'));
+    verify(mockedNoticeService.loadingStarted()).once();
+    verify(mockedSFProjectService.onlineAddCurrentUser('sf-cbntt')).once();
+    expect(env.joinButtonForProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
+    expect(env.component.joiningProjects).toEqual(['sf-cbntt']);
+    // Navigates to the connect project component.
+    expect(env.router.url).toEqual('/projects/sf-cbntt');
   }));
 
   it('lists my connected projects', fakeAsync(() => {
@@ -134,7 +155,8 @@ describe('MyProjectsComponent', () => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
 
-    expect(env.goButtonForProject('pt-connButNotThisUser').nativeElement.textContent).toContain('Join');
+    expect(env.joinButtonForProject('pt-connButNotThisUser')).not.toBeNull();
+    expect(env.goButtonForProject('pt-connButNotThisUser')).toBeNull();
   }));
 
   it('a project that is not on SF shows Connect button', fakeAsync(() => {
@@ -480,16 +502,6 @@ class TestEnvironment {
         }
       ] as ParatextProject[];
 
-      when(mockedParatextService.isParatextProjectInSF(objectContaining({ paratextId: 'pt-notConnToSF' }))).thenReturn(
-        false
-      );
-      when(
-        mockedParatextService.isParatextProjectInSF(objectContaining({ paratextId: 'pt-connButNotThisUser' }))
-      ).thenReturn(true);
-      when(
-        mockedParatextService.isParatextProjectInSF(objectContaining({ paratextId: 'pt-notConnToSFAndUserIsTran' }))
-      ).thenReturn(false);
-
       this.projectProfileDocs.forEach((projectProfileDoc: SFProjectProfileDoc) => {
         this.userParatextProjects.push({
           projectId: projectProfileDoc.id,
@@ -499,17 +511,12 @@ class TestEnvironment {
           isConnectable: true,
           isConnected: true
         } as ParatextProject);
-
-        when(
-          mockedParatextService.isParatextProjectInSF(
-            objectContaining({ paratextId: projectProfileDoc.data!.paratextId })
-          )
-        ).thenReturn(true);
       });
     }
 
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
+    when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
 
     const user: User = createTestUser({
       paratextId: isKnownPTUser ? 'pt-user-id' : undefined,
@@ -574,6 +581,10 @@ class TestEnvironment {
   /** Main button on card, like Open, Connect, or Join. */
   goButtonForProject(ptProjectId: string): DebugElement {
     return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}] > a`);
+  }
+
+  joinButtonForProject(ptProjectId: string): DebugElement {
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}] > button`);
   }
 
   cardForUserConnectedProject(ptProjectId: string): DebugElement {

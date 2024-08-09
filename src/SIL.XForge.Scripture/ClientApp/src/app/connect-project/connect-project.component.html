@@ -17,43 +17,17 @@
       @case ("connecting") {
         <mat-card class="progress-container card-outline">
           <mat-card-content>
-            <div class="progress-label">{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
+            <div class="progress-label">{{ t("connecting_to_project", { projectName: projectTitle }) }}</div>
             <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
           </mat-card-content>
         </mat-card>
       }
       @default {
+        <div class="project-title">
+          <img src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
+          {{ projectTitle }}
+        </div>
         <form [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-          @if (projects.length > 0 || state === "offline") {
-            @if (hasNonAdministratorProject && !showSettings && isAppOnline) {
-              <p id="connect-non-admin-msg">
-                {{ t("only_paratext_admins_can_start") }}
-              </p>
-            }
-            <mat-form-field appearance="outline">
-              <mat-label>{{ t("paratext_project") }}</mat-label>
-              <mat-select #projectSelect id="project-select" disableOptionCentering formControlName="paratextId">
-                @for (project of projects; track project) {
-                  <mat-option [value]="project.paratextId" [disabled]="!project.isConnectable">
-                    {{ projectLabel(project) }}
-                    @if (!project.isConnectable && project.isConnected) {
-                      &nbsp;{{ t("already_connected") }}
-                    }
-                    @if (!project.isConnectable && !project.isConnected) {
-                      &nbsp;**
-                    }
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          } @else {
-            @if (state !== "loading") {
-              <p
-                id="no-projects-msg"
-                [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
-              ></p>
-            }
-          }
           @if (showSettings) {
             <mat-card id="settings-card" class="card-outline" formGroupName="settings">
               <mat-card-title>{{ t("project_settings") }}</mat-card-title>
@@ -66,7 +40,8 @@
                   placeholder="{{ t('source_text_placeholder') }}"
                   [projects]="projects"
                   [resources]="resources"
-                  [hiddenParatextIds]="[paratextIdControl.value]"
+                  [hiddenParatextIds]="[ptProjectId]"
+                  [isDisabled]="projects.length === 0"
                 ></app-project-select>
                 @if (showResourcesLoadingFailedMessage) {
                   <mat-error>{{ t("error_fetching_resources") }}</mat-error>

@@ -2,8 +2,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { AbstractControl } from '@angular/forms';
-import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -33,6 +31,11 @@ import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 import { ConnectProjectComponent } from './connect-project.component';
+
+interface TestEnvironmentParams {
+  hasConnection?: boolean;
+  paratextId?: string | null;
+}
 
 const mockedAuthService = mock(AuthService);
 const mockedParatextService = mock(ParatextService);
@@ -84,10 +87,9 @@ describe('ConnectProjectComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectsResources([], []);
     env.waitForProjectsResponse();
+    expect(env.projectTitle).toContain('ENG - English');
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
-    expect(env.projectSelect).toBeNull();
-    expect(env.noProjectsMessage.nativeElement.textContent).toBe('A translated string.');
   }));
 
   it('should display projects then resources', fakeAsync(() => {
@@ -96,8 +98,6 @@ describe('ConnectProjectComponent', () => {
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
-
-    env.changeSelectValue(env.projectSelect, 'pt01');
 
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
@@ -112,28 +112,23 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
   }));
 
-  it('should do nothing when form is invalid', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources([], []);
+  it('should redirect to my projects if missing paratext id in params', fakeAsync(() => {
+    const env = new TestEnvironment({ paratextId: undefined });
+    env.setupProjectsResources();
     env.waitForProjectsResponse();
-
-    expect(env.submitButton.nativeElement.disabled).toBe(true);
-    env.clickElement(env.submitButton);
-
-    verify(mockedSFProjectService.onlineCreate(anything())).never();
-    verify(mockedSFProjectService.onlineAddCurrentUser(anything(), anything())).never();
-    verify(mockedRouter.navigate(anything())).never();
+    expect(env.component.ptProjectId).toEqual('');
+    verify(mockedRouter.navigate(deepEqual(['/projects']))).once();
   }));
 
-  it('should display loading when getting PT projects', fakeAsync(() => {
+  it('page is instantly available without waiting for projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProjectsResources([], []);
+    env.setupProjectsResources(env.paratextProjects, []);
     env.fixture.detectChanges();
 
-    expect(env.component.state).toEqual('loading');
+    expect(env.component.state).toEqual('input');
     verify(mockedNoticeService.loadingStarted()).once();
-    expect(env.projectSelect).toBeNull();
-    expect(env.noProjectsMessage).toBeNull();
+    expect(env.component.showSettings).toBe(true);
+    expect(env.component.projects.length).toEqual(0);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
     tick();
@@ -141,107 +136,27 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
+    expect(env.component.projects.length).toEqual(env.paratextProjects.length);
+    expect(env.submitButton.nativeElement.disabled).toBe(false);
     verify(mockedNoticeService.loadingFinished()).once();
   }));
 
-  it('should join when existing project is selected', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupDefaultProjectData();
-    env.waitForProjectsResponse();
-    expect(env.component.state).toEqual('input');
-
-    // Simulate touching the control
-    env.component.paratextIdControl.markAsTouched();
-    expect(env.component.paratextIdControl.valid).toBe(true);
-    env.clickElement(env.submitButton);
-    expect(env.component.paratextIdControl.errors!.required).toBe(true);
-
-    when(mockedParatextService.isParatextProjectInSF(anything())).thenReturn(true);
-    env.changeSelectValue(env.projectSelect, 'pt03');
-
-    // The project is already in SF, so do not present settings to configure.
-    expect(env.settingsCard).toBeNull();
-    env.clickElement(env.submitButton);
-
-    verify(mockedSFProjectService.onlineAddCurrentUser('project03')).once();
-    verify(mockedRouter.navigate(deepEqual(['/projects', 'project03']))).once();
-  }));
-
-  it('should display non-connectable projects disabled', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupDefaultProjectData();
-    env.waitForProjectsResponse();
-    expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(false);
-    expect(env.nonAdminMessage).not.toBeNull();
-  }));
-
-  it('should not display non-administrator message', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectsResources(
-      [
-        {
-          paratextId: 'pt01',
-          name: 'Target1',
-          shortName: 'TA1',
-          languageTag: 'en',
-          isConnectable: true,
-          isConnected: false
-        },
-        {
-          paratextId: 'pt02',
-          projectId: 'project02',
-          name: 'Target2',
-          shortName: 'TA2',
-          languageTag: 'mri',
-          isConnectable: false,
-          isConnected: true
-        },
-        {
-          paratextId: 'pt03',
-          projectId: 'project03',
-          name: 'Target3',
-          shortName: 'TA3',
-          languageTag: 'th',
-          isConnectable: true,
-          isConnected: true
-        }
-      ],
-      []
-    );
-    env.waitForProjectsResponse();
-    expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
-    expect(env.nonAdminMessage).toBeNull();
-  }));
-
   it('disables page if offline', fakeAsync(() => {
-    const env = new TestEnvironment(false);
+    const env = new TestEnvironment({ hasConnection: false });
     env.setupDefaultProjectData();
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('offline');
     expect(env.offlineMessage).not.toBeNull();
-    expect(env.noProjectsMessage).toBeNull();
     expect(env.component.connectProjectForm.disabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
     env.onlineStatus = true;
     expect(env.offlineMessage).toBeNull();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
     expect(env.component.connectProjectForm.enabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(false);
-    expect(env.nonAdminMessage).not.toBeNull();
 
     env.onlineStatus = false;
-    expect(env.nonAdminMessage).toBeNull();
     expect(env.component.state).toEqual('offline');
   }));
 
@@ -250,9 +165,7 @@ describe('ConnectProjectComponent', () => {
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.translationSuggestionsCheckbox).toBeNull();
-
-    env.changeSelectValue(env.projectSelect, 'pt01');
+    expect(env.projectTitle).toContain('ENG - English');
 
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
@@ -264,7 +177,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
 
     env.clickElement(env.submitButton);
-
+    expect(env.projectTitle).toBeUndefined();
     expect(env.component.state).toEqual('connecting');
     expect(env.submitButton).toBeNull();
     expect(env.progressBar).not.toBeNull();
@@ -286,7 +199,6 @@ describe('ConnectProjectComponent', () => {
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.translationSuggestionsCheckbox).toBeNull();
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
 
@@ -318,7 +230,6 @@ describe('ConnectProjectComponent', () => {
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.translationSuggestionsCheckbox).toBeNull();
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
     // Simulate someone else connecting the PT project to SF while we are working on the Connect Project form.
@@ -351,7 +262,6 @@ describe('ConnectProjectComponent', () => {
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('input');
-    env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.translationSuggestionsCheckbox).toBeNull();
 
     expect(env.resourceLoadingErrorMessage.nativeElement.textContent).toContain('error fetching');
@@ -376,15 +286,11 @@ describe('ConnectProjectComponent', () => {
   }));
 
   it('knows what PT project id the prior page asked to connect to', fakeAsync(() => {
-    when(mockedRouter.getCurrentNavigation()).thenReturn({
-      extras: { state: { ptProjectId: 'requested-pt-project-id' } }
-    } as any);
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ paratextId: 'requested-pt-project-id' });
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.component.incomingPTProjectId).toEqual('requested-pt-project-id');
-    expect(env.component.paratextIdControl.value).toEqual('requested-pt-project-id');
+    expect(env.component.ptProjectId).toEqual('requested-pt-project-id');
   }));
 
   it('should display the Paratext credentials update prompt when get projects throws a forbidden error', fakeAsync(() => {
@@ -395,7 +301,7 @@ describe('ConnectProjectComponent', () => {
 
     verify(mockedParatextService.getProjects()).once();
     verify(mockedAuthService.requestParatextCredentialUpdate(anything())).once();
-    expect(env.component.state).toEqual('loading');
+    expect(env.component.state).toEqual('input');
   }));
 });
 
@@ -406,9 +312,55 @@ class TestEnvironment {
     OnlineStatusService
   ) as TestOnlineStatusService;
 
+  paratextProjects: ParatextProject[] = [
+    {
+      paratextId: 'pt01',
+      name: 'English',
+      shortName: 'ENG',
+      languageTag: 'en',
+      isConnectable: true,
+      isConnected: false
+    },
+    {
+      paratextId: 'pt02',
+      projectId: 'project02',
+      name: 'Maori',
+      shortName: 'MRI',
+      languageTag: 'mri',
+      isConnectable: false,
+      isConnected: true
+    },
+    {
+      paratextId: 'pt04',
+      name: 'Spanish',
+      shortName: 'ESP',
+      languageTag: 'es',
+      isConnectable: false,
+      isConnected: false
+    },
+    {
+      paratextId: 'pt03',
+      projectId: 'project03',
+      name: 'Thai',
+      shortName: 'THA',
+      languageTag: 'th',
+      isConnectable: true,
+      isConnected: true
+    }
+  ];
+
+  private resources: SelectableProject[] = [
+    { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
+    {
+      paratextId: '5e51f89e89947acb',
+      name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
+      shortName: 'ANT'
+    },
+    { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
+  ];
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(hasConnection: boolean = true) {
+  constructor(params: TestEnvironmentParams = { paratextId: null }) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
       const newProject: SFProject = createTestProject({
         paratextId: settings.paratextId,
@@ -440,10 +392,21 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    if (params.paratextId === undefined) {
+      when(mockedRouter.getCurrentNavigation()).thenReturn({ extras: {} } as any);
+    } else {
+      const paratextId = params.paratextId ?? 'pt01';
+      const name: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.name;
+      const shortName: string | undefined = this.paratextProjects.find(p => p.paratextId === paratextId)?.shortName;
+
+      when(mockedRouter.getCurrentNavigation()).thenReturn({
+        extras: { state: { paratextId, name, shortName } }
+      } as any);
+    }
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
-    this.testOnlineStatusService.setIsOnline(hasConnection);
+    this.testOnlineStatusService.setIsOnline(params.hasConnection ?? true);
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -452,24 +415,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#paratext-login-button'));
   }
 
-  get projectSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#project-select'));
-  }
-
   get submitButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#connect-submit-button'));
   }
 
+  get projectTitle(): string | undefined {
+    return this.fixture.debugElement.query(By.css('.project-title'))?.nativeElement.textContent;
+  }
+
   get connectProjectForm(): DebugElement {
     return this.fixture.debugElement.query(By.css('form'));
-  }
-
-  get noProjectsMessage(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#no-projects-msg'));
-  }
-
-  get nonAdminMessage(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#connect-non-admin-msg'));
   }
 
   get settingsCard(): DebugElement {
@@ -486,10 +441,6 @@ class TestEnvironment {
 
   get sourceProjectSelect(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-project-select'));
-  }
-
-  get sourceParatextIdControl(): AbstractControl {
-    return this.component.settings.controls.sourceParatextId;
   }
 
   get progressBar(): DebugElement {
@@ -537,13 +488,6 @@ class TestEnvironment {
     tick();
   }
 
-  changeSelectValue(select: DebugElement, value: string): void {
-    const matSelect: MatSelect = select.componentInstance;
-    matSelect.value = value;
-    this.fixture.detectChanges();
-    tick();
-  }
-
   clickElement(element: HTMLElement | DebugElement): void {
     if (element instanceof DebugElement) {
       element = (element as DebugElement).nativeElement as HTMLElement;
@@ -552,24 +496,6 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
-  }
-
-  getMenuItems(menu: DebugElement): DebugElement[] {
-    const matSelect: MatSelect = menu.componentInstance;
-    matSelect.open();
-    this.waitForProjectsResponse();
-    const options = menu.queryAll(By.css('mat-option'));
-    matSelect.close();
-    this.waitForProjectsResponse();
-    return options;
-  }
-
-  isMenuItemDisabled(menu: DebugElement, index: number): boolean {
-    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mdc-list-item--disabled');
-  }
-
-  getMenuItemText(menu: DebugElement, index: number): string {
-    return this.getMenuItems(menu)[index].nativeElement.textContent.trim();
   }
 
   inputElement(element: DebugElement): HTMLInputElement {
@@ -599,53 +525,7 @@ class TestEnvironment {
   }
 
   setupDefaultProjectData(): void {
-    this.setupProjectsResources(
-      [
-        {
-          paratextId: 'pt01',
-          name: 'English',
-          shortName: 'ENG',
-          languageTag: 'en',
-          isConnectable: true,
-          isConnected: false
-        },
-        {
-          paratextId: 'pt02',
-          projectId: 'project02',
-          name: 'Maori',
-          shortName: 'MRI',
-          languageTag: 'mri',
-          isConnectable: false,
-          isConnected: true
-        },
-        {
-          paratextId: 'pt04',
-          name: 'Spanish',
-          shortName: 'ESP',
-          languageTag: 'es',
-          isConnectable: false,
-          isConnected: false
-        },
-        {
-          paratextId: 'pt03',
-          projectId: 'project03',
-          name: 'Thai',
-          shortName: 'THA',
-          languageTag: 'th',
-          isConnectable: true,
-          isConnected: true
-        }
-      ],
-      [
-        { paratextId: 'e01f11e9b4b8e338', name: 'Sob Jonah and Luke', shortName: 'SJL' },
-        {
-          paratextId: '5e51f89e89947acb',
-          name: 'Aruamu New Testament [msy] Papua New Guinea 2004 DBL',
-          shortName: 'ANT'
-        },
-        { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
-      ]
-    );
+    this.setupProjectsResources(this.paratextProjects, this.resources);
   }
 
   waitForProjectsResponse(): void {

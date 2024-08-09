@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ErrorHandler, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
@@ -17,7 +17,6 @@ import { SFProjectService } from '../core/sf-project.service';
 import { compareProjectsForSorting, projectLabel } from '../shared/utils';
 
 interface ConnectProjectFormValues {
-  paratextId: string;
   settings: {
     checking: boolean;
     translationSuggestions: boolean;
@@ -33,7 +32,6 @@ interface ConnectProjectFormValues {
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   static readonly errorAlreadyConnectedKey: string = 'error-already-connected';
   readonly connectProjectForm = new UntypedFormGroup({
-    paratextId: new UntypedFormControl(undefined),
     settings: new UntypedFormGroup({
       translationSuggestions: new UntypedFormControl(false),
       sourceParatextId: new UntypedFormControl(undefined),
@@ -42,17 +40,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   });
   resources?: SelectableProject[];
   showResourcesLoadingFailedMessage = false;
-  state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
-  connectProjectName?: string;
+  state: 'connecting' | 'input' | 'login' | 'offline' = 'input';
   projectDoc?: SFProjectDoc;
-  /** The Paratext project id of what was requested to connect. */
-  incomingPTProjectId?: string;
 
   projectLabel = projectLabel;
 
   private _isAppOnline: boolean = false;
-  private _projects?: ParatextProject[];
-  private targetProjects?: ParatextProject[];
+  private projectsFromParatext?: ParatextProject[];
+  private projectMetadata?: SelectableProject;
 
   constructor(
     private readonly authService: AuthService,
@@ -67,11 +62,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
-    this.incomingPTProjectId = this.router.getCurrentNavigation()?.extras.state?.ptProjectId;
-  }
-
-  get hasConnectableProjects(): boolean {
-    return this.state === 'input' && this.targetProjects != null && this.targetProjects.length > 0;
+    this.projectMetadata = {
+      paratextId: this.router.getCurrentNavigation()?.extras.state?.paratextId ?? '',
+      name: this.router.getCurrentNavigation()?.extras.state?.name ?? '',
+      shortName: this.router.getCurrentNavigation()?.extras.state?.shortName ?? ''
+    };
   }
 
   set isAppOnline(isOnline: boolean) {
@@ -83,28 +78,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._isAppOnline;
   }
 
-  get paratextIdControl(): AbstractControl<any, any> {
-    return this.connectProjectForm.controls.paratextId;
-  }
-
   get showSettings(): boolean {
-    if (this.state !== 'input' || this._projects == null) {
-      return false;
-    }
-    const paratextId: string = this.paratextIdControl.value;
-    const project = this._projects.find(p => p.paratextId === paratextId);
-    return project != null && !this.paratextService.isParatextProjectInSF(project);
+    return this.state === 'input';
   }
 
   get submitDisabled(): boolean {
-    return !this.hasConnectableProjects || !this.isAppOnline;
-  }
-
-  get hasNonAdministratorProject(): boolean {
-    if (!this._projects) {
-      return false;
-    }
-    return this._projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
+    return this.projectsFromParatext == null || !this.isAppOnline;
   }
 
   get isBasedOnProjectSet(): boolean {
@@ -112,35 +91,28 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get projects(): ParatextProject[] {
-    return this._projects != null ? this._projects : [];
-  }
-
-  get translationSuggestionsEnabled(): boolean {
-    return this.settings.controls.translationSuggestions.value;
+    return this.projectsFromParatext ?? [];
   }
 
   get settings(): UntypedFormGroup {
     return this.connectProjectForm.controls.settings as UntypedFormGroup;
   }
 
-  ngOnInit(): void {
-    this.subscribe(this.paratextIdControl.valueChanges, () => {
-      if (this.state !== 'input') {
-        return;
-      }
-      if (this.showSettings) {
-        this.settings.enable();
-      } else {
-        this.settings.disable();
-      }
-      if (!this.isBasedOnProjectSet) {
-        const translationSuggestions = this.settings.controls.translationSuggestions;
-        translationSuggestions.reset();
-        translationSuggestions.disable();
-      }
-    });
+  get ptProjectId(): string {
+    return this.projectMetadata?.paratextId ?? '';
+  }
 
-    this.state = 'loading';
+  get projectTitle(): string {
+    if (this.projectMetadata == null) return '';
+    return projectLabel(this.projectMetadata);
+  }
+
+  ngOnInit(): void {
+    this.state = 'input';
+    if (this.ptProjectId === '') {
+      this.router.navigate(['/projects']);
+    }
+
     this.subscribe(this.settings.controls.sourceParatextId.valueChanges, (value: boolean) => {
       const translationSuggestions = this.settings.controls.translationSuggestions;
       if (value) {
@@ -154,7 +126,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
-        if (this._projects == null) {
+        if (this.projectsFromParatext == null) {
           await this.populateProjectList();
         } else {
           this.state = 'input';
@@ -163,8 +135,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         this.state = 'offline';
       }
     });
-
-    if (this.incomingPTProjectId != null) this.paratextIdControl.setValue(this.incomingPTProjectId);
   }
 
   logInWithParatext(): void {
@@ -172,51 +142,33 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   async submit(): Promise<void> {
-    // Set the validator when the user tries to submit the form to prevent the select immediately being invalid
-    // when the user clicks it. Marking it untouched does not appear to work.
-    this.paratextIdControl.setValidators(Validators.required);
-    this.paratextIdControl.updateValueAndValidity();
-    if (!this.connectProjectForm.valid || this._projects == null) {
+    if (!this.connectProjectForm.valid || this.projectsFromParatext == null) {
       return;
     }
     const values = this.connectProjectForm.value as ConnectProjectFormValues;
-    const project = this._projects.find(p => p.paratextId === values.paratextId);
-    if (project == null) {
+    this.state = 'connecting';
+    const settings: SFProjectCreateSettings = {
+      paratextId: this.ptProjectId,
+      checkingEnabled: values.settings.checking,
+      translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
+      sourceParatextId: values.settings.sourceParatextId
+    };
+
+    let projectId: string = '';
+    try {
+      projectId = await this.projectService.onlineCreate(settings);
+    } catch (err) {
+      if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
+        throw err;
+      }
+
+      err.message = this.translocoService.translate('connect_project.problem_already_connected');
+      this.errorHandler.handleError(err);
+      this.state = 'input';
+      this.populateProjectList();
       return;
     }
-    this.state = 'connecting';
-    if (project.projectId == null) {
-      this.connectProjectName = project.name;
-      const settings: SFProjectCreateSettings = {
-        paratextId: project.paratextId,
-        checkingEnabled: values.settings.checking,
-        translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
-        sourceParatextId: values.settings.sourceParatextId
-      };
-
-      let projectId: string = '';
-      try {
-        projectId = await this.projectService.onlineCreate(settings);
-      } catch (err) {
-        if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
-          throw err;
-        }
-
-        err.message = this.translocoService.translate('connect_project.problem_already_connected');
-        await this.errorHandler.handleError(err);
-        this.state = 'input';
-        this.populateProjectList();
-        return;
-      }
-      this.projectDoc = await this.projectService.get(projectId);
-    } else {
-      await this.projectService.onlineAddCurrentUser(project.projectId);
-      this.router.navigate(['/projects', project.projectId]);
-    }
-  }
-
-  translateFromSettings(key: string): string {
-    return this.translocoService.translate(`settings.${key}`);
+    this.projectDoc = await this.projectService.get(projectId);
   }
 
   updateStatus(inProgress: boolean): void {
@@ -226,19 +178,18 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   private async populateProjectList(): Promise<void> {
-    this.state = 'loading';
+    this.state = 'input';
     this.loadingStarted();
+
     try {
-      const resourceFetchPromise = this.fetchResources();
-      const projects = await this.paratextService.getProjects();
+      const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
 
       if (projects == null) {
         this.state = 'login';
       } else {
-        this._projects = projects.sort(compareProjectsForSorting);
-        this.targetProjects = this._projects.filter(p => p.isConnectable);
-        this.state = 'input';
-        await resourceFetchPromise;
+        this.projectsFromParatext = projects.sort(compareProjectsForSorting);
+        // do not wait for resources to load
+        this.fetchResources();
       }
     } catch (error: any) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
