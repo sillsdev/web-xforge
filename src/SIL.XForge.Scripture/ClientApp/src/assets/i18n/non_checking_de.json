@@ -96,7 +96,6 @@
     "share_with_others": "Mit anderen teilen"
   },
   "connect_project": {
-    "already_connected": "(bereits verbunden)",
     "connect_network_to_connect_project": "Bitte mit dem Internet verbinden, um eine Verbindung zu einem Projekt herzustellen",
     "connect_paratext_project": "Mit Paratext-Projekt verbinden",
     "connect": "Verbinden",
@@ -106,10 +105,7 @@
     "engage_the_wider_community_to_check_scripture": "Arbeite mit der weiteren Zielgruppe zusammen, um sicherzustellen, dass die Übersetzung klar, genau und natürlich ist. Wähle Verse aus, stelle gezielte Fragen und ermögliche eine Diskussion über die Antworten.",
     "error_fetching_resources": "Beim Abrufen der Ressourcen aus der digitalen Bibelbibliothek ist ein Fehler aufgetreten. Du kannst nur Projekte auswählen.",
     "log_in_with_paratext": "Mit Paratext anmelden",
-    "no_connectable_projects": "Sieht so aus, als gäbe es keine verbindbaren Projekte für Dich.{{ newLine }}Bitte geh zu Paratext, um ein Projekt zu registrieren, mit dem Du Dich verbinden kannst.",
-    "only_paratext_admins_can_start": "** Du musst der Paratext-Administrator eines Projekts sein, um es hier zu starten. Bitte Deinen Administrator, Dich mit Deinem Projekt zu verbinden, dann kannst Du Dich danach auch hier mit ihm verbinden.",
     "paratext_account_linked_to_another_user": "Du hast Dich in ein Paratext-Konto eingeloggt, das bereits mit einem Benutzer mit der E-Mail {{ email }} verknüpft ist. Du wirst von Deinem aktuellen Konto abgemeldet und fährst als Paratext-Benutzer fort.",
-    "paratext_project": "Paratext-Projekt",
     "problem_already_connected": "Das Projekt ist bereits verbunden. Möglicherweise hat ein anderer Projektadministrator das Projekt zur gleichen Zeit verbunden. Bitte versuche es erneut. Wenn das Problem weiterhin besteht, melde bitte den Fehler, damit wir ihn beheben können.",
     "proceed": "Fortfahren",
     "project_settings": "Projekteinstellungen",

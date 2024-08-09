@@ -96,7 +96,6 @@
     "share_with_others": "Başqaları ilə paylaşın. "
   },
   "connect_project": {
-    "already_connected": "(artıq qoşulub)",
     "connect_network_to_connect_project": "Zəhmət olmasa bir layihəyə qoşulmaq üçün internetə qoşulun",
     "connect_paratext_project": "Paratekst layihəsinə qoşulmaq",
     "connect": "Qoşul",
@@ -106,10 +105,7 @@
     "engage_the_wider_community_to_check_scripture": "Tərcümənin aydın, dəqiq və təbii olduğuna əmin olmaq üçün daha böyük kollektivi cəlb edin.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "log_in_with_paratext": "Paratekst vasitəsilə daxil olmaq",
-    "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən layihələr yoxdur. {{ newLine }} Zəhmət olmazsa, layihəyə qoşulmaq məqsədilə qeydiyyatdan keçmək üçün Paratekst proqramına daxil olun.",
-    "only_paratext_admins_can_start": "Burada lahiyə başlamaq üçün, onun Paratekst Administratoru olmalısınız. Sizin Administratorunuzdan lahiyənizə qoşmağa xahiş ediniz, sonra siz də burada qoşula bilərsiniz.",
     "paratext_account_linked_to_another_user": "Artıq {{ email }} e-poçtu ilə bir istifadəçiyə bağlanan bir Paratext hesabına daxil olmusunuz. Cari hesabınızdan çıxacaq və Paratext istifadəçisi olaraq davam edəcəksiniz.",
-    "paratext_project": "Paratekst layihəsi",
     "problem_already_connected": "Layihə artıq bağlıdır. Bəlkə başqa bir layihə administratoru eyni zamanda layihəni bağladı. Zəhmət olmasa bir daha cəhd edin. Bir problem olmağa davam edərsə, xahiş edirik problemi bildirin ki, düzəldək.",
     "proceed": "Davam edin",
     "project_settings": "Project Settings",
