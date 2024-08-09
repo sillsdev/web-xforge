@@ -60,7 +60,7 @@ export function matDialogStory(component: any, config?: MatDialogStoryConfig): S
       imports: [UICommonModule, CommonModule, TranslocoModule, ...(config?.imports ?? [])],
       declarations: [...(config?.standaloneComponent ? [] : [component]), ...(config?.declarations ?? [])],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { data: args.data } },
+        { provide: MAT_DIALOG_DATA, useValue: args.data },
         { provide: COMPONENT_UNDER_TEST, useValue: component },
         { provide: COMPONENT_PROPS, useValue: args },
         ...(config?.providers ?? [])
