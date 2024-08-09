@@ -21,9 +21,39 @@ describe('TabGroup', () => {
     expect(tabGroup.tabs).toEqual(['tab1', 'tab2', 'tab3', 'tab4']);
   });
 
-  it('should add a tab', () => {
-    tabGroup.addTab('tab3');
-    expect(tabGroup.tabs).toEqual(['tab1', 'tab2', 'tab3']);
+  describe('addTab', () => {
+    it('should add a tab', () => {
+      tabGroup.addTab('tab3');
+      expect(tabGroup.tabs).toEqual(['tab1', 'tab2', 'tab3']);
+    });
+
+    it('should select the added tab', () => {
+      tabGroup.addTab('tab3');
+      expect(tabGroup.selectedIndex).toEqual(2);
+    });
+
+    it('should not select the added tab', () => {
+      tabGroup.addTab('tab3', false);
+      expect(tabGroup.selectedIndex).toEqual(0);
+    });
+
+    it('should emit the added tab with selection', () => {
+      let addedTabEvent: { tabs: string[]; selectedAddTab?: string } | undefined;
+      tabGroup.tabsAdded$.subscribe(event => {
+        addedTabEvent = event;
+      });
+      tabGroup.addTab('tab3');
+      expect(addedTabEvent).toEqual({ tabs: ['tab3'], selectedAddTab: 'tab3' });
+    });
+
+    it('should not emit the added tab selection if no selection', () => {
+      let addedTabEvent: { tabs: string[]; selectedAddTab?: string } | undefined;
+      tabGroup.tabsAdded$.subscribe(event => {
+        addedTabEvent = event;
+      });
+      tabGroup.addTab('tab3', false);
+      expect(addedTabEvent).toEqual({ tabs: ['tab3'] });
+    });
   });
 
   describe('removeTab', () => {
