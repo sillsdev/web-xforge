@@ -2,10 +2,8 @@
   @if (historyChooser?.isLoading$ | async) {
     <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
   }
-} @else {
-  @if (!loadedRevision) {
-    <app-notice icon="warning" type="warning">{{ "editor_history_tab.offline_notice" | transloco }}</app-notice>
-  }
+} @else if (!loadedRevision) {
+  <app-notice icon="warning" type="warning">{{ "editor_history_tab.offline_notice" | transloco }}</app-notice>
 }
 
 <app-history-chooser

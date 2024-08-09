@@ -7,8 +7,7 @@
             <button mat-icon-button type="button" (click)="play()" class="play">
               <mat-icon>play_arrow</mat-icon>
             </button>
-          }
-          @if (isPlaying()) {
+          } @else {
             <button mat-icon-button type="button" (click)="pause()" class="pause">
               <mat-icon>pause</mat-icon>
             </button>

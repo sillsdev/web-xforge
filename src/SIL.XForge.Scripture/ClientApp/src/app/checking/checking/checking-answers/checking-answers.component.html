@@ -90,8 +90,7 @@
                   >
                     <mat-icon class="attach-icon">attach_file</mat-icon>
                   </button>
-                }
-                @if (selectedText) {
+                } @else {
                   <div class="answer-scripture">
                     <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
                     <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
@@ -201,8 +200,6 @@
                       >
                         {{ t(isMarkedForExport(answer) ? "marked_for_export" : "mark_for_export") }}
                       </button>
-                    }
-                    @if (canChangeAnswerStatus(answer)) {
                       <button
                         mat-button
                         type="button"
@@ -222,8 +219,6 @@
                     }
                     @if (canDeleteAnswer(answer)) {
                       <div class="delete-divider">|</div>
-                    }
-                    @if (canDeleteAnswer(answer)) {
                       <button
                         mat-button
                         type="button"

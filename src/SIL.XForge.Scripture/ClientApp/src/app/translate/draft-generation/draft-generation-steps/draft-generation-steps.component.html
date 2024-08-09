@@ -18,20 +18,16 @@
         }
         @if (unusableTranslateSourceBooks.length) {
           <app-notice>
-            @if (unusableTranslateSourceBooks.length) {
-              <h4>
-                <transloco
-                  key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
-                  [params]="{ draftingSourceProjectName }"
-                ></transloco>
-              </h4>
-            }
-            @if (unusableTranslateSourceBooks.length) {
-              <app-book-multi-select
-                [availableBooks]="unusableTranslateSourceBooks"
-                [readonly]="true"
-              ></app-book-multi-select>
-            }
+            <h4>
+              <transloco
+                key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
+                [params]="{ draftingSourceProjectName }"
+              ></transloco>
+            </h4>
+            <app-book-multi-select
+              [availableBooks]="unusableTranslateSourceBooks"
+              [readonly]="true"
+            ></app-book-multi-select>
           </app-notice>
         }
         @if (showBookSelectionError) {
@@ -66,19 +62,15 @@
         @if (unusableTrainingSourceBooks.length) {
           <app-notice>
             <h4>
-              @if (unusableTrainingSourceBooks.length) {
-                <transloco
-                  key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
-                  [params]="{ trainingSourceProjectName }"
-                ></transloco>
-              }
+              <transloco
+                key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
+                [params]="{ trainingSourceProjectName }"
+              ></transloco>
             </h4>
-            @if (unusableTrainingSourceBooks.length) {
-              <app-book-multi-select
-                [availableBooks]="unusableTrainingSourceBooks"
-                [readonly]="true"
-              ></app-book-multi-select>
-            }
+            <app-book-multi-select
+              [availableBooks]="unusableTrainingSourceBooks"
+              [readonly]="true"
+            ></app-book-multi-select>
           </app-notice>
         }
         @if (showBookSelectionError) {
@@ -141,9 +133,7 @@
 
   @if (availableTranslateBooks && availableTranslateBooks.length <= 0) {
     <p>{{ t("no_available_books") }}</p>
-  }
-
-  @if (availableTranslateBooks == null) {
+  } @else if (availableTranslateBooks == null) {
     <div class="loading">
       <mat-spinner diameter="20" color="primary"></mat-spinner>
       <div>{{ t("loading") }}</div>

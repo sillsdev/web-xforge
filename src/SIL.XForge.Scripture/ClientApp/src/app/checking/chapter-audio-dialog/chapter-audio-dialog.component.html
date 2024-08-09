@@ -10,8 +10,7 @@
       <div class="wrapper wrapper-book-chapter valid">
         @if (!selectionHasAudioAlready || inEditState) {
           <mat-icon>book</mat-icon>
-        }
-        @if (selectionHasAudioAlready && !inEditState) {
+        } @else {
           <app-info [text]="t('audio_already_exists')" icon="warning" type="warning"></app-info>
         }
         <mat-select
@@ -53,13 +52,11 @@
           @if (hasAudioBeenUploaded) {
             <mat-icon (click)="deleteAudioData()" class="delete">delete</mat-icon>
           }
-        }
-        @if (!hasAudioBeenUploaded) {
+        } @else {
           <mat-icon>play_disabled</mat-icon>
           @if (!hasAudioDataError) {
             <span>{{ t("no_audio_file_uploaded") }}</span>
-          }
-          @if (hasAudioDataError) {
+          } @else {
             <span>{{ t(audioErrorMessageKey) }}</span>
           }
         }

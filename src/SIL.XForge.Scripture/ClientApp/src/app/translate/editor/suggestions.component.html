@@ -1,7 +1,6 @@
 @if (isLoading) {
   <div class="loading-indicator"><span></span> <span></span> <span></span></div>
-}
-@if (!isLoading) {
+} @else {
   <mat-selection-list #list dense [multiple]="false" (click)="selectAll($event)" hideSingleSelectionIndicator>
     @for (suggestion of suggestions; track suggestion; let i = $index) {
       <mat-list-option [selected]="suggestion && i === 0">

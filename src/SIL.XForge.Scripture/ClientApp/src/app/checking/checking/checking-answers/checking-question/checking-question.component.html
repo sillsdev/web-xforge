@@ -26,8 +26,7 @@
         <div id="noQuestionAudio" [class]="focusedText">
           <mat-icon class="mirror-rtl">question_answer</mat-icon>
         </div>
-      }
-      @if (questionAudioUrl) {
+      } @else {
         <app-single-button-audio-player
           #questionAudio
           id="questionAudio"

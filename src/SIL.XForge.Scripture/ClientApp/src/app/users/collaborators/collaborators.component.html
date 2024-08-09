@@ -51,8 +51,7 @@
                         <b class="current-user-label">&nbsp;{{ t("me") }}</b>
                       }
                     </div>
-                  }
-                  @if (userRow.inviteeStatus) {
+                  } @else {
                     <div
                       [innerHtml]="
                         userRow.inviteeStatus.expired
@@ -117,8 +116,7 @@
                       >
                         {{ t("remove_from_project") }}
                       </button>
-                    }
-                    @if (userRow.inviteeStatus) {
+                    } @else if (userRow.inviteeStatus) {
                       <button
                         mat-menu-item
                         class="cancel-invite"

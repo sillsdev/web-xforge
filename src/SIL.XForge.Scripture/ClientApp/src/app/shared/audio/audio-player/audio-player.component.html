@@ -7,8 +7,7 @@
       </mat-slider>
       <div class="duration">{{ duration | audioTime }}</div>
     </div>
-  }
-  @if (hasProblem) {
+  } @else {
     <div class="audio-not-available">
       <mat-icon>volume_off</mat-icon>
       <span>{{ t("audio_unavailable") }}</span>

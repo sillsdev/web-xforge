@@ -10,8 +10,7 @@
       <button mat-flat-button color="primary" [mat-dialog-close]="option.value">
         {{ option.label | async }}
       </button>
-    }
-    @if (!option.highlight) {
+    } @else {
       <button mat-button [mat-dialog-close]="option.value">{{ option.label | async }}</button>
     }
   }

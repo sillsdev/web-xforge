@@ -19,8 +19,7 @@
           }
           <span>{{ trainingDataFilename }}</span>
           <mat-icon (click)="deleteTrainingData()" class="delete">delete</mat-icon>
-        }
-        @if (!hasBeenUploaded) {
+        } @else {
           <mat-icon>file_download_off</mat-icon>
           <span>{{ t("no_training_data_file_uploaded") }}</span>
         }

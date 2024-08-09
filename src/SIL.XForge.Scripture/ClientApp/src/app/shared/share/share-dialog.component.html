@@ -72,8 +72,7 @@
           {{ t("invitation_shared_in_language") }}
           @if (shareLocaleCode?.localName) {
             <b>{{ shareLocaleCode?.localName }}</b>
-          }
-          @if (!shareLocaleCode?.localName) {
+          } @else {
             <b class="empty-field" [ngClass]="{ error: error }"> ________________ </b>
           }
           <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}"> ({{ t("change") }}) </a>

@@ -25,8 +25,7 @@
             }
             {{ viewers.length - maxAvatars + 1 }}</span
           >
-        }
-        @if (isMenuOpen) {
+        } @else {
           <mat-icon>arrow_drop_up</mat-icon>
         }
       </button>

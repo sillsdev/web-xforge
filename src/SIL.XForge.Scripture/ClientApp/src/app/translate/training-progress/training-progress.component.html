@@ -20,8 +20,7 @@
               [innerThicknessDelta]="0"
               [thickness]="22"
             ></app-donut-chart>
-          }
-          @if (trainingPercentage === 100) {
+          } @else if (trainingPercentage === 100) {
             <mat-icon id="training-complete-icon">check_circle_outline</mat-icon>
           }
         </div>

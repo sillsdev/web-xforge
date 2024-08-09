@@ -13,11 +13,9 @@
       (error)="onImageError()"
       referrerpolicy="no-referrer"
     />
-  }
-  @if (mode === "user_icon") {
+  } @else if (mode === "user_icon") {
     <mat-icon class="user-icon">account_circle</mat-icon>
-  }
-  @if (mode === "initials") {
+  } @else if (mode === "initials") {
     <div class="initials">{{ initials }}</div>
   }
 </div>
