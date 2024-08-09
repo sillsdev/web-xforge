@@ -96,7 +96,6 @@
     "share_with_others": "Compartilhar com outros"
   },
   "connect_project": {
-    "already_connected": "(já conectado)",
     "connect_network_to_connect_project": "Por favor, conecte-se à internet para ativar a conexão a um projeto",
     "connect_paratext_project": "Conectar Projeto do Paratext",
     "connect": "Conectar-se",
@@ -106,10 +105,7 @@
     "engage_the_wider_community_to_check_scripture": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",
     "error_fetching_resources": "Ocorreu um erro na busca de recursos da Digital Bible Library. Você só poderá selecionar projetos.",
     "log_in_with_paratext": "Entrar no Paratext",
-    "no_connectable_projects": "Parece que não há nenhum projeto conectável para você.{{ newLine }}Por favor, vá ao Paratext para registrar um projeto para se conectar.",
-    "only_paratext_admins_can_start": "** Você precisa ser o Administrador de um projeto do Paratext para iniciá-lo aqui. Peça ao seu administrador para se conectar ao seu projeto; depois disso, você também pode se conectar aqui.",
     "paratext_account_linked_to_another_user": "Você fez login numa conta do Paratext que já está vinculada a um usuário com o e-mail {{ email }}. Você será desconectado da sua conta atual e continuará como o usuário do Paratext.",
-    "paratext_project": "Projeto do Paratext",
     "problem_already_connected": "O projeto já está conectado. Talvez outro administrador de projeto tenha conectado o projeto ao mesmo tempo. Por favor, tente novamente. Se o problema persistir, por favor informe para que possamos corrigir o problema.",
     "proceed": "Continuar",
     "project_settings": "Configurações do Projeto",
