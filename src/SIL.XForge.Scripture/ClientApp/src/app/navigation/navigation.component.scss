@@ -3,7 +3,7 @@
 mat-nav-list .mdc-list-item {
   font-weight: 500;
   font-size: 14px;
-  padding-inline: 12px;
+  padding-inline: 12px 0;
 
   mat-icon {
     color: variables.$purpleMedium;
@@ -100,4 +100,5 @@ mat-nav-list .mdc-list-item {
   font-size: 0.95em;
   background: #4678d6;
   margin-inline-start: auto;
+  margin-inline-end: 12px;
 }
