@@ -1,7 +1,6 @@
 @if (isLoading && !isSyncActive) {
   <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-}
-@if (isSyncActive) {
+} @else if (isSyncActive) {
   <app-sync-progress [projectDoc]="selectedProjectDoc" (inProgress)="onSyncProgress($event)"></app-sync-progress>
 }
 
@@ -35,13 +34,11 @@
       <mat-error>
         {{ t("error_fetching_projects_resources") }}
       </mat-error>
-    }
-    @if (projectLoadingFailed && !resourceLoadingFailed) {
+    } @else if (projectLoadingFailed && !resourceLoadingFailed) {
       <mat-error>
         {{ t("error_fetching_projects") }}
       </mat-error>
-    }
-    @if (resourceLoadingFailed && !projectLoadingFailed) {
+    } @else if (resourceLoadingFailed && !projectLoadingFailed) {
       <mat-error>
         {{ t("error_fetching_resources") }}
       </mat-error>

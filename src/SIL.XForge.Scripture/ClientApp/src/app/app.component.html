@@ -159,8 +159,7 @@
             @if (isAppOnline) {
               <mat-icon>cloud</mat-icon>
               {{ t("online") }}
-            }
-            @if (!isAppOnline) {
+            } @else {
               <mat-icon>cloud_off</mat-icon>
               {{ t("offline") }}
             }

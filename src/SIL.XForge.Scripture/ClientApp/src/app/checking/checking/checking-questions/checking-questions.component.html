@@ -33,8 +33,7 @@
     <div class="no-questions-found">
       @if (isFiltered) {
         {{ t("no_questions_found_filtered") }}
-      }
-      @if (!isFiltered) {
+      } @else {
         {{ t("no_questions_found_unfiltered") }}
       }
     </div>

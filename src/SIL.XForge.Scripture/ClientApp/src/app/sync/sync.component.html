@@ -34,11 +34,7 @@
           }
           @if (syncActive) {
             <mat-hint id="sync-message">{{ t("your_project_is_being_synchronized") }}</mat-hint>
-          }
-          @if (syncActive) {
             <app-sync-progress [projectDoc]="projectDoc" (inProgress)="syncActive = $event"></app-sync-progress>
-          }
-          @if (syncActive) {
             <button
               mat-button
               type="button"
@@ -48,8 +44,7 @@
             >
               {{ t("cancel") }}
             </button>
-          }
-          @if (!syncActive) {
+          } @else {
             <mat-hint [title]="lastSyncDisplayDate" id="date-last-sync">
               {{ lastSyncNotice }}
             </mat-hint>
