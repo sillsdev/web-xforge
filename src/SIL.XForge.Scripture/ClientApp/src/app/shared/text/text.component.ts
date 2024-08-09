@@ -1043,7 +1043,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.editor == null || this.segment == null) {
       return false;
     }
-    const selection = this.editor.getSelection();
+    const selection: RangeStatic | null = this.editor.getSelection();
     if (selection == null) {
       return false;
     }
@@ -1053,8 +1053,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return true;
     }
 
+    // Strip embeds from the segment range so we can get can an accurate index and length
+    const segmentRange: RangeStatic =
+      this.conformToValidSelectionForCurrentSegment(this.segment.range) ?? this.segment.range;
+
     const selectionEndIndex = selection.index + (end ? selection.length : 0);
-    const segmentEndIndex = this.segment.range.index + (end ? this.segment.range.length : 0);
+    const segmentEndIndex = segmentRange.index + (end ? segmentRange.length : 0);
     return selectionEndIndex === segmentEndIndex;
   }
 
