@@ -48,7 +48,27 @@ jobs:
         run: git checkout "SF-QAv${{ github.event.inputs.from-staging-version }}"
       - name: Get commit
         id: get_commit
-        run: echo "build_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          set -xueo pipefail
+          build_commit="$(git rev-parse HEAD)"
+          echo "build_commit=${build_commit}" >> $GITHUB_OUTPUT
+      - name: Details on selected build commit
+        run: |
+          set -u
+          build_commit="${{ steps.get_commit.outputs.build_commit }}"
+          echo "Using build_commit: ${build_commit}"
+          echo " "
+          echo "git describe: $(git describe "${build_commit}")"
+          echo " "
+          echo "Commit details:"
+          git show --stat "${build_commit}"
+          echo " "
+          echo "Commit and ancestors:"
+          git log --graph --decorate=short --oneline --abbrev=9 --max-count 5 "${build_commit}"
+          echo " "
+          echo "Commit in context of other branches:"
+          build_commit_abbrev="${build_commit:0:9}"
+          git log --graph --decorate=short --oneline --abbrev=9 --max-count 100 origin/sf-live origin/sf-qa origin/master | grep "${build_commit_abbrev}" --context=7 | perl -p -e "s/${build_commit_abbrev}/${build_commit_abbrev} <--/"
 
   determine_version:
     name: "Determine version"
