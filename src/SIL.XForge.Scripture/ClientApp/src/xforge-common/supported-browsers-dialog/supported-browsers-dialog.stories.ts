@@ -3,7 +3,7 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { MatDialogLaunchComponent, matDialogStory } from '../../../.storybook/story-utils';
+import { MatDialogLaunchComponent, matDialogStory } from '../../../.storybook/util/mat-dialog-launch';
 
 const meta: Meta = {
   title: 'Misc/Dialogs',

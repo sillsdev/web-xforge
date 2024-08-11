@@ -1,8 +1,8 @@
 import { Meta } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { userEvent, within } from '@storybook/testing-library';
-import { getOverlay, MatDialogLaunchComponent, matDialogStory } from '../../../../.storybook/story-utils';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
+import { getOverlay, MatDialogLaunchComponent, matDialogStory } from '../../../../.storybook/util/mat-dialog-launch';
 
 const meta: Meta = {
   title: 'Settings/Delete Project',
