@@ -96,7 +96,6 @@
     "share_with_others": "Bagikan dengan orang lain"
   },
   "connect_project": {
-    "already_connected": "(Sudah terhubung)",
     "connect_network_to_connect_project": "Harap sambungkan ke internet untuk mengaktifkan hubungan ke proyek",
     "connect_paratext_project": "Hubungkan Proyek Paratext",
     "connect": "Menghubungkan",
@@ -106,10 +105,7 @@
     "engage_the_wider_community_to_check_scripture": "Libatkan komunitas yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
     "error_fetching_resources": "Terjadi kesalahan saat mengambil sumber daya Perpustakaan Alkitab Digital. Anda hanya dapat memilih proyek.",
     "log_in_with_paratext": "Masuk dengan Paratext",
-    "no_connectable_projects": "Sepertinya tidak ada proyek yang terhubung dengan Anda. {{ newLine }} Silakan buka Paratext untuk mendaftarkan proyek yang akan dihubungkan.",
-    "only_paratext_admins_can_start": "** Anda harus menjadi Administrator Paratext dari sebuah proyek untuk memulainya di sini. Minta Administrator Anda untuk menghubungkan ke proyek Anda maka Anda juga dapat terhubung ke sini setelah itu.",
     "paratext_account_linked_to_another_user": "Anda telah masuk ke akun Paratext yang telah ditautkan ke pengguna dengan email {{ email }}. Anda akan keluar dari akun Anda saat ini dan melanjutkan sebagai pengguna Paratext.",
-    "paratext_project": "Proyek Paratext",
     "problem_already_connected": "Proyek sudah terhubung. Mungkin administrator proyek lain sedang menghubungkan proyek tersebut pada saat yang bersamaan. Silakan coba lagi. Jika masih ada masalah, silakan laporkan masalahnya agar kami dapat memperbaikinya.",
     "proceed": "Dilanjutkan",
     "project_settings": "Pengaturan Proyek",

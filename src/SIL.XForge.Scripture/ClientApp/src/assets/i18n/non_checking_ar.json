@@ -96,7 +96,6 @@
     "share_with_others": "مشاركة مع الآخرين"
   },
   "connect_project": {
-    "already_connected": "(متّصل أصلاً)",
     "connect_network_to_connect_project": "يُرجى الاتصال بالإنترنت من أجل الاتصال بالمشروع",
     "connect_paratext_project": "اتصل بمشروع Paratext",
     "connect": "اتصال",
@@ -106,10 +105,7 @@
     "engage_the_wider_community_to_check_scripture": "إشراك المجتمع الأوسع لضمان أن تكون الترجمة واضحة، ودقيقة، وطبيعية. اختر الأعداد الكتابية، واطرح أسئلة هادفة، واسمح بمناقشة الإجابات.",
     "error_fetching_resources": "حدث خطأ أثناء جلب مصادر مكتبة الكتاب المقدس الرقمية. ستتمكن فقط من اختيار المشاريع.",
     "log_in_with_paratext": "سجل الدخول مع Paratext",
-    "no_connectable_projects": "يبدو أنه لا توجد مشاريع متصلة لك.{{ newLine }} يُرجى الذهاب إلى Paratext لتسجيل مشروع للاتصال به.",
-    "only_paratext_admins_can_start": "** يجب أن تكون مدير مشروع لبدئه هنا. اطلب من المسؤول الخاص بك الاتصال بمشروعك، وحينئذٍ يمكنك الاتصال به هنا.",
     "paratext_account_linked_to_another_user": "لقد قمت بتسجيل الدخول إلى حساب Paratext المرتبط مسبقاً بمستخدم من خلال البريد الإلكتروني {{ email }}. سيتم تسجيل الخروج من حسابك الحالي لتستمرّ كمستخدم Paratext.",
-    "paratext_project": "مشروع Paratext",
     "problem_already_connected": "المشروع متصل أصلاً. ربما مدير مشروع آخر قام بربط المشروع في نفس الوقت. يُرجى المحاولة مرة أخرى. إذا استمرت المشكلة، فيُرجى الإبلاغ عن المشكلة حتى نتمكن من إصلاحها.",
     "proceed": "باشِر",
     "project_settings": "إعدادات المشروع",

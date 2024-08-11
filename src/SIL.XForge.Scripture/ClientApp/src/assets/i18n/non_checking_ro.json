@@ -96,7 +96,6 @@
     "share_with_others": "Distribuiți altora"
   },
   "connect_project": {
-    "already_connected": "(deja conectat)",
     "connect_network_to_connect_project": "Vă rugăm să vă conectați la internet pentru a permite conectarea la un proiect",
     "connect_paratext_project": "Conectare la un proiect Paratext",
     "connect": "Conectare",
@@ -106,10 +105,7 @@
     "engage_the_wider_community_to_check_scripture": "Implicați comunitatea mai largă pentru ca traducerea să fie clară, corectă și naturală. Selectați versete, puneți întrebări țintite, conduceți discuții despre răspunsuri.",
     "error_fetching_resources": "A apărut o eroare la preluarea resurselor din Digital Bible Library. Veți putea selecta doar proiecte.",
     "log_in_with_paratext": "Autentificare cu Paratext",
-    "no_connectable_projects": "Se pare că nu există proiecte la care puteți să vă conectați.{{ newLine }}Deschideți programul Paratext pentru a înregistra un proiect la care să vă conectați.",
-    "only_paratext_admins_can_start": "** Trebuie să fiți administrator al unui proiect Paratext pentru a-l putea accesa aici. Cereți administratorului dvs. să vă conecteze la proiect, după care vă veți putea conecta și dvs.",
     "paratext_account_linked_to_another_user": "V-ați conectat la un cont Paratext care este deja asociat cu un utilizator cu adresa e-mail {{ email }}. Veți fi deconectat de la contul dvs. curent și veți continua ca utilizator Paratext.",
-    "paratext_project": "Proiectul Paratext",
     "problem_already_connected": "Proiectul este deja conectat. Poate un alt administrator a conectat proiectul în același timp. Vă rugăm să încercați din nou. Dacă problema persistă, vă rugăm să raportați problema pentru a o rezolva.",
     "proceed": "Continuă",
     "project_settings": "Project Settings",
