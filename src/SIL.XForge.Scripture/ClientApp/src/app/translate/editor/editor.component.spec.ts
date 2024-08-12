@@ -3813,6 +3813,22 @@ describe('EditorComponent', () => {
         expect(spyConsolidate).not.toHaveBeenCalled();
         flush();
       }));
+
+      it('should not consolidate on second editor load', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+
+        env.component['tabStateInitialized$'].next(true);
+        env.component['targetEditorLoaded$'].next();
+
+        const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
+
+        env.component['targetEditorLoaded$'].next();
+        expect(spyConsolidate).not.toHaveBeenCalled();
+        flush();
+      }));
     });
 
     describe('initEditorTabs', () => {
