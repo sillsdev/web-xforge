@@ -773,7 +773,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     combineLatest([
       this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.SM)),
       this.tabStateInitialized$.pipe(filter(initialized => initialized)),
-      this.targetEditorLoaded$
+      this.targetEditorLoaded$.pipe(take(1))
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([breakpointState]) => {
