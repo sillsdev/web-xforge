@@ -1,13 +1,18 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { filter, firstValueFrom, map } from 'rxjs';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
+import { ProgressService } from '../progress-service/progress-service';
 
 export interface BookOption {
   bookNum: number;
   bookId: string;
   selected: boolean;
+  progressPercentage: number;
 }
 
 @Component({
@@ -17,7 +22,7 @@ export interface BookOption {
   imports: [UICommonModule, MatChipsModule, TranslocoModule],
   styleUrls: ['./book-multi-select.component.scss']
 })
-export class BookMultiSelectComponent implements OnChanges {
+export class BookMultiSelectComponent extends SubscriptionDisposable implements OnInit, OnChanges {
   @Input() availableBooks: number[] = [];
   @Input() selectedBooks: number[] = [];
   @Input() readonly: boolean = false;
@@ -27,17 +32,34 @@ export class BookMultiSelectComponent implements OnChanges {
 
   selection: any = '';
 
+  constructor(
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly progressService: ProgressService
+  ) {
+    super();
+  }
+
+  ngOnInit(): void {
+    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
+      this.progressService.initialize(projectId);
+    });
+  }
+
   ngOnChanges(): void {
     this.initBookOptions();
   }
 
-  initBookOptions(): void {
+  async initBookOptions(): Promise<void> {
     const selectedSet = new Set<number>(this.selectedBooks);
+
+    await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+    const progress = this.progressService.texts;
 
     this.bookOptions = this.availableBooks.map((bookNum: number) => ({
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
-      selected: selectedSet.has(bookNum)
+      selected: selectedSet.has(bookNum),
+      progressPercentage: progress.find(p => p.text.bookNum === bookNum)!.percentage
     }));
   }
 
