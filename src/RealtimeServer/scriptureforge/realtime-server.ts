@@ -6,12 +6,13 @@ import { DocService } from '../common/services/doc-service';
 import { UserService } from '../common/services/user-service';
 import { NOTE_THREAD_COLLECTION } from './models/note-thread';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from './models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from './models/sf-project-rights';
 import { BiblicalTermService } from './services/biblical-term-service';
 import { NoteThreadService } from './services/note-thread-service';
 import { QuestionService } from './services/question-service';
 import { SF_PROJECT_MIGRATIONS } from './services/sf-project-migrations';
 import { SFProjectService } from './services/sf-project-service';
+import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './services/sf-project-user-config-migrations';
 import { SFProjectUserConfigService } from './services/sf-project-user-config-service';
 import { TextAudioService } from './services/text-audio-service';
 import { TextService } from './services/text-service';
@@ -20,7 +21,7 @@ import { TrainingDataService } from './services/training-data-service';
 const SF_DOC_SERVICES: DocService[] = [
   new UserService(),
   new SFProjectService(SF_PROJECT_MIGRATIONS),
-  new SFProjectUserConfigService(),
+  new SFProjectUserConfigService(SF_PROJECT_USER_CONFIG_MIGRATIONS),
   new TextService(),
   new QuestionService(),
   new BiblicalTermService(),
