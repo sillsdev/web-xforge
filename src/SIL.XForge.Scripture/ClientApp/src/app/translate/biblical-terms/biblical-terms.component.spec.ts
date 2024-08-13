@@ -24,6 +24,7 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -43,6 +44,7 @@ import { MockNoteDialogRef } from '../editor/editor.component.spec';
 import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogIcon, BiblicalTermNoteIcon, BiblicalTermsComponent } from './biblical-terms.component';
 
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedI18nService = mock(I18nService);
 const mockedMatDialog = mock(MatDialog);
 const mockedProjectService = mock(SFProjectService);
@@ -53,6 +55,7 @@ describe('BiblicalTermsComponent', () => {
     imports: [NoopAnimationsModule, TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     declarations: [BiblicalTermsComponent],
     providers: [
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -303,8 +306,9 @@ class TestEnvironment {
     bookNum: number,
     chapter: number,
     verse: string = '0',
-    configProjectId: string = projectId
+    activatedProjectId: string = projectId
   ) {
+    when(mockedActivatedProjectService.projectId).thenReturn(activatedProjectId);
     when(mockedProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
@@ -336,7 +340,6 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(BiblicalTermsComponent);
     this.component = this.fixture.componentInstance;
-    this.component.configProjectId = configProjectId;
     this.component.projectId = projectId;
     this.component.bookNum = bookNum;
     this.component.chapter = chapter;
