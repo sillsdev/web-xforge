@@ -195,8 +195,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
-  sourceSplitHeight: string = '';
-  targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
 
@@ -340,19 +338,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         userRole != null &&
         SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
     );
-  }
-
-  get biblicalTermsEnabledForSource(): boolean {
-    // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
-    // renderings for Biblical Terms.
-    return (
-      this.sourceProjectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true ||
-      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig?.hasRenderings === true)
-    );
-  }
-
-  get biblicalTermsEnabledForTarget(): boolean {
-    return this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true;
   }
 
   get numSuggestions(): number {
