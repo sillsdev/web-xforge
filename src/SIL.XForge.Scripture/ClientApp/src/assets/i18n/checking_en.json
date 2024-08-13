@@ -336,6 +336,7 @@
   },
   "join": {
     "error_occurred_login": "An error occurred trying to join the project",
+    "explain_your_name": "Enter the name you want other people to see",
     "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
     "join": "Join",
     "join_a_project": "Join a project",
@@ -346,7 +347,7 @@
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
     "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
-    "your_name": "Enter your name"
+    "your_name": "Your name"
   },
   "dialog": {
     "cancel": "Cancel",
