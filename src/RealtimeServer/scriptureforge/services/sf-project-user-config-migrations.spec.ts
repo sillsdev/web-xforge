@@ -6,6 +6,7 @@ import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { createDoc, fetchDoc } from '../../common/utils/test-utils';
 import { SF_PROJECT_USER_CONFIGS_COLLECTION } from '../models/sf-project-user-config';
+import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';
 import { SFProjectUserConfigService } from './sf-project-user-config-service';
 
 describe('SFProjectUserConfigMigrations', () => {
@@ -67,8 +68,7 @@ describe('SFProjectUserConfigMigrations', () => {
       await env.server.migrateIfNecessary();
 
       userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      //property under test is removed in the version 5 migration
-      expect(userConfigDoc.data.audioRefsPlayed).not.toBeDefined();
+      expect(userConfigDoc.data.audioRefsPlayed).toBeDefined();
     });
   });
 
@@ -101,6 +101,111 @@ describe('SFProjectUserConfigMigrations', () => {
       expect(userConfigDoc.data.editorTabsOpen).toEqual([]);
     });
   });
+
+  describe('version 7', () => {
+    it('creates the tab in the source if there are source tabs', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
+        biblicalTermsEnabled: true,
+        editorTabsOpen: [{ groupId: 'source' }]
+      });
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
+      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(2);
+      expect(userConfigDoc.data.editorTabsOpen[1]).toEqual({
+        tabType: 'biblical-terms',
+        groupId: 'source',
+        isSelected: false
+      });
+    });
+
+    it('creates the tab in the target if there are no source tabs', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
+        biblicalTermsEnabled: true,
+        editorTabsOpen: []
+      });
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(0);
+      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
+      expect(userConfigDoc.data.editorTabsOpen[0]).toEqual({
+        tabType: 'biblical-terms',
+        groupId: 'target',
+        isSelected: false
+      });
+    });
+
+    it('does not create a tab if one already exists', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
+        biblicalTermsEnabled: true,
+        editorTabsOpen: [
+          {
+            tabType: 'biblical-terms',
+            groupId: 'target',
+            isSelected: false
+          }
+        ]
+      });
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
+      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
+    });
+
+    it('does not migrate if already migrated', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+      expect(userConfigDoc.version).toBe(1);
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+      expect(userConfigDoc.version).toBe(1);
+    });
+
+    it('removes the biblicalTermsEnabled property', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
+        biblicalTermsEnabled: false,
+        editorTabsOpen: []
+      });
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(0);
+      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.editorTabsOpen.length).toBe(0);
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+    });
+  });
 });
 
 class TestEnvironment {
@@ -108,17 +213,22 @@ class TestEnvironment {
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
   readonly server: RealtimeServer;
 
-  constructor(version: number) {
+  /**
+   * @param startVersion The version the document is currently at (so migrations prior to this version will not be run
+   * on the document)
+   * @param endVersion The version the document should be migrated to
+   */
+  constructor(startVersion: number, endVersion: number = startVersion + 1) {
     const ShareDBMingoType = MetadataDB(ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB));
     this.db = new ShareDBMingoType();
     when(this.mockedSchemaVersionRepository.getAll()).thenResolve([
-      { _id: SF_PROJECT_USER_CONFIGS_COLLECTION, collection: SF_PROJECT_USER_CONFIGS_COLLECTION, version }
+      { _id: SF_PROJECT_USER_CONFIGS_COLLECTION, collection: SF_PROJECT_USER_CONFIGS_COLLECTION, version: startVersion }
     ]);
     this.server = new RealtimeServer(
       'TEST',
       false,
       true,
-      [new SFProjectUserConfigService()],
+      [new SFProjectUserConfigService(SF_PROJECT_USER_CONFIG_MIGRATIONS.filter(m => m.VERSION <= endVersion))],
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)
