@@ -22,7 +22,6 @@ import {
   createRange
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import { AngularSplitModule } from 'angular-split';
 import { merge } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
@@ -32,7 +31,6 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
-import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
@@ -77,7 +75,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -94,11 +91,9 @@ import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { XmlUtils } from '../../shared/utils';
-import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
-import { HistoryChooserComponent } from './editor-history/history-chooser/history-chooser.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -142,16 +137,8 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [
-      BiblicalTermsComponent,
-      EditorComponent,
-      HistoryChooserComponent,
-      SuggestionsComponent,
-      TrainingProgressComponent,
-      EditorDraftComponent
-    ],
+    declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent, EditorDraftComponent],
     imports: [
-      AngularSplitModule,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule,
@@ -3607,85 +3594,6 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows target biblical terms when enabled for the target project and target user project', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.targetBiblicalTerms).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('shows source biblical terms when enabled for the target project and target user project', fakeAsync(() => {
-      const targetProjectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
-      };
-      const sourceProjectConfig = {
-        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, hasRenderings: true }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(targetProjectConfig, 'project01');
-      env.setupProject(sourceProjectConfig, 'project02');
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
-      expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
-      expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.hasRenderings).toBeTrue();
-      expect(env.sourceBiblicalTerms).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('shows source biblical terms when enabled for the source project and target user project', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig, 'project02');
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
-      expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
-      expect(env.sourceBiblicalTerms).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('hides source biblical terms when there is an error syncing them', fakeAsync(() => {
-      const targetProjectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
-      };
-      const sourceProjectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: false,
-        biblicalTermsMessage: 'An error occurred'
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(targetProjectConfig, 'project01');
-      env.setupProject(sourceProjectConfig, 'project02');
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.sourceBiblicalTerms).toBeFalsy();
-      env.dispose();
-    }));
-
     it('shows the copyright banner', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
@@ -4260,12 +4168,6 @@ class TestEnvironment {
           [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
         })
     );
-    when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything())).thenCall(id =>
-      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
-        [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
-      })
-    );
     when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
       (projectId: string, noteThread: NoteThread) => {
         this.realtimeService.create(
@@ -4275,11 +4177,6 @@ class TestEnvironment {
         );
         tick();
       }
-    );
-    when(mockedSFProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId =>
-      this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, {
-        [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
-      })
     );
 
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
@@ -4421,14 +4318,6 @@ class TestEnvironment {
 
   get sourceTextEditor(): HTMLElement {
     return this.sourceTextArea.query(By.css('.ql-container')).nativeElement;
-  }
-
-  get sourceBiblicalTerms(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#source-biblical-terms'));
-  }
-
-  get targetBiblicalTerms(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#target-biblical-terms'));
   }
 
   get invalidWarning(): DebugElement {
