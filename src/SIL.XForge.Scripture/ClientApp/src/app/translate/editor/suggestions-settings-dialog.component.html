@@ -45,15 +45,6 @@
     <div class="row">
       <div class="col">
         <mat-slide-toggle
-          id="biblical-terms-enabled-switch"
-          [formControl]="biblicalTermsEnabledSwitch"
-          (change)="setBiblicalTermsEnabled($event.checked)"
-        >
-          {{ t("biblical_terms") }}
-        </mat-slide-toggle>
-      </div>
-      <div class="col">
-        <mat-slide-toggle
           id="transliterate-biblical-terms-switch"
           [formControl]="transliterateBiblicalTermsSwitch"
           (change)="setTransliterateBiblicalTerms($event.checked)"
