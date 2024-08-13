@@ -20,6 +20,16 @@ describe('EditorTabFactoryService', () => {
     when(mockI18nService.translate(anything())).thenReturn(of('Test Header Text'));
   });
 
+  it('should create a "biblical terms" tab', async () => {
+    const tab = await service.createTab('biblical-terms');
+    expect(tab.type).toEqual('biblical-terms');
+    expect(tab.svgIcon).toEqual('triquetra');
+    expect(tab.headerText).toEqual('Test Header Text');
+    expect(tab.closeable).toEqual(true);
+    expect(tab.movable).toEqual(true);
+    expect(tab.unique).toBeFalsy();
+  });
+
   it('should create a "history" tab', async () => {
     const tab = await service.createTab('history');
     expect(tab.type).toEqual('history');
