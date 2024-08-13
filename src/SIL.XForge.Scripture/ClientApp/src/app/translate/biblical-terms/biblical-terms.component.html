@@ -10,11 +10,6 @@
       matSortDirection="asc"
       matSortDisableClear
     >
-      <caption [dir]="i18n.direction">
-        {{
-          t("biblical_terms_renderings") + selectedReferenceForCaption
-        }}
-      </caption>
       @for (column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1; track column) {
         <ng-container [matColumnDef]="column">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t(column) }}</th>
