@@ -112,8 +112,8 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         .sort((a, b) => a.text.bookNum - b.text.bookNum);
       this.overallProgress.reset();
       const updateTextProgressPromises: Promise<void>[] = [];
-      for (const textProgress of this.texts) {
-        updateTextProgressPromises.push(this.updateTextProgress(this.projectDoc, textProgress));
+      for (const book of this.texts) {
+        updateTextProgressPromises.push(this.updateTextProgress(this.projectDoc, book));
       }
       await Promise.all(updateTextProgressPromises);
     } finally {
@@ -121,17 +121,17 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     }
   }
 
-  private async updateTextProgress(project: SFProjectProfileDoc, textProgress: TextProgress): Promise<void> {
+  private async updateTextProgress(project: SFProjectProfileDoc, book: TextProgress): Promise<void> {
     // NOTE: This will stop being incremented when the minimum required number of pairs for training is reached
     let numTranslatedSegments: number = 0;
-    for (const chapter of textProgress.text.chapters) {
-      const textDocId = new TextDocId(project.id, textProgress.text.bookNum, chapter.number, 'target');
+    for (const chapter of book.text.chapters) {
+      const textDocId = new TextDocId(project.id, book.text.bookNum, chapter.number, 'target');
       const chapterText: TextDoc = await this.projectService.getText(textDocId);
 
       // Calculate Segment Count
       const { translated, blank } = chapterText.getSegmentCount();
-      textProgress.translated += translated;
-      textProgress.blank += blank;
+      book.translated += translated;
+      book.blank += blank;
       this.overallProgress.translated += translated;
       this.overallProgress.blank += blank;
 
@@ -140,11 +140,11 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       if (
         project.data?.translateConfig.translationSuggestionsEnabled &&
         project.data.translateConfig.source != null &&
-        textProgress.text.hasSource &&
+        book.text.hasSource &&
         !this.canTrainSuggestions
       ) {
         const sourceId: string = project.data.translateConfig.source.projectRef;
-        const sourceTextDocId = new TextDocId(sourceId, textProgress.text.bookNum, chapter.number, 'target');
+        const sourceTextDocId = new TextDocId(sourceId, book.text.bookNum, chapter.number, 'target');
 
         // Only retrieve the source text if the user has permission
         let sourceNonEmptyVerses: string[] = [];

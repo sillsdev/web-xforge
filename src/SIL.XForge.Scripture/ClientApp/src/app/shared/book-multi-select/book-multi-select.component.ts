@@ -45,8 +45,8 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
     });
   }
 
-  ngOnChanges(): void {
-    this.initBookOptions();
+  async ngOnChanges(): Promise<void> {
+    await this.initBookOptions();
   }
 
   async initBookOptions(): Promise<void> {
@@ -72,7 +72,7 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
     this.bookSelect.emit(this.selectedBooks);
   }
 
-  select(eventValue: string): void {
+  async select(eventValue: string): Promise<void> {
     if (eventValue === 'OT') {
       this.selectedBooks.push(
         ...this.availableBooks.filter(n => Canon.isBookOT(n) && this.selectedBooks.indexOf(n) === -1)
@@ -86,14 +86,14 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
         ...this.availableBooks.filter(n => Canon.isBookDC(n) && this.selectedBooks.indexOf(n) === -1)
       );
     }
-    this.initBookOptions();
+    await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.selectedBooks.length = 0;
     this.selection = undefined;
-    this.initBookOptions();
+    await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
   }
 
