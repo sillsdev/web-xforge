@@ -30,14 +30,6 @@ describe('BookMultiSelectComponent', () => {
     mockSelectedBooks = [1, 3];
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedProgressService.isLoaded$).thenReturn(of(true));
-    fixture = TestBed.createComponent(BookMultiSelectComponent);
-    component = fixture.componentInstance;
-    component.availableBooks = mockBooks;
-    component.selectedBooks = mockSelectedBooks;
-    fixture.detectChanges();
-  });
-
-  it('should initialize book options on ngOnChanges', async () => {
     when(mockedProgressService.texts).thenReturn([
       { text: { bookNum: 1 }, percentage: 0 } as TextProgress,
       { text: { bookNum: 2 }, percentage: 20 } as TextProgress,
@@ -46,6 +38,14 @@ describe('BookMultiSelectComponent', () => {
       { text: { bookNum: 70 }, percentage: 100 } as TextProgress
     ]);
 
+    fixture = TestBed.createComponent(BookMultiSelectComponent);
+    component = fixture.componentInstance;
+    component.availableBooks = mockBooks;
+    component.selectedBooks = mockSelectedBooks;
+    fixture.detectChanges();
+  });
+
+  it('should initialize book options on ngOnChanges', async () => {
     await component.ngOnChanges();
 
     expect(component.bookOptions).toEqual([
