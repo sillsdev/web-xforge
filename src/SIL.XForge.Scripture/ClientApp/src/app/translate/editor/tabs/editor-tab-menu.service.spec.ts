@@ -136,6 +136,22 @@ describe('EditorTabMenuService', () => {
     });
   });
 
+  it('should get "biblical terms" menu item', done => {
+    const env = new TestEnvironment();
+    env.setExistingTabs([]);
+    env.setLastCompletedBuildExists(false);
+    service['canShowBiblicalTerms'] = () => true;
+    service['canShowHistory'] = () => false;
+    service['canShowResource'] = () => false;
+
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(1);
+      expect(items[0].type).toBe('biblical-terms');
+      expect(items[0].disabled).toBeFalsy();
+      done();
+    });
+  });
+
   it('should get no menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
