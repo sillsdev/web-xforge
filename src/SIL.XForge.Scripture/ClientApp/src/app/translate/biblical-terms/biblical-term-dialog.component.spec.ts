@@ -177,7 +177,6 @@ class TestEnvironment {
       confidenceThreshold: 0.5,
       translationSuggestionsEnabled: true,
       numSuggestions: 1,
-      biblicalTermsEnabled: true,
       transliterateBiblicalTerms: false
     });
 

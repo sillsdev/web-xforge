@@ -463,7 +463,6 @@ class TestEnvironment {
       data: createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: 'user01',
-        biblicalTermsEnabled: true,
         translationSuggestionsEnabled: false,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
@@ -475,7 +474,6 @@ class TestEnvironment {
       data: createTestProjectUserConfig({
         projectRef: 'project02',
         ownerRef: 'user01',
-        biblicalTermsEnabled: true,
         transliterateBiblicalTerms: true,
         translationSuggestionsEnabled: false,
         questionRefsRead: ['question01'],
