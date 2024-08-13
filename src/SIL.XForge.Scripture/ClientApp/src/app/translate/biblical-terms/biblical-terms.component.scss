@@ -1,5 +1,4 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@import 'src/styles';
 
 /* We have two mat-icon actions buttons */
 .actions {
@@ -32,48 +31,18 @@
   text-align: center;
 }
 
-/* Hide the category on XS, SM, MD, and LG devices */
+/* Hide the category when the view is constrained */
 .mat-column-category {
-  @include media-breakpoint-down(lg) {
-    display: none;
-  }
+  @extend .hide-lt-xl;
 }
 
-/* Show the category on SM, MD, and LG devices if there is no source visible */
-:host-context(.text-area-full-width) .mat-column-category {
-  @include media-breakpoint-between(sm, lg) {
-    display: table-cell;
-  }
-}
-
-/* Hide the gloss on XS, SM, and MD devices */
+/* Hide the gloss when the view is constrained */
 .mat-column-gloss {
-  @include media-breakpoint-down(md) {
-    display: none;
-  }
-}
-
-/* Show the gloss on SM and MD devices if there is no source visible */
-:host-context(.text-area-full-width) .mat-column-gloss {
-  @include media-breakpoint-between(sm, md) {
-    display: table-cell;
-  }
+  @extend .hide-lt-md;
+  overflow: hidden;
 }
 
 /* Disable hover effects for disabled buttons */
 .mat-mdc-icon-button:disabled {
   pointer-events: none;
-}
-
-/* The table heading */
-.mat-mdc-table caption {
-  font-size: 0.9em;
-  font-weight: bold;
-  padding: 5px 0 5px 20px;
-  text-align: left;
-}
-
-/* RTL support for the table heading */
-.mat-mdc-table caption[dir='rtl'] {
-  text-align: right;
 }
