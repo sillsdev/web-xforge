@@ -67,6 +67,15 @@ $tabHeaderBorderRadius: var(--sf-tab-header-border-radius);
     width: auto;
     height: auto;
   }
+
+  ::ng-deep > mat-icon > svg {
+    width: 1em;
+    height: 1em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+  }
 }
 
 // 'button' is needed to increase specificity for overriding hover text color

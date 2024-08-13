@@ -4,6 +4,7 @@ export interface TabMenuItem {
   type: string;
   text: string;
   icon?: string;
+  svgIcon?: string;
   disabled?: boolean;
 }
 
