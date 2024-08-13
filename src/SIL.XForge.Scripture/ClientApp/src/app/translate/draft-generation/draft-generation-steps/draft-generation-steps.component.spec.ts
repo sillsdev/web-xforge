@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute } from '@angular/router';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of } from 'rxjs';
@@ -16,6 +17,7 @@ import { environment } from '../../../../environments/environment';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { ProgressService, TextProgress } from '../../../shared/progress-service/progress-service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
@@ -25,11 +27,13 @@ describe('DraftGenerationStepsComponent', () => {
   let fixture: ComponentFixture<DraftGenerationStepsComponent>;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
+  const mockActivatedRoute = mock(ActivatedRoute);
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockProjectService = mock(SFProjectService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockTrainingDataService = mock(TrainingDataService);
   const mockUserService = mock(UserService);
+  const mockProgressService = mock(ProgressService);
 
   const mockTargetProjectDoc = {
     data: createTestProjectProfile({
@@ -84,12 +88,23 @@ describe('DraftGenerationStepsComponent', () => {
       { provide: NllbLanguageService, useMock: mockNllbLanguageService },
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
-      { provide: UserService, useMock: mockUserService }
+      { provide: UserService, useMock: mockUserService },
+      { provide: ProgressService, useMock: mockProgressService },
+      { provide: ActivatedRoute, useMock: mockActivatedRoute }
     ]
   }));
 
   beforeEach(fakeAsync(() => {
     when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
+    when(mockActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockProgressService.isLoaded$).thenReturn(of(true));
+    when(mockProgressService.texts).thenReturn([
+      { text: { bookNum: 1 } } as TextProgress,
+      { text: { bookNum: 2 } } as TextProgress,
+      { text: { bookNum: 3 } } as TextProgress,
+      { text: { bookNum: 6 } } as TextProgress,
+      { text: { bookNum: 7 } } as TextProgress
+    ]);
   }));
 
   describe('alternate training source project', () => {
