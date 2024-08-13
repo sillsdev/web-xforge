@@ -27,6 +27,7 @@ using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
@@ -2341,6 +2342,13 @@ public class ParatextService : DisposableBase, IParatextService
     {
         if (resource.InstallableResource != null)
         {
+            // Correct the language code for old resources
+            LanguageId? overrideLanguageId = null;
+            if (DetermineBestLanguageForResource(resource.InstallableResource.ExistingScrText))
+            {
+                overrideLanguageId = resource.InstallableResource.ExistingScrText?.Settings.LanguageID;
+            }
+
             // Install the resource if it is missing or out of date
             if (
                 !resource.IsInstalled
@@ -2350,6 +2358,12 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 resource.InstallableResource.Install();
                 needsToBeCloned = true;
+
+                // On first install, we will now have an existing ScrText, so check the language is OK
+                if (DetermineBestLanguageForResource(resource.InstallableResource.ExistingScrText))
+                {
+                    overrideLanguageId = resource.InstallableResource.ExistingScrText?.Settings.LanguageID;
+                }
             }
 
             // Extract the resource to the source directory
@@ -2358,7 +2372,7 @@ public class ParatextService : DisposableBase, IParatextService
                 string path = LocalProjectDir(targetParatextId);
                 _fileSystemService.CreateDirectory(path);
                 resource.InstallableResource.ExtractToDirectory(path);
-                MigrateResourceIfRequired(username, targetParatextId);
+                MigrateResourceIfRequired(username, targetParatextId, overrideLanguageId);
             }
         }
         else
@@ -2368,18 +2382,69 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary>
+    /// Determines the best language for a resource project
+    /// </summary>
+    /// <param name="scrText">The scripture text for the resource.</param>
+    /// <returns><c>true</c> if the project language was overridden by the DBL; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is reimplemented from <c>Paratext.Migration.MigrateLanguage.DetermineBestLangIdToUseForResource()</c>.
+    /// </para>
+    /// <para>
+    /// Because resources are not written to (as they are readonly), this should be run before using the LanguageID.
+    /// </para>
+    /// </remarks>
+    private static bool DetermineBestLanguageForResource(ScrText? scrText)
+    {
+        // If we do not have a ScrText, or this is not a resource, do not determine the language
+        if (scrText is null || !scrText.IsResourceProject)
+        {
+            return false;
+        }
+
+        // Get the language identifier from the .SSF file
+        string? languageIdLDML = scrText.Settings.LanguageID?.Id;
+
+        // Get the language identifier embedded in the .P8Z folder structure: .dbl\language\iso
+        string languageIdDBL = ((ZippedProjectFileManagerBase)scrText.FileManager).DBLResourceSettings.LanguageIso639_3;
+        LanguageId langIdDBL = LanguageId.FromEthnologueCode(languageIdDBL);
+        if (string.IsNullOrEmpty(languageIdLDML))
+        {
+            scrText.Settings.LanguageID = langIdDBL;
+            return true;
+        }
+
+        LanguageId langIdLDML = LanguageId.FromEthnologueCode(languageIdLDML);
+        if (langIdLDML.Code == langIdDBL.Code)
+        {
+            scrText.Settings.LanguageID = langIdLDML;
+            return false;
+        }
+
+        scrText.Settings.LanguageID = langIdDBL;
+        return true;
+    }
+
+    /// <summary>
     /// Migrates a Paratext Resource, if required.
     /// </summary>
     /// <param name="username">The username.</param>
     /// <param name="paratextId">The paratext project identifier.</param>
+    /// <param name="overrideLanguage">The language to override, if the project's language is incorrect.</param>
     /// <remarks>This only performs one basic migration. Full migration can only be performed by Paratext.</remarks>
-    private void MigrateResourceIfRequired(string username, string paratextId)
+    private void MigrateResourceIfRequired(string username, string paratextId, LanguageId? overrideLanguage)
     {
         // Ensure that we have the ScrText to migrate
         using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
         if (scrText is null)
         {
             return;
+        }
+
+        // Migrate the language if it is missing
+        if (overrideLanguage is not null)
+        {
+            scrText.Settings.LanguageID = overrideLanguage;
         }
 
         // Perform a simple migration of the Paratext 7 LDML file to the new Paratext 8+ location.
