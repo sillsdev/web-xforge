@@ -3616,7 +3616,7 @@ describe('EditorComponent', () => {
 
       const env = new TestEnvironment();
       env.setupProject(projectConfig);
-      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
       expect(env.targetBiblicalTerms).toBeTruthy();
@@ -3636,7 +3636,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(targetProjectConfig, 'project01');
       env.setupProject(sourceProjectConfig, 'project02');
-      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
       expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
@@ -3655,7 +3655,7 @@ describe('EditorComponent', () => {
 
       const env = new TestEnvironment();
       env.setupProject(projectConfig, 'project02');
-      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
       expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
@@ -3679,7 +3679,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(targetProjectConfig, 'project01');
       env.setupProject(sourceProjectConfig, 'project02');
-      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
       expect(env.sourceBiblicalTerms).toBeFalsy();

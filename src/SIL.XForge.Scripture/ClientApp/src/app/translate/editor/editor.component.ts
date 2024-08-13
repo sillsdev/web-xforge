@@ -345,17 +345,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
     // renderings for Biblical Terms.
     return (
-      (this.sourceProjectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
-        this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
+      this.sourceProjectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true ||
       (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig?.hasRenderings === true)
     );
   }
 
   get biblicalTermsEnabledForTarget(): boolean {
-    return (
-      this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
-      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
-    );
+    return this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true;
   }
 
   get numSuggestions(): number {
