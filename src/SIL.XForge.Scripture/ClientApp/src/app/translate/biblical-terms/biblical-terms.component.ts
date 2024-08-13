@@ -12,10 +12,11 @@ import {
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, firstValueFrom, merge, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -178,7 +179,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   private bookNum$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   private _chapter?: number;
   private chapter$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
-  private configProjectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private noteThreadSub?: Subscription;
   private _projectId?: string;
@@ -193,6 +193,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
+    private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
@@ -214,13 +215,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this._chapter = chapter;
     this.chapter$.next(chapter);
-  }
-
-  @Input() set configProjectId(id: string | undefined) {
-    if (id == null) {
-      return;
-    }
-    this.configProjectId$.next(id);
   }
 
   @Input() set projectId(id: string | undefined) {
@@ -278,15 +272,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   ngOnInit(): void {
-    this.subscribe(this.configProjectId$, async configProjectId => {
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(
-        configProjectId,
-        this.userService.currentUserId
-      );
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-    });
     this.subscribe(this.projectId$, async projectId => {
       this.projectDoc = await this.projectService.getProfile(projectId);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        this.activatedProjectService.projectId ?? projectId,
+        this.userService.currentUserId
+      );
       this.loadBiblicalTerms(projectId);
       this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
