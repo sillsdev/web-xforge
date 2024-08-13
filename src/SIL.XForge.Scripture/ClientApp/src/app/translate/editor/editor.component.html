@@ -58,14 +58,25 @@
       >
         @for (tab of tabGroup.value.tabs; track tab) {
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable" [tooltip]="tab.tooltip">
-            <!-- TODO: Localize tab header text -->
             <ng-template sf-tab-header>
-              @if (tab.icon) {
+              @if (tab.svgIcon) {
+                <mat-icon svgIcon="{{ tab.svgIcon }}"></mat-icon>
+              } @else if (tab.icon) {
                 <mat-icon>{{ tab.icon }}</mat-icon>
               }
               {{ tab.headerText }}
             </ng-template>
             @switch (tab.type) {
+              @case ("biblical-terms") {
+                <app-biblical-terms
+                  id="target-biblical-terms"
+                  [bookNum]="bookNum"
+                  [chapter]="chapter"
+                  [verse]="verse"
+                  [configProjectId]="projectId"
+                  [projectId]="projectId"
+                ></app-biblical-terms>
+              }
               @case ("project-resource") {
                 <app-editor-resource
                   [projectId]="tab.projectId"
