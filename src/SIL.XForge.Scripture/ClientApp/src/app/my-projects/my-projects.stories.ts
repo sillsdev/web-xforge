@@ -24,7 +24,6 @@ import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 import { PermissionsService } from '../core/permissions.service';
-import { CheckingQuestionsService } from '../checking/checking/checking-questions.service';
 import { TextDoc } from '../core/models/text-doc';
 
 @Component({ template: '' })
@@ -38,7 +37,6 @@ const mockedParatextService = mock(ParatextService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPermissionsService = mock(PermissionsService);
-const mockedQuestionsService = mock(CheckingQuestionsService);
 
 interface ProjectScenario {
   code: string;
@@ -200,8 +198,7 @@ const meta: Meta = {
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
         { provide: NoticeService, useValue: instance(mockedNoticeService) },
-        { provide: PermissionsService, useValue: instance(mockedPermissionsService) },
-        { provide: CheckingQuestionsService, useValue: instance(mockedQuestionsService) }
+        { provide: PermissionsService, useValue: instance(mockedPermissionsService) }
       ]
     }),
     (story, context) => {
