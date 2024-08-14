@@ -5,7 +5,11 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  DBL_RESOURCE_ID_LENGTH,
+  SFProject,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { delay, of } from 'rxjs';
 import { instance, mock, objectContaining, when } from 'ts-mockito';
@@ -23,6 +27,14 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
+import { PermissionsService } from '../core/permissions.service';
+import { CheckingQuestionsService } from '../checking/checking/checking-questions.service';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoteThreadDoc } from '../core/models/note-thread-doc';
+import { QuestionDoc } from '../core/models/question-doc';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { TextDoc } from '../core/models/text-doc';
 
 @Component({ template: '' })
 class EmptyComponent {}
@@ -34,6 +46,8 @@ const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedNoticeService = mock(NoticeService);
+const mockedPermissionsService = mock(PermissionsService);
+const mockedQuestionsService = mock(CheckingQuestionsService);
 
 interface ProjectScenario {
   code: string;
@@ -194,7 +208,9 @@ const meta: Meta = {
         { provide: ParatextService, useValue: instance(mockedParatextService) },
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
-        { provide: NoticeService, useValue: instance(mockedNoticeService) }
+        { provide: NoticeService, useValue: instance(mockedNoticeService) },
+        { provide: PermissionsService, useValue: instance(mockedPermissionsService) },
+        { provide: CheckingQuestionsService, useValue: instance(mockedQuestionsService) }
       ]
     }),
     (story, context) => {
@@ -202,6 +218,12 @@ const meta: Meta = {
       let projectProfileDocs: SFProjectProfileDoc[] = [];
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
+
+      let sfProjects: SFProjectDoc[] = [];
+      let userConfigDocs: SFProjectUserConfigDoc[] = [];
+      let projectsTextDocs: TextDoc[] = [];
+      let projectsNoteDocs: RealtimeQuery<NoteThreadDoc>[] = [];
+      let projectsQuestionsDocs: RealtimeQuery<QuestionDoc>[] = [];
 
       // Create the user who is viewing the page.
       const user: User = createTestUser({
