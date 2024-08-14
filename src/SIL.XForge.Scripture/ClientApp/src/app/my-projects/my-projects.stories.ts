@@ -211,9 +211,6 @@ const meta: Meta = {
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
 
-      let projectsTextDocs: TextDoc[] = [];
-
-
       let projectTextDocs: TextDoc[] = [];
       // Create the user who is viewing the page.
       const user: User = createTestUser({
