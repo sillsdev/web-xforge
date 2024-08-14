@@ -12,18 +12,11 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
-import { NoteThreadDoc } from '../../app/core/models/note-thread-doc';
-import { TextDoc } from '../../app/core/models/text-doc';
-import { QuestionDoc } from '../../app/core/models/question-doc';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
-import { PermissionsService } from '../core/permissions.service';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
@@ -150,8 +143,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
 
-    this.hasOfflineAccess = this.hasOfflineAccess
-      || this.projectsTextDocs.filter(textDoc => textDoc.id.includes(sfProject.id)).length > 0;
+    const hasTextDocs = this.projectsTextDocs.filter(textDoc => textDoc.id.includes(sfProject.id)).length > 0;
 
     const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
     const checking = isCheckingAccessible
@@ -159,7 +151,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
         ? ' • ' + translate('app.community_checking')
         : translate('app.community_checking')
       : '';
-    const offline = this.hasOfflineAccess
+    const offline = hasTextDocs
       ? isCheckingAccessible || isTranslateAccessible
         ? ' • ' + translate('my_projects.offline-accessible')
         : translate('my_projects.offline-accessible')

@@ -320,7 +320,7 @@ describe('MyProjectsComponent', () => {
     expect(env.messageOffline).not.toBeNull();
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
-    // Not throwing an exception..
+    // Not throwing an exception.
   }));
 
   it('fetch PT projects list if online', fakeAsync(() => {
