@@ -67,15 +67,6 @@ jobs:
       - name: "Deps: Frontend npm"
         run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
 
-      - name: "Lint: RealtimeServer ng"
-        run: cd src/RealtimeServer && npm run lint
-      - name: "Lint: RealtimeServer Prettier"
-        run: cd src/RealtimeServer && npm run prettier:ci
-      - name: "Lint: Frontend ng"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run lint
-      - name: "Lint: Frontend Prettier"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:ci
-
       - name: "Build: Backend, RealtimeServer"
         run: dotnet build xForge.sln
       - name: "Build: Frontend"

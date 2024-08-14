@@ -125,6 +125,7 @@ import {
 import {
   canInsertNote,
   formatFontSizeToRems,
+  getUnsupportedTags,
   getVerseRefFromSegmentRef,
   RIGHT_TO_LEFT_MARK,
   threadIdFromMouseEvent,
@@ -225,6 +226,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private text?: TextInfo;
   private sourceText?: TextInfo;
   sourceProjectDoc?: SFProjectProfileDoc;
+  private _unsupportedTags = new Set<string>();
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
@@ -509,6 +511,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get isUsfmValid(): boolean {
     return this.textDocService.isUsfmValidForText(this.text, this.chapter);
+  }
+
+  invalidTags(): string[] {
+    return [...this._unsupportedTags]?.map(tag => '\\' + tag) ?? [];
   }
 
   get dataInSync(): boolean {
@@ -937,6 +943,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetScrollContainer = this.target?.editor?.scrollingContainer;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
+
+        if (!this.isUsfmValid) {
+          const ops: DeltaOperation[] = this.target?.editor?.getContents().ops ?? [];
+          ops.forEach(op => getUnsupportedTags(op).forEach(inv => this._unsupportedTags.add(inv)));
+        }
 
         if (this.target?.editor != null && this.targetScrollContainer != null) {
           this.positionInsertNoteFab();
