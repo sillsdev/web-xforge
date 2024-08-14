@@ -5,7 +5,11 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  DBL_RESOURCE_ID_LENGTH,
+  SFProject,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { delay, of } from 'rxjs';
 import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
@@ -206,6 +210,8 @@ const meta: Meta = {
       let projectProfileDocs: SFProjectProfileDoc[] = [];
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
+
+      let projectsTextDocs: TextDoc[] = [];
 
       let projectTextDocs: TextDoc[] = [];
       // Create the user who is viewing the page.
