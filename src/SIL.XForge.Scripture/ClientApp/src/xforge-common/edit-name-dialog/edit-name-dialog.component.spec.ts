@@ -94,7 +94,7 @@ describe('EditNameDialogComponent', () => {
     env.component.isConfirmContext = true;
     env.openDialog();
     expect(env.title.textContent).toBe('Confirm your name');
-    expect(env.description.textContent).toContain('Confirm the name that other people on this project will see');
+    expect(env.description.textContent).toContain('Confirm the name that other people will see');
     env.clickSubmit();
     expect(env.component.confirmedName).toBe('Simon Says');
   }));

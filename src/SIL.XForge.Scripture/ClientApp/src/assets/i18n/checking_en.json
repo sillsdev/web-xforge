@@ -286,11 +286,11 @@
   },
   "edit_name_dialog": {
     "cancel": "Cancel",
-    "confirm_name": "Confirm the name that other people on this project will see when you post answers and comments",
+    "confirm_name": "Confirm the name that other people will see when you post answers and comments",
     "confirm_your_name": "Confirm your name",
     "confirm": "Confirm",
     "connect_to_edit_name": "Please connect to the internet to edit your name",
-    "enter_name": "Please enter your name",
+    "enter_name": "Enter the name you want other people to see",
     "update_your_name": "Update your name",
     "update": "Update",
     "your_name": "Your name"
