@@ -4,8 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom, map } from 'rxjs';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
 import { ProgressService } from '../progress-service/progress-service';
 
 export interface BookOption {
