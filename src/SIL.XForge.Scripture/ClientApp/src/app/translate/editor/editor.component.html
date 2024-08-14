@@ -133,9 +133,16 @@
                       </div>
                     </app-notice>
                   }
-                  @if (!isUsfmValid && hasEditRight) {
+                  @if (!isUsfmValid && hasEditRight && invalidTags().length === 0) {
                     <app-notice type="warning" icon="warning" class="formatting-invalid-warning">
                       {{ t("cannot_edit_chapter_formatting_invalid") }}
+                    </app-notice>
+                  }
+                  @if (!isUsfmValid && hasEditRight && invalidTags().length > 0) {
+                    <app-notice type="warning" icon="warning" class="formatting-invalid-warning">
+                      <span
+                        [innerHTML]="t('cannot_edit_chapter_unsupported_usfm', { tags: invalidTags().join(', ') })"
+                      ></span>
                     </app-notice>
                   }
                   @if (!dataInSync && hasEditRight) {
