@@ -88,6 +88,26 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
+    this.subscribe(this.userProjectsService.sfProjectDocs$, (projects?: SFProjectDoc[]) => {
+      if (projects == null) return;
+      this.sfProjects = projects;
+    });
+    this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
+      if (configs == null) return;
+      this.userConfigDocs = configs;
+    });
+    this.subscribe(this.userProjectsService.projectTexts$, (texts?: TextDoc[]) => {
+      if (texts == null) return;
+      this.projectsTextDocs = texts;
+    });
+    this.subscribe(this.userProjectsService.projectNotes$, (notes?: RealtimeQuery<NoteThreadDoc>[]) => {
+      if (notes == null) return;
+      this.projectsNoteDocs = notes;
+    });
+    this.subscribe(this.userProjectsService.projectQuestions$, (questions?: RealtimeQuery<QuestionDoc>[]) => {
+      if (questions == null) return;
+      this.projectsQuestionsDocs = questions;
+    });
 
     await this.loadUser();
     await this.onlineStatusService.online;
