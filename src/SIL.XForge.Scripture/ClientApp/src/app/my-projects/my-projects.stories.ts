@@ -219,12 +219,6 @@ const meta: Meta = {
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
 
-      let sfProjects: SFProjectDoc[] = [];
-      let userConfigDocs: SFProjectUserConfigDoc[] = [];
-      let projectsTextDocs: TextDoc[] = [];
-      let projectsNoteDocs: RealtimeQuery<NoteThreadDoc>[] = [];
-      let projectsQuestionsDocs: RealtimeQuery<QuestionDoc>[] = [];
-
       // Create the user who is viewing the page.
       const user: User = createTestUser({
         paratextId: context.args.isKnownPTUser ? 'pt-user-id' : undefined,
