@@ -8,11 +8,7 @@ import { Router, RouterModule } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import {
-  createTestProject,
-  createTestProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -24,14 +20,9 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
 import { CheckingQuestionsService } from '../checking/checking/checking-questions.service';
-import { NoteThreadDoc } from '../core/models/note-thread-doc';
 import { ParatextProject } from '../core/models/paratext-project';
-import { QuestionDoc } from '../core/models/question-doc';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { TextDoc } from '../core/models/text-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
@@ -479,11 +470,7 @@ class TestEnvironment {
   /** PT projects the user has access to. */
   userParatextProjects: ParatextProject[] = [];
 
-  sfProjects: SFProjectDoc[] = [];
-  userConfigDocs: SFProjectUserConfigDoc[] = [];
   projectsTextDocs: TextDoc[] = [];
-  noteThreadDocs: RealtimeQuery<NoteThreadDoc>[] = [];
-  questionDocs: RealtimeQuery<QuestionDoc>[] = [];
 
   constructor({
     userHasAnyProjects = true,
@@ -542,12 +529,6 @@ class TestEnvironment {
           isConnected: false
         }
       ] as ParatextProject[];
-      this.userConfigDocs = [
-        {
-          id: 'sf-user-id',
-          data: createTestProjectUserConfig({ ownerRef: 'sf-user-id', projectRef: 'testProject1' })
-        }
-      ] as SFProjectUserConfigDoc[];
 
       this.projectProfileDocs.forEach((projectProfileDoc: SFProjectProfileDoc) => {
         this.userParatextProjects.push({
@@ -559,38 +540,8 @@ class TestEnvironment {
           isConnected: true
         } as ParatextProject);
       });
-      this.sfProjects = [
-        {
-          id: 'testProject1',
-          data: createTestProject({}, 1)
-        },
-        {
-          id: 'testProject2',
-          data: createTestProject({}, 2)
-        },
-        {
-          id: 'testResource3',
-          data: createTestProject(
-            {
-              paratextId: 'resource90123456',
-              resourceConfig: {
-                createdTimestamp: Date.now(),
-                manifestChecksum: '123',
-                permissionsChecksum: '123',
-                revision: 1
-              }
-            },
-            3
-          )
-        }
-      ] as SFProjectDoc[];
+
       this.projectsTextDocs = [{ id: 'testProject1:matthew:40:1:target', data: { ops: [] } }] as unknown as TextDoc[];
-      this.noteThreadDocs = [
-        { id: 'testProject1:noteThread1', data: { ops: [] } }
-      ] as unknown as RealtimeQuery<NoteThreadDoc>[];
-      this.questionDocs = [
-        { id: 'testProject1:question1', data: { ops: [] } }
-      ] as unknown as RealtimeQuery<QuestionDoc>[];
     }
 
     when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
@@ -599,10 +550,6 @@ class TestEnvironment {
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
     when(mockedUserProjectsService.projectTexts$).thenReturn(of(this.projectsTextDocs));
-    when(mockedUserProjectsService.projectNotes$).thenReturn(of(this.noteThreadDocs));
-    when(mockedUserProjectsService.projectQuestions$).thenReturn(of(this.questionDocs));
-    when(mockedUserProjectsService.sfProjectDocs$).thenReturn(of(this.sfProjects));
-    when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(this.userConfigDocs));
     when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
 
     const user: User = createTestUser({
