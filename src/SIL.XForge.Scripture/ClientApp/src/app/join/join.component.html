@@ -3,8 +3,9 @@
     <h1 [innerHTML]="inviteText"></h1>
     @if (!isOnline) {
       <app-notice type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>
+    } @else {
+      <span>{{ t("explain_your_name") }}</span>
     }
-    <span>{{ t("explain_your_name") }}</span>
     <form>
       <mat-form-field appearance="fill">
         <mat-label>{{ t("your_name") }}</mat-label>
