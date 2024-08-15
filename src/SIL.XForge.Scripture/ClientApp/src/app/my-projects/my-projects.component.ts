@@ -25,6 +25,11 @@ import { PermissionsService } from '../core/permissions.service';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoteThreadDoc } from '../core/models/note-thread-doc';
+import { QuestionDoc } from '../core/models/question-doc';
 
 /** Presents user with list of available projects to open or connect to. */
 @Component({
