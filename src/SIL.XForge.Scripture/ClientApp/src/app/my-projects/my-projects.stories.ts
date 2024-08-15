@@ -24,7 +24,6 @@ import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 import { PermissionsService } from '../core/permissions.service';
-import { CheckingQuestionsService } from '../checking/checking/checking-questions.service';
 import { TextDoc } from '../core/models/text-doc';
 
 @Component({ template: '' })
