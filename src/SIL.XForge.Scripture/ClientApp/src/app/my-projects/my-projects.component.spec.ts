@@ -9,7 +9,6 @@ import { translate } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -21,7 +20,6 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingQuestionsService } from '../checking/checking/checking-questions.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { TextDoc } from '../core/models/text-doc';
@@ -40,7 +38,6 @@ const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPermissionsService = mock(PermissionsService);
-const mockedQuestionsService = mock(CheckingQuestionsService);
 
 describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -64,8 +61,7 @@ describe('MyProjectsComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PermissionsService, useMock: mockedPermissionsService },
-      { provide: CheckingQuestionsService, useMock: mockedQuestionsService }
+      { provide: PermissionsService, useMock: mockedPermissionsService }
     ]
   }));
 

@@ -38,7 +38,6 @@ const mockedParatextService = mock(ParatextService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPermissionsService = mock(PermissionsService);
-const mockedQuestionsService = mock(CheckingQuestionsService);
 
 interface ProjectScenario {
   code: string;
@@ -200,8 +199,7 @@ const meta: Meta = {
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
         { provide: NoticeService, useValue: instance(mockedNoticeService) },
-        { provide: PermissionsService, useValue: instance(mockedPermissionsService) },
-        { provide: CheckingQuestionsService, useValue: instance(mockedQuestionsService) }
+        { provide: PermissionsService, useValue: instance(mockedPermissionsService) }
       ]
     }),
     (story, context) => {
