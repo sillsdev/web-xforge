@@ -8,7 +8,10 @@ import { Router, RouterModule } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import {
+  createTestProject,
+  createTestProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -28,6 +31,12 @@ import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoteThreadDoc } from '../core/models/note-thread-doc';
+import { QuestionDoc } from '../core/models/question-doc';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 
 @Component({ template: '' })
 class EmptyComponent {}
@@ -483,6 +492,10 @@ class TestEnvironment {
   userParatextProjects: ParatextProject[] = [];
 
   projectsTextDocs: TextDoc[] = [];
+  userConfigDocs: SFProjectUserConfigDoc[] = [];
+  sfProjectDocs: SFProjectDoc[] = [];
+  projectQuestions: RealtimeQuery<QuestionDoc>[] = [];
+  projectNotes: RealtimeQuery<NoteThreadDoc>[] = [];
 
   constructor({
     userHasAnyProjects = true,
@@ -554,6 +567,28 @@ class TestEnvironment {
       });
 
       this.projectsTextDocs = [{ id: 'testProject1:matthew:40:1:target', data: { ops: [] } }] as unknown as TextDoc[];
+      this.userConfigDocs = [
+        {
+          id: 'testProject1:matthew:40:1:config',
+          data: createTestProjectUserConfig({})
+        }
+      ] as SFProjectUserConfigDoc[];
+      this.sfProjectDocs = [
+        {
+          id: 'testProject1',
+          data: createTestProject({}, 1)
+        },
+        {
+          id: 'testProject2',
+          data: createTestProject({}, 2)
+        }
+      ] as SFProjectDoc[];
+      this.projectQuestions = [
+        { id: 'testProject1:question1', data: { ops: [] } }
+      ] as unknown as RealtimeQuery<QuestionDoc>[];
+      this.projectNotes = [
+        { id: 'testProject1:note1', data: { ops: [] } }
+      ] as unknown as RealtimeQuery<NoteThreadDoc>[];
     }
 
     when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
@@ -562,6 +597,10 @@ class TestEnvironment {
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
     when(mockedUserProjectsService.projectTexts$).thenReturn(of(this.projectsTextDocs));
+    when(mockedUserProjectsService.sfProjectDocs$).thenReturn(of(this.sfProjectDocs));
+    when(mockedUserProjectsService.projectQuestions$).thenReturn(of(this.projectQuestions));
+    when(mockedUserProjectsService.projectNotes$).thenReturn(of(this.projectNotes));
+    when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(this.userConfigDocs));
     when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
 
     const user: User = createTestUser({
@@ -650,7 +689,6 @@ class TestEnvironment {
   }
 
   waitUntilLoaded(): void {
-    // Two cycles can be needed to finish working through loadParatextProjects().
     // Two cycles can be needed to finish working through loadParatextProjects().
     flush();
     this.fixture.detectChanges();

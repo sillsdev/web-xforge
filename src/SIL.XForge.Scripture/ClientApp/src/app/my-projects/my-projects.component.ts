@@ -20,6 +20,11 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoteThreadDoc } from '../core/models/note-thread-doc';
+import { QuestionDoc } from '../core/models/question-doc';
 
 /** Presents user with list of available projects to open or connect to. */
 @Component({
@@ -34,7 +39,13 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   userConnectedResources: SFProjectProfileDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
   userUnconnectedParatextProjects: ParatextProject[] = [];
+
   projectsTextDocs: TextDoc[] = [];
+  userConfigDocs: SFProjectUserConfigDoc[] = [];
+  sfProjectDocs: SFProjectDoc[] = [];
+  projectQuestions: RealtimeQuery<QuestionDoc>[] = [];
+  projectNotes: RealtimeQuery<NoteThreadDoc>[] = [];
+
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
   errorMessage: ObjectPaths<typeof en.my_projects> = 'problem_getting_pt_list';
@@ -86,6 +97,22 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     this.subscribe(this.userProjectsService.projectTexts$, (texts?: TextDoc[]) => {
       if (texts == null) return;
       this.projectsTextDocs = texts;
+    });
+    this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
+      if (configs == null) return;
+      this.userConfigDocs = configs;
+    });
+    this.subscribe(this.userProjectsService.sfProjectDocs$, (projects?: SFProjectDoc[]) => {
+      if (projects == null) return;
+      this.sfProjectDocs = projects;
+    });
+    this.subscribe(this.userProjectsService.projectQuestions$, (questions?: RealtimeQuery<QuestionDoc>[]) => {
+      if (questions == null) return;
+      this.projectQuestions = questions;
+    });
+    this.subscribe(this.userProjectsService.projectNotes$, (notes?: RealtimeQuery<NoteThreadDoc>[]) => {
+      if (notes == null) return;
+      this.projectNotes = notes;
     });
   }
 
