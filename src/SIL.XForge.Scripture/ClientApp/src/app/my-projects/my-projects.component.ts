@@ -78,6 +78,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
+
     await this.loadUser();
     await this.onlineStatusService.online;
     if (this.userIsPTUser) await this.loadParatextProjects();

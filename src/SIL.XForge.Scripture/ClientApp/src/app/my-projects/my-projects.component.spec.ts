@@ -9,6 +9,7 @@ import { translate } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -139,6 +140,21 @@ describe('MyProjectsComponent', () => {
         env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject2')!.data!.paratextId
       )
     ).not.toContain('Offline Access');
+  }));
+
+  it('displays if my connected projects have loaded texts for offline use', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+    const testProject1 = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject1')!.data!
+      .paratextId;
+    const testProject2 = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject2')!.data!
+      .paratextId;
+    expect(env.connectedProjectCardProjectDescription(testProject1).nativeElement.textContent).toContain(
+      translate('my_projects.offline-accessible')
+    );
+    expect(env.connectedProjectCardProjectDescription(testProject2).nativeElement.textContent).not.toContain(
+      translate('my_projects.offline-accessible')
+    );
   }));
 
   it('lists my PT projects that are not on SF', fakeAsync(() => {
@@ -638,6 +654,7 @@ class TestEnvironment {
   }
 
   waitUntilLoaded(): void {
+    // Two cycles can be needed to finish working through loadParatextProjects().
     // Two cycles can be needed to finish working through loadParatextProjects().
     flush();
     this.fixture.detectChanges();
