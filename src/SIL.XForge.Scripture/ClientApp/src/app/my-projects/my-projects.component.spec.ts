@@ -30,13 +30,13 @@ import { ParatextProject } from '../core/models/paratext-project';
 import { QuestionDoc } from '../core/models/question-doc';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { TextDoc } from '../core/models/text-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
 @Component({ template: '' })
 class EmptyComponent {}
