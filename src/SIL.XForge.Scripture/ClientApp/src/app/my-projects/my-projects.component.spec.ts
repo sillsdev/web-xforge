@@ -12,6 +12,7 @@ import {
   createTestProject,
   createTestProjectProfile
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -23,20 +24,19 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoteThreadDoc } from '../core/models/note-thread-doc';
 import { ParatextProject } from '../core/models/paratext-project';
+import { QuestionDoc } from '../core/models/question-doc';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { TextDoc } from '../core/models/text-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
-import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
-import { NoteThreadDoc } from '../core/models/note-thread-doc';
-import { QuestionDoc } from '../core/models/question-doc';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
-import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 
 @Component({ template: '' })
 class EmptyComponent {}
