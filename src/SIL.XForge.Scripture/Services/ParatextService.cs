@@ -2920,15 +2920,17 @@ public class ParatextService : DisposableBase, IParatextService
         string label = $"[{displayName} - {_siteOptions.Value.Name}]";
         var labelElement = new XElement("p", label, new XAttribute("sf-user-label", "true"));
         contentElem.Add(labelElement);
+
+        XDocument commentDoc = XDocument.Parse($"<root>{note.Content}</root>");
         if (!note.Content.StartsWith("<p>"))
         {
             // add the note content in a paragraph tag
-            XElement commentNode = new XElement("p", note.Content);
-            contentElem.Add(commentNode);
+            XElement paragraph = new XElement("p");
+            paragraph.Add(commentDoc.Root.Nodes());
+            contentElem.Add(paragraph);
         }
         else
         {
-            XDocument commentDoc = XDocument.Parse($"<root>{note.Content}</root>");
             // add the note content paragraph by paragraph
             foreach (XElement paragraphElems in commentDoc.Root.Descendants("p"))
                 contentElem.Add(paragraphElems);
@@ -2981,7 +2983,7 @@ public class ParatextService : DisposableBase, IParatextService
                 continue;
             // If there is only one paragraph node other than the SF user label then omit the paragraph tags
             if (isReviewer && paragraphNodeCount <= 2)
-                sb.Append(element.Value);
+                sb.Append(string.Concat(element.Elements()));
             else
                 sb.Append(node);
         }
