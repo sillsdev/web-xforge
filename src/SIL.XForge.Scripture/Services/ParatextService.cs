@@ -2971,7 +2971,7 @@ public class ParatextService : DisposableBase, IParatextService
                 continue;
             // If there is only one paragraph node other than the SF user label then omit the paragraph tags
             if (isReviewer && paragraphNodeCount <= 2)
-                sb.Append(string.Concat(element.Elements()));
+                sb.AppendJoin(string.Empty, element.Nodes());
             else
                 sb.Append(node);
         }
