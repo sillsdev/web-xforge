@@ -310,7 +310,7 @@ class TestEnvironment {
   }
 
   get joiningText(): DebugElement {
-    return this.fixture.debugElement.query(By.css('p'));
+    return this.fixture.debugElement.query(By.css('h1'));
   }
 
   get displayName(): string {

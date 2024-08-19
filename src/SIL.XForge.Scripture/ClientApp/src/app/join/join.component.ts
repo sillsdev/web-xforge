@@ -87,11 +87,8 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   get inviteText(): string {
-    if (this.joiningResponse == null) {
-      return '';
-    }
     return this.i18nService.translateAndInsertTags('join.invited_to_join', {
-      projectName: this.joiningResponse.projectName
+      projectName: this.joiningResponse?.projectName
     });
   }
 
