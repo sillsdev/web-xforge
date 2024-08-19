@@ -20,6 +20,11 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
+import { NoteThreadDoc } from '../core/models/note-thread-doc';
+import { QuestionDoc } from '../core/models/question-doc';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
 /** Presents user with list of available projects to open or connect to. */
 @Component({
@@ -49,7 +54,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
   joiningProjects: string[] = [];
-  hasOfflineAccess: boolean = false;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -122,9 +126,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   projectTypeDescription(sfProject: SFProjectProfileDoc): string {
     const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
-
-    this.hasOfflineAccess =
-      this.hasOfflineAccess || this.projectsTextDocs.filter(textDoc => textDoc.id.includes(sfProject.id)).length > 0;
+    const isOfflineAccessible = this.userProjectsService.checkProjectTextsLoaded(sfProject);
 
     const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
     const checking = isCheckingAccessible
@@ -132,7 +134,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
         ? ' • ' + translate('app.community_checking')
         : translate('app.community_checking')
       : '';
-    const offline = hasTextDocs
+    const offline = isOfflineAccessible
       ? isCheckingAccessible || isTranslateAccessible
         ? ' • ' + translate('my_projects.offline-accessible')
         : translate('my_projects.offline-accessible')

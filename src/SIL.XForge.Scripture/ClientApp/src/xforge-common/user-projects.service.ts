@@ -24,6 +24,7 @@ import { UserService } from './user.service';
 export class SFUserProjectsService extends SubscriptionDisposable {
   private projectDocs: Map<string, SFProjectProfileDoc> = new Map();
   private _projectDocs$ = new BehaviorSubject<SFProjectProfileDoc[] | undefined>(undefined);
+  private projectTextsLoaded: string[] = [];
   private sfProjectDocs: Map<string, SFProjectDoc> = new Map();
   private _sfProjectDocs$ = new BehaviorSubject<SFProjectDoc[] | undefined>(undefined);
   private userConfigDocs: Map<string, SFProjectUserConfigDoc> = new Map();
@@ -155,7 +156,7 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     this._userConfigDocs$.next(projectConfigs);
 
     for (const project of projects) {
-      if (project?.data == null) continue;
+      if (project?.data == null || this.projectTextsLoaded.includes(project.id)) continue;
       await this.loadProjectTextsNotesAndQuestions(project);
     }
 
@@ -165,6 +166,10 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     this._projectQuestions$.next(questions);
     const notes = Array.from(this.projectNotes.values());
     this._projectNotes$.next(notes);
+  }
+
+  checkProjectTextsLoaded(sfProject: SFProjectProfileDoc): boolean {
+    return this.projectTextsLoaded.includes(sfProject.id);
   }
 
   private async loadProjectTextsNotesAndQuestions(project: SFProjectProfileDoc): Promise<void> {
@@ -194,6 +199,7 @@ export class SFUserProjectsService extends SubscriptionDisposable {
           }
         }
       }
+      this.projectTextsLoaded.push(project.id);
     }
   }
 }

@@ -311,6 +311,7 @@ const meta: Meta = {
       }
       when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
       when(mockedPermissionsService.canAccessTranslate(anything())).thenReturn(true);
+      when(mockedUserProjectsService.checkProjectTextsLoaded(projectProfileDocs[0])).thenReturn(true);
       when(mockedUserProjectsService.projectTexts$).thenReturn(of(projectTextDocs));
       when(mockedParatextService.getProjects()).thenCall(async () => {
         if (context.args.delayFetchingPTProjectList) await new Promise(resolve => setTimeout(resolve, 5000));

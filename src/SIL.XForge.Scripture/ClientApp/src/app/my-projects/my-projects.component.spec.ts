@@ -599,7 +599,7 @@ class TestEnvironment {
       this.projectsTextDocs = [{ id: 'testProject1:matthew:40:1:target', data: { ops: [] } }] as unknown as TextDoc[];
       this.userConfigDocs = [
         {
-          id: 'testProject1:matthew:40:1:config',
+          id: 'user01',
           data: createTestProjectUserConfig({})
         }
       ] as SFProjectUserConfigDoc[];
@@ -623,7 +623,7 @@ class TestEnvironment {
 
     when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
     when(mockedPermissionsService.canAccessTranslate(anything())).thenReturn(true);
-
+    when(mockedUserProjectsService.checkProjectTextsLoaded(this.projectProfileDocs[0])).thenReturn(true);
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
     when(mockedUserProjectsService.projectTexts$).thenReturn(of(this.projectsTextDocs));
