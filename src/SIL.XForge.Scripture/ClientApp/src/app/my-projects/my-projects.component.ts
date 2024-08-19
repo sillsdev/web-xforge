@@ -12,18 +12,13 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
-import { NoteThreadDoc } from '../../app/core/models/note-thread-doc';
 import { TextDoc } from '../../app/core/models/text-doc';
-import { QuestionDoc } from '../../app/core/models/question-doc';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
-import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
 
 /** Presents user with list of available projects to open or connect to. */
@@ -40,10 +35,13 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   sfProjects: SFProjectDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
   userUnconnectedParatextProjects: ParatextProject[] = [];
-  userConfigDocs: SFProjectUserConfigDoc[] = [];
+
   projectsTextDocs: TextDoc[] = [];
-  projectsNoteDocs: RealtimeQuery<NoteThreadDoc>[] = [];
-  projectsQuestionsDocs: RealtimeQuery<QuestionDoc>[] = [];
+  userConfigDocs: SFProjectUserConfigDoc[] = [];
+  sfProjectDocs: SFProjectDoc[] = [];
+  projectQuestions: RealtimeQuery<QuestionDoc>[] = [];
+  projectNotes: RealtimeQuery<NoteThreadDoc>[] = [];
+
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
   errorMessage: ObjectPaths<typeof en.my_projects> = 'problem_getting_pt_list';
@@ -88,26 +86,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
-    this.subscribe(this.userProjectsService.sfProjectDocs$, (projects?: SFProjectDoc[]) => {
-      if (projects == null) return;
-      this.sfProjects = projects;
-    });
-    this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
-      if (configs == null) return;
-      this.userConfigDocs = configs;
-    });
-    this.subscribe(this.userProjectsService.projectTexts$, (texts?: TextDoc[]) => {
-      if (texts == null) return;
-      this.projectsTextDocs = texts;
-    });
-    this.subscribe(this.userProjectsService.projectNotes$, (notes?: RealtimeQuery<NoteThreadDoc>[]) => {
-      if (notes == null) return;
-      this.projectsNoteDocs = notes;
-    });
-    this.subscribe(this.userProjectsService.projectQuestions$, (questions?: RealtimeQuery<QuestionDoc>[]) => {
-      if (questions == null) return;
-      this.projectsQuestionsDocs = questions;
-    });
 
     await this.loadUser();
     await this.onlineStatusService.online;
@@ -117,21 +95,21 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       if (texts == null) return;
       this.projectsTextDocs = texts;
     });
-    this.subscribe(this.userProjectsService.sfProjectDocs$, (projects?: SFProjectDoc[]) => {
-      if (projects == null) return;
-      this.sfProjects = projects;
-    });
     this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
       if (configs == null) return;
       this.userConfigDocs = configs;
     });
-    this.subscribe(this.userProjectsService.projectNotes$, (notes?: RealtimeQuery<NoteThreadDoc>[]) => {
-      if (notes == null) return;
-      this.projectsNoteDocs = notes;
+    this.subscribe(this.userProjectsService.sfProjectDocs$, (projects?: SFProjectDoc[]) => {
+      if (projects == null) return;
+      this.sfProjectDocs = projects;
     });
     this.subscribe(this.userProjectsService.projectQuestions$, (questions?: RealtimeQuery<QuestionDoc>[]) => {
       if (questions == null) return;
-      this.projectsQuestionsDocs = questions;
+      this.projectQuestions = questions;
+    });
+    this.subscribe(this.userProjectsService.projectNotes$, (notes?: RealtimeQuery<NoteThreadDoc>[]) => {
+      if (notes == null) return;
+      this.projectNotes = notes;
     });
   }
 
@@ -145,7 +123,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
 
-    const hasTextDocs = this.projectsTextDocs.filter(textDoc => textDoc.id.includes(sfProject.id)).length > 0;
+    this.hasOfflineAccess =
+      this.hasOfflineAccess || this.projectsTextDocs.filter(textDoc => textDoc.id.includes(sfProject.id)).length > 0;
 
     const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
     const checking = isCheckingAccessible

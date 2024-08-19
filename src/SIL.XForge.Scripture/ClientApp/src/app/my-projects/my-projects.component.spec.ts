@@ -147,6 +147,21 @@ describe('MyProjectsComponent', () => {
     ).not.toContain('Offline Access');
   }));
 
+  it('displays if my connected projects have loaded texts for offline use', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+    const testProject1 = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject1')!.data!
+      .paratextId;
+    const testProject2 = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject2')!.data!
+      .paratextId;
+    expect(env.connectedProjectCardProjectDescription(testProject1).nativeElement.textContent).toContain(
+      translate('my_projects.offline-accessible')
+    );
+    expect(env.connectedProjectCardProjectDescription(testProject2).nativeElement.textContent).not.toContain(
+      translate('my_projects.offline-accessible')
+    );
+  }));
+
   it('lists my PT projects that are not on SF', fakeAsync(() => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
@@ -477,11 +492,10 @@ class TestEnvironment {
   userParatextProjects: ParatextProject[] = [];
 
   projectsTextDocs: TextDoc[] = [];
-
-  sfProjects: SFProjectDoc[] = [];
   userConfigDocs: SFProjectUserConfigDoc[] = [];
-  noteThreadDocs: RealtimeQuery<NoteThreadDoc>[] = [];
-  questionDocs: RealtimeQuery<QuestionDoc>[] = [];
+  sfProjectDocs: SFProjectDoc[] = [];
+  projectQuestions: RealtimeQuery<QuestionDoc>[] = [];
+  projectNotes: RealtimeQuery<NoteThreadDoc>[] = [];
 
   constructor({
     userHasAnyProjects = true,
@@ -557,7 +571,7 @@ class TestEnvironment {
           isConnected: true
         } as ParatextProject);
       });
-      this.sfProjects = [
+      this.sfProjectDocs = [
         {
           id: 'testProject1',
           data: createTestProject({}, 1)
@@ -583,12 +597,28 @@ class TestEnvironment {
         }
       ] as SFProjectDoc[];
       this.projectsTextDocs = [{ id: 'testProject1:matthew:40:1:target', data: { ops: [] } }] as unknown as TextDoc[];
-      this.noteThreadDocs = [
-        { id: 'testProject1:noteThread1', data: { ops: [] } }
-      ] as unknown as RealtimeQuery<NoteThreadDoc>[];
-      this.questionDocs = [
+      this.userConfigDocs = [
+        {
+          id: 'testProject1:matthew:40:1:config',
+          data: createTestProjectUserConfig({})
+        }
+      ] as SFProjectUserConfigDoc[];
+      this.sfProjectDocs = [
+        {
+          id: 'testProject1',
+          data: createTestProject({}, 1)
+        },
+        {
+          id: 'testProject2',
+          data: createTestProject({}, 2)
+        }
+      ] as SFProjectDoc[];
+      this.projectQuestions = [
         { id: 'testProject1:question1', data: { ops: [] } }
       ] as unknown as RealtimeQuery<QuestionDoc>[];
+      this.projectNotes = [
+        { id: 'testProject1:note1', data: { ops: [] } }
+      ] as unknown as RealtimeQuery<NoteThreadDoc>[];
     }
 
     when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
@@ -597,9 +627,9 @@ class TestEnvironment {
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
     when(mockedUserProjectsService.projectTexts$).thenReturn(of(this.projectsTextDocs));
-    when(mockedUserProjectsService.sfProjectDocs$).thenReturn(of(this.sfProjects));
-    when(mockedUserProjectsService.projectNotes$).thenReturn(of(this.noteThreadDocs));
-    when(mockedUserProjectsService.projectQuestions$).thenReturn(of(this.questionDocs));
+    when(mockedUserProjectsService.sfProjectDocs$).thenReturn(of(this.sfProjectDocs));
+    when(mockedUserProjectsService.projectQuestions$).thenReturn(of(this.projectQuestions));
+    when(mockedUserProjectsService.projectNotes$).thenReturn(of(this.projectNotes));
     when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(this.userConfigDocs));
     when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
 
