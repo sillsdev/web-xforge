@@ -1,9 +1,10 @@
 <ng-container *transloco="let t; read: 'join'">
   @if (!isLoading) {
-    <h1>{{ t("join_a_project") }}</h1>
-    <p [innerHTML]="inviteText"></p>
+    <h1 [innerHTML]="inviteText"></h1>
     @if (!isOnline) {
       <app-notice type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>
+    } @else {
+      <span>{{ t("explain_your_name") }}</span>
     }
     <form>
       <mat-form-field appearance="fill">
