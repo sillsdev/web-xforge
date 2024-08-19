@@ -549,6 +549,11 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     }
                 }
 
+                if (i >= chapterDeltaArray.Length)
+                {
+                    return newUsxDoc;
+                }
+
                 if (
                     chapterDeltaArray[i].Number == curChapter
                     && chapterDeltaArray[i].IsValid
