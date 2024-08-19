@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -1159,31 +1160,34 @@ public class ParatextServiceTests
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        string formattedContent = "Text with <bold>bold</bold> and <italics>italics</italics> styles.";
-        string nonFormattedContent = "Text without formatting";
-        string formattedContentInParagraph =
+        const string formattedContent = "Text with <bold>bold</bold> and <italics>italics</italics> styles.";
+        const string nonFormattedContent = "Text without formatting";
+        const string formattedContentInParagraph =
             "<p>Text with <bold>bold</bold> style.</p><p>Text with<italics>italics</italics> style.</p>";
-        string nonFormattedContentInParagraph = "<p>Text without formatting.</p><p>Second paragraph.</p>";
-        string whitespaceInContent = "<p>First paragraph.</p>\n<p>Second paragraph.</p>";
+        const string nonFormattedContentInParagraph = "<p>Text without formatting.</p><p>Second paragraph.</p>";
+        const string whitespaceInContent = "<p>First paragraph.</p>\n<p>Second paragraph.</p>";
+        const string reviewerAuthorParagraph = "<p sf-user-label=\"true\">[testuser - Scripture Forge]</p>";
+        const string reviewerContentParagraph = "<p>Test <bold>entity parsing</bold> with 1&amp;2 John!</p>";
+        const string reviewerContent = reviewerAuthorParagraph + reviewerContentParagraph;
         var note1 = new ThreadNoteComponents { content = formattedContent };
         var note2 = new ThreadNoteComponents { content = nonFormattedContent };
         var note3 = new ThreadNoteComponents { content = formattedContentInParagraph };
         var note4 = new ThreadNoteComponents { content = nonFormattedContentInParagraph };
         var note5 = new ThreadNoteComponents { content = whitespaceInContent };
+        var note6 = new ThreadNoteComponents { content = reviewerContent };
         env.AddParatextComments(
-            new[]
-            {
+            [
                 new ThreadComponents
                 {
                     threadNum = 1,
-                    noteCount = 5,
+                    noteCount = 6,
                     username = env.Username01,
-                    notes = new[] { note1, note2, note3, note4, note5 }
-                }
-            }
+                    notes = [note1, note2, note3, note4, note5, note6],
+                },
+            ]
         );
 
-        var noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
+        IDocument<NoteThread>[] noteThreadDocs = [];
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
@@ -1193,9 +1197,9 @@ public class ParatextServiceTests
                 {
                     SFUserId = env.User01,
                     OpaqueUserId = "syncuser01",
-                    Username = env.Username01
+                    Username = env.Username01,
                 }
-            }
+            },
         };
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
@@ -1207,17 +1211,19 @@ public class ParatextServiceTests
         );
         Assert.That(changes.Count, Is.EqualTo(1));
         NoteThreadChange change1 = changes.Single();
-        string expected1 = $"thread1-syncuser01-{formattedContent}";
+        const string expected1 = $"thread1-syncuser01-{formattedContent}";
         Assert.That(change1.NotesAdded[0].NoteToString(), Is.EqualTo(expected1));
-        string expected2 = $"thread1-syncuser01-{nonFormattedContent}";
+        const string expected2 = $"thread1-syncuser01-{nonFormattedContent}";
         Assert.That(change1.NotesAdded[1].NoteToString(), Is.EqualTo(expected2));
-        string expected3 = $"thread1-syncuser01-{formattedContentInParagraph}";
+        const string expected3 = $"thread1-syncuser01-{formattedContentInParagraph}";
         Assert.That(change1.NotesAdded[2].NoteToString(), Is.EqualTo(expected3));
-        string expected4 = $"thread1-syncuser01-{nonFormattedContentInParagraph}";
+        const string expected4 = $"thread1-syncuser01-{nonFormattedContentInParagraph}";
         Assert.That(change1.NotesAdded[3].NoteToString(), Is.EqualTo(expected4));
         // whitespace does not get processed as a node in xml, so it gets omitted from note content
-        string expected5 = $"thread1-syncuser01-{whitespaceInContent}".Replace("\n", "");
+        string expected5 = $"thread1-syncuser01-{whitespaceInContent.Replace("\n", string.Empty)}";
         Assert.That(change1.NotesAdded[4].NoteToString(), Is.EqualTo(expected5));
+        string expected6 = $"thread1-syncuser01-{Regex.Replace(reviewerContentParagraph, "<\\/?p>", string.Empty)}";
+        Assert.That(change1.NotesAdded[5].NoteToString(), Is.EqualTo(expected6));
     }
 
     [Test]
@@ -2624,80 +2630,78 @@ public class ParatextServiceTests
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        string dataId1 = "dataId1";
-        string dataId2 = "dataId2";
-        string dataId3 = "dataId3";
-        string thread1 = "thread1";
-        string thread2 = "thread2";
-        string thread3 = "thread3";
-        var thread1Notes = new[]
-        {
+        const string dataId1 = "dataId1";
+        const string dataId2 = "dataId2";
+        const string dataId3 = "dataId3";
+        const string thread1 = "thread1";
+        const string thread2 = "thread2";
+        const string thread3 = "thread3";
+        ThreadNoteComponents[] thread1Notes =
+        [
             new ThreadNoteComponents
             {
                 ownerRef = env.User01,
-                tagsAdded = new[] { "1" },
+                tagsAdded = ["1"],
                 editable = true,
                 versionNumber = 1,
                 status = NoteStatus.Todo,
-            }
-        };
-        var thread2Notes = new[]
-        {
+            },
+        ];
+        ThreadNoteComponents[] thread2Notes =
+        [
             new ThreadNoteComponents
             {
                 ownerRef = env.User05,
-                tagsAdded = new[] { "1" },
+                tagsAdded = ["1"],
                 editable = true,
                 versionNumber = 1,
-            }
-        };
+                content = "See 1&amp;2 John",
+            },
+        ];
         env.AddNoteThreadData(
-            new[]
-            {
+            [
                 new ThreadComponents
                 {
                     threadNum = 1,
                     noteCount = 1,
                     isNew = true,
-                    notes = thread1Notes
+                    notes = thread1Notes,
                 },
                 new ThreadComponents
                 {
                     threadNum = 2,
                     noteCount = 1,
                     isNew = true,
-                    notes = thread2Notes
+                    notes = thread2Notes,
                 },
                 new ThreadComponents
                 {
                     threadNum = 3,
                     noteCount = 2,
-                    deletedNotes = new[] { false, true },
-                    versionNumber = 1
-                }
-            }
+                    deletedNotes = [false, true],
+                    versionNumber = 1,
+                },
+            ]
         );
         env.AddParatextComments(
-            new[]
-            {
+            [
                 new ThreadComponents
                 {
                     threadNum = 3,
                     noteCount = 1,
                     username = env.Username01,
-                    deletedNotes = new[] { false },
-                    versionNumber = 1
-                }
-            }
+                    deletedNotes = [false],
+                    versionNumber = 1,
+                },
+            ]
         );
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         CommentThread thread = env.ProjectCommentManager.FindThread(thread1);
         Assert.That(thread, Is.Null);
-        string[] noteThreadDataIds = new[] { dataId1, dataId2, dataId3 };
-        IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
-            conn,
-            noteThreadDataIds
-        );
+        string[] noteThreadDataIds = [dataId1, dataId2, dataId3];
+        List<IDocument<NoteThread>> noteThreadDocs = (
+            await TestEnvironment.GetNoteThreadDocsAsync(conn, noteThreadDataIds)
+        ).ToList();
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
             {
@@ -2706,9 +2710,9 @@ public class ParatextServiceTests
                 {
                     Username = env.Username01,
                     OpaqueUserId = "syncuser01",
-                    SFUserId = env.User01
+                    SFUserId = env.User01,
                 }
-            }
+            },
         };
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -2738,7 +2742,7 @@ public class ParatextServiceTests
         expected =
             "thread2/User 01/2019-01-01T08:00:00.0000000+00:00-"
             + "MAT 1:2-"
-            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread2 note 1.</p>-"
+            + $"<p sf-user-label=\"true\">[User 05 - xForge]</p><p>{thread2Notes[0].content}</p>-"
             + "Start:0-"
             + "user05-"
             + "Tag:1-"
@@ -2756,7 +2760,7 @@ public class ParatextServiceTests
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
 
         // PT username is not written to server logs
-        env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username02));
+        env.MockLogger.AssertNoEvent(logEvent => logEvent.Message!.Contains(env.Username02));
     }
 
     [Test]
