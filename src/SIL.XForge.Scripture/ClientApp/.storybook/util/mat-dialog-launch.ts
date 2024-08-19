@@ -21,7 +21,7 @@ export function getOverlay(element: HTMLElement): HTMLElement {
 export const COMPONENT_UNDER_TEST = new InjectionToken<any>('COMPONENT_UNDER_TEST');
 export const COMPONENT_PROPS = new InjectionToken<any>('COMPONENT_PROPS');
 
-interface MatDialogStoryConfig {
+export interface MatDialogStoryConfig {
   imports?: any[];
   declarations?: any[];
   providers?: Provider[];

@@ -11,9 +11,10 @@ import {
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { isGecko, objectId } from 'xforge-common/utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { interval } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { interval, timer } from 'rxjs';
+import { map, startWith, take } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -22,6 +23,11 @@ export interface AudioAttachment {
   url?: string;
   fileName?: string;
   blob?: Blob;
+}
+
+export interface AudioRecorderDialogData {
+  countdown: boolean;
+  audio: AudioAttachment;
 }
 
 @Component({
@@ -54,7 +60,8 @@ export class AudioRecorderDialogComponent
     this.status.emit(audio);
   }
 
-  countdown: number = 0;
+  showCountdown: boolean;
+  countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
@@ -63,12 +70,20 @@ export class AudioRecorderDialogComponent
   private _onTouched = new EventEmitter();
 
   constructor(
+    public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: AudioRecorderDialogData,
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialogService: DialogService
   ) {
     super();
-    this.startCountdown();
+    this.showCountdown = data?.countdown ?? false;
+    if (data?.audio != null) {
+      this.audio = data.audio;
+    }
+    if (this.showCountdown) {
+      this.startCountdown();
+    }
   }
 
   writeValue(obj: AudioAttachment): void {
@@ -123,19 +138,27 @@ export class AudioRecorderDialogComponent
     this._onTouched.emit();
   }
 
+  saveRecording(): void {
+    if (this.audio.status !== 'processed') {
+      return;
+    }
+    this.dialogRef.close(this.audio);
+  }
+
   startCountdown(): void {
     // Start a countdown timer from 3 seconds to zero and then start recording
     const seconds = 3;
-    const countdown$ = interval(1000).pipe(
+    const countdown$ = timer(0, 1000).pipe(
       take(seconds + 1),
       map(countown => seconds - countown)
     );
 
     countdown$.subscribe({
       next: value => {
-        this.countdown = value;
+        this.countdownTimer = value;
       },
       complete: () => {
+        this.showCountdown = false;
         this.startRecording();
       }
     });
