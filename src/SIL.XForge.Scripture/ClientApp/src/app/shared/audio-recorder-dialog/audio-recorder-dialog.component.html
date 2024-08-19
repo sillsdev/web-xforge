@@ -1,48 +1,62 @@
-<ng-container *transloco="let t; read: 'checking_audio_recorder'">
+<ng-container *transloco="let t; read: 'audio_recorder_dialog'">
   <mat-dialog-content>
-    <div class="countdown" [ngClass]="{ animate: countdown > 0 }">{{ countdown }}</div>
-    @if (!hasAudioAttachment) {
-      <div class="no-attachment">
-        @if (!isRecording) {
-          <button
-            mat-button
-            (click)="startRecording()"
-            class="record"
-            [matTooltip]="t('record_audio')"
-            matTooltipPosition="before"
-          >
-            <mat-icon>mic</mat-icon>
-          </button>
-        } @else {
-          <button
-            mat-button
-            (click)="stopRecording()"
-            class="stop"
-            [matTooltip]="t('stop_recording')"
-            matTooltipPosition="before"
-          >
-            <mat-icon>stop</mat-icon>
-          </button>
-        }
-      </div>
-    }
-    @if (hasAudioAttachment) {
-      <div class="has-attachment">
-        @if (!!audio.url) {
+    <div class="container">
+      <div class="countdown" [ngClass]="{ animate: countdownTimer > 0 }">{{ countdownTimer }}</div>
+      @if (!hasAudioAttachment) {
+        <div class="no-attachment">
+          @if (!isRecording && !showCountdown) {
+            <button
+              mat-icon-button
+              (click)="startRecording()"
+              class="record"
+              [matTooltip]="t('record_audio')"
+              matTooltipPosition="before"
+            >
+              <mat-icon>mic</mat-icon>
+            </button>
+          }
+          @if (isRecording) {
+            <button
+              mat-icon-button
+              (click)="stopRecording()"
+              class="stop"
+              [matTooltip]="t('stop_recording')"
+              matTooltipPosition="before"
+            >
+              <mat-icon class="mic-icon">mic</mat-icon>
+              <mat-icon class="stop-icon">stop</mat-icon>
+            </button>
+          }
+        </div>
+      }
+      @if (hasAudioAttachment && !!audio.url) {
+        <div class="has-attachment">
           <app-single-button-audio-player [source]="audio.url" (click)="toggleAudio()">
             <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
           </app-single-button-audio-player>
-        }
-        <button
-          mat-button
-          (click)="resetRecording()"
-          [matTooltip]="t('delete')"
-          class="remove-audio-file"
-          matTooltipPosition="before"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
-    }
+        </div>
+      }
+    </div>
+    <div class="has-attachment" [ngClass]="{ visible: hasAudioAttachment }">
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="resetRecording()"
+        [matTooltip]="t('delete')"
+        class="remove-audio-file"
+        matTooltipPosition="before"
+      >
+        <mat-icon>mic</mat-icon> Re-record
+      </button>
+      <button
+        mat-button
+        (click)="saveRecording()"
+        [matTooltip]="t('save')"
+        class="save-audio-file"
+        matTooltipPosition="before"
+      >
+        <mat-icon>check</mat-icon> Save
+      </button>
+    </div>
   </mat-dialog-content>
 </ng-container>
