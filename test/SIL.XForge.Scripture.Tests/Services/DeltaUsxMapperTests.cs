@@ -120,6 +120,47 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_InvalidChapters()
+    {
+        // Set up a USX document with two invalid chapters
+        XDocument usxDoc = Usx(
+            "RUT",
+            null,
+            "3.0",
+            Chapter("1"),
+            Verse("1"),
+            Chapter("2."),
+            Verse("1"),
+            Chapter("3"),
+            Verse("1"),
+            Chapter("4."),
+            Verse("1")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+
+        // Get the chapter deltas, which will be the valid chapters
+        List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+        var expected1 = Delta.New().InsertChapter("1").InsertVerse("1").InsertBlank("verse_1_1").InsertText("\n");
+        var expected2 = Delta.New().InsertChapter("3").InsertVerse("1").InsertBlank("verse_3_1").InsertText("\n");
+
+        Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+        Assert.That(chapterDeltas[0].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected1));
+
+        Assert.That(chapterDeltas[1].Number, Is.EqualTo(3));
+        Assert.That(chapterDeltas[1].LastVerse, Is.EqualTo(1));
+        Assert.That(chapterDeltas[1].IsValid, Is.True);
+        Assert.IsTrue(chapterDeltas[1].Delta.DeepEquals(expected2));
+
+        // Ensure that the USX round trips perfectly
+        XDocument newUsxDoc = mapper.ToUsx(usxDoc, chapterDeltas);
+        Assert.IsTrue(XNode.DeepEquals(newUsxDoc, usxDoc));
+    }
+
+    [Test]
     public void ToUsx_CharText()
     {
         var chapterDelta = new ChapterDelta(
@@ -1221,37 +1262,6 @@ public class DeltaUsxMapperTests
         _exceptionHandler
             .Received()
             .ReportException(Arg.Is<Exception>((Exception e) => e.Message.Contains("no real chapters")));
-    }
-
-    [Test]
-    public void ToUsx_MismatchedChapters_UnchangedUsx()
-    {
-        _exceptionHandler.ClearReceivedCalls();
-        var chapterDeltas = new[]
-        {
-            new ChapterDelta(
-                1,
-                0,
-                true,
-                new Delta().InsertChapter("1").InsertBlank("p_1").InsertVerse("1").InsertBlank("verse_1_1")
-            )
-        };
-
-        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
-
-        // The USX here has chapter 2, which is not in chapterDeltas. The chapterDeltas does contain 1 real chapter.
-        XDocument input = Usx(
-            "PHM",
-            Chapter("1"),
-            Para("p", Verse("1"), "Verse text."),
-            Chapter("2"),
-            Para("p", Verse("1"), "Verse text.")
-        );
-
-        // SUT
-        Exception thrown = Assert.Throws<Exception>(() => mapper.ToUsx(input, chapterDeltas));
-        Assert.That(thrown.Message, Contains.Substring("Rethrowing"));
-        Assert.That(thrown.InnerException, Is.TypeOf<IndexOutOfRangeException>());
     }
 
     [Test]
@@ -3605,8 +3615,8 @@ public class DeltaUsxMapperTests
         AssertRoundtrips(
             """
 \id PHM
-\c 1
-\p
+            \c 1
+            \p
 \v 1 \bd \+sup 1\+sup* This is\+sup 2\+sup* bold text.\+sup 3\+sup* \bd*  This is normal text.
 """
         );
