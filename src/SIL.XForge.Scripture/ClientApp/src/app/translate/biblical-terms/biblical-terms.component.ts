@@ -176,7 +176,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   categories: string[] = [];
   columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
   viewFilters: ViewFilter[] = ['current_verse', 'current_chapter', 'current_book', 'current_project'];
-  selectedCategory = '';
+  selectedCategory = 'show_all';
   selectedViewFilter: ViewFilter = 'current_verse';
   rows: Row[] = [];
 
@@ -285,7 +285,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.activatedProjectService.projectId ?? projectId,
         this.userService.currentUserId
       );
-      this.selectedCategory = this.projectUserConfigDoc.data?.selectedBiblicalTermsCategory ?? '';
+      this.selectedCategory = this.projectUserConfigDoc.data?.selectedBiblicalTermsCategory ?? 'show_all';
       this.selectedViewFilter = (this.projectUserConfigDoc.data?.selectedBiblicalTermsFilter ??
         'current_verse') as ViewFilter;
       this.loadBiblicalTerms(projectId);
@@ -418,13 +418,19 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.i18n.localeCode,
         defaultLocaleCode
       );
+      let termCategories: string[] = [];
       if (category != null) {
         // Categories are localized in the biblical terms document, and comma separated
-        for (let categoryName of category.split(',')) categories.add(categoryName.trim());
+        termCategories = category.split(',');
+        for (let categoryName of termCategories) categories.add(categoryName.trim());
       }
 
       // If we are filtering by category, exclude terms without the specified category
-      if (this.selectedCategory !== '' && !category.includes(this.selectedCategory)) {
+      if (
+        this.selectedCategory !== 'show_all' &&
+        termCategories.length > 0 &&
+        !termCategories.includes(this.selectedCategory)
+      ) {
         displayTerm = false;
       }
 
@@ -449,7 +455,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.rows = rows;
     this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
     if (!this.categories.includes(this.selectedCategory)) {
-      this.selectedCategory = '';
+      this.selectedCategory = 'show_all';
     }
 
     this.loadingFinished();
