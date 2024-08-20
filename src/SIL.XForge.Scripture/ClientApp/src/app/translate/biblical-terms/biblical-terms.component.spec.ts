@@ -55,7 +55,6 @@ const mockedUserService = mock(UserService);
 describe('BiblicalTermsComponent', () => {
   configureTestingModule(() => ({
     imports: [NoopAnimationsModule, TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    declarations: [BiblicalTermsComponent],
     providers: [
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
