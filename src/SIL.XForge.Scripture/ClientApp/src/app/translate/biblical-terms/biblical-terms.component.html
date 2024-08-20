@@ -27,10 +27,33 @@
             <mat-icon>{{ row.editIcon }}</mat-icon>
           </button>
         </td>
+        <td *matFooterCellDef [attr.colspan]="columnsToDisplay.length">
+          <div class="toolbar">
+            <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t("show") }}</mat-label>
+              <mat-select panelWidth="''" [(ngModel)]="selectedViewFilter" (selectionChange)="onSelectionChanged()">
+                <mat-option *ngFor="let viewFilter of viewFilters" [value]="viewFilter">
+                  {{ t(viewFilter) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t("category") }}</mat-label>
+              <mat-select panelWidth="''" [(ngModel)]="selectedCategory" (selectionChange)="onSelectionChanged()">
+                <mat-option value="">All</mat-option>
+                <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
       <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
+      <tr mat-footer-row *matFooterRowDef="['id']; sticky: true"></tr>
+      <tr mat-row *matNoDataRow>
+        <td class="mat-cell" [attr.colspan]="columnsToDisplay.length"></td>
+      </tr>
     </table>
   </div>
 </ng-container>
