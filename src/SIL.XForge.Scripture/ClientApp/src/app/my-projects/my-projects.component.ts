@@ -12,7 +12,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { TextDoc } from '../../app/core/models/text-doc';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -20,9 +19,6 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { RealtimeQuery } from '../../xforge-common/models/realtime-query';
-import { NoteThreadDoc } from '../core/models/note-thread-doc';
-import { QuestionDoc } from '../core/models/question-doc';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
@@ -41,11 +37,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   /** PT projects that the user can access that they are not connected to on SF. */
   userUnconnectedParatextProjects: ParatextProject[] = [];
 
-  projectsTextDocs: TextDoc[] = [];
   userConfigDocs: SFProjectUserConfigDoc[] = [];
-  sfProjectDocs: SFProjectDoc[] = [];
-  projectQuestions: RealtimeQuery<QuestionDoc>[] = [];
-  projectNotes: RealtimeQuery<NoteThreadDoc>[] = [];
 
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
@@ -54,6 +46,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
   joiningProjects: string[] = [];
+  offlineTextsLoaded: string[] = [];
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -90,31 +83,18 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
-
-    await this.loadUser();
-    await this.onlineStatusService.online;
-    if (this.userIsPTUser) await this.loadParatextProjects();
-
-    this.subscribe(this.userProjectsService.projectTexts$, (texts?: TextDoc[]) => {
-      if (texts == null) return;
-      this.projectsTextDocs = texts;
-    });
     this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
       if (configs == null) return;
       this.userConfigDocs = configs;
     });
-    this.subscribe(this.userProjectsService.sfProjectDocs$, (projects?: SFProjectDoc[]) => {
-      if (projects == null) return;
-      this.sfProjectDocs = projects;
+    this.subscribe(this.userProjectsService.offlineTextsLoaded$, (offlineTexts?: string[]) => {
+      if (offlineTexts == null) return;
+      this.offlineTextsLoaded = offlineTexts;
     });
-    this.subscribe(this.userProjectsService.projectQuestions$, (questions?: RealtimeQuery<QuestionDoc>[]) => {
-      if (questions == null) return;
-      this.projectQuestions = questions;
-    });
-    this.subscribe(this.userProjectsService.projectNotes$, (notes?: RealtimeQuery<NoteThreadDoc>[]) => {
-      if (notes == null) return;
-      this.projectNotes = notes;
-    });
+
+    await this.loadUser();
+    await this.onlineStatusService.online;
+    if (this.userIsPTUser) await this.loadParatextProjects();
   }
 
   isLastSelectedProject(project: SFProjectProfileDoc): boolean {
@@ -126,7 +106,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   projectTypeDescription(sfProject: SFProjectProfileDoc): string {
     const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
-    const isOfflineAccessible = this.userProjectsService.checkProjectTextsLoaded(sfProject);
+    const isOfflineAccessible = this.offlineTextsLoaded.includes(sfProject.id);
 
     const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
     const checking = isCheckingAccessible
