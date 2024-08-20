@@ -53,6 +53,8 @@ export enum BiblicalTermDialogIcon {
 // This value is used in the row and component
 const defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
 
+type ViewFilter = 'current_verse' | 'current_chapter' | 'current_book' | 'current_project';
+
 class Row {
   constructor(
     private readonly biblicalTermDoc: BiblicalTermDoc,
@@ -170,7 +172,11 @@ class Row {
   styleUrls: ['./biblical-terms.component.scss']
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
+  categories: string[] = [];
   columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
+  viewFilters: ViewFilter[] = ['current_verse', 'current_chapter', 'current_book', 'current_project'];
+  selectedCategory = '';
+  selectedViewFilter: ViewFilter = 'current_verse';
   rows: Row[] = [];
 
   private biblicalTermQuery?: RealtimeQuery<BiblicalTermDoc>;
@@ -334,6 +340,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     });
   }
 
+  onSelectionChanged(): void {
+    this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+  }
+
   protected sortData(sort: Sort): void {
     const data: Row[] = this.rows.slice();
     if (!sort.active || sort.direction === '') {
@@ -349,23 +359,55 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this.loadingStarted();
 
+    const categories = new Set<string>();
     const rows: Row[] = [];
     let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let displayTerm = false;
-      for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
-        var verseRef = new VerseRef(bbbcccvvv);
-        if (
-          verseRef.bookNum === bookNum &&
-          verseRef.chapterNum === chapter &&
-          (verses.length === 0 ||
-            verses[0] === 0 ||
-            verses.includes(verseRef.verseNum) ||
-            (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
-        ) {
-          displayTerm = true;
-          break;
+      if (this.selectedViewFilter === 'current_project') {
+        displayTerm = true;
+      } else {
+        // Filter by verse, chapter, or book
+        for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
+          var verseRef = new VerseRef(bbbcccvvv);
+          if (this.selectedViewFilter === 'current_book' && verseRef.bookNum === bookNum) {
+            displayTerm = true;
+            break;
+          } else if (
+            this.selectedViewFilter === 'current_chapter' &&
+            verseRef.bookNum === bookNum &&
+            verseRef.chapterNum === chapter
+          ) {
+            displayTerm = true;
+            break;
+          } else if (
+            this.selectedViewFilter === 'current_verse' &&
+            verseRef.bookNum === bookNum &&
+            verseRef.chapterNum === chapter &&
+            (verses.length === 0 ||
+              verses[0] === 0 ||
+              verses.includes(verseRef.verseNum) ||
+              (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
+          ) {
+            displayTerm = true;
+            break;
+          }
         }
+      }
+
+      // Get the category
+      const category: string | undefined = biblicalTermDoc?.getBiblicalTermCategory(
+        this.i18n.localeCode,
+        defaultLocaleCode
+      );
+      if (category != null) {
+        // Categories are localized in the biblical terms document, and comma separated
+        for (let categoryName of category.split(',')) categories.add(categoryName.trim());
+      }
+
+      // If we are filtering by category, exclude terms without the specified category
+      if (this.selectedCategory !== '' && !category.includes(this.selectedCategory)) {
+        displayTerm = false;
       }
 
       if (displayTerm) {
@@ -385,6 +427,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         rows.push(new Row(biblicalTermDoc, this.i18n, this.projectDoc, this.projectUserConfigDoc, noteThreadDoc));
       }
     }
+    this.categories = Array.from(categories).sort();
     this.rows = rows;
     this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
 
