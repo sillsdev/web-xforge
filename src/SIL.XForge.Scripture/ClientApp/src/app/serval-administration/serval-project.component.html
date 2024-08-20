@@ -55,3 +55,17 @@
     <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
   </table>
 </div>
+
+<h2>Last Draft settings</h2>
+<h3>Training books</h3>
+{{ trainingBooks.join(", ") || "None" }}
+<h3>Training data files</h3>
+{{ trainingFiles.join(", ") || "None" }}
+<h3>Translation books</h3>
+{{ translationBooks.join(", ") || "None" }}
+
+<h2>Raw draft config</h2>
+<pre class="raw-draft-config">
+@for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{ stringify(draftConfig![key]) }}</strong>
+}
+</pre>

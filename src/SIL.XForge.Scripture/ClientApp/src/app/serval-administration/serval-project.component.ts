@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { catchError, lastValueFrom, of, tap, throwError } from 'rxjs';
@@ -36,6 +37,12 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   headingsToDisplay = { category: 'Category', name: 'Project', id: '' };
   columnsToDisplay = ['category', 'name', 'id'];
   rows: Row[] = [];
+
+  trainingBooks: string[] = [];
+  trainingFiles: string[] = [];
+  translationBooks: string[] = [];
+
+  draftConfig: Object | undefined;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -119,6 +126,17 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
           // We have to set the rows this way to trigger the update
           this.rows = rows;
+
+          // Setup the books
+          this.trainingBooks = project.translateConfig.draftConfig.lastSelectedTrainingBooks.map(bookNum =>
+            Canon.bookNumberToEnglishName(bookNum)
+          );
+          this.trainingFiles = project.translateConfig.draftConfig.lastSelectedTrainingDataFiles;
+          this.translationBooks = project.translateConfig.draftConfig.lastSelectedTranslationBooks.map(bookNum =>
+            Canon.bookNumberToEnglishName(bookNum)
+          );
+
+          this.draftConfig = project.translateConfig.draftConfig;
         })
       )
     );
@@ -161,5 +179,20 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   async retrievePreTranslationStatus(): Promise<void> {
     await this.servalAdministrationService.onlineRetrievePreTranslationStatus(this.activatedProjectService.projectId!);
     await this.noticeService.show('Webhook job started.');
+  }
+
+  keys(obj: Object): string[] {
+    return Object.keys(obj);
+  }
+
+  stringify(value: any): string {
+    if (Array.isArray(value)) {
+      return this.arrayToString(value);
+    }
+    return JSON.stringify(value, (_key, value) => (Array.isArray(value) ? this.arrayToString(value) : value), 2);
+  }
+
+  arrayToString(value: any): string {
+    return '[' + value.join(', ') + ']';
   }
 }
