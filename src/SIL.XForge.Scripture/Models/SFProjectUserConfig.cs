@@ -29,4 +29,6 @@ public class SFProjectUserConfig : ProjectData
     public List<EditorTabPersistData> EditorTabsOpen { get; set; } = [];
     public string? SelectedQuestionRef { get; set; }
     public bool TransliterateBiblicalTerms { get; set; }
+    public string? SelectedBiblicalTermsCategory { get; set; }
+    public string? SelectedBiblicalTermsFilter { get; set; }
 }
