@@ -24,11 +24,16 @@
   },
   "biblical_terms": {
     "actions": "Actions",
+    "biblical_terms_renderings": "Biblical Terms Renderings",
     "category": "Category",
+    "current_book": "Current Book",
+    "current_chapter": "Current Chapter",
+    "current_project": "Current Project",
+    "current_verse": "Current Verse",
     "gloss": "Gloss",
     "renderings": "Renderings",
-    "term": "Term",
-    "biblical_terms_renderings": "Biblical Terms Renderings"
+    "show": "Show",
+    "term": "Term"
   },
   "book_select": {
     "clear": "Clear",
