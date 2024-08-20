@@ -1,9 +1,11 @@
 @use 'src/_variables' as variables;
 
 :host {
-  width: 50em;
-  max-width: 100%;
+  max-width: 500px;
   margin: 0 auto;
+}
+
+.content {
   display: flex;
   flex-direction: column;
   row-gap: 1em;
@@ -14,7 +16,7 @@ h1,
 h2 {
   font-weight: 500;
   margin-top: 0.5em;
-  margin-bottom: 0;
+  margin-bottom: 0.25em;
 }
 
 .pt-content {
@@ -27,6 +29,12 @@ mat-card {
   padding: 1em;
   gap: 0.5em;
   grid-template-columns: 1fr auto;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+mat-card:active {
+  filter: brightness(90%);
 }
 
 [data-project-type='user-connected-project'] {
@@ -47,9 +55,16 @@ mat-card {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  padding: 1em;
+  padding-top: 0;
 
   .mdc-button {
     margin-inline-start: auto;
+  }
+
+  &:not(:last-child) {
+    border-width: 0 0 1px 0;
+    border-style: solid;
   }
 }
 
@@ -63,10 +78,12 @@ mat-card {
   grid-template-areas:
     'project-name project-name'
     'description button';
+  margin: 0 1em;
 }
 
 .project-name {
   font-size: 1.25em;
+  margin: auto 0;
   b {
     font-weight: 500;
   }
@@ -108,6 +125,7 @@ mat-card a,
 .loading-project-description {
   height: 1em;
   width: 8em;
+  align-self: end;
 }
 
 .loading-action {
