@@ -31,7 +31,7 @@ const filesByFamily: {
 for (const entry of Object.values(fonts)) {
   if (entry.distributable !== true) continue;
 
-  const defaultFileName = entry.defaults?.["woff2"] ?? entry.defaults?.["woff"];
+  const defaultFileName = entry.defaults?.["woff2"] ?? entry.defaults?.["woff"] ?? entry.defaults?.["ttf"];
   if (defaultFileName == null) continue;
 
   const defaultFileUrl = entry.files[defaultFileName]?.flourl;
@@ -53,7 +53,7 @@ for (const [family, files] of Object.entries(filesByFamily)) {
   if (files.length === 1) {
     bestFileByFamily[family] = files[0].fileUrl;
   } else if (files.length > 1) {
-    const matchingFiles = files.filter(file => /Regular/.test(file.fileName));
+    const matchingFiles = files.filter(file => file.fileUrl != null && /Regular/.test(file.fileName));
     if (matchingFiles.length === 1) {
       bestFileByFamily[family] = matchingFiles[0].fileUrl;
     } else if (matchingFiles.length > 1) {
