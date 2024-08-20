@@ -37,6 +37,12 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       selectedChapterNum: {
         bsonType: 'int'
       },
+      selectedBiblicalTermsCategory: {
+        bsonType: 'string'
+      },
+      selectedBiblicalTermsFilter: {
+        bsonType: 'string'
+      },
       isTargetTextRight: {
         bsonType: 'bool'
       },
