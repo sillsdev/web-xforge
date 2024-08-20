@@ -48,7 +48,7 @@
                 [(ngModel)]="selectedCategory"
                 (selectionChange)="onSelectionChanged($event, 'category')"
               >
-                <mat-option value="">All</mat-option>
+                <mat-option value="">{{ t("all") }}</mat-option>
                 <mat-option *ngFor="let category of categories" [value]="category">{{ category }}</mat-option>
               </mat-select>
             </mat-form-field>
