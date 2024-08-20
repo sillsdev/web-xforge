@@ -300,6 +300,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.subscribe(this.verse$, verse => {
       this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse);
     });
+    this.subscribe(this.i18n.locale$, _ => {
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+    });
   }
 
   async editNoteThread(row: Row): Promise<void> {
@@ -445,6 +448,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.categories = Array.from(categories).sort();
     this.rows = rows;
     this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
+    if (!this.categories.includes(this.selectedCategory)) {
+      this.selectedCategory = '';
+    }
 
     this.loadingFinished();
   }
