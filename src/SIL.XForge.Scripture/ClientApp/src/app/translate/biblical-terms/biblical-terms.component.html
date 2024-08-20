@@ -50,7 +50,7 @@
               >
                 <mat-option value="show_all">{{ t("all") }}</mat-option>
                 <mat-option *ngFor="let category of categories" [value]="category">{{
-                  category == "" ? t("blank") : category
+                  category === "" ? t("blank") : category
                 }}</mat-option>
               </mat-select>
             </mat-form-field>
