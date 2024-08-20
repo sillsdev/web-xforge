@@ -23,7 +23,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
@@ -34,6 +34,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { Locale } from '../../../xforge-common/models/i18n-locale';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -201,6 +202,26 @@ describe('BiblicalTermsComponent', () => {
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+  }));
+
+  it('should update the categories when the language changes', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.component.selectedViewFilter = 'current_verse';
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+    expect(env.component.categories.includes('category01_en')).toBe(true);
+    expect(env.component.categories.includes('category01_fr')).toBe(false);
+
+    env.setLanguage('fr');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_fr');
+    expect(env.component.categories.includes('category01_en')).toBe(false);
+    expect(env.component.categories.includes('category01_fr')).toBe(true);
   }));
 
   it('should exclude biblical terms not in the selected verse', fakeAsync(() => {
@@ -375,6 +396,7 @@ class TestEnvironment {
   readonly mockNoteDialogRef;
   readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  readonly locale$: BehaviorSubject<Locale> = new BehaviorSubject<Locale>({} as Locale);
 
   private openNoteDialogs: MockNoteDialogRef[] = [];
 
@@ -386,6 +408,7 @@ class TestEnvironment {
     activatedProjectId: string = projectId
   ) {
     when(mockedActivatedProjectService.projectId).thenReturn(activatedProjectId);
+    when(mockedI18nService.locale$).thenReturn(this.locale$);
     when(mockedProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
@@ -462,9 +485,14 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
   }
 
-  setupProjectData(language: string, noteThreads: boolean = true): void {
-    when(mockedUserService.currentUserId).thenReturn('user01');
+  setLanguage(language: string): void {
     when(mockedI18nService.localeCode).thenReturn(language);
+    this.locale$.next({ canonicalTag: language } as Locale);
+  }
+
+  setupProjectData(language: string, noteThreads: boolean = true): void {
+    this.setLanguage(language);
+    when(mockedUserService.currentUserId).thenReturn('user01');
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
       id: 'project01:dataId01',
       data: {
