@@ -32,17 +32,12 @@
   }
   <div class="flex-row">
     @for (book of bookOptions; track book) {
-      <mat-chip-listbox
-        hideSingleSelectionIndicator
-        [selectable]="!readonly"
-        class="book-multi-select"
+      <app-toggle-book
+        [book]="book.bookNum"
+        [selected]="book.selected"
+        (selected)="onChipListChange(book)"
         [disabled]="readonly"
-        (change)="onChipListChange(book)"
-      >
-        <mat-chip-option [value]="book" [selected]="book.selected">
-          {{ "canon.book_names." + book.bookId | transloco }}
-        </mat-chip-option>
-      </mat-chip-listbox>
+      ></app-toggle-book>
     }
   </div>
 </ng-container>

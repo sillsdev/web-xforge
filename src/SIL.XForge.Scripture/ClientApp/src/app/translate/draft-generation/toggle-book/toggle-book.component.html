@@ -1,0 +1,19 @@
+<ng-container transloco>
+  <span class="wrapper" [style.--background-image]="backgroundCssGradientStripes">
+    <span
+      class="book"
+      [style.--progress]="progressCssValue"
+      [style.--border-width]="borderWidthCssValue"
+      [class.selected]="selected"
+      [class.disabled]="disabled"
+      (click)="toggleSelected()"
+      (keypress)="onKeyPress($event)"
+      [matTooltip]="progressDescription"
+      matRipple
+      [matRippleDisabled]="disabled"
+      [tabindex]="disabled ? -1 : 0"
+    >
+      {{ bookName(book) }}
+    </span>
+  </span>
+</ng-container>

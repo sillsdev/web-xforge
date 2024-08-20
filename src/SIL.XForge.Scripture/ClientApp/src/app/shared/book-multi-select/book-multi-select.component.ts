@@ -3,6 +3,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ToggleBookComponent } from '../../translate/draft-generation/toggle-book/toggle-book.component';
 
 export interface BookOption {
   bookNum: number;
@@ -14,7 +15,7 @@ export interface BookOption {
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
   standalone: true,
-  imports: [UICommonModule, MatChipsModule, TranslocoModule],
+  imports: [UICommonModule, MatChipsModule, TranslocoModule, ToggleBookComponent],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {
