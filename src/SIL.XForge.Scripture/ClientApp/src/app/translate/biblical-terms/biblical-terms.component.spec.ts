@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { MatSelectChange } from '@angular/material/select';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -120,19 +121,28 @@ describe('BiblicalTermsComponent', () => {
 
   it('should filter biblical terms by category', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
-    env.component.selectedViewFilter = 'current_book';
-    env.component.selectedCategory = 'category04_en';
     env.setupProjectData('en');
+    env.wait();
+    env.component.selectedViewFilter = 'current_book';
+    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'viewFilter');
+    env.wait();
+    env.component.selectedCategory = 'category04_en';
+    env.component.onSelectionChanged({ value: 'category04_en' } as MatSelectChange, 'category');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId04');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category04_en');
+    const projectUserConfig = env.getProjectUserConfigDoc('project01', 'user01').data;
+    expect(projectUserConfig?.selectedBiblicalTermsFilter).toBe('current_book');
+    expect(projectUserConfig?.selectedBiblicalTermsCategory).toBe('category04_en');
   }));
 
   it('should filter biblical terms by project', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
-    env.component.selectedViewFilter = 'current_project';
     env.setupProjectData('en');
+    env.wait();
+    env.component.selectedViewFilter = 'current_project';
+    env.component.onSelectionChanged({ value: 'current_project' } as MatSelectChange, 'viewFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(4);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -143,12 +153,17 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[2] as HTMLElement).innerText).toBe('category04_en');
     expect((env.biblicalTermsTerm[3] as HTMLElement).innerText).toBe('termId05');
     expect((env.biblicalTermsCategory[3] as HTMLElement).innerText).toBe('category05_en');
+    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe(
+      'current_project'
+    );
   }));
 
   it('should filter biblical terms by book', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
-    env.component.selectedViewFilter = 'current_book';
     env.setupProjectData('en');
+    env.wait();
+    env.component.selectedViewFilter = 'current_book';
+    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'viewFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(3);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -157,18 +172,24 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
     expect((env.biblicalTermsTerm[2] as HTMLElement).innerText).toBe('termId05');
     expect((env.biblicalTermsCategory[2] as HTMLElement).innerText).toBe('category05_en');
+    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe('current_book');
   }));
 
   it('should filter biblical terms by chapter', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
-    env.component.selectedViewFilter = 'current_chapter';
     env.setupProjectData('en');
+    env.wait();
+    env.component.selectedViewFilter = 'current_chapter';
+    env.component.onSelectionChanged({ value: 'current_chapter' } as MatSelectChange, 'viewFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(2);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
     expect((env.biblicalTermsTerm[1] as HTMLElement).innerText).toBe('termId04');
     expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
+    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe(
+      'current_chapter'
+    );
   }));
 
   it('should filter biblical terms by verse', fakeAsync(() => {
