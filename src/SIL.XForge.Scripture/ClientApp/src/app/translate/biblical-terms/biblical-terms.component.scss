@@ -1,3 +1,4 @@
+@use 'src/material-styles';
 @import 'src/styles';
 
 /* We have two mat-icon actions buttons */
@@ -45,4 +46,24 @@
 /* Disable hover effects for disabled buttons */
 .mat-mdc-icon-button:disabled {
   pointer-events: none;
+}
+
+/* Style the toolbar and its dropdowns */
+.mat-mdc-table-sticky {
+  bottom: -1px !important;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  justify-content: center;
+  padding: 0.5em;
+  border-top: 1px solid var(--sf-tab-group-border-color);
+  background: #fff;
+}
+
+.biblical-terms-select {
+  @include material-styles.dense_mat_select();
+  width: 200px;
 }
