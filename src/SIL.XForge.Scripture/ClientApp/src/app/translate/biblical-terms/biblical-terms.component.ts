@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MatSelectChange } from '@angular/material/select';
 import { Sort } from '@angular/material/sort';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -284,6 +285,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.activatedProjectService.projectId ?? projectId,
         this.userService.currentUserId
       );
+      this.selectedCategory = this.projectUserConfigDoc.data?.selectedBiblicalTermsCategory ?? '';
+      this.selectedViewFilter = (this.projectUserConfigDoc.data?.selectedBiblicalTermsFilter ??
+        'current_verse') as ViewFilter;
       this.loadBiblicalTerms(projectId);
       this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
@@ -340,8 +344,19 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     });
   }
 
-  onSelectionChanged(): void {
+  onSelectionChanged(e: MatSelectChange, source: 'category' | 'viewFilter'): void {
     this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+
+    // Store the last selected category or view filter
+    let selectedValue: string | undefined = e.value;
+    if (selectedValue === '') selectedValue = undefined;
+    this.projectUserConfigDoc?.submitJson0Op(op => {
+      if (source === 'category') {
+        op.set(puc => puc.selectedBiblicalTermsCategory, selectedValue);
+      } else {
+        op.set(puc => puc.selectedBiblicalTermsFilter, selectedValue);
+      }
+    });
   }
 
   protected sortData(sort: Sort): void {
