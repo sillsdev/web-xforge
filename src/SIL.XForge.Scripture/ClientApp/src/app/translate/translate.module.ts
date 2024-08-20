@@ -30,7 +30,6 @@ import { TranslateRoutingModule } from './translate-routing.module';
 @NgModule({
   declarations: [
     BiblicalTermDialogComponent,
-    BiblicalTermsComponent,
     EditorComponent,
     MultiViewerComponent,
     NoteDialogComponent,
@@ -56,6 +55,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TranslocoMarkupModule,
     AvatarComponent,
     SFTabsModule,
+    BiblicalTermsComponent,
     DraftPreviewBooksComponent,
     FontUnsupportedMessageComponent
   ]
