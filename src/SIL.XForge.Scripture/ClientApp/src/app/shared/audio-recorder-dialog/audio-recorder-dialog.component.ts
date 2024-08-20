@@ -11,8 +11,8 @@ import {
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { isGecko, objectId } from 'xforge-common/utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { interval, timer } from 'rxjs';
-import { map, startWith, take } from 'rxjs/operators';
+import { timer } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
