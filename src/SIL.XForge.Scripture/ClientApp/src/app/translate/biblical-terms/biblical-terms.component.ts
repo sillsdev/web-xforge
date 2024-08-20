@@ -1,6 +1,8 @@
+import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatSelectChange } from '@angular/material/select';
 import { Sort } from '@angular/material/sort';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -23,6 +25,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
@@ -170,7 +173,9 @@ class Row {
 @Component({
   selector: 'app-biblical-terms',
   templateUrl: './biblical-terms.component.html',
-  styleUrls: ['./biblical-terms.component.scss']
+  styleUrls: ['./biblical-terms.component.scss'],
+  standalone: true,
+  imports: [CommonModule, TranslocoModule, UICommonModule]
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
   categories: string[] = [];
