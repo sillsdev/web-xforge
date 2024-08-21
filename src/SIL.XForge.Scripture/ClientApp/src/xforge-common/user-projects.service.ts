@@ -63,7 +63,8 @@ export class SFUserProjectsService extends SubscriptionDisposable {
 
   /** Updates our provided set of SF project docs for the current user based on the userdoc's list of SF projects the
    * user is on. */
-  private async updateProjectList(userDoc: UserDoc): Promise<void> {
+  async updateProjectList(userDoc: UserDoc | undefined): Promise<void> {
+    if (userDoc == null) return;
     const currentProjectIds = userDoc.data!.sites[environment.siteId].projects;
     let removedProjectsCount = 0;
     for (const [id, projectDoc] of this.projectDocs) {
@@ -81,6 +82,8 @@ export class SFUserProjectsService extends SubscriptionDisposable {
       }
     }
 
+    this.offlineTextsLoaded = this.offlineTextsLoaded.filter(projectId => currentProjectIds.includes(projectId));
+
     const docFetchPromises: Promise<SFProjectProfileDoc>[] = [];
     const configFetchPromises: Promise<SFProjectUserConfigDoc>[] = [];
     for (const id of currentProjectIds) {
@@ -88,16 +91,23 @@ export class SFUserProjectsService extends SubscriptionDisposable {
         docFetchPromises.push(this.projectService.getProfile(id));
       }
 
-      if (!this.projectDocs.has(id)) {
+      if (!this.userConfigDocs.has(id)) {
         configFetchPromises.push(this.projectService.getUserConfig(id, this.userService.currentUserId));
       }
     }
 
-    if (removedProjectsCount === 0 && docFetchPromises.length === 0) {
+    if (removedProjectsCount === 0 && docFetchPromises.length === 0 && configFetchPromises.length === 0) {
       if (currentProjectIds.length === 0) {
         // Provide an initial empty set of projects if the user has no projects.
         this._projectDocs$.next([]);
         this._userConfigDocs$.next([]);
+      }
+      /* We want to check for changes to offline text docs if no changes to
+       projects or user project configs have occurred. */
+      const currentProjects = Array.from(this.projectDocs.values());
+      const currentConfigs = Array.from(this.userConfigDocs.values());
+      if (currentProjects.length > 0 && currentConfigs.length > 0) {
+        await this.updateOfflineTextDocs(currentProjects, currentConfigs);
       }
       return;
     }
@@ -112,12 +122,19 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     this._projectDocs$.next(projects);
 
     for (const newProjectConfig of await Promise.all(configFetchPromises)) {
-      this.userConfigDocs.set(newProjectConfig.id, newProjectConfig);
+      this.userConfigDocs.set(newProjectConfig.data!.projectRef, newProjectConfig);
     }
     const projectConfigs = Array.from(this.userConfigDocs.values());
     this._userConfigDocs$.next(projectConfigs);
 
-    for (const sfProject of projects.filter(project => project.id.length > RESOURCE_IDENTIFIER_LENGTH)) {
+    await this.updateOfflineTextDocs(projects, projectConfigs);
+  }
+
+  async updateOfflineTextDocs(
+    sfProjects: SFProjectProfileDoc[],
+    projectConfigs: SFProjectUserConfigDoc[]
+  ): Promise<void> {
+    for (const sfProject of sfProjects.filter(project => project.id.length > RESOURCE_IDENTIFIER_LENGTH)) {
       const userConfig = projectConfigs.find(config => config.data?.projectRef === sfProject.id);
       if (userConfig == null) continue;
       const textDocId = new TextDocId(

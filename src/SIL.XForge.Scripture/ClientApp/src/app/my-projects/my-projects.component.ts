@@ -75,6 +75,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   }
 
   async ngOnInit(): Promise<void> {
+    await this.loadUser();
+    await this.userProjectsService.updateProjectList(this.user);
     this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
       if (projects == null) return;
       this.userConnectedProjects = projects.filter(
@@ -88,11 +90,10 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.userConfigDocs = configs;
     });
     this.subscribe(this.userProjectsService.offlineTextsLoaded$, (offlineTexts?: string[]) => {
-      if (offlineTexts == null) return;
+      if (offlineTexts == null || offlineTexts.length === 0) return;
       this.offlineTextsLoaded = offlineTexts;
     });
 
-    await this.loadUser();
     await this.onlineStatusService.online;
     if (this.userIsPTUser) await this.loadParatextProjects();
   }
