@@ -60,6 +60,7 @@ mat-card:active {
 
   .mdc-button {
     margin-inline-start: auto;
+    margin-block: 4px;
   }
 
   &:not(:last-child) {
