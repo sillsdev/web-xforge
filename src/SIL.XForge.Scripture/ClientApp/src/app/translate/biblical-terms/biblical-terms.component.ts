@@ -57,7 +57,7 @@ export enum BiblicalTermDialogIcon {
 // This value is used in the row and component
 const defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
 
-type ViewFilter = 'current_verse' | 'current_chapter' | 'current_book' | 'current_project';
+type ViewFilter = 'current_verse' | 'current_chapter' | 'current_book';
 
 class Row {
   constructor(
@@ -180,7 +180,7 @@ class Row {
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
   categories: string[] = [];
   columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
-  viewFilters: ViewFilter[] = ['current_verse', 'current_chapter', 'current_book', 'current_project'];
+  viewFilters: ViewFilter[] = ['current_verse', 'current_chapter', 'current_book'];
   selectedCategory = 'show_all';
   selectedViewFilter: ViewFilter = 'current_verse';
   rows: Row[] = [];
@@ -387,34 +387,30 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let displayTerm = false;
-      if (this.selectedViewFilter === 'current_project') {
-        displayTerm = true;
-      } else {
-        // Filter by verse, chapter, or book
-        for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
-          var verseRef = new VerseRef(bbbcccvvv);
-          if (this.selectedViewFilter === 'current_book' && verseRef.bookNum === bookNum) {
-            displayTerm = true;
-            break;
-          } else if (
-            this.selectedViewFilter === 'current_chapter' &&
-            verseRef.bookNum === bookNum &&
-            verseRef.chapterNum === chapter
-          ) {
-            displayTerm = true;
-            break;
-          } else if (
-            this.selectedViewFilter === 'current_verse' &&
-            verseRef.bookNum === bookNum &&
-            verseRef.chapterNum === chapter &&
-            (verses.length === 0 ||
-              verses[0] === 0 ||
-              verses.includes(verseRef.verseNum) ||
-              (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
-          ) {
-            displayTerm = true;
-            break;
-          }
+      // Filter by verse, chapter, or book
+      for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
+        var verseRef = new VerseRef(bbbcccvvv);
+        if (this.selectedViewFilter === 'current_book' && verseRef.bookNum === bookNum) {
+          displayTerm = true;
+          break;
+        } else if (
+          this.selectedViewFilter === 'current_chapter' &&
+          verseRef.bookNum === bookNum &&
+          verseRef.chapterNum === chapter
+        ) {
+          displayTerm = true;
+          break;
+        } else if (
+          this.selectedViewFilter === 'current_verse' &&
+          verseRef.bookNum === bookNum &&
+          verseRef.chapterNum === chapter &&
+          (verses.length === 0 ||
+            verses[0] === 0 ||
+            verses.includes(verseRef.verseNum) ||
+            (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
+        ) {
+          displayTerm = true;
+          break;
         }
       }
 
