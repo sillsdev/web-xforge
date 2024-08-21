@@ -1979,8 +1979,17 @@ public class ParatextService : DisposableBase, IParatextService
         milestonePeriod = ops.FirstOrDefault()?.Metadata.Timestamp ?? DateTime.UtcNow;
 
         // Load the Paratext project
-        string ptProjectId = projectDoc.Data.ParatextId;
-        using ScrText scrText = GetScrText(userSecret, ptProjectId);
+        ScrText scrText;
+        try
+        {
+            string ptProjectId = projectDoc.Data.ParatextId;
+            scrText = GetScrText(userSecret, ptProjectId);
+        }
+        catch (DataNotFoundException)
+        {
+            // If an error occurs loading the project from disk, just return the revisions from Mongo
+            yield break;
+        }
 
         // Get the Paratext users
         Dictionary<string, string> paratextUsers = projectDoc.Data.ParatextUsers.ToDictionary(
@@ -2019,6 +2028,9 @@ public class ParatextService : DisposableBase, IParatextService
                 };
             }
         }
+
+        // Clean up the scripture text
+        scrText.Dispose();
     }
 
     /// <summary>

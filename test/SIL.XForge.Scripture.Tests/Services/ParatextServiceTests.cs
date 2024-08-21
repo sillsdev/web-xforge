@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.ReturnsExtensions;
 using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.Languages;
@@ -5025,6 +5026,28 @@ public class ParatextServiceTests
         {
             await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)) { }
         });
+    }
+
+    [Test]
+    public async Task GetRevisionHistoryAsync_MissingParatextDirectory()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).ReturnsNull();
+
+        // SUT
+        bool historyExists = false;
+        await foreach (DocumentRevision _ in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1))
+        {
+            historyExists = true;
+        }
+
+        Assert.IsTrue(historyExists);
     }
 
     [Test]
