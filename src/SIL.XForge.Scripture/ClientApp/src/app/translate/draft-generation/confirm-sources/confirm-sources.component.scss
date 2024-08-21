@@ -1,0 +1,79 @@
+.training-data {
+  display: grid;
+  grid-template-areas: '. . .' '. . .';
+  row-gap: 1em;
+}
+
+.gap,
+.arrow {
+  padding-inline: 2em;
+}
+
+.sources,
+.targets,
+.arrow {
+  background: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 1em;
+  gap: 1em;
+}
+
+.source-description,
+.sources,
+.translation-data-description,
+.translation-data {
+  padding-inline-start: 1em;
+}
+
+.target-description,
+.targets {
+  padding-inline-end: 1em;
+}
+
+.source-description p,
+.target-description p,
+.translation-data-description {
+  font-style: italic;
+  font-size: 0.95em;
+}
+
+.training-data h3 {
+  margin-block: 0 0.5em;
+}
+
+.training-data p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+strong {
+  font-weight: 500;
+}
+
+h1 {
+  margin-bottom: 0;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+.project {
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.25em;
+}
+
+.project-name {
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.translation-data {
+  margin-bottom: 2.5em;
+}

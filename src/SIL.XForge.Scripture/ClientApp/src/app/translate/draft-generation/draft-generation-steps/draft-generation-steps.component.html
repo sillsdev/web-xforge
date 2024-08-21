@@ -1,6 +1,20 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
   @if (availableTranslateBooks && availableTranslateBooks.length > 0) {
-    <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
+    <mat-stepper orientation="horizontal" linear (selectionChange)="onStepChange()">
+      <mat-step [completed]="languagesVerified">
+        <ng-template matStepLabel> Confirm setup</ng-template>
+        <app-confirm-sources (languageCodesVerified)="languagesVerified = $event"></app-confirm-sources>
+        @if (nextClickedOnLanguageVerification && !languagesVerified) {
+          <app-notice type="error" mode="fill-dark">
+            Please confirm the language codes are correct before continuing.
+          </app-notice>
+        }
+        <div class="button-strip">
+          <button mat-flat-button (click)="nextClickedOnLanguageVerification = true; tryAdvanceStep()" color="primary">
+            {{ t("next") }}
+          </button>
+        </div>
+      </mat-step>
       <mat-step [completed]="userSelectedTranslateBooks.length > 0">
         <ng-template matStepLabel>
           {{ t("choose_books_to_translate") }}
@@ -36,9 +50,8 @@
           </app-notice>
         }
         <div class="button-strip">
-          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
-            {{ t("next") }}
-          </button>
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">{{ t("next") }}</button>
         </div>
       </mat-step>
       <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
