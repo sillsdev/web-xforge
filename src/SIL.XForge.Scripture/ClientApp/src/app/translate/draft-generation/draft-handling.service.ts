@@ -179,7 +179,9 @@ export class DraftHandlingService {
 
   /**
    * Retrieves and applies the draft to the text document.
-   * @param draftTextDocId The text doc identifier.
+   * @param project The project profile.
+   * @param draftTextDocId The text doc identifier of the draft of a chapter.
+   * @param targetTextDocId The text doc identifier to apply the draft to.
    * @returns True if the draft was successfully applied, false if the draft was not applied i.e. the draft
    * was in the legacy USFM format.
    */
@@ -204,7 +206,7 @@ export class DraftHandlingService {
           ops = draft;
         }
         const draftDelta: DeltaStatic = new Delta(ops);
-        await this.applyChapterDraftAsync(targetTextDocId ?? draftTextDocId, draftDelta);
+        await this.applyChapterDraftAsync(targetTextDocId, draftDelta);
         resolve(true);
       });
     });
