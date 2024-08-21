@@ -14,7 +14,7 @@
       </button>
       @if ((isProjectAdmin$ | async) === true) {
         <button mat-menu-item (click)="chooseAlternateProjectToAddDraft(book)">
-          <mat-icon>input</mat-icon>{{ t("add_to_different_project") }}
+          <mat-icon>output</mat-icon>{{ t("add_to_different_project") }}
         </button>
       }
     </mat-menu>
