@@ -7,7 +7,6 @@ namespace SIL.XForge.Scripture.Services;
 public interface IPreTranslationService
 {
     Task<PreTranslation[]> GetPreTranslationsAsync(
-        string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,
@@ -15,7 +14,6 @@ public interface IPreTranslationService
     );
 
     Task<string> GetPreTranslationUsfmAsync(
-        string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,

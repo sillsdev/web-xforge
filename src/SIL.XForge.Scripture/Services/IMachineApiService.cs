@@ -58,6 +58,12 @@ public interface IMachineApiService
         int chapterNum,
         CancellationToken cancellationToken
     );
+    Task<string> GetPreTranslationUsfmAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    );
     Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,

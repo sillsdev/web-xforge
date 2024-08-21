@@ -377,8 +377,8 @@ public class MachineApiServiceTests
                         DateFinished = dateFinished,
                         QueueDepth = queueDepth,
                         Step = step,
-                        Pretranslate = new List<PretranslateCorpus>
-                        {
+                        Pretranslate =
+                        [
                             new PretranslateCorpus
                             {
                                 Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" },
@@ -387,7 +387,7 @@ public class MachineApiServiceTests
                             {
                                 Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" },
                             },
-                        },
+                        ],
                     }
                 )
             );
@@ -591,8 +591,7 @@ public class MachineApiServiceTests
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
-                    new List<TranslationBuild>
-                    {
+                    [
                         new TranslationBuild
                         {
                             Url = "https://example.com",
@@ -604,7 +603,7 @@ public class MachineApiServiceTests
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
                         },
-                    }
+                    ]
                 )
             );
 
@@ -640,7 +639,7 @@ public class MachineApiServiceTests
             )
             .Throws(ServalApiExceptions.NoContent);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
-            .Returns(Task.FromResult<IList<TranslationBuild>>(new List<TranslationBuild>()));
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -768,8 +767,7 @@ public class MachineApiServiceTests
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
-                    new List<TranslationBuild>
-                    {
+                    [
                         new TranslationBuild
                         {
                             Url = "https://example.com",
@@ -780,7 +778,7 @@ public class MachineApiServiceTests
                             Revision = 0,
                             State = JobState.Faulted,
                         },
-                    }
+                    ]
                 )
             );
 
@@ -866,8 +864,7 @@ public class MachineApiServiceTests
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationBuild>>(
-                    new List<TranslationBuild>
-                    {
+                    [
                         new TranslationBuild
                         {
                             Url = "https://example.com",
@@ -879,7 +876,7 @@ public class MachineApiServiceTests
                             State = state,
                             DateFinished = DateTimeOffset.UtcNow,
                         },
-                    }
+                    ]
                 )
             );
 
@@ -906,7 +903,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(Project01, 40, 1, CancellationToken.None)
             .Throws(ServalApiExceptions.EngineNotBuilt);
 
         // SUT
@@ -920,7 +917,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(Project01, 40, 1, CancellationToken.None)
             .Throws(ServalApiExceptions.NotAuthenticated);
 
         // SUT
@@ -958,7 +955,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(Project01, 40, 1, CancellationToken.None)
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -974,7 +971,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const string reference = "MAT 1:1";
         const string translation = "The book of the generations of Jesus Christ, the son of David, the son of Abraham.";
-        env.PreTranslationService.GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationsAsync(Project01, 40, 1, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new PreTranslation[]
@@ -1002,7 +999,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
             .Throws(ServalApiExceptions.InvalidCorpus);
 
         // SUT
@@ -1050,7 +1047,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.PreTranslationService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
             .Throws(ServalApiExceptions.InvalidCorpus);
 
         // SUT
@@ -1065,7 +1062,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string expected = "\\c 1 \\v1 Verse 1";
-        env.PreTranslationService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
             .Returns(Task.FromResult(expected));
 
         // SUT
