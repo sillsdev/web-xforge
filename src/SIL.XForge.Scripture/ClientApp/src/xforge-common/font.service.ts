@@ -37,6 +37,7 @@ export const FONT_FACE_FALLBACKS: { [key: string]: string } = {
   'Lateef Haz Kas Low': 'Lateef',
   'Lateef Sindhi': 'Lateef',
   'Scheherazade New Persian': 'Scheherazade New',
+  'Khmer Busra Bunong': 'Khmer Busra',
 
   // Unclear category
   'Karenni Unicode': 'Kay Pho Du',
