@@ -9,6 +9,7 @@
       <app-project-select
         [projects]="projects"
         [placeholder]="t('choose_project')"
+        [isDisabled]="projects.length === 0"
         (projectSelect)="projectSelectedAsync($event.paratextId)"
       ></app-project-select>
       @if (!canEditProject) {

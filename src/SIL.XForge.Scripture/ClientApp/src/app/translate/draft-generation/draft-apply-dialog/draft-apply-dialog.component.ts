@@ -13,7 +13,7 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { TextDoc, TextDocId } from '../../../core/models/text-doc';
+import { TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
@@ -120,15 +120,17 @@ export class DraftApplyDialogComponent implements OnInit {
     const chapters = project.texts.find(t => t.bookNum === this.data.bookNum)?.chapters;
     if (chapters == null) return 0;
     const textPromises: Promise<boolean>[] = [];
-    for (const chapter of chapters) {
-      const textDocId = new TextDocId(this.targetProjectId, this.data.bookNum, chapter.number);
-      textPromises.push(this.isNotEmpty(textDocId));
-    }
-    return (await Promise.all(textPromises)).filter(hasText => hasText).length;
+    // for (const chapter of chapters) {
+    //   const textDocId = new TextDocId(this.targetProjectId, this.data.bookNum, chapter.number);
+    //   textPromises.push(this.isNotEmpty(textDocId));
+    // }
+    // return (await Promise.all(textPromises)).filter(hasText => hasText).length;
+    return 0;
   }
 
   private async isNotEmpty(textDocId: TextDocId): Promise<boolean> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
-    return textDoc.getNonEmptyVerses().length > 0;
+    return true;
+    // const textDoc: TextDoc = await this.projectService.getText(textDocId);
+    // return textDoc.getNonEmptyVerses().length > 0;
   }
 }
