@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -365,6 +367,7 @@ public class MachineApiController : ControllerBase
     /// <summary>
     /// Gets the pre-translations for the specified chapter as USFM.
     /// </summary>
+    /// <remarks>This method can be called by Serval Administrators for any project.</remarks>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned</param>
@@ -385,13 +388,29 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                bookNum,
-                chapterNum,
-                cancellationToken
-            );
+            string usfm;
+            if (_userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin))
+            {
+                // Get the USFM without checking permissions
+                usfm = await _machineApiService.GetPreTranslationUsfmAsync(
+                    sfProjectId,
+                    bookNum,
+                    chapterNum,
+                    cancellationToken
+                );
+            }
+            else
+            {
+                // Get the USFM, but ensure that the user has project permission
+                usfm = await _machineApiService.GetPreTranslationUsfmAsync(
+                    _userAccessor.UserId,
+                    sfProjectId,
+                    bookNum,
+                    chapterNum,
+                    cancellationToken
+                );
+            }
+
             return Ok(usfm);
         }
         catch (BrokenCircuitException e)

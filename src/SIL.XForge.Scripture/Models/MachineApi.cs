@@ -62,7 +62,7 @@ public static class MachineApi
     /// <param name="userId">The user id.</param>
     /// <param name="project">The project.</param>
     /// <returns><c>true</c> if the user has permission; otherwise, <c>false</c>.</returns>
-    public static bool HasPermission(string? userId, Project project) =>
+    private static bool HasPermission(string? userId, Project project) =>
         !string.IsNullOrWhiteSpace(userId)
         && project.UserRoles.TryGetValue(userId, out string role)
         && role is SFProjectRole.Administrator or SFProjectRole.Translator;
