@@ -9,6 +9,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -933,10 +934,36 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetPreTranslationUsfmAsync_Success_ServalAdmin()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        // Ensure that correct overload is called
+        env.MachineApiService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new NotSupportedException());
+        env.MachineApiService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(string.Empty));
+        env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.GetPreTranslationUsfmAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetPreTranslationUsfmAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        // Ensure that correct overload is called
+        env.MachineApiService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Throws(new NotSupportedException());
         env.MachineApiService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
 
@@ -1499,6 +1526,6 @@ public class MachineApiControllerTests
         public MachineApiController Controller { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public IMachineApiService MachineApiService { get; }
-        private IUserAccessor UserAccessor { get; }
+        public IUserAccessor UserAccessor { get; }
     }
 }

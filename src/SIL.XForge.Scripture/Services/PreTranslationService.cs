@@ -26,7 +26,6 @@ public class PreTranslationService(
     public static string GetTextId(int bookNum) => Canon.BookNumberToId(bookNum);
 
     public async Task<PreTranslation[]> GetPreTranslationsAsync(
-        string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,
@@ -181,7 +180,6 @@ public class PreTranslationService(
     /// <summary>
     /// Gets the pre-translations as USFM.
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The SF project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If 0, all chapters in the book are returned.</param>
@@ -191,7 +189,6 @@ public class PreTranslationService(
     /// The project secret or pre-translation configuration was not found.
     /// </exception>
     public async Task<string> GetPreTranslationUsfmAsync(
-        string curUserId,
         string sfProjectId,
         int bookNum,
         int chapterNum,

@@ -358,7 +358,6 @@ public class MachineApiService(
         try
         {
             preTranslation.PreTranslations = await preTranslationService.GetPreTranslationsAsync(
-                curUserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -393,7 +392,6 @@ public class MachineApiService(
         try
         {
             string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
-                curUserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -519,10 +517,21 @@ public class MachineApiService(
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
+        // Call the overload of this method, as we have performed the permission check
+        return await GetPreTranslationUsfmAsync(sfProjectId, bookNum, chapterNum, cancellationToken);
+    }
+
+    public async Task<string> GetPreTranslationUsfmAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Do not perform any permission checking
         try
         {
             return await preTranslationService.GetPreTranslationUsfmAsync(
-                curUserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
