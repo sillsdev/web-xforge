@@ -68,7 +68,7 @@ describe('MyProjectsComponent', () => {
       .paratextId;
     env.waitUntilLoaded();
 
-    env.click(env.goButtonForProject(ptProjectId));
+    env.click(env.connectedProject(ptProjectId));
     // Navigates to desired project.
     expect(env.router.url).toEqual(`/projects/${sfProjectId}`);
   }));
@@ -77,7 +77,7 @@ describe('MyProjectsComponent', () => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
 
-    env.click(env.goButtonForProject('pt-notConnToSF'));
+    env.click(env.buttonForUnconnectedProject('pt-notConnToSF'));
     // Navigates to the connect project component.
     expect(env.router.url).toEqual('/connect-project');
     // Passes PT project id to connect project component.
@@ -91,10 +91,10 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
     const resolve$: BehaviorSubject<boolean> = env.mockJoinProjectPromise('sf-cbntt');
 
-    env.click(env.joinButtonForProject('pt-connButNotThisUser'));
+    env.click(env.buttonForUnconnectedProject('pt-connButNotThisUser'));
     verify(mockedNoticeService.loadingStarted()).once();
     verify(mockedSFProjectService.onlineAddCurrentUser('sf-cbntt')).once();
-    expect(env.joinButtonForProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
+    expect(env.buttonForUnconnectedProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
     expect(env.component.joiningProjects).toEqual(['sf-cbntt']);
     resolve$.next(true);
     tick();
@@ -121,17 +121,17 @@ describe('MyProjectsComponent', () => {
 
     // Cards for this user's connected projects are shown.
     expect(
-      env.cardForUserConnectedProject(
+      env.connectedProject(
         env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject1')!.data!.paratextId
       )
     ).not.toBeNull();
     expect(
-      env.cardForUserConnectedProject(
+      env.connectedProject(
         env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject2')!.data!.paratextId
       )
     ).not.toBeNull();
     // Show whether the test works, too.
-    expect(env.cardForUserConnectedProject('unknown-pt-id')).toBeNull();
+    expect(env.buttonForUnconnectedProject('unknown-pt-id')).toBeNull();
   }));
 
   it('lists my PT projects that are not on SF', fakeAsync(() => {
@@ -139,12 +139,12 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // These should not show as this-user-connected SF projects.
-    expect(env.cardForUserConnectedProject('pt-notConnToSF')).toBeNull();
-    expect(env.cardForUserConnectedProject('pt-notConnToSFAndUserIsTran')).toBeNull();
+    expect(env.connectedProject('pt-notConnToSF')).toBeNull();
+    expect(env.connectedProject('pt-notConnToSFAndUserIsTran')).toBeNull();
 
     // But they should show as projects that are not connected to this user on SF.
-    expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).not.toBeNull();
-    expect(env.cardForUserUnconnectedProject('pt-notConnToSFAndUserIsTran')).not.toBeNull();
+    expect(env.unconnectedProject('pt-notConnToSF')).not.toBeNull();
+    expect(env.unconnectedProject('pt-notConnToSFAndUserIsTran')).not.toBeNull();
   }));
 
   it('lists my PT projects that are on SF but that I am not connected to on SF', fakeAsync(() => {
@@ -152,10 +152,10 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // These should not show as this-user-connected SF projects.
-    expect(env.cardForUserConnectedProject('pt-connButNotThisUser')).toBeNull();
+    expect(env.connectedProject('pt-connButNotThisUser')).toBeNull();
 
     // But they should show as projects that are not connected to this user on SF.
-    expect(env.cardForUserUnconnectedProject('pt-connButNotThisUser')).not.toBeNull();
+    expect(env.unconnectedProject('pt-connButNotThisUser')).not.toBeNull();
   }));
 
   it('lists my connected resources', fakeAsync(() => {
@@ -163,24 +163,24 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // Card for resource this user is using on SF is shown.
-    expect(env.cardForUserConnectedResource('resource90123456')).not.toBeNull();
+    expect(env.connectedResource('resource90123456')).not.toBeNull();
     // Show whether the test works, too.
-    expect(env.cardForUserConnectedResource('unknown-res-id56')).toBeNull();
+    expect(env.connectedResource('unknown-res-id56')).toBeNull();
   }));
 
   it('a project that is on SF but not this-user-connected shows Join button', fakeAsync(() => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
 
-    expect(env.joinButtonForProject('pt-connButNotThisUser')).not.toBeNull();
-    expect(env.goButtonForProject('pt-connButNotThisUser')).toBeNull();
+    expect(env.buttonForUnconnectedProject('pt-connButNotThisUser')).not.toBeNull();
+    expect(env.connectedProject('pt-connButNotThisUser')).toBeNull();
   }));
 
   it('a project that is not on SF shows Connect button', fakeAsync(() => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
 
-    expect(env.goButtonForProject('pt-notConnToSF').nativeElement.textContent).toContain('Connect');
+    expect(env.buttonForUnconnectedProject('pt-notConnToSF').nativeElement.textContent).toContain('Connect');
   }));
 
   it('a project that is not on SF, and that user is only a Translator for, should show guide message and not Connect button', fakeAsync(() => {
@@ -188,12 +188,10 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
 
     // There should not be a connect/join/open button.
-    expect(env.goButtonForProject('pt-notConnToSFAndUserIsTran')).toBeNull();
+    expect(env.buttonForUnconnectedProject('pt-notConnToSFAndUserIsTran')).toBeNull();
     // The card should show a guiding message.
     expect(
-      env
-        .cardForUserUnconnectedProject('pt-notConnToSFAndUserIsTran')
-        .nativeElement.textContent.includes('ask the administrator')
+      env.unconnectedProject('pt-notConnToSFAndUserIsTran').nativeElement.textContent.includes('ask the administrator')
     ).toBe(true);
   }));
 
@@ -318,7 +316,7 @@ describe('MyProjectsComponent', () => {
     env.waitUntilLoaded();
     verify(mockedParatextService.getProjects()).once();
     // Unconnected project cards are shown
-    expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).not.toBeNull();
+    expect(env.unconnectedProject('pt-notConnToSF')).not.toBeNull();
     // We are not showing a message about needing to be online.
     expect(env.messageOffline).toBeNull();
   }));
@@ -337,7 +335,7 @@ describe('MyProjectsComponent', () => {
     // Trouble message is not shown.
     expect(env.messageTroubleGettingPTProjectList).toBeNull();
     // Unconnected project cards are not shown
-    expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).toBeNull();
+    expect(env.unconnectedProject('pt-notConnToSF')).toBeNull();
     // Not throwing an exception.
 
     // The user comes online.
@@ -345,7 +343,7 @@ describe('MyProjectsComponent', () => {
     // We are online and have called getProjects.
     verify(mockedParatextService.getProjects()).once();
     // Unconnected project cards are now shown
-    expect(env.cardForUserUnconnectedProject('pt-notConnToSF')).not.toBeNull();
+    expect(env.unconnectedProject('pt-notConnToSF')).not.toBeNull();
     // We are no longer showing a message about needing to be online.
     expect(env.messageOffline).toBeNull();
   }));
@@ -613,16 +611,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  /** Main button on card, like Open, Connect, or Join. */
-  goButtonForProject(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}] > a`);
-  }
-
-  joinButtonForProject(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}] > button`);
-  }
-
-  cardForUserConnectedProject(ptProjectId: string): DebugElement {
+  connectedProject(ptProjectId: string): DebugElement {
     return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-project"]`);
   }
 
@@ -630,12 +619,19 @@ class TestEnvironment {
     return this.getElement(`#user-connected-project-card-${ptProjectId} > span.project-description`);
   }
 
-  cardForUserConnectedResource(ptProjectId: string): DebugElement {
+  connectedResource(ptProjectId: string): DebugElement {
     return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-resource"]`);
   }
 
-  cardForUserUnconnectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-unconnected-project"]`);
+  unconnectedProject(ptProjectId: string): DebugElement {
+    return this.getElement(`div[data-pt-project-id=${ptProjectId}][data-project-type="user-unconnected-project"]`);
+  }
+
+  buttonForUnconnectedProject(ptProjectId: string): DebugElement {
+    return (
+      this.getElement(`div[data-pt-project-id=${ptProjectId}] > button`) ??
+      this.getElement(`div[data-pt-project-id=${ptProjectId}] > a`)
+    );
   }
 
   waitUntilLoaded(): void {
