@@ -177,6 +177,14 @@ mat-list-item {
   border: 1px solid #e0e0e0;
 }
 
+// Workaround for compatibility between mat-card and mat-elevation class
+// https://github.com/angular/components/issues/26094#issuecomment-1490245622
+@for $i from 0 through 24 {
+  .mat-mdc-card.mat-elevation-z#{$i} {
+    @include mat.elevation($i);
+  }
+}
+
 // Restore the tab header underline from Material pre-v15
 .mat-mdc-tab-header {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
