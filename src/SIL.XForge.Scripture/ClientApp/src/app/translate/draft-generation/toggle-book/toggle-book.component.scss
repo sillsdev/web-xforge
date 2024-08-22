@@ -1,4 +1,4 @@
-.book.selected {
+:host.selected .book {
   color: white;
   --progress-color: var(--progress-selected-color);
   --progress-hover-color: var(--progress-selected-hover-color);
@@ -6,7 +6,7 @@
   --progress-hover-bg-color: var(--progress-selected-hover-bg-color);
 }
 
-.book:not(.selected) {
+:host:not(.selected) .book {
   --progress-color: hsl(0, 0%, 80%);
   --progress-hover-color: hsl(0, 0%, 70%);
   --progress-bg-color: hsl(0, 0%, 90%);
@@ -25,12 +25,12 @@
     var(--progress-color) var(--progress),
     var(--progress-bg-color) var(--progress)
   );
+}
 
-  &.disabled:not(.selected) {
-    opacity: 0.7;
-  }
+:host.disabled:not(.selected) {
+  opacity: 0.7;
+}
 
-  &:not(.disabled) {
-    cursor: pointer;
-  }
+:host:not(.disabled) {
+  cursor: pointer;
 }

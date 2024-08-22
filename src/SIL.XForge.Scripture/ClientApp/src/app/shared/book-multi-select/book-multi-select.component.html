@@ -35,11 +35,11 @@
       <app-toggle-book
         [book]="book.bookNum"
         [selected]="book.selected"
-        (selected)="onChipListChange(book)"
+        (selectedChanged)="onChipListChange(book)"
         [disabled]="readonly"
         [progress]="book.progressPercentage / 100"
-        (change)="onChipListChange(book)"
-      ></app-toggle-book>
+        >{{ "canon.book_names." + book.bookId | transloco }}</app-toggle-book
+      >
     }
   </div>
 </ng-container>

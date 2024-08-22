@@ -1,8 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { MatRippleModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoModule } from '@ngneat/transloco';
-import { I18nService } from '../../../../xforge-common/i18n.service';
 
 interface ButtonColorSpec {
   hue: number;
@@ -43,26 +41,29 @@ const availableColors: ButtonColorSpec[] = [
 @Component({
   selector: 'app-toggle-book',
   standalone: true,
-  imports: [TranslocoModule, MatTooltipModule, MatRippleModule],
+  imports: [MatTooltipModule, MatRippleModule],
   templateUrl: './toggle-book.component.html',
   styleUrl: './toggle-book.component.scss'
 })
 export class ToggleBookComponent {
   @Output() selectedChanged = new EventEmitter<number>();
-  @Input() selected = false;
-  @Input() disabled = false;
+
+  @HostBinding('class.selected')
+  @Input()
+  selected = false;
+
+  @HostBinding('class.disabled')
+  @Input()
+  disabled = false;
+
   @Input() borderWidth = 2;
   @Input() book!: number;
   @Input() progress?: number;
-  @Input() hues: number[] = [230];
+  // @Input() hues: number[] = [230];
 
   colorSpec = availableColors[3];
 
-  constructor(private readonly i18n: I18nService) {}
-
-  bookName(book: number): string {
-    return this.i18n.localizeBook(book);
-  }
+  constructor() {}
 
   toggleSelected(): void {
     if (!this.disabled) {
@@ -76,18 +77,6 @@ export class ToggleBookComponent {
       this.toggleSelected();
       event.preventDefault();
     }
-  }
-
-  get backgroundCssGradientStripes(): string {
-    const percentPerStripe = 12.5;
-    const colors = this.hues.map(hue => `hsl(${hue}, 80%, 60%)`);
-    let gradient = [];
-    for (const [index, color] of colors.entries()) {
-      const from = index * percentPerStripe;
-      const to = (index + 1) * percentPerStripe;
-      gradient.push(`${color} ${from}%, ${color} ${to}%`);
-    }
-    return `repeating-linear-gradient(135deg, ${gradient.join(', ')})`;
   }
 
   get progressCssValue(): string {

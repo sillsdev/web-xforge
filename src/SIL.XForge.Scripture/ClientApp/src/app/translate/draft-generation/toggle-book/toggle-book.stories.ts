@@ -15,27 +15,30 @@ const meta: Meta = {
     })
   ],
   argTypes: {
-    progress: { control: { type: 'range', min: 0, max: 1, step: 0.01 } }
-  }
+    progress: { control: { type: 'range', min: 0, max: 1, step: 0.01 } },
+    selected: { control: 'boolean', default: false }
+  },
+  render: args => ({
+    props: args,
+    template: `<app-toggle-book [selected]="selected" [disabled]="disabled" [progress]="progress" [hues]="hues" [book]="1">Genesis</app-toggle-book>`
+  })
 };
 
 export default meta;
 
 interface StoryState {
-  book: number;
   progress?: number;
   hues: number[];
   selected: boolean;
   disabled: boolean;
 }
 
-type Story = StoryObj<StoryState>;
+type Story = StoryObj<ToggleBookComponent>;
 
 export const Default: Story = {
   args: {
-    book: 1,
-    progress: 0.37,
-    hues: [0]
+    progress: 0.37
+    // hues: [0]
   }
 };
 
@@ -48,21 +51,20 @@ export const Selected: Story = {
 
 export const TwoColor: Story = {
   args: {
-    ...Selected.args,
-    hues: [0, 240]
+    ...Selected.args
+    // hues: [0, 240]
   }
 };
 
 export const ThreeColor: Story = {
   args: {
-    ...Selected.args,
-    hues: [0, 120, 240]
+    ...Selected.args
+    // hues: [0, 120, 240]
   }
 };
 
 export const Disabled: Story = {
   args: {
-    book: 8,
     disabled: true
   }
 };
