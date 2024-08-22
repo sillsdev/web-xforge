@@ -336,9 +336,9 @@
   },
   "join": {
     "error_occurred_login": "Une erreur s'est produite en essayant de rejoindre le projet",
-    "invited_to_join": "Vous avez été invité à rejoindre le projet {{ boldStart }}{{ projectName }}{{ boldEnd }}",
+    "explain_your_name": "Veuillez entrer votre nom",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }}",
     "join": "Rejoindre",
-    "join_a_project": "Rejoindre un projet",
     "key_already_used": "Le lien du projet a déjà été utilisé par un autre utilisateur. Veuillez contacter la personne qui vous a envoyé le lien et demander un nouveau lien.",
     "key_expired": "Le lien du projet a expiré. Veuillez contacter la personne qui vous a envoyé le lien et demander un nouveau lien.",
     "login_existing_account": "ou {{ underlineStart }}Se connecter{{ underlineEnd }} à un compte existant",
@@ -346,7 +346,7 @@
     "please_connect_to_use_link": "Veuillez vous connecter à Internet pour rejoindre un projet en utilisant un lien.",
     "project_link_is_invalid": "Le lien du projet n'est pas valide. Veuillez contacter la personne qui vous a envoyé le lien et demander un nouveau lien.",
     "role_not_found": "Le rôle qui vous a été attribué pour ce projet n'est plus disponible. Veuillez contacter la personne qui vous a envoyé le lien et en demander un nouveau.",
-    "your_name": "Entrez votre nom"
+    "your_name": "Votre nom"
   },
   "dialog": {
     "cancel": "Annuler",

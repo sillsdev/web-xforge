@@ -336,9 +336,9 @@
   },
   "join": {
     "error_occurred_login": "Terjadi kesalahan saat mencoba bergabung dengan proyek",
-    "invited_to_join": "Anda telah diundang untuk bergabung dengan proyek {{ boldStart }}{{ projectName }}{{ boldEnd }}",
+    "explain_your_name": "Silahkan masukkan nama Anda",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }}",
     "join": "Gabung",
-    "join_a_project": "Bergabung dengan Proyek",
     "key_already_used": "Tautan proyek telah digunakan oleh pengguna lain. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
     "key_expired": "Tautan proyek telah kedaluwarsa. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
     "login_existing_account": "atau {{ underlineStart }}Masuk{{ underlineEnd }} ke akun yang sudah ada",
@@ -346,7 +346,7 @@
     "please_connect_to_use_link": "Silakan terhubung ke internet untuk bergabung dengan proyek menggunakan tautan.",
     "project_link_is_invalid": "Tautan proyek telah kedaluwarsa. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
     "role_not_found": "Peran yang Anda tugaskan pada proyek ini sudah tidak tersedia lagi. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
-    "your_name": "Masukkan nama Anda"
+    "your_name": "Nama Anda"
   },
   "dialog": {
     "cancel": "Batal",
