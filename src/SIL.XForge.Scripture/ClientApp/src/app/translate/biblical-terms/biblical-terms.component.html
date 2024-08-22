@@ -33,11 +33,11 @@
               <mat-label>{{ t("show") }}</mat-label>
               <mat-select
                 panelWidth="''"
-                [(ngModel)]="selectedViewFilter"
-                (selectionChange)="onSelectionChanged($event, 'viewFilter')"
+                [(ngModel)]="selectedRangeFilter"
+                (selectionChange)="onSelectionChanged($event, 'rangeFilter')"
               >
-                <mat-option *ngFor="let viewFilter of viewFilters" [value]="viewFilter">
-                  {{ t(viewFilter) }}
+                <mat-option *ngFor="let rangeFilter of rangeFilters" [value]="rangeFilter">
+                  {{ t(rangeFilter) }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
