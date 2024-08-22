@@ -26,8 +26,8 @@ export interface AudioAttachment {
 }
 
 export interface AudioRecorderDialogData {
-  countdown: boolean;
-  audio: AudioAttachment;
+  countdown?: boolean;
+  audio?: AudioAttachment;
 }
 
 @Component({

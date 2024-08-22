@@ -1,11 +1,8 @@
 {
   "audio_recorder_dialog": {
-    "delete": "Delete Recording",
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
     "record_audio": "Record Audio",
-    "save": "Save",
     "stop_recording": "Stop Recording"
   },
   "app": {
