@@ -1,9 +1,11 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Route, RouterModule } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
@@ -14,6 +16,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { TextDoc } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
@@ -27,11 +30,25 @@ const mockedUserService = mock(UserService);
 const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 const mockedI18nService = mock(I18nService);
+
+@Component({
+  template: `<div>Mock</div>`
+})
+class MockComponent {}
+
+const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
+
 let env: TestEnvironment;
 
-fdescribe('DraftApplyDialogComponent', () => {
+describe('DraftApplyDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, DraftApplyDialogComponent, TestTranslocoModule, NoopAnimationsModule],
+    imports: [
+      UICommonModule,
+      DraftApplyDialogComponent,
+      TestTranslocoModule,
+      RouterModule.forRoot(ROUTES),
+      NoopAnimationsModule
+    ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
       { provide: ParatextService, useMock: mockedParatextService },
@@ -53,7 +70,8 @@ fdescribe('DraftApplyDialogComponent', () => {
     verify(mockedParatextService.getProjects()).once();
     tick();
     env.fixture.detectChanges();
-    expect(env.component.projects).toEqual(env.projects);
+    expect(env.component.projects.length).toEqual(env.projects.length - 1);
+    expect(env.component.projects.map(p => p.paratextId)).toEqual(['pt01', 'pt02']);
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     env.cancelButton.click();
     tick();
@@ -62,17 +80,16 @@ fdescribe('DraftApplyDialogComponent', () => {
 
   it('shows additional information to users', fakeAsync(() => {
     expect(env.unlistedProjectMessage).not.toBeNull();
-    expect(env.overwriteContentMessage).not.toBeNull();
+    expect(env.overwriteContentMessage).toBeNull();
     expect(env.targetProjectContent).toBeNull();
   }));
 
-  fit('add button is disabled until project is selected', fakeAsync(async () => {
+  it('add button is disabled until project is selected', fakeAsync(async () => {
     expect(env.addButton).toBeTruthy();
     expect(env.addButton.attributes['disabled']).toBeDefined();
-    env.component.targetProjectId = 'project01';
+    env.component.projectSelectedAsync('pt01');
     tick();
     env.fixture.detectChanges();
-    /*
     expect(env.addButton.attributes['disabled']).toBeDefined();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
@@ -82,11 +99,12 @@ fdescribe('DraftApplyDialogComponent', () => {
     env.cancelButton.click();
     tick();
     env.fixture.detectChanges();
-    */
   }));
 
   it('can add draft to project when project selected', fakeAsync(async () => {
-    env.component.targetProjectId = 'project01';
+    env.component.projectSelectedAsync('pt01');
+    tick();
+    env.fixture.detectChanges();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
@@ -100,15 +118,14 @@ fdescribe('DraftApplyDialogComponent', () => {
 
   it('checks if the user has edit permissions', fakeAsync(async () => {
     env.component.projectSelectedAsync('pt01');
+    tick();
+    env.fixture.detectChanges();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
-    tick(100);
+    tick();
     env.fixture.detectChanges();
-    tick(100);
-    env.fixture.detectChanges();
-    console.log('checking content');
     expect(env.targetProjectContent).not.toBeNull();
-    expect(env.component.targetProjectId).toBe('project01');
+    expect(env.component['targetProjectId']).toBe('project01');
     verify(mockedProjectService.getProfile(anything())).once();
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
     tick();
@@ -121,7 +138,7 @@ fdescribe('DraftApplyDialogComponent', () => {
     env.component.projectSelectedAsync('pt02');
     tick();
     env.fixture.detectChanges();
-    expect(env.component.targetProjectId).toBe('project02');
+    expect(env.component['targetProjectId']).toBe('project02');
     verify(mockedProjectService.getProfile(anything())).once();
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
     tick();
@@ -157,7 +174,7 @@ class TestEnvironment {
     },
     {
       paratextId: 'pt03',
-      projectId: 'project03',
+      projectId: undefined,
       name: 'Project 03',
       shortName: 'P03',
       languageTag: 'es',
@@ -170,7 +187,11 @@ class TestEnvironment {
     when(mockedParatextService.getProjects()).thenReturn(Promise.resolve(this.projects));
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
-    when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn(undefined);
+    when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn({
+      before: '',
+      templateTagText: 'text',
+      after: ''
+    });
     this.setupProject();
 
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
@@ -226,12 +247,12 @@ class TestEnvironment {
           ]
         })
       } as SFProjectProfileDoc;
-      when(mockedProjectService.getProfile(id)).thenReturn(Promise.resolve(mockedProject));
-      // const mockedTextDoc = {
-      //   getNonEmptyVerses: () => 0
-      // } as unknown as TextDoc;
-      // when(mockedProjectService.getText(anything())).thenResolve(mockedTextDoc);
+      when(mockedProjectService.getProfile(id)).thenResolve(mockedProject);
     }
+    const mockedTextDoc = {
+      getNonEmptyVerses: (): string[] => ['verse_1_1', 'verse_1_2', 'verse_1_3']
+    } as TextDoc;
+    when(mockedProjectService.getText(anything())).thenResolve(mockedTextDoc);
     when(mockedTextDocService.userHasGeneralEditRight(anything())).thenReturn(true);
   }
 }
