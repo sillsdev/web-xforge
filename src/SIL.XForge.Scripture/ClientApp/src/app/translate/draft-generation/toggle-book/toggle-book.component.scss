@@ -1,16 +1,5 @@
-.book.selected {
+:host.selected .book {
   color: white;
-  --progress-color: var(--progress-selected-color);
-  --progress-hover-color: var(--progress-selected-hover-color);
-  --progress-bg-color: var(--progress-selected-bg-color);
-  --progress-hover-bg-color: var(--progress-selected-hover-bg-color);
-}
-
-.book:not(.selected) {
-  --progress-color: hsl(0, 0%, 80%);
-  --progress-hover-color: hsl(0, 0%, 70%);
-  --progress-bg-color: hsl(0, 0%, 90%);
-  --progress-hover-bg-color: hsl(0, 0%, 80%);
 }
 
 .book {
@@ -19,18 +8,28 @@
   padding: 0 16px;
   line-height: 32px;
   border-radius: 1000px;
+  min-width: 5em;
+  text-align: center;
 
   background-image: linear-gradient(
-    90deg,
+    var(--progress-direction-degrees),
     var(--progress-color) var(--progress),
     var(--progress-bg-color) var(--progress)
   );
+}
 
-  &.disabled:not(.selected) {
-    opacity: 0.7;
-  }
+:host:not(.disabled) .book:hover {
+  background-image: linear-gradient(
+    var(--progress-direction-degrees),
+    var(--progress-hover-color) var(--progress),
+    var(--progress-hover-bg-color) var(--progress)
+  );
+}
 
-  &:not(.disabled) {
-    cursor: pointer;
-  }
+:host.disabled:not(.selected) {
+  opacity: 0.7;
+}
+
+:host:not(.disabled) {
+  cursor: pointer;
 }

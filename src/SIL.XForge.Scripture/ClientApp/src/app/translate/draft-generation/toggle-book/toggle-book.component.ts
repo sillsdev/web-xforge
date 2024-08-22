@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { MatRippleModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoModule } from '@ngneat/transloco';
 import { I18nService } from '../../../../xforge-common/i18n.service';
 
 interface ButtonColorSpec {
@@ -43,31 +42,39 @@ const availableColors: ButtonColorSpec[] = [
 @Component({
   selector: 'app-toggle-book',
   standalone: true,
-  imports: [TranslocoModule, MatTooltipModule, MatRippleModule],
+  imports: [MatTooltipModule, MatRippleModule],
   templateUrl: './toggle-book.component.html',
   styleUrl: './toggle-book.component.scss'
 })
 export class ToggleBookComponent {
-  @Output() selectedChanged = new EventEmitter<number>();
-  @Input() selected = false;
-  @Input() disabled = false;
+  @Output() selectedChanged = new EventEmitter<boolean>();
+
+  @HostBinding('class.selected')
+  @Input()
+  selected = false;
+
+  @HostBinding('class.disabled')
+  @Input()
+  disabled = false;
+
   @Input() borderWidth = 2;
-  @Input() book!: number;
   @Input() progress?: number;
-  @Input() hues: number[] = [230];
 
-  colorSpec = availableColors[3];
+  selectedColorSpec = availableColors[3];
+  unselectedColorSpec: ButtonColorSpec = { hue: 0, saturation: 0, dark: 80, light: 90, hoverLight: 80, hoverDark: 70 };
 
-  constructor(private readonly i18n: I18nService) {}
+  get colorSpec(): ButtonColorSpec {
+    return this.selected ? this.selectedColorSpec : this.unselectedColorSpec;
+  }
 
-  bookName(book: number): string {
-    return this.i18n.localizeBook(book);
+  constructor(readonly i18n: I18nService) {
+    console.log(i18n.direction);
   }
 
   toggleSelected(): void {
     if (!this.disabled) {
       this.selected = !this.selected;
-      this.selectedChanged.emit(this.book);
+      this.selectedChanged.emit(this.selected);
     }
   }
 
@@ -78,33 +85,29 @@ export class ToggleBookComponent {
     }
   }
 
-  get backgroundCssGradientStripes(): string {
-    const percentPerStripe = 12.5;
-    const colors = this.hues.map(hue => `hsl(${hue}, 80%, 60%)`);
-    let gradient = [];
-    for (const [index, color] of colors.entries()) {
-      const from = index * percentPerStripe;
-      const to = (index + 1) * percentPerStripe;
-      gradient.push(`${color} ${from}%, ${color} ${to}%`);
-    }
-    return `repeating-linear-gradient(135deg, ${gradient.join(', ')})`;
-  }
-
   get progressCssValue(): string {
     return `${(this.progress ?? 0) * 100}%`;
   }
 
   get progressColorCssValue(): string {
-    return `hsl(${this.colorSpec.hue}, ${this.colorSpec.saturation}%, ${this.colorSpec.dark}%)`;
+    return this.hsl(this.colorSpec.hue, this.colorSpec.saturation, this.colorSpec.dark);
   }
   get progressColorHoverCssValue(): string {
-    return `hsl(${this.colorSpec.hue}, ${this.colorSpec.saturation}%, ${this.colorSpec.hoverDark}%)`;
+    return this.hsl(this.colorSpec.hue, this.colorSpec.saturation, this.colorSpec.hoverDark);
   }
   get progressBgColorCssValue(): string {
-    return `hsl(${this.colorSpec.hue}, ${this.colorSpec.saturation}%, ${this.colorSpec.light}%)`;
+    return this.hsl(this.colorSpec.hue, this.colorSpec.saturation, this.colorSpec.light);
   }
   get progressHoverBgColorCssValue(): string {
-    return `hsl(${this.colorSpec.hue}, ${this.colorSpec.saturation}%, ${this.colorSpec.hoverLight}%)`;
+    return this.hsl(this.colorSpec.hue, this.colorSpec.saturation, this.colorSpec.hoverLight);
+  }
+
+  get progressDirectionCssValue(): string {
+    return this.i18n.direction === 'rtl' ? '270deg' : '90deg';
+  }
+
+  hsl(hue: number, saturation: number, light: number): string {
+    return `hsl(${hue}, ${saturation}%, ${light}%)`;
   }
 
   get progressDescription(): string {

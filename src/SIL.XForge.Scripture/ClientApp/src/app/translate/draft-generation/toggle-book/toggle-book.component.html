@@ -1,20 +1,17 @@
-<ng-container transloco>
-  <span
-    class="book"
-    [style.--progress]="progressCssValue"
-    [style.--progress-selected-color]="progressColorCssValue"
-    [style.--progress-selected-hover-color]="progressColorHoverCssValue"
-    [style.--progress-selected-bg-color]="progressBgColorCssValue"
-    [style.--progress-selected-hover-bg-color]="progressHoverBgColorCssValue"
-    [class.selected]="selected"
-    [class.disabled]="disabled"
-    (click)="toggleSelected()"
-    (keypress)="onKeyPress($event)"
-    [matTooltip]="progressDescription"
-    matRipple
-    [matRippleDisabled]="disabled"
-    [tabindex]="disabled ? -1 : 0"
-  >
-    {{ bookName(book) }}
-  </span>
-</ng-container>
+<span
+  class="book"
+  [style.--progress]="progressCssValue"
+  [style.--progress-color]="progressColorCssValue"
+  [style.--progress-hover-color]="progressColorHoverCssValue"
+  [style.--progress-bg-color]="progressBgColorCssValue"
+  [style.--progress-hover-bg-color]="progressHoverBgColorCssValue"
+  [style.--progress-direction-degrees]="progressDirectionCssValue"
+  (click)="toggleSelected()"
+  (keypress)="onKeyPress($event)"
+  [matTooltip]="progressDescription"
+  matRipple
+  [matRippleDisabled]="disabled"
+  [tabindex]="disabled ? -1 : 0"
+>
+  <ng-content></ng-content>
+</span>
