@@ -1,29 +1,24 @@
-:host {
+.book.selected {
+  color: white;
+  --progress-color: var(--progress-selected-color);
+  --progress-hover-color: var(--progress-selected-hover-color);
+  --progress-bg-color: var(--progress-selected-bg-color);
+  --progress-hover-bg-color: var(--progress-selected-hover-bg-color);
+}
+
+.book:not(.selected) {
   --progress-color: hsl(0, 0%, 80%);
   --progress-hover-color: hsl(0, 0%, 70%);
   --progress-bg-color: hsl(0, 0%, 90%);
   --progress-hover-bg-color: hsl(0, 0%, 80%);
-
-  user-select: none;
-}
-
-.wrapper {
-  display: inline-block;
-  border-radius: 1000px;
-}
-
-.wrapper:has(.selected) {
-  background-image: var(--background-image);
 }
 
 .book {
-  display: block;
-  background-color: var(--progress-bg-color);
+  display: inline-block;
+  user-select: none;
   padding: 0 16px;
   line-height: 32px;
   border-radius: 1000px;
-  margin: var(--border-width);
-  position: relative;
 
   background-image: linear-gradient(
     90deg,
@@ -37,15 +32,5 @@
 
   &:not(.disabled) {
     cursor: pointer;
-  }
-
-  &:hover:not(.disabled),
-  &:focus:not(.disabled) {
-    outline: none;
-    background-image: linear-gradient(
-      90deg,
-      var(--progress-hover-color) var(--progress),
-      var(--progress-hover-bg-color) var(--progress)
-    );
   }
 }
