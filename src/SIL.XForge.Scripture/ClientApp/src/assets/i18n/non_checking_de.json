@@ -82,11 +82,11 @@
     "connect_network_to_manage_users": "Offline ist die Benutzerverwaltung deaktiviert. Bitte mit dem Internet verbinden, um Benutzer zu verwalten.",
     "edit_roles_and_permissions": "Rollen und Berechtigungen bearbeiten",
     "filter_users": "Benutzer filtern...",
-    "guest_role_info": "Invited guests will have the roles you assign them in Scripture Forge.",
+    "guest_role_info": "Eingeladene Gäste haben die Rollen, die Du ihnen in Scripture Forge zuweist.",
     "invitation_expired": "Einladung für{{ newLine }}{{ email }} ist abgelaufen",
     "learn_more": "Mehr erfahren",
     "me": "ich",
-    "member_role_info": "Project members will have the same roles in both Scripture Forge and Paratext.",
+    "member_role_info": "Projektmitglieder haben in Scripture Forge und Paratext die gleichen Rollen.",
     "no_users_found": "Keine Benutzer gefunden",
     "paratext_members": "Paratext Mitglieder",
     "problem_loading_invited_users": "Es gab ein Problem beim Laden der Liste der eingeladenen Benutzer.",
@@ -129,18 +129,18 @@
     "add_to_project": "Zum Projekt hinzufügen",
     "book_contents_will_be_overwritten": "Achtung, damit werden alle Daten in Deinem Projekt für das Buch von {{ bookName }} überschrieben.",
     "cancel": "Abbrechen",
-    "readd_book_to_project": "Re-add {{ bookName }} to project",
-    "readd_to_project": "Re-add to project"
+    "readd_book_to_project": "{{ bookName }} wieder zum Projekt hinzufügen",
+    "readd_to_project": "Wieder zum Projekt hinzufügen"
   },
   "draft_generation": {
     "back_from_stepper_button": "Zurück",
     "back_translation_requirement": "Rückübersetzungsentwürfe können nur in den etwa 200 [link:supportedLanguagesUrl] unterstützten Sprachen[/link] erstellt werden.",
     "cancel_generation_button": "Abbrechen",
     "criteria_project_language_not_in_nllb_with_language": "Deine Projektsprache von [em]\"{{ targetLanguageDisplayName }}\"[/em] ist keine unterstützte Sprache.",
-    "dialog_confirm_draft_cancellation_message": "Canceling will reset progress for this draft request. Any previously generated draft will still be accessible.",
+    "dialog_confirm_draft_cancellation_message": "Durch den Abbruch wird der Fortschritt für diese Entwurfsanfrage zurückgesetzt. Alle zuvor generierten Entwürfe sind weiterhin zugänglich.",
     "dialog_confirm_draft_cancellation_no": "Nein",
-    "dialog_confirm_draft_cancellation_title": "Cancel generating draft?",
-    "dialog_confirm_draft_cancellation_yes": "Yes, cancel",
+    "dialog_confirm_draft_cancellation_title": "Generierung des Entwurfs abbrechen?",
+    "dialog_confirm_draft_cancellation_yes": "Ja, abbrechen",
     "dialog_confirm_draft_regeneration_message": "Das Erstellen eines neuen Entwurfs löscht den bestehenden Entwurf.",
     "dialog_confirm_draft_regeneration_no": "Abbrechen",
     "dialog_confirm_draft_regeneration_title": "Bist Du mit dem aktuellen Entwurf fertig?",
@@ -217,13 +217,14 @@
     "one_or_more_drafts_failed": "Entwürfe eines oder mehrerer Kapitel konnten nicht angewandt werden. Sieh Dir die Kapitel im Buch an, um zu sehen, welche Kapitel Entwürfe hat, die erfolgreich angewandt wurden.",
     "no_books_have_drafts": "Es gibt keine Bücher mit Entwürfen.",
     "no_permission_to_edit_book": "Du hast keine Schreibberechtigung für dieses Buch. Kontaktiere Deinen Projektadministrator, um die Berechtigung zu erhalten.",
-    "readd_to_project": "Re-add to project"
+    "readd_to_project": "Wieder zum Projekt hinzufügen"
   },
   "editor": {
     "add_comment": "Kommentar hinzufügen",
     "anonymous": "Anonym",
     "cancel": "Abbrechen",
     "cannot_edit_chapter_formatting_invalid": "Dieses Kapitel kann nicht bearbeitet werden, da die Formatierung ungültig ist. Bitte korrigiere die Formatierung in Paratext.",
+    "cannot_edit_chapter_unsupported_usfm": "Dieses Kapitel kann nicht bearbeitet werden, da es nicht unterstützte USFM-Code enthält. Um es zu bearbeiten, entferne diese Tags in Paratext: {{ tags }}",
     "cannot_edit_note_paratext": "Du kannst diesen Kommentar nicht bearbeiten, da er in Paratext bearbeitet wurde.",
     "configure_translation_suggestions": "Übersetzungsvorschläge konfigurieren",
     "more_info": "Weitere Informationen...",
@@ -248,7 +249,7 @@
     "no_draft_notice": "{{ bookChapterName }} hat keinen Entwurf.",
     "offline_notice": "Das automatische Erstellen eines Entwurfs ist offline nicht verfügbar.",
     "overwrite": "Das Hinzufügen des Entwurfs wird das aktuelle Kapitel überschreiben. Bist Du sicher, dass Du fortfahren möchtest?",
-    "reapply_to_project": "Re-add to project",
+    "reapply_to_project": "Wieder zum Projekt hinzufügen",
     "yes": "Kapitel überschreiben"
   },
   "editor_history_tab": {
@@ -266,10 +267,10 @@
     "draft_tab_header": "Automatischer Entwurf"
   },
   "font_unsupported_message": {
-    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
-    "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",
-    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support {{ graphite }}. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
-    "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead."
+    "change_font_or_contact_for_help": "Falls dies nicht den Bedürfnissen dieses Projekts entspricht, wähle bitte eine andere Schriftart in den Paratext-Projekteinstellungen oder { 1 }kontaktiere uns für Hilfe.{ 2 }",
+    "contact_for_help": "Falls dies nicht den Bedürfnissen dieses Projekts entspricht, { 1 }kontaktiere uns bitte für Hilfe.{ 2 }",
+    "warn_font_requires_graphite": "Die für dieses Projekt ausgewählte Schriftart, {{ selectedFont }}, kann nur von Webbrowsern angezeigt werden, die {{ graphite }} unterstützen. Das bedeutet, dass es nur in Firefox funktioniert, außer auf iOS-Geräten, wo es auch in Firefox nicht funktioniert. In Browsern, die keine Graphite unterstützen, wird stattdessen {{ fallbackFont }} verwendet.",
+    "warn_font_unsupported": "Die für dieses Projekt ausgewählte Schriftart, {{ selectedFont }}, wird nicht unterstützt. {{ fallbackFont }} wird stattdessen verwendet."
   },
   "history_chooser": {
     "confirm_revert": "Bist Du sicher, dass Du dieses Kapitel in die ausgewählten Überarbeitung wiederherstellen möchtest?",

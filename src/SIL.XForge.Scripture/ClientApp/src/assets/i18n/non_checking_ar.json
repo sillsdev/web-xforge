@@ -224,6 +224,7 @@
     "anonymous": "مجهول الهوية",
     "cancel": "إلغاء",
     "cannot_edit_chapter_formatting_invalid": "لا يمكن تعديل هذا الفصل لأن تنسيقه غير صالح. يُرجى إصلاح التنسيق في Paratext.",
+    "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
     "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "إعداد اقتراحات للترجمة",
     "more_info": "More Info...",
