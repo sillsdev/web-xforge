@@ -57,7 +57,7 @@ export enum BiblicalTermDialogIcon {
 // This value is used in the row and component
 const defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
 
-type ViewFilter = 'current_verse' | 'current_chapter' | 'current_book';
+type RangeFilter = 'current_verse' | 'current_chapter' | 'current_book';
 
 class Row {
   constructor(
@@ -180,9 +180,9 @@ class Row {
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
   categories: string[] = [];
   columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
-  viewFilters: ViewFilter[] = ['current_verse', 'current_chapter', 'current_book'];
+  rangeFilters: RangeFilter[] = ['current_verse', 'current_chapter', 'current_book'];
   selectedCategory = 'show_all';
-  selectedViewFilter: ViewFilter = 'current_verse';
+  selectedRangeFilter: RangeFilter = 'current_verse';
   rows: Row[] = [];
 
   private biblicalTermQuery?: RealtimeQuery<BiblicalTermDoc>;
@@ -291,8 +291,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.userService.currentUserId
       );
       this.selectedCategory = this.projectUserConfigDoc.data?.selectedBiblicalTermsCategory ?? 'show_all';
-      this.selectedViewFilter = (this.projectUserConfigDoc.data?.selectedBiblicalTermsFilter ??
-        'current_verse') as ViewFilter;
+      this.selectedRangeFilter = (this.projectUserConfigDoc.data?.selectedBiblicalTermsFilter ??
+        'current_verse') as RangeFilter;
       this.loadBiblicalTerms(projectId);
       this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
@@ -352,7 +352,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     });
   }
 
-  onSelectionChanged(e: MatSelectChange, source: 'category' | 'viewFilter'): void {
+  onSelectionChanged(e: MatSelectChange, source: 'category' | 'rangeFilter'): void {
     this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
 
     // Store the last selected category or view filter
@@ -390,18 +390,18 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       // Filter by verse, chapter, or book
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
         var verseRef = new VerseRef(bbbcccvvv);
-        if (this.selectedViewFilter === 'current_book' && verseRef.bookNum === bookNum) {
+        if (this.selectedRangeFilter === 'current_book' && verseRef.bookNum === bookNum) {
           displayTerm = true;
           break;
         } else if (
-          this.selectedViewFilter === 'current_chapter' &&
+          this.selectedRangeFilter === 'current_chapter' &&
           verseRef.bookNum === bookNum &&
           verseRef.chapterNum === chapter
         ) {
           displayTerm = true;
           break;
         } else if (
-          this.selectedViewFilter === 'current_verse' &&
+          this.selectedRangeFilter === 'current_verse' &&
           verseRef.bookNum === bookNum &&
           verseRef.chapterNum === chapter &&
           (verses.length === 0 ||
