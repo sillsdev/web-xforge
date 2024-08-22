@@ -11,30 +11,30 @@
         [placeholder]="t('choose_project')"
         [isDisabled]="projects.length === 0"
         (projectSelect)="projectSelectedAsync($event.paratextId)"
+        formControlName="targetParatextId"
       ></app-project-select>
       @if (!canEditProject) {
         <div class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</div>
       }
-      <div class="unlisted-project-message">
-        <p>
-          <span [innerHTML]="connectOtherProject?.before"></span>
-          <!-- TODO: Get page to open in new tab -->
-          <a target="_blank" [appRouterLink]="['projects']">{{ connectOtherProject?.templateTagText }}</a>
-          <span>{{ connectOtherProject?.after }}</span>
-        </p>
-      </div>
+      @if (connectOtherProject != null) {
+        <div class="unlisted-project-message">
+          <p>
+            <span [innerHTML]="connectOtherProject.before"></span>
+            <a [appRouterLink]="['projects']">{{ connectOtherProject.templateTagText }}</a>
+            <span>{{ connectOtherProject.after }}</span>
+          </p>
+        </div>
+      }
       @if (targetProject$ | async; as project) {
-        @if (targetChapters$ | async; as chapters) {
-          <div class="target-project-content">
-            @if (chapters === 0) {
-              <mat-icon>check</mat-icon>
-              {{ t("book_is_empty", { bookName, projectName: project.name }) }}
-            } @else {
-              <mat-icon>warning</mat-icon>
-              {{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
-            }
-          </div>
-        }
+        <div class="target-project-content">
+          @if (targetChapters$ | async; as chapters) {
+            <mat-icon>warning</mat-icon>
+            {{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
+          } @else {
+            <mat-icon>verified</mat-icon>
+            {{ t("book_is_empty", { bookName, projectName: project.name }) }}
+          }
+        </div>
         <mat-checkbox class="overwrite-content" formControlName="overwrite">{{
           t("i_understand_overwrite_book", { projectName: project.name, bookName })
         }}</mat-checkbox>
