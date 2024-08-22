@@ -6,7 +6,6 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  row-gap: 1em;
   padding-bottom: 2em;
 }
 
@@ -27,6 +26,29 @@ mat-card {
   padding: 1em;
   gap: 0.5em;
   grid-template-columns: 1fr auto;
+}
+
+[data-project-type^='user-connected-'] {
+  box-shadow: none;
+  border-radius: 0;
+  cursor: pointer;
+
+  &:nth-child(odd) {
+    background-color: #f8f8f8;
+    &:hover {
+      background-color: #ebe9ed;
+    }
+  }
+  &:nth-child(even) {
+    background-color: #fcfcfc;
+    &:hover {
+      background-color: #ebebeb;
+    }
+  }
+
+  a {
+    display: none;
+  }
 }
 
 [data-project-type='user-connected-project'] {
