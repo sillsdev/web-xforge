@@ -124,8 +124,8 @@ describe('BiblicalTermsComponent', () => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
-    env.component.selectedViewFilter = 'current_book';
-    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'viewFilter');
+    env.component.selectedRangeFilter = 'current_book';
+    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'rangeFilter');
     env.wait();
     env.component.selectedCategory = 'category04_en';
     env.component.onSelectionChanged({ value: 'category04_en' } as MatSelectChange, 'category');
@@ -142,8 +142,8 @@ describe('BiblicalTermsComponent', () => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
-    env.component.selectedViewFilter = 'current_book';
-    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'viewFilter');
+    env.component.selectedRangeFilter = 'current_book';
+    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'rangeFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(3);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -159,8 +159,8 @@ describe('BiblicalTermsComponent', () => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
-    env.component.selectedViewFilter = 'current_chapter';
-    env.component.onSelectionChanged({ value: 'current_chapter' } as MatSelectChange, 'viewFilter');
+    env.component.selectedRangeFilter = 'current_chapter';
+    env.component.onSelectionChanged({ value: 'current_chapter' } as MatSelectChange, 'rangeFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(2);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -174,7 +174,7 @@ describe('BiblicalTermsComponent', () => {
 
   it('should filter biblical terms by verse', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
-    env.component.selectedViewFilter = 'current_verse';
+    env.component.selectedRangeFilter = 'current_verse';
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -184,7 +184,7 @@ describe('BiblicalTermsComponent', () => {
 
   it('should update the categories when the language changes', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
-    env.component.selectedViewFilter = 'current_verse';
+    env.component.selectedRangeFilter = 'current_verse';
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
