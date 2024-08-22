@@ -37,6 +37,8 @@
         [selected]="book.selected"
         (selected)="onChipListChange(book)"
         [disabled]="readonly"
+        [progress]="book.progressPercentage / 100"
+        (change)="onChipListChange(book)"
       ></app-toggle-book>
     }
   </div>

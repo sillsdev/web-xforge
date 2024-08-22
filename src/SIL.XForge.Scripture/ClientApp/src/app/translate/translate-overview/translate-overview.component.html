@@ -10,10 +10,10 @@
       <mat-card-header id="translate-overview-title" class="books-card-title">
         <mat-card-title fxLayout="row" fxLayoutAlign="space-between center"
           >{{ t("progress") }}
-          <div class="progress" [title]="overallProgress.percentage + '%'">
+          <div class="progress" [title]="progressService.overallProgress.percentage">
             <app-donut-chart
               [colors]="['#b8d332', 'transparent']"
-              [data]="[overallProgress.translated, overallProgress.blank]"
+              [data]="[progressService.overallProgress.translated, progressService.overallProgress.blank]"
               backgroundColor="#ececec"
               [innerThicknessDelta]="0"
               [thickness]="22"
@@ -22,9 +22,9 @@
         </mat-card-title>
       </mat-card-header>
       <mat-divider></mat-divider>
-      @if (texts != null) {
+      @if (progressService.texts != null) {
         <mat-list role="list">
-          @for (textProgress of texts; track trackTextByBookNum($index, textProgress)) {
+          @for (textProgress of progressService.texts; track trackTextByBookNum($index, textProgress)) {
             <mat-list-item role="listitem" [appRouterLink]="['./', getBookId(textProgress.text)]">
               <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
               <span matListItemTitle>{{ getBookName(textProgress.text) }}</span>
@@ -72,7 +72,7 @@
             <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
             ><span>{{ t("trained_segments") }}</span>
           </div>
-          @if (showCannotTrainEngineMessage || !canTrainSuggestions) {
+          @if (showCannotTrainEngineMessage || !progressService.canTrainSuggestions) {
             <div class="translation-suggestions-info">
               {{
                 showCannotTrainEngineMessage ? t("cannot_train_suggestion_engine") : t("not_enough_verses_translated")

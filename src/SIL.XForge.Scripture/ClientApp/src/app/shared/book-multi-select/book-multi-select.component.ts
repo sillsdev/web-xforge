@@ -1,14 +1,19 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
+import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { filter, firstValueFrom, map } from 'rxjs';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ToggleBookComponent } from '../../translate/draft-generation/toggle-book/toggle-book.component';
+import { ProgressService } from '../progress-service/progress-service';
 
 export interface BookOption {
   bookNum: number;
   bookId: string;
   selected: boolean;
+  progressPercentage: number;
 }
 
 @Component({
@@ -18,7 +23,7 @@ export interface BookOption {
   imports: [UICommonModule, MatChipsModule, TranslocoModule, ToggleBookComponent],
   styleUrls: ['./book-multi-select.component.scss']
 })
-export class BookMultiSelectComponent implements OnChanges {
+export class BookMultiSelectComponent extends SubscriptionDisposable implements OnInit, OnChanges {
   @Input() availableBooks: number[] = [];
   @Input() selectedBooks: number[] = [];
   @Input() readonly: boolean = false;
@@ -28,17 +33,34 @@ export class BookMultiSelectComponent implements OnChanges {
 
   selection: any = '';
 
-  ngOnChanges(): void {
-    this.initBookOptions();
+  constructor(
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly progressService: ProgressService
+  ) {
+    super();
   }
 
-  initBookOptions(): void {
+  ngOnInit(): void {
+    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
+      this.progressService.initialize(projectId);
+    });
+  }
+
+  async ngOnChanges(): Promise<void> {
+    await this.initBookOptions();
+  }
+
+  async initBookOptions(): Promise<void> {
     const selectedSet = new Set<number>(this.selectedBooks);
+
+    await firstValueFrom(this.progressService.isLoaded$.pipe(filter(loaded => loaded)));
+    const progress = this.progressService.texts;
 
     this.bookOptions = this.availableBooks.map((bookNum: number) => ({
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
-      selected: selectedSet.has(bookNum)
+      selected: selectedSet.has(bookNum),
+      progressPercentage: progress.find(p => p.text.bookNum === bookNum)!.percentage
     }));
   }
 
@@ -51,7 +73,7 @@ export class BookMultiSelectComponent implements OnChanges {
     this.bookSelect.emit(this.selectedBooks);
   }
 
-  select(eventValue: string): void {
+  async select(eventValue: string): Promise<void> {
     if (eventValue === 'OT') {
       this.selectedBooks.push(
         ...this.availableBooks.filter(n => Canon.isBookOT(n) && this.selectedBooks.indexOf(n) === -1)
@@ -65,14 +87,14 @@ export class BookMultiSelectComponent implements OnChanges {
         ...this.availableBooks.filter(n => Canon.isBookDC(n) && this.selectedBooks.indexOf(n) === -1)
       );
     }
-    this.initBookOptions();
+    await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
   }
 
-  clear(): void {
+  async clear(): Promise<void> {
     this.selectedBooks.length = 0;
     this.selection = undefined;
-    this.initBookOptions();
+    await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
   }
 

@@ -12,7 +12,7 @@ import {
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, firstValueFrom, merge, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -29,7 +29,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { getVerseNumbers } from '../../shared/utils';
+import { getVerseNumbers, XmlUtils } from '../../shared/utils';
 import { SaveNoteParameters } from '../editor/editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
@@ -468,6 +468,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
     const currentDate: string = new Date().toJSON();
     const threadId = `BT_${biblicalTermDoc.data.termId}`;
+    const noteContent: string | undefined = params.content == null ? undefined : XmlUtils.encodeForXml(params.content);
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -476,7 +477,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       threadId,
       tagId: BIBLICAL_TERM_TAG_ID,
       ownerRef: this.userService.currentUserId,
-      content: params.content,
+      content: noteContent,
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
       status: params.status ?? NoteStatus.Todo,
@@ -516,7 +517,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
         await threadDoc!.submitJson0Op(op => {
-          op.set(t => t.notes[noteIndex].content, params.content);
+          op.set(t => t.notes[noteIndex].content, noteContent);
           op.set(t => t.notes[noteIndex].dateModified, currentDate);
         });
       } else {

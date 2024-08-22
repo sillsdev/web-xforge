@@ -38,6 +38,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
+import { XmlUtils } from '../../shared/utils';
 import { MockNoteDialogRef } from '../editor/editor.component.spec';
 import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogIcon, BiblicalTermNoteIcon, BiblicalTermsComponent } from './biblical-terms.component';
@@ -215,7 +216,7 @@ describe('BiblicalTermsComponent', () => {
     env.biblicalTermsNotesButton.click();
     env.wait();
 
-    const noteContent: string = 'content in the thread';
+    const noteContent: string = 'content in the thread & with an ampersand';
     env.mockNoteDialogRef.close({ noteContent });
     env.wait();
 
@@ -232,7 +233,7 @@ describe('BiblicalTermsComponent', () => {
     expect(noteThread.originalSelectedText).toEqual('');
     expect(noteThread.publishedToSF).toBe(true);
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
-    expect(noteThread.notes[0].content).toEqual(noteContent);
+    expect(noteThread.notes[0].content).toEqual(XmlUtils.encodeForXml(noteContent));
     expect(noteThread.notes[0].tagId).toEqual(BIBLICAL_TERM_TAG_ID);
     const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('project01', 'user01');
     expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.notes[0].dataId);
