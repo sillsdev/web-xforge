@@ -1,5 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { provideAnimations } from '@angular/platform-browser/animations';
+
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -23,11 +25,12 @@ describe('EditorTabAddResourceDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
+      provideAnimations(),
       { provide: SFProjectService, useMock: mockSFProjectService },
       { provide: ParatextService, useMock: mockParatextService },
       { provide: PermissionsService, useMock: mockPermissionsService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockMatDialogRef },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MAT_DIALOG_DATA, useValue: {} }
     ]
   }));
@@ -201,9 +204,24 @@ describe('EditorTabAddResourceDialogComponent', () => {
     expect(env.component.projectFetchFailed).toBe(false);
     expect(env.component.syncFailed).toBe(false);
   });
+
+  it('should return without calling sync if offline and show that sync failed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.onlineStatus = false;
+    env.component.confirmSelection();
+    verify(mockSFProjectService.onlineAddCurrentUser(env.projectId)).never();
+    verify(mockSFProjectService.onlineCreateResourceProject(env.paratextId)).never();
+    verify(mockPermissionsService.canSync(anything())).never();
+    verify(mockSFProjectService.onlineSync(anything())).never();
+    verify(mockMatDialogRef.close(anything())).never();
+    expect(env.component.syncFailed).toBe(true);
+  }));
 });
 
 class TestEnvironment {
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   component: EditorTabAddResourceDialogComponent;
   fixture: ComponentFixture<EditorTabAddResourceDialogComponent>;
 
@@ -229,6 +247,12 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
 
     this.component.form.setValue({ sourceParatextId: this.paratextId });
+  }
+
+  set onlineStatus(isOnline: boolean) {
+    this.testOnlineStatusService.setIsOnline(isOnline);
+    tick();
+    this.fixture.detectChanges();
   }
 
   setupProject(overrides?: Partial<SFProject>): void {
