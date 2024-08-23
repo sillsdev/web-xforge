@@ -82,11 +82,21 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.unlistedProjectMessage).not.toBeNull();
     expect(env.overwriteContentMessage).toBeNull();
     expect(env.targetProjectContent).toBeNull();
+    expect(env.getProjectsFailedMessage).toBeNull();
+  }));
+
+  it('shows error when loading project fails', fakeAsync(() => {
+    env.component.projectLoadingFailed = true;
+    verify(mockedParatextService.getProjects()).once();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.getProjectsFailedMessage).not.toBeNull();
   }));
 
   it('add button is disabled until project is selected', fakeAsync(async () => {
     expect(env.addButton).toBeTruthy();
     expect(env.addButton.attributes['disabled']).toBeDefined();
+    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
     env.component.projectSelectedAsync('pt01');
     tick();
     env.fixture.detectChanges();
@@ -102,6 +112,7 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('can add draft to project when project selected', fakeAsync(async () => {
+    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
     env.component.projectSelectedAsync('pt01');
     tick();
     env.fixture.detectChanges();
@@ -117,6 +128,7 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('checks if the user has edit permissions', fakeAsync(async () => {
+    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
     env.component.projectSelectedAsync('pt01');
     tick();
     env.fixture.detectChanges();
@@ -184,7 +196,7 @@ class TestEnvironment {
   ];
 
   constructor() {
-    when(mockedParatextService.getProjects()).thenReturn(Promise.resolve(this.projects));
+    when(mockedParatextService.getProjects()).thenResolve(this.projects);
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
     when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn({
@@ -222,6 +234,10 @@ class TestEnvironment {
 
   get unlistedProjectMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.unlisted-project-message');
+  }
+
+  get getProjectsFailedMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.fetch-projects-failed-message');
   }
 
   async checkboxHarnessAsync(): Promise<MatCheckboxHarness> {

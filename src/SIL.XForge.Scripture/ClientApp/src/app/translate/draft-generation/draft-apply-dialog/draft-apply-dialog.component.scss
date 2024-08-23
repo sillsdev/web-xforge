@@ -1,11 +1,5 @@
-@use 'src/variables' as var;
-
 .mat-mdc-dialog-actions {
   justify-content: flex-end;
-}
-
-.cannot-edit-message {
-  color: var.$errorColor;
 }
 
 .target-project-content {
