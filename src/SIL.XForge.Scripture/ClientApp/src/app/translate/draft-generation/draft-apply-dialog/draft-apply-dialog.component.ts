@@ -33,17 +33,18 @@ export interface DraftApplyDialogResult {
 })
 export class DraftApplyDialogComponent implements OnInit {
   _projects?: ParatextProject[];
-  // the project to add the draft to
   isLoading: boolean = false;
   addToProjectForm = new FormGroup({
-    targetParatextId: new FormControl<string | undefined>(undefined),
+    targetParatextId: new FormControl<string | undefined>(undefined, Validators.required),
     overwrite: new FormControl(false, Validators.requiredTrue)
   });
   connectOtherProject = this.i18n.translateTextAroundTemplateTags('draft_apply_dialog.looking_for_unlisted_project');
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   canEditProject: boolean = true;
+  projectLoadingFailed: boolean = false;
 
+  // the project id to add the draft to
   private targetProjectId?: string;
   private targetProjectDoc$: BehaviorSubject<SFProjectProfileDoc | undefined> = new BehaviorSubject<
     SFProjectProfileDoc | undefined
@@ -81,15 +82,25 @@ export class DraftApplyDialogComponent implements OnInit {
     return this.targetProjectDoc$.pipe(map(p => p?.data));
   }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     this.isLoading = true;
-    const projects: ParatextProject[] | undefined = await this.paratextService.getProjects();
-    this._projects = projects?.filter(p => p.projectId != null).sort(compareProjectsForSorting);
-    this.isLoading = false;
+    this.paratextService
+      .getProjects()
+      .then(projects => {
+        this._projects = projects?.filter(p => p.projectId != null).sort(compareProjectsForSorting);
+        this.isLoading = false;
+      })
+      .catch(() => {
+        this.projectLoadingFailed = true;
+      });
   }
 
   addToProject(): void {
-    if (this.targetProjectId == null || !this.canEditProject) {
+    if (
+      this.addToProjectForm.controls.targetParatextId.value == null ||
+      this.targetProjectId == null ||
+      !this.canEditProject
+    ) {
       this.dialogRef.close();
       return;
     }
@@ -119,6 +130,10 @@ export class DraftApplyDialogComponent implements OnInit {
     if (this.canEditProject) {
       this.targetProjectDoc$.next(projectDoc);
     }
+  }
+
+  close(): void {
+    this.dialogRef.close();
   }
 
   private async chaptersWithTextAsync(project: SFProjectProfile): Promise<number> {

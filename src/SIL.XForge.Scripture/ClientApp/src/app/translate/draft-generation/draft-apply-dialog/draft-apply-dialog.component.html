@@ -14,13 +14,16 @@
         formControlName="targetParatextId"
       ></app-project-select>
       @if (!canEditProject) {
-        <div class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</div>
+        <mat-error class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</mat-error>
+      }
+      @if (projectLoadingFailed) {
+        <mat-error class="fetch-projects-failed-message">{{ t("error_fetching_projects") }}</mat-error>
       }
       @if (connectOtherProject != null) {
         <div class="unlisted-project-message">
           <p>
             <span [innerHTML]="connectOtherProject.before"></span>
-            <a [appRouterLink]="['projects']">{{ connectOtherProject.templateTagText }}</a>
+            <a [appRouterLink]="['projects']" (click)="close()">{{ connectOtherProject.templateTagText }}</a>
             <span>{{ connectOtherProject.after }}</span>
           </p>
         </div>
