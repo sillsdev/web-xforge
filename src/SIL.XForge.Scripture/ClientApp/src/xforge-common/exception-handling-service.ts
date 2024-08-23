@@ -15,6 +15,7 @@ import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 import { objectId } from './utils';
+import { OnlineStatusService } from './online-status.service';
 
 export interface BreadcrumbSelector {
   element: string;
@@ -139,8 +140,13 @@ export class ExceptionHandlingService {
   private alertQueue: ErrorAlertData[] = [];
   private dialogOpen = false;
 
-  constructor(private readonly injector: Injector) {}
-
+  constructor(
+    private readonly injector: Injector,
+    private readonly onlineService: OnlineStatusService
+  ) {}
+  get appOnline(): boolean {
+    return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
+  }
   async handleError(originalError: unknown, silently: boolean = false): Promise<void> {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
     // use the "Injector" to get the dependencies in this method. At this point, providers should have been
@@ -246,7 +252,9 @@ export class ExceptionHandlingService {
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
-      this.console.log(`Error occurred. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
+      this.console.log(
+        `${this.appOnline ? 'Error occurred. Reported to Bugsnag with release stage set to' : 'Error occurred while offline. Release stage set to'}  ${environment.releaseStage}:`
+      );
       this.console.error(error);
     }
   }

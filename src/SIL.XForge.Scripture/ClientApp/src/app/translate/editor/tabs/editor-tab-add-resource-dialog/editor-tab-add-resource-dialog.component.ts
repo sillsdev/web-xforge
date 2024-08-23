@@ -33,6 +33,8 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   isSyncActive = false;
   projectFetchFailed = false;
   syncFailed = false;
+  offlineFailure = false;
+  userNotPermitted = false;
 
   // Placed after 'Loading' when syncing
   animatedEllipsis$ = timer(500, 300).pipe(
@@ -104,7 +106,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
               this.dialogRef.close(this.selectedProjectDoc);
             }
           } else {
-            this.dialogRef.close(this.selectedProjectDoc);
+            this.userNotPermitted = true;
           }
         } else {
           this.projectFetchFailed = true;
@@ -179,6 +181,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.resourceLoadingFailed = false;
     this.projectFetchFailed = false;
     this.syncFailed = false;
+    this.offlineFailure = false;
   }
 
   /**
