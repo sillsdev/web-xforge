@@ -33,6 +33,8 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   isSyncActive = false;
   projectFetchFailed = false;
   syncFailed = false;
+  offlineFailure = false;
+  userNotPermitted = false;
 
   // Placed after 'Loading' when syncing
   animatedEllipsis$ = timer(500, 300).pipe(
@@ -55,6 +57,10 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     private readonly dialogRef: MatDialogRef<EditorTabAddResourceDialogComponent, SFProjectDoc>,
     @Inject(MAT_DIALOG_DATA) readonly dialogData: EditorTabAddResourceDialogData
   ) {}
+
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
+  }
 
   async ngOnInit(): Promise<void> {
     await this.getProjectsAndResources();
@@ -87,28 +93,28 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
         if (this.selectedProjectDoc != null) {
           if (this.permissionsService.canSync(this.selectedProjectDoc)) {
-            // Wait for sync if no texts
-            if (!this.selectedProjectDoc.data?.texts.length) {
-              this.isSyncActive = true;
-              await this.syncProject(this.selectedProjectDoc.id);
-            } else {
-              // Otherwise, start a sync in the background and close dialog
-              this.syncProject(this.selectedProjectDoc.id);
-              this.dialogRef.close(this.selectedProjectDoc);
-            }
+            await this.syncProject(this.selectedProjectDoc.id);
           } else {
-            this.dialogRef.close(this.selectedProjectDoc);
+            this.userNotPermitted = true;
           }
         } else {
           this.projectFetchFailed = true;
         }
       }
     } catch (e) {
-      this.syncFailed = true;
       try {
-        this.cancelSync();
+        if (this.appOnline) {
+          this.syncFailed = true;
+          this.cancelSync();
+        }
       } catch {}
     } finally {
+      if (!this.appOnline) {
+        this.isSyncActive = false;
+        this.syncFailed = false;
+        this.projectFetchFailed = false;
+        this.offlineFailure = true;
+      }
       this.isLoading = false;
     }
   }
@@ -124,7 +130,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.isSyncActive = isActive;
 
     // Wait for sync to complete before closing dialog
-    if (!isActive) {
+    if (!isActive && this.selectedProjectDoc?.data?.texts?.length) {
       this.dialogRef.close(this.selectedProjectDoc);
     }
   }
@@ -165,10 +171,17 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.resourceLoadingFailed = false;
     this.projectFetchFailed = false;
     this.syncFailed = false;
+    this.offlineFailure = false;
   }
 
   private async syncProject(projectId: string): Promise<void> {
-    await this.projectService.onlineSync(projectId);
+    this.isSyncActive = true;
+    if (this.appOnline) {
+      if (!this.selectedProjectDoc?.data?.texts?.length) {
+        await this.projectService.onlineSync(projectId);
+      }
+      this.projectService.onlineSync(projectId);
+    }
   }
 
   /**

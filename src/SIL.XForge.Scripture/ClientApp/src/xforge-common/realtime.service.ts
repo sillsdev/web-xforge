@@ -7,6 +7,7 @@ import { OfflineStore } from './offline-store';
 import { QueryParameters } from './query-parameters';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { TypeRegistry } from './type-registry';
+import { OnlineStatusService } from './online-status.service';
 
 function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
@@ -28,6 +29,7 @@ export class RealtimeService {
     private readonly typeRegistry: TypeRegistry,
     public readonly remoteStore: RealtimeRemoteStore,
     public readonly offlineStore: OfflineStore,
+    private readonly onlineStatus: OnlineStatusService,
     @Optional() public readonly fileService?: FileService
   ) {
     if (this.fileService != null) {
@@ -42,6 +44,9 @@ export class RealtimeService {
     });
   }
 
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
+  }
   get<T extends RealtimeDoc>(collection: string, id: string): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
@@ -79,7 +84,9 @@ export class RealtimeService {
    */
   async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
     const doc = this.get<T>(collection, id);
-    await doc.subscribe();
+    if (this.appOnline) {
+      await doc.subscribe();
+    }
     return doc;
   }
 
