@@ -207,7 +207,6 @@ const meta: Meta = {
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
       let userConfigDocs: SFProjectUserConfigDoc[] = [];
-      let offlineTextsLoaded: string[] = [];
       // Create the user who is viewing the page.
       const user: User = createTestUser({
         paratextId: context.args.isKnownPTUser ? 'pt-user-id' : undefined,
@@ -268,7 +267,6 @@ const meta: Meta = {
                   selectedChapterNum: 1
                 })
               } as SFProjectUserConfigDoc);
-              if (sfProjectId != null && offlineTextsLoaded.length < 1) offlineTextsLoaded.push(sfProjectId);
             }
 
             // Define whether the project is on SF at all.
@@ -319,7 +317,6 @@ const meta: Meta = {
         user.sites.sf.currentProjectId = lastSelectedProjectId;
       }
       when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(userConfigDocs));
-      when(mockedUserProjectsService.offlineTextsLoaded$).thenReturn(of(offlineTextsLoaded));
 
       when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
       when(mockedPermissionsService.canAccessTranslate(anything())).thenReturn(true);

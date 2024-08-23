@@ -46,7 +46,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   initialLoadingSFProjects: boolean = true;
   userIsPTUser: boolean = false;
   joiningProjects: string[] = [];
-  offlineTextsLoaded: string[] = [];
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -89,10 +88,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       if (configs == null) return;
       this.userConfigDocs = configs;
     });
-    this.subscribe(this.userProjectsService.offlineTextsLoaded$, (offlineTexts?: string[]) => {
-      if (offlineTexts == null || offlineTexts.length === 0) return;
-      this.offlineTextsLoaded = offlineTexts;
-    });
 
     await this.onlineStatusService.online;
     if (this.userIsPTUser) await this.loadParatextProjects();
@@ -107,7 +102,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   projectTypeDescription(sfProject: SFProjectProfileDoc): string {
     const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
     const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
-    const isOfflineAccessible = this.offlineTextsLoaded.includes(sfProject.id);
 
     const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
     const checking = isCheckingAccessible
@@ -115,13 +109,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
         ? ' • ' + translate('app.community_checking')
         : translate('app.community_checking')
       : '';
-    const offline = isOfflineAccessible
-      ? isCheckingAccessible || isTranslateAccessible
-        ? ' • ' + translate('my_projects.offline-accessible')
-        : translate('my_projects.offline-accessible')
-      : '';
 
-    return `${drafting}${checking}${offline}`;
+    return `${drafting}${checking}`;
   }
 
   async joinProject(projectId: string): Promise<void> {

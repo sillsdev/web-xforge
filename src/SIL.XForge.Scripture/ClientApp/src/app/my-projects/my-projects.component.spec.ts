@@ -5,7 +5,6 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -117,21 +116,6 @@ describe('MyProjectsComponent', () => {
     ).not.toBeNull();
     // Show whether the test works, too.
     expect(env.cardForUserConnectedProject('unknown-pt-id')).toBeNull();
-  }));
-
-  it('displays if my connected projects have loaded texts for offline use', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.waitUntilLoaded();
-    const testProject1 = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject1')!.data!
-      .paratextId;
-    const testProject2 = env.projectProfileDocs.find((proj: SFProjectProfileDoc) => proj.id === 'testProject2')!.data!
-      .paratextId;
-    expect(env.connectedProjectCardProjectDescription(testProject1).nativeElement.textContent).toContain(
-      translate('my_projects.offline-accessible')
-    );
-    expect(env.connectedProjectCardProjectDescription(testProject2).nativeElement.textContent).not.toContain(
-      translate('my_projects.offline-accessible')
-    );
   }));
 
   it('lists my PT projects that are not on SF', fakeAsync(() => {
@@ -464,7 +448,6 @@ class TestEnvironment {
   userParatextProjects: ParatextProject[] = [];
 
   userConfigDocs: SFProjectUserConfigDoc[] = [];
-  offlineTextsLoaded: string[] = [];
 
   constructor({
     userHasAnyProjects = true,
@@ -535,8 +518,6 @@ class TestEnvironment {
         }
       ] as SFProjectUserConfigDoc[];
 
-      this.offlineTextsLoaded = ['testProject1'];
-
       this.projectProfileDocs.forEach((projectProfileDoc: SFProjectProfileDoc) => {
         this.userParatextProjects.push({
           projectId: projectProfileDoc.id,
@@ -552,7 +533,6 @@ class TestEnvironment {
     when(mockedParatextService.getProjects()).thenResolve(this.userParatextProjects);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
     when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(this.userConfigDocs));
-    when(mockedUserProjectsService.offlineTextsLoaded$).thenReturn(of(this.offlineTextsLoaded));
 
     when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
 

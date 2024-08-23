@@ -9,9 +9,6 @@ import { AuthService, LoginResult } from './auth.service';
 import { UserDoc } from './models/user-doc';
 import { SubscriptionDisposable } from './subscription-disposable';
 import { UserService } from './user.service';
-import { OfflineStore } from './offline-store';
-import { TextDoc, TextDocId } from '../app/core/models/text-doc';
-import { RESOURCE_IDENTIFIER_LENGTH } from '../app/core/paratext.service';
 
 /** Service that maintains an up-to-date set of SF project docs that the current user has access to. */
 @Injectable({
@@ -24,14 +21,10 @@ export class SFUserProjectsService extends SubscriptionDisposable {
   private userConfigDocs: Map<string, SFProjectUserConfigDoc> = new Map();
   private _userConfigDocs$ = new BehaviorSubject<SFProjectUserConfigDoc[] | undefined>(undefined);
 
-  private offlineTextsLoaded: string[] = [];
-  private _offlineTextsLoaded$ = new BehaviorSubject<string[]>([]);
-
   constructor(
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly authService: AuthService,
-    private readonly offlineStore: OfflineStore
+    private readonly authService: AuthService
   ) {
     super();
     this.setup();
@@ -44,10 +37,6 @@ export class SFUserProjectsService extends SubscriptionDisposable {
 
   get userConfigDocs$(): Observable<SFProjectUserConfigDoc[] | undefined> {
     return this._userConfigDocs$;
-  }
-
-  get offlineTextsLoaded$(): Observable<string[]> {
-    return this._offlineTextsLoaded$;
   }
 
   private async setup(): Promise<void> {
@@ -82,8 +71,6 @@ export class SFUserProjectsService extends SubscriptionDisposable {
       }
     }
 
-    this.offlineTextsLoaded = this.offlineTextsLoaded.filter(projectId => currentProjectIds.includes(projectId));
-
     const docFetchPromises: Promise<SFProjectProfileDoc>[] = [];
     const configFetchPromises: Promise<SFProjectUserConfigDoc>[] = [];
     for (const id of currentProjectIds) {
@@ -102,13 +89,6 @@ export class SFUserProjectsService extends SubscriptionDisposable {
         this._projectDocs$.next([]);
         this._userConfigDocs$.next([]);
       }
-      /* We want to check for changes to offline text docs if no changes to
-       projects or user project configs have occurred. */
-      const currentProjects = Array.from(this.projectDocs.values());
-      const currentConfigs = Array.from(this.userConfigDocs.values());
-      if (currentProjects.length > 0 && currentConfigs.length > 0) {
-        await this.updateOfflineTextDocs(currentProjects, currentConfigs);
-      }
       return;
     }
 
@@ -126,29 +106,5 @@ export class SFUserProjectsService extends SubscriptionDisposable {
     }
     const projectConfigs = Array.from(this.userConfigDocs.values());
     this._userConfigDocs$.next(projectConfigs);
-
-    await this.updateOfflineTextDocs(projects, projectConfigs);
-  }
-
-  async updateOfflineTextDocs(
-    sfProjects: SFProjectProfileDoc[],
-    projectConfigs: SFProjectUserConfigDoc[]
-  ): Promise<void> {
-    for (const sfProject of sfProjects.filter(project => project.id.length > RESOURCE_IDENTIFIER_LENGTH)) {
-      const userConfig = projectConfigs.find(config => config.data?.projectRef === sfProject.id);
-      if (userConfig == null) continue;
-      const textDocId = new TextDocId(
-        sfProject.id,
-        userConfig.data?.selectedBookNum ?? 1,
-        userConfig.data?.selectedChapterNum ?? 1
-      );
-      const textDoc = await this.offlineStore.get<TextDoc>(TextDoc.COLLECTION, textDocId.toString());
-      if (textDoc != null && !this.offlineTextsLoaded.includes(sfProject.id)) {
-        this.offlineTextsLoaded.push(sfProject.id);
-      }
-    }
-
-    const offlineTexts = Array.from(this.offlineTextsLoaded);
-    this._offlineTextsLoaded$.next(offlineTexts);
   }
 }
