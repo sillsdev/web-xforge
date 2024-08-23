@@ -108,7 +108,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
               this.dialogRef.close(this.selectedProjectDoc);
             }
           } else {
-            this.dialogRef.close(this.selectedProjectDoc);
+            this.userNotPermitted = true;
           }
         } else {
           this.projectFetchFailed = true;

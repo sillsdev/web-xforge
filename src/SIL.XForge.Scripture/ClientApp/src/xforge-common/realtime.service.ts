@@ -84,7 +84,9 @@ export class RealtimeService {
    */
   async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
     const doc = this.get<T>(collection, id);
-    await doc.subscribe();
+    if (this.appOnline) {
+      await doc.subscribe();
+    }
     return doc;
   }
 
