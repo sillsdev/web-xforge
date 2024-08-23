@@ -41,6 +41,7 @@
       >
         <mat-chip-option [value]="book" [selected]="book.selected">
           {{ "canon.book_names." + book.bookId | transloco }}
+          <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
         </mat-chip-option>
       </mat-chip-listbox>
     }

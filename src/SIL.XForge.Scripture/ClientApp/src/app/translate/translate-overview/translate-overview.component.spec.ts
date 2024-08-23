@@ -81,7 +81,7 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.texts!.length).toEqual(4);
+      expect(env.component.progressService.texts!.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
@@ -93,7 +93,7 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.texts!.length).toEqual(4);
+      expect(env.component.progressService.texts!.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
 
       env.deleteText(40, 1);
@@ -217,57 +217,6 @@ describe('TranslateOverviewComponent', () => {
       env.clickRetrainButton();
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeTruthy();
-    }));
-
-    it('can train suggestions', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProjectData({
-        projectId: 'project01',
-        sourceProjectId: 'project02',
-        translationSuggestionsEnabled: true,
-        allSegmentsBlank: false
-      });
-      env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: false, allSegmentsBlank: false });
-      env.setupUserData('user01', ['project01', 'project02']);
-      env.wait();
-
-      expect(env.component.canTrainSuggestions).toBeTruthy();
-    }));
-
-    it('cannot train suggestions', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProjectData({
-        projectId: 'project01',
-        sourceProjectId: 'project02',
-        translationSuggestionsEnabled: true,
-        allSegmentsBlank: true
-      });
-      env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: true, allSegmentsBlank: true });
-      env.setupUserData('user01', ['project01', 'project02']);
-      env.wait();
-
-      expect(env.component.canTrainSuggestions).toBeFalsy();
-    }));
-
-    it('cannot train suggestions if no source permission', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProjectData({
-        projectId: 'project01',
-        sourceProjectId: 'project02',
-        translationSuggestionsEnabled: true,
-        allSegmentsBlank: false,
-        textPermission: TextInfoPermission.Write
-      });
-      env.setupProjectData({
-        projectId: 'project02',
-        translationSuggestionsEnabled: true,
-        allSegmentsBlank: false,
-        textPermission: TextInfoPermission.None
-      });
-      env.setupUserData('user01', ['project01']);
-      env.wait();
-
-      expect(env.component.canTrainSuggestions).toBeFalsy();
     }));
 
     it('retrain should be disabled if offline', fakeAsync(() => {

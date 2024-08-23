@@ -224,6 +224,7 @@
     "anonymous": "Anonymous",
     "cancel": "Renunță",
     "cannot_edit_chapter_formatting_invalid": "Acest capitol nu poate fi editat deoarece formatarea nu este validă. Vă rugăm să remediați formatarea în Paratext.",
+    "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
     "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Configurarea sugestiilor de traducere",
     "more_info": "More Info...",

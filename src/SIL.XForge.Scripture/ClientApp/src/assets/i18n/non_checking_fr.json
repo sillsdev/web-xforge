@@ -224,6 +224,7 @@
     "anonymous": "Anonyme",
     "cancel": "Annuler",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
+    "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
     "cannot_edit_note_paratext": "Vous ne pouvez pas modifier cette remarque car elle a été modifiée dans Paratext.",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
     "more_info": "Plus d'infos...",

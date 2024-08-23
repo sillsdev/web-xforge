@@ -224,6 +224,7 @@
     "anonymous": "Anonim",
     "cancel": "Batal",
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
+    "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
     "cannot_edit_note_paratext": "Anda tidak dapat menyunting catatan ini karena telah disunting di Paratext.",
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",
     "more_info": "Informasi selengkapnya...",

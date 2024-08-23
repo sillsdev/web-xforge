@@ -336,9 +336,9 @@
   },
   "join": {
     "error_occurred_login": "Se ha producido un error al intentar unirse al proyecto",
-    "invited_to_join": "Has sido invitado a unirte al proyecto {{ boldStart }}{{ projectName }}{{ boldEnd }}",
+    "explain_your_name": "Por favor ingrese su nombre",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }}",
     "join": "Unirse",
-    "join_a_project": "Unirse a un proyecto",
     "key_already_used": "El enlace del proyecto ya ha sido utilizado por otro usuario. Póngase en contacto con la persona que le envió el enlace y pídale uno nuevo.",
     "key_expired": "El enlace del proyecto ha caducado. Póngase en contacto con la persona que le envió el enlace y solicite uno nuevo.",
     "login_existing_account": "o {{ underlineStart }}Iniciar sesión{{ underlineEnd }} en una cuenta existente",
