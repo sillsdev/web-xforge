@@ -286,6 +286,21 @@ describe('BiblicalTermsComponent', () => {
     expect(env.editBiblicalTermIcon.innerText).toBe(BiblicalTermDialogIcon.View);
   }));
 
+  it('should update the transliterate biblical terms setting', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.component.transliterateBiblicalTerms).toBe(false);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+
+    env.component.transliterateBiblicalTerms = !env.component.transliterateBiblicalTerms;
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.component.transliterateBiblicalTerms).toBe(true);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('transliteration01');
+  }));
+
   it('can save a new note thread for a biblical term', fakeAsync(() => {
     const projectId = 'project01';
     const env = new TestEnvironment(projectId, 2, 2, '2');

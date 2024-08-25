@@ -245,6 +245,14 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.verse$.next(verse);
   }
 
+  get transliterateBiblicalTerms(): boolean {
+    return this.projectUserConfigDoc?.data?.transliterateBiblicalTerms ?? false;
+  }
+
+  set transliterateBiblicalTerms(value: boolean) {
+    this.projectUserConfigDoc?.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
+  }
+
   get selectedReferenceForCaption(): string {
     if ((this._bookNum ?? 0) === 0) {
       return '';
@@ -464,6 +472,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
   private async loadBiblicalTerms(sfProjectId: string): Promise<void> {
     // Load the Biblical Terms
+    this.loadingStarted();
     this.biblicalTermQuery?.dispose();
 
     this.biblicalTermQuery = await this.projectService.queryBiblicalTerms(sfProjectId);
