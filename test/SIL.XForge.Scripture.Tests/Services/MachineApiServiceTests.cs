@@ -1052,7 +1052,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
-            () => env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, CancellationToken.None)
         );
     }
 
@@ -1066,7 +1066,14 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult(expected));
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            false,
+            CancellationToken.None
+        );
         Assert.AreEqual(expected, usfm);
     }
 
