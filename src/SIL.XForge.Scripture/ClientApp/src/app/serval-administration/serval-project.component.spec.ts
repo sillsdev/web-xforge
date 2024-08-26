@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import FileSaver from 'file-saver';
+import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -20,12 +20,14 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
+import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
+const mockDraftGenerationService = mock(DraftGenerationService);
 const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
@@ -44,12 +46,12 @@ describe('ServalProjectComponent', () => {
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
+      { provide: AuthService, useMock: mockAuthService },
+      { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
-      { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: AuthService, useMock: mockAuthService },
-      { provide: DraftGenerationService, useMock: mockDraftGenerationService }
+      { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
 
@@ -123,10 +125,7 @@ describe('ServalProjectComponent', () => {
       expect(env.firstDownloadButton.innerText).toBe('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
       env.clickElement(env.firstDownloadButton);
-
-      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
-      // eslint-disable-next-line deprecation/deprecation
-      expect(FileSaver.saveAs).toHaveBeenCalled();
+      expect(saveAs).toHaveBeenCalled();
     }));
   });
 
@@ -134,12 +133,38 @@ describe('ServalProjectComponent', () => {
     it('should disable the download button when offline', fakeAsync(() => {
       const env = new TestEnvironment(true);
       env.onlineStatus = false;
-      expect(env.firstDownloadButton.disabled).toBe(true);
+      expect(env.downloadDraftButton.disabled).toBe(true);
     }));
 
-    it('should have a download draft button', fakeAsync(() => {
+    it('should disable the download button when there is no last completed build', fakeAsync(() => {
       const env = new TestEnvironment(true);
-      expect(env.firstDownloadButton.disabled).toBe(false);
+      expect(env.downloadDraftButton.disabled).toBe(true);
+    }));
+
+    it('should have a download draft button when there is a last completed build', fakeAsync(() => {
+      const env = new TestEnvironment(true, {} as BuildDto);
+      expect(env.downloadDraftButton.disabled).toBe(false);
+    }));
+
+    it('should allow clicking of the download draft button to download a zip file', fakeAsync(() => {
+      const env = new TestEnvironment(true, {} as BuildDto);
+      when(mockDraftGenerationService.downloadGeneratedDraftZip(anything(), anything())).thenReturn(
+        of({ current: 1, total: 2 } as DraftZipProgress)
+      );
+      expect(env.downloadDraftButton.disabled).toBe(false);
+      env.clickElement(env.downloadDraftButton);
+      expect(env.component.downloadBooksProgress).toBe(1);
+      expect(env.component.downloadBooksTotal).toBe(2);
+    }));
+
+    it('should display any errors when downloading a zip file', fakeAsync(() => {
+      const env = new TestEnvironment(true, {} as BuildDto);
+      when(mockDraftGenerationService.downloadGeneratedDraftZip(anything(), anything())).thenReturn(
+        throwError(() => new Error())
+      );
+      expect(env.downloadDraftButton.disabled).toBe(false);
+      env.clickElement(env.downloadDraftButton);
+      verify(mockNoticeService.showError(anything())).once();
     }));
   });
 
@@ -152,7 +177,7 @@ describe('ServalProjectComponent', () => {
 
     mockProjectId = 'project01';
 
-    constructor(preTranslate: boolean) {
+    constructor(preTranslate: boolean, lastCompletedBuild: BuildDto | undefined = undefined) {
       const mockProjectId$ = new BehaviorSubject<string>(this.mockProjectId);
       const mockProjectDoc = {
         id: this.mockProjectId,
@@ -193,13 +218,11 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
 
+      when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(of(lastCompletedBuild));
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
-
-      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
-      // eslint-disable-next-line deprecation/deprecation
-      spyOn(FileSaver, 'saveAs').and.stub();
+      spyOn(saveAs, 'saveAs').and.stub();
 
       this.fixture = TestBed.createComponent(ServalProjectComponent);
       this.component = this.fixture.componentInstance;

@@ -3,6 +3,9 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { mock } from 'ts-mockito';
@@ -12,6 +15,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { MACHINE_API_BASE_URL } from '../../machine-api/http-client';
@@ -66,6 +70,8 @@ describe('DraftGenerationService', () => {
     service = TestBed.inject(DraftGenerationService);
     httpTestingController = TestBed.inject(HttpTestingController);
     testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+    spyOn(saveAs, 'saveAs').and.stub();
+    spyOn(JSZip.prototype, 'generateAsync').and.returnValue(Promise.resolve('blob data'));
   });
 
   afterEach(() => {
@@ -538,6 +544,78 @@ describe('DraftGenerationService', () => {
       );
       expect(req.request.method).toEqual('GET');
       req.flush(preTranslationData);
+      tick();
+    }));
+  });
+
+  describe('downloadDraft', () => {
+    it('should throw an error if the chapters have no drafts', done => {
+      const projectDoc: SFProjectProfileDoc = {
+        data: createTestProjectProfile({
+          texts: []
+        })
+      } as SFProjectProfileDoc;
+      service.downloadGeneratedDraftZip(projectDoc, undefined).subscribe({
+        error: (error: Error) => {
+          expect(error).not.toBeNull();
+          done();
+        },
+        complete: () => fail()
+      });
+    });
+
+    it('should throw an error if the project has no data', done => {
+      service.downloadGeneratedDraftZip(undefined, undefined).subscribe({
+        error: (error: Error) => {
+          expect(error).not.toBeNull();
+          done();
+        },
+        complete: () => fail()
+      });
+    });
+
+    it('should create a zip file containing all of the books with drafts', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        id: projectId,
+        data: createTestProjectProfile({
+          texts: [
+            {
+              bookNum: 62,
+              chapters: [
+                { number: 1, hasDraft: false },
+                { number: 2, hasDraft: true }
+              ]
+            },
+            { bookNum: 63, chapters: [{ number: 1, hasDraft: true }] },
+            { bookNum: 64, chapters: [{ number: 1, hasDraft: false }] }
+          ]
+        })
+      } as SFProjectProfileDoc;
+      const lastCompletedBuild: BuildDto = {
+        additionalInfo: { dateFinished: '2024-08-27T00:00:00.000+00:00' }
+      } as BuildDto;
+
+      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
+        complete: () => {
+          expect(saveAs).toHaveBeenCalled();
+        }
+      });
+      tick();
+
+      // Setup the HTTP request for 1 John
+      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
+      const req1jn = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm`
+      );
+      expect(req1jn.request.method).toEqual('GET');
+      req1jn.flush(usfm);
+
+      // Setup the HTTP request for 2 John
+      const req2jn = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/63_0/usfm`
+      );
+      expect(req2jn.request.method).toEqual('GET');
+      req2jn.flush(usfm);
       tick();
     }));
   });

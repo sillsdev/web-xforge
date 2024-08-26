@@ -1,21 +1,27 @@
 import { Inject, Injectable } from '@angular/core';
 import { translate } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { DeltaOperation } from 'rich-text';
-import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
+import { EMPTY, firstValueFrom, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
+import { getBookFileNameDigits } from '../../shared/utils';
 import {
   activeBuildStates,
   BuildConfig,
   DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
+  DraftZipProgress,
   PreTranslation,
   PreTranslationData
 } from './draft-generation';
@@ -218,6 +224,80 @@ export class DraftGenerationService {
           return of(undefined);
         })
       );
+  }
+
+  /**
+   * Downloads the generated drafts for a project as a zip file.
+   * @param projectDoc The project document.
+   * @param lastCompletedBuild The last completed build from the Machine API.
+   * @returns An observable of the zip progress until on completion a zip file is downloaded to the user's machine.
+   */
+  downloadGeneratedDraftZip(
+    projectDoc: SFProjectProfileDoc | undefined,
+    lastCompletedBuild: BuildDto | undefined
+  ): Observable<DraftZipProgress> {
+    return new Observable<DraftZipProgress>(observer => {
+      if (projectDoc?.data == null) {
+        observer.error(translate('draft_generation.info_alert_download_error'));
+        return;
+      }
+
+      const zip = new JSZip();
+      const projectShortName: string = projectDoc.data.shortName;
+      const usfmFiles: Promise<void>[] = [];
+
+      // Build the list of book numbers
+      const books: number[] = projectDoc.data.texts.reduce<number[]>((acc, text) => {
+        if (text.chapters.some(c => c.hasDraft)) {
+          acc.push(text.bookNum);
+        }
+        return acc;
+      }, []);
+      const zipProgress: DraftZipProgress = { current: 0, total: books.length };
+      observer.next(zipProgress);
+
+      // Create the promises to download each book's USFM
+      for (const bookNum of books) {
+        const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0)).then(usfm => {
+          if (usfm != null) {
+            const fileName: string =
+              getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.sfm';
+            zip.file(fileName, usfm);
+            zipProgress.current++;
+            observer.next(zipProgress);
+          }
+        });
+        usfmFiles.push(usfmFile);
+      }
+
+      Promise.all(usfmFiles).then(() => {
+        if (Object.keys(zip.files).length === 0) {
+          observer.next({ current: 0, total: 0 });
+          observer.error(translate('draft_generation.info_alert_download_error'));
+          return;
+        }
+
+        // Download the zip file
+        let filename: string = (projectDoc.data?.shortName ?? 'Translation') + ' Draft';
+        if (lastCompletedBuild?.additionalInfo?.dateFinished != null) {
+          const date: Date = new Date(lastCompletedBuild.additionalInfo.dateFinished);
+          const year: string = date.getFullYear().toString();
+          const month: string = (date.getMonth() + 1).toString().padStart(2, '0');
+          const day: string = date.getDate().toString().padStart(2, '0');
+          const hours: string = date.getHours().toString().padStart(2, '0');
+          const minutes: string = date.getMinutes().toString().padStart(2, '0');
+          filename += ` ${year}-${month}-${day}_${hours}${minutes}`;
+        }
+
+        filename += '.zip';
+
+        zip.generateAsync({ type: 'blob' }).then(blob => {
+          saveAs(blob, filename);
+          observer.next({ current: 0, total: 0 });
+          observer.complete();
+        });
+      });
+    });
   }
 
   /**
