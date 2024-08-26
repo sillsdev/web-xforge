@@ -245,6 +245,14 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.verse$.next(verse);
   }
 
+  get transliterateBiblicalTerms(): boolean {
+    return this.projectUserConfigDoc?.data?.transliterateBiblicalTerms ?? false;
+  }
+
+  set transliterateBiblicalTerms(value: boolean) {
+    this.projectUserConfigDoc?.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
+  }
+
   get selectedReferenceForCaption(): string {
     if ((this._bookNum ?? 0) === 0) {
       return '';
@@ -383,22 +391,23 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.loadingStarted();
 
     const categories = new Set<string>();
-    const rows: Row[] = [];
+    const rangeRows: Row[] = [];
+    const rangeAndCategoryRows: Row[] = [];
     let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
-      let displayTerm = false;
+      let matchesRange = false;
       // Filter by verse, chapter, or book
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
         var verseRef = new VerseRef(bbbcccvvv);
         if (this.selectedRangeFilter === 'current_book' && verseRef.bookNum === bookNum) {
-          displayTerm = true;
+          matchesRange = true;
           break;
         } else if (
           this.selectedRangeFilter === 'current_chapter' &&
           verseRef.bookNum === bookNum &&
           verseRef.chapterNum === chapter
         ) {
-          displayTerm = true;
+          matchesRange = true;
           break;
         } else if (
           this.selectedRangeFilter === 'current_verse' &&
@@ -409,7 +418,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
             verses.includes(verseRef.verseNum) ||
             (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
         ) {
-          displayTerm = true;
+          matchesRange = true;
           break;
         }
       }
@@ -427,15 +436,17 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       }
 
       // If we are filtering by category, exclude terms without the specified category
+      let matchesCategory = matchesRange;
       if (
+        matchesRange &&
         this.selectedCategory !== 'show_all' &&
         termCategories.length > 0 &&
         !termCategories.includes(this.selectedCategory)
       ) {
-        displayTerm = false;
+        matchesCategory = false;
       }
 
-      if (displayTerm) {
+      if (matchesRange) {
         let noteThreadDoc: NoteThreadDoc | undefined;
 
         // The code points will often be different, so we need to normalize the strings
@@ -449,21 +460,33 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           }
         }
 
-        rows.push(new Row(biblicalTermDoc, this.i18n, this.projectDoc, this.projectUserConfigDoc, noteThreadDoc));
+        // Add the row to the two arrays so we can select all if the category is missing
+        const row = new Row(biblicalTermDoc, this.i18n, this.projectDoc, this.projectUserConfigDoc, noteThreadDoc);
+        rangeRows.push(row);
+        if (matchesCategory) {
+          rangeAndCategoryRows.push(row);
+        }
       }
     }
+
     this.categories = Array.from(categories).sort();
-    this.rows = rows;
-    this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
+
+    // If we do not have the same category, show all rows in the range
     if (!this.categories.includes(this.selectedCategory)) {
       this.selectedCategory = 'show_all';
+      this.rows = rangeRows;
+    } else {
+      this.rows = rangeAndCategoryRows;
     }
+
+    this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
 
     this.loadingFinished();
   }
 
   private async loadBiblicalTerms(sfProjectId: string): Promise<void> {
     // Load the Biblical Terms
+    this.loadingStarted();
     this.biblicalTermQuery?.dispose();
 
     this.biblicalTermQuery = await this.projectService.queryBiblicalTerms(sfProjectId);
