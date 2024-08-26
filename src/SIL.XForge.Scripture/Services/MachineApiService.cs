@@ -511,24 +511,16 @@ public class MachineApiService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
-        // Call the overload of this method, as we have performed the permission check
-        return await GetPreTranslationUsfmAsync(sfProjectId, bookNum, chapterNum, cancellationToken);
-    }
-
-    public async Task<string> GetPreTranslationUsfmAsync(
-        string sfProjectId,
-        int bookNum,
-        int chapterNum,
-        CancellationToken cancellationToken
-    )
-    {
-        // Do not perform any permission checking
         try
         {
             return await preTranslationService.GetPreTranslationUsfmAsync(
