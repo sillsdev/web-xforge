@@ -226,13 +226,17 @@ public class MachineApiService(
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);

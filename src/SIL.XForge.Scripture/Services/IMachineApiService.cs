@@ -29,6 +29,7 @@ public interface IMachineApiService
     Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<PreTranslationDto> GetPreTranslationAsync(
