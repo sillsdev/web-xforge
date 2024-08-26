@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { catchError, lastValueFrom, of, tap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, of, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -12,8 +12,10 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
+import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { ServalAdministrationService } from './serval-administration.service';
 
 interface Row {
@@ -43,9 +45,11 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   translationBooks: string[] = [];
 
   draftConfig: Object | undefined;
+  lastCompletedBuild: BuildDto | undefined;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
@@ -62,8 +66,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     this.subscribe(
       this.activatedProjectService.projectDoc$.pipe(
         filterNullish(),
-        tap(projectDoc => {
-          if (projectDoc.data == null) return;
+        switchMap(projectDoc => {
+          if (projectDoc.data == null) return of(undefined);
           const project: SFProjectProfile = projectDoc.data;
           this.preTranslate = project.translateConfig.preTranslate;
           this.projectName = project.shortName + ' - ' + project.name;
@@ -137,9 +141,23 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           );
 
           this.draftConfig = project.translateConfig.draftConfig;
+
+          // Get the last completed build
+          if (this.isOnline) {
+            return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
+          } else {
+            return of(undefined);
+          }
         })
-      )
+      ),
+      (build: BuildDto | undefined) => {
+        this.lastCompletedBuild = build;
+      }
     );
+  }
+
+  async downloadDraft(): Promise<void> {
+    // TBD
   }
 
   async downloadProject(id: string, fileName: string): Promise<void> {
