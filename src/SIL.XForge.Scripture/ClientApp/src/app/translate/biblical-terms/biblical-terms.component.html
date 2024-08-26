@@ -20,10 +20,15 @@
       <ng-container matColumnDef="id">
         <th mat-header-cell *matHeaderCellDef class="actions">{{ t("actions") }}</th>
         <td mat-cell *matCellDef="let row" class="actions">
-          <button mat-icon-button (click)="editNoteThread(row)" [disabled]="row.disableNotesIcon">
+          <button
+            mat-icon-button
+            (click)="editNoteThread(row)"
+            [disabled]="row.disableNotesIcon"
+            [matTooltip]="t('notes')"
+          >
             <mat-icon [style.transform]="row.transformNotesIcon">{{ row.notesIcon }}</mat-icon>
           </button>
-          <button mat-icon-button (click)="editRendering(row.id)">
+          <button mat-icon-button (click)="editRendering(row.id)" [matTooltip]="t('renderings')">
             <mat-icon>{{ row.editIcon }}</mat-icon>
           </button>
         </td>
@@ -58,7 +63,7 @@
               mat-icon-button
               [matMenuTriggerFor]="menu"
               class="mat-menu-popup-button"
-              title="{{ t('settings') }}"
+              [matTooltip]="t('settings')"
             >
               <mat-icon>settings</mat-icon>
             </button>
