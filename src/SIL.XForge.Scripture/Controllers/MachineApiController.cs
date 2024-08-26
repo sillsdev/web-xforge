@@ -226,9 +226,11 @@ public class MachineApiController : ControllerBase
     {
         try
         {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             ServalBuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
+                isServalAdmin,
                 cancellationToken
             );
 
