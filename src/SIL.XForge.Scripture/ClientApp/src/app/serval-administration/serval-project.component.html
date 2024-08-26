@@ -72,11 +72,14 @@
     (click)="downloadDraft()"
     mat-raised-button
     color="primary"
-    [disabled]="!isOnline || lastCompletedBuild == null"
+    [disabled]="!isOnline || lastCompletedBuild == null || downloadBooksTotal > 0"
     id="download-draft"
   >
     Download draft as a zip file
   </button>
+  @if (downloadBooksTotal > 0) {
+    <span class="zip-progress">Zipping file {{ downloadBooksProgress }} of {{ downloadBooksTotal }}...</span>
+  }
 </p>
 
 <h2>Last Draft Settings</h2>
