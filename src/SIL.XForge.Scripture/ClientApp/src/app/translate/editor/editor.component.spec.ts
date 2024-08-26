@@ -3563,23 +3563,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows translator settings when biblical terms are enabled for the project', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.suggestionsSettingsButton).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('hides translator settings when suggestions and biblical terms are disabled for the project', fakeAsync(() => {
+    it('hides translator settings when suggestions are disabled for the project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
       };
@@ -3929,10 +3913,6 @@ describe('EditorComponent', () => {
   });
 });
 
-const defaultBiblicalTermsConfig = {
-  biblicalTermsEnabled: false,
-  hasRenderings: false
-};
 const defaultTranslateConfig = {
   translationSuggestionsEnabled: false,
   shareEnabled: false
@@ -4433,15 +4413,6 @@ class TestEnvironment {
     }
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
-    }
-    if (data.biblicalTermsConfig?.biblicalTermsEnabled != null) {
-      projectProfileData.biblicalTermsConfig.biblicalTermsEnabled = data.biblicalTermsConfig.biblicalTermsEnabled;
-    }
-    if (data.biblicalTermsConfig?.hasRenderings != null) {
-      projectProfileData.biblicalTermsConfig.hasRenderings = data.biblicalTermsConfig.hasRenderings;
-    }
-    if (data.biblicalTermsConfig?.errorMessage != null) {
-      projectProfileData.biblicalTermsConfig.errorMessage = data.biblicalTermsConfig.errorMessage;
     }
     if (data.editable != null) {
       projectProfileData.editable = data.editable;

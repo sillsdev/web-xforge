@@ -518,8 +518,7 @@
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
     "translation_suggestions": "Translation suggestions",
-    "translator_settings": "Translator settings",
-    "transliterate_biblical_terms": "Transliterate Biblical Terms"
+    "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Supported Back Translation Languages"
