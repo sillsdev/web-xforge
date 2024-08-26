@@ -535,7 +535,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
             .Throws(new BrokenCircuitException());
 
         // SUT
@@ -554,7 +554,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
             .Returns(Task.FromResult<ServalBuildDto>(null));
 
         // SUT
@@ -571,7 +571,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
             .Throws(new ForbiddenException());
 
         // SUT
@@ -588,7 +588,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
@@ -601,11 +601,33 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_ServalAdmin()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, true, CancellationToken.None)
+            .Returns(Task.FromResult(new ServalBuildDto()));
+        env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
+
+        // SUT
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+
+        await env
+            .MachineApiService.Received(1)
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, true, CancellationToken.None);
+    }
+
+    [Test]
     public async Task GetLastCompletedPreTranslationBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        env.MachineApiService.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
             .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
@@ -618,7 +640,7 @@ public class MachineApiControllerTests
 
         await env
             .MachineApiService.Received(1)
-            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None);
     }
 
     [Test]
@@ -951,6 +973,10 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+
+        await env
+            .MachineApiService.Received(1)
+            .GetPreTranslationUsfmAsync(User01, Project01, 40, 1, true, CancellationToken.None);
     }
 
     [Test]
@@ -971,6 +997,10 @@ public class MachineApiControllerTests
         );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+
+        await env
+            .MachineApiService.Received(1)
+            .GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, CancellationToken.None);
     }
 
     [Test]
