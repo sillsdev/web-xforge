@@ -185,7 +185,9 @@ describe('BiblicalTermsComponent', () => {
   it('should update the categories when the language changes', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.component.selectedRangeFilter = 'current_verse';
+    env.component.selectedCategory = 'category01_en';
     env.setupProjectData('en');
+    env.component.onSelectionChanged({ value: 'category04_en' } as MatSelectChange, 'category');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -200,6 +202,7 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_fr');
     expect(env.component.categories.includes('category01_en')).toBe(false);
     expect(env.component.categories.includes('category01_fr')).toBe(true);
+    expect(env.component.selectedCategory).toBe('show_all');
   }));
 
   it('should exclude biblical terms not in the selected verse', fakeAsync(() => {
@@ -284,6 +287,21 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect(env.editBiblicalTermIcon.innerText).toBe(BiblicalTermDialogIcon.View);
+  }));
+
+  it('should update the transliterate biblical terms setting', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.component.transliterateBiblicalTerms).toBe(false);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+
+    env.component.transliterateBiblicalTerms = !env.component.transliterateBiblicalTerms;
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.component.transliterateBiblicalTerms).toBe(true);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('transliteration01');
   }));
 
   it('can save a new note thread for a biblical term', fakeAsync(() => {
