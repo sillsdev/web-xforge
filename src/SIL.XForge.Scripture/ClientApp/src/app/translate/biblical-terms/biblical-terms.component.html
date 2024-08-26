@@ -54,6 +54,22 @@
                 }}</mat-option>
               </mat-select>
             </mat-form-field>
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="menu"
+              class="mat-menu-popup-button"
+              title="{{ t('settings') }}"
+            >
+              <mat-icon>settings</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="this.transliterateBiblicalTerms = !this.transliterateBiblicalTerms">
+                <mat-icon class="material-icons-outlined">{{
+                  this.transliterateBiblicalTerms ? "check_box" : "check_box_outline_blank"
+                }}</mat-icon>
+                <span>{{ t("transliterate_terms") }}</span>
+              </button>
+            </mat-menu>
           </div>
         </td>
       </ng-container>
@@ -61,8 +77,10 @@
       <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
       <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
       <tr mat-footer-row *matFooterRowDef="['id']; sticky: true"></tr>
-      <tr mat-row *matNoDataRow>
-        <td class="mat-cell" [attr.colspan]="columnsToDisplay.length"></td>
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" [attr.colspan]="columnsToDisplay.length">
+          {{ this.isLoaded ? t("not_found") : "" }}
+        </td>
       </tr>
     </table>
   </div>
