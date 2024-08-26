@@ -32,9 +32,12 @@
     "current_chapter": "Current Chapter",
     "current_verse": "Current Verse",
     "gloss": "Gloss",
+    "not_found": "No Biblical Terms match your criteria.",
     "renderings": "Renderings",
+    "settings": "Configure Biblical Terms",
     "show": "Show",
-    "term": "Term"
+    "term": "Term",
+    "transliterate_terms": "Transliterate Terms"
   },
   "book_select": {
     "clear": "Clear",
