@@ -23,8 +23,7 @@
               [matTooltip]="t('stop_recording')"
               matTooltipPosition="below"
             >
-              <mat-icon class="mic-icon">mic</mat-icon>
-              <mat-icon class="stop-icon">stop</mat-icon>
+              <mat-icon>stop</mat-icon>
             </button>
           }
         </div>
@@ -39,9 +38,12 @@
     </div>
     <div class="has-attachment" [ngClass]="{ visible: hasAudioAttachment }">
       <button mat-flat-button color="primary" (click)="resetRecording()" class="remove-audio-file">
-        <mat-icon>mic</mat-icon> Re-record
+        <mat-icon>mic</mat-icon>
+        {{ t("re_record") }}
       </button>
-      <button mat-button (click)="saveRecording()" class="save-audio-file"><mat-icon>check</mat-icon> Save</button>
+      <button mat-button (click)="saveRecording()" class="save-audio-file">
+        <mat-icon>check</mat-icon> {{ t("save") }}
+      </button>
     </div>
   </mat-dialog-content>
 </ng-container>

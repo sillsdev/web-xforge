@@ -32,15 +32,6 @@
     transition: color 0.3s;
     &:hover {
       color: #fff;
-      .stop-icon {
-        display: block;
-      }
-      .mic-icon {
-        display: none;
-      }
-    }
-    .stop-icon {
-      display: none;
     }
   }
 }

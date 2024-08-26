@@ -16,21 +16,9 @@ import {
   matDialogStory,
   MatDialogStoryConfig
 } from '../../../../.storybook/util/mat-dialog-launch';
+import { createMockMediaStream } from '../test-utils';
 
 const mockedNavigator = mock(Navigator);
-
-// Function to create a mock MediaStream with an audio track
-const createMockMediaStream = (): MediaStream => {
-  // Use the MediaStream constructor to simulate a stream with an audio track
-  const audioContext = new window.AudioContext();
-  const oscillator = audioContext.createOscillator();
-  const destination = audioContext.createMediaStreamDestination();
-
-  oscillator.connect(destination);
-  oscillator.start();
-
-  return destination.stream;
-};
 
 interface StoryAppState {
   audio: AudioAttachment;

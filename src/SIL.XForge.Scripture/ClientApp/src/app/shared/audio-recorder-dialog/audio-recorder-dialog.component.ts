@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor } from '@angular/forms';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -35,14 +35,7 @@ export interface AudioRecorderDialogData {
   selector: 'app-audio-recorder-dialog',
   templateUrl: './audio-recorder-dialog.component.html',
   styleUrl: './audio-recorder-dialog.component.scss',
-  imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      multi: true,
-      useExisting: AudioRecorderDialogComponent
-    }
-  ]
+  imports: [UICommonModule, CommonModule, SharedModule, TranslocoModule]
 })
 /* eslint-disable brace-style */
 export class AudioRecorderDialogComponent
@@ -86,18 +79,6 @@ export class AudioRecorderDialogComponent
     }
   }
 
-  writeValue(obj: AudioAttachment): void {
-    this.audio = obj;
-  }
-
-  registerOnChange(fn: ((value: AudioAttachment) => void) | undefined): void {
-    this.subscribe(this.status, fn);
-  }
-
-  registerOnTouched(fn: ((value: AudioAttachment) => void) | undefined): void {
-    this.subscribe(this._onTouched, fn);
-  }
-
   get hasAudioAttachment(): boolean {
     return this.audio.url !== undefined;
   }
@@ -115,6 +96,18 @@ export class AudioRecorderDialogComponent
   async ngOnInit(): Promise<void> {
     this.mediaDevicesUnsupported =
       this.navigator.mediaDevices?.getUserMedia == null || typeof MediaRecorder === 'undefined';
+  }
+
+  writeValue(obj: AudioAttachment): void {
+    this.audio = obj;
+  }
+
+  registerOnChange(fn: ((value: AudioAttachment) => void) | undefined): void {
+    this.subscribe(this.status, fn);
+  }
+
+  registerOnTouched(fn: ((value: AudioAttachment) => void) | undefined): void {
+    this.subscribe(this._onTouched, fn);
   }
 
   processAudio(): void {
@@ -188,8 +181,8 @@ export class AudioRecorderDialogComponent
     await new Promise<void>(resolve => {
       const statusPromise = this.status.subscribe((status: AudioAttachment) => {
         if (status.status === 'processed') {
-          resolve();
           statusPromise.unsubscribe();
+          resolve();
         }
       });
     });

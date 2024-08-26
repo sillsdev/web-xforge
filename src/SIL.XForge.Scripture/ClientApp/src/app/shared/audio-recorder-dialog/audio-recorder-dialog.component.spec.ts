@@ -17,9 +17,15 @@ import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModul
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { firstValueFrom } from 'rxjs';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { AudioPlayer } from '../audio/audio-player';
-import { AudioRecorderDialogComponent, AudioRecorderDialogData } from './audio-recorder-dialog.component';
+import {
+  AudioAttachment,
+  AudioRecorderDialogComponent,
+  AudioRecorderDialogData
+} from './audio-recorder-dialog.component';
+import { createMockMediaStream } from '../test-utils';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
@@ -63,8 +69,10 @@ describe('AudioRecorderDialogComponent', () => {
     await env.waitForRecorder(2400);
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();
+    expect(env.component.audio.status).toEqual('recording');
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
+    expect(env.component.audio.status).toEqual('processed');
     // The actual duration is slightly less than the length recorded so rounding is sufficient
     // If the duration fails it will return zero
     expect(Math.floor(await env.getAudioDuration())).toEqual(2);
@@ -112,6 +120,20 @@ describe('AudioRecorderDialogComponent', () => {
     verify(mockedDialog.openMatDialog(SupportedBrowsersDialogComponent, anything())).once();
     expect().nothing();
   });
+
+  it('return recorded audio on save', async () => {
+    const env = new TestEnvironment();
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(1000);
+    env.clickButton(env.stopRecordingButton);
+    await env.waitForRecorder(100);
+
+    const promiseForResult: Promise<AudioAttachment> = firstValueFrom(env.dialogRef.afterClosed());
+    env.clickButton(env.saveRecordingButton);
+    const result: AudioAttachment = await promiseForResult;
+    expect(result.status).toEqual('processed');
+    expect(result.url).toContain('blob:');
+  });
 });
 
 class TestEnvironment {
@@ -138,16 +160,10 @@ class TestEnvironment {
       data: { name: 'user' }
     });
     when(mockedNavigator.mediaDevices).thenReturn({
-      getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
-        this.rejectUserMedia ? Promise.reject('No microphone') : navigator.mediaDevices.getUserMedia(mediaConstraints)
+      getUserMedia: (_: MediaStreamConstraints): Promise<MediaStream> =>
+        this.rejectUserMedia ? Promise.reject('No microphone') : Promise.resolve(createMockMediaStream())
     } as MediaDevices);
     this.fixture.detectChanges();
-  }
-
-  async getAudioDuration(): Promise<number> {
-    const audio = new AudioPlayer(this.component.audio.url!, this.testOnlineStatusService);
-    await this.waitForRecorder(100);
-    return audio.duration;
   }
 
   get countdown(): HTMLElement {
@@ -162,6 +178,10 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('.record') as HTMLElement;
   }
 
+  get saveRecordingButton(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.save-audio-file') as HTMLElement;
+  }
+
   get stopRecordingButton(): HTMLElement {
     return this.overlayContainerElement.querySelector('.stop') as HTMLElement;
   }
@@ -173,6 +193,12 @@ class TestEnvironment {
   clickButton(button: HTMLElement): void {
     button.click();
     this.fixture.detectChanges();
+  }
+
+  async getAudioDuration(): Promise<number> {
+    const audio = new AudioPlayer(this.component.audio.url!, this.testOnlineStatusService);
+    await this.waitForRecorder(100);
+    return audio.duration;
   }
 
   async waitForRecorder(ms: number): Promise<any> {

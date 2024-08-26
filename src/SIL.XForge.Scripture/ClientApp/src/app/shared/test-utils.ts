@@ -113,3 +113,16 @@ export function paratextUsersFromRoles(userRoles: { [id: string]: string }): Par
     .filter(u => isParatextRole(userRoles[u]))
     .map(u => ({ sfUserId: u, username: `pt${u}`, opaqueUserId: `opaque${u}` }));
 }
+
+// Function to create a mock MediaStream with an audio track
+export const createMockMediaStream = (): MediaStream => {
+  // Use the MediaStream constructor to simulate a stream with an audio track
+  const audioContext: AudioContext = new window.AudioContext();
+  const oscillator: OscillatorNode = audioContext.createOscillator();
+  const destination: MediaStreamAudioDestinationNode = audioContext.createMediaStreamDestination();
+
+  oscillator.connect(destination);
+  oscillator.start();
+
+  return destination.stream;
+};
