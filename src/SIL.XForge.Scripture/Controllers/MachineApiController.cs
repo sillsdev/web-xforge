@@ -388,29 +388,15 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            string usfm;
-            if (_userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin))
-            {
-                // Get the USFM without checking permissions
-                usfm = await _machineApiService.GetPreTranslationUsfmAsync(
-                    sfProjectId,
-                    bookNum,
-                    chapterNum,
-                    cancellationToken
-                );
-            }
-            else
-            {
-                // Get the USFM, but ensure that the user has project permission
-                usfm = await _machineApiService.GetPreTranslationUsfmAsync(
-                    _userAccessor.UserId,
-                    sfProjectId,
-                    bookNum,
-                    chapterNum,
-                    cancellationToken
-                );
-            }
-
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                isServalAdmin,
+                cancellationToken
+            );
             return Ok(usfm);
         }
         catch (BrokenCircuitException e)
