@@ -33,6 +33,7 @@ public class MachineApiServiceTests
     private const string Build01 = "build01";
     private const string TranslationEngine01 = "translationEngine01";
     private const string User01 = "user01";
+    private const string User02 = "user02";
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
     private const string JobId = "jobId";
@@ -786,6 +787,7 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
+            false,
             CancellationToken.None
         );
 
@@ -804,6 +806,7 @@ public class MachineApiServiceTests
                 env.Service.GetLastCompletedPreTranslationBuildAsync(
                     "invalid_user_id",
                     Project01,
+                    false,
                     CancellationToken.None
                 )
         );
@@ -821,6 +824,7 @@ public class MachineApiServiceTests
                 env.Service.GetLastCompletedPreTranslationBuildAsync(
                     User01,
                     "invalid_project_id",
+                    false,
                     CancellationToken.None
                 )
         );
@@ -834,7 +838,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
+            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, false, CancellationToken.None)
         );
     }
 
@@ -847,8 +851,27 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, false, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+            User02,
+            Project01,
+            true,
+            CancellationToken.None
+        );
+
+        Assert.IsNull(actual);
     }
 
     [Test]
@@ -884,6 +907,7 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
+            false,
             CancellationToken.None
         );
 
@@ -1054,6 +1078,27 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<NotSupportedException>(
             () => env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task GetPreTranslationUsfmAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string expected = "\\c 1 \\v1 Verse 1";
+        env.PreTranslationService.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(expected));
+
+        // SUT
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(
+            User02,
+            Project01,
+            40,
+            1,
+            true,
+            CancellationToken.None
+        );
+        Assert.AreEqual(expected, usfm);
     }
 
     [Test]
