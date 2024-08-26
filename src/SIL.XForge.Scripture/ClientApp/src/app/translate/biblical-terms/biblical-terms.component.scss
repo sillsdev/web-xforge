@@ -53,15 +53,23 @@
   bottom: -1px !important;
 }
 
+/* Pad the left hand side of the table */
 .mat-mdc-header-cell:first-child,
 .mat-mdc-cell:first-child {
-  padding-left: 1.25em;
+  padding-inline-start: 1.25em;
+}
+
+/* Format the no data row */
+.mat-mdc-no-data-row td {
+  padding: 1em;
+  text-align: center;
 }
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 1em;
+  align-items: center;
   justify-content: center;
   padding: 1em 0.5em 0.75em 0.5em;
   border-top: 1px solid var(--sf-tab-group-border-color);

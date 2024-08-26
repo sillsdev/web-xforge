@@ -32,6 +32,10 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
     return this._isLoaded$.asObservable();
   }
 
+  get isLoaded(): boolean {
+    return this._isLoaded$.value;
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.loadingFinished();
