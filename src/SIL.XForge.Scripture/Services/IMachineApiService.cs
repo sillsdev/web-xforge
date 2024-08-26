@@ -56,12 +56,7 @@ public interface IMachineApiService
         string sfProjectId,
         int bookNum,
         int chapterNum,
-        CancellationToken cancellationToken
-    );
-    Task<string> GetPreTranslationUsfmAsync(
-        string sfProjectId,
-        int bookNum,
-        int chapterNum,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<WordGraph> GetWordGraphAsync(
