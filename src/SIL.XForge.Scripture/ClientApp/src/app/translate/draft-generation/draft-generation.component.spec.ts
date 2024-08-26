@@ -3,7 +3,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import FileSaver from 'file-saver';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -143,7 +142,8 @@ describe('DraftGenerationComponent', () => {
         'getBuildProgress',
         'pollBuildProgress',
         'getGeneratedDraftUsfm',
-        'getLastCompletedBuild'
+        'getLastCompletedBuild',
+        'downloadGeneratedDraftZip'
       ]);
       TestEnvironment.initProject('user01');
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
@@ -160,10 +160,6 @@ describe('DraftGenerationComponent', () => {
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(of({}));
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
-
-      // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
-      // eslint-disable-next-line deprecation/deprecation
-      spyOn(FileSaver, 'saveAs').and.stub();
     }
 
     static initProject(currentUserId: string): void {
@@ -2166,78 +2162,21 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('downloadDraft', () => {
-    it('should display an error if no chapters have drafts', done => {
-      const projectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          texts: []
-        })
-      } as SFProjectProfileDoc;
-      const env = new TestEnvironment(() => {
-        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
-          projectDoc: projectDoc,
-          projectDoc$: of(projectDoc),
-          changes$: of(projectDoc)
-        });
-      });
+    it('should display an error if one occurs', () => {
+      const env = new TestEnvironment();
+      mockDraftGenerationService.downloadGeneratedDraftZip.and.returnValue(throwError(() => new Error()));
 
-      env.component.downloadDraft().then(() => {
-        expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
-        done();
-      });
+      env.component.downloadDraft();
+      expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
     });
 
-    it('should display an error if the project has no data', done => {
-      const projectDoc = {
-        data: null
-      };
-      const env = new TestEnvironment(() => {
-        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
-          projectDoc: projectDoc,
-          projectDoc$: of(projectDoc),
-          changes$: of(projectDoc)
-        });
-      });
+    it('should emit draft progress', () => {
+      const env = new TestEnvironment();
+      mockDraftGenerationService.downloadGeneratedDraftZip.and.returnValue(of({ current: 1, total: 2 }));
 
-      env.component.downloadDraft().then(() => {
-        expect(mockNoticeService.showError).toHaveBeenCalledTimes(1);
-        done();
-      });
-    });
-
-    it('should create a zip file containing all of the books with drafts', done => {
-      const projectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          texts: [
-            {
-              bookNum: 62,
-              chapters: [
-                { number: 1, hasDraft: false },
-                { number: 2, hasDraft: true }
-              ]
-            },
-            { bookNum: 63, chapters: [{ number: 1, hasDraft: true }] },
-            { bookNum: 64, chapters: [{ number: 1, hasDraft: false }] }
-          ]
-        })
-      } as SFProjectProfileDoc;
-      const env = new TestEnvironment(() => {
-        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
-          projectDoc: projectDoc,
-          projectDoc$: of(projectDoc),
-          changes$: of(projectDoc)
-        });
-      });
-
-      env.component.downloadDraft().then(() => {
-        // Ensure drafts were generated for 1 and 2 John, but not 3 John
-        expect(mockDraftGenerationService.getGeneratedDraftUsfm).toHaveBeenCalledTimes(2);
-
-        // NOTE: The FileSaver namespace shares a signature with the FileSaver function, which has a deprecation warning
-        // eslint-disable-next-line deprecation/deprecation
-        expect(FileSaver.saveAs).toHaveBeenCalled();
-
-        done();
-      });
+      env.component.downloadDraft();
+      expect(env.component.downloadBooksProgress).toBe(1);
+      expect(env.component.downloadBooksTotal).toBe(2);
     });
   });
 });

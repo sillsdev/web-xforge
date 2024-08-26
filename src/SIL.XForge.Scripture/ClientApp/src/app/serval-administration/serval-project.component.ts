@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { catchError, lastValueFrom, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, tap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -15,6 +15,7 @@ import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
+import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -45,9 +46,13 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   trainingFiles: string[] = [];
   translationBooks: string[] = [];
 
+  downloadBooksProgress: number = 0;
+  downloadBooksTotal: number = 0;
+
   draftConfig: Object | undefined;
   draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
   lastCompletedBuild: BuildDto | undefined;
+  zipSubscription: Subscription | undefined;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -161,7 +166,16 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   async downloadDraft(): Promise<void> {
-    // TBD
+    this.zipSubscription?.unsubscribe();
+    this.zipSubscription = this.draftGenerationService
+      .downloadGeneratedDraftZip(this.activatedProjectService.projectDoc, this.lastCompletedBuild)
+      .subscribe({
+        next: (draftZipProgress: DraftZipProgress) => {
+          this.downloadBooksProgress = draftZipProgress.current;
+          this.downloadBooksTotal = draftZipProgress.total;
+        },
+        error: (error: Error) => this.noticeService.showError(error.message)
+      });
   }
 
   async downloadProject(id: string, fileName: string): Promise<void> {

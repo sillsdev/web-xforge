@@ -22,6 +22,14 @@ export interface DraftSegmentMap {
 }
 
 /**
+ * The zipping progress when downloading a draft as a zip file.
+ */
+export interface DraftZipProgress {
+  current: number;
+  total: number;
+}
+
+/**
  * Configuration options for DraftGenerationService.
  */
 export interface DraftGenerationServiceOptions {
