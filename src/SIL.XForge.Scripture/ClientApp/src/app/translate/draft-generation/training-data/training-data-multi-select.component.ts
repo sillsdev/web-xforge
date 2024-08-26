@@ -73,7 +73,7 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
     }
   }
 
-  async canDeleteTrainingData(trainingData: TrainingData): Promise<boolean> {
+  canDeleteTrainingData(trainingData: TrainingData): boolean {
     const userId: string = this.userService.currentUserId;
     const project: SFProjectProfile | undefined = this.activatedProjectService.projectDoc?.data;
     return (

@@ -84,16 +84,16 @@ describe('TrainingDataMultiSelectComponent', () => {
     tick();
   }));
 
-  it('can delete training data', fakeAsync(async () => {
+  it('can delete training data', fakeAsync(() => {
     when(mockUserService.currentUserId).thenReturn('user01');
-    let canDelete = await component.canDeleteTrainingData(mockTrainingData[0]);
+    let canDelete = component.canDeleteTrainingData(mockTrainingData[0]);
 
     expect(canDelete).toBeTruthy();
   }));
 
-  it('can not delete training data', fakeAsync(async () => {
+  it('can not delete training data', fakeAsync(() => {
     when(mockUserService.currentUserId).thenReturn('user02');
-    let canDelete = await component.canDeleteTrainingData(mockTrainingData[0]);
+    let canDelete = component.canDeleteTrainingData(mockTrainingData[0]);
 
     expect(canDelete).toBeFalsy();
   }));
