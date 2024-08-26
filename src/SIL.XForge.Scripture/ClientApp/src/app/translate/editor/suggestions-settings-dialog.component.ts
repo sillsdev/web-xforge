@@ -1,8 +1,6 @@
 import { Component, Inject } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -23,7 +21,6 @@ export interface SuggestionsSettingsDialogData {
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });
-  transliterateBiblicalTermsSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });
 
   private readonly projectDoc: SFProjectProfileDoc;
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
@@ -43,7 +40,6 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     }
 
     this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
-    this.transliterateBiblicalTermsSwitch.setValue(this.transliterateBiblicalTerms);
     onlineStatusService.onlineStatus$.subscribe(() => {
       this.updateSwitches();
     });
@@ -64,33 +60,21 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
       threshold => this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
     );
   }
-  setTransliterateBiblicalTerms(value: boolean): void {
-    this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
-  }
 
   setTranslationSettingsEnabled(value: boolean): void {
     this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.translationSuggestionsEnabled, value));
   }
 
   updateSwitches(): void {
-    if (this.canUseTranslationSuggestions && this.onlineStatusService.isOnline) {
+    if (this.onlineStatusService.isOnline) {
       this.suggestionsEnabledSwitch.enable();
     } else {
       this.suggestionsEnabledSwitch.disable();
     }
-    if (this.canUseBiblicalTerms && this.onlineStatusService.isOnline) {
-      this.transliterateBiblicalTermsSwitch.enable();
-    } else {
-      this.transliterateBiblicalTermsSwitch.disable();
-    }
   }
 
   get translationSuggestionsDisabled(): boolean {
-    return (
-      !this.translationSuggestionsUserEnabled ||
-      !this.canUseTranslationSuggestions ||
-      !this.onlineStatusService.isOnline
-    );
+    return !this.translationSuggestionsUserEnabled || !this.onlineStatusService.isOnline;
   }
 
   get translationSuggestionsUserEnabled(): boolean {
@@ -111,33 +95,5 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
 
   set confidenceThreshold(value: number) {
     this.confidenceThreshold$.next(value);
-  }
-
-  get transliterateBiblicalTerms(): boolean {
-    return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.transliterateBiblicalTerms;
-  }
-
-  get canUseBiblicalTerms(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data?.ownerRef]
-        : undefined;
-    return (
-      this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
-      userRole != null &&
-      SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View)
-    );
-  }
-
-  get canUseTranslationSuggestions(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data?.ownerRef]
-        : undefined;
-    return (
-      this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true &&
-      userRole != null &&
-      SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Texts, Operation.Edit)
-    );
   }
 }
