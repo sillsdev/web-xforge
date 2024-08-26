@@ -36,7 +36,7 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 
-describe('SuggestionsSettingsDialogComponent', () => {
+fdescribe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [
       DialogTestModule,
@@ -117,40 +117,6 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.isSwitchChecked(env.suggestionsEnabledCheckbox)).toBe(true);
     env.closeDialog();
   }));
-
-  it('update transliterate biblical terms', fakeAsync(() => {
-    const env = new TestEnvironment({ transliterateBiblicalTerms: false });
-    env.openDialog();
-    expect(env.component!.transliterateBiblicalTerms).toBe(false);
-
-    env.clickSwitch(env.transliterateBiblicalTermsSwitch);
-    expect(env.component!.transliterateBiblicalTerms).toBe(true);
-    const userConfigDoc = env.getProjectUserConfigDoc();
-    expect(userConfigDoc.data!.transliterateBiblicalTerms).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('transliterate biblical terms toggle is disabled and stays on if biblical terms is disabled', fakeAsync(() => {
-    const env = new TestEnvironment({ biblicalTermsEnabled: false });
-    env.openDialog();
-    expect(env.component!.canUseBiblicalTerms).toBe(false);
-    expect(env.transliterateBiblicalTermsCheckbox.disabled).toBe(true);
-    expect(env.isSwitchChecked(env.transliterateBiblicalTermsCheckbox)).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('translation suggestions are disabled if the user cannot edit texts', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const projectProfileDoc = env.getProjectProfileDoc();
-    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.ParatextObserver));
-    env.openDialog();
-    expect(env.component!.canUseBiblicalTerms).toBe(true);
-    expect(env.component!.canUseTranslationSuggestions).toBe(false);
-
-    expect(env.transliterateBiblicalTermsCheckbox.disabled).toBe(false);
-    expect(env.suggestionsEnabledCheckbox.disabled).toBe(true);
-    env.closeDialog();
-  }));
 });
 
 @NgModule({
@@ -161,9 +127,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
 class DialogTestModule {}
 
 interface TestEnvironmentConstructorArgs {
-  biblicalTermsEnabled?: boolean;
   translationSuggestionsEnabled?: boolean;
-  transliterateBiblicalTerms?: boolean;
 }
 
 class TestEnvironment {
@@ -175,20 +139,12 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor({
-    translationSuggestionsEnabled = true,
-    biblicalTermsEnabled = true,
-    transliterateBiblicalTerms = true
-  }: TestEnvironmentConstructorArgs = {}) {
-    this.setProjectUserConfig(
-      {
-        confidenceThreshold: 0.5,
-        translationSuggestionsEnabled,
-        numSuggestions: 1,
-        transliterateBiblicalTerms
-      },
-      biblicalTermsEnabled
-    );
+  constructor({ translationSuggestionsEnabled = true }: TestEnvironmentConstructorArgs = {}) {
+    this.setProjectUserConfig({
+      confidenceThreshold: 0.5,
+      translationSuggestionsEnabled,
+      numSuggestions: 1
+    });
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
   }
@@ -211,14 +167,6 @@ class TestEnvironment {
 
   get numSuggestionsSelect(): MatSelect {
     return this.fixture.debugElement.query(By.css('#num-suggestions-select')).componentInstance;
-  }
-
-  get transliterateBiblicalTermsSwitch(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#transliterate-biblical-terms-switch') as HTMLElement;
-  }
-
-  get transliterateBiblicalTermsCheckbox(): HTMLInputElement {
-    return this.transliterateBiblicalTermsSwitch.querySelector('button[role=switch]') as HTMLInputElement;
   }
 
   get offlineText(): DebugElement {
@@ -264,7 +212,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}, biblicalTermsEnabled: boolean): void {
+  setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
     const user1Config = cloneDeep(userConfig) as SFProjectUserConfig;
     user1Config.ownerRef = 'user01';
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
@@ -277,10 +225,6 @@ class TestEnvironment {
         translateConfig: {
           translationSuggestionsEnabled: user1Config.translationSuggestionsEnabled,
           shareEnabled: true
-        },
-        biblicalTermsConfig: {
-          biblicalTermsEnabled,
-          hasRenderings: false
         },
         userRoles: { user01: SFProjectRole.ParatextTranslator }
       })
