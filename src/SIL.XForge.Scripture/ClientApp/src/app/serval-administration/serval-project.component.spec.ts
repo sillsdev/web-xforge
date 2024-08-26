@@ -130,6 +130,19 @@ describe('ServalProjectComponent', () => {
     }));
   });
 
+  describe('download draft button', () => {
+    it('should disable the download button when offline', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      env.onlineStatus = false;
+      expect(env.firstDownloadButton.disabled).toBe(true);
+    }));
+
+    it('should have a download draft button', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      expect(env.firstDownloadButton.disabled).toBe(false);
+    }));
+  });
+
   class TestEnvironment {
     readonly component: ServalProjectComponent;
     readonly fixture: ComponentFixture<ServalProjectComponent>;
@@ -159,7 +172,9 @@ describe('ServalProjectComponent', () => {
                 projectRef: 'project04',
                 name: 'Project 04',
                 shortName: 'P4'
-              }
+              },
+              lastSelectedTrainingBooks: [1, 2],
+              lastSelectedTranslationBooks: [3, 4]
             },
             preTranslate: preTranslate,
             source: {
@@ -201,6 +216,10 @@ describe('ServalProjectComponent', () => {
 
     get firstDownloadButton(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('td button');
+    }
+
+    get downloadDraftButton(): HTMLInputElement {
+      return this.fixture.nativeElement.querySelector('#download-draft');
     }
 
     set onlineStatus(hasConnection: boolean) {
