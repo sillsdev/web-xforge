@@ -5,8 +5,8 @@
     "announcements": "Mitteilungen",
     "cannot_change_password": "Das Passwort kann im Moment nicht geändert werden. Versuche es später noch einmal oder melde das Problem über das Hilfemenü.",
     "change_password": "Passwort ändern",
-    "community_checking": "Überprüfung mit Zielgruppe",
-    "community_support": "Unterstützung durch Zielgruppe",
+    "community_checking": "Überprüfung mit der Zielgruppe",
+    "community_support": "Unterstützung durch die Zielgruppe",
     "help": "Hilfe",
     "install_on_device": "Auf Gerät installieren",
     "language": "Sprache",
@@ -261,7 +261,7 @@
     "confirm_delete": "Bist Du sicher, dass Du diesen Kommentar löschen willst?",
     "edit": "Bearbeiten",
     "show_more_comments_and_unread": "{{ count }} mehr Kommentare anzeigen - {{ unread }} ungelesen",
-    "show_more_comments": "{{$count}} weitere Kommentare anzeigen"
+    "show_more_comments": "{{ count }} weitere Kommentare anzeigen"
   },
   "checking_overview": {
     "answers": "Antworten",
