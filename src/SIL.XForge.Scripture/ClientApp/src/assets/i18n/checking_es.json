@@ -159,7 +159,7 @@
   },
   "checking": {
     "filter_questions": "Filtrar las preguntas",
-    "input_required_before_saving": "Provide text or audio before saving",
+    "input_required_before_saving": "Proporcione texto o audio antes de guardar",
     "manage_audio": "Administrar audio",
     "me": "Yo",
     "next": "Siguiente",
@@ -182,7 +182,7 @@
     "questions_range": "Rango de preguntas",
     "tooltip_questions_filter": "Filtrar las preguntas",
     "unknown_author": "Autor desconocido",
-    "upload_audio_file": "Upload Audio",
+    "upload_audio_file": "Subir audio",
     "view_questions": "Ver preguntas"
   },
   "checking_answers": {
@@ -202,9 +202,9 @@
     "save_answer": "Guardar respuesta",
     "select_verses": "Seleccionar versículos",
     "show_more_unread": "Mostrar {{ count }} más respuestas no leídas",
-    "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
+    "tooltip_attach": "Adjuntar escritura",
+    "tooltip_record": "Grabar audio",
+    "tooltip_stop": "Parar de grabar",
     "tooltip_status_export": "Exportar a Paratext si se ha configurado en Configuración",
     "tooltip_status_resolve": "Marcar la respuesta como resuelta",
     "your_answer": "Su respuesta"
@@ -212,7 +212,7 @@
   "chapter_audio_dialog": {
     "audio": "Audio",
     "audio_already_exists": "Ya existe audio para esta selección.",
-    "audio_file_less_than_one_hundred_mb": "Solo archivos de audio menores de 95MB",
+    "audio_file_less_than_one_hundred_mb": "Solo archivos de audio menores de 95 MB",
     "browse_files": "Examinar archivos",
     "cancel": "Cancelar",
     "chapter_audio": "Audio del capítulo",
@@ -242,11 +242,11 @@
     "audio_cannot_be_previewed": "El audio está en un formato que no se puede previsualizar. Guarda cualquier cambio y conéctate a Internet para reproducirlo."
   },
   "checking_audio_recorder": {
-    "delete": "Delete Recording",
+    "delete": "Eliminar grabación",
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
     "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecta un micrófono a tu dispositivo.",
     "not_available": "Su navegador actualmente no soporta la grabación de audio. Por favor, intente usar otro navegador compatible.",
-    "record_audio": "Record Audio",
+    "record_audio": "Grabar audio",
     "stop_recording": "Detener grabación"
   },
   "checking_comment_form": {
@@ -330,14 +330,14 @@
     "text_size": "Tamaño del texto"
   },
   "issue_email": {
-    "heading": "Please explain the problem.",
-    "technical_details": "Technical details",
-    "unknown": "desconocido"
+    "heading": "Por favor, explíquenos el problema.",
+    "technical_details": "Detalles técnicos",
+    "unknown": "Desconocido"
   },
   "join": {
     "error_occurred_login": "Se ha producido un error al intentar unirse al proyecto",
     "explain_your_name": "Por favor ingrese su nombre",
-    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }}",
+    "invited_to_join": "Has sido invitado a unirte al proyecto {{ boldStart }}{{ projectName }}{{ boldEnd }}",
     "join": "Unirse",
     "key_already_used": "El enlace del proyecto ya ha sido utilizado por otro usuario. Póngase en contacto con la persona que le envió el enlace y pídale uno nuevo.",
     "key_expired": "El enlace del proyecto ha caducado. Póngase en contacto con la persona que le envió el enlace y solicite uno nuevo.",
@@ -353,23 +353,23 @@
     "close": "Cerrar"
   },
   "my_projects": {
-    "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
-    "connect_a_project_to_get_started": "Connect a project to get started",
-    "connected": "Connected",
-    "dbl_resource": "Digital Bible Library resource",
-    "dbl_resources": "Digital Bible Library resources",
-    "drafting": "Drafting",
-    "failed_to_connect_to_pt_server": "There was a problem connecting to Paratext to get your projects. Please try again later. If the problem persists after several hours, please report the issue for help.",
+    "access_another_project": "Si no ve el proyecto que espera, es posible que necesite recibir una invitación al proyecto. O bien, si utiliza Paratext, puede desconectarse y volver a conectarse utilizando \"Conectarse con Paratext\", y conectarse a sus proyectos Paratext.",
+    "connect_a_project_to_get_started": "Conecte un proyecto para empezar",
+    "connected": "Conectado",
+    "dbl_resource": "Recurso de la Biblioteca Digital de la Biblia",
+    "dbl_resources": "Recursos de la Biblioteca Digital de la Biblia",
+    "drafting": "Redacción",
+    "failed_to_connect_to_pt_server": "Ha habido un problema al conectar con Paratext para obtener sus proyectos. Por favor, inténtelo de nuevo más tarde. Si el problema persiste después de varias horas, informe del problema para obtener ayuda.",
     "join": "Unirse",
-    "loading_more_pt_projects": "Loading additional Paratext projects ...",
-    "looking_for_another_project": "Looking for another project?",
-    "my_projects": "My projects",
-    "no_projects": "You have no projects.",
-    "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
-    "not_connected": "Not connected",
-    "offline": "You will need to connect to the internet to get started with a project.",
-    "open": "Open",
-    "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
+    "loading_more_pt_projects": "Cargando proyectos Paratext adicionales ...",
+    "looking_for_another_project": "¿Busca otro proyecto?",
+    "my_projects": "Mis proyectos",
+    "no_projects": "No tiene proyectos.",
+    "not_admin_cannot_connect_project": "Para unirse a este proyecto en Scripture Forge, pida al administrador del proyecto Paratext que conecte el proyecto en Scripture Forge.",
+    "not_connected": "No conectado",
+    "offline": "Necesitará conectarse a Internet para empezar con un proyecto.",
+    "open": "Abierto",
+    "problem_getting_pt_list": "Se ha producido un problema al obtener la lista de proyectos Paratext disponibles a los que conectarse. Si esto sigue sucediendo, y cerrar la sesión y volver a entrar no soluciona el problema, por favor informe del problema para obtener ayuda."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Elegir libro",
@@ -409,26 +409,26 @@
     "anyone_can": "Cualquiera que tenga el enlace puede",
     "change": "cambiar",
     "copy_link": "Copiar enlace",
-    "days_seven": "7 days",
-    "days_fourteen": "14 days",
-    "days_thirty": "30 days",
-    "days_ninety": "90 days",
-    "days_threesixtyfive": "1 year",
-    "error_language": "Please select a language",
-    "expiration_description": "Change the lifetime of the link",
+    "days_seven": "7 días",
+    "days_fourteen": "14 días",
+    "days_thirty": "30 días",
+    "days_ninety": "90 días",
+    "days_threesixtyfive": "1 año",
+    "error_language": "Por favor, seleccione un idioma",
+    "expiration_description": "Cambiar la vida útil del enlace",
     "invitation_language": "Cambiar el idioma de la invitación",
     "invitation_link_type": "Cambiar la forma de utilizar el enlace",
     "invitation_role": "Cambiar el rol de la invitación",
     "invitation_shared_in_language": "La invitación se compartirá en",
     "link_can_be_used_by": "El enlace puede ser utilizado por",
     "link_sharing_not_available_offline": "Invitar a usuarios compartiendo enlaces no está disponible mientras no se está conectado.",
-    "recipient": "One recipient",
-    "recipient_can": "The recipient can",
-    "recipient_only_notice": "Each link can only be used once and will expire after {{ shareExpiration }} days. Click the button again to generate and share a new link.",
+    "recipient": "Un beneficiario",
+    "recipient_can": "Sólo el destinatario puede",
+    "recipient_only_notice": "Cada enlace sólo puede utilizarse una vez y caducará al cabo de {{ shareExpiration }} días. Vuelva a pulsar el botón para generar y compartir un nuevo enlace.",
     "share": "Compartir",
     "share_project": "Compartir {{ project }}",
     "share_with_others": "Compartir con otros",
-    "will_expire_in": "Link expires in [b]{{ count }} days[/b]"
+    "will_expire_in": "El enlace caduca en [b]{{ count }} días[/b]"
   },
   "supported_browsers_dialog": {
     "audio_recording_not_supported": "La grabación de audio no es compatible con este navegador.",

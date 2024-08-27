@@ -129,18 +129,18 @@
     "add_to_project": "Ajouter au Projet",
     "book_contents_will_be_overwritten": "Attention, cela écrasera toutes les données de votre projet pour le livre de {{ bookName }}.",
     "cancel": "Annuler",
-    "readd_book_to_project": "Re-add {{ bookName }} to project",
-    "readd_to_project": "Re-add to project"
+    "readd_book_to_project": "Rajouter {{ bookName }} au projet",
+    "readd_to_project": "Rajouter au projet"
   },
   "draft_generation": {
     "back_from_stepper_button": "Retour",
     "back_translation_requirement": "Les ébauches de retraduction ne peuvent être générés que dans les quelque 200 [link:supportedLanguagesUrl]langues prises en charge[/link].",
     "cancel_generation_button": "Annuler",
     "criteria_project_language_not_in_nllb_with_language": "La langue de votre projet [em]\"{{ targetLanguageDisplayName }}\"[/em] n'est pas une langue prise en charge.",
-    "dialog_confirm_draft_cancellation_message": "Canceling will reset progress for this draft request. Any previously generated draft will still be accessible.",
+    "dialog_confirm_draft_cancellation_message": "L'annulation réinitialisera l'état d'avancement de cette demande de brouillon. Toute ébauche précédemment générée sera toujours accessible.",
     "dialog_confirm_draft_cancellation_no": "Non",
-    "dialog_confirm_draft_cancellation_title": "Cancel generating draft?",
-    "dialog_confirm_draft_cancellation_yes": "Yes, cancel",
+    "dialog_confirm_draft_cancellation_title": "Annuler la génération du brouillon ?",
+    "dialog_confirm_draft_cancellation_yes": "Oui, annuler",
     "dialog_confirm_draft_regeneration_message": "La création d'un nouveau brouillon supprimera le brouillon existant.",
     "dialog_confirm_draft_regeneration_no": "Annuler",
     "dialog_confirm_draft_regeneration_title": "Est-ce que vous avez terminé avec le projet actuel?",
@@ -155,7 +155,7 @@
     "generate_back_translation_drafts_header": "Générer des brouillons de retraduction",
     "generate_draft_button": "Générer un brouillon",
     "generate_forward_translation_drafts_header": "Générer des ébauches de traduction",
-    "generate_new_draft": "Nouveau brouillon",
+    "generate_new_draft": "Nouvelle Ébauche",
     "go_to_draft_viewer": "Allez sur [link:draftViewerUrl]l'aperçu du brouillon[/link] pour prévisualiser et appliquer le brouillon généré aux chapitres de votre choix.",
     "info_alert_different_additional_training_and_source_language": "La langue de votre texte de formation supplémentaire ({{ additionalTrainingSourceLanguageDisplayName }}) doit être la même que la langue source de la formation ({{ alternateTrainingSourceLanguageDisplayName }}). Sélectionnez un autre texte de formation supplémentaire sur la page [link:projectSettingsUrl]paramètres[/link].",
     "info_alert_different_training_and_source_language": "La langue de votre texte de formation alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) doit être la même que la langue source ({{ sourceLanguageDisplayName }}). Sélectionnez un texte de formation alternatif différent sur la page [link:projectSettingsUrl]paramètres[/link].",
@@ -176,10 +176,10 @@
     "instructions_scripture_forge_assist_back_translation_subtext": "Si votre équipe a déjà rédigé un ou plusieurs livres et retraduit un ou plusieurs d'entre eux, Scripture Forge peut utiliser les livres retraduits pour générer un brouillon du prochain livre sur lequel vous travaillez.",
     "instructions_scripture_forge_assist_forward_translation": "Scripture Forge peut vous aider à ébaucher une traduction.",
     "instructions_scripture_forge_assist_forward_translation_subtext": "En fonction de votre progression de traduction existante, vous pouvez utiliser les livres que vous avez déjà traduits pour générer un brouillon du prochain livre sur lequel vous travaillez.",
-    "non_pa_info_alert_different_additional_training_and_source_language": "The language for your additional training text ({{ additionalTrainingSourceLanguageDisplayName }}) must be the same as the training source language ({{ alternateTrainingSourceLanguageDisplayName }}). Please have your Paratext Administrator select a different additional training text.",
-    "non_pa_info_alert_different_training_and_source_language": "The language for your alternate training text ({{ alternateTrainingSourceLanguageDisplayName }}) must be the same as the source language ({{ sourceLanguageDisplayName }}). Please have your Paratext Administrator select a different alternate training text.",
-    "non_pa_info_alert_same_source_and_target_language": "The language for your source text must be different than the target language ({{ targetLanguageDisplayName }}). Please have your Paratext Administrator change the source before you can generate a draft.",
-    "non_pa_info_alert_source_text_not_selected": "Your project has no source text selected. This is required in order to produce a draft translation. Please have your Paratext Administrator select a source before you can generate a draft.",
+    "non_pa_info_alert_different_additional_training_and_source_language": "La langue de votre texte de formation supplémentaire ({{ additionalTrainingSourceLanguageDisplayName }}) doit être la même que la langue de la source de formation ({{ alternateTrainingSourceLanguageDisplayName }}). Veuillez demander à votre administrateur Paratext de sélectionner un autre texte de formation supplémentaire.",
+    "non_pa_info_alert_different_training_and_source_language": "La langue de votre texte de formation alternatif ({{ alternateTrainingSourceLanguageDisplayName }}) doit être la même que la langue source ({{ sourceLanguageDisplayName }}). Veuillez demander à votre administrateur Paratext de sélectionner un autre texte de formation.",
+    "non_pa_info_alert_same_source_and_target_language": "La langue de votre texte source doit être différente de la langue cible ({{ targetLanguageDisplayName }}). Veuillez demander à votre administrateur Paratext de modifier la source avant de pouvoir générer un brouillon.",
+    "non_pa_info_alert_source_text_not_selected": "Votre projet n'a pas de texte source sélectionné. Ceci est requis pour produire une traduction brouillonne. Veuillez avoir votre administrateur Paratext de sélectionner une source avant de pouvoir générer un brouillon.",
     "offline_message": "La génération de brouillon n'est pas disponible hors connexion.",
     "preview_draft_button": "Prévisualiser le brouillon",
     "preview_last_draft_button": "Prévisualiser le dernier brouillon",
@@ -213,18 +213,18 @@
   },
   "draft_preview_books": {
     "add_to_project": "Ajouter au Projet",
-    "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
-    "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
+    "draft_successfully_applied": "Le brouillon pour {{ bookName }} a été appliqué avec succès à votre projet.",
+    "one_or_more_drafts_failed": "Les brouillons d'un ou plusieurs chapitres n'ont pas pu être appliqués. Voir les chapitres du livre pour voir quels chapitres avaient été appliqués avec succès.",
     "no_books_have_drafts": " Aucun livre n'a de brouillons.",
-    "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission.",
-    "readd_to_project": "Re-add to project"
+    "no_permission_to_edit_book": "Vous n'avez pas la permission d'écrire dans ce livre. Contactez l'administrateur du projet pour obtenir la permission.",
+    "readd_to_project": "Rajouter au projet"
   },
   "editor": {
     "add_comment": "Ajouter un commentaire",
     "anonymous": "Anonyme",
     "cancel": "Annuler",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
-    "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
+    "cannot_edit_chapter_unsupported_usfm": "Ce chapitre ne peut pas être édité car il contient un USFM non pris en charge. Pour le modifier, supprimez ces tags dans Paratext : {{ tags }}",
     "cannot_edit_note_paratext": "Vous ne pouvez pas modifier cette remarque car elle a été modifiée dans Paratext.",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
     "more_info": "Plus d'infos...",
@@ -249,7 +249,7 @@
     "no_draft_notice": "{{ bookChapterName }} n'a pas de brouillon.",
     "offline_notice": "Le brouillon automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout du brouillon écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
-    "reapply_to_project": "Re-add to project",
+    "reapply_to_project": "Rajouter au projet",
     "yes": "Écraser le chapitre"
   },
   "editor_history_tab": {
@@ -267,10 +267,10 @@
     "draft_tab_header": "Brouillon automatique"
   },
   "font_unsupported_message": {
-    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
-    "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",
-    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support {{ graphite }}. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
-    "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead."
+    "change_font_or_contact_for_help": "Si cette police ne répond pas aux besoins de ce projet, veuillez sélectionner une autre police dans les paramètres du projet Paratext, ou { 1 }contactez-nous pour obtenir de l'aide.{ 2 }",
+    "contact_for_help": "Si cela ne répond pas aux besoins de ce projet, veuillez nous contacter à l'adresse { 1 }pour obtenir de l'aide.{ 2 }",
+    "warn_font_requires_graphite": "La police sélectionnée pour ce projet, {{ selectedFont }}, ne peut être rendue que par les navigateurs web qui supportent {{ graphite }}. Cela signifie qu'elle ne fonctionnera que dans Firefox, sauf sur les appareils iOS, où elle ne fonctionnera même pas dans Firefox. Dans les navigateurs qui ne supportent pas Graphite, {{ fallbackFont }} est utilisé à la place.",
+    "warn_font_unsupported": "La police sélectionnée pour ce projet, {{ selectedFont }}, n'est pas prise en charge. {{ fallbackFont }} est utilisé à la place."
   },
   "history_chooser": {
     "confirm_revert": "Êtes-vous sûr de vouloir restaurer ce chapitre à la révision sélectionnée ?",

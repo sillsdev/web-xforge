@@ -126,7 +126,7 @@
     <comment>Text to show in Paratext Notes when response is audio-only</comment>
   </data>
   <data name="CommunitySupport" xml:space="preserve">
-    <value>Unterstützung durch Zielgruppe</value>
+    <value>Unterstützung durch die Zielgruppe</value>
   </data>
   <data name="EmailBad" xml:space="preserve">
     <value>Bitte gib eine gültige E-Mail-Adresse ein</value>
