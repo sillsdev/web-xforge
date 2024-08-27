@@ -5,6 +5,7 @@ import { v1 as uuidv1 } from 'uuid';
 import { hasNumberProp, hasObjectProp, hasStringProp } from '../type-utils';
 import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
+import { OnlineStatusService } from './online-status.service';
 
 /** See also C# enum EdjCase.JsonRpc.Common.RpcErrorCode, which this somewhat matches. */
 export enum CommandErrorCode {
@@ -61,8 +62,13 @@ export class CommandError extends Error {
 export class CommandService {
   constructor(
     private readonly http: HttpClient,
-    private readonly bugsnagService: BugsnagService
+    private readonly bugsnagService: BugsnagService,
+    private readonly onlineStatus: OnlineStatusService
   ) {}
+
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
+  }
 
   async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;
@@ -119,7 +125,11 @@ export class CommandService {
         moreInformation = `Unexpected error type: ${error}`;
       }
       const message = `Error invoking ${method}: ${moreInformation}`;
-      throw new CommandError(code, message, data);
+      if (this.appOnline) {
+        throw new CommandError(code, message, data);
+      }
+      console.error(`${code} ${message} ${data}`);
+      return undefined;
     }
   }
 }
