@@ -64,9 +64,9 @@
 <h3>Translation books</h3>
 <p>{{ translationBooks.join(", ") || "None" }}</p>
 
-@if (draftJob$ | async; as draftJob) {
+<!-- @if (draftJob$ | async; as draftJob) {
   <app-draft-information [draftJob]="draftJob"></app-draft-information>
-}
+} -->
 <h2>Raw draft config</h2>
 <pre class="raw-draft-config">
 @for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{ stringify(draftConfig![key]) }}</strong>
