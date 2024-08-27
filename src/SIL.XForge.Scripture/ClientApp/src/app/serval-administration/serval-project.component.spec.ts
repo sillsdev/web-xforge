@@ -4,6 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import FileSaver from 'file-saver';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -18,6 +19,8 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
+import { BuildDto } from '../machine-api/build-dto';
+import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
 
@@ -27,6 +30,7 @@ const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
 const mockAuthService = mock(AuthService);
+const mockDraftGenerationService = mock(DraftGenerationService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
@@ -44,7 +48,8 @@ describe('ServalProjectComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: AuthService, useMock: mockAuthService }
+      { provide: AuthService, useMock: mockAuthService },
+      { provide: DraftGenerationService, useMock: mockDraftGenerationService }
     ]
   }));
 
@@ -174,6 +179,8 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
 
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
+      when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
 
       // NOTE: The FileSaver namespace shares its signature with the FileSaver function, which has a deprecation warning
       // eslint-disable-next-line deprecation/deprecation

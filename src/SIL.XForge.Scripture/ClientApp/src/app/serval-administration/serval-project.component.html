@@ -58,12 +58,15 @@
 
 <h2>Last Draft settings</h2>
 <h3>Training books</h3>
-{{ trainingBooks.join(", ") || "None" }}
+<p>{{ trainingBooks.join(", ") || "None" }}</p>
 <h3>Training data files</h3>
-{{ trainingFiles.join(", ") || "None" }}
+<p>{{ trainingFiles.join(", ") || "None" }}</p>
 <h3>Translation books</h3>
-{{ translationBooks.join(", ") || "None" }}
+<p>{{ translationBooks.join(", ") || "None" }}</p>
 
+@if (draftJob$ | async; as draftJob) {
+  <app-draft-information [draftJob]="draftJob"></app-draft-information>
+}
 <h2>Raw draft config</h2>
 <pre class="raw-draft-config">
 @for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{ stringify(draftConfig![key]) }}</strong>

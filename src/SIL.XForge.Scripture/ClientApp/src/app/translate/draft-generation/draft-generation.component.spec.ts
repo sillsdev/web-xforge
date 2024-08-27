@@ -2017,27 +2017,6 @@ describe('DraftGenerationComponent', () => {
     });
   });
 
-  describe('canShowAdditionalInfo', () => {
-    it('should return true if the user is serval admin, and build has additional info', () => {
-      let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.ServalAdmin] });
-      });
-      expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(true);
-    });
-
-    it('should return false if the draft build has no additional info', () => {
-      let env = new TestEnvironment(() => {
-        mockAuthService = jasmine.createSpyObj<AuthService>([], { currentUserRoles: [SystemRole.ServalAdmin] });
-      });
-      expect(env.component.canShowAdditionalInfo({} as BuildDto)).toBe(false);
-    });
-
-    it('should return false if the user is not system admin', () => {
-      let env = new TestEnvironment();
-      expect(env.component.canShowAdditionalInfo({ additionalInfo: {} } as BuildDto)).toBe(false);
-    });
-  });
-
   describe('downloadProgress', () => {
     it('should show number between 0 and 100', () => {
       const env = new TestEnvironment();
