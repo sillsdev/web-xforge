@@ -129,7 +129,11 @@ export class CommandService {
         moreInformation = `Unexpected error type: ${error}`;
       }
       const message = `Error invoking ${method}: ${moreInformation}`;
-      throw new CommandError(code, message, data);
+      if (this.appOnline) {
+        throw new CommandError(code, message, data);
+      }
+      console.error(`${code} ${message} ${data}`);
+      return undefined;
     }
   }
 }

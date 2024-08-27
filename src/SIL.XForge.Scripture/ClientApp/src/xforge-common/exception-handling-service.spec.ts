@@ -19,8 +19,6 @@ import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
-import { OnlineStatusService } from './online-status.service';
-import { TestOnlineStatusService } from './test-online-status.service';
 
 const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);
@@ -29,7 +27,6 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineService = mock(TestOnlineStatusService);
 
 // suppress any expected logging so it won't be shown in the test results
 class MockConsole {
@@ -66,8 +63,7 @@ describe('ExceptionHandlingService', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: CONSOLE, useValue: new MockConsole() },
-      { provide: CookieService, useMock: mockedCookieService },
-      { provide: OnlineStatusService, useMock: mockedOnlineService }
+      { provide: CookieService, useMock: mockedCookieService }
     ],
     imports: [TestTranslocoModule]
   }));
@@ -207,15 +203,6 @@ describe('ExceptionHandlingService', () => {
       verify(mockedErrorReportingService.addMeta(anything())).once();
       const [meta] = capture(mockedErrorReportingService.addMeta).first();
       expect(meta['isPwaInstalled']).toBeDefined();
-    }));
-
-    it('should not show dialog if app is offline', fakeAsync(() => {
-      const env = new TestEnvironment();
-      spyOn<any>(env.service, 'handleAlert');
-      when(mockedOnlineService.isOnline).thenReturn(false);
-      env.handleError({ message: 'Should not show dialog', name: 'Error' });
-      expect(env.service['handleAlert']).toHaveBeenCalled();
-      verify(mockedNoticeService.showError(anything())).never();
     }));
   });
 });
