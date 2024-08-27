@@ -1,0 +1,70 @@
+@use 'src/variables';
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  width: 150px;
+
+  .countdown {
+    line-height: 1;
+    font-weight: bold;
+
+    &.animate {
+      animation: countdown 1s 3;
+    }
+
+    &:not(.animate) {
+      opacity: 0;
+      display: none;
+    }
+  }
+
+  .record,
+  .stop,
+  .has-attachment {
+    transform: scale(2);
+  }
+  .stop {
+    animation: pulse 0.75s infinite;
+    color: #fff;
+    transition: color 0.3s;
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+.has-attachment {
+  transform: scale(0);
+  display: flex;
+  gap: 30px;
+
+  &.visible {
+    transform: scale(1);
+  }
+}
+
+@keyframes countdown {
+  0% {
+    font-size: 100px;
+    transform: scale(1.2);
+  }
+  100% {
+    font-size: 90px;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    background-color: variables.$red;
+  }
+  50% {
+    background-color: lighten(variables.$red, 10%);
+  }
+  100% {
+    background-color: variables.$red;
+  }
+}
