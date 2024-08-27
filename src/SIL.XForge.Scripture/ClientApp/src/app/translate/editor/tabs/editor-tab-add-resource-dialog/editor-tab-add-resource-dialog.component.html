@@ -43,17 +43,11 @@
         {{ t("error_fetching_resources") }}
       </mat-error>
     }
-    @if (userNotPermitted) {
-      <mat-error>
-        {{ t("error_user_not_permitted") }}
-      </mat-error>
-    }
-    @if (offlineFailure && !appOnline) {
+    @if (!appOnline || this.offlineFailure) {
       <mat-error>
         {{ t("error_offline") }}
       </mat-error>
-    }
-    @if (projectFetchFailed || syncFailed) {
+    } @else if (projectFetchFailed || syncFailed) {
       <mat-error>
         {{ t("error_loading_resource") }}
       </mat-error>
@@ -65,9 +59,7 @@
     <button
       mat-flat-button
       color="primary"
-      [disabled]="
-        !form.valid || isLoading || isSyncActive || projectFetchFailed || syncFailed || (offlineFailure && !appOnline)
-      "
+      [disabled]="!form.valid || isLoading || isSyncActive || projectFetchFailed || syncFailed || !appOnline"
       (click)="confirmSelection()"
     >
       {{ t("select") }}

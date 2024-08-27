@@ -34,7 +34,6 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   projectFetchFailed = false;
   syncFailed = false;
   offlineFailure = false;
-  userNotPermitted = false;
 
   // Placed after 'Loading' when syncing
   animatedEllipsis$ = timer(500, 300).pipe(
@@ -81,21 +80,30 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         const project = this.projects?.find(p => p.paratextId === paratextId);
         if (project?.projectId != null) {
           // Add the user to the project if they are not already connected to it
-          if (!project.isConnected) {
+          if (!project.isConnected && this.appOnline) {
             await this.projectService.onlineAddCurrentUser(project.projectId);
           }
-          this.selectedProjectDoc = await this.projectService.get(project.projectId);
+          this.selectedProjectDoc =
+            project.projectId != null && this.appOnline ? await this.projectService.get(project.projectId) : undefined;
         } else {
           // Load the project or resource, creating it if it is not present
-          const projectId: string | undefined = await this.projectService.onlineCreateResourceProject(paratextId);
-          this.selectedProjectDoc = projectId != null ? await this.projectService.get(projectId) : undefined;
+          const projectId: string | undefined = this.appOnline
+            ? await this.projectService.onlineCreateResourceProject(paratextId)
+            : undefined;
+          this.selectedProjectDoc =
+            projectId != null && this.appOnline ? await this.projectService.get(projectId) : undefined;
         }
 
         if (this.selectedProjectDoc != null) {
           if (this.permissionsService.canSync(this.selectedProjectDoc)) {
-            await this.syncProject(this.selectedProjectDoc.id);
+            if (this.appOnline) {
+              this.isSyncActive = true;
+              await this.projectService.onlineSync(this.selectedProjectDoc.id);
+            } else {
+              this.offlineFailure = true;
+            }
           } else {
-            this.userNotPermitted = true;
+            this.dialogRef.close(this.selectedProjectDoc);
           }
         } else {
           this.projectFetchFailed = true;
@@ -109,12 +117,13 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         }
       } catch {}
     } finally {
-      if (!this.appOnline) {
-        this.isSyncActive = false;
+      if (!this.appOnline || this.offlineFailure) {
+        this.offlineFailure = true;
         this.syncFailed = false;
         this.projectFetchFailed = false;
-        this.offlineFailure = true;
+        this.isSyncActive = false;
       }
+
       this.isLoading = false;
     }
   }
@@ -172,16 +181,6 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.projectFetchFailed = false;
     this.syncFailed = false;
     this.offlineFailure = false;
-  }
-
-  private async syncProject(projectId: string): Promise<void> {
-    this.isSyncActive = true;
-    if (this.appOnline) {
-      if (!this.selectedProjectDoc?.data?.texts?.length) {
-        await this.projectService.onlineSync(projectId);
-      }
-      this.projectService.onlineSync(projectId);
-    }
   }
 
   /**
