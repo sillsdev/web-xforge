@@ -23,7 +23,7 @@ describe('EditorTabFactoryService', () => {
   it('should create a "biblical terms" tab', async () => {
     const tab = await service.createTab('biblical-terms');
     expect(tab.type).toEqual('biblical-terms');
-    expect(tab.svgIcon).toEqual('triquetra');
+    expect(tab.svgIcon).toEqual('biblical_terms');
     expect(tab.headerText).toEqual('Test Header Text');
     expect(tab.closeable).toEqual(true);
     expect(tab.movable).toEqual(true);
