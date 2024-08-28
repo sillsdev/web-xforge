@@ -31,6 +31,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
+import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
@@ -75,6 +76,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -91,6 +93,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { XmlUtils } from '../../shared/utils';
+import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
@@ -139,6 +142,7 @@ describe('EditorComponent', () => {
   configureTestingModule(() => ({
     declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent, EditorDraftComponent],
     imports: [
+      BiblicalTermsComponent,
       NoopAnimationsModule,
       RouterModule.forRoot(ROUTES),
       SharedModule,
@@ -3752,6 +3756,26 @@ describe('EditorComponent', () => {
         });
         discardPeriodicTasks();
       }));
+
+      it('should not add the biblical terms tab if the project does not have biblical terms enabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: false } });
+        env.setProjectUserConfig({ editorTabsOpen: [{ tabType: 'biblical-terms', groupId: 'source' }] });
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).not.toHaveBeenCalledWith('biblical-terms', jasmine.any(Object));
+        discardPeriodicTasks();
+      }));
+
+      it('should add the biblical terms tab if the project has biblical terms enabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ editorTabsOpen: [{ tabType: 'biblical-terms', groupId: 'source' }] });
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).toHaveBeenCalledWith('biblical-terms', jasmine.any(Object));
+        discardPeriodicTasks();
+      }));
     });
 
     describe('updateAutoDraftTabVisibility', () => {
@@ -4148,6 +4172,17 @@ class TestEnvironment {
           [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
         })
     );
+    when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything())).thenCall(id =>
+      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+        [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
+      })
+    );
+    when(mockedSFProjectService.queryBiblicalTerms(anything())).thenCall(id =>
+      this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, {
+        [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: id
+      })
+    );
     when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
       (projectId: string, noteThread: NoteThread) => {
         this.realtimeService.create(
@@ -4410,6 +4445,9 @@ class TestEnvironment {
         projectProfileData.translateConfig.source,
         data.translateConfig?.source
       );
+    }
+    if (data.biblicalTermsConfig !== undefined) {
+      projectProfileData.biblicalTermsConfig = merge(projectProfileData.biblicalTermsConfig, data.biblicalTermsConfig);
     }
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
