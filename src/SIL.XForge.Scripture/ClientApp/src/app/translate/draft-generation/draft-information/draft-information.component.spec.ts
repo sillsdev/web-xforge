@@ -20,7 +20,9 @@ describe('DraftInformationComponent', () => {
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
     });
     env.component.draftJob = { additionalInfo: {} } as BuildDto;
+    env.fixture.detectChanges();
     expect(env.component.canShowAdditionalInfo).toBe(true);
+    expect(env.infoUnavailableMessage).toBeNull();
   });
 
   it('should return false if the draft build has no additional info', () => {
@@ -28,13 +30,17 @@ describe('DraftInformationComponent', () => {
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
     });
     env.component.draftJob = {} as BuildDto;
+    env.fixture.detectChanges();
     expect(env.component.canShowAdditionalInfo).toBe(false);
+    expect(env.infoUnavailableMessage).not.toBeNull();
   });
 
   it('should return false if the user is not system admin', () => {
     const env = new TestEnvironment();
     env.component.draftJob = { additionalInfo: {} } as BuildDto;
+    env.fixture.detectChanges();
     expect(env.component.canShowAdditionalInfo).toBe(false);
+    expect(env.infoUnavailableMessage).not.toBeNull();
   });
 });
 
@@ -51,5 +57,9 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(DraftInformationComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
+  }
+
+  get infoUnavailableMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.info-unavailable');
   }
 }
