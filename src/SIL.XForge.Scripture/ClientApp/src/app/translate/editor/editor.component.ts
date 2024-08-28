@@ -1181,10 +1181,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // Include the project doc for tabs that contain a project id
       switchMap(persistedTabs => {
         return Promise.all(
-          persistedTabs.map(async tabData => ({
-            ...tabData,
-            projectDoc: tabData.projectId != null ? await this.projectService.getProfile(tabData.projectId) : undefined
-          }))
+          persistedTabs.map(async tabData => {
+            let projectDoc: SFProjectProfileDoc | undefined = undefined;
+            if (tabData.projectId != null) {
+              projectDoc = await this.projectService.getProfile(tabData.projectId);
+            } else if (tabData.tabType === 'biblical-terms') {
+              // Biblical Terms requires the project doc for permissions
+              projectDoc = this.activatedProject.projectDoc;
+            }
+
+            return {
+              ...tabData,
+              projectDoc
+            };
+          })
         );
       }),
       tap(async (persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
@@ -1211,6 +1221,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         );
 
         for (const tabData of persistedTabs) {
+          // Do not display the Biblical Terms tab if the user has lost permission
+          if (
+            tabData.tabType === 'biblical-terms' &&
+            tabData?.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === false
+          ) {
+            continue;
+          }
+
+          // Create the tab
           const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
             projectId: tabData.projectId,
             headerText: tabData.projectDoc?.data?.shortName,

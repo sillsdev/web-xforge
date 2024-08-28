@@ -17,7 +17,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, firstValueFrom, merge, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, merge, Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -126,6 +126,16 @@ class Row {
     }
   }
 
+  get canEdit(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
+        : undefined;
+    return userRole == null
+      ? false
+      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
+  }
+
   private get canAddNotes(): boolean {
     const userRole: string | undefined =
       this.projectUserConfigDoc?.data?.ownerRef != null
@@ -134,16 +144,6 @@ class Row {
     const hasNotePermission: boolean =
       userRole == null ? false : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Notes, Operation.Create);
     return hasNotePermission;
-  }
-
-  private get canEdit(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
-        : undefined;
-    return userRole == null
-      ? false
-      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
   }
 
   private get hasUnreadNotes(): boolean {
@@ -192,7 +192,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   private _chapter?: number;
   private chapter$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
-  private noteThreadSub?: Subscription;
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectDoc?: SFProjectProfileDoc;
@@ -286,9 +285,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (this.biblicalTermSub != null) {
       this.biblicalTermSub.unsubscribe();
     }
-    if (this.noteThreadSub != null) {
-      this.noteThreadSub.unsubscribe();
-    }
   }
 
   ngOnInit(): void {
@@ -301,20 +297,23 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       this.selectedCategory = this.projectUserConfigDoc.data?.selectedBiblicalTermsCategory ?? 'show_all';
       this.selectedRangeFilter = (this.projectUserConfigDoc.data?.selectedBiblicalTermsFilter ??
         'current_verse') as RangeFilter;
-      this.loadBiblicalTerms(projectId);
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-    });
-    this.subscribe(this.bookNum$, bookNum => {
-      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse);
-    });
-    this.subscribe(this.chapter$, chapter => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse);
-    });
-    this.subscribe(this.verse$, verse => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse);
-    });
-    this.subscribe(this.i18n.locale$, _ => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+
+      // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
+      this.loadingStarted();
+      let biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
+      this.biblicalTermSub?.unsubscribe();
+      this.biblicalTermSub = this.subscribe(
+        combineLatest([
+          this.bookNum$,
+          this.chapter$,
+          this.verse$,
+          this.i18n.locale$,
+          biblicalTermsAndNotesChanges$
+        ]).pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null)),
+        ([bookNum, chapter, verse]) => {
+          this.filterBiblicalTerms(bookNum, chapter, verse);
+        }
+      );
     });
   }
 
@@ -484,39 +483,26 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.loadingFinished();
   }
 
-  private async loadBiblicalTerms(sfProjectId: string): Promise<void> {
-    // Load the Biblical Terms
-    this.loadingStarted();
+  private async getBiblicalTermsAndNotesChanges(sfProjectId: string): Promise<Observable<any>> {
+    // Clean up existing queries
     this.biblicalTermQuery?.dispose();
-
-    this.biblicalTermQuery = await this.projectService.queryBiblicalTerms(sfProjectId);
-    this.biblicalTermSub?.unsubscribe();
-    this.biblicalTermSub = this.subscribe(
-      merge(
-        this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
-        this.biblicalTermQuery.remoteChanges$,
-        this.biblicalTermQuery.remoteDocChanges$
-      ),
-      () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-      }
-    );
-
-    // Load the Note Threads
     this.noteThreadQuery?.dispose();
 
-    this.noteThreadQuery = await this.projectService.queryBiblicalTermNoteThreads(sfProjectId);
-    this.noteThreadSub?.unsubscribe();
-    this.noteThreadSub = this.subscribe(
-      merge(
-        this.noteThreadQuery.localChanges$,
-        this.noteThreadQuery.ready$,
-        this.noteThreadQuery.remoteChanges$,
-        this.noteThreadQuery.remoteDocChanges$
-      ),
-      () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-      }
+    // Get the Biblical Terms and Notes
+    [this.biblicalTermQuery, this.noteThreadQuery] = await Promise.all([
+      this.projectService.queryBiblicalTerms(sfProjectId),
+      this.projectService.queryBiblicalTermNoteThreads(sfProjectId)
+    ]);
+
+    // Return a merged observable to monitor changes
+    return merge(
+      this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
+      this.biblicalTermQuery.remoteChanges$,
+      this.biblicalTermQuery.remoteDocChanges$,
+      this.noteThreadQuery.localChanges$,
+      this.noteThreadQuery.ready$.pipe(filter(isReady => isReady)),
+      this.noteThreadQuery.remoteChanges$,
+      this.noteThreadQuery.remoteDocChanges$
     );
   }
 
