@@ -9,8 +9,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
   selector: 'app-draft-information',
   standalone: true,
   imports: [UICommonModule, CommonModule],
-  templateUrl: './draft-information.component.html',
-  styleUrl: './draft-information.component.scss'
+  templateUrl: './draft-information.component.html'
 })
 export class DraftInformationComponent {
   @Input() draftJob?: BuildDto;

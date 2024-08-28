@@ -1,17 +1,14 @@
 @if (this.canShowAdditionalInfo) {
-  <mat-expansion-panel class="diagnostic-info">
-    <mat-expansion-panel-header><h3>Diagnostic Information</h3></mat-expansion-panel-header>
-    <ng-template matExpansionPanelContent>
-      <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
-      <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
-      <div><strong>Date Finished:</strong> {{ draftJob?.additionalInfo?.dateFinished?.toLocaleString() }}</div>
-      <div><strong>Message:</strong> {{ draftJob?.message }}</div>
-      <div><strong>Percent Completed:</strong> {{ draftJob?.percentCompleted }}</div>
-      <div><strong>Revision:</strong> {{ draftJob?.revision }}</div>
-      <div><strong>Queue Depth:</strong> {{ draftJob?.queueDepth }}</div>
-      <div><strong>State:</strong> {{ draftJob?.state }}</div>
-      <div><strong>Step:</strong> {{ draftJob?.additionalInfo?.step }}</div>
-      <div><strong>Translation Engine Id:</strong> {{ draftJob?.additionalInfo?.translationEngineId }}</div>
-    </ng-template>
-  </mat-expansion-panel>
+  <div><strong>Build Id:</strong> {{ draftJob?.additionalInfo?.buildId }}</div>
+  <div><strong>Corpora Ids:</strong> {{ draftJob?.additionalInfo?.corporaIds?.join(", ") }}</div>
+  <div><strong>Date Finished:</strong> {{ draftJob?.additionalInfo?.dateFinished?.toLocaleString() }}</div>
+  <div><strong>Message:</strong> {{ draftJob?.message }}</div>
+  <div><strong>Percent Completed:</strong> {{ draftJob?.percentCompleted }}</div>
+  <div><strong>Revision:</strong> {{ draftJob?.revision }}</div>
+  <div><strong>Queue Depth:</strong> {{ draftJob?.queueDepth }}</div>
+  <div><strong>State:</strong> {{ draftJob?.state }}</div>
+  <div><strong>Step:</strong> {{ draftJob?.additionalInfo?.step }}</div>
+  <div><strong>Translation Engine Id:</strong> {{ draftJob?.additionalInfo?.translationEngineId }}</div>
+} @else {
+  <p class="info-unavailable">The latest draft information is unavailable</p>
 }
