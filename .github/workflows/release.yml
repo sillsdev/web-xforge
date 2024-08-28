@@ -125,6 +125,7 @@ jobs:
           DEPLOY_DESTINATION: ${{secrets.deploy_server}}
           DEPLOY_CREDENTIALS: ~/.ssh/deploy_key
           HOSTNAME: ${{inputs.server_domain_name}}
+          ALTERNATE_DOMAIN: ${{secrets.alternate_domain}}
           NODE_OPTIONS: ${{inputs.node_options}}
           PARATEXT_CLIENT_ID: ${{secrets.paratext_client_id}}
           PROJECT: ${{inputs.project}}
