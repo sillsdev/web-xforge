@@ -16,6 +16,7 @@ public interface IMachineApiService
         string buildId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalBuildDto?> GetCurrentBuildAsync(
@@ -23,6 +24,7 @@ public interface IMachineApiService
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
@@ -43,6 +45,7 @@ public interface IMachineApiService
         string curUserId,
         string sfProjectId,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(

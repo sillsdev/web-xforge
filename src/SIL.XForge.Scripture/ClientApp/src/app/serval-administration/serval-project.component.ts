@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, tap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -60,8 +60,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly draftGenerationService: DraftGenerationService
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
   }
