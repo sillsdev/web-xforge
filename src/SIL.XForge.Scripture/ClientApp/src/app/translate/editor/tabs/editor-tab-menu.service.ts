@@ -107,7 +107,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           take(1),
           map(localizedMenuItemText => ({
             type: 'biblical-terms',
-            svgIcon: 'triquetra',
+            svgIcon: 'biblical_terms',
             text: localizedMenuItemText
           }))
         );
