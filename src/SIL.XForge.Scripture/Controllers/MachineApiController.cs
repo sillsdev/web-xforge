@@ -112,12 +112,14 @@ public class MachineApiController : ControllerBase
         {
             // First, check for a queued build
             ServalBuildDto? build = null;
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             if (buildId is null)
             {
                 build = await _machineApiService.GetQueuedStateAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     preTranslate,
+                    isServalAdmin,
                     cancellationToken
                 );
 
@@ -135,6 +137,7 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     minRevision,
                     preTranslate,
+                    isServalAdmin,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -143,6 +146,7 @@ public class MachineApiController : ControllerBase
                     buildId,
                     minRevision,
                     preTranslate,
+                    isServalAdmin,
                     cancellationToken
                 );
 
@@ -517,6 +521,7 @@ public class MachineApiController : ControllerBase
                 _userAccessor.UserId,
                 sfProjectId,
                 preTranslate: false,
+                isServalAdmin: false,
                 cancellationToken
             );
             return Ok(build);

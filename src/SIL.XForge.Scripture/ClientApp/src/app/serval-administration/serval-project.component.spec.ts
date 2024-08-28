@@ -27,12 +27,11 @@ import { ServalProjectComponent } from './serval-project.component';
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
+const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
-const mockAuthService = mock(AuthService);
-const mockDraftGenerationService = mock(DraftGenerationService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
