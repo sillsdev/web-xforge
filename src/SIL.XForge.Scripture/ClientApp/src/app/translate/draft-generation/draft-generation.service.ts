@@ -261,7 +261,7 @@ export class DraftGenerationService {
         const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0)).then(usfm => {
           if (usfm != null) {
             const fileName: string =
-              getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.sfm';
+              getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
             zip.file(fileName, usfm);
             zipProgress.current++;
             observer.next(zipProgress);
