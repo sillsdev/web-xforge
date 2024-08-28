@@ -31,14 +31,16 @@
     "current_book": "Current Book",
     "current_chapter": "Current Chapter",
     "current_verse": "Current Verse",
+    "edit_renderings": "Edit Renderings",
     "gloss": "Gloss",
     "not_found": "No Biblical Terms match your criteria.",
     "notes": "Notes",
     "renderings": "Renderings",
-    "settings": "Configure Biblical Terms",
+    "settings": "Settings",
     "show": "Show",
     "term": "Term",
-    "transliterate_terms": "Transliterate Terms"
+    "transliterate_terms": "Transliterate Terms",
+    "view_renderings": "View Renderings"
   },
   "book_select": {
     "clear": "Clear",
