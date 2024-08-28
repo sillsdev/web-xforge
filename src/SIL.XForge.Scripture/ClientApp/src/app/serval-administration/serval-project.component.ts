@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { catchError, lastValueFrom, of, tap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, Observable, of, tap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -12,8 +12,11 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
+import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { ServalAdministrationService } from './serval-administration.service';
 
 interface Row {
@@ -27,7 +30,7 @@ interface Row {
   selector: 'app-serval-project',
   templateUrl: './serval-project.component.html',
   styleUrls: ['./serval-project.component.scss'],
-  imports: [CommonModule, NoticeComponent, SharedModule, UICommonModule],
+  imports: [CommonModule, NoticeComponent, SharedModule, UICommonModule, DraftInformationComponent],
   standalone: true
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
@@ -43,13 +46,15 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   translationBooks: string[] = [];
 
   draftConfig: Object | undefined;
+  draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly servalAdministrationService: ServalAdministrationService
+    private readonly servalAdministrationService: ServalAdministrationService,
+    private readonly draftGenerationService: DraftGenerationService
   ) {
     super(noticeService);
   }
@@ -137,6 +142,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           );
 
           this.draftConfig = project.translateConfig.draftConfig;
+          this.draftJob$ = this.getDraftJob(projectDoc.id);
         })
       )
     );
@@ -194,5 +200,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   arrayToString(value: any): string {
     return '[' + value.join(', ') + ']';
+  }
+
+  private getDraftJob(projectId: string): Observable<BuildDto | undefined> {
+    return this.draftGenerationService.getBuildProgress(projectId);
   }
 }

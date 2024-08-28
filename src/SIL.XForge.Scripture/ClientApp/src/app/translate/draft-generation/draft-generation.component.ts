@@ -40,6 +40,7 @@ import {
   DraftGenerationStepsResult
 } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { DraftInformationComponent } from './draft-information/draft-information.component';
 import { DraftPreviewBooksComponent } from './draft-preview-books/draft-preview-books.component';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
@@ -59,6 +60,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     SharedModule,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
+    DraftInformationComponent,
     SupportedBackTranslationLanguagesDialogComponent,
     ServalProjectComponent,
     DraftPreviewBooksComponent
@@ -534,10 +536,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   isServalAdmin(): boolean {
     return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
-  }
-
-  canShowAdditionalInfo(job?: BuildDto): boolean {
-    return job?.additionalInfo != null && this.isServalAdmin();
   }
 
   canCancel(job?: BuildDto): boolean {
