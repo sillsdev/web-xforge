@@ -538,6 +538,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
   }
 
+  canShowAdditionalInfo(job?: BuildDto): boolean {
+    return job?.additionalInfo != null && this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
+  }
+
   canCancel(job?: BuildDto): boolean {
     return job == null || this.isDraftInProgress(job);
   }
