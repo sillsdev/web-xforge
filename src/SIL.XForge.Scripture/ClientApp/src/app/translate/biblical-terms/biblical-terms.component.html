@@ -28,7 +28,11 @@
           >
             <mat-icon [style.transform]="row.transformNotesIcon">{{ row.notesIcon }}</mat-icon>
           </button>
-          <button mat-icon-button (click)="editRendering(row.id)" [matTooltip]="t('renderings')">
+          <button
+            mat-icon-button
+            (click)="editRendering(row.id)"
+            [matTooltip]="t(row.canEdit ? 'edit_renderings' : 'view_renderings')"
+          >
             <mat-icon>{{ row.editIcon }}</mat-icon>
           </button>
         </td>
