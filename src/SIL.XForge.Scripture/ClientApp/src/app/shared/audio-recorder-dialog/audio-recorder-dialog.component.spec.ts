@@ -1,5 +1,8 @@
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { firstValueFrom } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -15,17 +18,14 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { OverlayContainer } from '@angular/cdk/overlay';
-import { firstValueFrom } from 'rxjs';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { AudioPlayer } from '../audio/audio-player';
+import { createMockMediaStream } from '../test-utils';
 import {
   AudioAttachment,
   AudioRecorderDialogComponent,
   AudioRecorderDialogData
 } from './audio-recorder-dialog.component';
-import { createMockMediaStream } from '../test-utils';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
@@ -63,6 +63,7 @@ describe('AudioRecorderDialogComponent', () => {
     const env = new TestEnvironment();
     expect(env.recordButton).toBeTruthy();
     expect(env.stopRecordingButton).toBeFalsy();
+    expect(env.recordingIndicator.classList.contains('visible')).toBe(false);
     env.clickButton(env.recordButton);
     // Record for more than 2 seconds in order to test the duration of blob files
     // which can fail with certain recording types
@@ -70,6 +71,7 @@ describe('AudioRecorderDialogComponent', () => {
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();
     expect(env.component.audio.status).toEqual('recording');
+    expect(env.recordingIndicator.classList.contains('visible')).toBe(true);
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
     expect(env.component.audio.status).toEqual('processed');
@@ -188,6 +190,10 @@ class TestEnvironment {
 
   get tryAgainButton(): HTMLElement {
     return this.overlayContainerElement.querySelector('.remove-audio-file') as HTMLElement;
+  }
+
+  get recordingIndicator(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.visualizer') as HTMLElement;
   }
 
   clickButton(button: HTMLElement): void {

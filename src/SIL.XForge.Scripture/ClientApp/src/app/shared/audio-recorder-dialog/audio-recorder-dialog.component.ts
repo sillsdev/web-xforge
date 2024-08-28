@@ -1,6 +1,20 @@
-import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  Inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate, TranslocoModule } from '@ngneat/transloco';
+import { timer } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -9,12 +23,8 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { isGecko, objectId } from 'xforge-common/utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { timer } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { isGecko, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -40,7 +50,7 @@ export interface AudioRecorderDialogData {
 /* eslint-disable brace-style */
 export class AudioRecorderDialogComponent
   extends SubscriptionDisposable
-  implements ControlValueAccessor, OnInit, OnDestroy
+  implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit
 {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
@@ -61,6 +71,9 @@ export class AudioRecorderDialogComponent
   private recordedChunks: Blob[] = [];
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
+  private canvasContext: CanvasRenderingContext2D | null = null;
+  private HEIGHT = 200;
+  private WIDTH = 200;
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
@@ -96,6 +109,14 @@ export class AudioRecorderDialogComponent
   async ngOnInit(): Promise<void> {
     this.mediaDevicesUnsupported =
       this.navigator.mediaDevices?.getUserMedia == null || typeof MediaRecorder === 'undefined';
+  }
+
+  ngAfterViewInit(): void {
+    const canvas: HTMLCanvasElement = document.querySelector('.visualizer')!;
+    this.canvasContext = canvas.getContext('2d');
+    if (this.canvasContext == null) return;
+    this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
+    this.canvasContext.fillRect(0, 0, this.WIDTH, this.HEIGHT);
   }
 
   writeValue(obj: AudioAttachment): void {
@@ -217,6 +238,26 @@ export class AudioRecorderDialogComponent
   }
 
   private successCallback(stream: MediaStream): void {
+    // set up analyser node so we can visualize when a user is recording audio
+    const audioCtx = new AudioContext();
+    const analyser: AnalyserNode = audioCtx.createAnalyser();
+    const source: MediaStreamAudioSourceNode = audioCtx.createMediaStreamSource(stream);
+    analyser.fftSize = 256;
+    const bufferLength: number = analyser.frequencyBinCount;
+    const dataArray: Uint8Array = new Uint8Array(bufferLength);
+    source.connect(analyser);
+
+    this.canvasContext?.clearRect(0, 0, this.WIDTH, this.HEIGHT);
+
+    // draw the frequency bar to indicate the recording is working
+    const drawFrequencyBar = (): void => {
+      requestAnimationFrame(drawFrequencyBar);
+      analyser.getByteFrequencyData(dataArray);
+      this.drawOnCanvas(dataArray);
+    };
+
+    drawFrequencyBar();
+
     const options: MediaRecorderOptions = {
       mimeType: this.mimeType
     };
@@ -227,5 +268,15 @@ export class AudioRecorderDialogComponent
     this.mediaRecorder.onstop = () => this.processAudio();
     this.mediaRecorder.start();
     this.audio = { status: 'recording' };
+  }
+
+  private drawOnCanvas(dataArray: Uint8Array): void {
+    if (this.canvasContext == null) return;
+    this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
+    this.canvasContext.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+
+    const barHeight: number = dataArray[0];
+    this.canvasContext.fillStyle = 'rgb(' + 200 + ',0,0)';
+    this.canvasContext.fillRect(0, this.HEIGHT - barHeight, this.WIDTH, barHeight);
   }
 }

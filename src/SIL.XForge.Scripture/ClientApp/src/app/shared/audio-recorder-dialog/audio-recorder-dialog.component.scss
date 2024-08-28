@@ -36,6 +36,20 @@
   }
 }
 
+.visualizer-container {
+  display: flex;
+  justify-content: flex-end;
+
+  .visualizer {
+    width: 20px;
+    height: 50px;
+    transform: scale(0);
+    &.visible {
+      transform: scale(1);
+    }
+  }
+}
+
 .has-attachment {
   transform: scale(0);
   display: flex;
