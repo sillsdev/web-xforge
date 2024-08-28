@@ -1028,7 +1028,6 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        // Ensure that correct overload is called
         env.MachineApiService.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, false, CancellationToken.None)
             .Returns(Task.FromResult(string.Empty));
 
