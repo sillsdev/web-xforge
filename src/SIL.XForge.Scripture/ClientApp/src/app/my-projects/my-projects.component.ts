@@ -15,8 +15,11 @@ import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
 import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { ParatextService } from '../core/paratext.service';
+import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 /** Presents user with list of available projects to open or connect to. */
@@ -30,8 +33,12 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   userConnectedProjects: SFProjectProfileDoc[] = [];
   /** Resources on SF that the current user is on at SF. */
   userConnectedResources: SFProjectProfileDoc[] = [];
+  sfProjects: SFProjectDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
   userUnconnectedParatextProjects: ParatextProject[] = [];
+
+  userConfigDocs: SFProjectUserConfigDoc[] = [];
+
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
   errorMessage: ObjectPaths<typeof en.my_projects> = 'problem_getting_pt_list';
@@ -46,6 +53,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
     readonly paratextService: ParatextService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService,
+    private readonly permissions: PermissionsService,
     private readonly noticeService: NoticeService,
     private readonly router: Router
   ) {
@@ -66,6 +74,8 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   }
 
   async ngOnInit(): Promise<void> {
+    await this.loadUser();
+    await this.userProjectsService.updateProjectList(this.user);
     this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
       if (projects == null) return;
       this.userConnectedProjects = projects.filter(
@@ -74,7 +84,11 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
     });
-    await this.loadUser();
+    this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
+      if (configs == null) return;
+      this.userConfigDocs = configs;
+    });
+
     await this.onlineStatusService.online;
     if (this.userIsPTUser) await this.loadParatextProjects();
   }
@@ -86,8 +100,16 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   /** Get descriptive text to show on a project card regarding what the project is used for, such as
    *  Community Checking. */
   projectTypeDescription(sfProject: SFProjectProfileDoc): string {
-    const drafting = translate('my_projects.drafting');
-    const checking = sfProject.data?.checkingConfig?.checkingEnabled ? ' • ' + translate('app.community_checking') : '';
+    const isTranslateAccessible = this.permissions.canAccessTranslate(sfProject);
+    const isCheckingAccessible = this.permissions.canAccessCommunityChecking(sfProject) ?? false;
+
+    const drafting = isTranslateAccessible ? translate('my_projects.drafting') : '';
+    const checking = isCheckingAccessible
+      ? isTranslateAccessible
+        ? ' • ' + translate('app.community_checking')
+        : translate('app.community_checking')
+      : '';
+
     return `${drafting}${checking}`;
   }
 

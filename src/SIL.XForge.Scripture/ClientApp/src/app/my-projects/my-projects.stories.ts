@@ -7,8 +7,9 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { delay, of } from 'rxjs';
-import { instance, mock, objectContaining, when } from 'ts-mockito';
+import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -19,7 +20,9 @@ import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { ParatextService } from '../core/paratext.service';
+import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
@@ -34,7 +37,7 @@ const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedNoticeService = mock(NoticeService);
-
+const mockedPermissionsService = mock(PermissionsService);
 interface ProjectScenario {
   code: string;
   shortNameBase: string;
@@ -194,7 +197,8 @@ const meta: Meta = {
         { provide: ParatextService, useValue: instance(mockedParatextService) },
         { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
-        { provide: NoticeService, useValue: instance(mockedNoticeService) }
+        { provide: NoticeService, useValue: instance(mockedNoticeService) },
+        { provide: PermissionsService, useValue: instance(mockedPermissionsService) }
       ]
     }),
     (story, context) => {
@@ -202,7 +206,7 @@ const meta: Meta = {
       let projectProfileDocs: SFProjectProfileDoc[] = [];
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
-
+      let userConfigDocs: SFProjectUserConfigDoc[] = [];
       // Create the user who is viewing the page.
       const user: User = createTestUser({
         paratextId: context.args.isKnownPTUser ? 'pt-user-id' : undefined,
@@ -233,7 +237,6 @@ const meta: Meta = {
             // (Make sure the id is not 16 characters, so it is not incorrectly seen as a resource.)
             const ptProjectId: string = `pt-id-${shortName}-paratext-project`;
             const sfProjectId: string | undefined = scenario.projIsOnSF ? `sf-id-${shortName}` : undefined;
-
             // Add to list of user's SF projects that they are connected to, if appropriate.
             if (scenario.userOnSFProject) {
               const sfProjectProfile: SFProjectProfile = createTestProjectProfile({
@@ -255,6 +258,15 @@ const meta: Meta = {
                 id: sfProjectId,
                 data: sfProjectProfile
               } as SFProjectProfileDoc);
+              userConfigDocs.push({
+                id: 'sf-user-id',
+                data: createTestProjectUserConfig({
+                  ownerRef: 'sf-user-id',
+                  projectRef: sfProjectId,
+                  selectedBookNum: 40,
+                  selectedChapterNum: 1
+                })
+              } as SFProjectUserConfigDoc);
             }
 
             // Define whether the project is on SF at all.
@@ -304,6 +316,10 @@ const meta: Meta = {
         const lastSelectedProjectId: string = projectProfileDocs[lastSelectedProject].id;
         user.sites.sf.currentProjectId = lastSelectedProjectId;
       }
+      when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(userConfigDocs));
+
+      when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissionsService.canAccessTranslate(anything())).thenReturn(true);
 
       when(mockedParatextService.getProjects()).thenCall(async () => {
         if (context.args.delayFetchingPTProjectList) await new Promise(resolve => setTimeout(resolve, 5000));
