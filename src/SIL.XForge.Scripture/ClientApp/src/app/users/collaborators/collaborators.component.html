@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'collaborators'">
   <div class="invite-user">
     @if (!isAppOnline) {
-      <span id="collaborators-offline-message" class="offline-text">{{ t("connect_network_to_manage_users") }}</span>
+      <p id="collaborators-offline-message" class="offline-text">{{ t("connect_network_to_manage_users") }}</p>
     }
     <app-notice icon="live_help">
       <div class="help-message">
