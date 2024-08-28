@@ -20,7 +20,7 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
         return Object.assign(
           {
             type: 'biblical-terms',
-            svgIcon: 'triquetra',
+            svgIcon: 'biblical_terms',
             headerText: await firstValueFrom(
               this.i18n.translate('editor_tab_factory.default_biblical_terms_tab_header')
             ),
