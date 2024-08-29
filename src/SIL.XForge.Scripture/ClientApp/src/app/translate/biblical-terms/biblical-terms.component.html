@@ -88,7 +88,9 @@
       <tr mat-footer-row *matFooterRowDef="['id']; sticky: true"></tr>
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell" [attr.colspan]="columnsToDisplay.length">
-          {{ this.isLoaded ? t("not_found") : "" }}
+          @if (this.isLoaded) {
+            <span class="not-found">{{ t("not_found") }}</span>
+          }
         </td>
       </tr>
     </table>
