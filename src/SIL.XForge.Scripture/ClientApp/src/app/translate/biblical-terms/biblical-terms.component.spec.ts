@@ -25,7 +25,6 @@ import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scripturefo
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
@@ -46,7 +45,6 @@ import { MockNoteDialogRef } from '../editor/editor.component.spec';
 import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogIcon, BiblicalTermNoteIcon, BiblicalTermsComponent } from './biblical-terms.component';
 
-const mockedActivatedProjectService = mock(ActivatedProjectService);
 const mockedI18nService = mock(I18nService);
 const mockedMatDialog = mock(MatDialog);
 const mockedProjectService = mock(SFProjectService);
@@ -56,7 +54,6 @@ describe('BiblicalTermsComponent', () => {
   configureTestingModule(() => ({
     imports: [NoopAnimationsModule, TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -232,15 +229,6 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
   }));
 
-  it('can use the user project configuration of a different project', fakeAsync(() => {
-    const env = new TestEnvironment('project02', 3, 3, '0', 'project01');
-    env.setupProjectData('en');
-    env.wait();
-    expect(env.biblicalTermsTerm.length).toBe(1);
-    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId03');
-    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category03_en');
-  }));
-
   it('should show add if no biblical terms notes', fakeAsync(() => {
     const env = new TestEnvironment('project01', 2, 2, '2');
     env.setupProjectData('en');
@@ -384,6 +372,22 @@ describe('BiblicalTermsComponent', () => {
     expect(noteThread.status).toEqual(NoteStatus.Resolved);
     expect(noteThread.notes[1].content).toBeUndefined();
   }));
+
+  it('should show the not found message if no messages were found', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '4');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(0);
+    expect(env.noDataRow.length).toBe(1);
+    expect(env.notFoundMessage.length).toBe(1);
+  }));
+
+  it('should not show the not found message when loading the component', fakeAsync(() => {
+    const env = new TestEnvironment(undefined, 1, 1, '4');
+    env.wait();
+    expect(env.noDataRow.length).toBe(1);
+    expect(env.notFoundMessage.length).toBe(0);
+  }));
 });
 
 class TestEnvironment {
@@ -396,14 +400,7 @@ class TestEnvironment {
 
   private openNoteDialogs: MockNoteDialogRef[] = [];
 
-  constructor(
-    projectId: string,
-    bookNum: number,
-    chapter: number,
-    verse: string = '0',
-    activatedProjectId: string = projectId
-  ) {
-    when(mockedActivatedProjectService.projectId).thenReturn(activatedProjectId);
+  constructor(projectId: string | undefined, bookNum: number, chapter: number, verse: string = '0') {
     when(mockedI18nService.locale$).thenReturn(this.locale$);
     when(mockedProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
@@ -466,6 +463,14 @@ class TestEnvironment {
 
   get editBiblicalTermIcon(): HTMLElement {
     return this.fixture.nativeElement.querySelectorAll('td.mat-column-id mat-icon')[1] as HTMLElement;
+  }
+
+  get noDataRow(): NodeList {
+    return this.fixture.nativeElement.querySelectorAll('.mat-mdc-no-data-row');
+  }
+
+  get notFoundMessage(): NodeList {
+    return this.fixture.nativeElement.querySelectorAll('.not-found');
   }
 
   getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {

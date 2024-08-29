@@ -19,7 +19,6 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { BehaviorSubject, combineLatest, firstValueFrom, merge, Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -179,8 +178,8 @@ class Row {
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
   categories: string[] = [];
-  columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
-  rangeFilters: RangeFilter[] = ['current_verse', 'current_chapter', 'current_book'];
+  readonly columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
+  readonly rangeFilters: RangeFilter[] = ['current_verse', 'current_chapter', 'current_book'];
   selectedCategory = 'show_all';
   selectedRangeFilter: RangeFilter = 'current_verse';
   rows: Row[] = [];
@@ -204,7 +203,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
@@ -288,19 +286,16 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   ngOnInit(): void {
-    this.subscribe(this.projectId$, async projectId => {
+    this.subscribe(this.projectId$.pipe(filter(projectId => projectId !== '')), async projectId => {
       this.projectDoc = await this.projectService.getProfile(projectId);
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(
-        this.activatedProjectService.projectId ?? projectId,
-        this.userService.currentUserId
-      );
-      this.selectedCategory = this.projectUserConfigDoc.data?.selectedBiblicalTermsCategory ?? 'show_all';
-      this.selectedRangeFilter = (this.projectUserConfigDoc.data?.selectedBiblicalTermsFilter ??
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+      this.selectedRangeFilter = (this.projectUserConfigDoc?.data?.selectedBiblicalTermsFilter ??
         'current_verse') as RangeFilter;
 
       // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
       this.loadingStarted();
-      let biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
+      let selectedCategoryLoaded = false;
+      const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
       this.biblicalTermSub?.unsubscribe();
       this.biblicalTermSub = this.subscribe(
         combineLatest([
@@ -312,6 +307,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         ]).pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null)),
         ([bookNum, chapter, verse]) => {
           this.filterBiblicalTerms(bookNum, chapter, verse);
+          if (!selectedCategoryLoaded) {
+            selectedCategoryLoaded = true;
+            this.selectedCategory = this.projectUserConfigDoc?.data?.selectedBiblicalTermsCategory ?? 'show_all';
+          }
         }
       );
     });

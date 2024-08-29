@@ -1187,9 +1187,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             let projectDoc: SFProjectProfileDoc | undefined = undefined;
             if (tabData.projectId != null) {
               projectDoc = await this.projectService.getProfile(tabData.projectId);
-            } else if (tabData.tabType === 'biblical-terms') {
-              // Biblical Terms requires the project doc for permissions
-              projectDoc = this.activatedProject.projectDoc;
             }
 
             return {
@@ -1226,7 +1223,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           // Do not display the Biblical Terms tab if the user has lost permission
           if (
             tabData.tabType === 'biblical-terms' &&
-            tabData?.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === false
+            this.activatedProject.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === false
           ) {
             continue;
           }
