@@ -5,6 +5,7 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { BehaviorSubject, Observable, map, merge } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
@@ -46,13 +47,18 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     private readonly projectService: SFProjectService,
     private readonly projectNotificationService: ProjectNotificationService,
     private readonly featureFlags: FeatureFlagService,
-    private readonly errorReportingService: ErrorReportingService
+    private readonly errorReportingService: ErrorReportingService,
+    private readonly onlineStatus: OnlineStatusService
   ) {
     super();
 
     this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
       this.updateProgressState(projectId, progressState);
     });
+  }
+
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
   }
 
   @Input() set projectDoc(doc: SFProjectDoc | undefined) {
@@ -64,7 +70,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   }
 
   async initialize(): Promise<void> {
-    if (this._projectDoc?.data == null) {
+    if (this._projectDoc?.data == null || !this.appOnline) {
       return;
     }
     await this.projectNotificationService.start();

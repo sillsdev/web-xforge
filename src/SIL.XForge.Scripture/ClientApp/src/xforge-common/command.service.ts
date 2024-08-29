@@ -89,13 +89,17 @@ export class CommandService {
       'request'
     );
     try {
-      const response = await lastValueFrom(
-        this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
-      );
-      if (response.error != null) {
-        throw response.error;
+      if (!this.appOnline) {
+        return Promise.resolve(undefined);
+      } else {
+        const response = await lastValueFrom(
+          this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
+        );
+        if (response.error != null) {
+          throw response.error;
+        }
+        return response.result;
       }
-      return response.result;
     } catch (error) {
       // Transform the various kinds of errors into a CommandError.
 
@@ -125,11 +129,7 @@ export class CommandService {
         moreInformation = `Unexpected error type: ${error}`;
       }
       const message = `Error invoking ${method}: ${moreInformation}`;
-      if (this.appOnline) {
-        throw new CommandError(code, message, data);
-      }
-      console.error(`${code} ${message} ${data}`);
-      return undefined;
+      throw new CommandError(code, message, data);
     }
   }
 }
