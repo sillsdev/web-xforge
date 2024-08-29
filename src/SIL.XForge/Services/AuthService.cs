@@ -47,7 +47,16 @@ public class AuthService : DisposableBase, IAuthService
 
     public async Task<Tokens?> GetParatextTokensAsync(string authId, CancellationToken token)
     {
-        string userProfileJson = await CallApiAsync(HttpMethod.Get, $"users/{authId}", content: null, token);
+        string userProfileJson;
+        try
+        {
+            userProfileJson = await CallApiAsync(HttpMethod.Get, $"users/{authId}", content: null, token);
+        }
+        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.NotFound)
+        {
+            // The users API returns 404 if the user was removed from Auth0
+            return null;
+        }
 
         JObject userProfile = JObject.Parse(userProfileJson);
         JArray identities = userProfile["identities"] as JArray;

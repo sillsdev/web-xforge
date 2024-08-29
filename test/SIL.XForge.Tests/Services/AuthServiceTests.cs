@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
 
@@ -33,15 +33,50 @@ public class AuthServiceTests
                 ]
             }
             """;
-        Dictionary<string, string> responses = new Dictionary<string, string>
-        {
-            { "oauth/token", $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""" },
-            { "users/auth01", userResponse },
-        };
-        var handler = new MockHttpMessageHandler(responses, HttpStatusCode.OK);
+        var handler = new MockHttpMessageHandler(
+            [
+                (
+                    url: "oauth/token",
+                    message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
+                    statusCode: HttpStatusCode.OK
+                ),
+                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
+            ]
+        );
         var httpClient = TestEnvironment.CreateHttpClient(handler);
 
         var env = new TestEnvironment(httpClient);
+
+        // SUT
+        var result = await env.Service.GetParatextTokensAsync("auth01", CancellationToken.None);
+        Assert.IsNull(result);
+        Assert.AreEqual(2, handler.NumberOfCalls);
+        Assert.IsNull(handler.LastInput);
+    }
+
+    [Test]
+    public async Task GetParatextTokensAsync_NotFound()
+    {
+        // Set up a mock Auth0 API
+        var handler = new MockHttpMessageHandler(
+            [
+                (
+                    url: "oauth/token",
+                    message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
+                    statusCode: HttpStatusCode.OK
+                ),
+                (
+                    url: "users/auth01",
+                    message: """{"statusCode":404,"error":"Not Found","message":"The user does not exist.","errorCode":"inexistent_user"}""",
+                    statusCode: HttpStatusCode.NotFound
+                ),
+            ]
+        );
+        var httpClient = TestEnvironment.CreateHttpClient(handler);
+
+        var env = new TestEnvironment(httpClient);
+        env.ExceptionHandler.EnsureSuccessStatusCode(Arg.Is<HttpResponseMessage>(h => !h.IsSuccessStatusCode))
+            .Throws(new HttpRequestException(null, null, HttpStatusCode.NotFound));
 
         // SUT
         var result = await env.Service.GetParatextTokensAsync("auth01", CancellationToken.None);
@@ -77,12 +112,16 @@ public class AuthServiceTests
                 ]
             }
             """;
-        Dictionary<string, string> responses = new Dictionary<string, string>
-        {
-            { "oauth/token", $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""" },
-            { "users/auth01", userResponse },
-        };
-        var handler = new MockHttpMessageHandler(responses, HttpStatusCode.OK);
+        var handler = new MockHttpMessageHandler(
+            [
+                (
+                    url: "oauth/token",
+                    message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
+                    statusCode: HttpStatusCode.OK
+                ),
+                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
+            ]
+        );
         var httpClient = TestEnvironment.CreateHttpClient(handler);
 
         var env = new TestEnvironment(httpClient);
@@ -101,12 +140,13 @@ public class AuthServiceTests
         {
             var authOptions = Substitute.For<IOptions<AuthOptions>>();
             authOptions.Value.Returns(new AuthOptions { Domain = "localhost", BackendClientSecret = "secret" });
-            var exceptionHandler = Substitute.For<IExceptionHandler>();
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
             var httpClientFactory = Substitute.For<IHttpClientFactory>();
             httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
-            Service = new AuthService(authOptions, exceptionHandler, httpClientFactory);
+            Service = new AuthService(authOptions, ExceptionHandler, httpClientFactory);
         }
 
+        public IExceptionHandler ExceptionHandler { get; }
         public AuthService Service { get; }
 
         public static HttpClient CreateHttpClient(HttpMessageHandler handler) =>
