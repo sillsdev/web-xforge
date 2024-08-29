@@ -72,8 +72,8 @@ export class AudioRecorderDialogComponent
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
   private canvasContext: CanvasRenderingContext2D | null = null;
-  private HEIGHT = 200;
-  private WIDTH = 200;
+  private HEIGHT = 100;
+  private WIDTH = 300;
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
@@ -238,26 +238,6 @@ export class AudioRecorderDialogComponent
   }
 
   private successCallback(stream: MediaStream): void {
-    // set up analyser node so we can visualize when a user is recording audio
-    const audioCtx = new AudioContext();
-    const analyser: AnalyserNode = audioCtx.createAnalyser();
-    const source: MediaStreamAudioSourceNode = audioCtx.createMediaStreamSource(stream);
-    analyser.fftSize = 256;
-    const bufferLength: number = analyser.frequencyBinCount;
-    const dataArray: Uint8Array = new Uint8Array(bufferLength);
-    source.connect(analyser);
-
-    this.canvasContext?.clearRect(0, 0, this.WIDTH, this.HEIGHT);
-
-    // draw the frequency bar to indicate the recording is working
-    const drawFrequencyBar = (): void => {
-      requestAnimationFrame(drawFrequencyBar);
-      analyser.getByteFrequencyData(dataArray);
-      this.drawOnCanvas(dataArray);
-    };
-
-    drawFrequencyBar();
-
     const options: MediaRecorderOptions = {
       mimeType: this.mimeType
     };
@@ -268,15 +248,54 @@ export class AudioRecorderDialogComponent
     this.mediaRecorder.onstop = () => this.processAudio();
     this.mediaRecorder.start();
     this.audio = { status: 'recording' };
+
+    // set up analyser node so we can visualize when a user is recording audio
+    const audioCtx = new AudioContext();
+    const analyser: AnalyserNode = audioCtx.createAnalyser();
+    const source: MediaStreamAudioSourceNode = audioCtx.createMediaStreamSource(stream);
+    const bufferLength: number = analyser.frequencyBinCount;
+    const dataArray: Uint8Array = new Uint8Array(bufferLength);
+    source.connect(analyser);
+
+    this.canvasContext?.clearRect(0, 0, this.WIDTH, this.HEIGHT);
+
+    // draw the frequency bar to indicate the recording is working
+    const drawWaveForm = (): void => {
+      if (this.audio.status !== 'recording') return;
+
+      setTimeout(() => {
+        requestAnimationFrame(drawWaveForm);
+        analyser.getByteTimeDomainData(dataArray);
+        this.drawOnCanvas(dataArray, bufferLength);
+      }, 150);
+    };
+
+    drawWaveForm();
   }
 
-  private drawOnCanvas(dataArray: Uint8Array): void {
+  private drawOnCanvas(dataArray: Uint8Array, bufferLength: number): void {
     if (this.canvasContext == null) return;
-    this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
+    this.canvasContext.fillStyle = 'white';
     this.canvasContext.fillRect(0, 0, this.WIDTH, this.HEIGHT);
 
-    const barHeight: number = dataArray[0];
-    this.canvasContext.fillStyle = 'rgb(' + 200 + ',0,0)';
-    this.canvasContext.fillRect(0, this.HEIGHT - barHeight, this.WIDTH, barHeight);
+    this.canvasContext.lineWidth = 3;
+    this.canvasContext.strokeStyle = 'rgb(200 0 0)';
+    this.canvasContext.beginPath();
+
+    const interval = 32;
+    const sliceWidth = this.WIDTH / (bufferLength / interval);
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i += interval) {
+      const v = dataArray[i] / 128.0;
+      const y = (v * this.HEIGHT) / 2;
+
+      this.canvasContext.moveTo(x, this.HEIGHT);
+      this.canvasContext.lineTo(x, this.HEIGHT - y);
+
+      x += sliceWidth;
+    }
+
+    this.canvasContext.stroke();
   }
 }
