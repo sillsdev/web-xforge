@@ -306,6 +306,25 @@ describe('DraftHandlingService', () => {
       verify(mockedDraftGenerationService.getGeneratedDraft('project01', 1, 1)).once();
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).never();
     });
+
+    it('should return false if applying a draft fails', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      const draft: DeltaOperation[] = [{ insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }];
+      when(
+        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
+      ).thenReturn(of(draft));
+      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(mockedProjectService.onlineSetDraftApplied(anything(), anything(), anything(), anything())).thenReturn(
+        Promise.reject(new Error('Failed'))
+      );
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
+      expect(result).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
+      verify(mockedTextDocService.overwrite(textDocId, anything(), anything())).never();
+      verify(
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
+      ).once();
+    });
   });
 
   describe('opsHaveContent', () => {

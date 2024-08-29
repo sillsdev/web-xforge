@@ -206,7 +206,7 @@ export class DraftHandlingService {
           ops = draft;
         }
         const draftDelta: DeltaStatic = new Delta(ops);
-        await this.applyChapterDraftAsync(targetTextDocId, draftDelta);
+        await this.applyChapterDraftAsync(targetTextDocId, draftDelta).catch(() => resolve(false));
         resolve(true);
       });
     });

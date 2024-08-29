@@ -13,11 +13,14 @@
         (projectSelect)="projectSelectedAsync($event.paratextId)"
         formControlName="targetParatextId"
       ></app-project-select>
-      @if (!canEditProject) {
+      @if (!canEditProject && isAppOnline) {
         <mat-error class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</mat-error>
       }
-      @if (projectLoadingFailed) {
+      @if (projectLoadingFailed && isAppOnline) {
         <mat-error class="fetch-projects-failed-message">{{ t("error_fetching_projects") }}</mat-error>
+      }
+      @if (!isAppOnline) {
+        <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
       }
       @if (connectOtherProject != null) {
         <div class="unlisted-project-message">

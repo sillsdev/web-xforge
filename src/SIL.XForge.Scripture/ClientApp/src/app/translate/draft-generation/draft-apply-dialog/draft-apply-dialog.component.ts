@@ -12,6 +12,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -57,7 +58,8 @@ export class DraftApplyDialogComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly i18n: I18nService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly onlineStatusService: OnlineStatusService
   ) {
     this.targetProject$.pipe(filterNullish()).subscribe(async project => {
       const chapters: number = await this.chaptersWithTextAsync(project);
@@ -70,7 +72,7 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   get addDisabled(): boolean {
-    return this.targetProjectId == null || !this.canEditProject || this.addToProjectForm.invalid;
+    return this.targetProjectId == null || !this.canEditProject || this.addToProjectForm.invalid || !this.isAppOnline;
   }
 
   get bookName(): string {
@@ -80,6 +82,10 @@ export class DraftApplyDialogComponent implements OnInit {
   /** An observable that emits the target project profile if the user has permission to write to the specified book. */
   get targetProject$(): Observable<SFProjectProfile | undefined> {
     return this.targetProjectDoc$.pipe(map(p => p?.data));
+  }
+
+  get isAppOnline(): boolean {
+    return this.onlineStatusService.isOnline;
   }
 
   ngOnInit(): void {
@@ -129,6 +135,8 @@ export class DraftApplyDialogComponent implements OnInit {
     // emit the project profile document
     if (this.canEditProject) {
       this.targetProjectDoc$.next(projectDoc);
+    } else {
+      this.targetProjectDoc$.next(undefined);
     }
   }
 

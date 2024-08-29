@@ -14,6 +14,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
@@ -30,6 +31,7 @@ const mockedUserService = mock(UserService);
 const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 const mockedI18nService = mock(I18nService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -56,6 +58,7 @@ describe('DraftApplyDialogComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
       { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1 } }
     ]
@@ -158,6 +161,35 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.addButton.attributes['disabled']).toBeDefined();
     expect(env.cannotEditMessage).not.toBeNull();
   }));
+
+  it('updates the target project info when updating the project in the selector', fakeAsync(() => {
+    env.component.projectSelectedAsync('pt01');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.targetProjectContent.textContent).toContain('Test project 1');
+    env.component.projectSelectedAsync('pt02');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.targetProjectContent).toBeNull();
+  }));
+
+  it('notifies user if offline', fakeAsync(async () => {
+    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
+    env.component.projectSelectedAsync('pt01');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.offlineWarning).toBeNull();
+    const harness = await env.checkboxHarnessAsync();
+    harness.check();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.addButton.attributes['disabled']).toBeUndefined();
+    when(mockedOnlineStatusService.isOnline).thenReturn(false);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.offlineWarning).not.toBeNull();
+    expect(env.addButton.attributes['disabled']).toBeDefined();
+  }));
 });
 
 class TestEnvironment {
@@ -169,7 +201,7 @@ class TestEnvironment {
     {
       paratextId: 'pt01',
       projectId: 'project01',
-      name: 'Project 01',
+      name: 'Test project 1',
       shortName: 'P01',
       languageTag: 'en',
       isConnectable: true,
@@ -178,7 +210,7 @@ class TestEnvironment {
     {
       paratextId: 'pt02',
       projectId: 'project02',
-      name: 'Project 02',
+      name: 'Test project 2',
       shortName: 'P02',
       languageTag: 'fr',
       isConnectable: true,
@@ -204,6 +236,7 @@ class TestEnvironment {
       templateTagText: 'text',
       after: ''
     });
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
     this.setupProject();
 
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
@@ -240,6 +273,10 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.fetch-projects-failed-message');
   }
 
+  get offlineWarning(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.offline-message');
+  }
+
   async checkboxHarnessAsync(): Promise<MatCheckboxHarness> {
     return await this.loader.getHarness(MatCheckboxHarness.with({ selector: '.overwrite-content' }));
   }
@@ -249,19 +286,23 @@ class TestEnvironment {
       { id: 'project01', permission: TextInfoPermission.Write },
       { id: 'project02', permission: TextInfoPermission.Read }
     ];
+    let projectNum = 1;
     for (const { id, permission } of projectPermissions) {
       const mockedProject = {
         id,
-        data: createTestProjectProfile({
-          userRoles: { user01: SFProjectRole.ParatextAdministrator },
-          texts: [
-            {
-              bookNum: 1,
-              chapters: [{ number: 1, permissions: { user01: permission } }],
-              permissions: { user01: permission }
-            }
-          ]
-        })
+        data: createTestProjectProfile(
+          {
+            userRoles: { user01: SFProjectRole.ParatextAdministrator },
+            texts: [
+              {
+                bookNum: 1,
+                chapters: [{ number: 1, permissions: { user01: permission } }],
+                permissions: { user01: permission }
+              }
+            ]
+          },
+          projectNum++
+        )
       } as SFProjectProfileDoc;
       when(mockedProjectService.getProfile(id)).thenResolve(mockedProject);
     }
