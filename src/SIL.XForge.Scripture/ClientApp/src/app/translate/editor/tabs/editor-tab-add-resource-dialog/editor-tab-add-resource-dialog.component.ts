@@ -33,6 +33,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   isSyncActive = false;
   projectFetchFailed = false;
   syncFailed = false;
+  offlineFailure = false;
 
   // Placed after 'Loading' when syncing
   animatedEllipsis$ = timer(500, 300).pipe(
@@ -83,15 +84,18 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         }
         if (project?.projectId != null) {
           // Add the user to the project if they are not already connected to it
-          if (!project.isConnected) {
+          if (!project.isConnected && this.appOnline) {
             await this.projectService.onlineAddCurrentUser(project.projectId);
           }
           this.selectedProjectDoc =
             project?.projectId != null ? await this.projectService.get(project.projectId) : undefined;
         } else {
           // Load the project or resource, creating it if it is not present
-          const projectId: string | undefined = await this.projectService.onlineCreateResourceProject(paratextId);
-          this.selectedProjectDoc = projectId != null ? await this.projectService.get(projectId) : undefined;
+          const projectId: string | undefined = this.appOnline
+            ? await this.projectService.onlineCreateResourceProject(paratextId)
+            : undefined;
+          this.selectedProjectDoc =
+            projectId != null && this.appOnline ? await this.projectService.get(projectId) : undefined;
         }
 
         if (this.selectedProjectDoc != null) {

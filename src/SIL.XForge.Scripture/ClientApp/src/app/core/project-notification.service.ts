@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AbortError, HubConnection, HubConnectionBuilder, IHttpConnectionOptions } from '@microsoft/signalr';
 import { AuthService } from 'xforge-common/auth.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +12,15 @@ export class ProjectNotificationService {
     accessTokenFactory: async () => (await this.authService.getAccessToken()) ?? ''
   };
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private readonly onlineService: OnlineStatusService
+  ) {
     this.connection = new HubConnectionBuilder().withUrl('/project-notifications', this.options).build();
+  }
+
+  get appOnline(): boolean {
+    return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
   }
 
   setNotifySyncProgressHandler(handler: any): void {
