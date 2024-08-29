@@ -3354,6 +3354,7 @@ public class ParatextService : DisposableBase, IParatextService
             if (!userSecret.ParatextTokens.ValidateLifetime())
             {
                 Tokens refreshedUserTokens;
+                var refreshStartTime = DateTime.UtcNow;
                 try
                 {
                     refreshedUserTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(
@@ -3391,6 +3392,14 @@ public class ParatextService : DisposableBase, IParatextService
                         _registryClient,
                         token
                     );
+                }
+
+                var tokenIssuedAt = refreshedUserTokens.IssuedAt;
+                // The registry clock been more than 5 minutes fast in the past. Insure the new token is not issued more
+                // than 15 seconds in the future, or more than 15 seconds before the refresh started.
+                if (tokenIssuedAt > DateTime.UtcNow.AddSeconds(15) || tokenIssuedAt < refreshStartTime.AddSeconds(-15))
+                {
+                    // TODO log to Bugsnag
                 }
 
                 userSecret = await _userSecretRepository.UpdateAsync(
