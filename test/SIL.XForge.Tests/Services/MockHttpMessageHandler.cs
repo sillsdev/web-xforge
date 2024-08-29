@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -8,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SIL.XForge.Services;
 
-public class MockHttpMessageHandler(Dictionary<string, string> responses, HttpStatusCode statusCode)
+public class MockHttpMessageHandler((string url, string message, HttpStatusCode statusCode)[] responses)
     : HttpMessageHandler
 {
     public string? LastInput { get; private set; }
@@ -23,15 +22,15 @@ public class MockHttpMessageHandler(Dictionary<string, string> responses, HttpSt
         LastInput = request.Content is not null ? await request.Content.ReadAsStringAsync(cancellationToken) : null;
 
         foreach (
-            KeyValuePair<string, string> response in responses.Where(response =>
-                request.RequestUri!.PathAndQuery.Contains(response.Key)
+            (string _, string message, HttpStatusCode statusCode) in responses.Where(response =>
+                request.RequestUri!.PathAndQuery.Contains(response.url)
             )
         )
         {
             return new HttpResponseMessage
             {
                 StatusCode = statusCode,
-                Content = new StringContent(response.Value),
+                Content = new StringContent(message),
                 RequestMessage = request,
             };
         }
