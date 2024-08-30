@@ -273,14 +273,14 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides add audio button for community checker', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CHECKER_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addAudioButton).toBeNull();
       flush();
       discardPeriodicTasks();
     }));
 
     it('shows add audio and shows add question button for paratext administrator', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
       flush();
@@ -288,7 +288,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('shows add audio and hides add question button for paratext translator (includes consultant, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
-      const env = new TestEnvironment({ user: TRANSLATOR_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: TRANSLATOR_USER });
       env.fixture.detectChanges();
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).toBeNull();
@@ -297,7 +297,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides add audio and shows add question button for paratext consultant (includes translator, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CONSULTANT_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: CONSULTANT_USER });
       env.fixture.detectChanges();
       expect(env.addAudioButton).toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
