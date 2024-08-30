@@ -26,12 +26,27 @@
   .has-attachment {
     transform: scale(2);
   }
-  .stop {
-    animation: pulse 0.75s infinite;
-    color: #fff;
-    transition: color 0.3s;
-    &:hover {
+
+  .stop-background {
+    background-color: variables.$red;
+    height: 80px;
+    width: 80px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &.animate {
+      animation: 1s growshrink;
+    }
+
+    .stop {
+      animation: pulse 0.75s infinite;
       color: #fff;
+      transition: color 0.3s;
+      &:hover {
+        color: #fff;
+      }
     }
   }
 }
@@ -80,5 +95,17 @@
   }
   100% {
     background-color: variables.$red;
+  }
+}
+
+@keyframes growshrink {
+  0% {
+    width: 80px;
+    height: 80px;
+  }
+  100% {
+    width: 120px;
+    height: 120px;
+    background-color: white;
   }
 }
