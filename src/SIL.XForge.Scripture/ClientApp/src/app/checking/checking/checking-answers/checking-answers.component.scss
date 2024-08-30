@@ -22,23 +22,16 @@
 }
 
 .answer-question {
-  .question {
-    display: flex;
-    flex-direction: column;
-    row-gap: 8px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
 
-    .question-text {
-      font-weight: bold;
-    }
-    .question-footer {
-      .actions {
-        display: flex;
-        justify-content: flex-end;
-      }
-    }
+  .question-text {
+    font-weight: bold;
   }
-  > .actions {
-    padding-block-start: 8px;
+
+  .question-footer {
+    margin-inline-start: 40px;
   }
 }
 

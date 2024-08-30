@@ -1,47 +1,56 @@
 <ng-container *transloco="let t; read: 'checking_answers'">
   <div class="answers-component">
     <div class="answers-component-scrollable-content">
-      @if (featureFlags.scriptureAudio.enabled) {
-        <app-checking-question [questionDoc]="questionDoc" (audioPlayed)="playAudio()"> </app-checking-question>
-      }
-      <div class="answer-question">
-        <div class="question">
-          @if (!featureFlags.scriptureAudio.enabled) {
-            <div class="question-text">{{ questionDoc?.data?.text }}</div>
-            @if (questionDoc?.data?.audioUrl) {
-              <div class="question-audio">
-                <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
-                </app-checking-audio-player>
+      <div>
+        @if (featureFlags.scriptureAudio.enabled) {
+          <app-checking-question [questionDoc]="questionDoc" (audioPlayed)="playAudio()"> </app-checking-question>
+        }
+        <div class="answer-question">
+          <div class="question">
+            @if (!featureFlags.scriptureAudio.enabled) {
+              <div class="question-text">{{ questionDoc?.data?.text }}</div>
+              @if (questionDoc?.data?.audioUrl) {
+                <div class="question-audio">
+                  <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
+                  </app-checking-audio-player>
+                </div>
+              }
+            }
+            @if (canEditQuestion) {
+              <div class="question-footer">
+                <div class="actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="questionDialog()"
+                    class="edit-question-button"
+                    [matTooltip]="t('edit')"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    (click)="archiveQuestion()"
+                    class="archive-question-button"
+                    [matTooltip]="t('archive')"
+                  >
+                    <mat-icon>archive</mat-icon>
+                  </button>
+                </div>
               </div>
             }
-          }
-          @if (canEditQuestion) {
-            <div class="question-footer">
-              <div class="actions">
-                <button mat-button type="button" (click)="questionDialog()" class="edit-question-button short-button">
-                  {{ t("edit") }}
+          </div>
+          @if (!answerFormVisible) {
+            <div class="actions">
+              @if (currentUserTotalAnswers === 0 && canAddAnswer) {
+                <button mat-flat-button color="primary" (click)="showAnswerForm()" id="add-answer">
+                  {{ t("add_answer") }}
                 </button>
-                <button
-                  mat-button
-                  type="button"
-                  (click)="archiveQuestion()"
-                  class="archive-question-button short-button"
-                >
-                  {{ t("archive") }}
-                </button>
-              </div>
+              }
             </div>
           }
         </div>
-        @if (!answerFormVisible) {
-          <div class="actions">
-            @if (currentUserTotalAnswers === 0 && canAddAnswer) {
-              <button mat-flat-button color="primary" (click)="showAnswerForm()" id="add-answer">
-                {{ t("add_answer") }}
-              </button>
-            }
-          </div>
-        }
       </div>
       @if (answerFormVisible) {
         <div>
