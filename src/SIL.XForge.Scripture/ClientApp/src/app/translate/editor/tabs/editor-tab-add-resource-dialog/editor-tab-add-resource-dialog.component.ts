@@ -83,7 +83,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         }
         if (project?.projectId != null) {
           // Add the user to the project if they are not already connected to it
-          if (!project.isConnected && this.appOnline) {
+          if (!project.isConnected) {
             await this.projectService.onlineAddCurrentUser(project.projectId);
           }
           this.selectedProjectDoc =
@@ -99,11 +99,13 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
         if (this.selectedProjectDoc != null) {
           if (this.permissionsService.canSync(this.selectedProjectDoc)) {
-            if (!this.selectedProjectDoc?.data?.texts?.length) {
+            if (!this.selectedProjectDoc.data?.texts.length) {
               this.isSyncActive = true;
               await this.projectService.onlineSync(this.selectedProjectDoc.id);
             } else {
-              this.projectService.onlineSync(this.selectedProjectDoc.id);
+              this.projectService
+                .onlineSync(this.selectedProjectDoc.id)
+                .catch(_ => console.warn('Syncing to resource project failed'));
               this.dialogRef.close(this.selectedProjectDoc);
             }
           } else {
