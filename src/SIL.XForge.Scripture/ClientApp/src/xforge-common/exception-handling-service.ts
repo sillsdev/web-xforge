@@ -233,7 +233,7 @@ export class ExceptionHandlingService {
     try {
       const eventId = objectId();
       try {
-        // Don't show a dialog if app is offline or this is a silent error or that we just want sent to Bugsnag
+        // Don't show a dialog if this is a silent error or that we just want sent to Bugsnag
         if (!silently) {
           const stack = hasStringProp(error, 'stack') ? error.stack : undefined;
           await this.handleAlert(ngZone, dialogService, { message, stack, eventId });
