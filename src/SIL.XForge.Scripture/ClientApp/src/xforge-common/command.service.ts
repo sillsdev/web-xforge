@@ -5,7 +5,6 @@ import { v1 as uuidv1 } from 'uuid';
 import { hasNumberProp, hasObjectProp, hasStringProp } from '../type-utils';
 import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
-import { OnlineStatusService } from './online-status.service';
 
 /** See also C# enum EdjCase.JsonRpc.Common.RpcErrorCode, which this somewhat matches. */
 export enum CommandErrorCode {
@@ -62,13 +61,8 @@ export class CommandError extends Error {
 export class CommandService {
   constructor(
     private readonly http: HttpClient,
-    private readonly bugsnagService: BugsnagService,
-    private readonly onlineStatus: OnlineStatusService
+    private readonly bugsnagService: BugsnagService
   ) {}
-
-  get appOnline(): boolean {
-    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
-  }
 
   async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;
@@ -89,17 +83,13 @@ export class CommandService {
       'request'
     );
     try {
-      if (!this.appOnline) {
-        return Promise.resolve(undefined);
-      } else {
-        const response = await lastValueFrom(
-          this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
-        );
-        if (response.error != null) {
-          throw response.error;
-        }
-        return response.result;
+      const response = await lastValueFrom(
+        this.http.post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
+      );
+      if (response.error != null) {
+        throw response.error;
       }
+      return response.result;
     } catch (error) {
       // Transform the various kinds of errors into a CommandError.
 
@@ -129,11 +119,7 @@ export class CommandService {
         moreInformation = `Unexpected error type: ${error}`;
       }
       const message = `Error invoking ${method}: ${moreInformation}`;
-      if (this.appOnline) {
-        throw new CommandError(code, message, data);
-      }
-      console.error(`${code} ${message} ${data}`);
-      return undefined;
+      throw new CommandError(code, message, data);
     }
   }
 }

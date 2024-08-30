@@ -57,6 +57,7 @@ describe('SyncProgressComponent', () => {
 
   it('does not initialize if app is offline', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
+    env.setupProjectDoc();
     env.onlineStatus = false;
     verify(mockedProjectService.get('sourceProject02')).never();
     expect(await env.getMode()).toBe('indeterminate');
