@@ -16,15 +16,17 @@
             </button>
           }
           @if (isRecording) {
-            <button
-              mat-icon-button
-              (click)="stopRecording()"
-              class="stop"
-              [matTooltip]="t('stop_recording')"
-              matTooltipPosition="below"
-            >
-              <mat-icon>stop</mat-icon>
-            </button>
+            <div class="stop-background">
+              <button
+                mat-icon-button
+                (click)="stopRecording()"
+                class="stop"
+                [matTooltip]="t('stop_recording')"
+                matTooltipPosition="below"
+              >
+                <mat-icon>stop</mat-icon>
+              </button>
+            </div>
           }
         </div>
       }
