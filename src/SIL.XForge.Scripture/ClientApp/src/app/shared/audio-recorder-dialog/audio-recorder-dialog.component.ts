@@ -72,8 +72,10 @@ export class AudioRecorderDialogComponent
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
   private canvasContext: CanvasRenderingContext2D | null = null;
-  private HEIGHT = 100;
+  // height and width are calculated in ngAfterViewInit
+  private HEIGHT = 150;
   private WIDTH = 300;
+  private audioBase = 128;
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
@@ -113,6 +115,8 @@ export class AudioRecorderDialogComponent
 
   ngAfterViewInit(): void {
     const canvas: HTMLCanvasElement = document.querySelector('.visualizer')!;
+    this.WIDTH = canvas.width;
+    this.HEIGHT = canvas.height;
     this.canvasContext = canvas.getContext('2d');
     if (this.canvasContext == null) return;
     this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
@@ -262,11 +266,19 @@ export class AudioRecorderDialogComponent
     // draw the frequency bar to indicate the recording is working
     const drawWaveForm = (): void => {
       if (this.audio.status !== 'recording') return;
+      const elem: HTMLElement | null = document.querySelector('.stop-background');
 
       setTimeout(() => {
         requestAnimationFrame(drawWaveForm);
         analyser.getByteTimeDomainData(dataArray);
         this.drawOnCanvas(dataArray, bufferLength);
+
+        const threshold = 1.25;
+        if (dataArray.some(v => v / this.audioBase > threshold)) {
+          // show the ripple animation when the frequency reaches the threshold
+          elem?.classList.add('animate');
+          setTimeout(() => elem?.classList.remove('animate'), 1000);
+        }
       }, 150);
     };
 
@@ -275,23 +287,25 @@ export class AudioRecorderDialogComponent
 
   private drawOnCanvas(dataArray: Uint8Array, bufferLength: number): void {
     if (this.canvasContext == null) return;
-    this.canvasContext.fillStyle = 'white';
+    this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
     this.canvasContext.fillRect(0, 0, this.WIDTH, this.HEIGHT);
 
     this.canvasContext.lineWidth = 3;
     this.canvasContext.strokeStyle = 'rgb(200 0 0)';
     this.canvasContext.beginPath();
 
-    const interval = 32;
+    const interval = 16;
     const sliceWidth = this.WIDTH / (bufferLength / interval);
     let x = 0;
 
     for (let i = 0; i < bufferLength; i += interval) {
-      const v = dataArray[i] / 128.0;
-      const y = (v * this.HEIGHT) / 2;
+      const value: number = dataArray[i] / this.audioBase - 0.95;
+      const y = value * this.HEIGHT;
 
-      this.canvasContext.moveTo(x, this.HEIGHT);
-      this.canvasContext.lineTo(x, this.HEIGHT - y);
+      // draw the waveform line above and below the x-axis
+      const mid = this.HEIGHT / 2;
+      this.canvasContext.moveTo(x, mid + y);
+      this.canvasContext.lineTo(x, mid - y);
 
       x += sliceWidth;
     }
