@@ -42,7 +42,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -107,7 +106,6 @@ const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedPermissions = mock(PermissionsService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
@@ -184,7 +182,6 @@ describe('CheckingComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: PermissionsService, useMock: mockedPermissions }
     ]
   }));
@@ -2423,7 +2420,6 @@ class TestEnvironment {
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(scriptureAudio));
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));

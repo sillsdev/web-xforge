@@ -27,7 +27,6 @@ class ParseVersion {
     'Show non-published localizations',
     'Show NMT drafting',
     'Allow Forward Translation NMT drafting',
-    'Scripture audio',
     'Prevent op submission (intentionally breaks things)',
     'Prevent op acknowledgement (intentionally breaks things)',
     'Stillness (non-distracting progress indicators)',

@@ -204,7 +204,7 @@ export class FeatureFlagService {
 
   // Before you add a new feature flag:
   //
-  // NOTE: Be sure when adding new feature flags that you update /src/db_tools/parse-version.ts
+  // NOTE: Be sure when adding new feature flags that you update /scripts/db_tools/parse-version.ts
   //
   // Also, the position is important - this is the bit wise position of the feature flag in the version.
   // The position in the dialog is determined by the order in this class.
@@ -237,73 +237,66 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true, { readonly: true })
   );
 
-  readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'SCRIPTURE_AUDIO',
-    'Scripture audio',
-    4,
-    new StaticFeatureFlagStore(true, { readonly: true })
-  );
-
   readonly preventOpSubmission: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'PREVENT_OP_SUBMISSION',
     'Prevent op submission (intentionally breaks things)',
-    5,
+    4,
     this.featureFlagStore
   );
 
   readonly preventOpAcknowledgement: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'PREVENT_OP_ACKNOWLEDGEMENT',
     'Prevent op acknowledgement (intentionally breaks things)',
-    6,
+    5,
     this.featureFlagStore
   );
 
   readonly stillness: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'STILLNESS',
     'Stillness (non-distracting progress indicators)',
-    7,
+    6,
     this.featureFlagStore
   );
 
   private readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
     'MachineInProcess',
     'Use In-Process Machine for Suggestions',
-    8,
+    7,
     this.featureFlagStore
   );
 
   private readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
     'Serval',
     'Use Serval for Suggestions',
-    9,
+    8,
     this.featureFlagStore
   );
 
   private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UseEchoForPreTranslation',
     'Use Echo for Pre-Translation Drafting',
-    10,
+    9,
     this.featureFlagStore
   );
 
   readonly allowFastTraining: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'ALLOW_FAST_TRAINING',
     'Allow Fast Pre-Translation Training',
-    11,
+    10,
     this.featureFlagStore
   );
 
   private readonly uploadParatextZipForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UploadParatextZipForPreTranslation',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
-    12,
+    11,
     this.featureFlagStore
   );
 
   readonly allowAdditionalTrainingSource: FeatureFlag = new FeatureFlagFromStorage(
     'AllowAdditionalTrainingSource',
     'Allow mixing in an additional training source',
-    13,
+    12,
     this.featureFlagStore
   );
 

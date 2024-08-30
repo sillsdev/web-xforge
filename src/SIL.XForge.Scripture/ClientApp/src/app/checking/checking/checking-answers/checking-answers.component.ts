@@ -6,11 +6,10 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -124,7 +123,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    public featureFlags: FeatureFlagService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService
   ) {
