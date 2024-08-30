@@ -42,7 +42,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -107,7 +106,6 @@ const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedPermissions = mock(PermissionsService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
@@ -184,7 +182,6 @@ describe('CheckingComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: PermissionsService, useMock: mockedPermissions }
     ]
   }));
@@ -276,14 +273,14 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides add audio button for community checker', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CHECKER_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addAudioButton).toBeNull();
       flush();
       discardPeriodicTasks();
     }));
 
     it('shows add audio and shows add question button for paratext administrator', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
       flush();
@@ -291,7 +288,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('shows add audio and hides add question button for paratext translator (includes consultant, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
-      const env = new TestEnvironment({ user: TRANSLATOR_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: TRANSLATOR_USER });
       env.fixture.detectChanges();
       expect(env.addAudioButton).not.toBeNull();
       expect(env.addQuestionButton).toBeNull();
@@ -300,7 +297,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides add audio and shows add question button for paratext consultant (includes translator, reviewer, archivist, and typesetter) based on user permissions', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CONSULTANT_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: CONSULTANT_USER });
       env.fixture.detectChanges();
       expect(env.addAudioButton).toBeNull();
       expect(env.addQuestionButton).not.toBeNull();
@@ -2104,7 +2101,7 @@ describe('CheckingComponent', () => {
 
   describe('Chapter Audio', () => {
     it('can open chapter audio', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(false);
@@ -2120,7 +2117,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can close chapter audio', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2135,7 +2132,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('stops audio when changing chapter', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.component.chapter = 2;
@@ -2147,7 +2144,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('audio stops when changing question on the same chapter', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(4);
@@ -2158,7 +2155,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('pauses chapter audio when adding a question', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.clickButton(env.addQuestionButton);
@@ -2168,7 +2165,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('pauses audio when question is archived', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(1);
@@ -2185,7 +2182,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2200,7 +2197,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('keeps chapter audio if chapter audio is present', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2217,7 +2214,6 @@ describe('CheckingComponent', () => {
     it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
-        scriptureAudio: true,
         projectBookRoute: 'MAT',
         questionScope: 'book'
       });
@@ -2247,7 +2243,6 @@ describe('CheckingComponent', () => {
     it('notifies community checker if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
       const env = new TestEnvironment({
         user: CHECKER_USER,
-        scriptureAudio: true,
         projectBookRoute: 'MAT',
         questionScope: 'book'
       });
@@ -2263,8 +2258,7 @@ describe('CheckingComponent', () => {
 
     it('can highlight segments of varying formats', fakeAsync(() => {
       const env = new TestEnvironment({
-        user: CHECKER_USER,
-        scriptureAudio: true
+        user: CHECKER_USER
       });
       env.selectQuestion(1);
 
@@ -2301,7 +2295,7 @@ describe('CheckingComponent', () => {
 
     // TODO: Get this test working
     xit('pauses audio on reload (changing book)', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, questionScope: 'book', scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER, questionScope: 'book' });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2388,7 +2382,6 @@ class TestEnvironment {
     projectChapterRoute = 1,
     questionScope = 'book',
     hasConnection = true,
-    scriptureAudio = false,
     testProject = undefined
   }: {
     user: UserInfo;
@@ -2396,7 +2389,6 @@ class TestEnvironment {
     projectChapterRoute?: number;
     questionScope?: QuestionScope;
     hasConnection?: boolean;
-    scriptureAudio?: boolean;
     testProject?: SFProject;
   }) {
     this.params$ = new BehaviorSubject<Params>({
@@ -2423,7 +2415,6 @@ class TestEnvironment {
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(scriptureAudio));
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));

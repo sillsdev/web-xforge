@@ -74,10 +74,7 @@
             <ng-template matExpansionPanelContent>
               <mat-selection-list>
                 @for (chapter of text.chapters; track chapter) {
-                  @if (
-                    questionCount(text.bookNum, chapter.number) > 0 ||
-                    (chapter.hasAudio && featureFlagsService.scriptureAudio.enabled)
-                  ) {
+                  @if (questionCount(text.bookNum, chapter.number) > 0 || chapter.hasAudio) {
                     <mat-expansion-panel
                       [disabled]="!questionCount(text.bookNum, chapter.number)"
                       dense
@@ -88,7 +85,7 @@
                         <mat-panel-title fxLayoutAlign="start center">
                           <span fxFlex fxLayout class="book-chapter-heading"
                             >{{ getBookName(text) + " " + chapter?.number }}
-                            @if (featureFlagsService.scriptureAudio.enabled && chapter.hasAudio) {
+                            @if (chapter.hasAudio) {
                               <mat-icon title="{{ t('chapter_audio_attached') }}" class="material-icons-outlined"
                                 >audio_file</mat-icon
                               >

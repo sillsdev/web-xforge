@@ -204,7 +204,7 @@ export class FeatureFlagService {
 
   // Before you add a new feature flag:
   //
-  // NOTE: Be sure when adding new feature flags that you update /src/db_tools/parse-version.ts
+  // NOTE: Be sure when adding new feature flags that you update /scripts/db_tools/parse-version.ts
   //
   // Also, the position is important - this is the bit wise position of the feature flag in the version.
   // The position in the dialog is determined by the order in this class.
@@ -237,7 +237,7 @@ export class FeatureFlagService {
     new StaticFeatureFlagStore(true, { readonly: true })
   );
 
-  readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
+  private readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
     4,

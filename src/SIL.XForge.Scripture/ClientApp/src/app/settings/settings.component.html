@@ -281,24 +281,19 @@
                   ></app-write-status>
                 </div>
               </div>
-              @if (featureFlags.scriptureAudio.enabled) {
-                <div class="tool-setting">
-                  <div class="tool-setting-field checkbox-field">
-                    <mat-checkbox
-                      formControlName="hideCommunityCheckingText"
-                      id="checkbox-hide-community-checking-text"
-                    >
-                      {{ t("hide_community_checking_text") }}
-                    </mat-checkbox>
-                    <app-info [text]="t('checkers_listen_to_scripture_audio')"></app-info>
-                    <app-write-status
-                      [state]="getControlState('hideCommunityCheckingText')"
-                      [formGroup]="form"
-                      id="hide-community-checking-text-status"
-                    ></app-write-status>
-                  </div>
+              <div class="tool-setting">
+                <div class="tool-setting-field checkbox-field">
+                  <mat-checkbox formControlName="hideCommunityCheckingText" id="checkbox-hide-community-checking-text">
+                    {{ t("hide_community_checking_text") }}
+                  </mat-checkbox>
+                  <app-info [text]="t('checkers_listen_to_scripture_audio')"></app-info>
+                  <app-write-status
+                    [state]="getControlState('hideCommunityCheckingText')"
+                    [formGroup]="form"
+                    id="hide-community-checking-text-status"
+                  ></app-write-status>
                 </div>
-              }
+              </div>
               <div>
                 <p class="helper-text">{{ t("export_checking_answers") }}</p>
                 <div class="tool-setting">
