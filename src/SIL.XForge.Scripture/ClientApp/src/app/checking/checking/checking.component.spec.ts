@@ -2101,7 +2101,7 @@ describe('CheckingComponent', () => {
 
   describe('Chapter Audio', () => {
     it('can open chapter audio', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(false);
@@ -2117,7 +2117,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can close chapter audio', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2132,7 +2132,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('stops audio when changing chapter', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.component.chapter = 2;
@@ -2144,7 +2144,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('audio stops when changing question on the same chapter', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(4);
@@ -2155,7 +2155,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('pauses chapter audio when adding a question', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.clickButton(env.addQuestionButton);
@@ -2165,7 +2165,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('pauses audio when question is archived', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const audio = env.mockScriptureAudioAndPlay();
 
       env.selectQuestion(1);
@@ -2182,7 +2182,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2197,7 +2197,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('keeps chapter audio if chapter audio is present', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2214,7 +2214,6 @@ describe('CheckingComponent', () => {
     it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
-        scriptureAudio: true,
         projectBookRoute: 'MAT',
         questionScope: 'book'
       });
@@ -2244,7 +2243,6 @@ describe('CheckingComponent', () => {
     it('notifies community checker if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
       const env = new TestEnvironment({
         user: CHECKER_USER,
-        scriptureAudio: true,
         projectBookRoute: 'MAT',
         questionScope: 'book'
       });
@@ -2260,8 +2258,7 @@ describe('CheckingComponent', () => {
 
     it('can highlight segments of varying formats', fakeAsync(() => {
       const env = new TestEnvironment({
-        user: CHECKER_USER,
-        scriptureAudio: true
+        user: CHECKER_USER
       });
       env.selectQuestion(1);
 
@@ -2298,7 +2295,7 @@ describe('CheckingComponent', () => {
 
     // TODO: Get this test working
     xit('pauses audio on reload (changing book)', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, questionScope: 'book', scriptureAudio: true });
+      const env = new TestEnvironment({ user: ADMIN_USER, questionScope: 'book' });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2385,7 +2382,6 @@ class TestEnvironment {
     projectChapterRoute = 1,
     questionScope = 'book',
     hasConnection = true,
-    scriptureAudio = false,
     testProject = undefined
   }: {
     user: UserInfo;
@@ -2393,7 +2389,6 @@ class TestEnvironment {
     projectChapterRoute?: number;
     questionScope?: QuestionScope;
     hasConnection?: boolean;
-    scriptureAudio?: boolean;
     testProject?: SFProject;
   }) {
     this.params$ = new BehaviorSubject<Params>({
