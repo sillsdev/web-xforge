@@ -36,7 +36,10 @@
             <mat-icon>{{ row.editIcon }}</mat-icon>
           </button>
         </td>
-        <td *matFooterCellDef [attr.colspan]="columnsToDisplay.length">
+      </ng-container>
+
+      <ng-container matColumnDef="toolbar-row">
+        <th mat-header-cell *matHeaderCellDef [attr.colspan]="columnsToDisplay.length">
           <div class="toolbar">
             <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ t("show") }}</mat-label>
@@ -80,12 +83,12 @@
               </button>
             </mat-menu>
           </div>
-        </td>
+        </th>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
+      <tr mat-header-row *matHeaderRowDef="['toolbar-row']"></tr>
+      <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
       <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
-      <tr mat-footer-row *matFooterRowDef="['id']; sticky: true"></tr>
       <tr class="mat-row" *matNoDataRow>
         <td class="mat-cell" [attr.colspan]="columnsToDisplay.length">
           @if (this.isLoaded) {
