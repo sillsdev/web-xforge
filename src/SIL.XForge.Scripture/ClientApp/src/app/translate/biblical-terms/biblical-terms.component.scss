@@ -65,12 +65,19 @@
   text-align: center;
 }
 
+/* Keep the toolbar and cell headings at the top of the viewport when scrolling */
+::ng-deep thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 1em;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 1em 0.5em 0.75em 0.5em;
   border-top: 1px solid var(--sf-tab-group-border-color);
   background: #fff;
