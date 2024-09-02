@@ -1391,14 +1391,13 @@ public class ParatextService : DisposableBase, IParatextService
         Memento.AddParallelDeserializer<BiblicalTermsList>(null);
 
         // Get the ScrText, returning empty biblical terms if it is missing
-        BiblicalTermsChanges biblicalTermsChanges = new BiblicalTermsChanges();
         using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
         if (scrText is null)
         {
             // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
             const string message = "The Paratext Project is not accessible from Scripture Forge.";
             _logger.LogError(message);
-            return biblicalTermsChanges with { ErrorMessage = message, };
+            return new BiblicalTermsChanges { ErrorMessage = message };
         }
 
         // The biblical terms ScrText, if defined, must be disposed properly
@@ -1424,7 +1423,7 @@ public class ParatextService : DisposableBase, IParatextService
                         $"The Biblical Terms project ({biblicalTermsListParts[1]}) has not been synced to "
                         + "Scripture Forge.";
                     _logger.LogError(message);
-                    return biblicalTermsChanges with { ErrorMessage = message, };
+                    return new BiblicalTermsChanges { ErrorMessage = message };
                 }
 
                 // Load the biblical terms project
@@ -1437,10 +1436,10 @@ public class ParatextService : DisposableBase, IParatextService
                     // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
                     string message =
                         "Biblical Terms could not be retrieved during Sync because the user "
-                        + $"{GetParatextUsername(userSecret)}  does not have permission to read the Biblical Terms "
+                        + $"{GetParatextUsername(userSecret)} does not have permission to read the Biblical Terms "
                         + "project defined in Paratext.";
                     _logger.LogError(message);
-                    return biblicalTermsChanges with { ErrorMessage = message, };
+                    return new BiblicalTermsChanges { ErrorMessage = message };
                 }
 
                 Enum<BiblicalTermsListType> listType = string.IsNullOrEmpty(biblicalTermsListParts[0])
@@ -1461,9 +1460,12 @@ public class ParatextService : DisposableBase, IParatextService
 
             // Get the term renderings
             TermRenderings termRenderings = TermRenderings.GetTermRenderings(scrText);
-            biblicalTermsChanges.HasRenderings = termRenderings.SomeRenderingsPresent;
+            BiblicalTermsChanges biblicalTermsChanges = new BiblicalTermsChanges
+            {
+                HasRenderings = termRenderings.SomeRenderingsPresent,
+            };
 
-            // Load the biblical terms from the project settings (i.e. the terms this project's are based on)
+            // Load the biblical terms from the project settings (i.e. the terms this project's terms are based on)
             BiblicalTerms projectSettingsBiblicalTerms = BiblicalTerms.GetBiblicalTerms(biblicalTermsInfo);
 
             // Get the term localizations
@@ -1488,11 +1490,9 @@ public class ParatextService : DisposableBase, IParatextService
                     TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
                     BiblicalTermDefinition biblicalTermDefinition = new BiblicalTermDefinition
                     {
-                        Categories = term
-                            .CategoryIds.Select(c => termLocalizations.GetCategoryLocalization(c))
-                            .ToList(),
-                        Domains = term.SemanticDomains.Select(d => termLocalizations.GetDomainLocalization(d)).ToList(),
-                        Gloss = termLocalization.Gloss,
+                        Categories = term.CategoryIds.Select(termLocalizations.GetCategoryLocalization).ToList(),
+                        Domains = term.SemanticDomains.Select(termLocalizations.GetDomainLocalization).ToList(),
+                        Gloss = !string.IsNullOrEmpty(termLocalization.Gloss) ? termLocalization.Gloss : term.Gloss,
                         Notes = termLocalization.Notes,
                     };
                     definitions.Add(FixLanguageCode(language), biblicalTermDefinition);

@@ -22,8 +22,10 @@ using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectFileAccess;
+using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
+using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.Scripture;
@@ -5200,6 +5202,314 @@ public class ParatextServiceTests
         Assert.IsTrue(delta.DeepEquals(expected));
     }
 
+    [Test]
+    public async Task GetBiblicalTermsAsync_AllBiblicalTerms()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup Biblical Terms
+        string settingValue = $"{BiblicalTermsListType.All}::BiblicalTerms.xml";
+        env.ProjectScrText.Settings.SetSetting(Setting.BiblicalTermsListSetting, settingValue);
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            books: [40]
+        );
+
+        // There are 1587 All Biblical Terms in Matthew
+        Assert.AreEqual(actual.BiblicalTerms.Count, 1587);
+        Assert.IsEmpty(actual.ErrorMessage);
+        Assert.IsFalse(actual.HasRenderings);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_InvalidProjectBiblicalTermsConfiguration()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup Biblical Terms
+        string settingValue = $":{project.ShortName}:BiblicalTerms.xml";
+        env.ProjectScrText.Settings.SetSetting(Setting.BiblicalTermsListSetting, settingValue);
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            project.ParatextId,
+            books: [40]
+        );
+
+        // Code will fall back to Major Biblical Terms.
+        // There are 580 Major Biblical Terms in Matthew
+        Assert.AreEqual(actual.BiblicalTerms.Count, 580);
+        Assert.IsEmpty(actual.ErrorMessage);
+        Assert.IsFalse(actual.HasRenderings);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_MajorBiblicalTerms()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup term rendering
+        const string termId = "Ἀβιά-1";
+        const string rendering = "Abijah";
+        env.ProjectFileManager.GetXml<TermRenderingsList>(Arg.Any<string>())
+            .Returns(
+                new TermRenderingsList
+                {
+                    RenderingsInternal = [new TermRendering { Id = termId, RenderingsInternal = rendering }],
+                }
+            );
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            books: [40]
+        );
+
+        // Confirm there is only one rendering, and that rendering is our rendering
+        Assert.AreEqual(actual.BiblicalTerms.First().TermId, termId);
+        Assert.AreEqual(actual.BiblicalTerms.First().Renderings.Single(), rendering);
+        Assert.AreEqual(actual.BiblicalTerms.SelectMany(bt => bt.Renderings).Count(), 1);
+        Assert.IsEmpty(actual.ErrorMessage);
+        Assert.IsTrue(actual.HasRenderings);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_MissingBiblicalTermsParatextProject()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project02, new SFParatextUser(env.Username01));
+
+        // Setup Biblical Terms
+        string settingValue = $"Project:{project.ShortName}:ProjectBiblicalTerms.xml";
+        env.ProjectScrText.Settings.SetSetting(Setting.BiblicalTermsListSetting, settingValue);
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project02].Id,
+            books: []
+        );
+
+        string message =
+            $"Biblical Terms could not be retrieved during Sync because the user {env.Username01} does not have "
+            + "permission to read the Biblical Terms project defined in Paratext.";
+        Assert.AreEqual(actual.ErrorMessage, message);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_MissingBiblicalTermsProject()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup Biblical Terms
+        const string btShortName = "AnotherProjectShortName";
+        const string settingValue = $"Project:{btShortName}:ProjectBiblicalTerms.xml";
+        env.ProjectScrText.Settings.SetSetting(Setting.BiblicalTermsListSetting, settingValue);
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            books: []
+        );
+
+        const string message = $"The Biblical Terms project ({btShortName}) has not been synced to Scripture Forge.";
+        Assert.AreEqual(actual.ErrorMessage, message);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_MissingParatextProject()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            books: []
+        );
+
+        const string message = "The Paratext Project is not accessible from Scripture Forge.";
+        Assert.AreEqual(actual.ErrorMessage, message);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_NoTermRenderings()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            books: [40]
+        );
+
+        // There are 580 Major Biblical Terms in Matthew
+        Assert.AreEqual(actual.BiblicalTerms.Count, 580);
+        Assert.IsEmpty(actual.ErrorMessage);
+        Assert.IsFalse(actual.HasRenderings);
+    }
+
+    [Test]
+    public async Task GetBiblicalTermsAsync_ProjectBiblicalTerms()
+    {
+        // Setup the test environment
+        var env = new TestEnvironment();
+        SFProject project = env.NewSFProject();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup Biblical Terms
+        string settingValue = $"Project:{project.ShortName}:ProjectBiblicalTerms.xml";
+        env.ProjectScrText.Settings.SetSetting(Setting.BiblicalTermsListSetting, settingValue);
+        Term term = new Term
+        {
+            CategoryIds = ["AT"],
+            Id = "my_term_id",
+            Index = 0,
+            Language = "greek",
+            LinkString = "my_links",
+            LocalGloss = "my_gloss",
+            References = [new Verse { VerseText = new VerseRef(40, 1, 1).BBBCCCVVVS }],
+            SemanticDomain = "animals",
+            Transliteration = "my_transliteration",
+        };
+        TermRendering termRendering = new TermRendering
+        {
+            Id = term.Id,
+            RenderingsInternal = "my_rendering",
+            Notes = "my_notes",
+        };
+        BiblicalTermsList biblicalTermsList = new BiblicalTermsList();
+        biblicalTermsList.AddTerm(term);
+        env.ProjectFileManager.GetXml<BiblicalTermsList>(Arg.Any<string>()).Returns(biblicalTermsList);
+
+        env.ProjectFileManager.GetXml<TermRenderingsList>(Arg.Any<string>())
+            .Returns(new TermRenderingsList { RenderingsInternal = [termRendering] });
+
+        // SUT
+        BiblicalTermsChanges actual = await env.Service.GetBiblicalTermsAsync(
+            userSecret,
+            env.PTProjectIds[env.Project01].Id,
+            books: [40]
+        );
+
+        Assert.IsEmpty(actual.BiblicalTerms.Single().DataId);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Definitions["en"].Categories.Single(), "Attributes");
+        Assert.AreEqual(actual.BiblicalTerms.Single().Definitions["en"].Domains.Single(), term.SemanticDomain);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Definitions["en"].Gloss, term.Gloss);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Description, termRendering.Notes);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Transliteration, term.Transliteration);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Language, term.Language);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Links.Single(), term.Links.Single());
+        Assert.AreEqual(actual.BiblicalTerms.Single().TermId, term.Id);
+        Assert.AreEqual(actual.BiblicalTerms.Single().References.Single(), term.References.Single().VerseRef.BBBCCCVVV);
+        Assert.AreEqual(actual.BiblicalTerms.Single().Renderings.Single(), termRendering.RenderingsEntries.Single());
+        Assert.IsEmpty(actual.ErrorMessage);
+        Assert.IsTrue(actual.HasRenderings);
+    }
+
+    [Test]
+    public void UpdateBiblicalTerms_MissingParatextProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        IReadOnlyList<BiblicalTerm> biblicalTerms = [new BiblicalTerm()];
+
+        // SUT
+        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        env.MockScrTextCollection.Received(1).FindById(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public void UpdateBiblicalTerms_NoBiblicalTerms()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        IReadOnlyList<BiblicalTerm> biblicalTerms = [];
+
+        // SUT
+        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        env.MockScrTextCollection.DidNotReceive().FindById(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Test]
+    public void UpdateBiblicalTerms_UpdatesTermRenderings()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+
+        // Setup term rendering
+        const string termId = "Ἀβιά-1";
+        env.ProjectFileManager.GetXml<TermRenderingsList>(Arg.Any<string>())
+            .Returns(
+                new TermRenderingsList
+                {
+                    RenderingsInternal =
+                    [
+                        new TermRendering
+                        {
+                            Id = termId,
+                            RenderingsInternal = "Old Abijah",
+                            Notes = "Old Notes",
+                        },
+                    ],
+                }
+            );
+
+        const string newRendering = "New Abijah";
+        const string newNotes = "New Notes";
+        IReadOnlyList<BiblicalTerm> biblicalTerms =
+        [
+            new BiblicalTerm
+            {
+                TermId = termId,
+                Renderings = [newRendering],
+                Description = newNotes,
+            },
+        ];
+
+        // SUT
+        env.Service.UpdateBiblicalTerms(userSecret, env.PTProjectIds[env.Project01].Id, biblicalTerms);
+        env.ProjectFileManager.Received(1)
+            .SetXml(
+                Arg.Is<TermRenderingsList>(r =>
+                    r.Renderings.Single().Id == termId
+                    && r.Renderings.Single().RenderingsEntries.Single() == newRendering
+                    && r.Renderings.Single().Notes == newNotes
+                ),
+                "TermRenderings.xml"
+            );
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
@@ -5347,7 +5657,7 @@ public class ParatextServiceTests
             {
                 { User01, "User 01 Display" },
                 { User02, Username02 },
-                { User05, "User 05" }
+                { User05, "User 05" },
             };
 
             Service = new ParatextService(
@@ -5566,25 +5876,25 @@ public class ParatextServiceTests
             {
                 SendReceiveId = PTProjectIds[Project01],
                 ScrTextName = "P01",
-                SourceUsers = sourceUsers
+                SourceUsers = sourceUsers,
             };
             SharedRepository repo2 = new SharedRepository
             {
                 SendReceiveId = PTProjectIds[Project02],
                 ScrTextName = "P02",
-                SourceUsers = sourceUsers
+                SourceUsers = sourceUsers,
             };
             SharedRepository repo3 = new SharedRepository
             {
                 SendReceiveId = PTProjectIds[Project03],
                 ScrTextName = "P03",
-                SourceUsers = sourceUsers
+                SourceUsers = sourceUsers,
             };
             SharedRepository repo4 = new SharedRepository
             {
                 SendReceiveId = PTProjectIds[Project04],
                 ScrTextName = "P04",
-                SourceUsers = sourceUsers
+                SourceUsers = sourceUsers,
             };
 
             ProjectMetadata projMeta1 = GetMetadata(PTProjectIds[Project01].Id, "Full Name " + Project01);
@@ -5665,7 +5975,7 @@ public class ParatextServiceTests
                         Name = "Source",
                         ShortName = "SRC",
                         WritingSystem = new WritingSystem { Tag = "qaa" },
-                    }
+                    },
                 },
                 CheckingConfig = new CheckingConfig { ShareEnabled = false },
                 UserRoles = new Dictionary<string, string>
@@ -5803,9 +6113,9 @@ public class ParatextServiceTests
                         : new TextAnchor { Start = ContextBefore.Length, Length = text.Length },
                     OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                     Status = NoteStatus.Todo.InternalValue,
-                    Assignment = GetAssignedUserStr(comp.notes)
+                    Assignment = GetAssignedUserStr(comp.notes),
                 };
-                List<Note> notes = new List<Note>();
+                List<Note> notes = [];
                 for (int i = 1; i <= comp.noteCount; i++)
                 {
                     ThreadNoteComponents noteComponent = new ThreadNoteComponents
@@ -5904,7 +6214,7 @@ public class ParatextServiceTests
         )
         {
             Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
-            int numVersesInChapter = 10;
+            const int numVersesInChapter = 10;
             for (int i = 1; i <= chapters; i++)
             {
                 Delta delta = GetChapterDelta(
@@ -6136,7 +6446,7 @@ public class ParatextServiceTests
             CommentTags.CommentTagList list = new CommentTags.CommentTagList
             {
                 SerializedData = tags.ToArray(),
-                SerializedLastUsedId = TagCount
+                SerializedLastUsedId = TagCount,
             };
             scrText.FileManager.GetXml<CommentTags.CommentTagList>(Arg.Any<string>()).Returns(list);
         }
@@ -6171,20 +6481,20 @@ public class ParatextServiceTests
                 selectedText = ReattachedSelectedText,
                 startPos = startPos,
                 contextBefore = AlternateBefore,
-                contextAfter = AlternateAfter
+                contextAfter = AlternateAfter,
             };
         }
 
-        public static string ReattachedThreadInfoStr(ReattachedThreadInfo rnt)
+        private static string ReattachedThreadInfoStr(ReattachedThreadInfo rnt)
         {
-            string[] reattachParts = new[]
-            {
+            string[] reattachParts =
+            [
                 rnt.verseStr,
                 rnt.selectedText,
                 rnt.startPos,
                 rnt.contextBefore,
-                rnt.contextAfter
-            };
+                rnt.contextAfter,
+            ];
             return string.Join(StringUtils.orcCharacter, reattachParts);
         }
 
@@ -6195,7 +6505,7 @@ public class ParatextServiceTests
         /// </summary>
         public async Task<IEnumerable<NoteThreadChange>> PrepareChangeOnSingleCommentAsync(
             Action<Paratext.Data.ProjectComments.Comment> modifyComment,
-            Action<NoteThread> modifyNoteThread = null
+            Action<NoteThread>? modifyNoteThread = null
         )
         {
             var env = this;
@@ -6241,7 +6551,7 @@ public class ParatextServiceTests
                         Deleted = false,
                         Status = NoteStatus.Todo.InternalValue,
                         Assignment = CommentThread.unassignedUser,
-                        Content = $"<p>Note content.</p>",
+                        Content = "<p>Note content.</p>",
                         AcceptedChangeXml = null,
                     }
                 }
@@ -6263,7 +6573,7 @@ public class ParatextServiceTests
                 ContextBefore = "",
                 ContextAfter = "",
                 StartPosition = 0,
-                Date = $"2019-12-31T08:00:00.0000000+00:00",
+                Date = "2019-12-31T08:00:00.0000000+00:00",
                 Deleted = false,
                 Status = NoteStatus.Todo,
                 Type = NoteType.Normal,
@@ -6276,10 +6586,7 @@ public class ParatextServiceTests
             env.AddParatextComment(comment);
 
             await using IConnection conn = await env.RealtimeService.ConnectAsync();
-            IEnumerable<IDocument<NoteThread>> noteThreadDocs = await GetNoteThreadDocsAsync(
-                conn,
-                new[] { "dataId01" }
-            );
+            IEnumerable<IDocument<NoteThread>> noteThreadDocs = await GetNoteThreadDocsAsync(conn, ["dataId01"]);
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
             {
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
