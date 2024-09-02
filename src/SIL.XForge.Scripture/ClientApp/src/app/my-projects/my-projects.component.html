@@ -19,6 +19,7 @@
         data-project-type="user-connected-project"
         appRouterLink="/projects/{{ projectDoc.id }}"
         class="mat-elevation-z4"
+        matRipple
       >
         <span class="project-name">
           <b>{{ projectDoc.data?.shortName }}</b> - {{ projectDoc.data?.name }}
@@ -66,8 +67,9 @@
         <span class="project-description">{{ t("dbl_resource") }}</span>
       </mat-card>
     }
-
-    @if (userIsPTUser) {
+  </div>
+  @if (userIsPTUser) {
+    <div class="pt-content-container">
       <div class="pt-content">
         @if (
           userUnconnectedParatextProjects.length > 0 ||
@@ -148,6 +150,6 @@
           </app-notice>
         }
       </div>
-    }
-  </div>
+    </div>
+  }
 </ng-container>

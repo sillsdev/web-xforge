@@ -1,30 +1,40 @@
 @use 'src/_variables' as variables;
 @use '@angular/material' as mat;
 
-:host {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
 .content {
+  max-width: 600px;
   display: flex;
   flex-direction: column;
   row-gap: 1em;
   padding-bottom: 2em;
+  margin: 0 auto;
 }
 
-h1,
+h1 {
+  font-weight: 500;
+  margin: 0;
+}
 h2 {
   font-weight: 500;
-  margin-top: 0.5em;
-  margin-bottom: 0.25em;
+  margin: 1.5em 0 0.25em;
 }
 
-.pt-content {
-  display: flex;
-  flex-direction: column;
-}
+.pt-content-container {
+  background: #f4f4f4;
+  margin-top: 30px;
+  padding: 20px 0;
+  .pt-content {
+    display: flex;
+    flex-direction: column;
 
+    margin: 0 -20px;
+    max-width: 600px;
+    margin: 0 auto;
+    > *:nth-child(even) {
+      background: #e6e6e657;
+    }
+  }
+}
 mat-card {
   padding: 1em;
   gap: 0.5em;
@@ -59,17 +69,12 @@ mat-card:active {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  padding: 1em;
+  padding: 1.5em 1em;
   gap: 0.5em;
 
   .mdc-button {
     margin-inline-start: auto;
     margin-block: 4px;
-  }
-
-  &:not(:last-child) {
-    border-width: 0 0 1px 0;
-    border-style: solid;
   }
 }
 
