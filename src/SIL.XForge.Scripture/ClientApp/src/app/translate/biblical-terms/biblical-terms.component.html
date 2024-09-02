@@ -43,11 +43,7 @@
           <div class="toolbar">
             <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ t("show") }}</mat-label>
-              <mat-select
-                panelWidth="''"
-                [(ngModel)]="selectedRangeFilter"
-                (selectionChange)="onSelectionChanged($event, 'rangeFilter')"
-              >
+              <mat-select panelWidth="''" [(ngModel)]="selectedRangeFilter">
                 <mat-option *ngFor="let rangeFilter of rangeFilters" [value]="rangeFilter">
                   {{ t(rangeFilter) }}
                 </mat-option>
@@ -55,11 +51,7 @@
             </mat-form-field>
             <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ t("category") }}</mat-label>
-              <mat-select
-                panelWidth="''"
-                [(ngModel)]="selectedCategory"
-                (selectionChange)="onSelectionChanged($event, 'category')"
-              >
+              <mat-select panelWidth="''" [(ngModel)]="selectedCategory">
                 <mat-option value="show_all">{{ t("all") }}</mat-option>
                 <mat-option *ngFor="let category of categories" [value]="category">{{
                   category === "" ? t("blank") : category

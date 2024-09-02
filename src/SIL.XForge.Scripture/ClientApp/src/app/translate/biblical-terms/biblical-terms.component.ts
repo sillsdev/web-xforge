@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MatSelectChange } from '@angular/material/select';
 import { Sort } from '@angular/material/sort';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -180,14 +179,13 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   categories: string[] = [];
   readonly columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
   readonly rangeFilters: RangeFilter[] = ['current_verse', 'current_chapter', 'current_book'];
-  selectedCategory = 'show_all';
-  selectedRangeFilter: RangeFilter = 'current_verse';
   rows: Row[] = [];
 
   private biblicalTermQuery?: RealtimeQuery<BiblicalTermDoc>;
   private biblicalTermSub?: Subscription;
   private _bookNum?: number;
   private bookNum$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private categoriesLoading = false;
   private _chapter?: number;
   private chapter$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
@@ -242,6 +240,37 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.verse$.next(verse);
   }
 
+  get selectedCategory(): string {
+    // To stop visual glitches in the dropdown while the categories are loading, return the category as all
+    if (this.categoriesLoading) {
+      return 'show_all';
+    } else {
+      return this.projectUserConfigDoc?.data?.selectedBiblicalTermsCategory ?? 'show_all';
+    }
+  }
+
+  set selectedCategory(value: string | undefined) {
+    if (this.selectedCategory !== value) {
+      // Store the default dropdown value of show_all as undefined in the database
+      if (value === '' || value === 'show_all') value = undefined;
+      this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsCategory, value));
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+    }
+  }
+
+  get selectedRangeFilter(): string {
+    return this.projectUserConfigDoc?.data?.selectedBiblicalTermsFilter ?? 'current_verse';
+  }
+
+  set selectedRangeFilter(value: string | undefined) {
+    if (this.selectedRangeFilter !== value) {
+      // Store the default dropdown value of submitJson0Op as undefined in the database
+      if (value === '' || value === 'current_verse') value = undefined;
+      this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsFilter, value));
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+    }
+  }
+
   get transliterateBiblicalTerms(): boolean {
     return this.projectUserConfigDoc?.data?.transliterateBiblicalTerms ?? false;
   }
@@ -289,12 +318,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.subscribe(this.projectId$.pipe(filter(projectId => projectId !== '')), async projectId => {
       this.projectDoc = await this.projectService.getProfile(projectId);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
-      this.selectedRangeFilter = (this.projectUserConfigDoc?.data?.selectedBiblicalTermsFilter ??
-        'current_verse') as RangeFilter;
 
       // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
       this.loadingStarted();
-      let selectedCategoryLoaded = false;
+      this.categoriesLoading = true;
       const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
       this.biblicalTermSub?.unsubscribe();
       this.biblicalTermSub = this.subscribe(
@@ -307,10 +334,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         ]).pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null)),
         ([bookNum, chapter, verse]) => {
           this.filterBiblicalTerms(bookNum, chapter, verse);
-          if (!selectedCategoryLoaded) {
-            selectedCategoryLoaded = true;
-            this.selectedCategory = this.projectUserConfigDoc?.data?.selectedBiblicalTermsCategory ?? 'show_all';
-          }
+          this.categoriesLoading = false;
         }
       );
     });
@@ -355,21 +379,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
       data: { biblicalTermDoc, projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc },
       width: '560px'
-    });
-  }
-
-  onSelectionChanged(e: MatSelectChange, source: 'category' | 'rangeFilter'): void {
-    this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-
-    // Store the last selected category or view filter
-    let selectedValue: string | undefined = e.value;
-    if (selectedValue === '') selectedValue = undefined;
-    this.projectUserConfigDoc?.submitJson0Op(op => {
-      if (source === 'category') {
-        op.set(puc => puc.selectedBiblicalTermsCategory, selectedValue);
-      } else {
-        op.set(puc => puc.selectedBiblicalTermsFilter, selectedValue);
-      }
     });
   }
 
@@ -470,7 +479,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.categories = Array.from(categories).sort();
 
     // If we do not have the same category, show all rows in the range
-    if (!this.categories.includes(this.selectedCategory)) {
+    if (!this.categories.includes(this.selectedCategory) && this.selectedCategory !== 'show_all') {
       this.selectedCategory = 'show_all';
       this.rows = rangeRows;
     } else {
