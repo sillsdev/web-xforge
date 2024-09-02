@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { MatSelectChange } from '@angular/material/select';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -122,10 +121,8 @@ describe('BiblicalTermsComponent', () => {
     env.setupProjectData('en');
     env.wait();
     env.component.selectedRangeFilter = 'current_book';
-    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'rangeFilter');
     env.wait();
     env.component.selectedCategory = 'category04_en';
-    env.component.onSelectionChanged({ value: 'category04_en' } as MatSelectChange, 'category');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId04');
@@ -140,7 +137,6 @@ describe('BiblicalTermsComponent', () => {
     env.setupProjectData('en');
     env.wait();
     env.component.selectedRangeFilter = 'current_book';
-    env.component.onSelectionChanged({ value: 'current_book' } as MatSelectChange, 'rangeFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(3);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -157,7 +153,6 @@ describe('BiblicalTermsComponent', () => {
     env.setupProjectData('en');
     env.wait();
     env.component.selectedRangeFilter = 'current_chapter';
-    env.component.onSelectionChanged({ value: 'current_chapter' } as MatSelectChange, 'rangeFilter');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(2);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
@@ -184,7 +179,6 @@ describe('BiblicalTermsComponent', () => {
     env.component.selectedRangeFilter = 'current_verse';
     env.component.selectedCategory = 'category01_en';
     env.setupProjectData('en');
-    env.component.onSelectionChanged({ value: 'category04_en' } as MatSelectChange, 'category');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
