@@ -5510,6 +5510,34 @@ public class ParatextServiceTests
             );
     }
 
+    [Test]
+    public void InitializeCommentManager_MissingParatextProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.ProjectFileManager = Substitute.For<ProjectFileManager>(null, null);
+
+        // SUT
+        env.Service.InitializeCommentManager(userSecret, env.PTProjectIds[env.Project01].Id);
+        env.ProjectFileManager.DidNotReceive().ProjectFiles("Notes_*.xml");
+        env.ProjectFileManager.DidNotReceive().GetXml<CommentList>(Arg.Any<string>());
+    }
+
+    [Test]
+    public void InitializeCommentManager_Success()
+    {
+        var env = new TestEnvironment();
+        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        const string fileName = "Notes_User 01.xml";
+        env.ProjectFileManager.ProjectFiles("Notes_*.xml").Returns([fileName]);
+
+        // SUT
+        env.Service.InitializeCommentManager(userSecret, env.PTProjectIds[env.Project01].Id);
+        env.ProjectFileManager.Received().ProjectFiles("Notes_*.xml");
+        env.ProjectFileManager.Received().GetXml<CommentList>(Arg.Any<string>());
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
