@@ -31,7 +31,6 @@ import { anything, capture, instance, mock, reset, resetCalls, verify, when } fr
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -65,7 +64,6 @@ const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedPermissions = mock(PermissionsService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 
@@ -96,7 +94,6 @@ describe('CheckingOverviewComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: PermissionsService, useMock: mockedPermissions },
       { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService }
     ]
@@ -1032,8 +1029,6 @@ class TestEnvironment {
       }
     );
     this.setCurrentUser(this.adminUser);
-
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn(createTestFeatureFlag(true));
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;

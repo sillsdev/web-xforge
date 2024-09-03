@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -60,11 +60,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly router: Router,
     private readonly permissions: PermissionsService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService,
-    private readonly onlineStatusService: OnlineStatusService,
-    readonly featureFlagsService: FeatureFlagService
+    private readonly onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
   }
@@ -169,18 +167,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get canCreateScriptureAudio(): boolean {
-    if (!this.featureFlags.scriptureAudio.enabled) {
-      return false;
-    }
     const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
     const userId: string = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
   }
 
   get canDeleteScriptureAudio(): boolean {
-    if (!this.featureFlags.scriptureAudio.enabled) {
-      return false;
-    }
     const project = this.projectDoc?.data;
     const userId = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
@@ -410,9 +402,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   bookHasChapterAudio(text: TextInfo): boolean {
-    if (!this.featureFlagsService.scriptureAudio.enabled) {
-      return false;
-    }
     return text.chapters.filter((c: Chapter) => c.hasAudio).length > 0;
   }
 

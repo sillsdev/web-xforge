@@ -19,7 +19,6 @@ import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge
 import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -171,7 +170,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly permissions: PermissionsService,
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
-    readonly featureFlags: FeatureFlagService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService
   ) {
@@ -236,9 +234,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   get canCreateScriptureAudio(): boolean {
-    if (!this.featureFlags.scriptureAudio.enabled) {
-      return false;
-    }
     const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
     const userId: string = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);

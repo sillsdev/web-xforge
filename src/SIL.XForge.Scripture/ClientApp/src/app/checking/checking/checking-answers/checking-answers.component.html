@@ -1,19 +1,15 @@
 <ng-container *transloco="let t; read: 'checking_answers'">
   <div class="answers-component">
     <div class="answers-component-scrollable-content">
-      @if (featureFlags.scriptureAudio.enabled) {
-        <app-checking-question [questionDoc]="questionDoc" (audioPlayed)="playAudio()"> </app-checking-question>
-      }
+      <app-checking-question [questionDoc]="questionDoc" (audioPlayed)="playAudio()"> </app-checking-question>
       <div class="answer-question">
         <div class="question">
-          @if (!featureFlags.scriptureAudio.enabled) {
-            <div class="question-text">{{ questionDoc?.data?.text }}</div>
-            @if (questionDoc?.data?.audioUrl) {
-              <div class="question-audio">
-                <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
-                </app-checking-audio-player>
-              </div>
-            }
+          <div class="question-text">{{ questionDoc?.data?.text }}</div>
+          @if (questionDoc?.data?.audioUrl) {
+            <div class="question-audio">
+              <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
+              </app-checking-audio-player>
+            </div>
           }
           @if (canEditQuestion) {
             <div class="question-footer">

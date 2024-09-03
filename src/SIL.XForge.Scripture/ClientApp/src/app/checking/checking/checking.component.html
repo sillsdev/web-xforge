@@ -1,9 +1,7 @@
 <ng-container *transloco="let t; read: 'checking'">
   <div id="checking-app-container">
     <div id="questions-panel" #questionsPanel [ngClass]="{ 'overlay-visible': isQuestionsOverlayVisible }">
-      @if (
-        hideChapterText && hasQuestionWithoutAudio && featureFlags.scriptureAudio.enabled && canCreateScriptureAudio
-      ) {
+      @if (hideChapterText && hasQuestionWithoutAudio && canCreateScriptureAudio) {
         <span class="audio-checking-warning">{{ t("questions_on_chapters_no_audio") }}</span>
       }
       <header [ngClass]="{ 'filter-applied': isQuestionFilterApplied }">
@@ -106,7 +104,7 @@
                   <mat-icon class="material-icons-outlined">audio_file</mat-icon>
                 </button>
               }
-              @if (featureFlags.scriptureAudio.enabled && chapterHasAudio) {
+              @if (chapterHasAudio) {
                 <button
                   type="button"
                   mat-icon-button
@@ -124,7 +122,7 @@
             </div>
           </div>
         </header>
-        @if (!chapterHasAudio && hideChapterText && featureFlags.scriptureAudio.enabled) {
+        @if (!chapterHasAudio && hideChapterText) {
           <span class="no-audio-message">{{ t("question_does_not_have_audio") }}</span>
         }
         <div id="split-container" #splitContainer>
