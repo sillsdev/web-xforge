@@ -1,4 +1,12 @@
 {
+  "audio_recorder_dialog": {
+    "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
+    "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
+    "record_audio": "Record Audio",
+    "re_record": "Re-record",
+    "save": "Simpan Jawaban",
+    "stop_recording": "Hentikan Perekaman"
+  },
   "app": {
     "action_not_available_offline": "Tindakan ini tidak tersedia saat Anda luring.",
     "all_questions": "Semua Pertanyaan",
@@ -368,6 +376,7 @@
     "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
     "not_connected": "Not connected",
     "offline": "You will need to connect to the internet to get started with a project.",
+    "offline-accessible": "Offline Access",
     "open": "Open",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },

@@ -1,4 +1,12 @@
 {
+  "audio_recorder_dialog": {
+    "mic_access_denied": "L'accès à votre microphone a été refusé. Veuillez activer le microphone depuis votre navigateur.",
+    "mic_not_found": "Aucun microphone n'a été détecté. Veuillez connecter un microphone à votre appareil.",
+    "record_audio": "Enregistrer l'Audio",
+    "re_record": "Re-record",
+    "save": "Envoyer la réponse",
+    "stop_recording": "Arrêter l'enregistrement"
+  },
   "app": {
     "action_not_available_offline": "Cette action n'est pas disponible lorsque vous êtes hors connexion.",
     "all_questions": "Toutes les questions",
@@ -368,6 +376,7 @@
     "not_admin_cannot_connect_project": "Pour rejoindre ce projet dans Scripture Forge, demandez à l'administrateur du projet Paratext de connecter le projet dans Scripture Forge.",
     "not_connected": "Non connecté",
     "offline": "Vous devez vous connecter à l'internet pour démarrer un projet.",
+    "offline-accessible": "Offline Access",
     "open": "Ouvrir",
     "problem_getting_pt_list": "Il y a eu un problème pour obtenir la liste des projets Paratext disponibles auxquels se connecter. Si ce problème persiste et que la déconnexion et la reconnexion ne règlent pas le problème, veuillez signaler le problème pour obtenir de l'aide."
   },

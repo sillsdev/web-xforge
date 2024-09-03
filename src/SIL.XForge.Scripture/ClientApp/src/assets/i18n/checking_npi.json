@@ -1,4 +1,12 @@
 {
+  "audio_recorder_dialog": {
+    "mic_access_denied": "तपाइँको माइक्रोफोनमा पहुँच हुन सकेन। कृपया आफ्नो ब्राउजरबाट माइक्रोफोनलाई सक्षम गर्नुहोस्।",
+    "mic_not_found": "कुनै माइक्रोफोन फेला परेन। कृपया आफ्‍नो उपकरणमा माइक्रोफोन जडान गर्नुहोस्।",
+    "record_audio": "Record Audio",
+    "re_record": "Re-record",
+    "save": "जवाफ सेभ गर्नुहोस्",
+    "stop_recording": "रिकर्डिङ्ग रोक्नुहोस्"
+  },
   "app": {
     "action_not_available_offline": "तपाइँ अफलाइन हुँदा यस कार्य उपलब्ध हुँदैन।",
     "all_questions": "सबै प्रश्‍नहरू",
@@ -368,6 +376,7 @@
     "not_admin_cannot_connect_project": "To join this project in Scripture Forge, ask the administrator of the Paratext project to connect the project in Scripture Forge.",
     "not_connected": "Not connected",
     "offline": "You will need to connect to the internet to get started with a project.",
+    "offline-accessible": "Offline Access",
     "open": "Open",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
   },
