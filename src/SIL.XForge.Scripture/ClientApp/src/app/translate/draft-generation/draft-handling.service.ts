@@ -7,7 +7,7 @@ import { isString } from '../../../type-utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
-import { getVerseRefFromSegmentRef, verseSlug } from '../../shared/utils';
+import { getVerseRefFromSegmentRef, isBadDelta, verseSlug } from '../../shared/utils';
 import { DraftSegmentMap } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
@@ -167,6 +167,21 @@ export class DraftHandlingService {
           );
   }
 
+  canApplyDraft(
+    targetProject: SFProjectProfile,
+    bookNum: number,
+    chapterNum: number,
+    draftOps: DeltaOperation[]
+  ): boolean {
+    return (
+      this.textDocService.userHasGeneralEditRight(targetProject) &&
+      this.textDocService.hasChapterEditPermission(targetProject, bookNum, chapterNum) &&
+      this.textDocService.isDataInSync(targetProject) &&
+      !this.textDocService.isEditingDisabled(targetProject) &&
+      !isBadDelta(draftOps)
+    );
+  }
+
   /**
    * Applies the draft to the text document.
    * @param textDocId The text doc identifier.
@@ -174,6 +189,7 @@ export class DraftHandlingService {
    */
   async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: DeltaStatic): Promise<void> {
     await this.projectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
+    await this.projectService.onlineSetIsValid(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
     await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
   }
 

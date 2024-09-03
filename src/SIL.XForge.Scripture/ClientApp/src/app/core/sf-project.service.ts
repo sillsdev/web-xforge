@@ -284,4 +284,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       draftApplied
     });
   }
+
+  async onlineSetIsValid(projectId: string, book: number, chapter: number, isValid: boolean): Promise<void> {
+    return await this.onlineInvoke('setIsValid', {
+      projectId,
+      book,
+      chapter,
+      isValid
+    });
+  }
 }

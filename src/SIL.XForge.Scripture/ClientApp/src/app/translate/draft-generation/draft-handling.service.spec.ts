@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Delta, DeltaOperation } from 'rich-text';
 import { of, throwError } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -248,6 +249,110 @@ describe('DraftHandlingService', () => {
     });
   });
 
+  describe('canApplyDraft', () => {
+    it('should allow applying if all criteria are met', async () => {
+      const projectProfile = instance(mock<SFProjectProfile>());
+      const book = 1;
+      const chapter = 1;
+      const draftOps: DeltaOperation[] = [
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
+      ];
+
+      when(mockedTextDocService.hasChapterEditPermission(projectProfile, book, chapter)).thenReturn(true);
+      when(mockedTextDocService.userHasGeneralEditRight(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isDataInSync(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(false);
+
+      expect(service.canApplyDraft(projectProfile, book, chapter, draftOps)).toBe(true);
+    });
+
+    it('should not allow applying if lacking chapter edit permission', async () => {
+      const projectProfile = instance(mock<SFProjectProfile>());
+      const book = 1;
+      const chapter = 1;
+      const draftOps: DeltaOperation[] = [
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
+      ];
+
+      when(mockedTextDocService.hasChapterEditPermission(projectProfile, book, chapter)).thenReturn(false);
+      when(mockedTextDocService.userHasGeneralEditRight(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isDataInSync(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(false);
+
+      expect(service.canApplyDraft(projectProfile, book, chapter, draftOps)).toBe(false);
+    });
+
+    it('should not allow applying if lacking general edit permission', async () => {
+      const projectProfile = instance(mock<SFProjectProfile>());
+      const book = 1;
+      const chapter = 1;
+      const draftOps: DeltaOperation[] = [
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
+      ];
+
+      when(mockedTextDocService.hasChapterEditPermission(projectProfile, book, chapter)).thenReturn(true);
+      when(mockedTextDocService.userHasGeneralEditRight(projectProfile)).thenReturn(false);
+      when(mockedTextDocService.isDataInSync(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(false);
+
+      expect(service.canApplyDraft(projectProfile, book, chapter, draftOps)).toBe(false);
+    });
+
+    it('should not allow applying if data is not in sync', async () => {
+      const projectProfile = instance(mock<SFProjectProfile>());
+      const book = 1;
+      const chapter = 1;
+      const draftOps: DeltaOperation[] = [
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
+      ];
+
+      when(mockedTextDocService.hasChapterEditPermission(projectProfile, book, chapter)).thenReturn(true);
+      when(mockedTextDocService.userHasGeneralEditRight(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isDataInSync(projectProfile)).thenReturn(false);
+      when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(false);
+
+      expect(service.canApplyDraft(projectProfile, book, chapter, draftOps)).toBe(false);
+    });
+
+    it('should not allow applying if editing is disabled', async () => {
+      const projectProfile = instance(mock<SFProjectProfile>());
+      const book = 1;
+      const chapter = 1;
+      const draftOps: DeltaOperation[] = [
+        { insert: 'In the beginning', attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
+      ];
+
+      when(mockedTextDocService.hasChapterEditPermission(projectProfile, book, chapter)).thenReturn(true);
+      when(mockedTextDocService.userHasGeneralEditRight(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isDataInSync(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(true);
+
+      expect(service.canApplyDraft(projectProfile, book, chapter, draftOps)).toBe(false);
+    });
+
+    it('should not allow applying if draft is corrupted', async () => {
+      const projectProfile = instance(mock<SFProjectProfile>());
+      const book = 1;
+      const chapter = 1;
+      const badOps: DeltaOperation[] = [
+        { attributes: { segment: 'verse_1_1', draft: true } },
+        { insert: 'God created the heavens and the earth', attributes: { segment: 'verse_1_2', draft: true } }
+      ];
+
+      when(mockedTextDocService.hasChapterEditPermission(projectProfile, book, chapter)).thenReturn(true);
+      when(mockedTextDocService.userHasGeneralEditRight(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isDataInSync(projectProfile)).thenReturn(true);
+      when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(false);
+
+      expect(service.canApplyDraft(projectProfile, book, chapter, badOps)).toBe(false);
+    });
+  });
+
   describe('applyChapterDraftAsync', () => {
     it('should apply draft to text doc', async () => {
       const textDocId = new TextDocId('project01', 1, 1);
@@ -276,6 +381,9 @@ describe('DraftHandlingService', () => {
       verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
       verify(
         mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
+      ).once();
+      verify(
+        mockedProjectService.onlineSetIsValid(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
       ).once();
     });
 
