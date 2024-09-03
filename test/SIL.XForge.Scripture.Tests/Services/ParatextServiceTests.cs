@@ -4077,8 +4077,18 @@ public class ParatextServiceTests
         env.SetupSuccessfulSendReceive();
         env.SetRestClientFactory(user01Secret);
 
-        // Set up the Resource ScrText
+        // Set up the Resource ScrText before it is installed on disk
         string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        using MockResourceScrText resourceScrText = env.GetResourceScrText(associatedPtUser, resourceId, "RV1895");
+        env.MockScrTextCollection.CreateResourceScrText(
+                Arg.Any<string>(),
+                Arg.Any<ProjectName>(),
+                Arg.Any<IZippedResourcePasswordProvider>()
+            )
+            .Returns(resourceScrText);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
+
+        // Set up the Resource ScrText when it is installed on disk
         using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
         env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
@@ -4099,6 +4109,110 @@ public class ParatextServiceTests
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
         env.MockFileSystemService.Received(1)
             .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+    }
+
+    [Test]
+    public async Task SendReceiveAsync_SourceResource_DblLanguageDifferent()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        env.SetupSuccessfulSendReceive();
+        env.SetRestClientFactory(user01Secret);
+
+        // Set up the Resource ScrText before it is installed on disk
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        const string zipLanguageCode = "grc";
+        using MockResourceScrText resourceScrText = env.GetResourceScrText(
+            associatedPtUser,
+            resourceId,
+            "RV1895",
+            zipLanguageCode
+        );
+        env.MockScrTextCollection.CreateResourceScrText(
+                Arg.Any<string>(),
+                Arg.Any<ProjectName>(),
+                Arg.Any<IZippedResourcePasswordProvider>()
+            )
+            .Returns(resourceScrText);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(true);
+
+        // Set up the Resource ScrText when it is installed on disk
+        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
+        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+        // Set up the mock file system calls used by the migration
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
+
+        // Confirm that the language code is different
+        Assert.AreNotEqual(scrText.Settings.LanguageID.Code, zipLanguageCode);
+
+        // SUT
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(sourceProject);
+        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        env.MockFileSystemService.Received(1)
+            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        Assert.AreEqual(scrText.Settings.LanguageID.Code, zipLanguageCode);
+    }
+
+    [Test]
+    public async Task SendReceiveAsync_SourceResource_DblLanguageMissing()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+        env.SetupSuccessfulSendReceive();
+        env.SetRestClientFactory(user01Secret);
+
+        // Set up the Resource ScrText before it is installed on disk
+        string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
+        using MockResourceScrText resourceScrText = env.GetResourceScrText(associatedPtUser, resourceId, "RV1895");
+        env.MockScrTextCollection.CreateResourceScrText(
+                Arg.Any<string>(),
+                Arg.Any<ProjectName>(),
+                Arg.Any<IZippedResourcePasswordProvider>()
+            )
+            .Returns(resourceScrText);
+        resourceScrText.Settings.LanguageID = null;
+
+        // Mock a fresh installation by only showing the p8z as existing when the temp directory is created
+        bool resourceDownloaded = false;
+        env.MockFileSystemService.When(f => f.CreateDirectory(Arg.Any<string>())).Do(_ => resourceDownloaded = true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".p8z"))).Returns(_ => resourceDownloaded);
+
+        // Set up the Resource ScrText when it is installed on disk
+        using MockScrText scrText = env.GetScrText(associatedPtUser, resourceId);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), resourceId).Returns(scrText);
+        ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+
+        // Set up the mock file system calls used by the migration
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith("ldml.xml"))).Returns(true);
+        env.MockFileSystemService.FileExists(Arg.Is<string>(p => p.EndsWith(".ldml"))).Returns(false);
+
+        // SUT
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
+        Assert.IsNotNull(sourceProject);
+        Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
+        env.MockFileSystemService.Received(1)
+            .MoveFile(Arg.Is<string>(p => p.EndsWith("ldml.xml")), Arg.Is<string>(p => p.EndsWith(".ldml")));
+        Assert.AreEqual(resourceScrText.Settings.LanguageID?.Code, "en");
     }
 
     [Test]
@@ -6434,10 +6548,34 @@ public class ParatextServiceTests
         public void AddParatextComment(Paratext.Data.ProjectComments.Comment comment) =>
             ProjectCommentManager.AddComment(comment);
 
+        public MockResourceScrText GetResourceScrText(
+            ParatextUser associatedPtUser,
+            string projectId,
+            string shortName,
+            string zipLanguageCode = "eng"
+        )
+        {
+            string scrTextDir = Path.Combine(SyncDir, $"{shortName}.p8z");
+            ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = shortName };
+            var scrText = new MockResourceScrText(
+                projectName,
+                associatedPtUser,
+                new MockZippedResourcePasswordProvider()
+            )
+            {
+                CachedGuid = HexId.FromStr(projectId)
+            };
+            scrText.Settings.LanguageID = LanguageId.English;
+            scrText.ZipFile.AddFile(
+                Path.Combine(ZippedProjectFileManagerBase.DBLFolderName, "language", "iso", zipLanguageCode)
+            );
+            return scrText;
+        }
+
         public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, bool hasEditPermission = true)
         {
-            string scrtextDir = Path.Combine(SyncDir, projectId, "target");
-            ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
+            string scrTextDir = Path.Combine(SyncDir, projectId, "target");
+            ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = "Proj" };
             var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId) };
             scrText.Permissions.CreateFirstAdminUser();
             scrText.Data.Add("RUT", RuthBookUsfm);
