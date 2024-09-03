@@ -1,5 +1,6 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
@@ -11,10 +12,12 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
+import { TestOnlineStatusService } from '../../../../xforge-common/test-online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
@@ -31,7 +34,6 @@ const mockedUserService = mock(UserService);
 const mockedDialogRef = mock(MatDialogRef);
 const mockedTextDocService = mock(TextDocService);
 const mockedI18nService = mock(I18nService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -49,7 +51,9 @@ describe('DraftApplyDialogComponent', () => {
       DraftApplyDialogComponent,
       TestTranslocoModule,
       RouterModule.forRoot(ROUTES),
-      NoopAnimationsModule
+      NoopAnimationsModule,
+      HttpClientTestingModule,
+      TestOnlineStatusModule.forRoot()
     ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
@@ -58,7 +62,7 @@ describe('DraftApplyDialogComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MatDialogRef, useMock: mockedDialogRef },
       { provide: MAT_DIALOG_DATA, useValue: { bookNum: 1 } }
     ]
@@ -99,10 +103,7 @@ describe('DraftApplyDialogComponent', () => {
   it('add button is disabled until project is selected', fakeAsync(async () => {
     expect(env.addButton).toBeTruthy();
     expect(env.addButton.attributes['disabled']).toBeDefined();
-    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
-    env.component.projectSelectedAsync('pt01');
-    tick();
-    env.fixture.detectChanges();
+    env.selectParatextProject('pt01');
     expect(env.addButton.attributes['disabled']).toBeDefined();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
@@ -115,10 +116,7 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('can add draft to project when project selected', fakeAsync(async () => {
-    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
-    env.component.projectSelectedAsync('pt01');
-    tick();
-    env.fixture.detectChanges();
+    env.selectParatextProject('pt01');
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
@@ -131,10 +129,7 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('checks if the user has edit permissions', fakeAsync(async () => {
-    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
-    env.component.projectSelectedAsync('pt01');
-    tick();
-    env.fixture.detectChanges();
+    env.selectParatextProject('pt01');
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
@@ -150,9 +145,7 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('notifies user if no edit permissions', fakeAsync(() => {
-    env.component.projectSelectedAsync('pt02');
-    tick();
-    env.fixture.detectChanges();
+    env.selectParatextProject('pt02');
     expect(env.component['targetProjectId']).toBe('project02');
     verify(mockedProjectService.getProfile(anything())).once();
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
@@ -163,28 +156,23 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
-    env.component.projectSelectedAsync('pt01');
-    tick();
-    env.fixture.detectChanges();
+    env.selectParatextProject('pt01');
     expect(env.targetProjectContent.textContent).toContain('Test project 1');
-    env.component.projectSelectedAsync('pt02');
-    tick();
-    env.fixture.detectChanges();
+    // the user does not have permission to edit 'pt02' so the info section is hidden
+    env.selectParatextProject('pt02');
     expect(env.targetProjectContent).toBeNull();
   }));
 
   it('notifies user if offline', fakeAsync(async () => {
-    env.component.addToProjectForm.controls.targetParatextId.setValue('pt01');
-    env.component.projectSelectedAsync('pt01');
-    tick();
-    env.fixture.detectChanges();
+    env.selectParatextProject('pt01');
     expect(env.offlineWarning).toBeNull();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
     env.fixture.detectChanges();
     expect(env.addButton.attributes['disabled']).toBeUndefined();
-    when(mockedOnlineStatusService.isOnline).thenReturn(false);
+    // when(mockedOnlineStatusService.isOnline).thenReturn(false);
+    env.onlineStatus = false;
     tick();
     env.fixture.detectChanges();
     expect(env.offlineWarning).not.toBeNull();
@@ -226,6 +214,7 @@ class TestEnvironment {
       isConnected: false
     }
   ];
+  onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
   constructor() {
     when(mockedParatextService.getProjects()).thenResolve(this.projects);
@@ -236,9 +225,7 @@ class TestEnvironment {
       templateTagText: 'text',
       after: ''
     });
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
     this.setupProject();
-
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);
     this.component = this.fixture.componentInstance;
@@ -277,8 +264,21 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.offline-message');
   }
 
+  set onlineStatus(online: boolean) {
+    this.onlineStatusService.setIsOnline(online);
+    tick();
+    this.fixture.detectChanges();
+  }
+
   async checkboxHarnessAsync(): Promise<MatCheckboxHarness> {
     return await this.loader.getHarness(MatCheckboxHarness.with({ selector: '.overwrite-content' }));
+  }
+
+  selectParatextProject(paratextId: string): void {
+    env.component.addToProjectForm.controls.targetParatextId.setValue(paratextId);
+    env.component.projectSelectedAsync(paratextId);
+    tick();
+    this.fixture.detectChanges();
   }
 
   private setupProject(): void {
