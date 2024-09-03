@@ -46,7 +46,7 @@ describe('I18nService', () => {
   it('should set locale', () => {
     const service = getI18nService();
     expect(service).toBeTruthy();
-    service.setLocale('zh-CN', instance(mockedAuthService));
+    service.setLocale('zh-CN');
     verify(mockedTranslocoService.setActiveLang('zh-CN')).called();
     verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
     expect(service.localeCode).toEqual('zh-CN');
@@ -100,15 +100,15 @@ describe('I18nService', () => {
     // Test for any white space character for maximum compatibility
     expect(service.formatDate(date)).toMatch(/Nov 25, 1991, 5:28\sPM/);
 
-    service.setLocale('en-GB', mockedAuthService);
+    service.setLocale('en-GB');
     expect(service.formatDate(date)).toMatch(/25 Nov 1991, 5:28\spm/);
 
     // As of Chromium 98 for zh-CN it's changed from using characters to indicate AM/PM, to using a 24 hour clock. It's
     // unclear whether the cause is Chromium itself or a localization library. The tests should pass with either version
-    service.setLocale('zh-CN', mockedAuthService);
+    service.setLocale('zh-CN');
     expect(['1991/11/25 17:28', '1991/11/25下午5:28']).toContain(service.formatDate(date));
 
-    service.setLocale('az', mockedAuthService);
+    service.setLocale('az');
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
 
@@ -145,9 +145,9 @@ describe('I18nService', () => {
   it('should set text direction on the body element', () => {
     const service = getI18nService();
     verify(mockedDocumentBody.setAttribute('dir', 'ltr')).never();
-    service.setLocale('zh-CN', mockedAuthService);
+    service.setLocale('zh-CN');
     verify(mockedDocumentBody.setAttribute('dir', 'ltr')).once();
-    service.setLocale('ar', mockedAuthService);
+    service.setLocale('ar');
     verify(mockedDocumentBody.setAttribute('dir', 'rtl')).once();
     expect().nothing();
   });
@@ -156,7 +156,7 @@ describe('I18nService', () => {
     when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
     const service = getI18nService();
     expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1:2-3');
-    service.setLocale('ar', mockedAuthService);
+    service.setLocale('ar');
     // Expect right-to-left mark before chapter num, ':', and '-' characters
     expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis \u200F1\u200F:2\u200F-3');
   });
@@ -164,19 +164,19 @@ describe('I18nService', () => {
   describe('getLanguageDisplayName', () => {
     it('should return the display name for a valid language code', () => {
       const service = getI18nService();
-      service.setLocale('en', instance(mockedAuthService));
+      service.setLocale('en');
       expect(service.getLanguageDisplayName('en')).toBe('English');
     });
 
     it('should return undefined for an undefined language code', () => {
       const service = getI18nService();
-      service.setLocale('en', instance(mockedAuthService));
+      service.setLocale('en');
       expect(service.getLanguageDisplayName(undefined)).toBeUndefined();
     });
 
     it('should return language code for an unknown language code', () => {
       const service = getI18nService();
-      service.setLocale('en', instance(mockedAuthService));
+      service.setLocale('en');
       expect(service.getLanguageDisplayName('123')).toBe('123');
     });
   });
