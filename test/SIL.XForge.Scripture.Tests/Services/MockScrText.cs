@@ -5,9 +5,7 @@ using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.Users;
-using PtxUtils;
 using SIL.Scripture;
-using SIL.WritingSystems;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -35,7 +33,7 @@ public class MockScrText : ScrText
         }
     }
 
-    public Dictionary<string, string> Data = new Dictionary<string, string>();
+    public Dictionary<string, string> Data { get; } = new Dictionary<string, string>();
 
     /// <summary>
     /// Return text of specified chapter or book.
@@ -64,17 +62,4 @@ public class MockScrText : ScrText
     public override ScrLanguage Language => _language;
     private readonly ScrLanguage _language;
     private readonly ProjectSettings _settings;
-}
-
-/// <summary>
-/// Replaces a ScrLanguage for use in testing. Does not use the file system to save/load data.
-/// </summary>
-class MockScrLanguage : ScrLanguage
-{
-    internal MockScrLanguage(ScrText scrText)
-        : base(null, ProjectNormalization.Undefined, scrText) { }
-
-    protected override WritingSystemDefinition LoadWsDef(ScrText scrText) =>
-        // Don't load anything from disk for testing and just return the one we already have
-        wsDef;
 }

@@ -17,7 +17,6 @@ using SIL.IO;
 using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
-using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
@@ -74,6 +73,11 @@ public class SFInstallableDblResource : InstallableResource
     private readonly ISFRestClientFactory _restClientFactory;
 
     /// <summary>
+    /// The scripture text collection.
+    /// </summary>
+    private readonly IScrTextCollection _scrTextCollection;
+
+    /// <summary>
     /// The user secret.
     /// </summary>
     private readonly UserSecret _userSecret;
@@ -91,35 +95,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="restClientFactory">The rest client factory.</param>
     /// <param name="fileSystemService">The file system service.</param>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
-    /// <remarks>
-    /// This is a convenience constructor for unit tests.
-    /// </remarks>
-    internal SFInstallableDblResource(
-        UserSecret userSecret,
-        ParatextOptions paratextOptions,
-        ISFRestClientFactory restClientFactory,
-        IFileSystemService fileSystemService,
-        IJwtTokenHelper jwtTokenHelper
-    )
-        : this(
-            userSecret,
-            paratextOptions,
-            restClientFactory,
-            fileSystemService,
-            jwtTokenHelper,
-            new ParatextProjectDeleter(),
-            new ParatextMigrationOperations(),
-            new ParatextZippedResourcePasswordProvider(paratextOptions)
-        ) { }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SFInstallableDblResource" /> class.
-    /// </summary>
-    /// <param name="userSecret">The user secret.</param>
-    /// <param name="paratextOptions">The paratext options.</param>
-    /// <param name="restClientFactory">The rest client factory.</param>
-    /// <param name="fileSystemService">The file system service.</param>
-    /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="scrTextCollection">The scripture text collection.</param>
     /// <param name="projectDeleter">The project deleter.</param>
     /// <param name="migrationOperations">The migration operations.</param>
     /// <param name="passwordProvider">The password provider.</param>
@@ -130,6 +106,7 @@ public class SFInstallableDblResource : InstallableResource
         ISFRestClientFactory restClientFactory,
         IFileSystemService fileSystemService,
         IJwtTokenHelper jwtTokenHelper,
+        IScrTextCollection scrTextCollection,
         IProjectDeleter projectDeleter,
         IMigrationOperations migrationOperations,
         IZippedResourcePasswordProvider passwordProvider
@@ -141,6 +118,7 @@ public class SFInstallableDblResource : InstallableResource
         this._restClientFactory = restClientFactory;
         this._fileSystemService = fileSystemService;
         this._jwtTokenHelper = jwtTokenHelper;
+        this._scrTextCollection = scrTextCollection;
         if (this._restClientFactory == null)
         {
             throw new ArgumentNullException(nameof(restClientFactory));
@@ -180,7 +158,7 @@ public class SFInstallableDblResource : InstallableResource
                 // First check the resources by ID directory
                 string fileName = Name + "." + DBLEntryUid + ProjectFileManager.resourceFileExtension;
                 string projectPath = Path.Combine(SFScrTextCollection.ResourcesByIdDirectory, fileName);
-                if (!RobustFile.Exists(projectPath))
+                if (!_fileSystemService.FileExists(projectPath))
                 {
                     // If that does not exist, use the resources directory
                     fileName = Name + ProjectFileManager.resourceFileExtension;
@@ -188,7 +166,7 @@ public class SFInstallableDblResource : InstallableResource
                 }
 
                 // Generate an ExistingScrText from the p8z file on disk
-                if (RobustFile.Exists(projectPath))
+                if (_fileSystemService.FileExists(projectPath))
                 {
                     var name = new ProjectName(projectPath);
                     string userName = _jwtTokenHelper.GetParatextUsername(_userSecret);
@@ -196,9 +174,8 @@ public class SFInstallableDblResource : InstallableResource
                     {
                         throw new Exception($"Failed to get a PT username for SF user id {_userSecret.Id}.");
                     }
-                    var ptUser = new SFParatextUser(userName);
                     var passwordProvider = new ParatextZippedResourcePasswordProvider(_paratextOptions);
-                    var resourceScrText = new ResourceScrText(name, ptUser, passwordProvider);
+                    var resourceScrText = _scrTextCollection.CreateResourceScrText(userName, name, passwordProvider);
                     if (resourceScrText.Settings.DBLId == DBLEntryUid)
                     {
                         _existingScrText = resourceScrText;
@@ -219,6 +196,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="restClientFactory">The rest client factory.</param>
     /// <param name="fileSystemService">The file system service.</param>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="scrTextCollection">The scripture text collection.</param>
     /// <param name="exceptionHandler">The exception handler.</param>
     /// <param name="baseUrl">The base URL.</param>
     /// <returns>
@@ -236,6 +214,7 @@ public class SFInstallableDblResource : InstallableResource
         ISFRestClientFactory restClientFactory,
         IFileSystemService fileSystemService,
         IJwtTokenHelper jwtTokenHelper,
+        IScrTextCollection scrTextCollection,
         IExceptionHandler exceptionHandler,
         string baseUrl = null
     )
@@ -263,6 +242,7 @@ public class SFInstallableDblResource : InstallableResource
                 restClientFactory,
                 fileSystemService,
                 jwtTokenHelper,
+                scrTextCollection,
                 exceptionHandler,
                 baseUrl,
                 id
@@ -318,6 +298,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="restClientFactory">The rest client factory.</param>
     /// <param name="fileSystemService">The file system service.</param>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="scrTextCollection">The scripture text collection.</param>
     /// <param name="exceptionHandler">The exception handler.</param>
     /// <param name="baseUrl">The base URL.</param>
     /// <param name="id">ID of resource to filter for (optional).</param>
@@ -332,6 +313,7 @@ public class SFInstallableDblResource : InstallableResource
         ISFRestClientFactory restClientFactory,
         IFileSystemService fileSystemService,
         IJwtTokenHelper jwtTokenHelper,
+        IScrTextCollection scrTextCollection,
         IExceptionHandler exceptionHandler,
         string baseUrl = null,
         string id = null
@@ -371,6 +353,7 @@ public class SFInstallableDblResource : InstallableResource
             restClientFactory,
             fileSystemService,
             jwtTokenHelper,
+            scrTextCollection,
             DateTime.Now,
             userSecret,
             paratextOptions,
@@ -462,7 +445,6 @@ public class SFInstallableDblResource : InstallableResource
         {
             if (RobustFile.Exists(filePath))
             {
-                // RobustFile only handles retries...
                 RobustFile.Delete(filePath);
             }
 
@@ -481,9 +463,9 @@ public class SFInstallableDblResource : InstallableResource
             result = false;
         }
 
-        if (RobustFile.Exists(filePath))
+        if (_fileSystemService.FileExists(filePath))
         {
-            RobustFile.Delete(filePath);
+            _fileSystemService.DeleteFile(filePath);
         }
 
         return result;
@@ -651,6 +633,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="restClientFactory">The rest client factory.</param>
     /// <param name="fileSystemService">The file system service.</param>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="scrTextCollection">The scripture text collection.</param>
     /// <param name="createdTimestamp">The created timestamp.</param>
     /// <param name="userSecret">The user secret.</param>
     /// <param name="paratextOptions">The paratext options.</param>
@@ -666,6 +649,7 @@ public class SFInstallableDblResource : InstallableResource
         ISFRestClientFactory restClientFactory,
         IFileSystemService fileSystemService,
         IJwtTokenHelper jwtTokenHelper,
+        IScrTextCollection scrTextCollection,
         DateTime createdTimestamp,
         UserSecret userSecret,
         ParatextOptions paratextOptions,
@@ -724,6 +708,7 @@ public class SFInstallableDblResource : InstallableResource
                     restClientFactory,
                     fileSystemService,
                     jwtTokenHelper,
+                    scrTextCollection,
                     projectDeleter,
                     migrationOperations,
                     passwordProvider

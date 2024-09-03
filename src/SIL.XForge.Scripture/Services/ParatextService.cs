@@ -596,6 +596,7 @@ public class ParatextService : DisposableBase, IParatextService
                 _restClientFactory,
                 _fileSystemService,
                 _jwtTokenHelper,
+                ScrTextCollection,
                 _exceptionHandler,
                 _dblServerUri
             );
@@ -2717,6 +2718,7 @@ public class ParatextService : DisposableBase, IParatextService
             _restClientFactory,
             _fileSystemService,
             _jwtTokenHelper,
+            ScrTextCollection,
             _exceptionHandler,
             _dblServerUri
         );
