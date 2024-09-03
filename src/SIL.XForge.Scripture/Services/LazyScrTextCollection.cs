@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Paratext.Data;
+using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -69,6 +70,16 @@ public class LazyScrTextCollection : IScrTextCollection
         }
 
         return null;
+    }
+
+    public virtual ResourceScrText CreateResourceScrText(
+        string ptUsername,
+        ProjectName projectName,
+        IZippedResourcePasswordProvider passwordProvider
+    )
+    {
+        var associatedUser = new SFParatextUser(ptUsername);
+        return new ResourceScrText(projectName, associatedUser, passwordProvider);
     }
 
     protected virtual ScrText CreateScrText(string ptUsername, ProjectName projectName)
