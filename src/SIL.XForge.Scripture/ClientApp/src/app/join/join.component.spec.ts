@@ -112,19 +112,19 @@ describe('JoinComponent', () => {
 
   it('sets locale when not logged in', fakeAsync(() => {
     new TestEnvironment({ isLoggedIn: false, locale: 'fr' });
-    verify(mockedI18nService.setLocale('fr', anything())).once();
+    verify(mockedI18nService.setLocale('fr')).once();
     expect().nothing();
   }));
 
   it('sets locale when not logged in and locale not supplied', fakeAsync(() => {
     new TestEnvironment({ isLoggedIn: false });
-    verify(mockedI18nService.setLocale('en', anything())).once();
+    verify(mockedI18nService.setLocale('en')).once();
     expect().nothing();
   }));
 
   it('does not set locale when logged in', fakeAsync(() => {
     new TestEnvironment({ isLoggedIn: true });
-    verify(mockedI18nService.setLocale(anything(), anything())).never();
+    verify(mockedI18nService.setLocale(anything())).never();
     expect().nothing();
   }));
 
