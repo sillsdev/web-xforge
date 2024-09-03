@@ -240,12 +240,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (Bugsnag.isStarted()) Bugsnag.setUser(this.currentUserDoc.id);
     }
 
-    // Set the locale in the Auth0 user profile to the current browsing session based on the cookie
-    const languageTag: string | undefined = this.currentUserDoc.data!.interfaceLanguage;
-    if (languageTag != null && I18nService.getLocale(languageTag)?.canonicalTag !== this.i18n.localeCode) {
-      this.authService.updateInterfaceLanguage(this.i18n.localeCode);
-    }
-
     const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
     this.isLoggedInUserAnonymous = await this.authService.isLoggedInUserAnonymous;
     const isBrowserSupported = supportedBrowser();
@@ -254,6 +248,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, {
         data: BrowserIssue.Upgrade
       });
+    }
+
+    // Set the locale to the Auth0 user profile on first login
+    const languageTag: string | undefined = this.currentUserDoc.data!.interfaceLanguage;
+    if (
+      isNewlyLoggedIn &&
+      languageTag != null &&
+      I18nService.getLocale(languageTag)?.canonicalTag !== this.i18n.localeCode
+    ) {
+      this.i18n.setLocale(languageTag);
     }
 
     // Monitor current project
@@ -328,7 +332,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   setLocale(locale: string): void {
-    this.i18n.setLocale(locale, this.authService);
+    this.i18n.setLocale(locale);
+    this.authService.updateInterfaceLanguage(locale);
   }
 
   changePassword(): void {

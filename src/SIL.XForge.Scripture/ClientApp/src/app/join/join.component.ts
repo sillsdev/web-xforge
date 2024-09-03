@@ -75,7 +75,7 @@ export class JoinComponent extends DataLoadingComponent {
     this.subscribe(checkLinkSharing$, joining => {
       // Set locale only if not logged in
       if (this.authService.currentUserId == null) {
-        this.i18nService.setLocale(joining.locale, this.authService);
+        this.i18nService.setLocale(joining.locale);
       }
       this.initialize(joining.shareKey);
     });
