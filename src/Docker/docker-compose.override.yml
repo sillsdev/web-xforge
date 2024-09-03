@@ -1,6 +1,4 @@
 # This override is loaded automatically via docker compose, and contains development/debug configuration
-version: "3.4"
-
 name: scripture-forge
 
 services:
