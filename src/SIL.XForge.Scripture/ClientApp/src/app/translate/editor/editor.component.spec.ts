@@ -77,6 +77,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -226,6 +227,19 @@ describe('EditorComponent', () => {
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
 
     env.dispose();
+  }));
+
+  it('shows warning to users when translation is Korean, Japanese, or Chinese', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'ko' }
+    });
+    env.wait();
+    expect(env.component.browserEngine).not.toEqual('gecko');
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
+    expect(env.component.showBrowserWarningBanner).toBe(true);
+    expect(env.browserWarningBanner).not.toBeNull();
+    discardPeriodicTasks();
   }));
 
   describe('Translation Suggestions enabled', () => {
@@ -4458,6 +4472,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.copyright-banner'));
   }
 
+  get browserWarningBanner(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.browser-warning-banner'));
+  }
+
   get copyrightMoreInfo(): DebugElement {
     return this.fixture.debugElement.query(By.css('.copyright-banner .copyright-more-info'));
   }
@@ -4536,6 +4554,9 @@ class TestEnvironment {
       ...this.testProjectProfile,
       paratextUsers: this.paratextUsersOnProject
     });
+    if (data.writingSystem != null) {
+      projectProfileData.writingSystem = data.writingSystem as WritingSystem;
+    }
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;

@@ -113,6 +113,13 @@
               }
               @case ("project-target") {
                 <div class="project-tab-container">
+                  @if (showBrowserWarningBanner) {
+                    <app-notice icon="warning" type="warning" class="browser-warning-banner">
+                      <div>
+                        <span [innerHtml]="browserWarningMessage"></span>
+                      </div>
+                    </app-notice>
+                  }
                   @if (hasTargetCopyrightBanner) {
                     <app-notice icon="copyright" type="warning" class="copyright-banner">
                       <div>
