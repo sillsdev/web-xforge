@@ -1,4 +1,12 @@
 {
+  "audio_recorder_dialog": {
+    "mic_access_denied": "Der Zugriff auf Dein Mikrofon wurde verweigert. Bitte aktiviere das Mikrofon über Deinen Browser.",
+    "mic_not_found": "Kein Mikrofon gefunden. Bitte verbinde ein Mikrofon mit Deinem Gerät.",
+    "record_audio": "Audio aufnehmen",
+    "re_record": "Erneut aufnehmen",
+    "save": "Speichern",
+    "stop_recording": "Aufnahme stoppen"
+  },
   "app": {
     "action_not_available_offline": "Diese Funktion ist nicht verfügbar, wenn Du nicht mit dem Internet verbunden bist.",
     "all_questions": "Alle Fragen.",
@@ -67,8 +75,8 @@
       "MIC": "Micha",
       "NAM": "Nahum",
       "HAB": "Habakuk",
-      "ZEP": "Zefania",
-      "HAG": "Hagai",
+      "ZEP": "Zefanja",
+      "HAG": "Haggai",
       "ZEC": "Sacharja",
       "MAL": "Maleachi",
       "MAT": "Matthäus",
@@ -368,6 +376,7 @@
     "not_admin_cannot_connect_project": "Um diesem Projekt in Scripture Forge beizutreten, bitte den Administrator des Paratext-Projekts, das Projekt mit Scripture Forge zu verbinden.",
     "not_connected": "Nicht verbunden",
     "offline": "Du musst eine Internetverbindung herstellen, um mit einem Projekt zu beginnen.",
+    "offline-accessible": "Offline-Zugang",
     "open": "Öffnen",
     "problem_getting_pt_list": "Es gab ein Problem beim Abrufen der Liste der verfügbaren Paratext-Projekte, mit denen eine Verbindung hergestellt werden kann. Wenn dieses Problem weiterhin auftritt und das Ab- und Wiederanmelden das Problem nicht behebt, bitte melde das Problem."
   },
