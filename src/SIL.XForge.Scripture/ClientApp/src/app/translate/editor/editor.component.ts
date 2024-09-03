@@ -96,7 +96,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
+import { getBrowserEngine, getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -249,6 +249,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
+  readonly browserEngine: string = getBrowserEngine();
+  readonly translationWarningLanguages = ['ko', 'ja', 'cmn'];
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -500,6 +502,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
   }
 
+  get browserWarningMessage(): string {
+    return translate('editor.browser_warning_banner', { firefoxLink: getLinkHTML('Firefox', 'https://firefox.com') });
+  }
+
   get showMultiViewers(): boolean {
     return this.onlineStatusService.isOnline && this.multiCursorViewers.length > 0;
   }
@@ -579,6 +585,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
   get targetLabel(): string | undefined {
     return this.projectDoc?.data?.shortName;
+  }
+
+  get showBrowserWarningBanner(): boolean {
+    const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
+    return (
+      writingSystemTag != null &&
+      this.translationWarningLanguages.includes(writingSystemTag) &&
+      this.browserEngine !== 'gecko'
+    );
   }
 
   /**
