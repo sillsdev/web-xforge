@@ -48,7 +48,7 @@ describe('I18nService', () => {
     expect(service).toBeTruthy();
     service.setLocale('zh-CN', instance(mockedAuthService));
     verify(mockedTranslocoService.setActiveLang('zh-CN')).called();
-    verify(mockedAuthService.updateInterfaceLanguage('zh-CN')).called();
+    verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
     expect(service.localeCode).toEqual('zh-CN');
   });
 

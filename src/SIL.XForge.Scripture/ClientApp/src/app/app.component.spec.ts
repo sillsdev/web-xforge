@@ -235,18 +235,44 @@ describe('AppComponent', () => {
 
   it('sets user locale when stored locale does not match the browsing session', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedAuthService.isNewlyLoggedIn).thenResolve(true);
     when(mockedI18nService.localeCode).thenReturn('es');
     env.navigate(['/projects', 'project01']);
     env.init();
 
     tick();
     env.fixture.detectChanges();
-    verify(mockedAuthService.updateInterfaceLanguage('es')).once();
+    verify(mockedI18nService.setLocale('en')).once();
 
     env.component.setLocale('pt-BR');
     tick();
     env.fixture.detectChanges();
-    verify(mockedI18nService.setLocale('pt-BR', anything())).once();
+    verify(mockedI18nService.setLocale('pt-BR')).once();
+  }));
+
+  it('should not set user locale when not newly logged in and stored locale does not match the browsing session', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedAuthService.isNewlyLoggedIn).thenResolve(false);
+    when(mockedI18nService.localeCode).thenReturn('es');
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedI18nService.setLocale('en')).never();
+  }));
+
+  it('set interface language when specifically setting locale', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    tick();
+    env.fixture.detectChanges();
+
+    env.component.setLocale('pt-BR');
+    verify(mockedI18nService.setLocale('pt-BR')).once();
+    verify(mockedAuthService.updateInterfaceLanguage('pt-BR')).once();
   }));
 
   it('response to remote project deletion', fakeAsync(() => {
