@@ -884,4 +884,35 @@ public class SFProjectsRpcController(
             throw;
         }
     }
+
+    public async Task<IRpcMethodResult> SetIsValid(string projectId, int book, int chapter, bool isValid)
+    {
+        try
+        {
+            await projectService.SetIsValidAsync(UserId, projectId, book, chapter, isValid);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException ex)
+        {
+            return NotFoundError(ex.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetIsValid" },
+                    { "projectId", projectId },
+                    { "book", book.ToString() },
+                    { "chapter", chapter.ToString() },
+                    { "isValid", isValid.ToString() },
+                }
+            );
+            throw;
+        }
+    }
 }

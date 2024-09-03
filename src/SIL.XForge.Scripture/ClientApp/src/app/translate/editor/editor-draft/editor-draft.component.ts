@@ -55,7 +55,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   isDraftReady = false;
   isDraftApplied = false;
   userAppliedDraft = false;
-  canApplyDraft = false;
 
   private draftDelta?: DeltaStatic;
   private targetDelta?: DeltaStatic;
@@ -109,7 +108,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             filterNullish(),
             tap(projectDoc => {
               this.targetProject = projectDoc.data;
-              this.canApplyDraft = this.canEdit();
             }),
             distinctUntilChanged()
           );
@@ -153,6 +151,13 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       });
   }
 
+  get canApplyDraft(): boolean {
+    if (this.targetProject == null || this.bookNum == null || this.chapter == null || this.draftDelta?.ops == null) {
+      return false;
+    }
+    return this.draftHandlingService.canApplyDraft(this.targetProject, this.bookNum, this.chapter, this.draftDelta.ops);
+  }
+
   async applyDraft(): Promise<void> {
     if (this.draftDelta == null) {
       throw new Error('No draft ops to apply.');
@@ -177,7 +182,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.isDraftReady = false;
     this.isDraftApplied = false;
     this.userAppliedDraft = false;
-    this.canApplyDraft = false;
   }
 
   private draftExists(): Observable<boolean> {
@@ -196,12 +200,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     });
 
     return hasContent ?? false;
-  }
-
-  private canEdit(): boolean {
-    return (
-      this.textDocService.canEdit(this.targetProject, this.bookNum, this.chapter) && !this.draftText?.areOpsCorrupted
-    );
   }
 
   private getLocalizedBookChapter(): string {
