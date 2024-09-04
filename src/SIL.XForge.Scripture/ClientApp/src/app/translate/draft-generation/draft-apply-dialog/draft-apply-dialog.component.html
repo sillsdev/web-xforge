@@ -1,0 +1,56 @@
+@if (isLoading) {
+  <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+}
+
+<ng-container *transloco="let t; read: 'draft_apply_dialog'">
+  <div mat-dialog-content>
+    <form [formGroup]="addToProjectForm">
+      <p>{{ t("select_alternate_project") }}</p>
+      <app-project-select
+        [projects]="projects"
+        [placeholder]="t('choose_project')"
+        [isDisabled]="projects.length === 0"
+        (projectSelect)="projectSelectedAsync($event.paratextId)"
+        formControlName="targetParatextId"
+      ></app-project-select>
+      @if (!canEditProject && isAppOnline) {
+        <mat-error class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</mat-error>
+      }
+      @if (projectLoadingFailed && isAppOnline) {
+        <mat-error class="fetch-projects-failed-message">{{ t("error_fetching_projects") }}</mat-error>
+      }
+      @if (!isAppOnline) {
+        <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
+      }
+      @if (connectOtherProject != null) {
+        <div class="unlisted-project-message">
+          <p>
+            <span [innerHTML]="connectOtherProject.before"></span>
+            <a [appRouterLink]="['projects']" (click)="close()">{{ connectOtherProject.templateTagText }}</a>
+            <span>{{ connectOtherProject.after }}</span>
+          </p>
+        </div>
+      }
+      @if (targetProject$ | async; as project) {
+        <div class="target-project-content">
+          @if (targetChapters$ | async; as chapters) {
+            <mat-icon>warning</mat-icon>
+            {{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
+          } @else {
+            <mat-icon>verified</mat-icon>
+            {{ t("book_is_empty", { bookName, projectName: project.name }) }}
+          }
+        </div>
+        <mat-checkbox class="overwrite-content" formControlName="overwrite">{{
+          t("i_understand_overwrite_book", { projectName: project.name, bookName })
+        }}</mat-checkbox>
+      }
+    </form>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button class="cancel-button" [mat-dialog-close]="false">{{ t("cancel") }}</button>
+    <button mat-raised-button class="add-button" color="primary" (click)="addToProject()" [disabled]="addDisabled">
+      {{ t("add_to_project") }}
+    </button>
+  </div>
+</ng-container>

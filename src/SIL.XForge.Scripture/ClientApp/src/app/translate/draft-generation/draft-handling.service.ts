@@ -179,17 +179,23 @@ export class DraftHandlingService {
 
   /**
    * Retrieves and applies the draft to the text document.
-   * @param textDocId The text doc identifier.
+   * @param project The project profile.
+   * @param draftTextDocId The text doc identifier of the draft of a chapter.
+   * @param targetTextDocId The text doc identifier to apply the draft to.
    * @returns True if the draft was successfully applied, false if the draft was not applied i.e. the draft
    * was in the legacy USFM format.
    */
-  async getAndApplyDraftAsync(project: SFProjectProfile, textDocId: TextDocId): Promise<boolean> {
-    if (!this.textDocService.canEdit(project, textDocId.bookNum, textDocId.chapterNum)) {
+  async getAndApplyDraftAsync(
+    project: SFProjectProfile,
+    draftTextDocId: TextDocId,
+    targetTextDocId: TextDocId
+  ): Promise<boolean> {
+    if (!this.textDocService.canEdit(project, draftTextDocId.bookNum, draftTextDocId.chapterNum)) {
       return false;
     }
 
     return await new Promise<boolean>(resolve => {
-      this.getDraft(textDocId, { isDraftLegacy: false }).subscribe(async draft => {
+      this.getDraft(draftTextDocId, { isDraftLegacy: false }).subscribe(async draft => {
         let ops: DeltaOperation[] = [];
         if (this.isDraftSegmentMap(draft)) {
           // Do not support applying drafts for the legacy segment map format.
@@ -200,7 +206,7 @@ export class DraftHandlingService {
           ops = draft;
         }
         const draftDelta: DeltaStatic = new Delta(ops);
-        await this.applyChapterDraftAsync(textDocId, draftDelta);
+        await this.applyChapterDraftAsync(targetTextDocId, draftDelta).catch(() => resolve(false));
         resolve(true);
       });
     });
