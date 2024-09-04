@@ -242,10 +242,9 @@ describe('EditorComponent', () => {
       writingSystem: { tag: 'ko' }
     });
     env.wait();
-    expect(env.component.browserEngine).not.toEqual('gecko');
     expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
-    expect(env.component.showBrowserWarningBanner).toBe(true);
-    expect(env.browserWarningBanner).not.toBeNull();
+    expect(env.component.writingSystemWarningBanner).toBe(true);
+    expect(env.showWritingSystemWarningBanner).not.toBeNull();
     discardPeriodicTasks();
   }));
 
@@ -4471,8 +4470,8 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.copyright-banner'));
   }
 
-  get browserWarningBanner(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.browser-warning-banner'));
+  get showWritingSystemWarningBanner(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.writing-system-warning-banner'));
   }
 
   get copyrightMoreInfo(): DebugElement {
