@@ -26,11 +26,12 @@
   <div class="admin-tool-control">
     <button
       (click)="downloadDraft()"
-      mat-raised-button
+      mat-flat-button
       color="primary"
       [disabled]="!isOnline || lastCompletedBuild == null || downloadBooksTotal > 0"
       id="download-draft"
     >
+      <mat-icon>download</mat-icon>
       Download draft
     </button>
     <app-info text="A zip file containing the latest generated draft."></app-info>
@@ -93,7 +94,8 @@
 
 <h2>Raw Draft Configuration</h2>
 <pre class="raw-draft-config">
-@for (key of keys(draftConfig ?? {}); track key) {
-  {{ key }}: <strong>{{ stringify(draftConfig![key]) }}</strong>
+@for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{
+    key === 'servalConfig' ? draftConfig![key] : stringify(draftConfig![key])
+  }}</strong>
 }
 </pre>
