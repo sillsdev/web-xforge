@@ -3,7 +3,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { catchError, lastValueFrom, Observable, of, tap, throwError } from 'rxjs';
+import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -14,6 +14,7 @@ import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
+import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -45,16 +46,21 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   trainingFiles: string[] = [];
   translationBooks: string[] = [];
 
+  downloadBooksProgress: number = 0;
+  downloadBooksTotal: number = 0;
+
   draftConfig: Object | undefined;
   draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
+  lastCompletedBuild: BuildDto | undefined;
+  zipSubscription: Subscription | undefined;
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
-    private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly draftGenerationService: DraftGenerationService
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
   }
@@ -67,8 +73,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     this.subscribe(
       this.activatedProjectService.projectDoc$.pipe(
         filterNullish(),
-        tap(projectDoc => {
-          if (projectDoc.data == null) return;
+        switchMap(projectDoc => {
+          if (projectDoc.data == null) return of(undefined);
           const project: SFProjectProfile = projectDoc.data;
           this.preTranslate = project.translateConfig.preTranslate;
           this.projectName = project.shortName + ' - ' + project.name;
@@ -134,9 +140,32 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
           this.draftConfig = project.translateConfig.draftConfig;
           this.draftJob$ = this.getDraftJob(projectDoc.id);
+
+          // Get the last completed build
+          if (this.isOnline) {
+            return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
+          } else {
+            return of(undefined);
+          }
         })
-      )
+      ),
+      (build: BuildDto | undefined) => {
+        this.lastCompletedBuild = build;
+      }
     );
+  }
+
+  async downloadDraft(): Promise<void> {
+    this.zipSubscription?.unsubscribe();
+    this.zipSubscription = this.draftGenerationService
+      .downloadGeneratedDraftZip(this.activatedProjectService.projectDoc, this.lastCompletedBuild)
+      .subscribe({
+        next: (draftZipProgress: DraftZipProgress) => {
+          this.downloadBooksProgress = draftZipProgress.current;
+          this.downloadBooksTotal = draftZipProgress.total;
+        },
+        error: (error: Error) => this.noticeService.showError(error.message)
+      });
   }
 
   async downloadProject(id: string, fileName: string): Promise<void> {

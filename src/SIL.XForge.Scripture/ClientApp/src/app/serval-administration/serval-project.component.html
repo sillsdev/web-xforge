@@ -23,6 +23,22 @@
       text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
     ></app-info>
   </div>
+  <div class="admin-tool-control">
+    <button
+      (click)="downloadDraft()"
+      mat-flat-button
+      color="primary"
+      [disabled]="!isOnline || lastCompletedBuild == null || downloadBooksTotal > 0"
+      id="download-draft"
+    >
+      <mat-icon>download</mat-icon>
+      Download draft
+    </button>
+    <app-info text="A zip file containing the latest generated draft."></app-info>
+    @if (downloadBooksTotal > 0) {
+      <div class="zip-progress">Zipping file {{ downloadBooksProgress }} of {{ downloadBooksTotal }}...</div>
+    }
+  </div>
 </div>
 
 <h2>Downloads</h2>
@@ -63,7 +79,7 @@
   </table>
 </div>
 
-<h2>Last Draft settings</h2>
+<h2>Last Draft Settings</h2>
 <h3>Training books</h3>
 <p>{{ trainingBooks.join(", ") || "None" }}</p>
 <h3>Training data files</h3>
@@ -71,12 +87,15 @@
 <h3>Translation books</h3>
 <p>{{ translationBooks.join(", ") || "None" }}</p>
 
-<!-- @if (draftJob$ | async; as draftJob) {
+@if (draftJob$ | async; as draftJob) {
   <h3>Diagnostic Information</h3>
   <app-draft-information [draftJob]="draftJob"></app-draft-information>
-} -->
-<h2>Raw draft config</h2>
+}
+
+<h2>Raw Draft Configuration</h2>
 <pre class="raw-draft-config">
-@for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{ stringify(draftConfig![key]) }}</strong>
+@for (key of keys(draftConfig ?? {}); track key) {{{ key }}: <strong>{{
+    key === 'servalConfig' ? draftConfig![key] : stringify(draftConfig![key])
+  }}</strong>
 }
 </pre>

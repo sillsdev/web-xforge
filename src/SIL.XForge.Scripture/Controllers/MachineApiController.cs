@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
 using Serval.Client;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -110,12 +112,14 @@ public class MachineApiController : ControllerBase
         {
             // First, check for a queued build
             ServalBuildDto? build = null;
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             if (buildId is null)
             {
                 build = await _machineApiService.GetQueuedStateAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     preTranslate,
+                    isServalAdmin,
                     cancellationToken
                 );
 
@@ -133,6 +137,7 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     minRevision,
                     preTranslate,
+                    isServalAdmin,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -141,6 +146,7 @@ public class MachineApiController : ControllerBase
                     buildId,
                     minRevision,
                     preTranslate,
+                    isServalAdmin,
                     cancellationToken
                 );
 
@@ -224,9 +230,11 @@ public class MachineApiController : ControllerBase
     {
         try
         {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             ServalBuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
+                isServalAdmin,
                 cancellationToken
             );
 
@@ -365,6 +373,7 @@ public class MachineApiController : ControllerBase
     /// <summary>
     /// Gets the pre-translations for the specified chapter as USFM.
     /// </summary>
+    /// <remarks>This method can be called by Serval Administrators for any project.</remarks>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. If zero, the entire book is returned</param>
@@ -385,11 +394,13 @@ public class MachineApiController : ControllerBase
     {
         try
         {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
             string usfm = await _machineApiService.GetPreTranslationUsfmAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
+                isServalAdmin,
                 cancellationToken
             );
             return Ok(usfm);
@@ -510,6 +521,7 @@ public class MachineApiController : ControllerBase
                 _userAccessor.UserId,
                 sfProjectId,
                 preTranslate: false,
+                isServalAdmin: false,
                 cancellationToken
             );
             return Ok(build);

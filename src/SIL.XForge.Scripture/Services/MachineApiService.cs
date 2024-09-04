@@ -188,13 +188,17 @@ public class MachineApiService(
         string buildId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -226,13 +230,17 @@ public class MachineApiService(
     public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
         // Get the translation engine
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
@@ -269,13 +277,17 @@ public class MachineApiService(
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
         // Otherwise execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -358,7 +370,6 @@ public class MachineApiService(
         try
         {
             preTranslation.PreTranslations = await preTranslationService.GetPreTranslationsAsync(
-                curUserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -393,7 +404,6 @@ public class MachineApiService(
         try
         {
             string usfm = await preTranslationService.GetPreTranslationUsfmAsync(
-                curUserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,
@@ -419,6 +429,7 @@ public class MachineApiService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="preTranslate">If <c>true</c>, check the status of the NMT/Pre-Translation build.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the user is a Serval administrator.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>
     /// A <see cref="ServalBuildDto"/> if the build is being uploaded to Serval; otherwise, <c>null</c>.
@@ -427,13 +438,17 @@ public class MachineApiService(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
         ServalBuildDto? buildDto = null;
 
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
         // If there is a job queued, return a build dto with a status showing it is queued
         if (
@@ -513,16 +528,19 @@ public class MachineApiService(
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission, if they are not a Serval administrator
+        if (!isServalAdmin)
+        {
+            await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        }
 
         try
         {
             return await preTranslationService.GetPreTranslationUsfmAsync(
-                curUserId,
                 sfProjectId,
                 bookNum,
                 chapterNum,

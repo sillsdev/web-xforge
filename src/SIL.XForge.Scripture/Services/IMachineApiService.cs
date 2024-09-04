@@ -16,6 +16,7 @@ public interface IMachineApiService
         string buildId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalBuildDto?> GetCurrentBuildAsync(
@@ -23,12 +24,14 @@ public interface IMachineApiService
         string sfProjectId,
         long? minRevision,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<PreTranslationDto> GetPreTranslationAsync(
@@ -42,6 +45,7 @@ public interface IMachineApiService
         string curUserId,
         string sfProjectId,
         bool preTranslate,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<Snapshot<TextData>> GetPreTranslationDeltaAsync(
@@ -56,6 +60,7 @@ public interface IMachineApiService
         string sfProjectId,
         int bookNum,
         int chapterNum,
+        bool isServalAdmin,
         CancellationToken cancellationToken
     );
     Task<WordGraph> GetWordGraphAsync(

@@ -19,7 +19,6 @@ public class PreTranslationServiceTests
     private const string Project01 = "project01";
     private const string Project02 = "project02";
     private const string Project03 = "project03";
-    private const string User01 = "user01";
     private const string Corpus01 = "corpus01";
     private const string TranslationEngine01 = "translationEngine01";
 
@@ -70,7 +69,6 @@ public class PreTranslationServiceTests
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
-            User01,
             Project01,
             bookNum,
             chapterNum,
@@ -92,7 +90,7 @@ public class PreTranslationServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationsAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationsAsync("invalid_project_id", 40, 1, CancellationToken.None)
         );
     }
 
@@ -104,7 +102,7 @@ public class PreTranslationServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationsAsync(User01, Project02, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationsAsync(Project02, 40, 1, CancellationToken.None)
         );
     }
 
@@ -126,7 +124,6 @@ public class PreTranslationServiceTests
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
-            User01,
             Project01,
             bookNum,
             chapterNum,
@@ -156,7 +153,6 @@ public class PreTranslationServiceTests
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
-            User01,
             Project01,
             bookNum,
             chapterNum,
@@ -230,7 +226,6 @@ public class PreTranslationServiceTests
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
-            User01,
             Project01,
             bookNum,
             chapterNum,
@@ -311,7 +306,6 @@ public class PreTranslationServiceTests
 
         // SUT
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
-            User01,
             Project01,
             bookNum,
             chapterNum,
@@ -338,7 +332,7 @@ public class PreTranslationServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationUsfmAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationUsfmAsync("invalid_project_id", 40, 1, CancellationToken.None)
         );
     }
 
@@ -350,7 +344,7 @@ public class PreTranslationServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetPreTranslationUsfmAsync(User01, Project02, 40, 1, CancellationToken.None)
+            () => env.Service.GetPreTranslationUsfmAsync(Project02, 40, 1, CancellationToken.None)
         );
     }
 
@@ -361,7 +355,7 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 0, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 0, CancellationToken.None);
         Assert.AreEqual(TestEnvironment.MatthewBookUsfm, usfm);
     }
 
@@ -372,7 +366,7 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 1, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 1, CancellationToken.None);
         Assert.AreEqual(TestEnvironment.MatthewChapterOneUsfm, usfm);
     }
 
@@ -383,7 +377,7 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 2, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 2, CancellationToken.None);
         Assert.AreEqual(TestEnvironment.MatthewChapterTwoUsfm, usfm);
     }
 
@@ -394,7 +388,7 @@ public class PreTranslationServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { UseParatextZipFile = true });
 
         // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(User01, Project01, 40, 3, CancellationToken.None);
+        string usfm = await env.Service.GetPreTranslationUsfmAsync(Project01, 40, 3, CancellationToken.None);
         Assert.IsEmpty(usfm);
     }
 
@@ -485,13 +479,12 @@ public class PreTranslationServiceTests
             )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
-                    new List<Pretranslation>
-                    {
+                    [
                         new Pretranslation { TextId = "MAT", Refs = ["MAT 1:1"] },
                         new Pretranslation { TextId = "MRK", Refs = ["MRK 1:1"] },
                         new Pretranslation { TextId = "MRK", Refs = ["MRK 1:2"] },
                         new Pretranslation { TextId = "MRK", Refs = ["MRK 2:1/3:h"] },
-                    }
+                    ]
                 )
             );
 
@@ -532,13 +525,12 @@ public class PreTranslationServiceTests
             )
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
-                    new List<Pretranslation>
-                    {
+                    [
                         new Pretranslation { TextId = "40_1" },
                         new Pretranslation { TextId = "41_1" },
                         new Pretranslation { TextId = "41_1" },
                         new Pretranslation { TextId = "41_2" },
-                    }
+                    ]
                 )
             );
 
