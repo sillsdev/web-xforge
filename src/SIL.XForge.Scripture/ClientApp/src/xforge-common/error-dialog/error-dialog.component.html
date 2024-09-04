@@ -7,7 +7,7 @@
       <p class="unsupported-browser" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
     }
     <p>
-      @for (portion of i18n.interpolateVariables("error.error_id", { errorId: data.eventId }); track portion) {
+      @for (portion of i18n.interpolateVariables("error.error_id", { errorId: data.eventId }); track portion.text) {
         @if (portion.id == null) {
           {{ portion.text }}
         }
