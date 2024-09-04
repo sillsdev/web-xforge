@@ -97,7 +97,7 @@ describe('ServalProjectComponent', () => {
     it('should disable the download button when offline', fakeAsync(() => {
       const env = new TestEnvironment(true);
       env.onlineStatus = false;
-      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.innerText).toContain('Download');
       expect(env.firstDownloadButton.disabled).toBe(true);
     }));
 
@@ -106,7 +106,7 @@ describe('ServalProjectComponent', () => {
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(
         throwError(() => new HttpErrorResponse({ status: 404 }))
       );
-      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.innerText).toContain('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
       env.clickElement(env.firstDownloadButton);
       verify(mockNoticeService.showError(anything())).once();
@@ -114,13 +114,13 @@ describe('ServalProjectComponent', () => {
 
     it('should have a download button', fakeAsync(() => {
       const env = new TestEnvironment(true);
-      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.innerText).toContain('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
     }));
 
     it('should allow clicking of the button to download', fakeAsync(() => {
       const env = new TestEnvironment(true);
-      expect(env.firstDownloadButton.innerText).toBe('Download');
+      expect(env.firstDownloadButton.innerText).toContain('Download');
       expect(env.firstDownloadButton.disabled).toBe(false);
       env.clickElement(env.firstDownloadButton);
 

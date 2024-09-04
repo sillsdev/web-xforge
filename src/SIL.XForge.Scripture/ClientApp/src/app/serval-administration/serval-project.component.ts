@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -10,7 +10,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
@@ -34,6 +33,7 @@ interface Row {
   standalone: true
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
+  @Input() showProjectTitle = true;
   preTranslate = false;
   projectName = '';
 
@@ -85,10 +85,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           });
 
           // Add the source
-          if (
-            project.translateConfig.source != null &&
-            !ParatextService.isResource(project.translateConfig.source.paratextId)
-          ) {
+          if (project.translateConfig.source != null) {
             rows.push({
               id: project.translateConfig.source.projectRef,
               name: project.translateConfig.source.shortName + ' - ' + project.translateConfig.source.name,
@@ -98,10 +95,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           }
 
           // Add the alternate source
-          if (
-            project.translateConfig.draftConfig.alternateSource != null &&
-            !ParatextService.isResource(project.translateConfig.draftConfig.alternateSource.paratextId)
-          ) {
+          if (project.translateConfig.draftConfig.alternateSource != null) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateSource.projectRef,
               name:
@@ -114,10 +108,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           }
 
           // Add the alternate training source
-          if (
-            project.translateConfig.draftConfig.alternateTrainingSource != null &&
-            !ParatextService.isResource(project.translateConfig.draftConfig.alternateTrainingSource.paratextId)
-          ) {
+          if (project.translateConfig.draftConfig.alternateTrainingSource != null) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateTrainingSource.projectRef,
               name:

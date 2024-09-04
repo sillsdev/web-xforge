@@ -1,5 +1,6 @@
-<h1>{{ projectName }}</h1>
-<a mat-raised-button color="primary" [appRouterLink]="'/serval-administration'">Back to Projects</a>
+@if (showProjectTitle) {
+  <h1>{{ projectName }}</h1>
+}
 
 <h2>Pre-Translation Configuration</h2>
 <div class="admin-tool">
@@ -11,7 +12,7 @@
   <div class="admin-tool-control">
     <button
       id="run-webhook"
-      mat-raised-button
+      mat-flat-button
       color="primary"
       (click)="retrievePreTranslationStatus()"
       [disabled]="!isOnline"
@@ -26,7 +27,12 @@
 
 <h2>Downloads</h2>
 <app-notice icon="info">
-  The Zip archives contain the Paratext files for the project at the time of last sync.
+  <p>The Zip archives contain the Paratext files for the project at the time of last sync.</p>
+  <p>
+    Source projects may be listed here even if they are not currently being used for drafting. For example, if a user
+    selects an alternate source, but then unselects "Use a different source for drafting," the source will still be
+    listed here even though it is not currently set to be used for drafting.
+  </p>
 </app-notice>
 <div class="table-container">
   <table mat-table [dataSource]="rows">
@@ -41,11 +47,12 @@
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let row">
         <button
-          mat-raised-button
+          mat-flat-button
           color="primary"
           (click)="downloadProject(row['id'], row['fileName'])"
           [disabled]="!isOnline"
         >
+          <mat-icon>download</mat-icon>
           Download
         </button>
       </td>
