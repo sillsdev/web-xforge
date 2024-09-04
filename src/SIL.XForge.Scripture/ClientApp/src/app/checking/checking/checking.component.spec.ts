@@ -2493,7 +2493,7 @@ class TestEnvironment {
   }
 
   get audioPlayerOnQuestion(): DebugElement {
-    return this.answerPanel.query(By.css('.question-audio'));
+    return this.answerPanel.query(By.css('#questionAudio'));
   }
 
   get chapterAudio(): DebugElement {
