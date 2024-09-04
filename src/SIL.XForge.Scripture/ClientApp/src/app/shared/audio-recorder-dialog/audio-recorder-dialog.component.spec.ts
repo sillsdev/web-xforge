@@ -63,7 +63,7 @@ describe('AudioRecorderDialogComponent', () => {
     const env = new TestEnvironment();
     expect(env.recordButton).toBeTruthy();
     expect(env.stopRecordingButton).toBeFalsy();
-    expect(env.recordingIndicator.classList.contains('visible')).toBe(false);
+    expect(env.recordingIndicator).toBeNull();
     env.clickButton(env.recordButton);
     // Record for more than 2 seconds in order to test the duration of blob files
     // which can fail with certain recording types
@@ -71,7 +71,7 @@ describe('AudioRecorderDialogComponent', () => {
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();
     expect(env.component.audio.status).toEqual('recording');
-    expect(env.recordingIndicator.classList.contains('visible')).toBe(true);
+    expect(env.recordingIndicator).not.toBeNull();
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
     expect(env.component.audio.status).toEqual('processed');

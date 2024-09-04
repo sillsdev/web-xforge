@@ -1,19 +1,9 @@
 import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  Inject,
-  Input,
-  OnDestroy,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate, TranslocoModule } from '@ngneat/transloco';
-import { timer } from 'rxjs';
+import { interval, Observable, Subscription, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -50,7 +40,7 @@ export interface AudioRecorderDialogData {
 /* eslint-disable brace-style */
 export class AudioRecorderDialogComponent
   extends SubscriptionDisposable
-  implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit
+  implements ControlValueAccessor, OnInit, OnDestroy
 {
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
@@ -66,16 +56,18 @@ export class AudioRecorderDialogComponent
   showCountdown: boolean;
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
+  showCanvas: boolean = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
   private recordedChunks: Blob[] = [];
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
+  private rippleSubscription?: Subscription;
   private canvasContext: CanvasRenderingContext2D | null = null;
-  // height and width are calculated in ngAfterViewInit
-  private HEIGHT = 150;
-  private WIDTH = 300;
-  private audioBase = 128;
+  // height and width are calculated when the canvas is initialized
+  private visualizerHeight = 150;
+  private visualizerWidth = 300;
+  private audioWaveformBase = 128;
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
@@ -111,16 +103,6 @@ export class AudioRecorderDialogComponent
   async ngOnInit(): Promise<void> {
     this.mediaDevicesUnsupported =
       this.navigator.mediaDevices?.getUserMedia == null || typeof MediaRecorder === 'undefined';
-  }
-
-  ngAfterViewInit(): void {
-    const canvas: HTMLCanvasElement = document.querySelector('.visualizer')!;
-    this.WIDTH = canvas.width;
-    this.HEIGHT = canvas.height;
-    this.canvasContext = canvas.getContext('2d');
-    if (this.canvasContext == null) return;
-    this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
-    this.canvasContext.fillRect(0, 0, this.WIDTH, this.HEIGHT);
   }
 
   writeValue(obj: AudioAttachment): void {
@@ -189,6 +171,7 @@ export class AudioRecorderDialogComponent
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
+    this.showCanvas = true;
     this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
@@ -198,7 +181,8 @@ export class AudioRecorderDialogComponent
     if (this.mediaRecorder == null || this.stream == null) {
       return;
     }
-
+    this.rippleSubscription?.unsubscribe();
+    this.showCanvas = false;
     this.mediaRecorder.stop();
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.audio = { status: 'stopped' };
@@ -261,49 +245,47 @@ export class AudioRecorderDialogComponent
     const dataArray: Uint8Array = new Uint8Array(bufferLength);
     source.connect(analyser);
 
-    this.canvasContext?.clearRect(0, 0, this.WIDTH, this.HEIGHT);
+    this.initCanvasContext();
+    this.canvasContext?.clearRect(0, 0, this.visualizerWidth, this.visualizerHeight);
 
-    // draw the frequency bar to indicate the recording is working
+    // draw the waveform to indicate the recording is working
     const drawWaveForm = (): void => {
       if (this.audio.status !== 'recording') return;
-      const elem: HTMLElement | null = document.querySelector('.stop-background');
-
-      setTimeout(() => {
-        requestAnimationFrame(drawWaveForm);
-        analyser.getByteTimeDomainData(dataArray);
-        this.drawOnCanvas(dataArray, bufferLength);
-
-        const threshold = 1.25;
-        if (dataArray.some(v => v / this.audioBase > threshold)) {
-          // show the ripple animation when the frequency reaches the threshold
-          elem?.classList.add('animate');
-          setTimeout(() => elem?.classList.remove('animate'), 1000);
-        }
-      }, 150);
+      analyser.getByteTimeDomainData(dataArray);
+      this.drawOnCanvas(dataArray, bufferLength);
+      this.addRippleEffect(dataArray);
     };
 
-    drawWaveForm();
+    const refreshRate: Observable<number> = interval(150);
+    this.rippleSubscription = this.subscribe(refreshRate, _ => drawWaveForm());
+  }
+
+  private initCanvasContext(): void {
+    const canvas: HTMLCanvasElement | null = document.querySelector('.visualizer');
+    if (canvas == null) return;
+    this.visualizerWidth = canvas.width;
+    this.visualizerHeight = canvas.height;
+    this.canvasContext = canvas.getContext('2d');
+    this.resetCanvasContext();
   }
 
   private drawOnCanvas(dataArray: Uint8Array, bufferLength: number): void {
     if (this.canvasContext == null) return;
-    this.canvasContext.fillStyle = 'rgb(200, 200, 200)';
-    this.canvasContext.fillRect(0, 0, this.WIDTH, this.HEIGHT);
-
+    this.resetCanvasContext();
     this.canvasContext.lineWidth = 3;
     this.canvasContext.strokeStyle = 'rgb(200 0 0)';
     this.canvasContext.beginPath();
 
     const interval = 16;
-    const sliceWidth = this.WIDTH / (bufferLength / interval);
+    const sliceWidth = this.visualizerWidth / (bufferLength / interval);
     let x = 0;
 
     for (let i = 0; i < bufferLength; i += interval) {
-      const value: number = dataArray[i] / this.audioBase - 0.95;
-      const y = value * this.HEIGHT;
+      const value: number = dataArray[i] / this.audioWaveformBase - 0.95;
+      const y = value * this.visualizerHeight;
 
       // draw the waveform line above and below the x-axis
-      const mid = this.HEIGHT / 2;
+      const mid = this.visualizerHeight / 2;
       this.canvasContext.moveTo(x, mid + y);
       this.canvasContext.lineTo(x, mid - y);
 
@@ -311,5 +293,26 @@ export class AudioRecorderDialogComponent
     }
 
     this.canvasContext.stroke();
+  }
+
+  private resetCanvasContext(): void {
+    if (this.canvasContext == null) return;
+    this.canvasContext.fillStyle = 'white';
+    this.canvasContext.fillRect(0, 0, this.visualizerWidth, this.visualizerHeight);
+  }
+
+  private addRippleEffect(dataArray: Uint8Array): void {
+    const rippleContainerElement: HTMLElement | null = document.querySelector('#audioRecordContainer');
+    if (rippleContainerElement == null) return;
+
+    const waveformThreshold = 1.3;
+    if (dataArray.some(v => v / this.audioWaveformBase > waveformThreshold)) {
+      // show the ripple animation when the waveform reaches the threshold
+      const rippleElement: HTMLElement = document.createElement('div');
+      rippleElement.classList.add('animate');
+      rippleContainerElement.appendChild(rippleElement);
+      // remove the div element after the 1s animation completes
+      setTimeout(() => rippleElement.remove(), 1000);
+    }
   }
 }
