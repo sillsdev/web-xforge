@@ -96,7 +96,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { getBrowserEngine, getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
+import { getLinkHTML, issuesEmailTemplate, objectId, browserLinks, isGecko } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -249,8 +249,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
-  readonly browserEngine: string = getBrowserEngine();
-  readonly translationWarningLanguages = ['ko', 'ja', 'cmn'];
+  readonly writingSystemWarningRegex = /^(ko|cmn|ja)_?$/;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -502,8 +501,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
   }
 
-  get browserWarningMessage(): string {
-    return translate('editor.browser_warning_banner', { firefoxLink: getLinkHTML('Firefox', 'https://firefox.com') });
+  get writingSystemWarningMessage(): string {
+    return translate('editor.browser_warning_banner', { firefoxLink: browserLinks().firefoxLink });
   }
 
   get showMultiViewers(): boolean {
@@ -587,13 +586,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.data?.shortName;
   }
 
-  get showBrowserWarningBanner(): boolean {
+  get writingSystemWarningBanner(): boolean {
     const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
-    return (
-      writingSystemTag != null &&
-      this.translationWarningLanguages.includes(writingSystemTag) &&
-      this.browserEngine !== 'gecko'
-    );
+    return !isGecko() && writingSystemTag != null && this.writingSystemWarningRegex.test(writingSystemTag);
   }
 
   /**
