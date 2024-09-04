@@ -164,11 +164,9 @@ export class I18nService {
   /**
    * Attempts to set the locale to the specified locale tag. If the specified locale is not available this will not
    * throw an exception but will report the failure to Bugsnag. If it is available, this will set the active local of
-   * the I18nService, write to the ASP .NET Core culture cookie, and log to Bugsnag. If the authService parameter is
-   * supplied, it will also be written the locale to the user profile.
+   * the I18nService, write to the ASP .NET Core culture cookie, and log to Bugsnag.
    * @param tag The locale code of the locale to activate. I18nService.locales lists the locales, and each locale has a
    * canonicalTag. This parameter must be one of those tags, or similar to it, by a case-insensitive comparison.
-   * this is not supplied, the user profile will not be updated.
    */
   trySetLocale(tag: string): void {
     const locale = I18nService.getLocale(tag);

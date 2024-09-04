@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { AuthService } from './auth.service';
 import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { I18nService } from './i18n.service';
@@ -15,7 +14,6 @@ import { LocationService } from './location.service';
 
 const mockedLocationService = mock(LocationService);
 const mockedBugsnagService = mock(BugsnagService);
-const mockedAuthService = mock(AuthService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
 const mockedErrorReportingService = mock(ErrorReportingService);
@@ -29,7 +27,6 @@ describe('I18nService', () => {
     providers: [
       { provide: LocationService, useMock: mockedLocationService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: AuthService, useMock: mockedAuthService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
@@ -48,7 +45,6 @@ describe('I18nService', () => {
     expect(service).toBeTruthy();
     service.setLocale('zh-CN');
     verify(mockedTranslocoService.setActiveLang('zh-CN')).called();
-    verify(mockedAuthService.updateInterfaceLanguage(anything())).never();
     expect(service.localeCode).toEqual('zh-CN');
   });
 
