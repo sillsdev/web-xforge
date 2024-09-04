@@ -3786,6 +3786,142 @@ public class SFProjectServiceTests
         );
     }
 
+    [Test]
+    public void SetIsValidAsync_BookMustBeInProject()
+    {
+        var env = new TestEnvironment();
+        const int book = 39;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
+        );
+    }
+
+    [Test]
+    public void SetIsValidAsync_ChapterMustBeInBook()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 2;
+        const bool isValid = true;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
+        );
+    }
+
+    [Test]
+    public void SetIsValidAsync_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetIsValidAsync(User01, "invalid_project", book, chapter, isValid)
+        );
+    }
+
+    [Test]
+    public void SetIsValidAsync_ProjectMustNotBeResource()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetIsValidAsync(User01, Resource01, book, chapter, isValid)
+        );
+    }
+
+    [Test]
+    public async Task SetIsValidAsync_Success()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // Grant User01 write permission
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project01,
+                u =>
+                    u.Set(
+                        p => p.Texts[0].Chapters[0].Permissions,
+                        new Dictionary<string, string> { { User01, TextInfoPermission.Write } }
+                    )
+            );
+
+        // SUT
+        await env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid);
+
+        Assert.IsTrue(env.GetProject(Project01).Texts[0].Chapters[0].IsValid);
+    }
+
+    [Test]
+    public void SetIsValidAsync_UserMustHaveParatextRole()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetIsValidAsync(User02, Project01, book, chapter, isValid)
+        );
+    }
+
+    [Test]
+    public void SetIsValidAsync_UserMustHavePermissionRecord()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
+        );
+    }
+
+    [Test]
+    public async Task SetIsValidAsync_UserMustHaveWritePermission()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        const bool isValid = true;
+
+        // Grant User01 read permission
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(
+                Project01,
+                u =>
+                    u.Set(
+                        p => p.Texts[0].Chapters[0].Permissions,
+                        new Dictionary<string, string> { { User01, TextInfoPermission.Read } }
+                    )
+            );
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
+        );
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
