@@ -1,6 +1,7 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -10,6 +11,9 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -28,22 +32,33 @@ describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
     declarations: [HostComponent, SyncProgressComponent],
     imports: [
+      TestOnlineStatusModule.forRoot(),
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       HttpClientTestingModule
     ],
     providers: [
+      provideAnimations(),
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: ErrorReportingService, useMock: mockedErrorReportingService }
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
   it('does not initialize if projectDoc is undefined', fakeAsync(async () => {
     const env = new TestEnvironment({ userId: 'user01' });
     expect(env.host.projectDoc).toBeUndefined();
+    verify(mockedProjectService.get('sourceProject02')).never();
+    expect(await env.getMode()).toBe('indeterminate');
+  }));
+
+  it('does not initialize if app is offline', fakeAsync(async () => {
+    const env = new TestEnvironment({ userId: 'user01' });
+    env.setupProjectDoc();
+    env.onlineStatus = false;
     verify(mockedProjectService.get('sourceProject02')).never();
     expect(await env.getMode()).toBe('indeterminate');
   }));
@@ -144,6 +159,9 @@ interface TestEnvArgs {
 }
 
 class TestEnvironment {
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   readonly fixture: ComponentFixture<HostComponent>;
   readonly host: HostComponent;
 
@@ -209,6 +227,12 @@ class TestEnvironment {
 
   get progressBar(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('mat-progress-bar');
+  }
+
+  set onlineStatus(isOnline: boolean) {
+    this.testOnlineStatusService.setIsOnline(isOnline);
+    tick();
+    this.fixture.detectChanges();
   }
 
   updateSyncProgress(percentCompleted: number, projectId: string): void {

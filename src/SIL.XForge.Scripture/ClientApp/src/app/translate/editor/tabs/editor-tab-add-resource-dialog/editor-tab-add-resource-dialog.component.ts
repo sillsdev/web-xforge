@@ -56,6 +56,10 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) readonly dialogData: EditorTabAddResourceDialogData
   ) {}
 
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
+  }
+
   async ngOnInit(): Promise<void> {
     await this.getProjectsAndResources();
   }
@@ -65,6 +69,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   }
 
   async confirmSelection(): Promise<void> {
+    this.resetErrors();
     const paratextId: string | null | undefined = this.form.value.sourceParatextId;
 
     try {
@@ -73,27 +78,34 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
 
         // If the Paratext project has a SF project id, add the user to that project if they are not already
         const project = this.projects?.find(p => p.paratextId === paratextId);
+        if (!this.appOnline) {
+          return;
+        }
         if (project?.projectId != null) {
           // Add the user to the project if they are not already connected to it
           if (!project.isConnected) {
             await this.projectService.onlineAddCurrentUser(project.projectId);
           }
-          this.selectedProjectDoc = await this.projectService.get(project.projectId);
+          this.selectedProjectDoc =
+            project?.projectId != null ? await this.projectService.get(project.projectId) : undefined;
         } else {
           // Load the project or resource, creating it if it is not present
-          const projectId: string | undefined = await this.projectService.onlineCreateResourceProject(paratextId);
-          this.selectedProjectDoc = projectId != null ? await this.projectService.get(projectId) : undefined;
+          const projectId: string | undefined = this.appOnline
+            ? await this.projectService.onlineCreateResourceProject(paratextId)
+            : undefined;
+          this.selectedProjectDoc =
+            projectId != null && this.appOnline ? await this.projectService.get(projectId) : undefined;
         }
 
         if (this.selectedProjectDoc != null) {
           if (this.permissionsService.canSync(this.selectedProjectDoc)) {
-            // Wait for sync if no texts
             if (!this.selectedProjectDoc.data?.texts.length) {
               this.isSyncActive = true;
-              await this.syncProject(this.selectedProjectDoc.id);
+              await this.projectService.onlineSync(this.selectedProjectDoc.id);
             } else {
-              // Otherwise, start a sync in the background and close dialog
-              this.syncProject(this.selectedProjectDoc.id);
+              this.projectService
+                .onlineSync(this.selectedProjectDoc.id)
+                .catch(_ => console.warn('Syncing to resource project failed'));
               this.dialogRef.close(this.selectedProjectDoc);
             }
           } else {
@@ -104,11 +116,19 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
         }
       }
     } catch (e) {
-      this.syncFailed = true;
       try {
-        this.cancelSync();
+        if (this.appOnline) {
+          this.isSyncActive = false;
+          this.syncFailed = true;
+          this.cancelSync();
+        }
       } catch {}
     } finally {
+      if (!this.appOnline) {
+        this.syncFailed = true;
+        this.isSyncActive = false;
+      }
+
       this.isLoading = false;
     }
   }
@@ -124,7 +144,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.isSyncActive = isActive;
 
     // Wait for sync to complete before closing dialog
-    if (!isActive) {
+    if (!isActive && this.selectedProjectDoc?.data?.texts?.length) {
       this.dialogRef.close(this.selectedProjectDoc);
     }
   }
@@ -165,10 +185,6 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.resourceLoadingFailed = false;
     this.projectFetchFailed = false;
     this.syncFailed = false;
-  }
-
-  private async syncProject(projectId: string): Promise<void> {
-    await this.projectService.onlineSync(projectId);
   }
 
   /**
