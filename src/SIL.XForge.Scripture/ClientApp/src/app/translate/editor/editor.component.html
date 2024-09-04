@@ -123,10 +123,10 @@
               }
               @case ("project-target") {
                 <div class="project-tab-container">
-                  @if (showBrowserWarningBanner) {
-                    <app-notice icon="warning" type="warning" class="browser-warning-banner">
+                  @if (writingSystemWarningBanner) {
+                    <app-notice icon="warning" type="warning" class="writing-system-warning-banner">
                       <div>
-                        <span [innerHtml]="browserWarningMessage"></span>
+                        <span [innerHtml]="writingSystemWarningMessage"></span>
                       </div>
                     </app-notice>
                   }
