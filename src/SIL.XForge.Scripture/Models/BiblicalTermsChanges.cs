@@ -8,6 +8,15 @@ namespace SIL.XForge.Scripture.Models;
 public class BiblicalTermsChanges
 {
     public List<BiblicalTerm> BiblicalTerms { get; } = [];
+    public BiblicalTermErrorCode ErrorCode { get; init; } = BiblicalTermErrorCode.None;
     public string ErrorMessage { get; init; } = string.Empty;
     public bool HasRenderings { get; init; }
+}
+
+public enum BiblicalTermErrorCode
+{
+    None,
+    NotAccessible,
+    NotSynced,
+    NoPermission,
 }

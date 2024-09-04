@@ -5338,6 +5338,7 @@ public class ParatextServiceTests
         // There are 1587 All Biblical Terms in Matthew
         Assert.AreEqual(actual.BiblicalTerms.Count, 1587);
         Assert.IsEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.None);
         Assert.IsFalse(actual.HasRenderings);
     }
 
@@ -5365,6 +5366,7 @@ public class ParatextServiceTests
         // There are 580 Major Biblical Terms in Matthew
         Assert.AreEqual(actual.BiblicalTerms.Count, 580);
         Assert.IsEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.None);
         Assert.IsFalse(actual.HasRenderings);
     }
 
@@ -5399,6 +5401,7 @@ public class ParatextServiceTests
         Assert.AreEqual(actual.BiblicalTerms.First().Renderings.Single(), rendering);
         Assert.AreEqual(actual.BiblicalTerms.SelectMany(bt => bt.Renderings).Count(), 1);
         Assert.IsEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.None);
         Assert.IsTrue(actual.HasRenderings);
     }
 
@@ -5421,11 +5424,8 @@ public class ParatextServiceTests
             env.PTProjectIds[env.Project02].Id,
             books: []
         );
-
-        string message =
-            $"Biblical Terms could not be retrieved during Sync because the user {env.Username01} does not have "
-            + "permission to read the Biblical Terms project defined in Paratext.";
-        Assert.AreEqual(actual.ErrorMessage, message);
+        Assert.IsNotEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.NoPermission);
     }
 
     [Test]
@@ -5447,9 +5447,8 @@ public class ParatextServiceTests
             env.PTProjectIds[env.Project01].Id,
             books: []
         );
-
-        const string message = $"The Biblical Terms project ({btShortName}) has not been synced to Scripture Forge.";
-        Assert.AreEqual(actual.ErrorMessage, message);
+        Assert.IsNotEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.NotSynced);
     }
 
     [Test]
@@ -5465,9 +5464,8 @@ public class ParatextServiceTests
             env.PTProjectIds[env.Project01].Id,
             books: []
         );
-
-        const string message = "The Paratext Project is not accessible from Scripture Forge.";
-        Assert.AreEqual(actual.ErrorMessage, message);
+        Assert.IsNotEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.NotAccessible);
     }
 
     [Test]
@@ -5488,6 +5486,7 @@ public class ParatextServiceTests
         // There are 580 Major Biblical Terms in Matthew
         Assert.AreEqual(actual.BiblicalTerms.Count, 580);
         Assert.IsEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.None);
         Assert.IsFalse(actual.HasRenderings);
     }
 
@@ -5547,6 +5546,7 @@ public class ParatextServiceTests
         Assert.AreEqual(actual.BiblicalTerms.Single().References.Single(), term.References.Single().VerseRef.BBBCCCVVV);
         Assert.AreEqual(actual.BiblicalTerms.Single().Renderings.Single(), termRendering.RenderingsEntries.Single());
         Assert.IsEmpty(actual.ErrorMessage);
+        Assert.AreEqual(actual.ErrorCode, BiblicalTermErrorCode.None);
         Assert.IsTrue(actual.HasRenderings);
     }
 

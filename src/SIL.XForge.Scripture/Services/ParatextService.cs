@@ -1398,7 +1398,7 @@ public class ParatextService : DisposableBase, IParatextService
             // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
             const string message = "The Paratext Project is not accessible from Scripture Forge.";
             _logger.LogError(message);
-            return new BiblicalTermsChanges { ErrorMessage = message };
+            return new BiblicalTermsChanges { ErrorCode = BiblicalTermErrorCode.NotAccessible, ErrorMessage = message };
         }
 
         // The biblical terms ScrText, if defined, must be disposed properly
@@ -1424,7 +1424,11 @@ public class ParatextService : DisposableBase, IParatextService
                         $"The Biblical Terms project ({biblicalTermsListParts[1]}) has not been synced to "
                         + "Scripture Forge.";
                     _logger.LogError(message);
-                    return new BiblicalTermsChanges { ErrorMessage = message };
+                    return new BiblicalTermsChanges
+                    {
+                        ErrorCode = BiblicalTermErrorCode.NotSynced,
+                        ErrorMessage = message
+                    };
                 }
 
                 // Load the biblical terms project
@@ -1440,7 +1444,11 @@ public class ParatextService : DisposableBase, IParatextService
                         + $"{GetParatextUsername(userSecret)} does not have permission to read the Biblical Terms "
                         + "project defined in Paratext.";
                     _logger.LogError(message);
-                    return new BiblicalTermsChanges { ErrorMessage = message };
+                    return new BiblicalTermsChanges
+                    {
+                        ErrorCode = BiblicalTermErrorCode.NoPermission,
+                        ErrorMessage = message
+                    };
                 }
 
                 Enum<BiblicalTermsListType> listType = string.IsNullOrEmpty(biblicalTermsListParts[0])
