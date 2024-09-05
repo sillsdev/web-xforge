@@ -87,6 +87,11 @@
           {{ t(errorMessage) }}
         </app-notice>
       }
+      @if ((isOnline | async) === false) {
+        <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'">
+          {{ t("offline") }}
+        </app-notice>
+      }
       @for (ptProject of userUnconnectedParatextProjects; track ptProject) {
         <mat-card
           attr.data-pt-project-id="{{ ptProject.paratextId }}"
@@ -120,7 +125,7 @@
               mat-flat-button
               color="primary"
               (click)="joinProject(ptProject.projectId)"
-              [disabled]="joiningProjects.includes(ptProject.projectId)"
+              [disabled]="!(isOnline | async) || joiningProjects.includes(ptProject.projectId)"
             >
               {{ t("join") }}
             </button>
@@ -138,11 +143,6 @@
           <div class="loading-project-description"></div>
           <div class="loading-action"></div>
         </mat-card>
-      }
-      @if ((isOnline | async) === false) {
-        <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'">
-          {{ t("offline") }}
-        </app-notice>
       }
     </div>
   }
