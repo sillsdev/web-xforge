@@ -87,13 +87,13 @@
     "localName": "Deutsch",
     "englishName": "German",
     "tags": ["de", "de-DE"],
-    "production": false,
+    "production": true,
     "helps": "en"
   },
   {
     "localName": "नेपाली",
     "englishName": "Nepali",
     "tags": ["npi", "npi-NP"],
-    "production": false
+    "production": true
   }
 ]
