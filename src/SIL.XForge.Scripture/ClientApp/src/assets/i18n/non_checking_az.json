@@ -132,6 +132,19 @@
     "readd_book_to_project": "Re-add {{ bookName }} to project",
     "readd_to_project": "Re-add to project"
   },
+  "draft_apply_dialog": {
+    "add_to_project": "Add to project",
+    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty",
+    "cancel": "Ləğv etmək",
+    "connect_to_the_internet": "Please connect to the internet to add the draft to your project",
+    "choose_project": "Choose project",
+    "error_fetching_projects": "There was an error fetching projects.",
+    "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
+    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first",
+    "no_write_permission": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
+    "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
+    "select_alternate_project": "Select the project you want to add the draft to"
+  },
   "draft_generation": {
     "back_from_stepper_button": "Back",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
@@ -213,6 +226,7 @@
   },
   "draft_preview_books": {
     "add_to_project": "Add to project",
+    "add_to_different_project": "Add to a different project",
     "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
     "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
     "no_books_have_drafts": "No books have any drafts.",
@@ -478,6 +492,7 @@
     "error_fetching_projects": "There was an error fetching projects. You will only be able to select resources from Digital Bible Library.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "error_loading_resource": "There was an error loading the selected resource.",
+    "error_offline": "You are offline. Please connect to the internet to load this resource.",
     "loading": "Loading",
     "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
     "placeholder_ready": "Select paratext project or DBL resource",
