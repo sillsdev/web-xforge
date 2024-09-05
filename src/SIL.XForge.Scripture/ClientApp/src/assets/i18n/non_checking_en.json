@@ -248,7 +248,7 @@
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
-    "browser_warning_banner": "Your browser does not support editing in this language. We recommend using firefox. {{ firefoxLink }}.",
+    "browser_warning_banner": "Your browser does not support editing in this language. We recommend using {{ firefoxLink }}.",
     "cancel": "Cancel",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
