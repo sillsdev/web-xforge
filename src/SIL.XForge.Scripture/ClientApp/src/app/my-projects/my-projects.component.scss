@@ -19,15 +19,27 @@ h2 {
   margin: 1.5em 0 0.25em;
 }
 
+:host {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 .pt-content-container {
   background: #f4f4f4;
-  margin-top: 30px;
+  margin: 30px -20px -14px;
   padding: 20px 0;
+  height: 100%;
+
+  h2 {
+    // this is required to replicate the gap used by the other lists, specifically under the header
+    margin: 1.5em 0 1em;
+  }
+
   .pt-content {
     display: flex;
     flex-direction: column;
 
-    margin: 0 -20px;
     max-width: 600px;
     margin: 0 auto;
     > *:nth-child(even) {
