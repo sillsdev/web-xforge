@@ -2,7 +2,7 @@
   @for (comment of getSortedComments(); track comment; let i = $index) {
     <div>
       @if (
-        (activeComment == null || (commentFormVisible && activeComment?.dataId !== comment.dataId)) &&
+        (activeComment == null || (commentFormVisible && activeComment.dataId !== comment.dataId)) &&
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       ) {
         <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }">

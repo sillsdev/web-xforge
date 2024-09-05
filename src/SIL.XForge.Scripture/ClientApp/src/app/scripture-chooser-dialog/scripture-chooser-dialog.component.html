@@ -73,7 +73,7 @@
           </h1>
           <div mat-dialog-content>
             <div class="reference">{{ getBookName(selection.book) }} {{ selection.chapter }}</div>
-            @for (verse of versesOf(selection?.book, selection?.chapter); track verse) {
+            @for (verse of versesOf(selection.book, selection.chapter); track verse) {
               <button
                 mat-button
                 [ngClass]="{
