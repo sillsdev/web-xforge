@@ -3,6 +3,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -10,6 +11,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
@@ -21,9 +23,14 @@ import { ServalAdministrationService } from './serval-administration.service';
 
 interface Row {
   id: string;
+  type: string;
   name: string;
   category: string;
   fileName: string;
+}
+
+function projectType(project: TranslateSource | SFProjectProfile): string {
+  return ParatextService.isResource(project.paratextId) ? 'DBL resource' : 'Paratext project';
 }
 
 @Component({
@@ -38,8 +45,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   preTranslate = false;
   projectName = '';
 
-  headingsToDisplay = { category: 'Category', name: 'Project', id: '' };
-  columnsToDisplay = ['category', 'name', 'id'];
+  headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', id: '' };
+  columnsToDisplay = ['category', 'type', 'name', 'id'];
   rows: Row[] = [];
 
   trainingBooks: string[] = [];
@@ -85,6 +92,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // Add the target
           rows.push({
             id: projectDoc.id,
+            type: projectType(projectDoc.data),
             name: this.projectName,
             category: 'Target Project',
             fileName: project.shortName + '.zip'
@@ -94,6 +102,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (project.translateConfig.source != null) {
             rows.push({
               id: project.translateConfig.source.projectRef,
+              type: projectType(project.translateConfig.source),
               name: project.translateConfig.source.shortName + ' - ' + project.translateConfig.source.name,
               category: 'Source Project',
               fileName: project.translateConfig.source.shortName + '.zip'
@@ -104,6 +113,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (project.translateConfig.draftConfig.alternateSource != null) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateSource.projectRef,
+              type: projectType(project.translateConfig.draftConfig.alternateSource),
               name:
                 project.translateConfig.draftConfig.alternateSource.shortName +
                 ' - ' +
@@ -117,6 +127,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (project.translateConfig.draftConfig.alternateTrainingSource != null) {
             rows.push({
               id: project.translateConfig.draftConfig.alternateTrainingSource.projectRef,
+              type: projectType(project.translateConfig.draftConfig.alternateTrainingSource),
               name:
                 project.translateConfig.draftConfig.alternateTrainingSource.shortName +
                 ' - ' +
