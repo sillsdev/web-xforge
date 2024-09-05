@@ -10,7 +10,6 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { ObjectPaths } from '../type-utils';
-import { AuthService } from './auth.service';
 import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { FeatureFlagService } from './feature-flags/feature-flag.service';
@@ -154,25 +153,22 @@ export class I18nService {
     );
   }
 
-  setLocale(tag: string, authService: AuthService): void {
+  setLocale(tag: string): void {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       throw new Error(`Cannot set locale to non-existent locale ${tag}`);
     }
-    this.trySetLocale(tag, authService);
+    this.trySetLocale(tag);
   }
 
   /**
    * Attempts to set the locale to the specified locale tag. If the specified locale is not available this will not
    * throw an exception but will report the failure to Bugsnag. If it is available, this will set the active local of
-   * the I18nService, write to the ASP .NET Core culture cookie, and log to Bugsnag. If the authService parameter is
-   * supplied, it will also be written the locale to the user profile.
+   * the I18nService, write to the ASP .NET Core culture cookie, and log to Bugsnag.
    * @param tag The locale code of the locale to activate. I18nService.locales lists the locales, and each locale has a
    * canonicalTag. This parameter must be one of those tags, or similar to it, by a case-insensitive comparison.
-   * @param authService (optional) The AuthService, which can be used to update the interfaceLanguage on the user. If
-   * this is not supplied, the user profile will not be updated.
    */
-  trySetLocale(tag: string, authService?: AuthService): void {
+  trySetLocale(tag: string): void {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       this.reportingService.silentError(`Failed attempt to set locale to unsupported locale ${tag}`);
@@ -192,9 +188,6 @@ export class I18nService {
       true,
       'Strict'
     );
-    if (authService != null) {
-      authService.updateInterfaceLanguage(locale.canonicalTag);
-    }
     this.bugsnagService.leaveBreadcrumb(
       'Set Locale',
       {
