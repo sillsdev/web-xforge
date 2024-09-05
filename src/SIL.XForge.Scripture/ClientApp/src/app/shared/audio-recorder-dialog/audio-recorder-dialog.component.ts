@@ -62,7 +62,7 @@ export class AudioRecorderDialogComponent
   private recordedChunks: Blob[] = [];
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
-  private rippleSubscription?: Subscription;
+  private refreshWaveformSub?: Subscription;
   private canvasContext: CanvasRenderingContext2D | null = null;
   // height and width are calculated when the canvas is initialized
   private visualizerHeight = 150;
@@ -181,7 +181,7 @@ export class AudioRecorderDialogComponent
     if (this.mediaRecorder == null || this.stream == null) {
       return;
     }
-    this.rippleSubscription?.unsubscribe();
+    this.refreshWaveformSub?.unsubscribe();
     this.showCanvas = false;
     this.mediaRecorder.stop();
     this.stream.getAudioTracks().forEach(track => track.stop());
@@ -257,7 +257,7 @@ export class AudioRecorderDialogComponent
     };
 
     const refreshRate: Observable<number> = interval(150);
-    this.rippleSubscription = this.subscribe(refreshRate, _ => drawWaveForm());
+    this.refreshWaveformSub = this.subscribe(refreshRate, _ => drawWaveForm());
   }
 
   private initCanvasContext(): void {
