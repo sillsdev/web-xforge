@@ -161,7 +161,7 @@ export interface SaveNoteParameters {
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
-const WRITING_SYSTEM_WARNING_REGEX = /^(ko|cmn|ja)$/;
+const WRITING_SYSTEM_WARNING_REGEX = /^(ja|ko|cmn)(?![a-z])/;
 /** Scripture editing area. Used for Translate task.
  * ```
  * ┌─────────────────────────────────────┐
