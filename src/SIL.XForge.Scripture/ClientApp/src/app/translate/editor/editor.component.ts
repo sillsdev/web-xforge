@@ -96,7 +96,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { getLinkHTML, issuesEmailTemplate, objectId, browserLinks, isGecko } from 'xforge-common/utils';
+import { browserLinks, getLinkHTML, isGecko, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -161,7 +161,7 @@ export interface SaveNoteParameters {
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
-
+const WRITING_SYSTEM_WARNING_REGEX = /^(ko|cmn|ja)$/;
 /** Scripture editing area. Used for Translate task.
  * ```
  * ┌─────────────────────────────────────┐
@@ -249,7 +249,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
-  readonly writingSystemWarningRegex = /^(ko|cmn|ja)_?$/;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -588,7 +587,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get writingSystemWarningBanner(): boolean {
     const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
-    return !isGecko() && writingSystemTag != null && this.writingSystemWarningRegex.test(writingSystemTag);
+    return !isGecko() && writingSystemTag != null && WRITING_SYSTEM_WARNING_REGEX.test(writingSystemTag);
   }
 
   /**
