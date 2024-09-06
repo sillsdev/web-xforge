@@ -176,3 +176,16 @@ mat-card a,
   opacity: 0.5;
   background-color: #eee;
 }
+
+mat-card {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+mat-card:nth-child(odd) {
+  background-color: #f0f0f0;
+}
+
+mat-card:nth-child(even) {
+  background-color: #f8f8f8;
+}
