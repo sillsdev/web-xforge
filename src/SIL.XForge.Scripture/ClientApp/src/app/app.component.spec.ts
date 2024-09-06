@@ -1,7 +1,7 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Location } from '@angular/common';
 import { Component, DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MediaChange, MediaObserver } from '@angular/flex-layout';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
@@ -14,7 +14,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, filter, firstValueFrom, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, filter, firstValueFrom } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
@@ -22,7 +22,7 @@ import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -30,11 +30,12 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PWA_BEFORE_PROMPT_CAN_BE_SHOWN_AGAIN, PwaService } from 'xforge-common/pwa.service';
+import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { AppComponent } from './app.component';
@@ -64,7 +65,6 @@ const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
-const mockedMediaObserver = mock(MediaObserver);
 const mockedPermissions = mock(PermissionsService);
 
 @Component({
@@ -116,7 +116,7 @@ describe('AppComponent', () => {
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: MediaObserver, useMock: mockedMediaObserver },
+      { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
@@ -168,7 +168,7 @@ describe('AppComponent', () => {
   it('drawer disappears as appropriate in small viewport', fakeAsync(() => {
     // The user goes to a project. They are using an sm size viewport.
     const env = new TestEnvironment();
-    env.media.next([{ mqAlias: 'sm' } as MediaChange]);
+    env.breakpointObserver.emitObserveValue(false);
     when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
     when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigateFully(['/projects', 'project01']);
@@ -576,8 +576,8 @@ class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
-  readonly media: BehaviorSubject<MediaChange[]> = new BehaviorSubject<MediaChange[]>([]);
   readonly comesOnline$: Subject<void> = new Subject<void>();
+  readonly breakpointObserver: TestBreakpointObserver = TestBed.inject(BreakpointObserver) as TestBreakpointObserver;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -666,7 +666,6 @@ class TestEnvironment {
     when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
-    when(mockedMediaObserver.asObservable()).thenReturn(this.media.asObservable());
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
     when(mockedPwaService.canInstall$).thenReturn(this.canInstall$);
 
