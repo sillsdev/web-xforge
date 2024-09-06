@@ -1837,6 +1837,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 {
                     ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(u =>
                         u.Username == activePtSyncUser.Username
+                        || (!string.IsNullOrEmpty(u.SFUserId) && string.Equals(u.SFUserId, activePtSyncUser.SFUserId))
                     );
                     if (existingUser == null)
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
@@ -1848,6 +1849,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         string userId = _currentPtSyncUsers[existingUser.Username].SFUserId;
                         if (!string.IsNullOrEmpty(userId))
                             op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                    }
+                    else if (!string.Equals(existingUser.Username, activePtSyncUser.Username))
+                    {
+                        int index = _projectDoc.Data.ParatextUsers.FindIndex(u => u.SFUserId == existingUser.SFUserId);
+                        op.Set(pd => pd.ParatextUsers[index].Username, activePtSyncUser.Username);
                     }
                 }
             });
