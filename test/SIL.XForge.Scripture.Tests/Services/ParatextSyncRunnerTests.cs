@@ -615,7 +615,7 @@ public class ParatextSyncRunnerTests
 
         SFProject project = env.VerifyProjectSync(true);
 
-        List<ParatextUserProfile> afterParatextUsers = env.GetProject().ParatextUsers;
+        List<ParatextUserProfile> afterParatextUsers = project.ParatextUsers;
         Assert.That(afterParatextUsers.Count, Is.EqualTo(2));
         Assert.That(afterParatextUsers[0].Username, Is.EqualTo("User 1"));
         Assert.That(afterParatextUsers[1].Username, Is.EqualTo("User 2 Changed"));
