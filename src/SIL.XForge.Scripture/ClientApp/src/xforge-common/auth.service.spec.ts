@@ -694,6 +694,25 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
+  it('should not try join with transparent authentication if a user was previously logged in at some point', fakeAsync(() => {
+    const shareKeyPath = '/join/shareKey';
+    const callback = (env: TestEnvironment): void => {
+      when(mockedLocationService.pathname).thenReturn(shareKeyPath);
+      when(mockedLocationService.search).thenReturn('');
+      env.localSettings.set(ID_TOKEN_SETTING, '12345');
+    };
+    new TestEnvironment({
+      isOnline: true,
+      callback
+    });
+    verify(mockedAuth0Service.tryTransparentAuthentication()).never();
+    verify(mockedWebAuth.loginWithRedirect(anything())).once();
+    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+      mockedWebAuth.loginWithRedirect
+    ).last()[0];
+    expect(authOptions?.appState).toEqual(JSON.stringify({ returnUrl: shareKeyPath }));
+  }));
+
   it('should log the user out if they click the log out button when requesting Paratext credential update', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
