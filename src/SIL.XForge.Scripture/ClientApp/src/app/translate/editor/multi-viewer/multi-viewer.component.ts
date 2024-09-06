@@ -1,9 +1,10 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { translate } from '@ngneat/transloco';
 import { slice } from 'lodash-es';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import { filter, map } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 export interface MultiCursorViewer extends UserProfile {
@@ -22,7 +23,10 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
   maxAvatars: number = 3;
   isMenuOpen: boolean = false;
 
-  constructor(private readonly media: MediaObserver) {
+  constructor(
+    private readonly breakpointObserver: BreakpointObserver,
+    private readonly breakpointService: MediaBreakpointService
+  ) {
     super();
   }
 
@@ -38,14 +42,14 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
 
   ngOnInit(): void {
     this.subscribe(
-      this.media.asObservable().pipe(
-        filter((changes: MediaChange[]) => changes.length > 0),
-        map((changes: MediaChange[]) => changes[0])
-      ),
-      (change: MediaChange) => {
-        const isViewportBigger: boolean = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
+      combineLatest([
+        this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.SM)),
+        this.breakpointObserver.observe(this.breakpointService.width('<=', Breakpoint.XS))
+      ]),
+      ([bigger, xs]) => {
+        const isViewportBigger: boolean = bigger.matches;
         this.maxAvatars = isViewportBigger ? 6 : 3;
-        const isViewportXS: boolean = ['xs'].includes(change.mqAlias);
+        const isViewportXS: boolean = xs.matches;
         this.maxAvatars = isViewportXS ? 1 : this.maxAvatars;
       }
     );
