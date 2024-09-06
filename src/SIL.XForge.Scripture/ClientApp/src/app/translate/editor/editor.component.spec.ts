@@ -4,15 +4,13 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MediaObserver } from '@angular/flex-layout';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, Route, Router, RouterModule } from '@angular/router';
 import {
-  createRange,
   InteractiveTranslatorFactory,
   LatinWordDetokenizer,
   LatinWordTokenizer,
@@ -20,7 +18,8 @@ import {
   TranslationSources,
   WordAlignmentMatrix,
   WordGraph,
-  WordGraphArc
+  WordGraphArc,
+  createRange
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AngularSplitModule } from 'angular-split';
@@ -38,29 +37,29 @@ import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
-  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType
+  NoteType,
+  getNoteThreadDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   createTestProject,
   createTestProjectProfile
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  getSFProjectUserConfigDocId,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  getSFProjectUserConfigDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, defer, Observable, of, Subject, take } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, defer, of, take } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -70,11 +69,12 @@ import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/gene
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
@@ -115,8 +115,6 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
-const mockedMediaObserver = mock(MediaObserver);
-const mockedBreakpointObserver = mock(BreakpointObserver);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedParatextService = mock(ParatextService);
@@ -176,8 +174,7 @@ describe('EditorComponent', () => {
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
-      { provide: MediaObserver, useMock: mockedMediaObserver },
-      { provide: BreakpointObserver, useMock: mockedBreakpointObserver },
+      { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ParatextService, useMock: mockedParatextService },
@@ -2689,7 +2686,7 @@ describe('EditorComponent', () => {
       expect(env.insertNoteFabMobile).toBeNull();
 
       // Allow check for mobile viewports to return TRUE
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.breakpointObserver.matchedResult = true;
       verseSegment = env.getSegmentElement('verse_1_2')!;
       verseSegment.click();
       env.wait();
@@ -2721,7 +2718,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       // Allow check for mobile viewports to return TRUE
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.breakpointObserver.matchedResult = true;
       env.clickSegmentRef(segmentRef);
       env.insertNoteFabMobile!.click();
       env.wait();
@@ -2744,7 +2741,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       // Allow check for mobile viewports to return TRUE
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.breakpointObserver.matchedResult = true;
       env.clickSegmentRef('verse_1_2');
       expect(env.insertNoteFabMobile).toBeFalsy();
       expect(env.insertNoteFab).toBeTruthy();
@@ -2770,7 +2767,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       // Allow check for mobile viewports to return TRUE
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.breakpointObserver.matchedResult = true;
       env.clickSegmentRef('verse_1_1');
       env.wait();
       expect(env.insertNoteFabMobile).toBeTruthy();
@@ -2794,7 +2791,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       // Allow check for mobile viewports to return TRUE
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.breakpointObserver.matchedResult = true;
       env.clickSegmentRef('verse_1_1');
       env.wait();
       expect(env.insertNoteFabMobile).toBeTruthy();
@@ -3099,7 +3096,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.ngZone.run(() => {
         env.setProjectUserConfig();
-        when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+        env.breakpointObserver.matchedResult = true;
         env.wait();
 
         const segmentRef = 'verse_1_1';
@@ -3121,7 +3118,7 @@ describe('EditorComponent', () => {
     it('keeps insert note fab hidden for commenters on mobile devices', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.breakpointObserver.matchedResult = true;
       env.addParatextNoteThread(
         6,
         'MAT 1:1',
@@ -3749,12 +3746,12 @@ describe('EditorComponent', () => {
     describe('tab group consolidation', () => {
       it('should call consolidateTabGroups for small screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
         const env = new TestEnvironment(env => {
-          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
 
         expect(spyConsolidate).not.toHaveBeenCalled();
+        env.breakpointObserver.emitObserveValue(true);
         env.component['tabStateInitialized$'].next(true);
         expect(spyConsolidate).not.toHaveBeenCalled();
         env.component['targetEditorLoaded$'].next();
@@ -3766,12 +3763,11 @@ describe('EditorComponent', () => {
 
       it('should call deconsolidateTabGroups for large screen widths once editor is loaded and tab state is initialized', fakeAsync(() => {
         const env = new TestEnvironment(env => {
-          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: false } as any));
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
         const spyDeconsolidate = spyOn(env.component.tabState, 'deconsolidateTabGroups');
-
         expect(spyDeconsolidate).not.toHaveBeenCalled();
+        env.breakpointObserver.emitObserveValue(false);
         env.component['tabStateInitialized$'].next(true);
         expect(spyDeconsolidate).not.toHaveBeenCalled();
         env.component['targetEditorLoaded$'].next();
@@ -3783,7 +3779,6 @@ describe('EditorComponent', () => {
 
       it('should not set id on source tab if user does not have permission', fakeAsync(() => {
         const env = new TestEnvironment(env => {
-          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
           env.setCurrentUser('user05');
           env.setupUsers(['project01']);
           env.setupProject({ userRoles: { user05: SFProjectRole.None } }, 'project02');
@@ -3803,7 +3798,6 @@ describe('EditorComponent', () => {
 
       it('should not consolidate if showSource is false', fakeAsync(() => {
         const env = new TestEnvironment(env => {
-          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
         const spyConsolidate = spyOn(env.component.tabState, 'consolidateTabGroups');
@@ -3816,7 +3810,6 @@ describe('EditorComponent', () => {
 
       it('should not consolidate on second editor load', fakeAsync(() => {
         const env = new TestEnvironment(env => {
-          when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: true } as any));
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
 
@@ -4050,6 +4043,7 @@ class TestEnvironment {
   readonly tabFactory: EditorTabFactoryService;
   readonly harnessLoader: HarnessLoader;
   readonly testOnlineStatusService: TestOnlineStatusService;
+  readonly breakpointObserver: TestBreakpointObserver = TestBed.inject(BreakpointObserver) as TestBreakpointObserver;
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -4299,7 +4293,8 @@ class TestEnvironment {
     });
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
-    when(mockedMediaObserver.isActive(anything())).thenReturn(false);
+    this.breakpointObserver.matchedResult = false;
+
     when(mockedSFProjectService.getNoteThread(anything())).thenCall((id: string) => {
       const [projectId, threadId] = id.split(':');
       return this.getNoteThreadDoc(projectId, threadId);
@@ -4310,7 +4305,6 @@ class TestEnvironment {
       of([])
     );
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
-    when(mockedBreakpointObserver.observe(anything())).thenReturn(of({ matches: false } as any));
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
 
