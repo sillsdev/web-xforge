@@ -15,7 +15,6 @@ import {
   ViewChildren
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MediaObserver } from '@angular/flex-layout';
 import { UntypedFormControl, Validators } from '@angular/forms';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -259,7 +258,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     noticeService: NoticeService,
     private readonly dialogService: DialogService,
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly mediaObserver: MediaObserver,
+
     private readonly onlineStatusService: OnlineStatusService,
     private readonly translationEngineService: TranslationEngineService,
     readonly i18n: I18nService,
@@ -574,7 +573,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private get isCommenterOnMobileDevice(): boolean {
-    return !this.hasEditRight && this.mediaObserver.isActive('lt-lg');
+    return (
+      !this.hasEditRight && this.breakpointObserver.isMatched(this.mediaBreakpointService.width('<', Breakpoint.LG))
+    );
   }
 
   private get canShowInsertNoteFab(): boolean {
@@ -1099,7 +1100,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
     }
     // Mobile users can use the bottom sheet to add new notes
-    if (this.mediaObserver.isActive('lt-lg')) {
+    if (this.breakpointObserver.isMatched(this.mediaBreakpointService.width('<', Breakpoint.LG))) {
       this.toggleAddingMobileNote();
       this.setNoteFabVisibility('hidden');
       this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
