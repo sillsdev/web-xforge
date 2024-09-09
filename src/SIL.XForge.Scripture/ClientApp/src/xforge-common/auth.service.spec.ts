@@ -694,11 +694,29 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
-  it('should not try join with transparent authentication if a user was previously logged in at some point', fakeAsync(() => {
+  it('should renew tokens to verify if user is still logged in and join project without transparent authentication', fakeAsync(() => {
+    const callback = (env: TestEnvironment): void => {
+      when(mockedLocationService.pathname).thenReturn('/join/shareKey');
+      when(mockedWebAuth.getTokenSilently(anything())).thenResolve(env.validToken);
+      env.localSettings.set(ID_TOKEN_SETTING, '12345');
+    };
+    const env = new TestEnvironment({
+      isOnline: true,
+      callback
+    });
+    verify(mockedAuth0Service.tryTransparentAuthentication()).never();
+    verify(mockedWebAuth.loginWithRedirect(anything())).never();
+    verify(mockedWebAuth.getTokenSilently(anything())).once();
+    expect(env.isAuthenticated).toBeTrue();
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should redirect to auth0 if renew tokens fails to verify if a user who was previously logged in when and is trying to join a project', fakeAsync(() => {
     const shareKeyPath = '/join/shareKey';
     const callback = (env: TestEnvironment): void => {
       when(mockedLocationService.pathname).thenReturn(shareKeyPath);
       when(mockedLocationService.search).thenReturn('');
+      env.setLoginRequiredResponse();
       env.localSettings.set(ID_TOKEN_SETTING, '12345');
     };
     new TestEnvironment({
@@ -984,6 +1002,13 @@ class TestEnvironment {
     when(mockedWebAuth.getTokenSilently()).thenThrow(loginError);
     when(mockedWebAuth.getTokenSilently(anything())).thenThrow(loginError);
     when(mockedWebAuth.getIdTokenClaims()).thenThrow(loginError);
+  }
+
+  setMissingTokenResponse(): void {
+    const tokenError = new GenericError('missing_refresh_token', 'Invalid token');
+    when(mockedWebAuth.getTokenSilently()).thenThrow(tokenError);
+    when(mockedWebAuth.getTokenSilently(anything())).thenThrow(tokenError);
+    when(mockedWebAuth.getIdTokenClaims()).thenThrow(tokenError);
   }
 
   setOnline(isOnline: boolean = true): void {

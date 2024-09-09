@@ -262,6 +262,8 @@ export class AuthService {
       appState: JSON.stringify(state)
     };
     this.unscheduleRenewal();
+    console.log(returnUrl);
+    console.log(auth0Parameters);
     await this.auth0.loginWithRedirect(authOptions);
   }
 
@@ -425,10 +427,20 @@ export class AuthService {
           // Auth0 as they may still have a valid refresh token
           // Connections to Auth0 from Scripture Forge use the Auth0 API which has different expiry timestamps on tokens
           // compared with the tokens used directly in the Auth0 website application
+          console.log('Joining with share key');
           if (this.idToken != null) {
-            await this.logIn({ returnUrl: this.locationService.pathname + this.locationService.search });
-            // Return a NEVER promise to graceful wait for the redirection to complete without showing the join page
-            return new Promise<never>(() => {});
+            console.log('User may be logged in - renew tokens');
+            // Attempt to renew tokens first otherwise send them to Auth0
+            await this.renewTokens();
+            if (await this.hasExpired()) {
+              console.log('Tokens have expired - send to Auth0');
+              // Return a NEVER promise to graceful wait for the redirection to complete from renewTokens
+              // without showing the join page
+              return new Promise<never>(() => {});
+            }
+            console.log('Tokens have been renewed');
+            await this.remoteStore.init(() => this.getAccessToken());
+            return { loggedIn: true, newlyLoggedIn: true, anonymousUser: true };
           } else if (await this.tryTransparentAuthentication()) {
             return { loggedIn: true, newlyLoggedIn: true, anonymousUser: true };
           }
@@ -592,6 +604,7 @@ export class AuthService {
   }
 
   private async renewTokens(): Promise<void> {
+    console.log('Renewing tokens');
     if (this.renewTokenPromise == null) {
       this.renewTokenPromise = new Promise<void>(async (resolve, reject) => {
         let success = false;
