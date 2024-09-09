@@ -88,7 +88,7 @@ describe('TranslateOverviewComponent', () => {
       env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
     }));
 
-    it('should update books when texts changed in project', fakeAsync(() => {
+    it('should update books when chapter changes in project', fakeAsync(() => {
       const env = new TestEnvironment();
       env.wait();
 
@@ -96,8 +96,8 @@ describe('TranslateOverviewComponent', () => {
       expect(env.component.progressService.texts!.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
 
-      env.deleteText(40, 1);
-      env.expectContainsTextProgress(0, 'Matthew', '5 of 10 segments');
+      env.addVerse(40, 1);
+      env.expectContainsTextProgress(0, 'Matthew', '11 of 21 segments');
     }));
   });
 
@@ -537,13 +537,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  deleteText(bookNum: number, chapter: number): void {
+  addVerse(bookNum: number, chapter: number): void {
+    const delta = new Delta();
+    delta.insert(`chapter ${chapter}, verse 22.`, { segment: `verse_${chapter}_22` });
+
     const textDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, getTextDocId('project01', bookNum, chapter));
-    textDoc.delete();
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
-    const textIndex = projectDoc.data!.texts.findIndex(t => t.bookNum === bookNum);
-    const chapterIndex = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
-    projectDoc.submitJson0Op(ops => ops.remove(p => p.texts[textIndex].chapters, chapterIndex), false);
+    textDoc.submit({ ops: delta.ops });
     this.waitForProjectDocChanges();
   }
 

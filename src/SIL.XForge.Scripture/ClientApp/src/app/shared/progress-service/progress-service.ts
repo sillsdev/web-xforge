@@ -1,8 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { asyncScheduler, filter, Subscription, throttleTime } from 'rxjs';
+import { Subscription, asyncScheduler, merge, throttleTime } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -10,8 +8,6 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-
-const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
 
 export class Progress {
   translated: number = 0;
@@ -44,8 +40,8 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   readonly overallProgress = new Progress();
 
   private _texts?: TextProgress[];
-  private projectDoc?: SFProjectProfileDoc;
-  private projectDataChangesSub?: Subscription;
+  private _projectDoc?: SFProjectProfileDoc;
+  private _allChaptersChangeSub?: Subscription;
   private _canTrainSuggestions: boolean = false;
 
   constructor(
@@ -58,8 +54,8 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   }
 
   async initialize(projectId: string): Promise<void> {
-    if (this.projectDoc?.id !== projectId) {
-      this.projectDoc = await this.projectService.getProfile(projectId);
+    if (this._projectDoc?.id !== projectId) {
+      this._projectDoc = await this.projectService.getProfile(projectId);
 
       // If we are offline, just update the progress with what we have
       if (!this.onlineStatusService.isOnline) {
@@ -71,14 +67,18 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         await this.calculateProgress();
       });
 
-      if (this.projectDataChangesSub != null) {
-        this.projectDataChangesSub.unsubscribe();
+      const chapterObservables = [];
+      for (const book of this._projectDoc.data!.texts) {
+        for (const chapter of book.chapters) {
+          const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
+          const chapterText: TextDoc = await this.projectService.getText(textDocId);
+          chapterObservables.push(chapterText.changes$);
+        }
       }
-      this.projectDataChangesSub = this.projectDoc.remoteChanges$
-        .pipe(
-          filter(ops => ops.some(op => TEXT_PATH_TEMPLATE.matches(op.p))),
-          throttleTime(1000, asyncScheduler, { leading: true, trailing: true })
-        )
+
+      this._allChaptersChangeSub?.unsubscribe();
+      this._allChaptersChangeSub = merge(...chapterObservables)
+        .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(async () => {
           await this.calculateProgress();
         });
@@ -87,9 +87,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.projectDataChangesSub != null) {
-      this.projectDataChangesSub.unsubscribe();
-    }
+    this._allChaptersChangeSub?.unsubscribe();
   }
 
   get texts(): TextProgress[] {
@@ -104,24 +102,24 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   private async calculateProgress(): Promise<void> {
     this.loadingStarted();
     try {
-      if (this.projectDoc == null || this.projectDoc.data == null) {
+      if (this._projectDoc == null || this._projectDoc.data == null) {
         return;
       }
-      this._texts = this.projectDoc.data.texts
+      this._texts = this._projectDoc.data.texts
         .map(t => new TextProgress(t))
         .sort((a, b) => a.text.bookNum - b.text.bookNum);
       this.overallProgress.reset();
-      const updateTextProgressPromises: Promise<void>[] = [];
+      const bookProgressPromises: Promise<void>[] = [];
       for (const book of this.texts) {
-        updateTextProgressPromises.push(this.updateTextProgress(this.projectDoc, book));
+        bookProgressPromises.push(this.incorporateBookProgress(this._projectDoc, book));
       }
-      await Promise.all(updateTextProgressPromises);
+      await Promise.all(bookProgressPromises);
     } finally {
       this.loadingFinished();
     }
   }
 
-  private async updateTextProgress(project: SFProjectProfileDoc, book: TextProgress): Promise<void> {
+  private async incorporateBookProgress(project: SFProjectProfileDoc, book: TextProgress): Promise<void> {
     // NOTE: This will stop being incremented when the minimum required number of pairs for training is reached
     let numTranslatedSegments: number = 0;
     for (const chapter of book.text.chapters) {
