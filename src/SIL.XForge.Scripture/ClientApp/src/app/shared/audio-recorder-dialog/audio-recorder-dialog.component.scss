@@ -53,15 +53,13 @@
     width: 100%;
     position: relative;
 
+    // the div elements with the animate class are created dynamically and the
+    // ng-deep was needed for these styles to apply
     ::ng-deep .animate {
-      content: '';
       background-color: variables.$red;
       height: 80px;
       width: 80px;
       border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       position: absolute;
       top: 0;
       bottom: 0;

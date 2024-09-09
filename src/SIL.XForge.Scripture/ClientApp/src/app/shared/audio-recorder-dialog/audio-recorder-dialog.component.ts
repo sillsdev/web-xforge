@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { translate, TranslocoModule } from '@ngneat/transloco';
-import { interval, Observable, Subscription, timer } from 'rxjs';
+import { TranslocoModule, translate } from '@ngneat/transloco';
+import { Observable, Subscription, interval, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -305,8 +305,8 @@ export class AudioRecorderDialogComponent
     const rippleContainerElement: HTMLElement | null = document.querySelector('#audioRecordContainer');
     if (rippleContainerElement == null) return;
 
-    const waveformThreshold = 1.3;
-    if (dataArray.some(v => v / this.audioWaveformBase > waveformThreshold)) {
+    const waveformThreshold = 1.2;
+    if (dataArray.some(v => Math.abs(v / this.audioWaveformBase) > waveformThreshold)) {
       // show the ripple animation when the waveform reaches the threshold
       const rippleElement: HTMLElement = document.createElement('div');
       rippleElement.classList.add('animate');
