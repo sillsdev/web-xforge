@@ -26,20 +26,65 @@
   .has-attachment {
     transform: scale(2);
   }
+
+  .record,
+  .stop {
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    margin: auto;
+  }
+
   .stop {
     animation: pulse 0.75s infinite;
     color: #fff;
     transition: color 0.3s;
+
     &:hover {
       color: #fff;
     }
   }
+
+  .no-attachment {
+    height: 100%;
+    width: 100%;
+    position: relative;
+
+    // the div elements with the animate class are created dynamically and the
+    // ng-deep was needed for these styles to apply
+    ::ng-deep .animate {
+      background-color: variables.$red;
+      height: 80px;
+      width: 80px;
+      border-radius: 50%;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      margin: auto;
+      animation: growshrink 1s forwards;
+    }
+  }
+}
+
+.dialog-footer {
+  height: 50px;
+  width: 220px;
+}
+
+.visualizer {
+  width: 100%;
+  height: 100%;
 }
 
 .has-attachment {
   transform: scale(0);
   display: flex;
-  gap: 30px;
+  justify-content: space-between;
 
   &.visible {
     transform: scale(1);
@@ -66,5 +111,17 @@
   }
   100% {
     background-color: variables.$red;
+  }
+}
+
+@keyframes growshrink {
+  0% {
+    width: 80px;
+    height: 80px;
+  }
+  100% {
+    width: 120px;
+    height: 120px;
+    background-color: white;
   }
 }

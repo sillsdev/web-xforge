@@ -1,6 +1,10 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor } from '@angular/forms';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { TranslocoModule, translate } from '@ngneat/transloco';
+import { Observable, Subscription, interval, timer } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -9,12 +13,8 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { isGecko, objectId } from 'xforge-common/utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { timer } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { isGecko, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { SharedModule } from '../shared.module';
 
@@ -56,11 +56,18 @@ export class AudioRecorderDialogComponent
   showCountdown: boolean;
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
+  showCanvas: boolean = false;
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
   private recordedChunks: Blob[] = [];
   private _audio: AudioAttachment = {};
   private _onTouched = new EventEmitter();
+  private refreshWaveformSub?: Subscription;
+  private canvasContext: CanvasRenderingContext2D | null = null;
+  // height and width are calculated when the canvas is initialized
+  private visualizerHeight = 150;
+  private visualizerWidth = 300;
+  private audioWaveformBase = 128;
 
   constructor(
     public readonly dialogRef: MatDialogRef<AudioRecorderDialogComponent>,
@@ -164,6 +171,7 @@ export class AudioRecorderDialogComponent
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
+    this.showCanvas = true;
     this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
@@ -173,7 +181,8 @@ export class AudioRecorderDialogComponent
     if (this.mediaRecorder == null || this.stream == null) {
       return;
     }
-
+    this.refreshWaveformSub?.unsubscribe();
+    this.showCanvas = false;
     this.mediaRecorder.stop();
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.audio = { status: 'stopped' };
@@ -227,5 +236,83 @@ export class AudioRecorderDialogComponent
     this.mediaRecorder.onstop = () => this.processAudio();
     this.mediaRecorder.start();
     this.audio = { status: 'recording' };
+
+    // set up analyser node so we can visualize when a user is recording audio
+    const audioCtx = new AudioContext();
+    const analyser: AnalyserNode = audioCtx.createAnalyser();
+    const source: MediaStreamAudioSourceNode = audioCtx.createMediaStreamSource(stream);
+    const bufferLength: number = analyser.frequencyBinCount;
+    const dataArray: Uint8Array = new Uint8Array(bufferLength);
+    source.connect(analyser);
+
+    this.initCanvasContext();
+    this.canvasContext?.clearRect(0, 0, this.visualizerWidth, this.visualizerHeight);
+
+    // draw the waveform to indicate the recording is working
+    const drawWaveForm = (): void => {
+      if (this.audio.status !== 'recording') return;
+      analyser.getByteTimeDomainData(dataArray);
+      this.drawOnCanvas(dataArray, bufferLength);
+      this.addRippleEffect(dataArray);
+    };
+
+    const refreshRate: Observable<number> = interval(150);
+    this.refreshWaveformSub = this.subscribe(refreshRate, _ => drawWaveForm());
+  }
+
+  private initCanvasContext(): void {
+    const canvas: HTMLCanvasElement | null = document.querySelector('.visualizer');
+    if (canvas == null) return;
+    this.visualizerWidth = canvas.width;
+    this.visualizerHeight = canvas.height;
+    this.canvasContext = canvas.getContext('2d');
+    this.resetCanvasContext();
+  }
+
+  private drawOnCanvas(dataArray: Uint8Array, bufferLength: number): void {
+    if (this.canvasContext == null) return;
+    this.resetCanvasContext();
+    this.canvasContext.lineWidth = 3;
+    this.canvasContext.strokeStyle = 'rgb(200 0 0)';
+    this.canvasContext.beginPath();
+
+    const interval = 16;
+    const sliceWidth = this.visualizerWidth / (bufferLength / interval);
+    let x = 0;
+
+    for (let i = 0; i < bufferLength; i += interval) {
+      const value: number = dataArray[i] / this.audioWaveformBase - 0.95;
+      const y = value * this.visualizerHeight;
+
+      // draw the waveform line above and below the x-axis
+      const mid = this.visualizerHeight / 2;
+      this.canvasContext.moveTo(x, mid + y);
+      this.canvasContext.lineTo(x, mid - y);
+
+      x += sliceWidth;
+    }
+
+    this.canvasContext.stroke();
+  }
+
+  private resetCanvasContext(): void {
+    if (this.canvasContext == null) return;
+    this.canvasContext.fillStyle = 'white';
+    this.canvasContext.fillRect(0, 0, this.visualizerWidth, this.visualizerHeight);
+  }
+
+  private addRippleEffect(dataArray: Uint8Array): void {
+    const rippleContainerElement: HTMLElement | null = document.querySelector('#audioRecordContainer');
+    if (rippleContainerElement == null) return;
+
+    const waveformThreshold = 1.2;
+    if (dataArray.some(v => Math.abs(v / this.audioWaveformBase) > waveformThreshold)) {
+      // show the ripple animation when the waveform reaches the threshold
+      const rippleElement: HTMLElement = document.createElement('div');
+      rippleElement.classList.add('animate');
+      rippleContainerElement.appendChild(rippleElement);
+      // remove the div element after the 1s animation completes
+      setTimeout(() => rippleElement.remove(), 1000);
+    }
   }
 }
