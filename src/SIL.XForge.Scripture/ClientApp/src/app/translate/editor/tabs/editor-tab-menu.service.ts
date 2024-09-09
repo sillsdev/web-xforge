@@ -6,7 +6,7 @@ import {
   editorTabTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
+import { Observable, combineLatest, forkJoin, map, of } from 'rxjs';
 import { shareReplay, switchMap, take } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -50,7 +50,10 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
         return combineLatest([
           of(projectDoc),
           of(isOnline),
-          !isOnline || projectDoc.data == null || ParatextService.isResource(projectDoc.data.paratextId)
+          !isOnline ||
+          projectDoc.data == null ||
+          projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks.length < 1 ||
+          ParatextService.isResource(projectDoc.data.paratextId)
             ? of(undefined)
             : this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
           this.tabState.tabs$
