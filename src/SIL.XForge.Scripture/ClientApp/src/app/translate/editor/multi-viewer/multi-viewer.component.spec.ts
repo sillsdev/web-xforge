@@ -1,15 +1,17 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBreakpointObserver } from 'xforge-common/test-breakpoint-observer';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { MultiViewerComponent } from './multi-viewer.component';
 
 describe('MultiViewerComponent', () => {
   let component: MultiViewerComponent;
   let fixture: ComponentFixture<MultiViewerComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [MultiViewerComponent]
-    }).compileComponents();
-  });
+  configureTestingModule(() => ({
+    declarations: [MultiViewerComponent],
+    providers: [{ provide: BreakpointObserver, useClass: TestBreakpointObserver }]
+  }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(MultiViewerComponent);
