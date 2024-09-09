@@ -136,6 +136,27 @@ describe('EditorTabMenuService', () => {
     });
   });
 
+  it('should get "project-resources" and "history", and not "draft" when draft does not exist', done => {
+    const projectDoc = {
+      id: 'project-no-draft',
+      data: createTestProjectProfile({ translateConfig: { draftConfig: { lastSelectedTranslationBooks: [] } } })
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment(projectDoc);
+    env.setExistingTabs([]);
+    service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
+
+    verify(draftGenerationServiceMock.getLastCompletedBuild(anything())).never();
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(2);
+      expect(items[0].type).toBe('history');
+      expect(items[0].disabled).toBeFalsy();
+      expect(items[1].type).toBe('project-resource');
+      expect(items[1].disabled).toBeFalsy();
+      done();
+    });
+  });
+
   it('should get no menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
@@ -239,7 +260,8 @@ class TestEnvironment {
     id: 'project1',
     data: createTestProjectProfile({
       translateConfig: {
-        preTranslate: true
+        preTranslate: true,
+        draftConfig: { lastSelectedTranslationBooks: [40] }
       },
       userRoles: TestEnvironment.rolesByUser
     })
