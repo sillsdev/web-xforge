@@ -87,7 +87,7 @@
           {{ t(errorMessage) }}
         </app-notice>
       }
-      @if ((isOnline | async) === false) {
+      @if (!(isOnline | async)) {
         <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'">
           {{ t("offline") }}
         </app-notice>
