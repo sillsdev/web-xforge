@@ -77,7 +77,8 @@ describe('DraftApplyDialogComponent', () => {
     verify(mockedParatextService.getProjects()).once();
     tick();
     env.fixture.detectChanges();
-    expect(env.component.projects.length).toEqual(env.projects.length - 1);
+    const numNotConnectedProjects = 2;
+    expect(env.component.projects.length).toEqual(env.projects.length - numNotConnectedProjects);
     expect(env.component.projects.map(p => p.paratextId)).toEqual(['pt01', 'pt02']);
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     env.cancelButton.click();
@@ -210,6 +211,15 @@ class TestEnvironment {
       name: 'Project 03',
       shortName: 'P03',
       languageTag: 'es',
+      isConnectable: true,
+      isConnected: false
+    },
+    {
+      paratextId: 'pt04',
+      projectId: 'project04',
+      name: 'Project 04',
+      shortName: 'P04',
+      languageTag: 'grc',
       isConnectable: true,
       isConnected: false
     }
