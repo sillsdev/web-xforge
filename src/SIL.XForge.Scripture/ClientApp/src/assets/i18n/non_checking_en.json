@@ -142,7 +142,9 @@
   "draft_apply_dialog": {
     "add_to_project": "Add to project",
     "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty",
+    "book_does_not_exist": "{{ bookName }} does not exist in the selected project",
     "cancel": "Cancel",
+    "confirm_overwrite": "Please confirm you want to overwrite the book",
     "connect_to_the_internet": "Please connect to the internet to add the draft to your project",
     "choose_project": "Choose project",
     "error_fetching_projects": "There was an error fetching projects.",
