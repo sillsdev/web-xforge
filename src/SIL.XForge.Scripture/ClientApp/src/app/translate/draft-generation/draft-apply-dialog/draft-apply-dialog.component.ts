@@ -6,7 +6,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -93,7 +93,7 @@ export class DraftApplyDialogComponent implements OnInit {
     this.paratextService
       .getProjects()
       .then(projects => {
-        this._projects = projects?.filter(p => p.projectId != null).sort(compareProjectsForSorting);
+        this._projects = projects?.filter(p => p.isConnected).sort(compareProjectsForSorting);
         this.isLoading = false;
       })
       .catch(() => {
