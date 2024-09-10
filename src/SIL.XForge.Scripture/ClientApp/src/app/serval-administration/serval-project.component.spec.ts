@@ -165,6 +165,24 @@ describe('ServalProjectComponent', () => {
       env.clickElement(env.downloadDraftButton);
       verify(mockNoticeService.showError(anything())).once();
     }));
+
+    describe('get last completed build', () => {
+      it('does not get last completed build if project does not have drafting enabled', fakeAsync(() => {
+        const env = new TestEnvironment(false);
+        verify(mockDraftGenerationService.getLastCompletedBuild(anything())).never();
+        verify(mockDraftGenerationService.getBuildProgress(anything())).never();
+        expect(env.component.translationBooks.length).toEqual(0);
+      }));
+
+      it('gets last completed build if drafting enabled and translation books selected', fakeAsync(() => {
+        const env = new TestEnvironment(true, {} as BuildDto);
+        tick();
+        env.fixture.detectChanges();
+        verify(mockDraftGenerationService.getLastCompletedBuild(anything())).once();
+        verify(mockDraftGenerationService.getBuildProgress(anything())).once();
+        expect(env.component.translationBooks.length).toEqual(2);
+      }));
+    });
   });
 
   class TestEnvironment {
@@ -198,7 +216,7 @@ describe('ServalProjectComponent', () => {
                 shortName: 'P4'
               },
               lastSelectedTrainingBooks: [1, 2],
-              lastSelectedTranslationBooks: [3, 4]
+              lastSelectedTranslationBooks: preTranslate ? [3, 4] : []
             },
             preTranslate: preTranslate,
             source: {
@@ -218,6 +236,7 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
 
       when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(of(lastCompletedBuild));
+      when(mockDraftGenerationService.getBuildProgress(this.mockProjectId)).thenReturn(of(lastCompletedBuild));
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
