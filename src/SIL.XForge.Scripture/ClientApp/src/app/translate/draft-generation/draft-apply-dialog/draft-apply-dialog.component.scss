@@ -5,10 +5,14 @@
 .target-project-content {
   display: flex;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 12px;
   padding: 8px 0;
 }
 
 .overwrite-content {
   inset-inline-start: -8px;
+}
+
+.no-shrink {
+  flex-shrink: 0;
 }
