@@ -34,10 +34,10 @@
       @if (targetProject$ | async; as project) {
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
-            <mat-icon>warning</mat-icon>
+            <mat-icon class="no-shrink">warning</mat-icon>
             {{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
           } @else {
-            <mat-icon>verified</mat-icon>
+            <mat-icon class="no-shrink">verified</mat-icon>
             {{ t("book_is_empty", { bookName, projectName: project.name }) }}
           }
         </div>
