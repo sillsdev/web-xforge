@@ -4,19 +4,17 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { BehaviorSubject, Observable, map } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
-import { ParatextProject } from '../../../core/models/paratext-project';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
-import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { compareProjectsForSorting } from '../../../shared/utils';
@@ -33,7 +31,7 @@ export interface DraftApplyDialogResult {
   styleUrl: './draft-apply-dialog.component.scss'
 })
 export class DraftApplyDialogComponent implements OnInit {
-  _projects?: ParatextProject[];
+  _projects?: SFProjectProfile[];
   isLoading: boolean = false;
   addToProjectForm = new FormGroup({
     targetParatextId: new FormControl<string | undefined>(undefined, Validators.required),
@@ -43,18 +41,21 @@ export class DraftApplyDialogComponent implements OnInit {
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   canEditProject: boolean = true;
-  projectLoadingFailed: boolean = false;
+  targetBookExists: boolean = true;
+  addToProjectClicked: boolean = false;
+  /** An observable that emits the target project profile if the user has permission to write to the book. */
+  targetProject$: BehaviorSubject<SFProjectProfile | undefined> = new BehaviorSubject<SFProjectProfile | undefined>(
+    undefined
+  );
 
   // the project id to add the draft to
   private targetProjectId?: string;
-  private targetProjectDoc$: BehaviorSubject<SFProjectProfileDoc | undefined> = new BehaviorSubject<
-    SFProjectProfileDoc | undefined
-  >(undefined);
+  private paratextIdToProjectId: Map<string, string> = new Map<string, string>();
 
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: { bookNum: number },
     @Inject(MatDialogRef) private dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult>,
-    private readonly paratextService: ParatextService,
+    private readonly userProjectsService: SFUserProjectsService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly i18n: I18nService,
@@ -67,21 +68,20 @@ export class DraftApplyDialogComponent implements OnInit {
     });
   }
 
-  get projects(): ParatextProject[] {
+  get projects(): SFProjectProfile[] {
     return this._projects ?? [];
-  }
-
-  get addDisabled(): boolean {
-    return this.targetProjectId == null || !this.canEditProject || this.addToProjectForm.invalid || !this.isAppOnline;
   }
 
   get bookName(): string {
     return this.i18n.localizeBook(this.data.bookNum);
   }
 
-  /** An observable that emits the target project profile if the user has permission to write to the specified book. */
-  get targetProject$(): Observable<SFProjectProfile | undefined> {
-    return this.targetProjectDoc$.pipe(map(p => p?.data));
+  get isFormValid(): boolean {
+    return this.addToProjectForm.valid;
+  }
+
+  get overwriteConfirmed(): boolean {
+    return !!this.addToProjectForm.controls.overwrite.value;
   }
 
   get isAppOnline(): boolean {
@@ -89,25 +89,26 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.isLoading = true;
-    this.paratextService
-      .getProjects()
-      .then(projects => {
-        this._projects = projects?.filter(p => p.isConnected).sort(compareProjectsForSorting);
-        this.isLoading = false;
-      })
-      .catch(() => {
-        this.projectLoadingFailed = true;
-      });
+    this.userProjectsService.projectDocs$
+      .pipe(
+        filterNullish(),
+        map(projectDocs => {
+          const projects: SFProjectProfile[] = [];
+          for (const projectDoc of projectDocs) {
+            if (projectDoc.data != null) {
+              projects.push(projectDoc.data);
+              this.paratextIdToProjectId.set(projectDoc.data.paratextId, projectDoc.id);
+            }
+          }
+          return projects.sort(compareProjectsForSorting);
+        })
+      )
+      .subscribe(projects => (this._projects = projects));
   }
 
   addToProject(): void {
-    if (
-      this.addToProjectForm.controls.targetParatextId.value == null ||
-      this.targetProjectId == null ||
-      !this.canEditProject
-    ) {
-      this.dialogRef.close();
+    this.addToProjectClicked = true;
+    if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
     this.dialogRef.close({ projectId: this.targetProjectId });
@@ -115,28 +116,29 @@ export class DraftApplyDialogComponent implements OnInit {
 
   async projectSelectedAsync(paratextId: string): Promise<void> {
     if (paratextId == null) {
-      this.targetProjectDoc$.next(undefined);
+      this.targetProject$.next(undefined);
       return;
     }
-    this.targetProjectId = this.projects?.find(p => p.paratextId === paratextId)?.projectId;
-    if (this.targetProjectId == null) return;
-    const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(this.targetProjectId);
-    if (projectDoc.data == null) {
+    const project: SFProjectProfile | undefined = this.projects.find(p => p.paratextId === paratextId);
+    if (project == null) {
       this.canEditProject = false;
-      this.targetProjectDoc$.next(undefined);
+      this.targetBookExists = false;
+      this.targetProject$.next(undefined);
       return;
     }
 
+    this.targetProjectId = this.paratextIdToProjectId.get(paratextId);
+    const targetBook: TextInfo | undefined = project.texts.find(t => t.bookNum === this.data.bookNum);
+    this.targetBookExists = targetBook != null;
     this.canEditProject =
-      this.textDocService.userHasGeneralEditRight(projectDoc.data) &&
-      projectDoc.data.texts.find(t => t.bookNum === this.data.bookNum)?.permissions[this.userService.currentUserId] ===
-        TextInfoPermission.Write;
+      this.textDocService.userHasGeneralEditRight(project) &&
+      targetBook?.permissions[this.userService.currentUserId] === TextInfoPermission.Write;
 
     // emit the project profile document
     if (this.canEditProject) {
-      this.targetProjectDoc$.next(projectDoc);
+      this.targetProject$.next(project);
     } else {
-      this.targetProjectDoc$.next(undefined);
+      this.targetProject$.next(undefined);
     }
   }
 
