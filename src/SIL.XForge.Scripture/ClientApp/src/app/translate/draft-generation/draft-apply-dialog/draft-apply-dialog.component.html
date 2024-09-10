@@ -3,9 +3,9 @@
 }
 
 <ng-container *transloco="let t; read: 'draft_apply_dialog'">
+  <h2 mat-dialog-title>{{ t("select_alternate_project") }}</h2>
   <div mat-dialog-content>
     <form [formGroup]="addToProjectForm">
-      <p>{{ t("select_alternate_project") }}</p>
       <app-project-select
         [projects]="projects"
         [placeholder]="t('choose_project')"
@@ -13,14 +13,12 @@
         (projectSelect)="projectSelectedAsync($event.paratextId)"
         formControlName="targetParatextId"
       ></app-project-select>
-      @if (!canEditProject && isAppOnline) {
-        <mat-error class="cannot-edit-message mat-hint">{{ t("no_write_permission") }}</mat-error>
-      }
-      @if (projectLoadingFailed && isAppOnline) {
-        <mat-error class="fetch-projects-failed-message">{{ t("error_fetching_projects") }}</mat-error>
-      }
       @if (!isAppOnline) {
         <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
+      } @else if (!targetBookExists) {
+        <mat-error class="book-does-not-exist">{{ t("book_does_not_exist", { bookName }) }}</mat-error>
+      } @else if (!canEditProject) {
+        <mat-error class="cannot-edit-message">{{ t("no_write_permission") }}</mat-error>
       }
       @if (connectOtherProject != null) {
         <div class="unlisted-project-message">
@@ -44,12 +42,15 @@
         <mat-checkbox class="overwrite-content" formControlName="overwrite">{{
           t("i_understand_overwrite_book", { projectName: project.name, bookName })
         }}</mat-checkbox>
+        <mat-error class="form-error" [ngClass]="{ visible: addToProjectClicked && !overwriteConfirmed }">{{
+          t("confirm_overwrite")
+        }}</mat-error>
       }
     </form>
   </div>
   <div mat-dialog-actions>
     <button mat-button class="cancel-button" [mat-dialog-close]="false">{{ t("cancel") }}</button>
-    <button mat-raised-button class="add-button" color="primary" (click)="addToProject()" [disabled]="addDisabled">
+    <button mat-raised-button class="add-button" color="primary" (click)="addToProject()">
       {{ t("add_to_project") }}
     </button>
   </div>
