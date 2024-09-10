@@ -4,7 +4,7 @@ import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { catchError, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
+import { Observable, Subscription, catchError, lastValueFrom, of, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -150,10 +150,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           );
 
           this.draftConfig = project.translateConfig.draftConfig;
-          this.draftJob$ = this.getDraftJob(projectDoc.id);
+          this.draftJob$ = this.translationBooks.length > 0 ? this.getDraftJob(projectDoc.id) : of(undefined);
 
           // Get the last completed build
-          if (this.isOnline) {
+          if (this.isOnline && this.translationBooks.length > 0) {
             return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
           } else {
             return of(undefined);
