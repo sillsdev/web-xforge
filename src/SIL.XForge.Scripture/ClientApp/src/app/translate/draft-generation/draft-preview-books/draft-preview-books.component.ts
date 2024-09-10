@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Router, RouterModule } from '@angular/router';
-import { translate, TranslocoModule } from '@ngneat/transloco';
+import { TranslocoModule, translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { firstValueFrom, map, Observable } from 'rxjs';
+import { Observable, firstValueFrom, map } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -92,7 +92,7 @@ export class DraftPreviewBooksComponent {
   async chooseAlternateProjectToAddDraft(bookWithDraft: BookWithDraft): Promise<void> {
     const dialogRef: MatDialogRef<DraftApplyDialogComponent, DraftApplyDialogResult> = this.dialogService.openMatDialog(
       DraftApplyDialogComponent,
-      { data: { bookNum: bookWithDraft.bookNumber }, disableClose: true, width: '600px' }
+      { data: { bookNum: bookWithDraft.bookNumber }, width: '600px' }
     );
     const result: DraftApplyDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (result == null || result.projectId == null) {

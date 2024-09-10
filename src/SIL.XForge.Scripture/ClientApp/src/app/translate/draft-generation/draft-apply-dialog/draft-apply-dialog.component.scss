@@ -2,6 +2,18 @@
   justify-content: flex-end;
 }
 
+.mat-mdc-dialog-content {
+  padding-bottom: 0;
+
+  .form-error {
+    visibility: hidden;
+
+    &.visible {
+      visibility: visible;
+    }
+  }
+}
+
 .target-project-content {
   display: flex;
   align-items: center;
