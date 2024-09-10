@@ -47,10 +47,8 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
         this.breakpointObserver.observe(this.breakpointService.width('<=', Breakpoint.XS))
       ]),
       ([bigger, xs]) => {
-        const isViewportBigger: boolean = bigger.matches;
-        this.maxAvatars = isViewportBigger ? 6 : 3;
-        const isViewportXS: boolean = xs.matches;
-        this.maxAvatars = isViewportXS ? 1 : this.maxAvatars;
+        // initialize to 3, but if > SM then set to 6, else if <= XS then set to 1
+        this.maxAvatars = bigger.matches ? 6 : xs.matches ? 1 : 3;
       }
     );
   }
