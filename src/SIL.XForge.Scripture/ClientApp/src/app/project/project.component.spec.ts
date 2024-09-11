@@ -14,6 +14,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -35,6 +36,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPermissions = mock(PermissionsService);
 const mockResumeCheckingService = mock(ResumeCheckingService);
+const mockedDialogService = mock(DialogService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -47,7 +49,8 @@ describe('ProjectComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: PermissionsService, useMock: mockedPermissions },
-      { provide: ResumeCheckingService, useMock: mockResumeCheckingService }
+      { provide: ResumeCheckingService, useMock: mockResumeCheckingService },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -207,6 +210,8 @@ class TestEnvironment {
 
     // Just mock the response.  Testing of the actual service functionality can be in the service spec.
     when(mockResumeCheckingService.checkingLink$).thenReturn(of(['projects', 'project1', 'checking', 'JHN', '1']));
+
+    when(mockedDialogService.message(anything())).thenResolve();
 
     this.fixture = TestBed.createComponent(ProjectComponent);
     this.component = this.fixture.componentInstance;

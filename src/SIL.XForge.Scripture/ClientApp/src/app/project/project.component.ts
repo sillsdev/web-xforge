@@ -6,6 +6,7 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
@@ -28,6 +29,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly userService: UserService,
     private readonly permissions: PermissionsService,
     private readonly resumeCheckingService: ResumeCheckingService,
+    private readonly dialogService: DialogService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -60,11 +62,13 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       });
     });
 
-    this.subscribe(navigateToProject$, projectId => {
-      if (!userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
-        return;
+    this.subscribe(navigateToProject$, async projectId => {
+      if (userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
+        this.navigateToProject(projectId);
+      } else {
+        await this.dialogService.message('app.project_has_been_deleted');
+        this.router.navigateByUrl('/projects', { replaceUrl: true });
       }
-      this.navigateToProject(projectId);
     });
   }
 
