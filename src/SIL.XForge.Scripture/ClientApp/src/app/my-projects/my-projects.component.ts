@@ -114,11 +114,17 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   }
 
   async joinProject(projectId: string): Promise<void> {
-    this.noticeService.loadingStarted();
-    this.joiningProjects.push(projectId);
-    await this.projectService.onlineAddCurrentUser(projectId);
-    this.noticeService.loadingFinished();
-    this.router.navigate(['projects', projectId]);
+    try {
+      this.noticeService.loadingStarted();
+      this.joiningProjects.push(projectId);
+      await this.projectService.onlineAddCurrentUser(projectId);
+      this.router.navigate(['projects', projectId]);
+    } catch (err) {
+      this.noticeService.show(translate('my_projects.failed_to_join_project'));
+    } finally {
+      this.noticeService.loadingFinished();
+      this.joiningProjects.pop();
+    }
   }
 
   private async loadUser(): Promise<void> {

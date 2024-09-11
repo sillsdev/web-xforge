@@ -9,7 +9,7 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -89,14 +89,30 @@ describe('MyProjectsComponent', () => {
   it('click Join, user added to the project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.waitUntilLoaded();
+    const resolve$: BehaviorSubject<boolean> = env.mockJoinProjectPromise('sf-cbntt');
 
     env.click(env.joinButtonForProject('pt-connButNotThisUser'));
     verify(mockedNoticeService.loadingStarted()).once();
     verify(mockedSFProjectService.onlineAddCurrentUser('sf-cbntt')).once();
     expect(env.joinButtonForProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
     expect(env.component.joiningProjects).toEqual(['sf-cbntt']);
+    resolve$.next(true);
+    tick();
+    env.fixture.detectChanges();
     // Navigates to the connect project component.
     expect(env.router.url).toEqual('/projects/sf-cbntt');
+  }));
+
+  it('user cannot join a project while offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.waitUntilLoaded();
+    env.onlineStatus = false;
+    expect(env.messageOffline).not.toBeNull();
+    expect(env.joinButtonForProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
+    env.component.joinProject('sf-cbntt');
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedNoticeService.show(anything())).once();
   }));
 
   it('lists my connected projects', fakeAsync(() => {
@@ -534,8 +550,6 @@ class TestEnvironment {
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(this.projectProfileDocs));
     when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(this.userConfigDocs));
 
-    when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenResolve();
-
     const user: User = createTestUser({
       paratextId: isKnownPTUser ? 'pt-user-id' : undefined,
       sites: {
@@ -586,6 +600,9 @@ class TestEnvironment {
 
   set onlineStatus(isOnline: boolean) {
     this.testOnlineStatusService.setIsOnline(isOnline);
+    if (!isOnline) {
+      when(mockedSFProjectService.onlineAddCurrentUser(anything())).thenReject(new Error('504: Gateway Timeout'));
+    }
     tick();
     this.fixture.detectChanges();
   }
@@ -627,6 +644,20 @@ class TestEnvironment {
     this.fixture.detectChanges();
     flush();
     this.fixture.detectChanges();
+  }
+
+  mockJoinProjectPromise(projectId: string): BehaviorSubject<boolean> {
+    const resolve$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    const delayedPromise = new Promise<void>(resolve => {
+      const sub = resolve$.subscribe(done => {
+        if (done) {
+          resolve();
+          sub.unsubscribe();
+        }
+      });
+    });
+    when(mockedSFProjectService.onlineAddCurrentUser(projectId)).thenReturn(delayedPromise);
+    return resolve$;
   }
 
   private getElement(query: string): DebugElement {
