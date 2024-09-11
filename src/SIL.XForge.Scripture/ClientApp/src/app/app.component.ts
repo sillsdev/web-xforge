@@ -173,7 +173,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get appIconLink(): string[] {
-    return this.router.url === '/projects' ? ['/projects', this.lastSelectedProjectId ?? ''] : ['/projects'];
+    return this.router.url === '/projects' && this.lastSelectedProjectId != null
+      ? ['/projects', this.lastSelectedProjectId]
+      : ['/projects'];
   }
 
   get isLoggedIn(): Observable<boolean> {
@@ -276,7 +278,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
       this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
         // handle remotely deleted project
-        if (this.userService.currentProjectId != null) {
+        const userDoc = this.currentUserDoc;
+        if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
           this.showProjectDeletedDialog();
         }
       });

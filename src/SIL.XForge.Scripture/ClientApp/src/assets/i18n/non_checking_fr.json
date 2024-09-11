@@ -134,16 +134,16 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Ajouter au Projet",
-    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty",
+    "book_is_empty": "{{ bookName }} dans le projet {{ projectName }} est vide",
     "cancel": "Annuler",
-    "connect_to_the_internet": "Please connect to the internet to add the draft to your project",
-    "choose_project": "Choose project",
-    "error_fetching_projects": "There was an error fetching projects.",
-    "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
-    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first",
-    "no_write_permission": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
-    "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
-    "select_alternate_project": "Select the project you want to add the draft to"
+    "connect_to_the_internet": "Veuillez vous connecter à internet pour ajouter le brouillon à votre projet",
+    "choose_project": "Choisir projet",
+    "error_fetching_projects": "Une erreur s'est produite lors de la récupération des projets.",
+    "i_understand_overwrite_book": "Je comprends que le brouillon va écraser {{ bookName }} dans le projet {{ projectName }}",
+    "looking_for_unlisted_project": "Vous cherchez un projet qui n'est pas répertorié ? Connectez-le à {{ templateTagBoundary }}la page des projets{{ templateTagBoundary }} en premier",
+    "no_write_permission": "Vous n'avez pas l'autorisation d'écrire dans ce livre sur ce projet. Contactez l'administrateur du projet pour obtenir cette autorisation.",
+    "project_has_text_in_chapters": "{{ bookName }} dans {{ projectName }} a du texte dans les chapitres {{ numChapters }}",
+    "select_alternate_project": "Sélectionnez le projet auquel vous souhaitez ajouter le brouillon"
   },
   "draft_generation": {
     "back_from_stepper_button": "Retour",
@@ -226,7 +226,7 @@
   },
   "draft_preview_books": {
     "add_to_project": "Ajouter au Projet",
-    "add_to_different_project": "Add to a different project",
+    "add_to_different_project": "Ajouter à un autre projet",
     "draft_successfully_applied": "Le brouillon pour {{ bookName }} a été appliqué avec succès à votre projet.",
     "one_or_more_drafts_failed": "Les brouillons d'un ou plusieurs chapitres n'ont pas pu être appliqués. Voir les chapitres du livre pour voir quels chapitres avaient été appliqués avec succès.",
     "no_books_have_drafts": " Aucun livre n'a de brouillons.",
@@ -492,7 +492,7 @@
     "error_fetching_projects": "Une erreur s'est produite lors de la récupération des projets. Vous ne pourrez sélectionner que les ressources de la bibliothèque biblique numérique.",
     "error_fetching_resources": "Une erreur s'est produite lors de la récupération des ressources de la bibliothèque biblique numérique. Vous ne pourrez sélectionner que des projets.",
     "error_loading_resource": "Une erreur s'est produite lors du chargement de la ressource sélectionnée.",
-    "error_offline": "You are offline. Please connect to the internet to load this resource.",
+    "error_offline": "Vous êtes déconnecté. Veuillez vous connecter à internet pour charger cette ressource.",
     "loading": "Chargement en cours",
     "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
     "placeholder_ready": "Sélectionner un projet paratext ou une ressource BBN",
