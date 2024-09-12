@@ -68,14 +68,14 @@ mat-card:active {
   display: grid;
   grid-template-areas:
     'project-name project-name'
-    'description button';
+    'description empty';
 }
 
 [data-project-type='user-connected-resource'] {
   display: grid;
   grid-template-areas:
     'project-name project-name'
-    'description button';
+    'description empty';
 }
 
 [data-project-type='user-unconnected-project'] {
