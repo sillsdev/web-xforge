@@ -149,11 +149,6 @@
             <div class="loading-action"></div>
           </div>
         }
-        @if ((isOnline | async) === false) {
-          <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'">
-            {{ t("offline") }}
-          </app-notice>
-        }
       </div>
     </div>
   }
