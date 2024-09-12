@@ -25,7 +25,7 @@ const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockAuthService = mock(AuthService);
 
-fdescribe('EditorTabMenuService', () => {
+describe('EditorTabMenuService', () => {
   configureTestingModule(() => ({
     imports: [TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
