@@ -15,9 +15,9 @@
       ></app-project-select>
       @if (!isAppOnline) {
         <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
-      } @else if (!targetBookExists) {
+      } @else if (!targetBookExists && projectSelectValid) {
         <mat-error class="book-does-not-exist">{{ t("book_does_not_exist", { bookName }) }}</mat-error>
-      } @else if (!canEditProject) {
+      } @else if (!canEditProject && projectSelectValid) {
         <mat-error class="cannot-edit-message">{{ t("no_write_permission") }}</mat-error>
       }
       @if (connectOtherProject != null) {

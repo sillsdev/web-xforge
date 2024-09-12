@@ -130,6 +130,15 @@ describe('ProjectSelectComponent', () => {
     env.clickOption(0, 0);
     expect(env.selectionInvalidMessage).toBeNull();
   }));
+
+  it('allows marking the selection invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.selectionInvalidMessage).toBeNull();
+    env.component.projectSelect.validate(false);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.selectionInvalidMessage).not.toBeNull();
+  }));
 });
 
 @Component({
