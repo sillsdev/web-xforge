@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -14,9 +14,13 @@ import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
+
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
+import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
+import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { compareProjectsForSorting } from '../../../shared/utils';
 
 export interface DraftApplyDialogResult {
@@ -31,10 +35,12 @@ export interface DraftApplyDialogResult {
   styleUrl: './draft-apply-dialog.component.scss'
 })
 export class DraftApplyDialogComponent implements OnInit {
+  @ViewChild(ProjectSelectComponent) projectSelect!: ProjectSelectComponent;
+
   _projects?: SFProjectProfile[];
   isLoading: boolean = false;
   addToProjectForm = new FormGroup({
-    targetParatextId: new FormControl<string | undefined>(undefined, Validators.required),
+    targetParatextId: new FormControl<string | undefined>('', Validators.required),
     overwrite: new FormControl(false, Validators.requiredTrue)
   });
   connectOtherProject = this.i18n.translateTextAroundTemplateTags('draft_apply_dialog.looking_for_unlisted_project');
@@ -84,6 +90,10 @@ export class DraftApplyDialogComponent implements OnInit {
     return !!this.addToProjectForm.controls.overwrite.value;
   }
 
+  get projectSelectValid(): boolean {
+    return this.addToProjectForm.controls.targetParatextId.valid;
+  }
+
   get isAppOnline(): boolean {
     return this.onlineStatusService.isOnline;
   }
@@ -92,9 +102,12 @@ export class DraftApplyDialogComponent implements OnInit {
     this.userProjectsService.projectDocs$
       .pipe(
         filterNullish(),
-        map(projectDocs => {
+        map(resourceAndProjectDocs => {
           const projects: SFProjectProfile[] = [];
-          for (const projectDoc of projectDocs) {
+          const userProjectDocs: SFProjectProfileDoc[] = resourceAndProjectDocs.filter(
+            p => p.data != null && !ParatextService.isResource(p.data.paratextId)
+          );
+          for (const projectDoc of userProjectDocs) {
             if (projectDoc.data != null) {
               projects.push(projectDoc.data);
               this.paratextIdToProjectId.set(projectDoc.data.paratextId, projectDoc.id);
@@ -108,6 +121,7 @@ export class DraftApplyDialogComponent implements OnInit {
 
   addToProject(): void {
     this.addToProjectClicked = true;
+    this.projectSelect.validate(false);
     if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
