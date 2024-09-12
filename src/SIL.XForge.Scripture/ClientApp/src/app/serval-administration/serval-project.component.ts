@@ -16,6 +16,7 @@ import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { SharedModule } from '../shared/shared.module';
+import { projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
@@ -84,7 +85,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (projectDoc.data == null) return of(undefined);
           const project: SFProjectProfile = projectDoc.data;
           this.preTranslate = project.translateConfig.preTranslate;
-          this.projectName = project.shortName + ' - ' + project.name;
+          this.projectName = projectLabel(project);
 
           // Setup the downloads table
           const rows: Row[] = [];
@@ -150,10 +151,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           );
 
           this.draftConfig = project.translateConfig.draftConfig;
-          this.draftJob$ = this.translationBooks.length > 0 ? this.getDraftJob(projectDoc.id) : of(undefined);
+          this.draftJob$ = SFProjectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
 
           // Get the last completed build
-          if (this.isOnline && this.translationBooks.length > 0) {
+          if (this.isOnline && SFProjectService.hasDraft(project)) {
             return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
           } else {
             return of(undefined);
