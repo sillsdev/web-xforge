@@ -242,9 +242,42 @@ describe('EditorComponent', () => {
       writingSystem: { tag: 'ko' }
     });
     env.wait();
+
+    expect(env.component.canEdit).toBe(true);
     expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
     expect(env.component.writingSystemWarningBanner).toBe(true);
     expect(env.showWritingSystemWarningBanner).not.toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('does not show warning to users when translation is not Korean, Japanese, or Chinese', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'en' }
+    });
+    env.wait();
+
+    expect(env.component.canEdit).toBe(true);
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('en');
+    expect(env.component.writingSystemWarningBanner).toBe(false);
+    expect(env.showWritingSystemWarningBanner).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('does not show warning to users if they cannot edit', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'ko' },
+      translateConfig: defaultTranslateConfig
+    });
+    env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+    env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+    env.wait();
+
+    expect(env.component.canEdit).toBe(false);
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
+    expect(env.component.writingSystemWarningBanner).toBe(false);
+    expect(env.showWritingSystemWarningBanner).toBeNull();
     discardPeriodicTasks();
   }));
 

@@ -610,7 +610,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get writingSystemWarningBanner(): boolean {
     const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
-    return !isGecko() && writingSystemTag != null && WRITING_SYSTEM_WARNING_REGEX.test(writingSystemTag);
+    return (
+      !isGecko() && writingSystemTag != null && WRITING_SYSTEM_WARNING_REGEX.test(writingSystemTag) && this.canEdit
+    );
   }
 
   /**
