@@ -141,12 +141,17 @@ describe('DraftApplyDialogComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.cannotEditMessage).not.toBeNull();
+    // hides the message when an invalid project is selected
+    env.selectParatextProject('');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.cannotEditMessage).toBeNull();
   }));
 
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
     env.selectParatextProject('paratextId1');
     expect(env.targetProjectContent.textContent).toContain('Test project 1');
-    // the user does not have permission to edit 'pt02' so the info section is hidden
+    // the user does not have permission to edit 'paratextId2' so the info section is hidden
     env.selectParatextProject('paratextId2');
     expect(env.targetProjectContent).toBeNull();
   }));
@@ -238,7 +243,8 @@ class TestEnvironment {
   private setupProject(): void {
     const projectPermissions = [
       { id: 'project01', permission: TextInfoPermission.Write },
-      { id: 'project02', permission: TextInfoPermission.Read }
+      { id: 'project02', permission: TextInfoPermission.Read },
+      { id: 'resource03', permission: TextInfoPermission.Read }
     ];
     const mockProjectDocs: SFProjectProfileDoc[] = [];
     let projectNum = 1;
@@ -247,6 +253,7 @@ class TestEnvironment {
         id,
         data: createTestProjectProfile(
           {
+            paratextId: id.startsWith('resource') ? `resource16char0${projectNum}` : `paratextId${projectNum}`,
             userRoles: { user01: SFProjectRole.ParatextAdministrator },
             texts: [
               {

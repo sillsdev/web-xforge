@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
@@ -111,6 +111,15 @@ describe('ProjectSelectComponent', () => {
     env.clickInput();
     env.clickOption(0, 0);
     expect(env.selectionInvalidMessage).toBeNull();
+  }));
+
+  it('allows marking the selection invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.selectionInvalidMessage).toBeNull();
+    env.component.projectSelect.validate(false);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.selectionInvalidMessage).not.toBeNull();
   }));
 });
 

@@ -127,6 +127,13 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     return this.hiddenParatextIds$.getValue();
   }
 
+  validate(allowBlank: boolean): void {
+    this.paratextIdControl.clearValidators();
+    this.paratextIdControl.setValidators(SFValidators.selectableProject(allowBlank));
+    this.paratextIdControl.markAsDirty();
+    this.paratextIdControl.updateValueAndValidity();
+  }
+
   writeValue(value: any): void {
     this.value = value;
   }
