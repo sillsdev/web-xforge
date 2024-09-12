@@ -139,7 +139,7 @@ describe('EditorTabMenuService', () => {
   it('should get "project-resources" and "history", and not "draft" when draft does not exist', done => {
     const projectDoc = {
       id: 'project-no-draft',
-      data: createTestProjectProfile({ translateConfig: { draftConfig: { lastSelectedTranslationBooks: [] } } })
+      data: createTestProjectProfile({ translateConfig: { preTranslate: false } })
     } as SFProjectProfileDoc;
     const env = new TestEnvironment(projectDoc);
     env.setExistingTabs([]);
@@ -259,9 +259,13 @@ class TestEnvironment {
   readonly projectDoc = {
     id: 'project1',
     data: createTestProjectProfile({
+      texts: [
+        { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
+        { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
+      ],
       translateConfig: {
         preTranslate: true,
-        draftConfig: { lastSelectedTranslationBooks: [40] }
+        draftConfig: { lastSelectedTranslationBooks: [40], lastSelectedTrainingBooks: [41] }
       },
       userRoles: TestEnvironment.rolesByUser
     })

@@ -165,24 +165,26 @@ describe('ServalProjectComponent', () => {
       env.clickElement(env.downloadDraftButton);
       verify(mockNoticeService.showError(anything())).once();
     }));
+  });
 
-    describe('get last completed build', () => {
-      it('does not get last completed build if project does not have drafting enabled', fakeAsync(() => {
-        const env = new TestEnvironment(false);
-        verify(mockDraftGenerationService.getLastCompletedBuild(anything())).never();
-        verify(mockDraftGenerationService.getBuildProgress(anything())).never();
-        expect(env.component.translationBooks.length).toEqual(0);
-      }));
+  describe('get last completed build', () => {
+    it('does not get last completed build if project does not have draft books', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.preTranslate).toBe(false);
+      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).never();
+      verify(mockDraftGenerationService.getBuildProgress(anything())).never();
+    }));
 
-      it('gets last completed build if drafting enabled and translation books selected', fakeAsync(() => {
-        const env = new TestEnvironment(true, {} as BuildDto);
-        tick();
-        env.fixture.detectChanges();
-        verify(mockDraftGenerationService.getLastCompletedBuild(anything())).once();
-        verify(mockDraftGenerationService.getBuildProgress(anything())).once();
-        expect(env.component.translationBooks.length).toEqual(2);
-      }));
-    });
+    it('gets last completed build if drafting enabled and draft books exist', fakeAsync(() => {
+      const env = new TestEnvironment(true, {} as BuildDto);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.preTranslate).toBe(true);
+      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).once();
+      verify(mockDraftGenerationService.getBuildProgress(anything())).once();
+    }));
   });
 
   class TestEnvironment {
@@ -201,6 +203,12 @@ describe('ServalProjectComponent', () => {
         data: createTestProjectProfile({
           name: 'Project 01',
           shortName: 'P1',
+          texts: [
+            { bookNum: 1, chapters: [{ number: 1, hasDraft: false }] },
+            { bookNum: 2, chapters: [{ number: 1, hasDraft: false }] },
+            { bookNum: 3, chapters: [{ number: 1, hasDraft: preTranslate }] },
+            { bookNum: 4, chapters: [{ number: 1, hasDraft: preTranslate }] }
+          ],
           translateConfig: {
             draftConfig: {
               alternateSource: {
@@ -215,10 +223,10 @@ describe('ServalProjectComponent', () => {
                 name: 'Project 04',
                 shortName: 'P4'
               },
-              lastSelectedTrainingBooks: [1, 2],
+              lastSelectedTrainingBooks: preTranslate ? [1, 2] : [],
               lastSelectedTranslationBooks: preTranslate ? [3, 4] : []
             },
-            preTranslate: preTranslate,
+            preTranslate,
             source: {
               paratextId: 'ptproject02',
               projectRef: 'project02',
