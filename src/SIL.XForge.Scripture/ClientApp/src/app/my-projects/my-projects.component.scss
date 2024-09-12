@@ -1,55 +1,93 @@
 @use 'src/_variables' as variables;
+@use '@angular/material' as mat;
 
-:host {
-  width: 50em;
-  max-width: 100%;
-  margin: 0 auto;
+.content {
+  max-width: 600px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   row-gap: 1em;
   padding-bottom: 2em;
+  margin: 0 auto;
 }
 
-h1,
+h1 {
+  font-weight: 500;
+  margin: 0;
+}
 h2 {
   font-weight: 500;
-  margin-top: 0.5em;
-  margin-bottom: 0;
+  margin: 1.5em 0 0.25em;
 }
 
-.pt-content {
+:host {
   display: flex;
   flex-direction: column;
-  row-gap: 1em;
+  flex-grow: 1;
 }
 
+.pt-content-container {
+  background: #f4f4f4;
+  margin: 30px -20px -14px;
+  padding: 20px;
+  height: 100%;
+
+  h2 {
+    // this is required to replicate the gap used by the other lists, specifically under the header
+    margin: 1.5em 0 1em;
+  }
+
+  .pt-content {
+    display: flex;
+    flex-direction: column;
+
+    max-width: 600px;
+    margin: 0 auto;
+    > *:nth-child(even) {
+      background: #e6e6e6;
+    }
+  }
+}
 mat-card {
   padding: 1em;
   gap: 0.5em;
   grid-template-columns: 1fr auto;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+mat-card:hover {
+  filter: brightness(90%);
+}
+
+mat-card:active {
+  @include mat.elevation(1);
 }
 
 [data-project-type='user-connected-project'] {
   display: grid;
   grid-template-areas:
     'project-name project-name'
-    'description button';
+    'description empty';
 }
 
 [data-project-type='user-connected-resource'] {
   display: grid;
   grid-template-areas:
     'project-name project-name'
-    'description button';
+    'description empty';
 }
 
 [data-project-type='user-unconnected-project'] {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  padding: 1.5em 1em;
+  gap: 0.5em;
 
   .mdc-button {
     margin-inline-start: auto;
+    margin-block: 4px;
   }
 }
 
@@ -63,10 +101,12 @@ mat-card {
   grid-template-areas:
     'project-name project-name'
     'description button';
+  padding: 1em;
 }
 
 .project-name {
   font-size: 1.25em;
+  margin: auto 0;
   b {
     font-weight: 500;
   }
@@ -108,6 +148,7 @@ mat-card a,
 .loading-project-description {
   height: 1em;
   width: 8em;
+  align-self: end;
 }
 
 .loading-action {
