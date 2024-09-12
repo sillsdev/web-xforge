@@ -694,6 +694,43 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
+  it('should renew tokens to verify if user is still logged in and join project without transparent authentication', fakeAsync(() => {
+    const callback = (env: TestEnvironment): void => {
+      when(mockedLocationService.pathname).thenReturn('/join/shareKey');
+      when(mockedWebAuth.getTokenSilently(anything())).thenResolve(env.validToken);
+      env.localSettings.set(ID_TOKEN_SETTING, '12345');
+    };
+    const env = new TestEnvironment({
+      isOnline: true,
+      callback
+    });
+    verify(mockedAuth0Service.tryTransparentAuthentication()).never();
+    verify(mockedWebAuth.loginWithRedirect(anything())).never();
+    verify(mockedWebAuth.getTokenSilently(anything())).once();
+    expect(env.isAuthenticated).toBeTrue();
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should redirect to auth0 if renew tokens fails to verify if a user who was previously logged in when and is trying to join a project', fakeAsync(() => {
+    const shareKeyPath = '/join/shareKey';
+    const callback = (env: TestEnvironment): void => {
+      when(mockedLocationService.pathname).thenReturn(shareKeyPath);
+      when(mockedLocationService.search).thenReturn('');
+      env.setLoginRequiredResponse();
+      env.localSettings.set(ID_TOKEN_SETTING, '12345');
+    };
+    new TestEnvironment({
+      isOnline: true,
+      callback
+    });
+    verify(mockedAuth0Service.tryTransparentAuthentication()).never();
+    verify(mockedWebAuth.loginWithRedirect(anything())).once();
+    const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
+      mockedWebAuth.loginWithRedirect
+    ).last()[0];
+    expect(authOptions?.appState).toEqual(JSON.stringify({ returnUrl: shareKeyPath }));
+  }));
+
   it('should log the user out if they click the log out button when requesting Paratext credential update', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
@@ -965,6 +1002,13 @@ class TestEnvironment {
     when(mockedWebAuth.getTokenSilently()).thenThrow(loginError);
     when(mockedWebAuth.getTokenSilently(anything())).thenThrow(loginError);
     when(mockedWebAuth.getIdTokenClaims()).thenThrow(loginError);
+  }
+
+  setMissingTokenResponse(): void {
+    const tokenError = new GenericError('missing_refresh_token', 'Invalid token');
+    when(mockedWebAuth.getTokenSilently()).thenThrow(tokenError);
+    when(mockedWebAuth.getTokenSilently(anything())).thenThrow(tokenError);
+    when(mockedWebAuth.getIdTokenClaims()).thenThrow(tokenError);
   }
 
   setOnline(isOnline: boolean = true): void {

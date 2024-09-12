@@ -421,7 +421,21 @@ export class AuthService {
       if (await this.onlineStatusService.checkOnline()) {
         // Try and login transparently if a share key is available
         if (this.isJoining) {
-          if (await this.tryTransparentAuthentication()) {
+          // If someone may have been logged in previously and their state isn't clear then it is best to send them to
+          // Auth0 as they may still have a valid refresh token
+          // Connections to Auth0 from Scripture Forge use the Auth0 API which has different expiry timestamps on tokens
+          // compared with the tokens used directly in the Auth0 website application
+          if (this.idToken != null) {
+            // Attempt to renew tokens first otherwise send them to Auth0
+            await this.renewTokens();
+            if (await this.hasExpired()) {
+              // Return a NEVER promise to graceful wait for the redirection to complete from renewTokens
+              // without showing the join page
+              return new Promise<never>(() => {});
+            }
+            await this.remoteStore.init(() => this.getAccessToken());
+            return { loggedIn: true, newlyLoggedIn: true, anonymousUser: true };
+          } else if (await this.tryTransparentAuthentication()) {
             return { loggedIn: true, newlyLoggedIn: true, anonymousUser: true };
           }
           return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
