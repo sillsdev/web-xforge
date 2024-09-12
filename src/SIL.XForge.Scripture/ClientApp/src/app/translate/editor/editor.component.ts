@@ -161,7 +161,35 @@ export interface SaveNoteParameters {
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
-const WRITING_SYSTEM_WARNING_REGEX = /^(ja|ko|cmn)(?![a-z])/;
+const UNSUPPORTED_LANGUAGE_CODES = [
+  'ko',
+  'kor',
+  'ja',
+  'jpn',
+  'cmn',
+  'czh',
+  'cdo',
+  'cjy',
+  'cmn',
+  'cpx',
+  'czh',
+  'czo',
+  'gan',
+  'hak',
+  'hsn',
+  'lzh',
+  'mnp',
+  'nan',
+  'quu',
+  'yue',
+  'cnp',
+  'csp',
+  'cpi',
+  'lzh',
+  'lpz',
+  'wuu',
+  'zh'
+];
 /** Scripture editing area. Used for Translate task.
  * ```
  * ┌─────────────────────────────────────┐
@@ -587,9 +615,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get writingSystemWarningBanner(): boolean {
     const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
-    return (
-      !isGecko() && writingSystemTag != null && WRITING_SYSTEM_WARNING_REGEX.test(writingSystemTag) && this.canEdit
-    );
+    const languageCode = writingSystemTag?.split('-')[0] ?? '';
+    const unsupportedLanguageCode = UNSUPPORTED_LANGUAGE_CODES.includes(languageCode);
+    return !isGecko() && writingSystemTag != null && unsupportedLanguageCode && this.canEdit;
   }
 
   /**

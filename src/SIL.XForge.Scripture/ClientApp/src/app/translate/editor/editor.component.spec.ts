@@ -255,20 +255,29 @@ describe('EditorComponent', () => {
     discardPeriodicTasks();
   }));
 
-  it('does not show warning to users if they cannot edit', fakeAsync(() => {
+  it('does not show warning to users if they do not have edit permissions on the selected book', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProject({
       writingSystem: { tag: 'ko' },
       translateConfig: defaultTranslateConfig
     });
-    env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+    // user03 only has read permissions on Luke 1
+    // As the editor is disabled, we do not need to show the writing system warning
+    // The no_permission_edit_chapter message will be displayed instead
+    env.setCurrentUser('user03');
+    env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
     env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
     env.wait();
 
-    expect(env.component.canEdit).toBe(false);
     expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
     expect(env.component.writingSystemWarningBanner).toBe(false);
     expect(env.showWritingSystemWarningBanner).toBeNull();
+    expect(env.component.userHasGeneralEditRight).toBe(true);
+    expect(env.component.hasChapterEditPermission).toBe(false); // undefined
+    expect(env.component.canEdit).toBe(false);
+    expect(env.component.showNoEditPermissionMessage).toBe(true); //false
+    expect(env.noChapterEditPermissionMessage).not.toBeNull(); // null
+
     discardPeriodicTasks();
   }));
 
