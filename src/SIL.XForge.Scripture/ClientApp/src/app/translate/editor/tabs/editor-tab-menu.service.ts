@@ -18,7 +18,6 @@ import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
-import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
 @Injectable()
@@ -29,7 +28,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly destroyRef: DestroyRef,
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
-    private readonly draftGenerationService: DraftGenerationService,
     private readonly onlineStatus: OnlineStatusService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly permissionsService: PermissionsService,
@@ -48,20 +46,10 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     ]).pipe(
       takeUntilDestroyed(this.destroyRef),
       switchMap(([projectDoc, isOnline]) => {
-        return combineLatest([
-          of(projectDoc),
-          of(isOnline),
-          !isOnline ||
-          projectDoc.data == null ||
-          !SFProjectService.hasDraft(projectDoc.data) ||
-          ParatextService.isResource(projectDoc.data.paratextId)
-            ? of(undefined)
-            : this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
-          this.tabState.tabs$
-        ]);
+        return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),
-      switchMap(([projectDoc, isOnline, buildDto, existingTabs]) => {
-        const showDraft = buildDto != null;
+      switchMap(([projectDoc, isOnline, existingTabs]) => {
+        const showDraft = isOnline && projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
