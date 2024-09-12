@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
@@ -16,7 +16,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
@@ -612,7 +612,7 @@ class TestEnvironment {
   }
 
   connectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-project"]`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}].user-connected-project`);
   }
 
   connectedProjectCardProjectDescription(ptProjectId: string): DebugElement {
@@ -620,11 +620,11 @@ class TestEnvironment {
   }
 
   connectedResource(ptProjectId: string): DebugElement {
-    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}][data-project-type="user-connected-resource"]`);
+    return this.getElement(`mat-card[data-pt-project-id=${ptProjectId}].user-connected-resource`);
   }
 
   unconnectedProject(ptProjectId: string): DebugElement {
-    return this.getElement(`div[data-pt-project-id=${ptProjectId}][data-project-type="user-unconnected-project"]`);
+    return this.getElement(`div[data-pt-project-id=${ptProjectId}].user-unconnected-project`);
   }
 
   buttonForUnconnectedProject(ptProjectId: string): DebugElement {
