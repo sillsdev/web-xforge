@@ -16,6 +16,7 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabInfo } from './editor-tabs.types';
@@ -52,7 +53,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
           of(isOnline),
           !isOnline ||
           projectDoc.data == null ||
-          projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks.length < 1 ||
+          !SFProjectService.hasDraft(projectDoc.data) ||
           ParatextService.isResource(projectDoc.data.paratextId)
             ? of(undefined)
             : this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
