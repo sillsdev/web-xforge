@@ -43,7 +43,7 @@ h2 {
 
     max-width: 600px;
     margin: 0 auto;
-    > *:nth-child(even) {
+    .user-unconnected-project:nth-child(even) {
       background: #e6e6e6;
     }
   }
@@ -64,21 +64,21 @@ mat-card:active {
   @include mat.elevation(1);
 }
 
-[data-project-type='user-connected-project'] {
+.user-connected-project {
   display: grid;
   grid-template-areas:
     'project-name project-name'
     'description empty';
 }
 
-[data-project-type='user-connected-resource'] {
+.user-connected-resource {
   display: grid;
   grid-template-areas:
     'project-name project-name'
     'description empty';
 }
 
-[data-project-type='user-unconnected-project'] {
+.user-unconnected-project {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -91,7 +91,7 @@ mat-card:active {
   }
 }
 
-[data-project-type='user-unconnected-project'].cannot-connect {
+.user-unconnected-project.cannot-connect {
   display: flex;
   flex-direction: column;
 }
