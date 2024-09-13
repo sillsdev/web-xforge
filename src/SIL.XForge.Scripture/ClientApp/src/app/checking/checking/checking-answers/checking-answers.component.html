@@ -6,6 +6,11 @@
         @if (canEditQuestion) {
           <div class="question-footer">
             <div class="actions">
+              @if (questionDoc?.data?.audioUrl == null) {
+                <button mat-icon-button type="button" (click)="recordDialog()" class="record-question-button">
+                  <mat-icon>mic</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 type="button"
