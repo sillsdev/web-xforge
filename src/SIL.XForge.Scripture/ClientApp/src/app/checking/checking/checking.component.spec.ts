@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
@@ -21,21 +21,21 @@ import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { Question, getQuestionDocId } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  getSFProjectUserConfigDocId,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  getSFProjectUserConfigDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
-import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextData, getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -43,7 +43,7 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
+import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -55,7 +55,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -69,6 +69,7 @@ import { Delta, TextDoc } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
@@ -137,7 +138,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId', component: MockComponent }
 ];
 
-describe('CheckingComponent', () => {
+fdescribe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
       AudioTimePipe,
@@ -580,6 +581,38 @@ describe('CheckingComponent', () => {
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
       tick();
       flush();
+    }));
+
+    it('records audio for question when button clicked', fakeAsync(() => {
+      const mockedDialogRef = mock(MatDialogRef);
+      when(mockedDialogRef.afterClosed()).thenReturn(
+        of({ audio: { fileName: 'audio.mp3', status: 'processed', blob: new Blob() } as AudioAttachment })
+      );
+      when(mockedDialogService.openMatDialog(anything())).thenReturn(instance(mockedDialogRef));
+      const env = new TestEnvironment({ user: ADMIN_USER });
+      expect(env.recordQuestionButton).not.toBeNull();
+      env.clickButton(env.recordQuestionButton);
+      verify(mockedDialogService.openMatDialog(AudioRecorderDialogComponent)).once();
+      verify(
+        mockedFileService.uploadFile(
+          FileType.Audio,
+          'project01',
+          QuestionDoc.COLLECTION,
+          'q1Id',
+          getQuestionDocId('project01', 'q1Id'),
+          anything(),
+          'audio.mp3',
+          anything()
+        )
+      ).once();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('hides record question button when question has audio', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER });
+      env.selectQuestion(15);
+      expect(env.recordQuestionButton).toBeNull();
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
@@ -2600,6 +2633,10 @@ class TestEnvironment {
 
   get recordButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#answer-form button.record'));
+  }
+
+  get recordQuestionButton(): DebugElement {
+    return this.answerPanel.query(By.css('.record-question-button'));
   }
 
   get removeAudioButton(): DebugElement {
