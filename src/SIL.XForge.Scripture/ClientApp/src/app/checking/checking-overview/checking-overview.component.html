@@ -50,10 +50,10 @@
             <mat-expansion-panel-header>
               <mat-panel-title>
                 <span fxFlex>{{ getBookName(text) }}</span>
-                <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="questions-count">
+                <span fxFlex="110px" fxLayoutAlign="end center" class="questions-count hide-lt-sm">
                   {{ questionCountLabel(bookQuestionCount(text)) }}
                 </span>
-                <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
+                <span fxFlex="110px" class="hide-lt-sm" fxLayoutAlign="end center">
                   {{ answerCountLabel(bookAnswerCount(text)) }}
                 </span>
                 <span fxFlex="64px" fxLayoutAlign="end center">
@@ -91,10 +91,10 @@
                               >
                             }
                           </span>
-                          <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="questions-count">
+                          <span fxFlex="110px" fxLayoutAlign="end center" class="questions-count hide-lt-sm">
                             {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                           </span>
-                          <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
+                          <span fxFlex="110px" class="hide-lt-sm" fxLayoutAlign="end center">
                             {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                           </span>
                           <span fxFlex="64px" fxLayoutAlign="end center">
@@ -177,7 +177,7 @@
                                     <span>{{ questionDoc.data?.text }}</span>
                                   }
                                 </span>
-                                <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
+                                <span fxFlex="110px" class="hide-lt-sm" fxLayoutAlign="end center">
                                   {{ answerCountLabel(questionDoc.getAnswers().length) }}
                                 </span>
                                 <span fxFlex="64px" fxLayoutAlign="end center">
@@ -305,7 +305,7 @@
               <mat-panel-title>
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex>{{ getBookName(text) }}</span>
-                  <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
+                  <span fxFlex="110px" fxLayoutAlign="end center" class="archived-questions-count hide-lt-sm">
                     {{ questionCountLabel(bookQuestionCount(text, true)) }}
                   </span>
                   <span fxFlex="64px" fxLayoutAlign="end center">
@@ -330,13 +330,7 @@
                       <mat-panel-title>
                         <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                           <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-                          <span
-                            fxFlex="110px"
-                            fxShow
-                            fxHide.xs
-                            fxLayoutAlign="end center"
-                            class="archived-questions-count"
-                          >
+                          <span fxFlex="110px" fxLayoutAlign="end center" class="archived-questions-count hide-lt-sm">
                             {{ questionCountLabel(questionCount(text.bookNum, chapter.number, true)) }}
                           </span>
                           <span fxFlex="64px" fxLayoutAlign="end center">
@@ -372,7 +366,7 @@
                                   <span>{{ questionDoc.data?.text }}</span>
                                 }
                               </span>
-                              <span fxFlex="260px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived">{{
+                              <span fxFlex="260px" fxLayoutAlign="end center" class="date-archived hide-lt-sm">{{
                                 timeArchivedStamp(questionDoc.data?.dateArchived)
                               }}</span>
                               <span fxFlex="64px" fxLayoutAlign="end center">
