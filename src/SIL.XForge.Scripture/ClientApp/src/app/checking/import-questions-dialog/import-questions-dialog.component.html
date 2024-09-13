@@ -260,8 +260,8 @@
       }
       @if (status === "filter") {
         <button id="import-button" mat-flat-button color="primary" (click)="importQuestions()">
-          <span fxShow fxHide.xs>{{ t("import_count_questions", { count: selectedCount }) }}</span>
-          <span fxHide fxShow.xs>{{ t("import") }}</span>
+          <span class="hide-lt-sm">{{ t("import_count_questions", { count: selectedCount }) }}</span>
+          <span class="hide-gt-sm">{{ t("import") }}</span>
         </button>
       }
       @if (status === "progress") {

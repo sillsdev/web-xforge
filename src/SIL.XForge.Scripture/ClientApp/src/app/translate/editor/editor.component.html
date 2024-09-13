@@ -10,7 +10,7 @@
           [chapters]="chapters"
         ></app-book-chapter-chooser>
         @if (showSource || suggestionsSettingsEnabled) {
-          <div class="toolbar-separator" [fxHide.xs]="!suggestionsSettingsEnabled">&nbsp;</div>
+          <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !suggestionsSettingsEnabled }">&nbsp;</div>
           @if (showSource) {
             <button
               mat-icon-button
@@ -18,7 +18,7 @@
               type="button"
               (click)="isTargetTextRight = !isTargetTextRight"
               title="{{ t('swap_source_and_target') }}"
-              fxHide.xs
+              class="hide-lt-sm"
             >
               <mat-icon>swap_horiz</mat-icon>
             </button>

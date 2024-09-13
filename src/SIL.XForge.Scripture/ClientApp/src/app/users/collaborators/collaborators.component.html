@@ -64,7 +64,7 @@
                       "
                     ></div>
                   }
-                  <div fxHide.gt-xs>
+                  <div class="hide-gt-sm">
                     <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
                   </div>
                 </td>
@@ -97,7 +97,7 @@
                 </td>
               </ng-container>
               <ng-container matColumnDef="role">
-                <td fxHide.xs mat-cell *matCellDef="let userRow">
+                <td class="hide-lt-sm" mat-cell *matCellDef="let userRow">
                   <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
                 </td>
               </ng-container>
