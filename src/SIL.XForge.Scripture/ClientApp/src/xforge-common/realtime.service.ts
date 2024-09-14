@@ -1,5 +1,5 @@
 import { Injectable, Optional } from '@angular/core';
-import { AppError } from 'xforge-common/exception-handling-service';
+import { AppError } from 'xforge-common/exception-handling.service';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';

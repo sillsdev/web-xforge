@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, merge, throttleTime } from 'rxjs';
+import { asyncScheduler, merge, Subscription, throttleTime } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -33,9 +33,7 @@ export class TextProgress extends Progress {
   }
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ProgressService extends DataLoadingComponent implements OnDestroy {
   readonly overallProgress = new Progress();
 

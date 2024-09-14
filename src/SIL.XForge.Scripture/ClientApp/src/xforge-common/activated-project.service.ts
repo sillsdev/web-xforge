@@ -7,7 +7,7 @@ import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { PermissionsService } from '../app/core/permissions.service';
 import { SFProjectService } from '../app/core/sf-project.service';
-import { CacheService } from '../app/shared/cache-service/cache-service';
+import { CacheService } from '../app/shared/cache-service/cache.service';
 import { SubscriptionDisposable } from './subscription-disposable';
 
 interface IActiveProjectIdService {

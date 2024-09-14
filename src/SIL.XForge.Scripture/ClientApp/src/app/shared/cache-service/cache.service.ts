@@ -4,9 +4,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CacheService {
   private abortCurrent: EventEmitter<void> = new EventEmitter();
   constructor(
