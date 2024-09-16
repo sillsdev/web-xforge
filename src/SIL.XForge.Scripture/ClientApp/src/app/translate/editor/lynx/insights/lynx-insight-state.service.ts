@@ -196,7 +196,7 @@ export class LynxInsightStateService {
       chapter: 2,
       book: 41,
       range: {
-        index: 0,
+        index: 2,
         length: 5
       },
       code: '1001'
