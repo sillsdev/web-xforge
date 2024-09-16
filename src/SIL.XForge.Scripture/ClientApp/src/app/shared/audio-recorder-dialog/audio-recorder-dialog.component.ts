@@ -154,7 +154,7 @@ export class AudioRecorderDialogComponent
     const seconds = 3;
     const countdown$ = timer(0, 1000).pipe(
       take(seconds + 1),
-      map(countown => seconds - countown)
+      map(countdown => seconds - countdown)
     );
 
     countdown$.subscribe({

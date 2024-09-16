@@ -388,12 +388,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return undefined;
   }
 
+  /** Opens the audio recorder dialog and saves the recorded audio for the current question. */
   async recordDialog(): Promise<void> {
     if (this.questionDoc?.data == null) return;
     const dialogRef: MatDialogRef<AudioRecorderDialogComponent, AudioRecorderDialogResult> =
-      this.dialogService.openMatDialog(AudioRecorderDialogComponent);
+      this.dialogService.openMatDialog(AudioRecorderDialogComponent, { data: { countdown: true } });
+
     const result: AudioRecorderDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
-    if (result != null && result.audio.fileName != null && result.audio.blob != null) {
+    if (result?.audio.fileName != null && result.audio.blob != null) {
       const urlResult: string | undefined = await this.questionDoc.uploadFile(
         FileType.Audio,
         this.questionDoc.data.dataId,
