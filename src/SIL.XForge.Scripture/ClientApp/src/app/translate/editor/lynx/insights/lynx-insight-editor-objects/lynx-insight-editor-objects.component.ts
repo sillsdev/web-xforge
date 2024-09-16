@@ -25,7 +25,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
       return;
     }
 
-    combineLatest([this.insightState.insights$, this.editorLoaded$.pipe(filter(loaded => loaded))])
+    combineLatest([this.insightState.filteredChapterInsights$, this.editorLoaded$.pipe(filter(loaded => loaded))])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([insights]) => {
         // If text is just '\n', wait for loaded$ to emit again before rendering
