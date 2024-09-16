@@ -1,11 +1,11 @@
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
+import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Observable, Subscription } from 'rxjs';
@@ -21,6 +21,7 @@ import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
+import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -73,9 +74,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly locationService: LocationService,
+    private readonly breakpointObserver: BreakpointObserver,
+    private readonly breakpointService: MediaBreakpointService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
-    readonly media: MediaObserver,
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
@@ -83,13 +85,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   ) {
     super(noticeService);
     this.subscribe(
-      media.asObservable().pipe(
-        filter((changes: MediaChange[]) => changes.length > 0),
-        map((changes: MediaChange[]) => changes[0])
-      ),
-      (change: MediaChange) => {
-        this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
-      }
+      this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.MD)),
+      (value: BreakpointState) => (this.isDrawerPermanent = value.matches)
     );
 
     // Check full online status changes
