@@ -46,10 +46,3 @@ a {
     }
   }
 }
-
-mat-spinner {
-  visibility: hidden;
-  &.visible {
-    visibility: visible;
-  }
-}
