@@ -69,7 +69,7 @@ export class LynxInsightsPanelComponent implements OnInit {
 
   ngOnInit(): void {
     combineLatest([
-      this.editorInsightState.insights$,
+      this.editorInsightState.filteredInsights$,
       this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val)))
     ])
       .pipe(

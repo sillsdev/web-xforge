@@ -30,7 +30,7 @@ export class LynxInsightStatusIndicatorComponent implements OnChanges, OnInit {
 
   private editorLoaded$ = new BehaviorSubject<boolean>(false);
   private insightTypeOrder: LynxInsightType[] = ['info', 'warning', 'error'];
-  readonly insightCountsByType$: Observable<InsightCount[]> = this.editorInsightState.insightCountsByType$.pipe(
+  readonly insightCountsByType$: Observable<InsightCount[]> = this.editorInsightState.filteredInsightCountsByType$.pipe(
     map(counts =>
       this.insightTypeOrder
         .filter(insightType => counts[insightType] > 0)
