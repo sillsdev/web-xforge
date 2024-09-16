@@ -1,6 +1,7 @@
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
+import { Observable, combineLatest, filter } from 'rxjs';
 import { LynxInsightRenderService } from '../lynx-insight-render.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -11,6 +12,7 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
 })
 export class LynxInsightEditorObjectsComponent implements OnInit {
   @Input() editor?: Quill;
+  @Input() editorLoaded$?: Observable<boolean>;
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -19,8 +21,17 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.insightState.insights$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(insights => {
-      this.insightRenderService.render(insights, this.editor);
-    });
+    if (this.editorLoaded$ == null) {
+      return;
+    }
+
+    combineLatest([this.insightState.insights$, this.editorLoaded$.pipe(filter(loaded => loaded))])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([insights]) => {
+        // If text is just '\n', wait for loaded$ to emit again before rendering
+        if (this.editor != null && this.editor.getText().length > 1) {
+          this.insightRenderService.render(insights, this.editor);
+        }
+      });
   }
 }
