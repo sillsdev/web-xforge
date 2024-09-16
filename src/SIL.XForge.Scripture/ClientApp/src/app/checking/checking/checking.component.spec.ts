@@ -588,11 +588,11 @@ describe('CheckingComponent', () => {
       when(mockedDialogRef.afterClosed()).thenReturn(
         of({ audio: { fileName: 'audio.mp3', status: 'processed', blob: new Blob() } as AudioAttachment })
       );
-      when(mockedDialogService.openMatDialog(anything())).thenReturn(instance(mockedDialogRef));
+      when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn(instance(mockedDialogRef));
       const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.recordQuestionButton).not.toBeNull();
       env.clickButton(env.recordQuestionButton);
-      verify(mockedDialogService.openMatDialog(AudioRecorderDialogComponent)).once();
+      verify(mockedDialogService.openMatDialog(AudioRecorderDialogComponent, anything())).once();
       verify(
         mockedFileService.uploadFile(
           FileType.Audio,
