@@ -1837,11 +1837,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 {
                     ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(u =>
                         u.Username == activePtSyncUser.Username
-                        || (!string.IsNullOrEmpty(u.SFUserId) && string.Equals(u.SFUserId, activePtSyncUser.SFUserId))
                     );
                     if (existingUser == null)
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
-                    else if (existingUser.SFUserId == null)
+                    else if (string.IsNullOrWhiteSpace(existingUser.SFUserId))
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(u =>
                             u.Username == activePtSyncUser.Username
@@ -1850,10 +1849,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         if (!string.IsNullOrEmpty(userId))
                             op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
                     }
-                    else if (!string.Equals(existingUser.Username, activePtSyncUser.Username))
+                    else if (_currentPtSyncUsers.Count(u => u.Value.SFUserId == existingUser.SFUserId) > 1)
                     {
-                        int index = _projectDoc.Data.ParatextUsers.FindIndex(u => u.SFUserId == existingUser.SFUserId);
-                        op.Set(pd => pd.ParatextUsers[index].Username, activePtSyncUser.Username);
+                        // username changed update old username with empty string
+                        int index = _projectDoc.Data.ParatextUsers.FindIndex(u =>
+                            u.Username == activePtSyncUser.Username
+                        );
+                        op.Set(pd => pd.ParatextUsers[index].SFUserId, string.Empty);
                     }
                 }
             });
@@ -2012,7 +2014,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             {
                 // If we do not have the SF user Id set, set the SF user Id to be stored when CompleteSync() is called.
                 // We create a new object to so that the logic in projectDoc.SubmitJson0OpAsync() will see the change.
-                if (profile.SFUserId is null)
+                if (string.IsNullOrWhiteSpace(profile.SFUserId))
                 {
                     paratextUsers[paratextUser.Username] = new ParatextUserProfile
                     {

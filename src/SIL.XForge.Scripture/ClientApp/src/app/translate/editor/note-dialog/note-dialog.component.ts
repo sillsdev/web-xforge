@@ -432,11 +432,14 @@ export class NoteDialogComponent implements OnInit {
 
     // If the user is not a PT user, or the note was created in SF, or the user created the note
     if (
-      syncUser == null || // There is no sync user, i.e. the note is not synced yet or the current user is not a PT user
-      note.editable || // Only notes created in SF are editable, so display the SF owner, falling back to the sync user
-      syncUser.sfUserId === ownerDoc.id // The note is not editable, but the sync user is the owner, so use the SF owner
+      // There is no sync user, i.e. the note is not synced yet or the current user is not a PT user
+      syncUser == null ||
+      // Only notes created in SF are editable, so display the SF owner, falling back to the sync user
+      note.editable ||
+      // The note is not editable, but the sync user is the owner, so use the SF owner
+      syncUser.sfUserId === note.ownerRef
     ) {
-      return this.userService.currentUserId === ownerDoc.id
+      return this.userService.currentUserId === note.ownerRef
         ? translate('checking.me') // "Me", i.e. the current user
         : (ownerDoc.data?.displayName ?? // Another user
             syncUser?.username ?? // Fallback to the sync user

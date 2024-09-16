@@ -2823,8 +2823,7 @@ public class ParatextService : DisposableBase, IParatextService
 
                     // We can only update a note if the comment and note have the same version number.
                     // Or if the note is authored by a commenter, set the comment content to be the SF note content
-                    bool isCommenterNote =
-                        ptProjectUsers.Values.SingleOrDefault(p => p.SFUserId == note.OwnerRef) == null;
+                    bool isCommenterNote = !ptProjectUsers.Values.Any(p => p.SFUserId == note.OwnerRef);
                     if (note.VersionNumber == comment.VersionNumber || isCommenterNote)
                     {
                         bool commentUpdated = false;
@@ -2986,10 +2985,11 @@ public class ParatextService : DisposableBase, IParatextService
     {
         if (note.Content == null)
             return null;
+        string syncUser = note.SyncUserRef;
         string ownerId = note.OwnerRef;
         // if the user is a paratext user, keep the note content as is
         if (
-            ptProjectUsers.Values.SingleOrDefault(u => u.SFUserId == ownerId) != null
+            ptProjectUsers.Values.Any(u => u.SFUserId == ownerId)
             || !displayNames.TryGetValue(ownerId, out string displayName)
         )
             return note.Content;

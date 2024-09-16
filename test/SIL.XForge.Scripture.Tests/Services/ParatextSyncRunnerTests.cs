@@ -587,7 +587,9 @@ public class ParatextSyncRunnerTests
         List<ParatextUserProfile> beforeParatextUsers = env.GetProject().ParatextUsers;
         Assert.That(beforeParatextUsers.Count, Is.EqualTo(2));
         Assert.That(beforeParatextUsers[0].Username, Is.EqualTo("User 1"));
+        Assert.That(beforeParatextUsers[0].SFUserId, Is.EqualTo("pt01"));
         Assert.That(beforeParatextUsers[1].Username, Is.EqualTo("User 2"));
+        Assert.That(beforeParatextUsers[1].SFUserId, Is.EqualTo("pt02"));
 
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
@@ -598,14 +600,16 @@ public class ParatextSyncRunnerTests
                 [
                     TestEnvironment.ParatextProjectUser01 with
                     {
-                        Id = "user01",
-                        ParatextId = "pt01",
+                        Id = "pt01",
+                        ParatextId = "user01",
                         Role = SFProjectRole.Administrator,
                         Username = "User 1"
                     },
                     TestEnvironment.ParatextProjectUser02 with
                     {
                         Id = "pt02",
+                        ParatextId = "user02",
+                        Role = SFProjectRole.Administrator,
                         Username = "User 2 Changed"
                     }
                 ]
@@ -616,9 +620,13 @@ public class ParatextSyncRunnerTests
         SFProject project = env.VerifyProjectSync(true);
 
         List<ParatextUserProfile> afterParatextUsers = project.ParatextUsers;
-        Assert.That(afterParatextUsers.Count, Is.EqualTo(2));
+        Assert.That(afterParatextUsers.Count, Is.EqualTo(3));
         Assert.That(afterParatextUsers[0].Username, Is.EqualTo("User 1"));
-        Assert.That(afterParatextUsers[1].Username, Is.EqualTo("User 2 Changed"));
+        Assert.That(afterParatextUsers[0].SFUserId, Is.EqualTo("pt01"));
+        Assert.That(afterParatextUsers[1].Username, Is.EqualTo("User 2"));
+        Assert.That(afterParatextUsers[2].Username, Is.EqualTo("User 2 Changed"));
+        Assert.That(afterParatextUsers[2].OpaqueUserId, Is.Not.EqualTo(afterParatextUsers[1].OpaqueUserId));
+        Assert.That(afterParatextUsers[2].SFUserId, Is.EqualTo("pt02"));
     }
 
     [Test]
