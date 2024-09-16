@@ -30,7 +30,7 @@ export class LynxInsightActionPromptComponent implements OnChanges, OnInit {
   private editorLoaded$ = new BehaviorSubject<boolean>(false);
   private currentInsight$: Observable<LynxInsight | undefined> = this.editorLoaded$.pipe(
     filter(loaded => loaded),
-    switchMap(() => this.editorInsightState.insights$),
+    switchMap(() => this.editorInsightState.filteredChapterInsights$),
     map(insights => this.getPromptInsight(insights)),
     tap(insight => (this.currentInsight = insight))
   );

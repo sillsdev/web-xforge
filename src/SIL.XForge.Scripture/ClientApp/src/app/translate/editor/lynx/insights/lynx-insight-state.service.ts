@@ -311,13 +311,25 @@ export class LynxInsightStateService {
   readonly filter$ = new BehaviorSubject<LynxInsightFilter>(this.defaults.filter);
   readonly orderBy$ = new BehaviorSubject<LynxInsightSortOrder>(this.defaults.sortOrder);
 
-  readonly insights$: Observable<LynxInsight[]> = combineLatest([
+  readonly filteredChapterInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
     this.activatedBookChapter.routeBookChapter$.pipe(
       tap(params => console.log('routeBookChapter$ params changed (LynxInsightStateService)', params)),
       filterNullish()
     )
+  ]).pipe(
+    map(([insights, filter, routeBookChapter]) =>
+      insights.filter(insight =>
+        this.insightFilterService.matchesFilter(insight, { ...filter, scope: 'chapter' }, routeBookChapter)
+      )
+    )
+  );
+
+  readonly filteredInsights$: Observable<LynxInsight[]> = combineLatest([
+    this.rawInsights$,
+    this.filter$,
+    this.activatedBookChapter.routeBookChapter$.pipe(filterNullish())
   ]).pipe(
     map(([insights, filter, routeBookChapter]) =>
       insights.filter(insight => this.insightFilterService.matchesFilter(insight, filter, routeBookChapter))
@@ -327,7 +339,7 @@ export class LynxInsightStateService {
   /**
    * Insight counts for the currently filtered types grouped by scope.
    */
-  readonly insightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
+  readonly filteredInsightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
     this.rawInsights$,
     this.filter$,
     this.activatedBookChapter.routeBookChapter$.pipe(filterNullish())
@@ -361,7 +373,7 @@ export class LynxInsightStateService {
   /**
    * Insight counts for the currently filtered types and scope grouped by type.
    */
-  readonly insightCountsByType$: Observable<Record<LynxInsightType, number>> = this.insights$.pipe(
+  readonly filteredInsightCountsByType$: Observable<Record<LynxInsightType, number>> = this.filteredInsights$.pipe(
     map((insights: LynxInsight[]) => {
       const result: Record<LynxInsightType, number> = { error: 0, warning: 0, info: 0 };
 
