@@ -21,7 +21,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnChanges {
   private editorLoaded$ = new BehaviorSubject<boolean>(false);
   scrollPositions$ = this.editorLoaded$.pipe(
     filter(loaded => loaded),
-    switchMap(() => this.editorInsightState.insights$),
+    switchMap(() => this.editorInsightState.filteredChapterInsights$),
     map(insights => insights.map(insight => this.getScrollPosition(insight, this.editor!)))
   );
 
@@ -34,7 +34,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnChanges {
   }
 
   /**
-   * From editorInsightState.insights$, gets a map of insight id -> vertical percent of the insight in the quill editor based on the range in the LynxInsight
+   * Gets a map of insight id -> vertical scroll position as a percent of the total scroll height.
    * TODO: move to service?
    */
   private getScrollPosition(insight: LynxInsight, editor: Quill): LynxInsightScrollPosition {
@@ -45,7 +45,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnChanges {
     };
 
     if (insight.range != null) {
-      const bounds = editor.getBounds(insight.range.index, insight.range.length);
+      const bounds = editor.getBounds(insight.range.index, 1);
       scrollPosition.percent = (bounds.top / editor.scrollingContainer.scrollHeight) * 100;
     }
 

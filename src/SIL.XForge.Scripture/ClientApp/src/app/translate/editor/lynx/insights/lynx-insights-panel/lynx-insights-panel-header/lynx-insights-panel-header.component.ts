@@ -46,7 +46,7 @@ export class LynxInsightsPanelHeaderComponent implements OnInit {
       this.orderBy = orderBy;
     });
 
-    this.state.insightCountsByScope$
+    this.state.filteredInsightCountsByScope$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(counts => (this.scopeCounts = counts));
   }
