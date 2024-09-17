@@ -26,7 +26,8 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
             ),
             closeable: true,
             movable: true,
-            persist: true
+            persist: true,
+            unique: true
           },
           tabOptions
         );
