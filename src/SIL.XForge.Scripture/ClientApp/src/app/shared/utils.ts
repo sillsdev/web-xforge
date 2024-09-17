@@ -2,7 +2,7 @@ import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { DeltaOperation } from 'rich-text';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
@@ -248,9 +248,14 @@ export function getUnsupportedTags(deltaOp: DeltaOperation): string[] {
     deltaOp.forEach(t => getUnsupportedTags(t).forEach(s => invalidTags.add(s)));
   } else if (deltaOp && typeof deltaOp === 'object') {
     if (deltaOp.attributes?.['invalid-block'] !== undefined || deltaOp.attributes?.['invalid-inline'] !== undefined) {
-      const style = deltaOp.attributes?.char?.style;
+      let style = deltaOp.attributes?.char?.style;
       if (style !== undefined) {
         invalidTags.add(style);
+      } else {
+        style = deltaOp.attributes?.para?.style;
+        if (style !== undefined) {
+          invalidTags.add(style);
+        }
       }
     }
 
