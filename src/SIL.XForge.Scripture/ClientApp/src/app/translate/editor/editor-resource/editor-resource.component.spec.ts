@@ -1,10 +1,10 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { FontService } from 'xforge-common/font.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { EditorResourceComponent } from './editor-resource.component';
 
@@ -15,8 +15,8 @@ describe('EditorResourceComponent', () => {
   const mockFontService = mock(FontService);
   const projectDoc = {
     id: 'projectId',
-    data: createTestProject()
-  } as SFProjectDoc;
+    data: createTestProjectProfile()
+  } as SFProjectProfileDoc;
 
   configureTestingModule(() => ({
     providers: [
@@ -66,5 +66,21 @@ describe('EditorResourceComponent', () => {
     tick();
     verify(mockSFProjectService.getProfile(projectId)).once();
     verify(mockFontService.getFontFamilyFromProject(projectDoc)).once();
+  }));
+
+  it('can determine if a resource should display right-to-left', fakeAsync(() => {
+    const projectId = 'rtl-project';
+    component.projectId = projectId;
+    component.bookNum = 1;
+    component.chapter = 1;
+    const rtlProjectDoc: SFProjectProfileDoc = {
+      id: projectId,
+      data: createTestProjectProfile({ isRightToLeft: true })
+    } as SFProjectProfileDoc;
+    when(mockSFProjectService.getProfile(projectId)).thenReturn(Promise.resolve(rtlProjectDoc));
+    component['initProjectDetails']();
+    component.resourceText.editorCreated.next();
+    tick();
+    expect(component.isRightToLeft).toBe(true);
   }));
 });
