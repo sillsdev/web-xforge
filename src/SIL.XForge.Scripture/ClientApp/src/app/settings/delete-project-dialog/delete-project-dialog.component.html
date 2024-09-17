@@ -25,8 +25,8 @@
         [mat-dialog-close]="'accept'"
         [disabled]="deleteDisabled"
       >
-        <span fxHide.lt-sm>{{ t("i_understand_the_consequences") }}</span>
-        <span fxHide fxShow.xs>{{ t("delete_this_project") }}</span>
+        <span class="hide-lt-sm">{{ t("i_understand_the_consequences") }}</span>
+        <span class="hide-gt-sm">{{ t("delete_this_project") }}</span>
       </button>
     </mat-dialog-actions>
   </mat-dialog>
