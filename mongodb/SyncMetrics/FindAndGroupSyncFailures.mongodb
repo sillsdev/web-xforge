@@ -1,0 +1,97 @@
+use('xforge');
+
+// This query attempts to group sync failures by common exception messages, stack traces (without regard to line
+// numbers), URLs, and more.
+
+// This is a new and improved version of FindCommonSyncFailureReasons.mongodb
+
+const metricsCursor = db.sync_metrics.find({
+  errorDetails: { $exists: true },
+  dateStarted: { $gte: new Date('2024-01-01') }
+}, {
+  errorDetails: 1,
+  projectRef: 1
+});
+
+const results = [];
+
+const matchers = {
+  exceptions: /[\w.]+Exception: .*/gm,
+  stack: /at [\w.]+/gm,
+  // Some URLs have parentheses around them
+  urls: /[A-Z]+ \(?https?:\/\/.*\)?/gm,
+  statusCodes: /StatusCode: \d+/gm,
+  // Some errors from the registry generally have the relevant error message in error_description in the body
+  errorDescription: /"error_description":\s+"[^"]+"/gm,
+  // Some failures when contacting the send/receive server only have a host and no URL
+  serverLocation: /Server at [\w+. ]+/gm
+};
+
+function redactIds(text) {
+  // Find object IDs that are 16 or more characters long, and are whole words
+  return text.replaceAll(/\b[0-9,a-f]{16,}\b/g, '<alphanumeric id>');
+}
+
+function matchAll(regex, text) {
+  let match;
+  const matches = [];
+  while ((match = regex.exec(text)) !== null) {
+    matches.push(match[0]);
+  }
+  return matches;
+}
+
+function descriptionFromErrorDetails(errorDetails) {
+  const description = {};
+
+  for (const [matcherName, matcher] of Object.entries(matchers)) {
+    description[matcherName] = matchAll(matcher, errorDetails).map(redactIds);
+  }
+
+  return description;
+}
+
+function descriptionsAreEqual(description1, description2) {
+  for (const matcherName of Object.keys(matchers)) {
+    if (description1[matcherName].length !== description2[matcherName].length) {
+      return false;
+    }
+    for (let i = 0; i < description1[matcherName].length; i++) {
+      if (description1[matcherName][i] !== description2[matcherName][i]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+while (metricsCursor.hasNext()) {
+  const metric = metricsCursor.next();
+
+  const description = descriptionFromErrorDetails(metric.errorDetails);
+
+  const indexOfEqualDescription = results.findIndex(result => descriptionsAreEqual(result.description, description));
+  if (indexOfEqualDescription === -1) {
+    results.push({ description, count: 1, metrics: [metric] });
+  } else {
+    results[indexOfEqualDescription].count++;
+    results[indexOfEqualDescription].metrics.push(metric);
+  }
+}
+
+for (const result of results) {
+  const affectedProjectIds = [];
+  for (const metric of result.metrics) {
+    const projectId = metric.projectRef;
+    if (!affectedProjectIds.includes(projectId)) {
+      affectedProjectIds.push(projectId);
+    }
+  }
+  result.affectedProjectCount = affectedProjectIds.length;
+  delete result.metrics;
+}
+
+results.sort((a, b) => b.affectedProjectCount - a.affectedProjectCount);
+
+console.log(results.length);
+results
