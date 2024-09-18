@@ -26,6 +26,7 @@ import { TextsByBookId } from '../../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../../core/sf-project.service';
 import {
   AudioRecorderDialogComponent,
+  AudioRecorderDialogData,
   AudioRecorderDialogResult
 } from '../../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import {
@@ -392,7 +393,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   async recordDialog(): Promise<void> {
     if (this.questionDoc?.data == null) return;
     const dialogRef: MatDialogRef<AudioRecorderDialogComponent, AudioRecorderDialogResult> =
-      this.dialogService.openMatDialog(AudioRecorderDialogComponent, { data: { countdown: true } });
+      this.dialogService.openMatDialog(AudioRecorderDialogComponent, {
+        data: { countdown: true } as AudioRecorderDialogData
+      });
 
     const result: AudioRecorderDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (result?.audio.fileName != null && result.audio.blob != null) {

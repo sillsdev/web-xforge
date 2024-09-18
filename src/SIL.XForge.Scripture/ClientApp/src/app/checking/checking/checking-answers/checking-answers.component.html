@@ -7,7 +7,13 @@
           <div class="question-footer">
             <div class="actions">
               @if (questionDoc?.data?.audioUrl == null) {
-                <button mat-icon-button type="button" (click)="recordDialog()" class="record-question-button">
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="recordDialog()"
+                  class="record-question-button"
+                  [matTooltip]="t('record_question')"
+                >
                   <mat-icon>mic</mat-icon>
                 </button>
               }
