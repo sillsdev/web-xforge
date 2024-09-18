@@ -106,6 +106,7 @@ import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-ro
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { Revision } from '../../core/paratext.service';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -274,7 +275,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly draftGenerationService: DraftGenerationService,
     private readonly destroyRef: DestroyRef,
     private readonly breakpointObserver: BreakpointObserver,
-    private readonly mediaBreakpointService: MediaBreakpointService
+    private readonly mediaBreakpointService: MediaBreakpointService,
+    private readonly permissionsService: PermissionsService
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -1200,8 +1202,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const sourceTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('source');
         const targetTabGroup = new TabGroup<EditorTabGroupType, EditorTabInfo>('target');
         const projectSource: TranslateSource | undefined = projectDoc.data?.translateConfig.source;
-
+        let canViewSource = false;
         if (projectSource != null) {
+          canViewSource = await this.permissionsService.isUserOnProject(projectSource?.projectRef);
+        }
+
+        if (projectSource != null && canViewSource) {
           sourceTabGroup.addTab(
             await this.editorTabFactory.createTab('project-source', {
               projectId: projectSource.projectRef,
@@ -1235,7 +1241,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             tooltip: tabData.projectDoc?.data?.name
           });
 
-          if (tabData.groupId === 'source') {
+          if (tabData.groupId === 'source' && canViewSource) {
             sourceTabGroup.addTab(tab, tabData.isSelected);
           } else {
             targetTabGroup.addTab(tab, tabData.isSelected);
