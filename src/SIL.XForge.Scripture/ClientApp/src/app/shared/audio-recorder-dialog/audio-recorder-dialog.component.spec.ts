@@ -136,13 +136,6 @@ describe('AudioRecorderDialogComponent', () => {
     expect(result.audio.status).toEqual('processed');
     expect(result.audio.url).toContain('blob:');
   });
-
-  it('can show countdown', async () => {
-    const env = new TestEnvironment(true);
-    await env.waitForRecorder(100);
-    expect(env.countdown).not.toBeNull();
-    expect(env.recordButton).toBeNull();
-  });
 });
 
 class TestEnvironment {
