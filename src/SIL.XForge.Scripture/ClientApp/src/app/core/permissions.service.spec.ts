@@ -125,6 +125,16 @@ describe('PermissionsService', () => {
     expect(await env.service.canAccessText(cloneDeep(textDoc) as TextDocId)).toBe(false);
   }));
 
+  it('checks current user doc to determine if user is on project', fakeAsync(async () => {
+    const env = new TestEnvironment();
+
+    expect(await env.service.isUserOnProject('project01')).toBe(true);
+
+    env.setCurrentUser('other');
+
+    expect(await env.service.isUserOnProject('project01')).toBe(false);
+  }));
+
   describe('canSync', () => {
     it('returns false when projectDoc.data is undefined', fakeAsync(() => {
       const env = new TestEnvironment();

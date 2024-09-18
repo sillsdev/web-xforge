@@ -36,14 +36,19 @@ export class PermissionsService {
     return role != null && roleCanAccessTranslate(role as SFProjectRole);
   }
 
+  async isUserOnProject(projectId: string): Promise<boolean> {
+    const currentUserDoc = await this.userService.getCurrentUser();
+    const userOnProject: boolean =
+      currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
+    return userOnProject;
+  }
+
   async canAccessText(textDocId: TextDocId): Promise<boolean> {
     // Get the project doc, if the user is on that project
     let projectDoc: SFProjectProfileDoc | undefined;
     if (textDocId.projectId != null) {
-      const currentUserDoc = await this.userService.getCurrentUser();
-      const userOnProject: boolean =
-        currentUserDoc?.data?.sites[environment.siteId].projects.includes(textDocId.projectId) ?? false;
-      projectDoc = userOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
+      const isUserOnProject = await this.isUserOnProject(textDocId.projectId);
+      projectDoc = isUserOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
     }
 
     // Ensure the user has project level permission to view the text
