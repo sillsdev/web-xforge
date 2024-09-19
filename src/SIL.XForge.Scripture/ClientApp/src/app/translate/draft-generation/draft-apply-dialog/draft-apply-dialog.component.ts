@@ -21,6 +21,8 @@ import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
+import { CustomValidatorState as CustomErrorState, SFValidators } from '../../../shared/sfvalidators';
+import { SharedModule } from '../../../shared/shared.module';
 import { compareProjectsForSorting } from '../../../shared/utils';
 
 export interface DraftApplyDialogResult {
@@ -30,7 +32,7 @@ export interface DraftApplyDialogResult {
 @Component({
   selector: 'app-draft-apply-dialog',
   standalone: true,
-  imports: [UICommonModule, XForgeCommonModule, TranslocoModule, CommonModule],
+  imports: [UICommonModule, XForgeCommonModule, TranslocoModule, CommonModule, SharedModule],
   templateUrl: './draft-apply-dialog.component.html',
   styleUrl: './draft-apply-dialog.component.scss'
 })
@@ -121,14 +123,14 @@ export class DraftApplyDialogComponent implements OnInit {
 
   addToProject(): void {
     this.addToProjectClicked = true;
-    this.projectSelect.validate(false);
+    this.projectSelect.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
     if (!this.isAppOnline || !this.isFormValid || this.targetProjectId == null || !this.canEditProject) {
       return;
     }
     this.dialogRef.close({ projectId: this.targetProjectId });
   }
 
-  async projectSelectedAsync(paratextId: string): Promise<void> {
+  projectSelected(paratextId: string): void {
     if (paratextId == null) {
       this.targetProject$.next(undefined);
       return;
@@ -138,6 +140,7 @@ export class DraftApplyDialogComponent implements OnInit {
       this.canEditProject = false;
       this.targetBookExists = false;
       this.targetProject$.next(undefined);
+      this.projectSelect.customValidate(SFValidators.customValidator(this.getCustomErrorState()));
       return;
     }
 
@@ -154,6 +157,7 @@ export class DraftApplyDialogComponent implements OnInit {
     } else {
       this.targetProject$.next(undefined);
     }
+    this.projectSelect.customValidate(SFValidators.customValidator(this.getCustomErrorState(paratextId)));
   }
 
   close(): void {
@@ -175,5 +179,18 @@ export class DraftApplyDialogComponent implements OnInit {
   private async isNotEmpty(textDocId: TextDocId): Promise<boolean> {
     const textDoc: TextDoc = await this.projectService.getText(textDocId);
     return textDoc.getNonEmptyVerses().length > 0;
+  }
+
+  private getCustomErrorState(paratextId?: string): CustomErrorState {
+    if (!this.projectSelectValid && paratextId == null) {
+      return CustomErrorState.InvalidProject;
+    }
+    if (!this.targetBookExists) {
+      return CustomErrorState.BookNotFound;
+    }
+    if (!this.canEditProject) {
+      return CustomErrorState.NoWritePermissions;
+    }
+    return CustomErrorState.None;
   }
 }
