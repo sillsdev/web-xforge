@@ -2002,6 +2002,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             if (!paratextUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
             {
+                if (paratextUsers.Any(u => u.Value.SFUserId == paratextUser.Id))
+                {
+                    // If the user is already in the project, but with a different username, update the sfUserId to empty
+                    string oldUsername = paratextUsers.First(u => u.Value.SFUserId == paratextUser.Id).Key;
+                    paratextUsers[oldUsername].SFUserId = string.Empty;
+                }
+
                 ParatextUserProfile userProfile = new ParatextUserProfile
                 {
                     Username = paratextUser.Username,
@@ -2024,6 +2031,23 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     };
                 }
             }
+        }
+        // check if any paratextUsers have duplicate sfuserids
+        if (
+            paratextUsers
+                .Values.Where(u => !string.IsNullOrWhiteSpace(u.SFUserId))
+                .GroupBy(u => u.SFUserId)
+                .Any(g => g.Count() > 1)
+        )
+        {
+            // remove the sfUserId user not in the _paratextUsers list
+            string oldUsername = paratextUsers
+                .First(u =>
+                    !string.IsNullOrWhiteSpace(u.Value.SFUserId)
+                    && !_paratextUsers.Any(pu => pu.Username == u.Value.Username)
+                )
+                .Key;
+            paratextUsers[oldUsername].SFUserId = string.Empty;
         }
         return paratextUsers;
     }

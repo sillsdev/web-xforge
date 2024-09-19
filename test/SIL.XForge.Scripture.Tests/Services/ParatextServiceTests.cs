@@ -2767,6 +2767,153 @@ public class ParatextServiceTests
     }
 
     [Test]
+    [Ignore(
+        "TODO: We cannot currently create this test case as the hard coded data does not replicate what is being returned by the CommentManager."
+    )]
+    public async Task UpdateParatextComments_AddsCommentWhenParatextUsernameChanges()
+    {
+        // Currently there is an issue when the Paratext username changes. The scenario is as follows:
+        /*
+            1. Existing Paratext user has saved notes.
+            2. The Paratext username is changed.
+            3. The user creates a new note in SF.
+            4. The user syncs the notes.
+            5. The note is deleted as the CommentManager does not find the associated thread for the user.
+        */
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username02);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId01);
+
+        const string dataId1 = "dataId1";
+        const string dataId2 = "dataId2";
+        const string thread1 = "thread1";
+        const string thread2 = "thread2";
+        ThreadNoteComponents[] thread1Notes =
+        [
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                tagsAdded = ["1"],
+                editable = true,
+                versionNumber = 1,
+                status = NoteStatus.Todo,
+            },
+        ];
+        ThreadNoteComponents[] thread2Notes =
+        [
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User02,
+                tagsAdded = ["1"],
+                editable = true,
+                versionNumber = 1,
+                status = NoteStatus.Todo,
+            },
+        ];
+
+        // TODO: This is manually adding the expected data to the thread, where the data is missing when this runs in reality.
+        env.AddNoteThreadData(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    isNew = true,
+                    username = env.Username01,
+                    notes = thread1Notes,
+                    editable = true,
+                },
+                new ThreadComponents
+                {
+                    threadNum = 2,
+                    noteCount = 1,
+                    isNew = true,
+                    username = env.Username02,
+                    notes = thread2Notes,
+                    editable = true,
+                },
+            }
+        );
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        CommentThread thread = env.ProjectCommentManager.FindThread(thread1);
+        Assert.That(thread, Is.Null);
+        thread = env.ProjectCommentManager.FindThread(thread2);
+        Assert.That(thread, Is.Null);
+        string[] noteThreadDataIds = [dataId1, dataId2];
+        List<IDocument<NoteThread>> noteThreadDocs = (
+            await TestEnvironment.GetNoteThreadDocsAsync(conn, noteThreadDataIds)
+        ).ToList();
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    Username = env.Username01,
+                    OpaqueUserId = "syncuser01",
+                    SFUserId = string.Empty,
+                }
+            },
+            {
+                env.Username02,
+                new ParatextUserProfile
+                {
+                    Username = env.Username02,
+                    OpaqueUserId = "syncuser02",
+                    SFUserId = env.User01,
+                }
+            },
+        };
+        SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            ptProjectId,
+            noteThreadDocs,
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+        // This data should find the existing thread
+        thread = env.ProjectCommentManager.FindThread(thread1);
+        Assert.That(thread.Comments.Count, Is.EqualTo(1));
+        Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
+        string expected =
+            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "thread1 note 1.-"
+            + "Start:0-"
+            + "Tag:1-"
+            + "Version:1-"
+            + "Status:todo";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected));
+
+        // TODO: As the data is being manually added, this result is a false positive and returns as expected.
+        // The data is not being found in the CommentManager as expected. Cannot currently replicate this issue.
+        thread = env.ProjectCommentManager.FindThread(thread2);
+        Assert.That(thread.Comments.Count, Is.EqualTo(1));
+        comment = thread.Comments.First();
+        expected =
+            "thread2/User 02/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:2-"
+            + "thread2 note 1.-"
+            + "Start:0-"
+            + "Tag:1-"
+            + "Version:1-"
+            + "Status:todo";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected));
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
+        IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == dataId1);
+        Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
+        IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == dataId2);
+        Assert.That(noteThread2Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+
+        // PT username is not written to server logs
+        env.MockLogger.AssertNoEvent(logEvent => logEvent.Message!.Contains(env.Username02));
+    }
+
+    [Test]
     public async Task UpdateParatextComments_AddsCommentTagIdNotSet()
     {
         var env = new TestEnvironment();
