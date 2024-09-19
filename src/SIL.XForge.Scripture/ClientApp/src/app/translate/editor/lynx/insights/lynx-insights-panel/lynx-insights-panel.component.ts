@@ -192,6 +192,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     return segmentRefs;
   }
 
+  // TODO: this currently doesn't work for links from other chapters
   private getLinkText(insight: LynxInsight): string {
     if (this.editorSegments == null) {
       return '...'; // TODO: better default text

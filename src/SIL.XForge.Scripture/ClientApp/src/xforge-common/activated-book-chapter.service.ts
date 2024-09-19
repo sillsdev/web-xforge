@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivationEnd, Params, Router } from '@angular/router';
 import { isEqual } from 'lodash-es';
-import { BehaviorSubject, distinctUntilChanged, filter } from 'rxjs';
+import { BehaviorSubject, Observable, distinctUntilChanged, filter } from 'rxjs';
 
 export interface RouteBookChapter {
   bookId?: string;
@@ -14,7 +14,9 @@ export interface RouteBookChapter {
 })
 export class ActivatedBookChapterService {
   private routeBookChapterSource$ = new BehaviorSubject<RouteBookChapter | undefined>(undefined);
-  readonly routeBookChapter$ = this.routeBookChapterSource$.pipe(distinctUntilChanged(isEqual));
+  readonly routeBookChapter$: Observable<RouteBookChapter | undefined> = this.routeBookChapterSource$.pipe(
+    distinctUntilChanged(isEqual)
+  );
 
   constructor(private readonly router: Router) {
     this.router.events
