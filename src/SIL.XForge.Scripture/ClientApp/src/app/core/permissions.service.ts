@@ -38,9 +38,7 @@ export class PermissionsService {
 
   async isUserOnProject(projectId: string): Promise<boolean> {
     const currentUserDoc = await this.userService.getCurrentUser();
-    const userOnProject: boolean =
-      currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
-    return userOnProject;
+    return currentUserDoc?.data?.sites[environment.siteId].projects.includes(projectId) ?? false;
   }
 
   async canAccessText(textDocId: TextDocId): Promise<boolean> {
