@@ -24,6 +24,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { TextDoc } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
+import { CustomValidatorState } from '../../../shared/sfvalidators';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftApplyDialogComponent } from './draft-apply-dialog.component';
 
@@ -131,7 +132,7 @@ describe('DraftApplyDialogComponent', () => {
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
     tick();
     env.fixture.detectChanges();
-    expect(env.cannotEditMessage).toBeNull();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.None);
   }));
 
   it('notifies user if no edit permissions', fakeAsync(() => {
@@ -140,12 +141,12 @@ describe('DraftApplyDialogComponent', () => {
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
     tick();
     env.fixture.detectChanges();
-    expect(env.cannotEditMessage).not.toBeNull();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.NoWritePermissions);
     // hides the message when an invalid project is selected
     env.selectParatextProject('');
     tick();
     env.fixture.detectChanges();
-    expect(env.cannotEditMessage).toBeNull();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.InvalidProject);
   }));
 
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
@@ -198,10 +199,6 @@ class TestEnvironment {
 
   get cancelButton(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.cancel-button');
-  }
-
-  get cannotEditMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.cannot-edit-message');
   }
 
   get targetProjectContent(): HTMLElement {
