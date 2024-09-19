@@ -2,9 +2,9 @@
   <mat-dialog-content>
     <div class="container">
       <div class="countdown" [ngClass]="{ animate: countdownTimer > 0 }">{{ countdownTimer }}</div>
-      @if (!hasAudioAttachment) {
+      @if (!hasAudioAttachment && !showCountdown) {
         <div class="no-attachment" id="audioRecordContainer">
-          @if (!isRecording && !showCountdown) {
+          @if (!isRecording) {
             <button
               mat-icon-button
               (click)="startRecording()"
@@ -14,8 +14,7 @@
             >
               <mat-icon>mic</mat-icon>
             </button>
-          }
-          @if (isRecording) {
+          } @else {
             <button
               mat-icon-button
               (click)="stopRecording()"
