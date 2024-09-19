@@ -1,8 +1,25 @@
 import { Inject, Injectable } from '@angular/core';
+import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
-import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, tap } from 'rxjs';
-import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import {
+  BehaviorSubject,
+  Observable,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap
+} from 'rxjs';
+import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { SFProjectService } from '../../../../core/sf-project.service';
 import {
   EDITOR_INSIGHT_DEFAULTS,
   LynxInsight,
@@ -19,6 +36,58 @@ import { LynxInsightFilterService } from './lynx-insight-filter.service';
   providedIn: 'root'
 })
 export class LynxInsightStateService {
+  private projectUserConfig$: Observable<SFProjectUserConfig> = this.activatedProject.projectId$.pipe(
+    filterNullish(),
+    switchMap(projectId => this.projectService.getUserConfig(projectId, this.userService.currentUserId)),
+    switchMap(projectUserConfigDoc =>
+      projectUserConfigDoc.changes$.pipe(
+        map(() => projectUserConfigDoc.data),
+        startWith(projectUserConfigDoc.data)
+      )
+    ),
+    filterNullish(),
+    shareReplay(1)
+  );
+
+  private projectProfile$: Observable<SFProjectProfile> = this.activatedProject.projectId$.pipe(
+    filterNullish(),
+    switchMap(projectId => this.projectService.getProfile(projectId)),
+    switchMap(projectProfileDoc =>
+      projectProfileDoc.changes$.pipe(
+        map(() => projectProfileDoc.data),
+        startWith(projectProfileDoc.data)
+      )
+    ),
+    filterNullish(),
+    shareReplay(1)
+  );
+
+  private routeBookChapter$: Observable<RouteBookChapter | undefined> = combineLatest([
+    this.activatedBookChapter.routeBookChapter$.pipe(filterNullish()),
+    this.projectProfile$,
+    this.projectUserConfig$
+  ]).pipe(
+    switchMap(([{ bookId, chapter }, projectProfile, projectUserConfig]) => {
+      if (bookId == null) {
+        return of(undefined);
+      }
+
+      if (chapter == null) {
+        chapter = projectUserConfig.selectedChapterNum;
+
+        if (chapter == null) {
+          let bookNum: number = Canon.bookIdToNumber(bookId);
+          chapter = projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
+        }
+      }
+
+      return of({ bookId, chapter });
+    }),
+    distinctUntilChanged(isEqual),
+    tap(routeBookChapter => console.log('routeBookChapter', routeBookChapter)),
+    shareReplay(1)
+  );
+
   private rawInsightSource$ = new BehaviorSubject<LynxInsight[]>([
     // Mark 1
     {
@@ -304,17 +373,24 @@ export class LynxInsightStateService {
   ]);
 
   private rawInsights$: Observable<LynxInsight[]> = this.rawInsightSource$.pipe(
+    // distinctUntilChanged((prev, curr) => {
+    //   const equal = isEqual(prev, curr);
+    //   console.log('rawInsights$ distinctUntilChanged (LynxInsightStateService)', prev, curr, equal);
+    //   return equal;
+    // }),
     distinctUntilChanged(isEqual),
-    tap(insights => console.log('insights changed (LynxInsightStateService)', insights))
+    shareReplay(1),
+    tap(insights => console.log('rawInsights$ changed (LynxInsightStateService)', insights))
   );
 
+  // TODO: Load stored filter from user project config
   readonly filter$ = new BehaviorSubject<LynxInsightFilter>(this.defaults.filter);
   readonly orderBy$ = new BehaviorSubject<LynxInsightSortOrder>(this.defaults.sortOrder);
 
   readonly filteredChapterInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.activatedBookChapter.routeBookChapter$.pipe(
+    this.routeBookChapter$.pipe(
       tap(params => console.log('routeBookChapter$ params changed (LynxInsightStateService)', params)),
       filterNullish()
     )
@@ -323,17 +399,22 @@ export class LynxInsightStateService {
       insights.filter(insight =>
         this.insightFilterService.matchesFilter(insight, { ...filter, scope: 'chapter' }, routeBookChapter)
       )
-    )
+    ),
+    distinctUntilChanged(isEqual),
+    shareReplay(1),
+    tap(insights => console.log('filteredChapterInsights$ changed (LynxInsightStateService)', insights))
   );
 
   readonly filteredInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.activatedBookChapter.routeBookChapter$.pipe(filterNullish())
+    this.routeBookChapter$.pipe(filterNullish())
   ]).pipe(
     map(([insights, filter, routeBookChapter]) =>
       insights.filter(insight => this.insightFilterService.matchesFilter(insight, filter, routeBookChapter))
-    )
+    ),
+    distinctUntilChanged(isEqual),
+    shareReplay(1)
   );
 
   /**
@@ -342,7 +423,7 @@ export class LynxInsightStateService {
   readonly filteredInsightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.activatedBookChapter.routeBookChapter$.pipe(filterNullish())
+    this.routeBookChapter$.pipe(filterNullish())
   ]).pipe(
     map(([insights, filter, routeBookChapter]) => {
       const result: Record<LynxInsightFilterScope, number> = { project: 0, book: 0, chapter: 0 };
@@ -367,7 +448,9 @@ export class LynxInsightStateService {
       }
 
       return result;
-    })
+    }),
+    distinctUntilChanged(isEqual),
+    shareReplay(1)
   );
 
   /**
@@ -382,7 +465,9 @@ export class LynxInsightStateService {
       }
 
       return result;
-    })
+    }),
+    distinctUntilChanged(isEqual),
+    shareReplay(1)
   );
 
   private readonly insightPanelVisibleSource$ = new BehaviorSubject<boolean>(false);
@@ -391,7 +476,10 @@ export class LynxInsightStateService {
   constructor(
     @Inject(EDITOR_INSIGHT_DEFAULTS) private defaults: LynxInsightConfig,
     private readonly insightFilterService: LynxInsightFilterService,
-    private readonly activatedBookChapter: ActivatedBookChapterService
+    private readonly activatedBookChapter: ActivatedBookChapterService,
+    private readonly activatedProject: ActivatedProjectService,
+    private readonly projectService: SFProjectService,
+    private readonly userService: UserService
   ) {
     // TODO: load stored filter from user project config
   }

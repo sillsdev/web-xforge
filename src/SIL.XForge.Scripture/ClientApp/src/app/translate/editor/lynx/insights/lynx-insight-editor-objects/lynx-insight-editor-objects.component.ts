@@ -1,7 +1,7 @@
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
-import { Observable, combineLatest, filter } from 'rxjs';
+import { BehaviorSubject, EMPTY, distinctUntilChanged, fromEvent, startWith, switchMap } from 'rxjs';
 import { LynxInsightRenderService } from '../lynx-insight-render.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -12,7 +12,8 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
 })
 export class LynxInsightEditorObjectsComponent implements OnInit {
   @Input() editor?: Quill;
-  @Input() editorLoaded$?: Observable<boolean>;
+
+  private editorReady$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private readonly destroyRef: DestroyRef,
@@ -21,15 +22,33 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.editorLoaded$ == null) {
+    if (this.editor == null) {
       return;
     }
 
-    combineLatest([this.insightState.filteredChapterInsights$, this.editorLoaded$.pipe(filter(loaded => loaded))])
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([insights]) => {
-        // If text is just '\n', wait for loaded$ to emit again before rendering
-        if (this.editor != null && this.editor.getText().length > 1) {
+    fromEvent(this.editor, 'editor-change')
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        startWith(['initial']) // Arbitrary event to ensure 'ready' is checked in case editor changes have already fired
+      )
+      .subscribe(([event]: any) => {
+        if (event !== 'text-change' && event !== 'initial') {
+          return;
+        }
+
+        this.editorReady$.next(this.editor != null && this.editor.getLength() > 1);
+      });
+
+    // Render when insights change if editor is ready
+    this.editorReady$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        distinctUntilChanged(),
+        switchMap(ready => (ready ? this.insightState.filteredChapterInsights$ : EMPTY))
+      )
+      .subscribe(insights => {
+        // Ensure text is more than just '\n'
+        if (this.editor != null && this.editor.getLength() > 1) {
           this.insightRenderService.render(insights, this.editor);
         }
       });
