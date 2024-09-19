@@ -1,7 +1,8 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ValidatorFn } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
+import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -123,13 +124,30 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     }
     this.hiddenParatextIds$.next(value);
   }
+
   get hiddenParatextIds(): string[] {
     return this.hiddenParatextIds$.getValue();
   }
 
-  validate(allowBlank: boolean): void {
+  get customMessage(): string {
+    const invalidSelection = this.paratextIdControl.hasError('invalidProject');
+    const bookNotFound = this.paratextIdControl.hasError('bookNotFound');
+    const noWritePermissions = this.paratextIdControl.hasError('noWritePermissions');
+    if (invalidSelection) {
+      return translate('project_select.please_select_valid_project');
+    }
+    if (bookNotFound) {
+      return translate('project_select.book_does_not_exist');
+    }
+    if (noWritePermissions) {
+      return translate('project_select.no_write_permissions');
+    }
+    return '';
+  }
+
+  customValidate(customValidator: ValidatorFn): void {
     this.paratextIdControl.clearValidators();
-    this.paratextIdControl.setValidators(SFValidators.selectableProject(allowBlank));
+    this.paratextIdControl.setValidators([SFValidators.selectableProject(true), customValidator]);
     this.paratextIdControl.markAsDirty();
     this.paratextIdControl.updateValueAndValidity();
   }
