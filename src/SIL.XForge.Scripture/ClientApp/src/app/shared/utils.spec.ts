@@ -196,8 +196,12 @@ describe('shared utils', () => {
       expect(getUnsupportedTags({ insert: 'some text' })).toEqual([]);
     });
 
-    it('can find invalid-block', () => {
+    it('can find invalid-block char style', () => {
       expect(getUnsupportedTags({ attributes: { 'invalid-block': true, char: { style: 'bad' } } })).toEqual(['bad']);
+    });
+
+    it('can find invalid-block para style', () => {
+      expect(getUnsupportedTags({ attributes: { 'invalid-block': true, para: { style: 'bad' } } })).toEqual(['bad']);
     });
 
     it('can find invalid-line', () => {
