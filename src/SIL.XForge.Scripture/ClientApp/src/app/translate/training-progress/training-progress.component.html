@@ -1,14 +1,14 @@
 <ng-container *transloco="let t; read: 'training_progress'">
   @if (showTrainingProgress) {
     <div class="training-progress mat-card">
-      <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="training-title">
         <div>{{ t("training") }}</div>
         <button id="training-close-button" mat-icon-button type="button" (click)="closeTrainingProgress()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
-      <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">
-        <div class="text-ellipsis">{{ trainingMessage }}</div>
+      <div class="training-content">
+        <div class="text-ellipsis">A message to be added</div>
         <div>
           @if (trainingPercentage < 100) {
             <app-donut-chart
