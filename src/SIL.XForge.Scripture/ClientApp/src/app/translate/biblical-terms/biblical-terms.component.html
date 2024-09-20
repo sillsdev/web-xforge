@@ -10,11 +10,6 @@
       matSortDirection="asc"
       matSortDisableClear
     >
-      <caption [dir]="i18n.direction">
-        {{
-          t("biblical_terms_renderings") + selectedReferenceForCaption
-        }}
-      </caption>
       @for (column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1; track column) {
         <ng-container [matColumnDef]="column">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t(column) }}</th>
@@ -25,17 +20,74 @@
       <ng-container matColumnDef="id">
         <th mat-header-cell *matHeaderCellDef class="actions">{{ t("actions") }}</th>
         <td mat-cell *matCellDef="let row" class="actions">
-          <button mat-icon-button (click)="editNoteThread(row)" [disabled]="row.disableNotesIcon">
+          <button
+            mat-icon-button
+            (click)="editNoteThread(row)"
+            [disabled]="row.disableNotesIcon"
+            [matTooltip]="t('notes')"
+          >
             <mat-icon [style.transform]="row.transformNotesIcon">{{ row.notesIcon }}</mat-icon>
           </button>
-          <button mat-icon-button (click)="editRendering(row.id)">
+          <button
+            mat-icon-button
+            (click)="editRendering(row.id)"
+            [matTooltip]="t(row.canEdit ? 'edit_renderings' : 'view_renderings')"
+          >
             <mat-icon>{{ row.editIcon }}</mat-icon>
           </button>
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
+      <ng-container matColumnDef="toolbar-row">
+        <th mat-header-cell *matHeaderCellDef [attr.colspan]="columnsToDisplay.length">
+          <div class="toolbar">
+            <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t("show") }}</mat-label>
+              <mat-select panelWidth="''" [(ngModel)]="selectedRangeFilter">
+                <mat-option *ngFor="let rangeFilter of rangeFilters" [value]="rangeFilter">
+                  {{ t(rangeFilter) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="biblical-terms-select" appearance="outline" subscriptSizing="dynamic">
+              <mat-label>{{ t("category") }}</mat-label>
+              <mat-select panelWidth="''" [(ngModel)]="selectedCategory">
+                <mat-option value="show_all">{{ t("all") }}</mat-option>
+                <mat-option *ngFor="let category of categories" [value]="category">{{
+                  category === "" ? t("blank") : category
+                }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="menu"
+              class="mat-menu-popup-button"
+              [matTooltip]="t('settings')"
+            >
+              <mat-icon>settings</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="this.transliterateBiblicalTerms = !this.transliterateBiblicalTerms">
+                <mat-icon class="material-icons-outlined">{{
+                  this.transliterateBiblicalTerms ? "check_box" : "check_box_outline_blank"
+                }}</mat-icon>
+                <span>{{ t("transliterate_terms") }}</span>
+              </button>
+            </mat-menu>
+          </div>
+        </th>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="['toolbar-row']"></tr>
+      <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
       <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell" [attr.colspan]="columnsToDisplay.length">
+          @if (this.isLoaded) {
+            <span class="not-found">{{ t("not_found") }}</span>
+          }
+        </td>
+      </tr>
     </table>
   </div>
 </ng-container>

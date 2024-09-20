@@ -194,8 +194,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
-  sourceSplitHeight: string = '';
-  targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
 
@@ -326,35 +324,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get suggestionsSettingsEnabled(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc?.data?.ownerRef]
-        : undefined;
     return (
-      (this.hasSource &&
-        this.hasSourceViewRight &&
-        this.translationSuggestionsProjectEnabled &&
-        this.userHasGeneralEditRight) ||
-      (this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
-        userRole != null &&
-        SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
-    );
-  }
-
-  get biblicalTermsEnabledForSource(): boolean {
-    // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
-    // renderings for Biblical Terms.
-    return (
-      (this.sourceProjectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
-        this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
-      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig?.hasRenderings === true)
-    );
-  }
-
-  get biblicalTermsEnabledForTarget(): boolean {
-    return (
-      this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
-      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
+      this.hasSource &&
+      this.hasSourceViewRight &&
+      this.translationSuggestionsProjectEnabled &&
+      this.userHasGeneralEditRight
     );
   }
 
@@ -1209,10 +1183,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // Include the project doc for tabs that contain a project id
       switchMap(persistedTabs => {
         return Promise.all(
-          persistedTabs.map(async tabData => ({
-            ...tabData,
-            projectDoc: tabData.projectId != null ? await this.projectService.getProfile(tabData.projectId) : undefined
-          }))
+          persistedTabs.map(async tabData => {
+            let projectDoc: SFProjectProfileDoc | undefined = undefined;
+            if (tabData.projectId != null) {
+              projectDoc = await this.projectService.getProfile(tabData.projectId);
+            }
+
+            return {
+              ...tabData,
+              projectDoc
+            };
+          })
         );
       }),
       tap(async (persistedTabs: (EditorTabPersistData & { projectDoc?: SFProjectProfileDoc })[]) => {
@@ -1239,6 +1220,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         );
 
         for (const tabData of persistedTabs) {
+          // Do not display the Biblical Terms tab if the user has lost permission
+          if (
+            tabData.tabType === 'biblical-terms' &&
+            this.activatedProject.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === false
+          ) {
+            continue;
+          }
+
+          // Create the tab
           const tab: EditorTabInfo = await this.editorTabFactory.createTab(tabData.tabType, {
             projectId: tabData.projectId,
             headerText: tabData.projectDoc?.data?.shortName,

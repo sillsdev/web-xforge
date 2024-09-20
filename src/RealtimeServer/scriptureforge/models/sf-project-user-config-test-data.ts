@@ -9,7 +9,6 @@ export function createTestProjectUserConfig(overrides?: RecursivePartial<SFProje
     ownerRef: '',
     isTargetTextRight: false,
     confidenceThreshold: 0.2,
-    biblicalTermsEnabled: false,
     transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,

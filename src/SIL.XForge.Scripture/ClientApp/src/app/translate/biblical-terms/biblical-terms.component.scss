@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/material-styles';
+@import 'src/styles';
 
 /* We have two mat-icon actions buttons */
 .actions {
@@ -32,32 +32,15 @@
   text-align: center;
 }
 
-/* Hide the category on XS, SM, MD, and LG devices */
+/* Hide the category when the view is constrained */
 .mat-column-category {
-  @include media-breakpoint-down(lg) {
-    display: none;
-  }
+  @extend .hide-lt-xl;
 }
 
-/* Show the category on SM, MD, and LG devices if there is no source visible */
-:host-context(.text-area-full-width) .mat-column-category {
-  @include media-breakpoint-between(sm, lg) {
-    display: table-cell;
-  }
-}
-
-/* Hide the gloss on XS, SM, and MD devices */
+/* Hide the gloss when the view is constrained */
 .mat-column-gloss {
-  @include media-breakpoint-down(md) {
-    display: none;
-  }
-}
-
-/* Show the gloss on SM and MD devices if there is no source visible */
-:host-context(.text-area-full-width) .mat-column-gloss {
-  @include media-breakpoint-between(sm, md) {
-    display: table-cell;
-  }
+  @extend .hide-lt-md;
+  overflow: hidden;
 }
 
 /* Disable hover effects for disabled buttons */
@@ -65,15 +48,42 @@
   pointer-events: none;
 }
 
-/* The table heading */
-.mat-mdc-table caption {
-  font-size: 0.9em;
-  font-weight: bold;
-  padding: 5px 0 5px 20px;
-  text-align: left;
+/* Style the toolbar and its dropdowns */
+.mat-mdc-table-sticky {
+  bottom: -1px !important;
 }
 
-/* RTL support for the table heading */
-.mat-mdc-table caption[dir='rtl'] {
-  text-align: right;
+/* Pad the left hand side of the table */
+.mat-mdc-header-cell:first-child,
+.mat-mdc-cell:first-child {
+  padding-inline-start: 1.25em;
+}
+
+/* Format the no data row */
+.mat-mdc-no-data-row td {
+  padding: 1em;
+  text-align: center;
+}
+
+/* Keep the toolbar and cell headings at the top of the viewport when scrolling */
+::ng-deep thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1em 0.5em 0.75em 0.5em;
+  border-top: 1px solid var(--sf-tab-group-border-color);
+  background: #fff;
+}
+
+.biblical-terms-select {
+  @include material-styles.dense_mat_select();
+  width: 200px;
 }

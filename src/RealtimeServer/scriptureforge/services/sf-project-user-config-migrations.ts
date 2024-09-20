@@ -1,4 +1,4 @@
-import { Doc, ObjectDeleteOp, ObjectInsertOp } from 'sharedb/lib/client';
+import { Doc, ListInsertOp, ObjectDeleteOp, ObjectInsertOp, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 
@@ -75,11 +75,58 @@ class SFProjectUserConfigMigration6 extends DocMigration {
   }
 }
 
+class SFProjectUserConfigMigration7 extends DocMigration {
+  static readonly VERSION = 7;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const biblicalTermsEnabled: boolean | undefined = doc.data.biblicalTermsEnabled;
+    if (biblicalTermsEnabled !== undefined) {
+      const ops: Op[] = [];
+      if (biblicalTermsEnabled) {
+        // Determine whether to show the biblical terms tab in the source or target
+        let createTab: boolean = true;
+        let groupId: string = 'target';
+        for (const editorTab of doc.data.editorTabsOpen) {
+          // If a tab is in the source, we can show the tab in the source
+          if (editorTab.groupId === 'source') {
+            groupId = 'source';
+          }
+
+          // If we already have a biblical terms tab, do not recreate it
+          if (editorTab.tabType === 'biblical-terms') {
+            createTab = false;
+          }
+        }
+
+        // Add a biblical terms tab
+        if (createTab) {
+          const i: number = doc.data.editorTabsOpen.length;
+          const liOp: ListInsertOp = {
+            p: ['editorTabsOpen', i],
+            li: {
+              tabType: 'biblical-terms',
+              groupId,
+              isSelected: false
+            }
+          };
+          ops.push(liOp);
+        }
+      }
+
+      // Remove the old biblical terms enabled property
+      const odOp: ObjectDeleteOp = { p: ['biblicalTermsEnabled'], od: biblicalTermsEnabled };
+      ops.push(odOp);
+      await submitMigrationOp(SFProjectUserConfigMigration7.VERSION, doc, ops);
+    }
+  }
+}
+
 export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
   SFProjectUserConfigMigration1,
   SFProjectUserConfigMigration2,
   SFProjectUserConfigMigration3,
   SFProjectUserConfigMigration4,
   SFProjectUserConfigMigration5,
-  SFProjectUserConfigMigration6
+  SFProjectUserConfigMigration6,
+  SFProjectUserConfigMigration7
 ];

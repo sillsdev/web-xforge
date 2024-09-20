@@ -16,6 +16,21 @@ export class EditorTabFactoryService implements TabFactoryService<EditorTabType,
     tabOptions = omitBy(tabOptions, isUndefined);
 
     switch (tabType) {
+      case 'biblical-terms':
+        return Object.assign(
+          {
+            type: 'biblical-terms',
+            svgIcon: 'biblical_terms',
+            headerText: await firstValueFrom(
+              this.i18n.translate('editor_tab_factory.default_biblical_terms_tab_header')
+            ),
+            closeable: true,
+            movable: true,
+            persist: true,
+            unique: true
+          },
+          tabOptions
+        );
       case 'history':
         return Object.assign(
           {

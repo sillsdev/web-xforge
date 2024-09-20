@@ -21,6 +21,9 @@ export interface TabInfo<TType extends string> {
   /** Optional material icon to place alongside tab header text. */
   icon?: string;
 
+  /** Optional SVG icon to show instead of the material icon. */
+  svgIcon?: string;
+
   /** Whether the tab can be removed from the tab group. */
   closeable: boolean;
 

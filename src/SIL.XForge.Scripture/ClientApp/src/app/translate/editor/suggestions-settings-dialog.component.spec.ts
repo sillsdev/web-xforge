@@ -84,7 +84,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
   }));
 
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
-    const env = new TestEnvironment(false);
+    const env = new TestEnvironment({ translationSuggestionsEnabled: false });
     env.openDialog();
     expect(env.component?.confidenceThreshold).toEqual(50);
     env.closeDialog();
@@ -117,89 +117,6 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.isSwitchChecked(env.suggestionsEnabledCheckbox)).toBe(true);
     env.closeDialog();
   }));
-
-  it('update biblical terms enabled', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.openDialog();
-    expect(env.component!.biblicalTermsDisabled).toBe(false);
-
-    env.clickSwitch(env.biblicalTermsEnabledSwitch);
-    expect(env.component!.biblicalTermsDisabled).toBe(true);
-    const userConfigDoc = env.getProjectUserConfigDoc();
-    expect(userConfigDoc.data!.biblicalTermsEnabled).toBe(false);
-    env.closeDialog();
-  }));
-
-  it('update transliterate biblical terms', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.openDialog();
-    expect(env.component!.transliterateBiblicalTerms).toBe(false);
-
-    env.clickSwitch(env.transliterateBiblicalTermsSwitch);
-    expect(env.component!.transliterateBiblicalTerms).toBe(true);
-    const userConfigDoc = env.getProjectUserConfigDoc();
-    expect(userConfigDoc.data!.transliterateBiblicalTerms).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('biblical terms is disabled if it is disabled in the project', fakeAsync(() => {
-    const env = new TestEnvironment(true, false);
-    env.openDialog();
-    expect(env.component!.biblicalTermsDisabled).toBe(true);
-
-    expect(env.biblicalTermsEnabledCheckbox.disabled).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('biblical terms is disabled if the user is an SF user', fakeAsync(() => {
-    const env = new TestEnvironment(true, true);
-    const projectProfileDoc = env.getProjectProfileDoc();
-    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Commenter));
-    env.openDialog();
-    expect(env.component!.biblicalTermsDisabled).toBe(true);
-
-    expect(env.biblicalTermsEnabledCheckbox.disabled).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('transliterate biblical terms is disabled if biblical terms is disabled', fakeAsync(() => {
-    const env = new TestEnvironment(true, true);
-    env.openDialog();
-    expect(env.component!.biblicalTermsDisabled).toBe(false);
-    expect(env.transliterateBiblicalTermsCheckbox.disabled).toBe(false);
-
-    env.clickSwitch(env.biblicalTermsEnabledSwitch);
-    expect(env.component!.biblicalTermsDisabled).toBe(true);
-    expect(env.transliterateBiblicalTermsCheckbox.disabled).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('the transliterate biblical terms toggle stays on when biblical terms is off', fakeAsync(() => {
-    const env = new TestEnvironment(true, true);
-    env.openDialog();
-    expect(env.component!.biblicalTermsDisabled).toBe(false);
-    expect(env.component!.transliterateBiblicalTerms).toBe(false);
-
-    env.clickSwitch(env.transliterateBiblicalTermsSwitch);
-    env.clickSwitch(env.biblicalTermsEnabledSwitch);
-
-    expect(env.component!.transliterateBiblicalTerms).toBe(true);
-    expect(env.transliterateBiblicalTermsCheckbox.disabled).toBe(true);
-    expect(env.isSwitchChecked(env.transliterateBiblicalTermsCheckbox)).toBe(true);
-    env.closeDialog();
-  }));
-
-  it('translation suggestions are disabled if the user cannot edit tests', fakeAsync(() => {
-    const env = new TestEnvironment(true, true);
-    const projectProfileDoc = env.getProjectProfileDoc();
-    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.ParatextObserver));
-    env.openDialog();
-    expect(env.component!.biblicalTermsDisabled).toBe(false);
-
-    expect(env.biblicalTermsEnabledCheckbox.disabled).toBe(false);
-    expect(env.suggestionsEnabledCheckbox.disabled).toBe(true);
-    env.closeDialog();
-  }));
 });
 
 @NgModule({
@@ -208,6 +125,10 @@ describe('SuggestionsSettingsDialogComponent', () => {
   exports: [SuggestionsSettingsDialogComponent]
 })
 class DialogTestModule {}
+
+interface TestEnvironmentConstructorArgs {
+  translationSuggestionsEnabled?: boolean;
+}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
@@ -218,13 +139,11 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(translationSuggestionsEnabled = true, biblicalTermsEnabled = true) {
+  constructor({ translationSuggestionsEnabled = true }: TestEnvironmentConstructorArgs = {}) {
     this.setProjectUserConfig({
       confidenceThreshold: 0.5,
       translationSuggestionsEnabled,
-      numSuggestions: 1,
-      biblicalTermsEnabled,
-      transliterateBiblicalTerms: false
+      numSuggestions: 1
     });
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -248,22 +167,6 @@ class TestEnvironment {
 
   get numSuggestionsSelect(): MatSelect {
     return this.fixture.debugElement.query(By.css('#num-suggestions-select')).componentInstance;
-  }
-
-  get biblicalTermsEnabledSwitch(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#biblical-terms-enabled-switch') as HTMLElement;
-  }
-
-  get biblicalTermsEnabledCheckbox(): HTMLInputElement {
-    return this.biblicalTermsEnabledSwitch.querySelector('button[role=switch]') as HTMLInputElement;
-  }
-
-  get transliterateBiblicalTermsSwitch(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#transliterate-biblical-terms-switch') as HTMLElement;
-  }
-
-  get transliterateBiblicalTermsCheckbox(): HTMLInputElement {
-    return this.transliterateBiblicalTermsSwitch.querySelector('button[role=switch]') as HTMLInputElement;
   }
 
   get offlineText(): DebugElement {
@@ -322,10 +225,6 @@ class TestEnvironment {
         translateConfig: {
           translationSuggestionsEnabled: user1Config.translationSuggestionsEnabled,
           shareEnabled: true
-        },
-        biblicalTermsConfig: {
-          biblicalTermsEnabled: user1Config.biblicalTermsEnabled,
-          hasRenderings: false
         },
         userRoles: { user01: SFProjectRole.ParatextTranslator }
       })

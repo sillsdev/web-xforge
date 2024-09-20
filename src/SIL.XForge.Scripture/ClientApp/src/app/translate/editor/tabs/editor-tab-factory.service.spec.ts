@@ -3,7 +3,7 @@ import { EditorTabType } from 'realtime-server/lib/esm/scriptureforge/models/edi
 import { of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { EditorTabFactoryService } from './editor-tab-factory.service';
 
 describe('EditorTabFactoryService', () => {
@@ -18,6 +18,16 @@ describe('EditorTabFactoryService', () => {
   beforeEach(() => {
     service = TestBed.inject(EditorTabFactoryService);
     when(mockI18nService.translate(anything())).thenReturn(of('Test Header Text'));
+  });
+
+  it('should create a "biblical terms" tab', async () => {
+    const tab = await service.createTab('biblical-terms');
+    expect(tab.type).toEqual('biblical-terms');
+    expect(tab.svgIcon).toEqual('biblical_terms');
+    expect(tab.headerText).toEqual('Test Header Text');
+    expect(tab.closeable).toEqual(true);
+    expect(tab.movable).toEqual(true);
+    expect(tab.unique).toEqual(true);
   });
 
   it('should create a "history" tab', async () => {

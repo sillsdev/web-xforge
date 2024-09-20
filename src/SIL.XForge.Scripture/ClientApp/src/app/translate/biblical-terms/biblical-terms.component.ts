@@ -1,5 +1,7 @@
+import { CommonModule } from '@angular/common';
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -14,13 +16,14 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, firstValueFrom, merge, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, merge, Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
@@ -51,6 +54,8 @@ export enum BiblicalTermDialogIcon {
 
 // This value is used in the row and component
 const defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
+
+type RangeFilter = 'current_verse' | 'current_chapter' | 'current_book';
 
 class Row {
   constructor(
@@ -119,6 +124,16 @@ class Row {
     }
   }
 
+  get canEdit(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
+        : undefined;
+    return userRole == null
+      ? false
+      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
+  }
+
   private get canAddNotes(): boolean {
     const userRole: string | undefined =
       this.projectUserConfigDoc?.data?.ownerRef != null
@@ -127,16 +142,6 @@ class Row {
     const hasNotePermission: boolean =
       userRole == null ? false : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Notes, Operation.Create);
     return hasNotePermission;
-  }
-
-  private get canEdit(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
-        : undefined;
-    return userRole == null
-      ? false
-      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
   }
 
   private get hasUnreadNotes(): boolean {
@@ -166,21 +171,24 @@ class Row {
 @Component({
   selector: 'app-biblical-terms',
   templateUrl: './biblical-terms.component.html',
-  styleUrls: ['./biblical-terms.component.scss']
+  styleUrls: ['./biblical-terms.component.scss'],
+  standalone: true,
+  imports: [CommonModule, TranslocoModule, UICommonModule]
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
-  columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
+  categories: string[] = [];
+  readonly columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
+  readonly rangeFilters: RangeFilter[] = ['current_verse', 'current_chapter', 'current_book'];
   rows: Row[] = [];
 
   private biblicalTermQuery?: RealtimeQuery<BiblicalTermDoc>;
   private biblicalTermSub?: Subscription;
   private _bookNum?: number;
   private bookNum$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private categoriesLoading = false;
   private _chapter?: number;
   private chapter$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
-  private configProjectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
-  private noteThreadSub?: Subscription;
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectDoc?: SFProjectProfileDoc;
@@ -216,13 +224,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.chapter$.next(chapter);
   }
 
-  @Input() set configProjectId(id: string | undefined) {
-    if (id == null) {
-      return;
-    }
-    this.configProjectId$.next(id);
-  }
-
   @Input() set projectId(id: string | undefined) {
     if (id == null) {
       return;
@@ -237,6 +238,45 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this._verse = verse;
     this.verse$.next(verse);
+  }
+
+  get selectedCategory(): string {
+    // To stop visual glitches in the dropdown while the categories are loading, return the category as all
+    if (this.categoriesLoading) {
+      return 'show_all';
+    } else {
+      return this.projectUserConfigDoc?.data?.selectedBiblicalTermsCategory ?? 'show_all';
+    }
+  }
+
+  set selectedCategory(value: string | undefined) {
+    if (this.selectedCategory !== value) {
+      // Store the default dropdown value of show_all as undefined in the database
+      if (value === '' || value === 'show_all') value = undefined;
+      this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsCategory, value));
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+    }
+  }
+
+  get selectedRangeFilter(): string {
+    return this.projectUserConfigDoc?.data?.selectedBiblicalTermsFilter ?? 'current_verse';
+  }
+
+  set selectedRangeFilter(value: string | undefined) {
+    if (this.selectedRangeFilter !== value) {
+      // Store the default dropdown value of submitJson0Op as undefined in the database
+      if (value === '' || value === 'current_verse') value = undefined;
+      this.projectUserConfigDoc?.submitJson0Op(op => op.set(puc => puc.selectedBiblicalTermsFilter, value));
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+    }
+  }
+
+  get transliterateBiblicalTerms(): boolean {
+    return this.projectUserConfigDoc?.data?.transliterateBiblicalTerms ?? false;
+  }
+
+  set transliterateBiblicalTerms(value: boolean) {
+    this.projectUserConfigDoc?.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
   }
 
   get selectedReferenceForCaption(): string {
@@ -272,32 +312,31 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (this.biblicalTermSub != null) {
       this.biblicalTermSub.unsubscribe();
     }
-    if (this.noteThreadSub != null) {
-      this.noteThreadSub.unsubscribe();
-    }
   }
 
   ngOnInit(): void {
-    this.subscribe(this.configProjectId$, async configProjectId => {
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(
-        configProjectId,
-        this.userService.currentUserId
-      );
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-    });
-    this.subscribe(this.projectId$, async projectId => {
+    this.subscribe(this.projectId$.pipe(filter(projectId => projectId !== '')), async projectId => {
       this.projectDoc = await this.projectService.getProfile(projectId);
-      this.loadBiblicalTerms(projectId);
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-    });
-    this.subscribe(this.bookNum$, bookNum => {
-      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse);
-    });
-    this.subscribe(this.chapter$, chapter => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse);
-    });
-    this.subscribe(this.verse$, verse => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+
+      // Subscribe to any project, book, chapter, verse, locale, biblical term, or note changes
+      this.loadingStarted();
+      this.categoriesLoading = true;
+      const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
+      this.biblicalTermSub?.unsubscribe();
+      this.biblicalTermSub = this.subscribe(
+        combineLatest([
+          this.bookNum$,
+          this.chapter$,
+          this.verse$,
+          this.i18n.locale$,
+          biblicalTermsAndNotesChanges$
+        ]).pipe(filter(([bookNum, chapter, verse]) => bookNum !== 0 && chapter !== 0 && verse !== null)),
+        ([bookNum, chapter, verse]) => {
+          this.filterBiblicalTerms(bookNum, chapter, verse);
+          this.categoriesLoading = false;
+        }
+      );
     });
   }
 
@@ -358,13 +397,27 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this.loadingStarted();
 
-    const rows: Row[] = [];
+    const categories = new Set<string>();
+    const rangeRows: Row[] = [];
+    const rangeAndCategoryRows: Row[] = [];
     let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
-      let displayTerm = false;
+      let matchesRange = false;
+      // Filter by verse, chapter, or book
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
         var verseRef = new VerseRef(bbbcccvvv);
-        if (
+        if (this.selectedRangeFilter === 'current_book' && verseRef.bookNum === bookNum) {
+          matchesRange = true;
+          break;
+        } else if (
+          this.selectedRangeFilter === 'current_chapter' &&
+          verseRef.bookNum === bookNum &&
+          verseRef.chapterNum === chapter
+        ) {
+          matchesRange = true;
+          break;
+        } else if (
+          this.selectedRangeFilter === 'current_verse' &&
           verseRef.bookNum === bookNum &&
           verseRef.chapterNum === chapter &&
           (verses.length === 0 ||
@@ -372,12 +425,35 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
             verses.includes(verseRef.verseNum) ||
             (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
         ) {
-          displayTerm = true;
+          matchesRange = true;
           break;
         }
       }
 
-      if (displayTerm) {
+      // Get the category
+      const category: string | undefined = biblicalTermDoc?.getBiblicalTermCategory(
+        this.i18n.localeCode,
+        defaultLocaleCode
+      );
+      let termCategories: string[] = [];
+      if (category != null) {
+        // Categories are localized in the biblical terms document, and comma separated
+        termCategories = category.split(',');
+        for (let categoryName of termCategories) categories.add(categoryName.trim());
+      }
+
+      // If we are filtering by category, exclude terms without the specified category
+      let matchesCategory = matchesRange;
+      if (
+        matchesRange &&
+        this.selectedCategory !== 'show_all' &&
+        termCategories.length > 0 &&
+        !termCategories.includes(this.selectedCategory)
+      ) {
+        matchesCategory = false;
+      }
+
+      if (matchesRange) {
         let noteThreadDoc: NoteThreadDoc | undefined;
 
         // The code points will often be different, so we need to normalize the strings
@@ -391,47 +467,50 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           }
         }
 
-        rows.push(new Row(biblicalTermDoc, this.i18n, this.projectDoc, this.projectUserConfigDoc, noteThreadDoc));
+        // Add the row to the two arrays so we can select all if the category is missing
+        const row = new Row(biblicalTermDoc, this.i18n, this.projectDoc, this.projectUserConfigDoc, noteThreadDoc);
+        rangeRows.push(row);
+        if (matchesCategory) {
+          rangeAndCategoryRows.push(row);
+        }
       }
     }
-    this.rows = rows;
+
+    this.categories = Array.from(categories).sort();
+
+    // If we do not have the same category, show all rows in the range
+    if (!this.categories.includes(this.selectedCategory) && this.selectedCategory !== 'show_all') {
+      this.selectedCategory = 'show_all';
+      this.rows = rangeRows;
+    } else {
+      this.rows = rangeAndCategoryRows;
+    }
+
     this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
 
     this.loadingFinished();
   }
 
-  private async loadBiblicalTerms(sfProjectId: string): Promise<void> {
-    // Load the Biblical Terms
+  private async getBiblicalTermsAndNotesChanges(sfProjectId: string): Promise<Observable<any>> {
+    // Clean up existing queries
     this.biblicalTermQuery?.dispose();
-
-    this.biblicalTermQuery = await this.projectService.queryBiblicalTerms(sfProjectId);
-    this.biblicalTermSub?.unsubscribe();
-    this.biblicalTermSub = this.subscribe(
-      merge(
-        this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
-        this.biblicalTermQuery.remoteChanges$,
-        this.biblicalTermQuery.remoteDocChanges$
-      ),
-      () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-      }
-    );
-
-    // Load the Note Threads
     this.noteThreadQuery?.dispose();
 
-    this.noteThreadQuery = await this.projectService.queryBiblicalTermNoteThreads(sfProjectId);
-    this.noteThreadSub?.unsubscribe();
-    this.noteThreadSub = this.subscribe(
-      merge(
-        this.noteThreadQuery.localChanges$,
-        this.noteThreadQuery.ready$,
-        this.noteThreadQuery.remoteChanges$,
-        this.noteThreadQuery.remoteDocChanges$
-      ),
-      () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
-      }
+    // Get the Biblical Terms and Notes
+    [this.biblicalTermQuery, this.noteThreadQuery] = await Promise.all([
+      this.projectService.queryBiblicalTerms(sfProjectId),
+      this.projectService.queryBiblicalTermNoteThreads(sfProjectId)
+    ]);
+
+    // Return a merged observable to monitor changes
+    return merge(
+      this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
+      this.biblicalTermQuery.remoteChanges$,
+      this.biblicalTermQuery.remoteDocChanges$,
+      this.noteThreadQuery.localChanges$,
+      this.noteThreadQuery.ready$.pipe(filter(isReady => isReady)),
+      this.noteThreadQuery.remoteChanges$,
+      this.noteThreadQuery.remoteDocChanges$
     );
   }
 

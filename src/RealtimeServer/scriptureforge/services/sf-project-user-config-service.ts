@@ -1,13 +1,13 @@
+import { MigrationConstructor } from '../../common/migration';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import {
-  SFProjectUserConfig,
+  SF_PROJECT_USER_CONFIG_INDEX_PATHS,
   SF_PROJECT_USER_CONFIGS_COLLECTION,
-  SF_PROJECT_USER_CONFIG_INDEX_PATHS
+  SFProjectUserConfig
 } from '../models/sf-project-user-config';
 import { SFProjectDataService } from './sf-project-data-service';
-import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';
 
 /**
  * This class manages project-user configuration docs.
@@ -37,14 +37,17 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       selectedChapterNum: {
         bsonType: 'int'
       },
+      selectedBiblicalTermsCategory: {
+        bsonType: 'string'
+      },
+      selectedBiblicalTermsFilter: {
+        bsonType: 'string'
+      },
       isTargetTextRight: {
         bsonType: 'bool'
       },
       confidenceThreshold: {
         bsonType: 'number'
-      },
-      biblicalTermsEnabled: {
-        bsonType: 'bool'
       },
       transliterateBiblicalTerms: {
         bsonType: 'bool'
@@ -111,8 +114,8 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
     additionalProperties: false
   };
 
-  constructor() {
-    super(SF_PROJECT_USER_CONFIG_MIGRATIONS);
+  constructor(sfProjectUserConfigMigrations: MigrationConstructor[]) {
+    super(sfProjectUserConfigMigrations);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {

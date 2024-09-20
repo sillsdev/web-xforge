@@ -62,6 +62,11 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
 
         for (const tabType of editorTabTypes) {
           switch (tabType) {
+            case 'biblical-terms':
+              if (!this.canShowBiblicalTerms(projectDoc)) {
+                continue;
+              }
+              break;
             case 'history':
               if (!this.canShowHistory(projectDoc)) {
                 continue;
@@ -97,6 +102,15 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
 
   private createMenuItem(tabType: EditorTabType): Observable<TabMenuItem> {
     switch (tabType) {
+      case 'biblical-terms':
+        return this.i18n.translate('editor_tabs_menu.biblical_terms_menu_item').pipe(
+          take(1),
+          map(localizedMenuItemText => ({
+            type: 'biblical-terms',
+            svgIcon: 'biblical_terms',
+            text: localizedMenuItemText
+          }))
+        );
       case 'history':
         return this.i18n.translate('editor_tabs_menu.history_menu_item').pipe(
           take(1),
@@ -130,6 +144,10 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
       default:
         throw new Error(`Unknown TabType: ${tabType}`);
     }
+  }
+
+  private canShowBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
+    return projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true;
   }
 
   private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {

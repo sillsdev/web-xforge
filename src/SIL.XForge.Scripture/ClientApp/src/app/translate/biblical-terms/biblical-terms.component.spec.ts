@@ -22,10 +22,11 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -51,7 +52,6 @@ const mockedUserService = mock(UserService);
 describe('BiblicalTermsComponent', () => {
   configureTestingModule(() => ({
     imports: [NoopAnimationsModule, TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    declarations: [BiblicalTermsComponent],
     providers: [
       { provide: I18nService, useMock: mockedI18nService },
       { provide: MatDialog, useMock: mockedMatDialog },
@@ -61,7 +61,7 @@ describe('BiblicalTermsComponent', () => {
   }));
 
   it('should display biblical terms', fakeAsync(() => {
-    const env = new TestEnvironment('project01', 1, 1);
+    const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -70,7 +70,7 @@ describe('BiblicalTermsComponent', () => {
   }));
 
   it('should display biblical terms in the specified language', fakeAsync(() => {
-    const env = new TestEnvironment('project01', 1, 1);
+    const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('fr');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -79,7 +79,7 @@ describe('BiblicalTermsComponent', () => {
   }));
 
   it('should display biblical terms in the default language if the specified language does not exist', fakeAsync(() => {
-    const env = new TestEnvironment('project01', 1, 1);
+    const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('de');
     env.wait();
     expect(I18nService.defaultLocale.canonicalTag).toBe('en');
@@ -89,7 +89,7 @@ describe('BiblicalTermsComponent', () => {
   }));
 
   it('should display biblical terms in the default language if the specified language has blank values', fakeAsync(() => {
-    const env = new TestEnvironment('project01', 1, 1);
+    const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('es');
     env.wait();
     expect(I18nService.defaultLocale.canonicalTag).toBe('en');
@@ -116,8 +116,57 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category03_en');
   }));
 
+  it('should filter biblical terms by category', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    env.component.selectedRangeFilter = 'current_book';
+    env.wait();
+    env.component.selectedCategory = 'category04_en';
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId04');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category04_en');
+    const projectUserConfig = env.getProjectUserConfigDoc('project01', 'user01').data;
+    expect(projectUserConfig?.selectedBiblicalTermsFilter).toBe('current_book');
+    expect(projectUserConfig?.selectedBiblicalTermsCategory).toBe('category04_en');
+  }));
+
+  it('should filter biblical terms by book', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    env.component.selectedRangeFilter = 'current_book';
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(3);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+    expect((env.biblicalTermsTerm[1] as HTMLElement).innerText).toBe('termId04');
+    expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
+    expect((env.biblicalTermsTerm[2] as HTMLElement).innerText).toBe('termId05');
+    expect((env.biblicalTermsCategory[2] as HTMLElement).innerText).toBe('category05_en');
+    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe('current_book');
+  }));
+
+  it('should filter biblical terms by chapter', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    env.component.selectedRangeFilter = 'current_chapter';
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(2);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+    expect((env.biblicalTermsTerm[1] as HTMLElement).innerText).toBe('termId04');
+    expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
+    expect(env.getProjectUserConfigDoc('project01', 'user01').data?.selectedBiblicalTermsFilter).toBe(
+      'current_chapter'
+    );
+  }));
+
   it('should filter biblical terms by verse', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
+    env.component.selectedRangeFilter = 'current_verse';
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -125,8 +174,30 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
   }));
 
+  it('should update the categories when the language changes', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.component.selectedRangeFilter = 'current_verse';
+    env.component.selectedCategory = 'category01_en';
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+    expect(env.component.categories.includes('category01_en')).toBe(true);
+    expect(env.component.categories.includes('category01_fr')).toBe(false);
+
+    env.setLanguage('fr');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_fr');
+    expect(env.component.categories.includes('category01_en')).toBe(false);
+    expect(env.component.categories.includes('category01_fr')).toBe(true);
+    expect(env.component.selectedCategory).toBe('show_all');
+  }));
+
   it('should exclude biblical terms not in the selected verse', fakeAsync(() => {
-    const env = new TestEnvironment('project01', 1, 1, '2');
+    const env = new TestEnvironment('project01', 1, 1, '4');
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(0);
@@ -136,9 +207,11 @@ describe('BiblicalTermsComponent', () => {
     const env = new TestEnvironment('project01', 1, 1, '1-2');
     env.setupProjectData('en');
     env.wait();
-    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.biblicalTermsTerm.length).toBe(2);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+    expect((env.biblicalTermsTerm[1] as HTMLElement).innerText).toBe('termId04');
+    expect((env.biblicalTermsCategory[1] as HTMLElement).innerText).toBe('category04_en');
   }));
 
   it('should show biblical terms for partial verse', fakeAsync(() => {
@@ -148,15 +221,6 @@ describe('BiblicalTermsComponent', () => {
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
-  }));
-
-  it('can use the user project configuration of a different project', fakeAsync(() => {
-    const env = new TestEnvironment('project02', 3, 3, '0', 'project01');
-    env.setupProjectData('en');
-    env.wait();
-    expect(env.biblicalTermsTerm.length).toBe(1);
-    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId03');
-    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category03_en');
   }));
 
   it('should show add if no biblical terms notes', fakeAsync(() => {
@@ -205,6 +269,21 @@ describe('BiblicalTermsComponent', () => {
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect(env.editBiblicalTermIcon.innerText).toBe(BiblicalTermDialogIcon.View);
+  }));
+
+  it('should update the transliterate biblical terms setting', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.component.transliterateBiblicalTerms).toBe(false);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+
+    env.component.transliterateBiblicalTerms = !env.component.transliterateBiblicalTerms;
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.component.transliterateBiblicalTerms).toBe(true);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('transliteration01');
   }));
 
   it('can save a new note thread for a biblical term', fakeAsync(() => {
@@ -287,6 +366,22 @@ describe('BiblicalTermsComponent', () => {
     expect(noteThread.status).toEqual(NoteStatus.Resolved);
     expect(noteThread.notes[1].content).toBeUndefined();
   }));
+
+  it('should show the not found message if no messages were found', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '4');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(0);
+    expect(env.noDataRow.length).toBe(1);
+    expect(env.notFoundMessage.length).toBe(1);
+  }));
+
+  it('should not show the not found message when loading the component', fakeAsync(() => {
+    const env = new TestEnvironment(undefined, 1, 1, '4');
+    env.wait();
+    expect(env.noDataRow.length).toBe(1);
+    expect(env.notFoundMessage.length).toBe(0);
+  }));
 });
 
 class TestEnvironment {
@@ -295,16 +390,12 @@ class TestEnvironment {
   readonly mockNoteDialogRef;
   readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  readonly locale$: BehaviorSubject<Locale> = new BehaviorSubject<Locale>({} as Locale);
 
   private openNoteDialogs: MockNoteDialogRef[] = [];
 
-  constructor(
-    projectId: string,
-    bookNum: number,
-    chapter: number,
-    verse: string = '0',
-    configProjectId: string = projectId
-  ) {
+  constructor(projectId: string | undefined, bookNum: number, chapter: number, verse: string = '0') {
+    when(mockedI18nService.locale$).thenReturn(this.locale$);
     when(mockedProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
@@ -336,7 +427,6 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(BiblicalTermsComponent);
     this.component = this.fixture.componentInstance;
-    this.component.configProjectId = configProjectId;
     this.component.projectId = projectId;
     this.component.bookNum = bookNum;
     this.component.chapter = chapter;
@@ -369,6 +459,14 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelectorAll('td.mat-column-id mat-icon')[1] as HTMLElement;
   }
 
+  get noDataRow(): NodeList {
+    return this.fixture.nativeElement.querySelectorAll('.mat-mdc-no-data-row');
+  }
+
+  get notFoundMessage(): NodeList {
+    return this.fixture.nativeElement.querySelectorAll('.not-found');
+  }
+
   getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
     return this.realtimeService.get(BiblicalTermDoc.COLLECTION, getBiblicalTermDocId(projectId, dataId));
   }
@@ -382,9 +480,14 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
   }
 
-  setupProjectData(language: string, noteThreads: boolean = true): void {
-    when(mockedUserService.currentUserId).thenReturn('user01');
+  setLanguage(language: string): void {
     when(mockedI18nService.localeCode).thenReturn(language);
+    this.locale$.next({ canonicalTag: language } as Locale);
+  }
+
+  setupProjectData(language: string, noteThreads: boolean = true): void {
+    this.setLanguage(language);
+    when(mockedUserService.currentUserId).thenReturn('user01');
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
       id: 'project01:dataId01',
       data: {
@@ -459,12 +562,57 @@ class TestEnvironment {
         }
       }
     });
+    this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
+      id: 'project01:dataId04',
+      data: {
+        projectRef: 'project01',
+        ownerRef: 'user01',
+        dataId: 'dataId04',
+        termId: 'termId04',
+        transliteration: 'transliteration04',
+        renderings: ['rendering04'],
+        description: 'description04',
+        language: 'language04',
+        links: ['link04'],
+        references: [new VerseRef(1, 1, 2).BBBCCCVVV],
+        definitions: {
+          en: {
+            categories: ['category04_en'],
+            domains: ['domain04_en'],
+            gloss: 'gloss04_en',
+            notes: 'notes04_en'
+          }
+        }
+      }
+    });
+    this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
+      id: 'project01:dataId05',
+      data: {
+        projectRef: 'project01',
+        ownerRef: 'user01',
+        dataId: 'dataId05',
+        termId: 'termId05',
+        transliteration: 'transliteration05',
+        renderings: ['rendering05'],
+        description: 'description05',
+        language: 'language05',
+        links: ['link05'],
+        references: [new VerseRef(1, 2, 1).BBBCCCVVV],
+        definitions: {
+          en: {
+            categories: ['category05_en'],
+            domains: ['domain05_en'],
+            gloss: 'gloss05_en',
+            notes: 'notes05_en'
+          }
+        }
+      }
+    });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: 'project01:user01',
       data: createTestProjectUserConfig({
         projectRef: 'project01',
         ownerRef: 'user01',
-        biblicalTermsEnabled: true,
         translationSuggestionsEnabled: false,
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
@@ -476,7 +624,6 @@ class TestEnvironment {
       data: createTestProjectUserConfig({
         projectRef: 'project02',
         ownerRef: 'user01',
-        biblicalTermsEnabled: true,
         transliterateBiblicalTerms: true,
         translationSuggestionsEnabled: false,
         questionRefsRead: ['question01'],
@@ -554,6 +701,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
+    tick();
   }
 
   private getNewBiblicalTermNote(threadId: string, dataId: string, ownerRef: string): Note {

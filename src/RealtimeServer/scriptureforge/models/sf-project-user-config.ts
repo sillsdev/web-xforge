@@ -1,4 +1,4 @@
-import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
 import { EditorTabPersistData } from './editor-tab-persist-data';
 
 export const SF_PROJECT_USER_CONFIGS_COLLECTION = 'sf_project_user_configs';
@@ -13,9 +13,10 @@ export interface SFProjectUserConfig extends ProjectData {
   selectedQuestionRef?: string;
   selectedBookNum?: number;
   selectedChapterNum?: number;
+  selectedBiblicalTermsCategory?: string;
+  selectedBiblicalTermsFilter?: string;
   isTargetTextRight: boolean;
   confidenceThreshold: number;
-  biblicalTermsEnabled: boolean;
   transliterateBiblicalTerms: boolean;
   translationSuggestionsEnabled: boolean;
   numSuggestions: number;
