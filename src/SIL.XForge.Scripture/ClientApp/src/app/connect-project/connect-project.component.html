@@ -47,8 +47,8 @@
                   <mat-error>{{ t("error_fetching_resources") }}</mat-error>
                 }
                 @if (isBasedOnProjectSet) {
-                  <div fxLayout="row" fxLayoutAlign="start center">
-                    <div fxLayout="column" fxFlex="grow">
+                  <div>
+                    <div class="flex-column">
                       <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
                         {{ t("enable_translation_suggestions") }}
                       </mat-checkbox>
