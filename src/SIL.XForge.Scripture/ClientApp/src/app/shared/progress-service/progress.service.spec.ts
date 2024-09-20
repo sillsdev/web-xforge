@@ -16,7 +16,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ProgressService } from '../../shared/progress-service/progress-service';
+import { ProgressService } from '../../shared/progress-service/progress.service';
 
 const mockSFProjectService = mock(SFProjectService);
 const mockNoticeService = mock(NoticeService);

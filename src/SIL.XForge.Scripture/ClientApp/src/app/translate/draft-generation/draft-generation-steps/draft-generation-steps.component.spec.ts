@@ -17,7 +17,7 @@ import { environment } from '../../../../environments/environment';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { ProgressService, TextProgress } from '../../../shared/progress-service/progress-service';
+import { ProgressService, TextProgress } from '../../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
