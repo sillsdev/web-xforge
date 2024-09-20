@@ -84,6 +84,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { ParatextService } from '../../core/paratext.service';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
@@ -116,6 +117,7 @@ const mockedMatDialog = mock(MatDialog);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedParatextService = mock(ParatextService);
+const mockedPermissionsService = mock(PermissionsService);
 
 class MockComponent {}
 
@@ -170,7 +172,8 @@ describe('EditorComponent', () => {
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: TabFactoryService, useValue: EditorTabFactoryService },
-      { provide: TabMenuService, useValue: EditorTabMenuService }
+      { provide: TabMenuService, useValue: EditorTabMenuService },
+      { provide: PermissionsService, useMock: mockedPermissionsService }
     ]
   }));
 
@@ -3721,12 +3724,26 @@ describe('EditorComponent', () => {
     });
 
     describe('initEditorTabs', () => {
-      it('should add source tab group when source is defined', fakeAsync(() => {
+      it('should add source tab group when source is defined and viewable', fakeAsync(() => {
         const env = new TestEnvironment();
         const projectDoc = env.getProjectDoc('project01');
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         env.wait();
         expect(spyCreateTab).toHaveBeenCalledWith('project-source', {
+          projectId: projectDoc.data?.translateConfig.source?.projectRef,
+          headerText: projectDoc.data?.translateConfig.source?.shortName,
+          tooltip: projectDoc.data?.translateConfig.source?.name
+        });
+        discardPeriodicTasks();
+      }));
+
+      it('should not add source tab group when source is defined but not viewable', fakeAsync(() => {
+        const env = new TestEnvironment();
+        when(mockedPermissionsService.isUserOnProject('project02')).thenResolve(false);
+        const projectDoc = env.getProjectDoc('project01');
+        const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).not.toHaveBeenCalledWith('project-source', {
           projectId: projectDoc.data?.translateConfig.source?.projectRef,
           headerText: projectDoc.data?.translateConfig.source?.shortName,
           tooltip: projectDoc.data?.translateConfig.source?.name
@@ -4217,6 +4234,7 @@ class TestEnvironment {
       of([])
     );
     when(mockedDraftGenerationService.draftExists(anything(), anything(), anything())).thenReturn(of(true));
+    when(mockedPermissionsService.isUserOnProject(anything())).thenResolve(true);
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
 
