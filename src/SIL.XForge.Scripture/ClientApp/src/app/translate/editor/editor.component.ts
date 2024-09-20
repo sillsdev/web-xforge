@@ -615,7 +615,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get writingSystemWarningBanner(): boolean {
     const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
-    const languageCode = writingSystemTag?.split('-')[0] ?? '';
+    /*
+      We only want the beginning part of the language code identifier from Paratext.
+      Standard format is with a hyphen, checking for an underscore in the off
+      chance a SF project has saved the writing system tag with one.
+    */
+    const languageCode = writingSystemTag?.split(/-_/)[0] ?? '';
     const unsupportedLanguageCode = UNSUPPORTED_LANGUAGE_CODES.includes(languageCode);
     return !isGecko() && writingSystemTag != null && unsupportedLanguageCode && this.canEdit;
   }

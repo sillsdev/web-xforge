@@ -275,10 +275,10 @@ describe('EditorComponent', () => {
     expect(env.component.writingSystemWarningBanner).toBe(false);
     expect(env.showWritingSystemWarningBanner).toBeNull();
     expect(env.component.userHasGeneralEditRight).toBe(true);
-    expect(env.component.hasChapterEditPermission).toBe(false); // undefined
+    expect(env.component.hasChapterEditPermission).toBe(false);
     expect(env.component.canEdit).toBe(false);
-    expect(env.component.showNoEditPermissionMessage).toBe(true); //false
-    expect(env.noChapterEditPermissionMessage).not.toBeNull(); // null
+    expect(env.component.showNoEditPermissionMessage).toBe(true);
+    expect(env.noChapterEditPermissionMessage).not.toBeNull();
 
     discardPeriodicTasks();
   }));
