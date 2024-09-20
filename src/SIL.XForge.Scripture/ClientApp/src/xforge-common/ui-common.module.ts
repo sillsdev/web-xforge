@@ -82,61 +82,6 @@ const modules = [
   NgCircleProgressModule
 ];
 
-const appFlexLayoutBreakPoints = [
-  {
-    alias: 'xs',
-    mediaQuery: 'screen and (min-width: 1px) and (max-width: 575px)'
-  },
-  {
-    alias: 'sm',
-    mediaQuery: 'screen and (min-width: 576px) and (max-width: 767px)'
-  },
-  {
-    alias: 'md',
-    mediaQuery: 'screen and (min-width: 768px) and (max-width: 991px)'
-  },
-  {
-    alias: 'lg',
-    mediaQuery: 'screen and (min-width: 992px) and (max-width: 1199px)'
-  },
-  {
-    alias: 'xl',
-    mediaQuery: 'screen and (min-width: 1200px) and (max-width: 5000px)'
-  },
-  {
-    alias: 'lt-sm',
-    mediaQuery: 'screen and (max-width: 575px)'
-  },
-  {
-    alias: 'lt-md',
-    mediaQuery: 'screen and (max-width: 767px)'
-  },
-  {
-    alias: 'lt-lg',
-    mediaQuery: 'screen and (max-width: 991px)'
-  },
-  {
-    alias: 'lt-xl',
-    mediaQuery: 'screen and (max-width: 1199px)'
-  },
-  {
-    alias: 'gt-xs',
-    mediaQuery: 'screen and (min-width: 576px)'
-  },
-  {
-    alias: 'gt-sm',
-    mediaQuery: 'screen and (min-width: 768px)'
-  },
-  {
-    alias: 'gt-md',
-    mediaQuery: 'screen and (min-width: 992px)'
-  },
-  {
-    alias: 'gt-lg',
-    mediaQuery: 'screen and (min-width: 1200px)'
-  }
-];
-
 @NgModule({
   declarations: [BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective, RouterLinkDirective],
   imports: modules,
