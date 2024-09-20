@@ -1,0 +1,17 @@
+<span
+  class="book"
+  [style.--progress]="progressCssValue"
+  [style.--progress-color]="progressColorCssValue"
+  [style.--progress-hover-color]="progressColorHoverCssValue"
+  [style.--progress-bg-color]="progressBgColorCssValue"
+  [style.--progress-hover-bg-color]="progressHoverBgColorCssValue"
+  [style.--progress-direction-degrees]="progressDirectionCssValue"
+  (click)="toggleSelected()"
+  (keypress)="onKeyPress($event)"
+  [matTooltip]="progressDescription"
+  matRipple
+  [matRippleDisabled]="disabled"
+  [tabindex]="disabled ? -1 : 0"
+>
+  <ng-content></ng-content>
+</span>

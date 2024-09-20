@@ -6,6 +6,7 @@ import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom, map } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ToggleBookComponent } from '../../translate/draft-generation/toggle-book/toggle-book.component';
 import { ProgressService } from '../progress-service/progress-service';
 
 export interface BookOption {
@@ -19,7 +20,7 @@ export interface BookOption {
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
   standalone: true,
-  imports: [UICommonModule, MatChipsModule, TranslocoModule],
+  imports: [UICommonModule, MatChipsModule, TranslocoModule, ToggleBookComponent],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent extends SubscriptionDisposable implements OnInit, OnChanges {

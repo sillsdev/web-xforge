@@ -1,0 +1,35 @@
+:host.selected .book {
+  color: white;
+}
+
+.book {
+  display: inline-block;
+  user-select: none;
+  padding: 0 16px;
+  line-height: 32px;
+  border-radius: 1000px;
+  min-width: 5em;
+  text-align: center;
+
+  background-image: linear-gradient(
+    var(--progress-direction-degrees),
+    var(--progress-color) var(--progress),
+    var(--progress-bg-color) var(--progress)
+  );
+}
+
+:host:not(.disabled) .book:hover {
+  background-image: linear-gradient(
+    var(--progress-direction-degrees),
+    var(--progress-hover-color) var(--progress),
+    var(--progress-hover-bg-color) var(--progress)
+  );
+}
+
+:host.disabled:not(.selected) {
+  opacity: 0.7;
+}
+
+:host:not(.disabled) {
+  cursor: pointer;
+}

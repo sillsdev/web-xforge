@@ -32,18 +32,13 @@
   }
   <div class="flex-row">
     @for (book of bookOptions; track book) {
-      <mat-chip-listbox
-        hideSingleSelectionIndicator
-        [selectable]="!readonly"
-        class="book-multi-select"
+      <app-toggle-book
+        [selected]="book.selected"
+        (selectedChanged)="onChipListChange(book)"
         [disabled]="readonly"
-        (change)="onChipListChange(book)"
+        [progress]="book.progressPercentage / 100"
+        >{{ "canon.book_names." + book.bookId | transloco }}</app-toggle-book
       >
-        <mat-chip-option [value]="book" [selected]="book.selected">
-          {{ "canon.book_names." + book.bookId | transloco }}
-          <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
-        </mat-chip-option>
-      </mat-chip-listbox>
     }
   </div>
 </ng-container>
