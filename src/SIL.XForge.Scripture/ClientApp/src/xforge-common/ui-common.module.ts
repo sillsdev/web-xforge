@@ -1,6 +1,5 @@
 import { BidiModule } from '@angular/cdk/bidi';
 import { ModuleWithProviders, NgModule } from '@angular/core';
-import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -45,7 +44,6 @@ import { ScrollIntoViewDirective } from './scroll-into-view';
 
 const modules = [
   DonutChartModule,
-  FlexLayoutModule,
   FormsModule,
   BidiModule,
   MatAutocompleteModule,
@@ -144,7 +142,6 @@ const appFlexLayoutBreakPoints = [
   imports: modules,
   exports: [...modules, BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective, RouterLinkDirective],
   providers: [
-    { provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true },
     {
       provide: MatPaginatorIntl,
       useClass: Paginator,
