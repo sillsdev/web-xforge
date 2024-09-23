@@ -34,7 +34,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
     }
 
     combineLatest([
-      this.editorReadyService.getEditorReadyState(this.editor).pipe(filter(loaded => loaded)),
+      this.editorReadyService.listenEditorReadyState(this.editor).pipe(filter(loaded => loaded)),
       fromEvent(window, 'resize').pipe(debounceTime(200), startWith(undefined))
     ])
       .pipe(
