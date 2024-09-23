@@ -1,19 +1,8 @@
-import { Component, DestroyRef, ElementRef, Input, OnChanges, OnInit, Renderer2, SimpleChanges } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill, { BoundsStatic } from 'quill';
-import {
-  BehaviorSubject,
-  NEVER,
-  Observable,
-  combineLatest,
-  filter,
-  fromEvent,
-  iif,
-  map,
-  startWith,
-  switchMap,
-  tap
-} from 'rxjs';
+import { EMPTY, combineLatest, debounceTime, filter, fromEvent, iif, map, startWith, switchMap, tap } from 'rxjs';
+import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -22,18 +11,10 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
   templateUrl: './lynx-insight-action-prompt.component.html',
   styleUrl: './lynx-insight-action-prompt.component.scss'
 })
-export class LynxInsightActionPromptComponent implements OnChanges, OnInit {
+export class LynxInsightActionPromptComponent implements OnInit {
   @Input() editor?: Quill;
 
   currentInsight?: LynxInsight | undefined;
-
-  private editorLoaded$ = new BehaviorSubject<boolean>(false);
-  private currentInsight$: Observable<LynxInsight | undefined> = this.editorLoaded$.pipe(
-    filter(loaded => loaded),
-    switchMap(() => this.editorInsightState.filteredChapterInsights$),
-    map(insights => this.getPromptInsight(insights)),
-    tap(insight => (this.currentInsight = insight))
-  );
 
   // Adjust to move prompt up so less text is hidden
   private yOffsetAdjustment = -9; // TODO: Derive from 'line-height'?
@@ -43,24 +24,28 @@ export class LynxInsightActionPromptComponent implements OnChanges, OnInit {
     private readonly destroyRef: DestroyRef,
     private readonly renderer: Renderer2,
     private readonly el: ElementRef,
-    private readonly editorInsightState: LynxInsightStateService
+    private readonly editorInsightState: LynxInsightStateService,
+    private readonly editorReadyService: EditorReadyService
     // private readonly overlayService: LynxInsightRenderService
   ) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.editor?.currentValue?.scrollingContainer != null) {
-      this.editorLoaded$.next(true);
-    }
-  }
-
   ngOnInit(): void {
+    if (this.editor == null) {
+      return;
+    }
+
     combineLatest([
-      this.currentInsight$,
-      fromEvent(window, 'resize').pipe(startWith(undefined)),
+      this.editorReadyService.getEditorReadyState(this.editor).pipe(
+        filter(loaded => loaded),
+        switchMap(() => this.editorInsightState.filteredChapterInsights$),
+        map(insights => this.getPromptInsight(insights)),
+        tap(insight => (this.currentInsight = insight))
+      ),
+      fromEvent(window, 'resize').pipe(debounceTime(200), startWith(undefined)),
       iif(
         () => this.editor?.scrollingContainer != null,
-        fromEvent(this.editor?.scrollingContainer!, 'scroll').pipe(startWith(undefined)),
-        NEVER
+        fromEvent(this.editor.scrollingContainer, 'scroll').pipe(startWith(undefined)),
+        EMPTY
       )
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
