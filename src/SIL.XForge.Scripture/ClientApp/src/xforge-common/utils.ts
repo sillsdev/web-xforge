@@ -66,6 +66,22 @@ export function isGecko(): boolean {
   return getBrowserEngine() === 'gecko';
 }
 
+export function audioRecordingMimeType(): string {
+  // MediaRecorder.isTypeSupported('audio/webm') will erroneously return true on Firefox,
+  // and so we must use browser sniffing in this case.
+  if (isGecko()) {
+    // If OGG is not used on Firefox, recording does not work correctly.
+    // See https://github.com/muaz-khan/RecordRTC/issues/166#issuecomment-242942400
+    return 'audio/ogg';
+  } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+    // This is the default format for Chromium based browsers
+    return 'audio/webm';
+  } else {
+    // Safari on iOS/macOS does not support audio/webm
+    return 'audio/mp4';
+  }
+}
+
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
 
