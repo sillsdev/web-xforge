@@ -16,15 +16,15 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { AudioPlayer } from '../audio/audio-player';
 import { createMockMediaStream } from '../test-utils';
 import {
-  AudioAttachment,
   AudioRecorderDialogComponent,
-  AudioRecorderDialogData
+  AudioRecorderDialogData,
+  AudioRecorderDialogResult
 } from './audio-recorder-dialog.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -113,6 +113,7 @@ describe('AudioRecorderDialogComponent', () => {
   it('should show browser unsupported dialog', async () => {
     const env = new TestEnvironment();
     env.component.mediaDevicesUnsupported = true;
+    expect(env.recordButton).not.toBeNull();
     env.clickButton(env.recordButton);
     await env.waitForRecorder(100);
     verify(mockedDialog.openMatDialog(SupportedBrowsersDialogComponent, anything())).once();
@@ -120,7 +121,6 @@ describe('AudioRecorderDialogComponent', () => {
     env.clickButton(env.recordButton);
     await env.waitForRecorder(100);
     verify(mockedDialog.openMatDialog(SupportedBrowsersDialogComponent, anything())).once();
-    expect().nothing();
   });
 
   it('return recorded audio on save', async () => {
@@ -130,11 +130,11 @@ describe('AudioRecorderDialogComponent', () => {
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
 
-    const promiseForResult: Promise<AudioAttachment> = firstValueFrom(env.dialogRef.afterClosed());
+    const promiseForResult: Promise<AudioRecorderDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
     env.clickButton(env.saveRecordingButton);
-    const result: AudioAttachment = await promiseForResult;
-    expect(result.status).toEqual('processed');
-    expect(result.url).toContain('blob:');
+    const result: AudioRecorderDialogResult = await promiseForResult;
+    expect(result.audio.status).toEqual('processed');
+    expect(result.audio.url).toContain('blob:');
   });
 });
 

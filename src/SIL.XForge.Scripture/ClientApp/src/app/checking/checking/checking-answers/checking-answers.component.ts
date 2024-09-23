@@ -1,14 +1,15 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subscription } from 'rxjs';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { VerseRefData, fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -23,6 +24,11 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../../core/sf-project.service';
+import {
+  AudioRecorderDialogComponent,
+  AudioRecorderDialogData,
+  AudioRecorderDialogResult
+} from '../../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import {
   TextChooserDialogComponent,
   TextChooserDialogData,
@@ -381,6 +387,28 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return this.fileSources.get(url);
     }
     return undefined;
+  }
+
+  /** Opens the audio recorder dialog and saves the recorded audio for the current question. */
+  async recordDialog(): Promise<void> {
+    if (this.questionDoc?.data == null) return;
+    const dialogRef: MatDialogRef<AudioRecorderDialogComponent, AudioRecorderDialogResult> =
+      this.dialogService.openMatDialog(AudioRecorderDialogComponent, {
+        data: { countdown: true } as AudioRecorderDialogData
+      });
+
+    const result: AudioRecorderDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
+    if (result?.audio.fileName != null && result.audio.blob != null) {
+      const urlResult: string | undefined = await this.questionDoc.uploadFile(
+        FileType.Audio,
+        this.questionDoc.data.dataId,
+        result.audio.blob,
+        result.audio.fileName
+      );
+      if (urlResult != null) {
+        this.questionDoc.submitJson0Op(op => op.set(q => q.audioUrl, urlResult));
+      }
+    }
   }
 
   startRecording(): void {

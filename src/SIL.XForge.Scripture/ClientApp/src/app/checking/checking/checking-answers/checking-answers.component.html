@@ -6,6 +6,17 @@
         @if (canEditQuestion) {
           <div class="question-footer">
             <div class="actions">
+              @if (questionDoc?.data?.audioUrl == null) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="recordDialog()"
+                  class="record-question-button"
+                  [matTooltip]="t('record_question')"
+                >
+                  <mat-icon>mic</mat-icon>
+                </button>
+              }
               <button
                 mat-icon-button
                 type="button"
@@ -27,17 +38,16 @@
             </div>
           </div>
         }
-        @if (!answerFormVisible) {
-          <div class="actions">
-            @if (currentUserTotalAnswers === 0 && canAddAnswer) {
-              <button mat-flat-button color="primary" (click)="showAnswerForm()" id="add-answer">
-                {{ t("add_answer") }}
-              </button>
-            }
-          </div>
-        }
       </div>
-      @if (answerFormVisible) {
+      @if (!answerFormVisible) {
+        <div class="actions">
+          @if (currentUserTotalAnswers === 0 && canAddAnswer) {
+            <button mat-flat-button color="primary" (click)="showAnswerForm()" id="add-answer">
+              {{ t("add_answer") }}
+            </button>
+          }
+        </div>
+      } @else {
         <div>
           <form autocomplete="off" id="answer-form" appScrollIntoView>
             <app-text-and-audio

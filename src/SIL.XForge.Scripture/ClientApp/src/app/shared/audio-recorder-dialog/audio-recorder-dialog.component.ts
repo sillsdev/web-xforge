@@ -30,6 +30,10 @@ export interface AudioRecorderDialogData {
   audio?: AudioAttachment;
 }
 
+export interface AudioRecorderDialogResult {
+  audio: AudioAttachment;
+}
+
 @Component({
   standalone: true,
   selector: 'app-audio-recorder-dialog',
@@ -142,7 +146,7 @@ export class AudioRecorderDialogComponent
     if (this.audio.status !== 'processed') {
       return;
     }
-    this.dialogRef.close(this.audio);
+    this.dialogRef.close({ audio: this.audio });
   }
 
   startCountdown(): void {
@@ -150,7 +154,7 @@ export class AudioRecorderDialogComponent
     const seconds = 3;
     const countdown$ = timer(0, 1000).pipe(
       take(seconds + 1),
-      map(countown => seconds - countown)
+      map(countdown => seconds - countdown)
     );
 
     countdown$.subscribe({
