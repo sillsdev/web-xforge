@@ -297,6 +297,10 @@
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },
+  "diagnostic-dialog": {
+    "close": "Close",
+    "diagnostic_info": "Diagnostic Information"
+  },
   "edit_name_dialog": {
     "cancel": "Cancel",
     "confirm_name": "Confirm the name that other people will see when you post answers and comments",
