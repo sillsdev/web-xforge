@@ -38,6 +38,7 @@ import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-not
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+import { DiagnosticDialogComponent } from './diagnostic-dialog/diagnostic-dialog.component';
 
 @NgModule({
   declarations: [
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     NavigationComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
+    DiagnosticDialogComponent,
     ProjectComponent,
     SettingsComponent,
     MyProjectsComponent,
