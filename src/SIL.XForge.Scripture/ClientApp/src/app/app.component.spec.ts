@@ -665,6 +665,7 @@ class TestEnvironment {
     when(mockedFeatureFlagService.showFeatureFlags).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.showDiagnosticOverlay).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
     when(mockedPwaService.canInstall$).thenReturn(this.canInstall$);
