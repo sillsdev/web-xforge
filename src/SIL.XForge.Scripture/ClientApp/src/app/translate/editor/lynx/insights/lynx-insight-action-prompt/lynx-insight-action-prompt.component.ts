@@ -35,7 +35,7 @@ export class LynxInsightActionPromptComponent implements OnInit {
     }
 
     combineLatest([
-      this.editorReadyService.getEditorReadyState(this.editor).pipe(
+      this.editorReadyService.listenEditorReadyState(this.editor).pipe(
         filter(loaded => loaded),
         switchMap(() => this.editorInsightState.filteredChapterInsights$),
         map(insights => this.getPromptInsight(insights)),

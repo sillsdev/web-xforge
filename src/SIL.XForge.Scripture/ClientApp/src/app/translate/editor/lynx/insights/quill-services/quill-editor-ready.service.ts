@@ -10,7 +10,7 @@ export class QuillEditorReadyService implements EditorReadyService {
   // Arbitrary event to ensure 'ready' is checked in case editor changes have already fired
   private readonly initialEvent = 'initial';
 
-  getEditorReadyState(editor: Quill): Observable<boolean> {
+  listenEditorReadyState(editor: Quill): Observable<boolean> {
     return fromEvent(editor, 'editor-change').pipe(
       startWith([this.initialEvent]),
       filter(([event]: any) => event === 'text-change' || event === this.initialEvent),
