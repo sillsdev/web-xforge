@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
 
@@ -15,7 +16,16 @@ public class RealtimeServer : IRealtimeServer
     public RealtimeServer(INodeJSService nodeJSService)
     {
         _nodeJSService = nodeJSService;
-        _modulePath = Path.Combine("RealtimeServer", "lib", "cjs", "common", "index");
+        if (Product.RunningInContainer)
+        {
+            // Path to realtime server index file in the realtimeserver docker container.
+            _modulePath = Path.Combine("/app", "lib", "cjs", "common", "index.js");
+        }
+        else
+        {
+            string assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
+            _modulePath = Path.Combine(assemblyDirectory, "RealtimeServer", "lib", "cjs", "common", "index.js");
+        }
     }
 
     public void Start(object options)

@@ -17,7 +17,7 @@ public class ExistingNodeJSProcess : INodeJSProcess
 
             // Code to be executed after the delay
             messageReceivedHandler.Invoke(
-                "[Jering.Javascript.NodeJS: HttpVersion - HTTP/1.1 Listening on IP - 127.0.0.1 Port - 5002]"
+                "[Jering.Javascript.NodeJS: HttpVersion - HTTP/1.1 Listening on IP - realtimeserver Port - 5002]"
             );
         });
 
