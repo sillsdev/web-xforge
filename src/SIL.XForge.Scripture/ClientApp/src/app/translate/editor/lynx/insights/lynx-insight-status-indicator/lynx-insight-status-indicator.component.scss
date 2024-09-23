@@ -4,7 +4,7 @@
   position: absolute;
   z-index: 1;
   inset-inline-end: calc(
-    2px + var(--editor-scrollbar-width, 0px)
+    2px + var(--lynx-scrollbar-width, 0px)
   ); // Adjust for scrollbar width (css var set in component)
   top: 0;
   display: flex;
