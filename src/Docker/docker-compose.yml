@@ -2,6 +2,12 @@ services:
   db-xforge:
     image: mongo:5.0
 
+  realtimeserver:
+    image: ${DOCKER_REGISTRY-}sillsdev/realtimeserver
+    build:
+      context: ..
+      dockerfile: ./RealtimeServer/Dockerfile
+
   web-xforge:
     image: ${DOCKER_REGISTRY-}sillsdev/web-xforge
     build:
