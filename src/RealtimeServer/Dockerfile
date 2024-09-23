@@ -35,6 +35,9 @@ EXPOSE 9230
 FROM base AS final
 WORKDIR /app
 ARG MIGRATOR_ENVIRONMENT
+LABEL org.opencontainers.image.source=https://github.com/sillsdev/web-xforge
+LABEL org.opencontainers.image.description="Scripture Forge Realtime Server"
+LABEL org.opencontainers.image.licenses=MIT
 COPY ../../SIL.XForge.Scripture/appsettings.json .
 COPY ../../SIL.XForge.Scripture/appsettings.${MIGRATOR_ENVIRONMENT}.json .
 COPY ../RealtimeServer/start.sh ./start.sh
