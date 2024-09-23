@@ -150,7 +150,6 @@ describe('EditorTabMenuService', () => {
   it('should get "biblical terms" menu item', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
-    env.setLastCompletedBuildExists(false);
     service['canShowBiblicalTerms'] = () => true;
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
