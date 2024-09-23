@@ -313,9 +313,9 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly showDiagnosticDialog: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'ShowDiagnosticDialog',
-    'Display dialog for diagnosing subscribed to docs',
+  readonly showDiagnosticOverlay: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'ShowDiagnosticOverlay',
+    'Display overlay for diagnosing subscribed to docs',
     14,
     this.featureFlagStore
   );
