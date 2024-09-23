@@ -53,18 +53,14 @@ RUN update-ca-certificates \
 RUN apt-get install -y \
     nodejs \
     && rm -rf /var/lib/apt/lists/*
-# Build the Realtime Server
+# Get the Realtime Server files
 COPY ../RealtimeServer/ /src/RealtimeServer/
 WORKDIR /src/RealtimeServer
-RUN npm ci
-# Build the Angular Frontend
+# Get the Angular Frontend files
 COPY ../SIL.XForge.Scripture/locales.json /src/SIL.XForge.Scripture/locales.json
 COPY ../SIL.XForge.Scripture/version.json /src/SIL.XForge.Scripture/version.json
 COPY ../SIL.XForge.Scripture/fonts.json /src/SIL.XForge.Scripture/fonts.json
 COPY ../SIL.XForge.Scripture/ClientApp/ /src/SIL.XForge.Scripture/ClientApp/
-WORKDIR /src/SIL.XForge.Scripture/ClientApp
-RUN npm ci
-RUN npm run build
 # Build the .NET Backend
 COPY ../SIL.XForge/ /src/SIL.XForge/
 COPY ../SIL.XForge.Scripture/ /src/SIL.XForge.Scripture/
