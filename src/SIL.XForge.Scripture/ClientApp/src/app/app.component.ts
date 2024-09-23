@@ -65,7 +65,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private permissionsChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private showDiagnosticOverlay: boolean = false;
 
   constructor(
     private readonly router: Router,

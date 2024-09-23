@@ -46,7 +46,7 @@ export class RealtimeService {
     return this.docs.size;
   }
 
-  get docCollection(): { [key: string]: number } {
+  get docsCountByCollection(): { [key: string]: number } {
     const docCollections: { [key: string]: number } = {};
     this.docs.forEach((value, key) => {
       const collection = key.split(':')[0];

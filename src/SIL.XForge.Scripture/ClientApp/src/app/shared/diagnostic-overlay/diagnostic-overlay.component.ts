@@ -32,20 +32,20 @@ export class DiagnosticOverlayComponent extends SubscriptionDisposable {
     super();
   }
 
-  get showDocCollections(): { [key: string]: number } {
-    return this.realtimeService.docCollection;
+  get docCountsByCollection(): { [key: string]: number } {
+    return this.realtimeService.docsCountByCollection;
   }
 
   get totalDocsCount(): number {
     return this.realtimeService.totalDocCount;
   }
 
-  onToggle(): void {
+  toggle(): void {
     this.isExpanded = !this.isExpanded;
   }
 
-  onClose(): void {
-    this.isOpen = !this.isOpen;
+  close(): void {
+    this.isOpen = false;
     this.dialogService.closeDiagnosticOverlay();
   }
 }
