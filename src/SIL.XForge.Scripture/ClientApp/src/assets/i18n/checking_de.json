@@ -368,7 +368,7 @@
     "dbl_resources": "Ressourcen der digitalen Bibelbibliothek",
     "drafting": "Entwurf erstellen",
     "failed_to_connect_to_pt_server": "Es gab ein Problem bei der Verbindung mit Deinem Projekte über Paratext. Bitte versuche es später noch einmal. Wenn das Problem auch nach mehreren Stunden noch besteht, melde das Problem bitte, um Hilfe zu erhalten.",
-    "failed_to_join_project": "Failed to join the project. Please check your internet connection and try again later.",
+    "failed_to_join_project": "Die Verbindung zum Projekt ist fehlgeschlagen. Bitte überprüfe Deine Internetverbindung und versuche es später wieder.",
     "join": "Beitreten",
     "loading_more_pt_projects": "Zusätzliche Paratext-Projekte laden ...",
     "looking_for_another_project": "Auf der Suche nach einem anderen Projekt?",
