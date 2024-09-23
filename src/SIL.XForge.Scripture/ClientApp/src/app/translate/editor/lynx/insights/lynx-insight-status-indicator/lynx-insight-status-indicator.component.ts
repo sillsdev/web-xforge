@@ -1,17 +1,9 @@
-import {
-  Component,
-  DestroyRef,
-  ElementRef,
-  HostListener,
-  Input,
-  OnChanges,
-  OnInit,
-  SimpleChanges
-} from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
-import { BehaviorSubject, Observable, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
+import { Observable, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxInsightType } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -25,10 +17,9 @@ interface InsightCount {
   templateUrl: './lynx-insight-status-indicator.component.html',
   styleUrl: './lynx-insight-status-indicator.component.scss'
 })
-export class LynxInsightStatusIndicatorComponent implements OnChanges, OnInit {
+export class LynxInsightStatusIndicatorComponent implements OnInit {
   @Input() editor?: Quill;
 
-  private editorLoaded$ = new BehaviorSubject<boolean>(false);
   private insightTypeOrder: LynxInsightType[] = ['info', 'warning', 'error'];
   readonly insightCountsByType$: Observable<InsightCount[]> = this.editorInsightState.filteredInsightCountsByType$.pipe(
     map(counts =>
@@ -41,17 +32,18 @@ export class LynxInsightStatusIndicatorComponent implements OnChanges, OnInit {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly elementRef: ElementRef,
-    private readonly editorInsightState: LynxInsightStateService
+    private readonly editorInsightState: LynxInsightStateService,
+    private readonly editorReadyService: EditorReadyService
   ) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.editor?.currentValue?.scrollingContainer != null) {
-      this.editorLoaded$.next(true);
-    }
-  }
-
   ngOnInit(): void {
-    this.editorLoaded$
+    if (this.editor == null) {
+      return;
+    }
+
+    // TODO: editor will be ready before styles have been applied, so scrollbar may not be present yet
+    this.editorReadyService
+      .getEditorReadyState(this.editor)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         filter(loaded => loaded),
@@ -69,6 +61,6 @@ export class LynxInsightStatusIndicatorComponent implements OnChanges, OnInit {
 
   private updateScrollbarWidth(scrollContainer: HTMLElement): void {
     const scrollbarWidth = scrollContainer.offsetWidth - scrollContainer.clientWidth;
-    this.elementRef.nativeElement.style.setProperty('--editor-scrollbar-width', `${scrollbarWidth}px`);
+    this.elementRef.nativeElement.style.setProperty('--lynx-scrollbar-width', `${scrollbarWidth}px`);
   }
 }
