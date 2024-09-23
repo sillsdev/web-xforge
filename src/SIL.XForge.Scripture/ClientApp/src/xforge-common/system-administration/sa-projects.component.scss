@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/variables';
+@use 'src/breakpoints';
 
 .projects-controls {
   margin: 32px 0;
@@ -14,7 +14,7 @@ table {
 }
 
 .mat-column-tasks {
-  @include media-breakpoint-down(md) {
+  @include breakpoints.media-breakpoint-down(md) {
     display: none;
   }
 }
@@ -30,7 +30,7 @@ table {
 
 .task-label {
   font-size: small;
-  color: darkgray;
+  color: variables.$greyLight;
 }
 
 .small-form-field {

@@ -1,12 +1,10 @@
-@import 'bootstrap/scss/mixins/breakpoints';
-
-@import 'src/variables';
+@use 'src/breakpoints';
 
 form {
   display: flex;
   width: 100%;
   column-gap: 20px;
-  @include media-breakpoint-down(sm) {
+  @include breakpoints.media-breakpoint-down(sm) {
     flex-direction: column;
   }
 }
@@ -25,7 +23,7 @@ form {
 
 #send-btn {
   align-self: center;
-  @include media-breakpoint-down(sm) {
+  @include breakpoints.media-breakpoint-down(sm) {
     align-self: flex-end;
   }
 }

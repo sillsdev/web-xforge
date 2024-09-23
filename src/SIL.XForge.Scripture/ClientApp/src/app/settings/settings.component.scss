@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/variables';
+@use 'src/breakpoints';
 
 .container {
   margin: 0;
@@ -35,7 +35,7 @@
 
     > app-write-status {
       min-width: 24px;
-      @include media-breakpoint-up(sm) {
+      @include breakpoints.media-breakpoint-up(sm) {
         margin-inline-start: 22px;
       }
     }
@@ -61,11 +61,11 @@ mat-hint {
 }
 
 a {
-  color: $blueMedium;
+  color: variables.$blueMedium;
 }
 
 mat-icon {
-  color: $greyLight;
+  color: variables.$greyLight;
   overflow: visible;
 }
 
@@ -78,7 +78,7 @@ mat-icon {
 }
 
 #btn-log-in-settings {
-  background-color: $pt-button-green;
+  background-color: variables.$pt-button-green;
   color: white;
   height: 40px;
 }
