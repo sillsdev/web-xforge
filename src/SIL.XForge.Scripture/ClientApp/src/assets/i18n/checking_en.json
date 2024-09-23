@@ -297,9 +297,11 @@
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },
-  "diagnostic-dialog": {
-    "close": "Close",
-    "diagnostic_info": "Diagnostic Information"
+  "diagnostic-overlay": {
+    "collection": "Collection",
+    "doc_count": "Doc Count",
+    "header": "Developer Diagnostics",
+    "total_docs": "Currently subscribed to {{ totalDocsCount }} documents."
   },
   "edit_name_dialog": {
     "cancel": "Cancel",
