@@ -78,7 +78,8 @@ RUN dotnet publish SIL.XForge.Scripture.csproj -c $configuration -o /app/publish
 
 FROM base AS final
 WORKDIR /app
+LABEL org.opencontainers.image.source=https://github.com/sillsdev/web-xforge
+LABEL org.opencontainers.image.description="Scripture Forge"
+LABEL org.opencontainers.image.licenses=MIT
 COPY --from=publish /app/publish .
 ENTRYPOINT [ "dotnet", "SIL.XForge.Scripture.dll", "--start-ng-serve=none"]
-
-
