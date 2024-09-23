@@ -32,6 +32,7 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
+import { EditorTabGroupType } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
@@ -89,7 +90,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { HttpClient } from '../../machine-api/http-client';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
-import { SFTabsModule, TabFactoryService, TabMenuService } from '../../shared/sf-tab-group';
+import { SFTabsModule, TabFactoryService, TabGroup, TabMenuService } from '../../shared/sf-tab-group';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
@@ -103,6 +104,7 @@ import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-di
 import { SuggestionsComponent } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
+import { EditorTabInfo } from './tabs/editor-tabs.types';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
 const mockedAuthService = mock(AuthService);
@@ -3724,7 +3726,7 @@ describe('EditorComponent', () => {
     });
 
     describe('initEditorTabs', () => {
-      it('should add source tab group when source is defined and viewable', fakeAsync(() => {
+      it('should add source tab when source is defined and viewable', fakeAsync(() => {
         const env = new TestEnvironment();
         const projectDoc = env.getProjectDoc('project01');
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
@@ -3737,7 +3739,7 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
-      it('should not add source tab group when source is defined but not viewable', fakeAsync(() => {
+      it('should not add source tab when source is defined but not viewable', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedPermissionsService.isUserOnProject('project02')).thenResolve(false);
         const projectDoc = env.getProjectDoc('project01');
@@ -3751,7 +3753,7 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
-      it('should not add source tab group when source is undefined', fakeAsync(() => {
+      it('should not add source tab when source is undefined', fakeAsync(() => {
         const env = new TestEnvironment();
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
         delete env.testProjectProfile.translateConfig.source;
@@ -3761,7 +3763,7 @@ describe('EditorComponent', () => {
         discardPeriodicTasks();
       }));
 
-      it('should add target tab group', fakeAsync(() => {
+      it('should add target tab', fakeAsync(() => {
         const env = new TestEnvironment();
         const projectDoc = env.getProjectDoc('project01');
         const spyCreateTab = spyOn(env.tabFactory, 'createTab').and.callThrough();
@@ -3771,6 +3773,19 @@ describe('EditorComponent', () => {
           headerText: projectDoc.data?.shortName,
           tooltip: projectDoc.data?.name
         });
+        discardPeriodicTasks();
+      }));
+
+      it('should add source and target groups', fakeAsync(() => {
+        const env = new TestEnvironment();
+        const spyCreateTab = spyOn(env.component.tabState, 'setTabGroups').and.callThrough();
+        env.wait();
+        expect(spyCreateTab).toHaveBeenCalledWith(
+          jasmine.arrayWithExactContents([
+            jasmine.any(TabGroup<EditorTabGroupType, EditorTabInfo>),
+            jasmine.any(TabGroup<EditorTabGroupType, EditorTabInfo>)
+          ])
+        );
         discardPeriodicTasks();
       }));
 
