@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DiagnosticDialogComponent } from './diagnostic-dialog.component';
+import { DiagnosticDialogComponent } from './diagnostic-overlay.component';
 
 describe('DiagnosticDialogComponent', () => {
   let component: DiagnosticDialogComponent;
