@@ -85,7 +85,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   ) {
     super(noticeService);
     this.subscribe(
-      this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.MD)),
+      this.breakpointObserver.observe(this.breakpointService.width('>', Breakpoint.LG)),
       (value: BreakpointState) => (this.isDrawerPermanent = value.matches)
     );
 

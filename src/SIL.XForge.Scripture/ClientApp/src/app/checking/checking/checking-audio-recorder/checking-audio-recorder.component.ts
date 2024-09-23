@@ -9,7 +9,7 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { isGecko, objectId } from 'xforge-common/utils';
+import { audioRecordingMimeType, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../single-button-audio-player/single-button-audio-player.component';
 
 export interface AudioAttachment {
@@ -97,7 +97,7 @@ export class CheckingAudioRecorderComponent
       return;
     }
 
-    const blob = new Blob(this.recordedChunks, { type: this.mimeType });
+    const blob = new Blob(this.recordedChunks, { type: audioRecordingMimeType() });
     this.audio = {
       url: URL.createObjectURL(blob),
       status: 'processed',
@@ -149,12 +149,6 @@ export class CheckingAudioRecorderComponent
     this._onTouched.emit();
   }
 
-  private get mimeType(): string {
-    // If OGG is not used on Firefox, recording does not work correctly.
-    // See https://github.com/muaz-khan/RecordRTC/issues/166#issuecomment-242942400
-    return isGecko() ? 'audio/ogg' : 'audio/webm';
-  }
-
   private errorCallback(error: any): void {
     console.error(error);
     this.audio = { status: 'denied' };
@@ -174,7 +168,7 @@ export class CheckingAudioRecorderComponent
 
   private successCallback(stream: MediaStream): void {
     const options: MediaRecorderOptions = {
-      mimeType: this.mimeType
+      mimeType: audioRecordingMimeType()
     };
     this.stream = stream;
     this.recordedChunks = [];

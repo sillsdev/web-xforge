@@ -13,7 +13,7 @@ import { CONSOLE } from './browser-globals';
 import { DialogService } from './dialog.service';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
-import { ExceptionHandlingService } from './exception-handling-service';
+import { ExceptionHandlingService } from './exception-handling.service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
