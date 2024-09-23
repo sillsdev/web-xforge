@@ -1,5 +1,4 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/breakpoints';
 
 .users-controls {
   margin: 32px 0;
@@ -20,7 +19,7 @@ table {
 .mat-column-projects {
   word-break: break-word;
 
-  @include media-breakpoint-down(md) {
+  @include breakpoints.media-breakpoint-down(md) {
     display: none;
   }
 }

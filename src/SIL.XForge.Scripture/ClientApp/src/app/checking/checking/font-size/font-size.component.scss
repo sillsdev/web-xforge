@@ -1,5 +1,4 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/breakpoints';
 
 :host {
   > button {
@@ -17,7 +16,7 @@
     min-width: 0;
 
     // Only center menu if screen is wide enough
-    @include media-breakpoint-up(sm) {
+    @include breakpoints.media-breakpoint-up(sm) {
       // If both 'left' and 'right' are specified, 'left' wins when direction is 'ltr'
       // and 'right' wins when direction is 'rtl'.
       // (See https://developer.mozilla.org/en-US/docs/Web/CSS/position#description)
