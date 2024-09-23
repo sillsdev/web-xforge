@@ -43,7 +43,7 @@ export class LynxInsightStatusIndicatorComponent implements OnInit {
 
     // TODO: editor will be ready before styles have been applied, so scrollbar may not be present yet
     this.editorReadyService
-      .getEditorReadyState(this.editor)
+      .listenEditorReadyState(this.editor)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         filter(loaded => loaded),
