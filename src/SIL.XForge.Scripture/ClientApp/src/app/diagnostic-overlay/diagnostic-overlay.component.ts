@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 // import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 // import { startWith, delay, of } from 'rxjs';
 
@@ -13,9 +13,9 @@ export interface DiagnosticDialogData {
 }
 
 @Component({
-  selector: 'app-diagnostic-dialog',
-  templateUrl: './diagnostic-dialog.component.html',
-  styleUrl: './diagnostic-dialog.component.scss'
+  selector: 'app-diagnostic-overlay',
+  templateUrl: './diagnostic-overlay.component.html',
+  styleUrl: './diagnostic-overlay.component.scss'
 })
 export class DiagnosticDialogComponent extends SubscriptionDisposable implements OnInit {
   @Output() toggleOverlay = new EventEmitter<boolean>();
