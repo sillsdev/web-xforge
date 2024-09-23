@@ -34,12 +34,12 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { RealtimeService } from '../xforge-common/realtime.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
-import { RealtimeService } from '../xforge-common/realtime.service';
 
 declare function gtag(...args: any): void;
 
@@ -327,7 +327,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     });
 
-    this.featureFlags.showDiagnosticDialog.enabled$.subscribe(isEnabled => {
+    this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
       this.showDiagnosticOverlay = isEnabled;
       this.isOverlayExpanded$.next(isEnabled);
     });
