@@ -27,7 +27,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
     }
 
     this.editorReadyService
-      .getEditorReadyState(this.editor)
+      .listenEditorReadyState(this.editor)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         switchMap(ready => (ready ? this.insightState.filteredChapterInsights$ : EMPTY))
