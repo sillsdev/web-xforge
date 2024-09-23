@@ -11,6 +11,7 @@ import { MatTreeModule } from '@angular/material/tree';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
 
 import { SF_QUILL_FORMAT_NAMES } from '../../../../shared/text/quill-formats.service';
+import { EditorReadyService } from './base-services/editor-ready.service';
 import { InsightCodePipe } from './insight-code.pipe';
 import { LynxInsightActionPromptComponent } from './lynx-insight-action-prompt/lynx-insight-action-prompt.component';
 import { LynxInsightEditorObjectsComponent } from './lynx-insight-editor-objects/lynx-insight-editor-objects.component';
@@ -22,6 +23,7 @@ import { LynxInsightsPanelHeaderComponent } from './lynx-insights-panel/lynx-ins
 import { LynxInsightsPanelComponent } from './lynx-insights-panel/lynx-insights-panel.component';
 import { lynxInsightBlots } from './quill-services/blots/lynx-insight-blot';
 import { LynxInsightBlotService } from './quill-services/lynx-insight-blot.service';
+import { QuillEditorReadyService } from './quill-services/quill-editor-ready.service';
 
 @NgModule({
   declarations: [
@@ -64,7 +66,8 @@ export class LynxInsightsModule {
           useFactory: (blotService: LynxInsightBlotService) => blotService.registerBlots(lynxInsightBlots),
           deps: [LynxInsightBlotService],
           multi: true
-        }
+        },
+        { provide: EditorReadyService, useClass: QuillEditorReadyService }
       ]
     };
   }
