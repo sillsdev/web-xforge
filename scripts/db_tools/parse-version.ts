@@ -37,8 +37,7 @@ class ParseVersion {
     'Allow Fast Pre-Translation Training',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
     'Allow mixing in an additional training source',
-    'ShowDiagnosticDialog',
-    'Display dialog for diagnosing subscribed to docs'
+    'Display overlay for diagnosing subscribed to docs'
   ];
 
   constructor() {

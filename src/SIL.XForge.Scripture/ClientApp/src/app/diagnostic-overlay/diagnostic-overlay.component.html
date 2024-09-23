@@ -8,17 +8,17 @@
       }
     </button>
     @if (isExpanded) {
-      <h1>Developer Info:</h1>
-      <h3>{{ totalDocsCount }} total docs.</h3>
+      <h1>{{ t("header") }}</h1>
+      <h3>{{ t("total_docs", { totalDocsCount: totalDocsCount }) }}</h3>
       <table class="diagnostic-overlay-table">
         <thead>
           <tr>
-            <th>Collection</th>
-            <th>Value</th>
+            <th>{{ t("collection") }}</th>
+            <th>{{ t("doc_count") }}</th>
           </tr>
         </thead>
         <tbody>
-          @for (docType of docs | keyvalue; track docType.key) {
+          @for (docType of showDocCollections | keyvalue; track docType.key) {
             @if (docType) {
               <tr>
                 <td>{{ docType.key }}</td>

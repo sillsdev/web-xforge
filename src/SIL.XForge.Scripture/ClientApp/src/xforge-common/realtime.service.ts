@@ -49,16 +49,16 @@ export class RealtimeService {
   }
 
   get docCollection(): { [key: string]: number } {
-    const docsMap: { [key: string]: number } = {};
+    const docCollections: { [key: string]: number } = {};
     this.docs.forEach((value, key) => {
       const collection = key.split(':')[0];
-      if (docsMap[collection] != null) {
-        docsMap[collection]++;
+      if (docCollections[collection] != null) {
+        docCollections[collection]++;
       } else {
-        docsMap[collection] = 1;
+        docCollections[collection] = 1;
       }
     });
-    return docsMap;
+    return docCollections;
   }
 
   get<T extends RealtimeDoc>(collection: string, id: string): T {
