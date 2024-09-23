@@ -1,6 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, DestroyRef, Input, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
-import { BehaviorSubject, filter, map, switchMap } from 'rxjs';
+import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
+import { EditorReadyService } from '../base-services/editor-ready.service';
 import { LynxInsight, LynxInsightType } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -15,22 +17,34 @@ interface LynxInsightScrollPosition {
   templateUrl: './lynx-insight-scroll-position-indicator.component.html',
   styleUrl: './lynx-insight-scroll-position-indicator.component.scss'
 })
-export class LynxInsightScrollPositionIndicatorComponent implements OnChanges {
+export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
   @Input() editor?: Quill;
 
-  private editorLoaded$ = new BehaviorSubject<boolean>(false);
-  scrollPositions$ = this.editorLoaded$.pipe(
-    filter(loaded => loaded),
-    switchMap(() => this.editorInsightState.filteredChapterInsights$),
-    map(insights => insights.map(insight => this.getScrollPosition(insight, this.editor!)))
-  );
+  scrollPositions: LynxInsightScrollPosition[] = [];
 
-  constructor(private readonly editorInsightState: LynxInsightStateService) {}
+  constructor(
+    private readonly destroyRef: DestroyRef,
+    private readonly editorInsightState: LynxInsightStateService,
+    private readonly editorReadyService: EditorReadyService
+  ) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.editor?.currentValue?.scrollingContainer != null) {
-      this.editorLoaded$.next(true);
+  ngOnInit(): void {
+    if (this.editor == null) {
+      return;
     }
+
+    combineLatest([
+      this.editorReadyService.getEditorReadyState(this.editor).pipe(filter(loaded => loaded)),
+      fromEvent(window, 'resize').pipe(debounceTime(200), startWith(undefined))
+    ])
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        switchMap(() => this.editorInsightState.filteredChapterInsights$),
+        map(insights => insights.map(insight => this.getScrollPosition(insight, this.editor!)))
+      )
+      .subscribe(scrollPositions => {
+        this.scrollPositions = scrollPositions;
+      });
   }
 
   /**
