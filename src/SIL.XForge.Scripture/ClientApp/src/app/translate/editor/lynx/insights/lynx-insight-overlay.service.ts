@@ -20,8 +20,17 @@ export class LynxInsightOverlayService {
   }
 
   close(insightId: string): void {
-    this.openRefs.get(insightId)?.dispose();
-    this.openRefs.delete(insightId);
+    if (this.openRefs.size > 0) {
+      this.openRefs.get(insightId)?.dispose();
+      this.openRefs.delete(insightId);
+    }
+  }
+
+  closeAll(): void {
+    this.openRefs.forEach(overlayRef => {
+      overlayRef.dispose();
+    });
+    this.openRefs.clear();
   }
 
   private getConfig(origin: HTMLElement): OverlayConfig {
