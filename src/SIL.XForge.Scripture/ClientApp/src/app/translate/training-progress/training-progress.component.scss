@@ -17,7 +17,7 @@
     padding: 2px;
     padding-inline-start: 10px;
     display: flex;
-    place-content: space-between;
+    justify-content: space-between;
     align-items: center;
 
     > div {
@@ -30,7 +30,7 @@
     padding: 10px;
     height: 44px;
     display: flex;
-    place-content: space-between;
+    justify-content: space-between;
     column-gap: 5px;
   }
 }

@@ -38,7 +38,7 @@
   </div>
 
   @if (canEditQuestion) {
-    <div class="flex-column" id="text-with-questions-list">
+    <div id="text-with-questions-list">
       @if (!isOnline && (canCreateScriptureAudio || canDeleteScriptureAudio)) {
         <app-notice id="warning-some-actions-unavailable-offline" icon="cloud_off" type="warning">{{
           t("some_actions_unavailable_offline")
@@ -297,7 +297,7 @@
   }
 
   @if (canEditQuestion) {
-    <div class="flex-column" id="text-with-archived-questions">
+    <div id="text-with-archived-questions">
       @for (text of texts; track text) {
         @if (bookQuestionCount(text, true) > 0) {
           <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
