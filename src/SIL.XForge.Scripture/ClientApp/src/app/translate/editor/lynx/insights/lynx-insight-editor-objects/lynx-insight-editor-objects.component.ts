@@ -3,8 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
 import { filter, switchMap, tap } from 'rxjs';
 import { EditorReadyService } from '../base-services/editor-ready.service';
+import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
-import { LynxInsightRenderService } from '../lynx-insight-render.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 @Component({
@@ -18,7 +18,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly insightState: LynxInsightStateService,
-    private readonly insightRenderService: LynxInsightRenderService,
+    private readonly insightRenderService: InsightRenderService,
     private readonly editorReadyService: EditorReadyService,
     private readonly overlayService: LynxInsightOverlayService
   ) {}
@@ -41,10 +41,7 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
         switchMap(() => this.insightState.filteredChapterInsights$)
       )
       .subscribe(chapterInsights => {
-        // Ensure text is more than just '\n'
-        if (this.editor != null && this.editor.getLength() > 1) {
-          this.insightRenderService.render(chapterInsights, this.editor);
-        }
+        this.insightRenderService.render(chapterInsights, this.editor);
       });
   }
 }

@@ -1,23 +1,27 @@
 import { Injectable } from '@angular/core';
 import Quill, { StringMap } from 'quill';
-import { LynxInsight, LynxInsightTypes } from './lynx-insight';
-import { LynxInsightOverlayService } from './lynx-insight-overlay.service';
+import { InsightRenderService } from '../base-services/insight-render.service';
+import { LynxInsight, LynxInsightTypes } from '../lynx-insight';
+import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class LynxInsightRenderService {
+export class QuillInsightRenderService extends InsightRenderService {
   readonly prefix = 'lynx-insight';
   readonly editorAttentionClass = `${this.prefix}-attention`;
 
-  constructor(private readonly overlayService: LynxInsightOverlayService) {}
+  constructor(private readonly overlayService: LynxInsightOverlayService) {
+    super();
+  }
 
   // TODO: Render just display state changes if insight ids haven't changed?
 
   render(insights: LynxInsight[], editor: Quill | undefined): void {
     console.log('*** Render insights', insights);
 
-    if (editor == null) {
+    // Ensure text is more than just '\n'
+    if (editor == null || editor.getLength() <= 1) {
       return;
     }
 
