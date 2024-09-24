@@ -46,4 +46,4 @@ COPY ../RealtimeServer/start.sh ./start.sh
 RUN chmod +x /app/start.sh
 COPY --from=jering-build /src .
 COPY --from=build /src .
-ENTRYPOINT [ "/app/start.sh" ]
+ENTRYPOINT [ "sh", "/app/start.sh" ]
