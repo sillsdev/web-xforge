@@ -21,9 +21,9 @@ services:
       - MIGRATOR_ENVIRONMENT=Development
       - MIGRATOR_VERSION=9.9.9
     ports:
-      - "5002:5002"
-      - "5003:5003"
-      - "9320:9320"
+      # We do not expose 5002, as that port is for RPC communication between web-xforge and realtimeserver
+      - "5003:5003" # ShareDB
+      - "9230:9230" # Node Debugging
 
   web-xforge:
     container_name: web-xforge
@@ -38,7 +38,8 @@ services:
       - Realtime__UseExistingRealtimeServer=true
       - urls=http://*:5000 # Docker apps cannot bind to localhost, so we bind to all IP addresses
     ports:
-      - "5000:5000"
+      - "5000:5000" # HTTP Server
+      - "4200:4200" # Angular CLI
     depends_on:
       - db-xforge
       - realtimeserver
