@@ -9,48 +9,31 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { ParatextService } from '../core/paratext.service';
 import { ServalAdministrationService } from './serval-administration.service';
 
 class Row {
   constructor(public readonly projectDoc: SFProjectProfileDoc) {}
 
   get alternateSource(): string {
-    return this.projectDoc.data?.translateConfig.draftConfig.alternateSource == null
+    const alternateDraftingSource = this.projectDoc.data?.translateConfig.draftConfig.alternateSource;
+    return alternateDraftingSource == null
       ? 'None'
-      : this.projectDoc.data.translateConfig.draftConfig.alternateSource.shortName +
-          ' - ' +
-          this.projectDoc.data.translateConfig.draftConfig.alternateSource.name;
+      : alternateDraftingSource.shortName + ' - ' + alternateDraftingSource.name;
   }
 
   get alternateSourceId(): string | undefined {
-    const paratextId: string | undefined =
-      this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.paratextId;
-
-    if (paratextId != null && !ParatextService.isResource(paratextId)) {
-      return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
-    } else {
-      return undefined;
-    }
+    return this.projectDoc.data?.translateConfig.draftConfig.alternateSource?.projectRef;
   }
 
   get alternateTrainingSource(): string {
-    return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource == null
+    const alternateTrainingSource = this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource;
+    return alternateTrainingSource == null
       ? 'None'
-      : this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSource.shortName +
-          ' - ' +
-          this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSource.name;
+      : alternateTrainingSource.shortName + ' - ' + alternateTrainingSource.name;
   }
 
   get alternateTrainingSourceId(): string | undefined {
-    const paratextId: string | undefined =
-      this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.paratextId;
-
-    if (paratextId != null && !ParatextService.isResource(paratextId)) {
-      return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
-    } else {
-      return undefined;
-    }
+    return this.projectDoc.data?.translateConfig.draftConfig.alternateTrainingSource?.projectRef;
   }
 
   get id(): string {
@@ -66,21 +49,12 @@ class Row {
   }
 
   get source(): string {
-    return this.projectDoc.data?.translateConfig.source == null
-      ? 'None'
-      : this.projectDoc.data.translateConfig.source.shortName +
-          ' - ' +
-          this.projectDoc.data.translateConfig.source.name;
+    const source = this.projectDoc.data?.translateConfig.source;
+    return source == null ? 'None' : source.shortName + ' - ' + source.name;
   }
 
   get sourceId(): string | undefined {
-    const paratextId: string | undefined = this.projectDoc.data?.translateConfig.source?.paratextId;
-
-    if (paratextId != null && !ParatextService.isResource(paratextId)) {
-      return this.projectDoc.data?.translateConfig.source?.projectRef;
-    } else {
-      return undefined;
-    }
+    return this.projectDoc.data?.translateConfig.source?.projectRef;
   }
 }
 
@@ -107,8 +81,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly servalAdministrationService: ServalAdministrationService,
-    private readonly paratextService: ParatextService
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
