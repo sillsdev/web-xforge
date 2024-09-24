@@ -49,10 +49,6 @@
     "old_testament": "OT",
     "select": "Select"
   },
-  "chapter_nav": {
-    "previous_chapter": "Previous chapter",
-    "next_chapter": "Next chapter"
-  },
   "checking": {
     "add_question": "Add question"
   },
@@ -429,7 +425,6 @@
     "roles": "Roles",
     "roles_from_pt_cannot_be_changed": "Roles can only be changed in Paratext",
     "save": "Save",
-    "sf_community_checker": "Community Checker",
     "sf_commenter": "Commenter",
     "sf_observer": "Viewer",
     "user_pt": "Paratext User",
@@ -440,7 +435,6 @@
     "pt_consultant": "View translation - view questions & answers - add notes",
     "pt_observer": "View translation - view questions & answers - view notes",
     "pt_translator": "Edit translations - view questions - add answers - add notes - sync with Paratext",
-    "sf_community_checker": "Answer questions - comment on answers",
     "sf_commenter": "View translation - add notes",
     "sf_observer": "View translation - view notes"
   },
