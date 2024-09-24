@@ -1,8 +1,9 @@
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
-import { EMPTY, switchMap } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs';
 import { EditorReadyService } from '../base-services/editor-ready.service';
+import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { LynxInsightRenderService } from '../lynx-insight-render.service';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
@@ -18,7 +19,8 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
     private readonly destroyRef: DestroyRef,
     private readonly insightState: LynxInsightStateService,
     private readonly insightRenderService: LynxInsightRenderService,
-    private readonly editorReadyService: EditorReadyService
+    private readonly editorReadyService: EditorReadyService,
+    private readonly overlayService: LynxInsightOverlayService
   ) {}
 
   ngOnInit(): void {
@@ -30,12 +32,18 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
       .listenEditorReadyState(this.editor)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        switchMap(ready => (ready ? this.insightState.filteredChapterInsights$ : EMPTY))
+        filter(ready => ready),
+        tap(() => {
+          // When editor becomes ready, close all action overlays,
+          // including those for insights from other books/chapters
+          this.overlayService.closeAll();
+        }),
+        switchMap(() => this.insightState.filteredChapterInsights$)
       )
-      .subscribe(insights => {
+      .subscribe(chapterInsights => {
         // Ensure text is more than just '\n'
         if (this.editor != null && this.editor.getLength() > 1) {
-          this.insightRenderService.render(insights, this.editor);
+          this.insightRenderService.render(chapterInsights, this.editor);
         }
       });
   }
