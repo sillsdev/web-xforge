@@ -48,15 +48,13 @@
                 }
                 @if (isBasedOnProjectSet) {
                   <div>
-                    <div class="flex-column">
-                      <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                        {{ t("enable_translation_suggestions") }}
-                      </mat-checkbox>
-                      <p
-                        class="helper-text"
-                        [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                      ></p>
-                    </div>
+                    <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
+                      {{ t("enable_translation_suggestions") }}
+                    </mat-checkbox>
+                    <p
+                      class="helper-text"
+                      [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
+                    ></p>
                   </div>
                 }
               </mat-card-content>

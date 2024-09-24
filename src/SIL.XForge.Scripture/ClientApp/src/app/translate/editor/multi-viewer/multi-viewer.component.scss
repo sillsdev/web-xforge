@@ -24,7 +24,7 @@ app-avatar {
   cursor: pointer;
 }
 
-::ng-deep .other-viewer {
+.other-viewer ::ng-deep {
   > span {
     display: flex;
     align-items: center;
