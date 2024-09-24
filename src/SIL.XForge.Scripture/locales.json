@@ -78,6 +78,12 @@
     "production": true
   },
   {
+    "localName": "नेपाली",
+    "englishName": "Nepali",
+    "tags": ["npi", "npi-NP"],
+    "production": true
+  },
+  {
     "localName": "ພາສາລາວ",
     "englishName": "Lao",
     "tags": ["lo", "lo-LA"],
@@ -91,9 +97,9 @@
     "helps": "de"
   },
   {
-    "localName": "नेपाली",
-    "englishName": "Nepali",
-    "tags": ["npi", "npi-NP"],
+    "localName": "ខ្មែរ",
+    "englishName": "Khmer",
+    "tags": ["km", "km-KH"],
     "production": true
   }
 ]
