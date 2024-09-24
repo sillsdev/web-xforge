@@ -19,4 +19,4 @@ timeDifference=$(($exitSeconds - $startSeconds))
 echo "Total time running migrator was $timeDifference seconds"
 
 # Start Realtime Server
-exec node Javascript.NodeJS/src/NodeJS/Javascript/bin/Debug/Http11Server.js --inspect=0.0.0.0:9230 --parentPid 1 --port 5002
+exec node --inspect=0.0.0.0:9230 Javascript.NodeJS/src/NodeJS/Javascript/bin/Debug/Http11Server.js --parentPid 1 --port 5002
