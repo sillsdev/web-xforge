@@ -1,1 +1,3 @@
-<mat-icon [class]="currentInsight?.type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
+@if (currentInsight != null) {
+  <mat-icon [class]="currentInsight.type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
+}
