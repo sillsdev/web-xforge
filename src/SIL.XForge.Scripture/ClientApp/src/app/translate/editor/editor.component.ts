@@ -1412,6 +1412,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  private async updateBiblicalTermsTabVisibility(): Promise<void> {
+    // If the user does not have an existing Biblical Terms tab, and BT is enabled in their project and project-user
+    // configuration, show the Biblical Terms tab then remove that setting from their project-user configuration.
+    const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
+      this.tabState.getFirstTabOfTypeIndex('biblical-terms');
+    if (
+      existingDraftTab == null &&
+      this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
+      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
+    ) {
+      const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
+      this.tabState.addTab(groupIdToAddTo, await this.editorTabFactory.createTab('biblical-terms'), false);
+      await this.projectUserConfigDoc?.submitJson0Op(op => op.unset(p => p.biblicalTermsEnabled));
+    }
+  }
+
   /** Insert or remove note thread embeds into the quill editor. */
   private toggleNoteThreadVerses(toggleOn: boolean): void {
     if (
@@ -1891,6 +1907,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.changeText();
     this.toggleNoteThreadVerses(true);
     this.updateAutoDraftTabVisibility();
+    this.updateBiblicalTermsTabVisibility();
   }
 
   private loadTranslateSuggesterConfidence(): void {
