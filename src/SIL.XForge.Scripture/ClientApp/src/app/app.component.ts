@@ -8,7 +8,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -34,7 +34,6 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
-import { RealtimeService } from '../xforge-common/realtime.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
@@ -64,9 +63,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private permissionsChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
-  isOverlayExpanded$ = new BehaviorSubject<boolean>(false);
-  showDiagnosticOverlay: boolean = false;
-  isOverlayExpanded: boolean = false;
 
   constructor(
     private readonly router: Router,
@@ -80,7 +76,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly locationService: LocationService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly breakpointService: MediaBreakpointService,
-    private readonly realtimeService: RealtimeService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService,
@@ -327,20 +322,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     });
 
-    this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
-      this.showDiagnosticOverlay = isEnabled;
-      this.isOverlayExpanded$.next(isEnabled);
-    });
-
-    this.isOverlayExpanded$.subscribe(isExpanded => {
-      this.isOverlayExpanded = isExpanded;
-    });
-
     this.loadingFinished();
-  }
-
-  toggleOverlay(): void {
-    this.isOverlayExpanded$.next(!this.isOverlayExpanded);
   }
 
   ngOnDestroy(): void {

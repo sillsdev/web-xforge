@@ -35,6 +35,8 @@ import { DraftGenerationService } from './draft-generation.service';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
+import { TestRealtimeModule } from '../../../xforge-common/test-realtime.module';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 
 describe('DraftGenerationComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
@@ -92,6 +94,7 @@ describe('DraftGenerationComponent', () => {
         imports: [
           TestOnlineStatusModule.forRoot(),
           RouterModule.forRoot([]),
+          TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
           TranslocoMarkupModule,
           TestTranslocoModule,
           NoopAnimationsModule,
@@ -126,7 +129,10 @@ describe('DraftGenerationComponent', () => {
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
-        { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
+        {
+          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false),
+          showDiagnosticOverlay: createTestFeatureFlag(false)
+        }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(
@@ -350,6 +356,7 @@ describe('DraftGenerationComponent', () => {
           changes$: of(projectDoc)
         });
       });
+
       env.fixture.detectChanges();
       tick();
 
@@ -1552,7 +1559,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            showDiagnosticOverlay: createTestFeatureFlag(false)
+          }
         );
       });
       env.component.isBackTranslation = false;
@@ -1660,7 +1670,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            showDiagnosticOverlay: createTestFeatureFlag(false)
+          }
         );
 
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
