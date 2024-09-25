@@ -5214,8 +5214,6 @@ public class ParatextServiceTests
         TextData textData = env.AddTextDoc(Canon.BookIdToNumber(book), chapter);
 
         var associatedPtUser = new SFParatextUser(env.Username01);
-        UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
 
