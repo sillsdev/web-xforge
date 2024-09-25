@@ -3620,6 +3620,106 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task UpdateParatextComments_PTUsernameChanged_AddsNewComments()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string oldParatextUsername = "Old Username";
+        ThreadNoteComponents note1 = new ThreadNoteComponents
+        {
+            ownerRef = env.User01,
+            content = "Note with old name",
+            paratextUsername = oldParatextUsername,
+            syncUserRef = oldParatextUsername
+        };
+        ThreadNoteComponents note2 = new ThreadNoteComponents
+        {
+            ownerRef = env.User01,
+            content = "Note with new name synced",
+            paratextUsername = env.Username01,
+            syncUserRef = "syncuser01"
+        };
+        ThreadNoteComponents note3 = new ThreadNoteComponents
+        {
+            ownerRef = env.User01,
+            content = "Note with new name",
+            syncUserRef = string.Empty
+        };
+        // Comment 1 - old user name/ Comment 2 - new user name synced/ Comment 3 - new user name not synced
+        ThreadComponents oldThread = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 3,
+            username = env.Username01,
+            notes = [note1, note2, note3],
+            editable = true
+        };
+        ThreadComponents newThread = new ThreadComponents
+        {
+            threadNum = 2,
+            noteCount = 1,
+            username = env.Username01,
+            editable = true,
+            isNew = true
+        };
+        env.AddNoteThreadData([oldThread, newThread]);
+
+        ThreadComponents threadPt = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 2,
+            username = env.Username01,
+            notes = [note1, note2]
+        };
+        env.AddParatextComments([threadPt]);
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc1 = await TestEnvironment.GetNoteThreadDocAsync(conn, "dataId1");
+        IDocument<NoteThread> noteThreadDoc2 = await TestEnvironment.GetNoteThreadDocAsync(conn, "dataId2");
+
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    OpaqueUserId = "syncuser01",
+                    Username = env.Username01,
+                    SFUserId = env.User01
+                }
+            },
+            {
+                oldParatextUsername,
+                new ParatextUserProfile { OpaqueUserId = oldParatextUsername, Username = oldParatextUsername }
+            }
+        };
+
+        var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            paratextId,
+            [noteThreadDoc1, noteThreadDoc2],
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+
+        CommentThread thread1 = env.ProjectCommentManager.FindThread("thread1");
+        Assert.That(thread1.Comments.Count, Is.EqualTo(3));
+        var comment1 = thread1.Comments[0];
+        Assert.That(comment1.User, Is.EqualTo(oldParatextUsername));
+        var comment2 = thread1.Comments[1];
+        Assert.That(comment2.User, Is.EqualTo(env.Username01));
+        var comment3 = thread1.Comments[2];
+        Assert.That(comment2.User, Is.EqualTo(env.Username01));
+        CommentThread thread2 = env.ProjectCommentManager.FindThread("thread2");
+        Assert.That(thread2.Comments.Count, Is.EqualTo(1));
+        Assert.That(thread2.Comments.First().User, Is.EqualTo(env.Username01));
+    }
+
+    [Test]
     public void GetParatextSettings_RetrievesTagIcons()
     {
         var env = new TestEnvironment();
@@ -4497,6 +4597,8 @@ public class ParatextServiceTests
     struct ThreadNoteComponents
     {
         public string ownerRef;
+        public string paratextUsername;
+        public string syncUserRef;
         public Enum<NoteStatus> status;
         public string[] tagsAdded;
         public string assignedPTUser;
@@ -6275,6 +6377,7 @@ public class ParatextServiceTests
                             ? $"{threadId} note {i}: EDITED."
                             : $"{threadId} note {i}.";
                     }
+                    string syncUserRef = comp.isNew ? null : noteComponent.syncUserRef ?? "syncuser01";
                     Note note = new Note
                     {
                         DataId = $"n{i}on{threadId}",
@@ -6283,7 +6386,7 @@ public class ParatextServiceTests
                         ConflictType = Note.NoConflictType,
                         OwnerRef = noteComponent.ownerRef,
                         Content = noteComponent.content,
-                        SyncUserRef = comp.isNew ? null : "syncuser01",
+                        SyncUserRef = syncUserRef,
                         DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                         TagId = noteComponent.tagsAdded == null ? null : int.Parse(noteComponent.tagsAdded[0]),
                         Deleted = comp.deletedNotes != null && comp.deletedNotes[i - 1],
@@ -6474,9 +6577,10 @@ public class ParatextServiceTests
                         break;
                 }
 
-                Paratext.Data.ProjectComments.Comment getThreadComment()
+                Paratext.Data.ProjectComments.Comment getThreadComment(string username)
                 {
-                    return new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+                    SFParatextUser user = new SFParatextUser(username ?? "");
+                    return new Paratext.Data.ProjectComments.Comment(user)
                     {
                         Thread = threadId,
                         VerseRefStr = verseStr,
@@ -6490,7 +6594,6 @@ public class ParatextServiceTests
                 for (int i = 1; i <= comp.noteCount; i++)
                 {
                     string date = $"2019-01-0{i}T08:00:00.0000000+00:00";
-                    Paratext.Data.ProjectComments.Comment comment = getThreadComment();
 
                     ThreadNoteComponents note = new ThreadNoteComponents
                     {
@@ -6507,6 +6610,8 @@ public class ParatextServiceTests
                     if (!note.forceNullContent)
                         note.content ??= content;
 
+                    string username = note.paratextUsername ?? comp.username;
+                    Paratext.Data.ProjectComments.Comment comment = getThreadComment(username);
                     XmlElement contentElem = doc.CreateElement("Contents");
                     contentElem.InnerXml = note.content;
                     comment.Contents = contentElem;
@@ -6527,7 +6632,7 @@ public class ParatextServiceTests
 
                 if (comp.reattachedVerseStr != null)
                 {
-                    Paratext.Data.ProjectComments.Comment reattachedComment = getThreadComment();
+                    Paratext.Data.ProjectComments.Comment reattachedComment = getThreadComment(comp.username);
                     reattachedComment.Status = NoteStatus.Unspecified;
                     reattachedComment.Date = "2019-01-20T08:00:00.0000000+00:00";
                     if (comp.doNotParseReattachedVerseStr)

@@ -1840,14 +1840,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     );
                     if (existingUser == null)
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
-                    else if (existingUser.SFUserId == null)
+                    else if (existingUser.SFUserId != activePtSyncUser.SFUserId)
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(u =>
                             u.Username == activePtSyncUser.Username
                         );
                         string userId = _currentPtSyncUsers[existingUser.Username].SFUserId;
-                        if (!string.IsNullOrEmpty(userId))
-                            op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                        op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
                     }
                 }
             });
@@ -1994,6 +1993,20 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             if (!paratextUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
             {
+                if (
+                    !string.IsNullOrEmpty(paratextUser.Id)
+                    && paratextUsers.Values.Any(u => u.SFUserId == paratextUser.Id)
+                )
+                {
+                    // If the user is already in the project but with a different username, update the username
+                    ParatextUserProfile oldPtUser = paratextUsers.Values.Single(u => u.SFUserId == paratextUser.Id);
+                    paratextUsers[oldPtUser.Username] = new ParatextUserProfile
+                    {
+                        Username = oldPtUser.Username,
+                        OpaqueUserId = oldPtUser.OpaqueUserId,
+                        SFUserId = string.Empty
+                    };
+                }
                 ParatextUserProfile userProfile = new ParatextUserProfile
                 {
                     Username = paratextUser.Username,

@@ -124,6 +124,40 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_UpdatesParatextUsers()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(true, true, false, false);
+        env.SetupPTData(new Book("MAT", 2));
+        SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        ParatextUserProfile user1 = project.ParatextUsers.First(u => u.Username == "User 1");
+        string sfUserId = "user01";
+        Assert.That(user1.SFUserId, Is.EqualTo(sfUserId));
+        ParatextProjectUser userWithNewName = new ParatextProjectUser
+        {
+            Id = "user01",
+            ParatextId = "pt01",
+            Username = "New Name",
+            Role = SFProjectRole.Administrator
+        };
+        env.ParatextService.GetParatextUsersAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns([userWithNewName, TestEnvironment.ParatextProjectUser02]);
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        project = env.VerifyProjectSync(true);
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(3));
+        user1 = project.ParatextUsers.First(u => u.Username == "User 1");
+        Assert.That(user1.SFUserId, Is.EqualTo(string.Empty));
+        ParatextUserProfile newUser1 = project.ParatextUsers.First(u => u.Username == "New Name");
+        Assert.That(newUser1.SFUserId, Is.EqualTo(sfUserId));
+    }
+
+    [Test]
     public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingDisabled()
     {
         var env = new TestEnvironment();
@@ -3637,11 +3671,21 @@ public class ParatextSyncRunnerTests
                         SyncedToRepositoryVersion = "beforeSR",
                         DataInSync = true
                     },
-                    ParatextUsers = new List<ParatextUserProfile>
-                    {
-                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
-                        new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
-                    },
+                    ParatextUsers =
+                    [
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser01",
+                            Username = "User 1",
+                            SFUserId = "user01"
+                        },
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser02",
+                            Username = "User 2",
+                            SFUserId = "user02"
+                        }
+                    ],
                     NoteTags = new List<NoteTag>()
                 },
                 new SFProject
