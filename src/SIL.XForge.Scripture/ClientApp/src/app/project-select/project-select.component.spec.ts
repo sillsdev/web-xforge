@@ -125,6 +125,7 @@ describe('ProjectSelectComponent', () => {
 
   it('allows using a custom error state matcher', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.component.projectSelect.bookName = 'Genesis';
     expect(env.selectionInvalidMessage).toBeNull();
     env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.InvalidProject));
     tick();
@@ -134,7 +135,7 @@ describe('ProjectSelectComponent', () => {
     env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.BookNotFound));
     tick();
     env.fixture.detectChanges();
-    expect(env.selectionInvalidMessage!.textContent).toContain('project does not exist');
+    expect(env.selectionInvalidMessage!.textContent).toContain('Genesis on the selected project');
 
     env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.NoWritePermissions));
     tick();

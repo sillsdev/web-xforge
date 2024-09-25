@@ -29,6 +29,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @Output() projectSelect = new EventEmitter<SelectableProject>();
 
   @Input() placeholder = '';
+  @Input() bookName?: string;
 
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
   @ViewChild(MatAutocompleteTrigger)
@@ -129,7 +130,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     return this.hiddenParatextIds$.getValue();
   }
 
-  get customMessage(): string {
+  get invalidMessage(): string {
     const invalidSelection = this.paratextIdControl.hasError('invalidProject');
     const bookNotFound = this.paratextIdControl.hasError('bookNotFound');
     const noWritePermissions = this.paratextIdControl.hasError('noWritePermissions');
@@ -137,12 +138,13 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
       return translate('project_select.please_select_valid_project');
     }
     if (bookNotFound) {
-      return translate('project_select.book_does_not_exist');
+      const bookName: string = this.bookName == null ? translate('project_select.the_book') : this.bookName;
+      return translate('project_select.book_does_not_exist', { bookName });
     }
     if (noWritePermissions) {
       return translate('project_select.no_write_permissions');
     }
-    return '';
+    return translate('project_select.please_select_valid_project_or_resource');
   }
 
   customValidate(customValidator: ValidatorFn): void {
