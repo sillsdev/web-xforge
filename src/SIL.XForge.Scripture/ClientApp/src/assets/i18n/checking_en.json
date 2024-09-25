@@ -297,12 +297,6 @@
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },
-  "diagnostic-overlay": {
-    "collection": "Collection",
-    "doc_count": "Doc Count",
-    "header": "Developer Diagnostics",
-    "total_docs": "Currently subscribed to {{ totalDocsCount }} documents."
-  },
   "edit_name_dialog": {
     "cancel": "Cancel",
     "confirm_name": "Confirm the name that other people will see when you post answers and comments",
