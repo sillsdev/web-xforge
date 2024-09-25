@@ -5,7 +5,6 @@ export interface TabMenuItem {
   text: string;
   icon?: string;
   svgIcon?: string;
-  disabled?: boolean;
 }
 
 export abstract class TabMenuService<TGroupId extends string> {

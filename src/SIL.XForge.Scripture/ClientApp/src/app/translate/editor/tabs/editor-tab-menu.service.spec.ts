@@ -48,11 +48,8 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(3);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('draft');
-      expect(items[1].disabled).toBeFalsy();
       expect(items[2].type).toBe('project-resource');
-      expect(items[2].disabled).toBeFalsy();
       done();
     });
   });
@@ -70,9 +67,7 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -86,7 +81,6 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       done();
     });
   });
@@ -100,9 +94,7 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('draft');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -120,9 +112,7 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -140,9 +130,7 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -157,9 +145,7 @@ describe('EditorTabMenuService', () => {
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('biblical-terms');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('draft');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -189,7 +175,6 @@ describe('EditorTabMenuService', () => {
       .subscribe(items => {
         expect(items.length).toBe(1);
         expect(items[0].type).toBe('history');
-        expect(items[0].disabled).toBeFalsy();
       });
 
     env.onlineStatus.setIsOnline(true);
@@ -199,11 +184,8 @@ describe('EditorTabMenuService', () => {
       .subscribe(items => {
         expect(items.length).toBe(3);
         expect(items[0].type).toBe('history');
-        expect(items[0].disabled).toBeFalsy();
         expect(items[1].type).toBe('draft');
-        expect(items[1].disabled).toBeFalsy();
         expect(items[2].type).toBe('project-resource');
-        expect(items[2].disabled).toBeFalsy();
         done();
       });
   });
