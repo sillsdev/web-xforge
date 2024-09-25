@@ -431,12 +431,12 @@
     "user_sf": "Scripture Forge User"
   },
   "role_descriptions": {
-    "pt_administrator": "Edit translations, manage notes and questions, manage users and settings, sync with Paratext",
-    "pt_consultant": "View translation, view questions & answers, add notes",
-    "pt_observer": "View translation, view questions & answers, view notes",
-    "pt_translator": "Edit translations, view questions, add answers, add notes, sync with Paratext",
-    "sf_commenter": "View translation, add notes",
-    "sf_observer": "View translation, view notes"
+    "pt_administrator": "Edit translations - manage notes and questions - manage users and settings - sync with Paratext",
+    "pt_consultant": "View translation - view questions & answers - add notes",
+    "pt_observer": "View translation - view questions & answers - view notes",
+    "pt_translator": "Edit translations - view questions - add answers - add notes - sync with Paratext",
+    "sf_commenter": "View translation - add notes",
+    "sf_observer": "View translation - view notes"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
