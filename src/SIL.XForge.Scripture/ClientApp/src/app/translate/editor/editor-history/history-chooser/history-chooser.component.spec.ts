@@ -160,6 +160,7 @@ describe('HistoryChooserComponent', () => {
     env.clickRevertHistoryButton();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     verify(mockedTextDocService.overwrite(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), env.isSnapshotValid)).once();
   }));
 
   class TestEnvironment {
@@ -167,6 +168,7 @@ describe('HistoryChooserComponent', () => {
     readonly fixture: ComponentFixture<HistoryChooserComponent>;
     readonly realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
     readonly testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+    isSnapshotValid = true;
 
     constructor() {
       this.fixture = TestBed.createComponent(HistoryChooserComponent);
@@ -185,7 +187,8 @@ describe('HistoryChooserComponent', () => {
         data: { ops: [] },
         id: 'id',
         type: '',
-        v: 1
+        v: 1,
+        isValid: this.isSnapshotValid
       });
       when(mockedI18nService.locale).thenReturn({
         localName: 'English',

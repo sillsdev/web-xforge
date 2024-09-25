@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 using Paratext.Data;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
-using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -136,7 +135,7 @@ public class ParatextController : ControllerBase
     /// <response code="403">The user does not have permission to access the document.</response>
     /// <response code="404">The document does not exist.</response>
     [HttpGet("history/snapshot/{projectId}_{book}_{chapter:int}_target")]
-    public async Task<ActionResult<Snapshot<TextData>>> GetSnapshotAsync(
+    public async Task<ActionResult<TextSnapshot>> GetSnapshotAsync(
         string projectId,
         string book,
         int chapter,
