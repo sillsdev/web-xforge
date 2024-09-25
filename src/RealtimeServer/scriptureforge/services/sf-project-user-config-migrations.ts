@@ -79,7 +79,9 @@ class SFProjectUserConfigMigration7 extends DocMigration {
   static readonly VERSION = 7;
 
   async migrateDoc(_: Doc): Promise<void> {
-    // This migration has been removed
+    // This migration has been removed.
+    // The migration that was here added the Biblical Terms tab, and removed the setting from project-user-config.
+    // This migration was run on QA but not live.
   }
 }
 
