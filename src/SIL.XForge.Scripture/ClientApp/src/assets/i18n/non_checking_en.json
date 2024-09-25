@@ -382,12 +382,13 @@
     "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
   "project_select": {
-    "book_does_not_exist": "The book on the selected project does not exist",
+    "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
     "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
     "please_select_valid_project": "Please select a valid project",
     "please_select_valid_project_or_resource": "Please select a valid project or resource",
     "projects": "Projects",
-    "resources": "Resources"
+    "resources": "Resources",
+    "the_book": "The book"
   },
   "question_answered_dialog": {
     "cancel": "Cancel",

@@ -10,6 +10,7 @@
         [projects]="projects"
         [placeholder]="t('choose_project')"
         [isDisabled]="projects.length === 0"
+        [bookName]="bookName"
         (projectSelect)="projectSelected($event.paratextId)"
         formControlName="targetParatextId"
       ></app-project-select>
@@ -28,7 +29,7 @@
       @if (targetProject$ | async; as project) {
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
-            <app-notice [icon]="'warning'" [type]="'warning'"
+            <app-notice icon="warning" type="warning"
               >{{ t("project_has_text_in_chapters", { bookName, numChapters: chapters, projectName: project.name }) }}
             </app-notice>
           } @else {
