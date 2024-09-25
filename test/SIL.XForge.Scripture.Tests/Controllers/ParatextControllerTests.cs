@@ -250,7 +250,7 @@ public class ParatextControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        var actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -263,7 +263,7 @@ public class ParatextControllerTests
         env.UserAccessor.UserId.Returns("invalid_user");
 
         // SUT
-        var actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -277,7 +277,7 @@ public class ParatextControllerTests
             .Throws(new DataNotFoundException("Not Found"));
 
         // SUT
-        var actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -289,7 +289,7 @@ public class ParatextControllerTests
         var env = new TestEnvironment();
 
         // SUT
-        var actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         var snapshot = (Snapshot<TextData>)((OkObjectResult)actual.Result!).Value!;

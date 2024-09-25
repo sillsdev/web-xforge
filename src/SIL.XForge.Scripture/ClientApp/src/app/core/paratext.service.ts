@@ -3,8 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
+import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
-import { TextSnapshot } from '../../xforge-common/models/textsnapshot';
 import { ParatextProject } from './models/paratext-project';
 import { TextDocSource } from './models/text-doc';
 

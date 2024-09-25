@@ -469,7 +469,7 @@ public class ParatextServiceTests
         string ptProjectId = env.PTProjectIds[env.Project01].Id;
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-        env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
+        env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(_ => null);
 
         // SUT
         Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
@@ -5217,7 +5217,7 @@ public class ParatextServiceTests
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
 
-        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(i => scrText);
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
         env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
             .Returns([new ChapterDelta(chapter, 1, false, textData)]);
 

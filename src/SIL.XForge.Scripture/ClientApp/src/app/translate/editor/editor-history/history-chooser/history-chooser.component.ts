@@ -17,9 +17,9 @@ import {
 } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { TextSnapshot } from '../../../../../xforge-common/models/textsnapshot';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { Delta, TextDocId } from '../../../../core/models/text-doc';
 import { ParatextService, Revision } from '../../../../core/paratext.service';

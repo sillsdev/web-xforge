@@ -1902,7 +1902,7 @@ public class ParatextService : DisposableBase, IParatextService
             // Retrieve the USFM for the chapter, and convert to USX, then to deltas
             IGetText version = versionedText.GetVersion(revision.Id);
             string usfm = version.GetText(verseRef, true, false);
-            var chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
+            ChapterDelta chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
             ret = new TextSnapshot
             {
                 Id = id,
@@ -1915,7 +1915,7 @@ public class ParatextService : DisposableBase, IParatextService
         {
             // We have the snapshot, but we need to determine if it's valid
             var usfm = scrText.GetText(verseRef.BookNum);
-            var chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
+            ChapterDelta chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
             ret = new TextSnapshot
             {
                 Id = snapshot.Id,
