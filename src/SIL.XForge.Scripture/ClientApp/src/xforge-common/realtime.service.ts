@@ -1,6 +1,5 @@
 import { Injectable, Optional } from '@angular/core';
 import { AppError } from 'xforge-common/exception-handling.service';
-//import { BehaviorSubject, Observable } from 'rxjs';
 import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
@@ -24,7 +23,6 @@ function getDocKey(collection: string, id: string): string {
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
-  //private _docs$ = new BehaviorSubject<Map<string, RealtimeDoc>>(this.docs);
 
   constructor(
     private readonly typeRegistry: TypeRegistry,
@@ -99,7 +97,6 @@ export class RealtimeService {
   async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
     const doc = this.get<T>(collection, id);
     await doc.subscribe();
-    // this._docs$.next(this.docs);
     return doc;
   }
 

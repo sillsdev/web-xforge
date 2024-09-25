@@ -26,7 +26,6 @@ import { AppComponent } from './app.component';
 import { CheckingModule } from './checking/checking.module';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { CoreModule } from './core/core.module';
-import { DiagnosticOverlayComponent } from './diagnostic-overlay/diagnostic-overlay.component';
 import { JoinComponent } from './join/join.component';
 import { MyProjectsComponent } from './my-projects/my-projects.component';
 import { NavigationComponent } from './navigation/navigation.component';
@@ -46,7 +45,6 @@ import { UsersModule } from './users/users.module';
     NavigationComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
-    DiagnosticOverlayComponent,
     ProjectComponent,
     SettingsComponent,
     MyProjectsComponent,

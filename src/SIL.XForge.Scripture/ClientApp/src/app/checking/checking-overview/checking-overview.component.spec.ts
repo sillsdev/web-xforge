@@ -704,7 +704,15 @@ describe('CheckingOverviewComponent', () => {
 });
 
 @NgModule({
-  imports: [MatDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule, TestTranslocoModule]
+  imports: [
+    MatDialogModule,
+    NoopAnimationsModule,
+    UICommonModule,
+    ngfModule,
+    CheckingModule,
+    TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+    TestTranslocoModule
+  ]
 })
 class DialogTestModule {}
 

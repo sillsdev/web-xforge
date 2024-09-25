@@ -31,17 +31,12 @@ export class FeatureFlagStore extends SubscriptionDisposable implements IFeature
   private localFlags: { [key: string]: boolean } = {};
   private remoteFlags: { [key: string]: boolean } = {};
   private remoteFlagCacheExpiry: Date = new Date();
-  readonly localFlags$: Observable<{ [key: string]: boolean }>;
-
-  private localFlagsSubject: BehaviorSubject<{ [key: string]: boolean }>;
 
   constructor(
     private readonly anonymousService: AnonymousService,
     private readonly onlineStatusService: OnlineStatusService
   ) {
     super();
-    this.localFlagsSubject = new BehaviorSubject<{ [key: string]: boolean }>(this.localFlags);
-    this.localFlags$ = this.localFlagsSubject.asObservable();
     // Cause the flags to be reloaded when coming online
     this.subscribe(onlineStatusService.onlineStatus$, status => {
       if (status) this.remoteFlagCacheExpiry = new Date();
@@ -60,7 +55,6 @@ export class FeatureFlagStore extends SubscriptionDisposable implements IFeature
   setEnabled(key: string, value: boolean): void {
     // Keys are only set locally
     this.localFlags[key] = value;
-    this.localFlagsSubject.next(this.localFlags);
     localStorage.setItem(this.getLocalStorageKey(key), JSON.stringify(value));
   }
 
@@ -205,7 +199,6 @@ class ServerOnlyFeatureFlag implements FeatureFlag {
   providedIn: 'root'
 })
 export class FeatureFlagService {
-  [x: string]: any;
   constructor(private readonly featureFlagStore: FeatureFlagStore) {}
 
   // Before you add a new feature flag:
@@ -315,7 +308,7 @@ export class FeatureFlagService {
 
   readonly showDiagnosticOverlay: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'ShowDiagnosticOverlay',
-    'Display overlay for diagnosing subscribed to docs',
+    'Display overlay for diagnosing doc subscriptions',
     14,
     this.featureFlagStore
   );
