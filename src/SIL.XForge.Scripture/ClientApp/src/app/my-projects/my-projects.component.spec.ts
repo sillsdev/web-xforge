@@ -27,6 +27,8 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
+import { TestRealtimeModule } from '../../xforge-common/test-realtime.module';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 @Component({ template: '' })
 class EmptyComponent {}
 
@@ -48,6 +50,7 @@ describe('MyProjectsComponent', () => {
         { path: 'connect-project', component: EmptyComponent }
       ]),
       TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule
     ],
     providers: [
@@ -557,7 +560,6 @@ class TestEnvironment {
     });
     const userDoc = { id: 'sf-user-id', data: user };
     when(mockedUserService.getCurrentUser()).thenResolve(userDoc as UserDoc);
-
     this.router = TestBed.inject(Router);
     this.fixture = TestBed.createComponent(MyProjectsComponent);
     this.component = this.fixture.componentInstance;

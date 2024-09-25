@@ -27,6 +27,7 @@ import { ProjectNotificationService } from '../core/project-notification.service
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 import { SyncComponent } from './sync.component';
+import { DiagnosticOverlayComponent } from '../shared/diagnostic-overlay/diagnostic-overlay.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -41,7 +42,7 @@ const mockedCookieService = mock(CookieService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
-    declarations: [SyncComponent, SyncProgressComponent],
+    declarations: [SyncComponent, SyncProgressComponent, DiagnosticOverlayComponent],
     imports: [
       CommonModule,
       UICommonModule,
