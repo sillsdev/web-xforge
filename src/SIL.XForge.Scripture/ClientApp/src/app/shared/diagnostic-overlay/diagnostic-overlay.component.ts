@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
@@ -16,11 +17,18 @@ export interface DiagnosticOverlayData {
   styleUrl: './diagnostic-overlay.component.scss'
 })
 export class DiagnosticOverlayComponent extends SubscriptionDisposable {
-  @Output() toggleOverlay = new EventEmitter<boolean>();
-  isExpanded: boolean = true;
+  showDiagnosticOverlay: boolean = false;
+  isExpanded: boolean = false;
 
-  constructor(private readonly realtimeService: RealtimeService) {
+  constructor(
+    readonly featureFlags: FeatureFlagService,
+    private readonly realtimeService: RealtimeService
+  ) {
     super();
+    this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
+      this.showDiagnosticOverlay = isEnabled;
+      this.isExpanded = isEnabled;
+    });
   }
 
   get showDocCollections(): { [key: string]: number } {
@@ -33,6 +41,5 @@ export class DiagnosticOverlayComponent extends SubscriptionDisposable {
 
   onToggle(): void {
     this.isExpanded = !this.isExpanded;
-    this.toggleOverlay.emit(this.isExpanded);
   }
 }
