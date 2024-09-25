@@ -5,11 +5,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import {
-  DBL_RESOURCE_ID_LENGTH,
-  SFProjectProfile,
-  SF_PROJECTS_COLLECTION
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { delay, of } from 'rxjs';
 import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
@@ -29,7 +25,6 @@ import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
 import { TestRealtimeModule } from '../../xforge-common/test-realtime.module';
-import { SF_DEFAULT_SHARE_ROLE } from '../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 
 @Component({ template: '' })
