@@ -3,7 +3,7 @@ services:
     image: mongo:5.0
 
   realtimeserver:
-    image: ${DOCKER_REGISTRY-}sillsdev/realtimeserver
+    image: ${DOCKER_REGISTRY-}sillsdev/web-xforge/realtimeserver
     build:
       context: ..
       dockerfile: ./RealtimeServer/Dockerfile
