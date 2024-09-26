@@ -42,8 +42,7 @@ LABEL org.opencontainers.image.description="Scripture Forge Realtime Server"
 LABEL org.opencontainers.image.licenses=MIT
 COPY ../../SIL.XForge.Scripture/appsettings.json .
 COPY ../../SIL.XForge.Scripture/appsettings.${MIGRATOR_ENVIRONMENT}.json .
-COPY ../RealtimeServer/start.sh ./start.sh
-RUN chmod +x /app/start.sh
 COPY --from=jering-build /src .
 COPY --from=build /src .
+RUN chmod +x /app/start.sh
 ENTRYPOINT [ "sh", "/app/start.sh" ]
