@@ -30,7 +30,19 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
 
   bookOptions: BookOption[] = [];
 
-  selection: any = '';
+  booksOT: number[] = [];
+  availableBooksOT: number[] = [];
+  booksNT: number[] = [];
+  availableBooksNT: number[] = [];
+  booksDC: number[] = [];
+  availableBooksDC: number[] = [];
+
+  partialOT: boolean = false;
+  partialNT: boolean = false;
+  partialDC: boolean = false;
+  selectedAllOT: boolean = false;
+  selectedAllNT: boolean = false;
+  selectedAllDC: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -61,15 +73,29 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
       selected: selectedSet.has(bookNum),
       progressPercentage: progress.find(p => p.text.bookNum === bookNum)!.percentage
     }));
+
+    this.booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n));
+    this.availableBooksOT = this.availableBooks.filter(n => Canon.isBookOT(n));
+    this.booksNT = this.selectedBooks.filter(n => Canon.isBookNT(n));
+    this.availableBooksNT = this.availableBooks.filter(n => Canon.isBookNT(n));
+    this.booksDC = this.selectedBooks.filter(n => Canon.isBookDC(n));
+    this.availableBooksDC = this.availableBooks.filter(n => Canon.isBookDC(n));
+
+    this.selectedAllOT = this.booksOT.length > 0 && this.booksOT.length === this.availableBooksOT.length;
+    this.selectedAllNT = this.booksNT.length > 0 && this.booksNT.length === this.availableBooksNT.length;
+    this.selectedAllDC = this.booksDC.length > 0 && this.booksDC.length === this.availableBooksDC.length;
+
+    this.partialOT = !this.selectedAllOT && this.booksOT.length > 0;
+    this.partialNT = !this.selectedAllNT && this.booksNT.length > 0;
+    this.partialDC = !this.selectedAllDC && this.booksDC.length > 0;
   }
 
   onChipListChange(book: BookOption): void {
     const bookIndex: number = this.bookOptions.findIndex(n => n.bookId === book.bookId);
     this.bookOptions[bookIndex].selected = !this.bookOptions[bookIndex].selected;
     this.selectedBooks = this.bookOptions.filter(n => n.selected).map(n => n.bookNum);
-
-    this.selection = undefined;
     this.bookSelect.emit(this.selectedBooks);
+    this.initBookOptions();
   }
 
   async select(eventValue: string): Promise<void> {
@@ -77,22 +103,24 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
       this.selectedBooks.push(
         ...this.availableBooks.filter(n => Canon.isBookOT(n) && this.selectedBooks.indexOf(n) === -1)
       );
+    } else if (eventValue === 'clearOT') {
+      const booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n));
+      this.selectedBooks = this.selectedBooks.filter(n => !booksOT.includes(n));
     } else if (eventValue === 'NT') {
       this.selectedBooks.push(
         ...this.availableBooks.filter(n => Canon.isBookNT(n) && this.selectedBooks.indexOf(n) === -1)
       );
+    } else if (eventValue === 'clearNT') {
+      const booksNT = this.selectedBooks.filter(n => Canon.isBookNT(n));
+      this.selectedBooks = this.selectedBooks.filter(n => !booksNT.includes(n));
     } else if (eventValue === 'DC') {
       this.selectedBooks.push(
         ...this.availableBooks.filter(n => Canon.isBookDC(n) && this.selectedBooks.indexOf(n) === -1)
       );
+    } else if (eventValue === 'clearDC') {
+      const booksDC = this.selectedBooks.filter(n => Canon.isBookDC(n));
+      this.selectedBooks = this.selectedBooks.filter(n => !booksDC.includes(n));
     }
-    await this.initBookOptions();
-    this.bookSelect.emit(this.selectedBooks);
-  }
-
-  async clear(): Promise<void> {
-    this.selectedBooks.length = 0;
-    this.selection = undefined;
     await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
   }
