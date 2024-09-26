@@ -227,7 +227,7 @@ export class I18nService {
   }
 
   localizeRoleDescription(role: string): string {
-    return this.transloco.translate(`role_descriptions.${role}`).replace(/\s*,\s*/, ' • ');
+    return this.transloco.translate(`role_descriptions.${role}`).replace(/\s+-\s+/g, ' • ');
   }
 
   translate(key: I18nKey, params: object = {}): Observable<string> {
