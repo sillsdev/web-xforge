@@ -2,10 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { isEqual } from 'lodash-es';
 import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, shareReplay, tap } from 'rxjs';
 import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
-import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { SFProjectService } from '../../../../core/sf-project.service';
 import {
   EDITOR_INSIGHT_DEFAULTS,
   LynxInsight,
@@ -407,10 +404,7 @@ export class LynxInsightStateService {
   constructor(
     @Inject(EDITOR_INSIGHT_DEFAULTS) private defaults: LynxInsightConfig,
     private readonly insightFilterService: LynxInsightFilterService,
-    private readonly activatedBookChapter: ActivatedBookChapterService,
-    private readonly activatedProject: ActivatedProjectService,
-    private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly activatedBookChapter: ActivatedBookChapterService
   ) {
     // TODO: load stored filter from user project config
   }
