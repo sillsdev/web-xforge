@@ -23,7 +23,7 @@ FROM node:${NODE_VERSION} AS base
 # Build RealtimeServer node application
 FROM base AS build
 WORKDIR /src
-COPY ../RealtimeServer .
+COPY src/RealtimeServer .
 RUN npm ci
 RUN npm run build
 
@@ -40,8 +40,8 @@ ARG MIGRATOR_ENVIRONMENT
 LABEL org.opencontainers.image.source=https://github.com/sillsdev/web-xforge
 LABEL org.opencontainers.image.description="Scripture Forge Realtime Server"
 LABEL org.opencontainers.image.licenses=MIT
-COPY ../../SIL.XForge.Scripture/appsettings.json .
-COPY ../../SIL.XForge.Scripture/appsettings.${MIGRATOR_ENVIRONMENT}.json .
+COPY src/SIL.XForge.Scripture/appsettings.json .
+COPY src/SIL.XForge.Scripture/appsettings.${MIGRATOR_ENVIRONMENT}.json .
 COPY --from=jering-build /src .
 COPY --from=build /src .
 RUN chmod +x /app/start.sh
