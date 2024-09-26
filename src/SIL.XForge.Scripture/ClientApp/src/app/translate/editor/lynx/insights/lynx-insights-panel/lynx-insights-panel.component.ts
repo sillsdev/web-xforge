@@ -1,15 +1,25 @@
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { Component, DestroyRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
-import { VerseRef } from '@sillsdev/scripture';
+import { Router } from '@angular/router';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
 import Quill, { RangeStatic } from 'quill';
 import { combineLatest, map, tap } from 'rxjs';
+import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { rangeComparer } from '../../../../../shared/text/quill-scripture';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
-import { LynxInsight, LynxInsightSortOrder, LynxInsightType, LynxInsightTypes } from '../lynx-insight';
+import {
+  EDITOR_INSIGHT_DEFAULTS,
+  LynxInsight,
+  LynxInsightConfig,
+  LynxInsightSortOrder,
+  LynxInsightType,
+  LynxInsightTypes
+} from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface InsightPanelNode {
@@ -58,13 +68,18 @@ export class LynxInsightsPanelComponent implements OnInit {
   expandCollapseState = new Map<string, boolean>();
 
   orderBy?: LynxInsightSortOrder;
+  activeBookChapter?: RouteBookChapter;
 
   readonly linkTextMaxLength = 30; // TODO: Make this configurable
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly editorInsightState: LynxInsightStateService,
-    readonly i18n: I18nService
+    private readonly activatedProject: ActivatedProjectService,
+    private readonly activatedBookChapterService: ActivatedBookChapterService,
+    private readonly router: Router,
+    readonly i18n: I18nService,
+    @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly lynxInsightConfig: LynxInsightConfig
   ) {}
 
   ngOnInit(): void {
@@ -79,6 +94,12 @@ export class LynxInsightsPanelComponent implements OnInit {
       .subscribe(flattenedInsightNodes => {
         this.dataSource.data = flattenedInsightNodes;
         this.restoreExpandCollapseState();
+      });
+
+    this.activatedBookChapterService.activatedBookChapter$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(bookChapter => {
+        this.activeBookChapter = bookChapter;
       });
   }
 
@@ -95,8 +116,13 @@ export class LynxInsightsPanelComponent implements OnInit {
       event.stopPropagation();
 
       // Show action menu overlay in editor
-      this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
-      this.editorInsightState.updateDisplayState(node.insight.id, { promptActiveFull: false, actionMenuActive: true });
+      if (!this.navInsight(node.insight)) {
+        this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
+        this.editorInsightState.updateDisplayState(node.insight.id, {
+          promptActiveFull: false,
+          actionMenuActive: true
+        });
+      }
     }
   }
 
@@ -163,11 +189,35 @@ export class LynxInsightsPanelComponent implements OnInit {
     }
   }
 
+  private navInsight(insight: LynxInsight): boolean {
+    if (this.activeBookChapter?.bookId == null || this.activeBookChapter?.chapter == null) {
+      return false;
+    }
+
+    const activeBookNum: number = Canon.bookIdToNumber(this.activeBookChapter.bookId);
+
+    if (insight.book !== activeBookNum || insight.chapter !== this.activeBookChapter.chapter) {
+      const insightBookId: string = Canon.bookNumberToId(insight.book);
+
+      // Navigate to book/chapter with insight id as query params
+      this.router.navigate(
+        ['/projects', this.activatedProject.projectId, 'translate', insightBookId, insight.chapter],
+        {
+          queryParams: { [this.lynxInsightConfig.queryParamName]: insight.id }
+        }
+      );
+
+      return true;
+    }
+
+    return false;
+  }
+
   /**
    * Get all segment references that intersect the given range.
    * TODO: move to service?
    */
-  getSegmentRefs(range: RangeStatic, segments: ReadonlyMap<string, RangeStatic>): string[] {
+  private getSegmentRefs(range: RangeStatic, segments: ReadonlyMap<string, RangeStatic>): string[] {
     const segmentRefs: string[] = [];
 
     if (range != null) {
