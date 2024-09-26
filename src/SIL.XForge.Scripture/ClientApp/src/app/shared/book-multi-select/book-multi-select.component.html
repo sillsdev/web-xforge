@@ -1,33 +1,35 @@
 <ng-container *transloco="let t; read: 'book_select'">
   @if (availableBooks.length > 0 && !readonly) {
     <div>
-      <mat-card class="bulk-select">
-        <mat-card-content>
-          <div>
-            <span>{{ t("select") }}:</span>
-            <mat-button-toggle-group
-              (change)="select($event.value)"
-              [(ngModel)]="selection"
-              hideSingleSelectionIndicator="true"
-            >
-              <mat-button-toggle value="OT" [disabled]="!isOldTestamentAvailable()">
-                {{ t("old_testament") }}
-              </mat-button-toggle>
-              <mat-button-toggle value="NT" [disabled]="!isNewTestamentAvailable()">
-                {{ t("new_testament") }}
-              </mat-button-toggle>
-              @if (isDeuterocanonAvailable()) {
-                <mat-button-toggle value="DC">
-                  {{ t("deuterocanon") }}
-                </mat-button-toggle>
-              }
-            </mat-button-toggle-group>
-            @if (selectedBooks.length > 0) {
-              <button mat-button (click)="clear()">{{ t("clear") }}</button>
-            }
-          </div>
-        </mat-card-content>
-      </mat-card>
+      <mat-checkbox
+        value="OT"
+        [checked]="selectedAllOT"
+        [disabled]="!isOldTestamentAvailable()"
+        [(indeterminate)]="partialOT"
+        (change)="select($event.checked ? 'OT' : 'clearOT')"
+      >
+        {{ t("old_testament") }}
+      </mat-checkbox>
+      <mat-checkbox
+        value="NT"
+        [checked]="selectedAllNT"
+        [(indeterminate)]="partialNT"
+        [disabled]="!isNewTestamentAvailable()"
+        (change)="select($event.checked ? 'NT' : 'clearNT')"
+      >
+        {{ t("new_testament") }}
+      </mat-checkbox>
+
+      @if (isDeuterocanonAvailable()) {
+        <mat-checkbox
+          value="DC"
+          [checked]="selectedAllDC"
+          (change)="select($event.checked ? 'DC' : 'clearDC')"
+          [(indeterminate)]="partialDC"
+        >
+          {{ t("deuterocanon") }}
+        </mat-checkbox>
+      }
     </div>
   }
   <div class="flex-row">
