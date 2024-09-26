@@ -5,14 +5,14 @@ services:
   realtimeserver:
     image: ${DOCKER_REGISTRY-}sillsdev/web-xforge/realtimeserver
     build:
-      context: ..
-      dockerfile: ./RealtimeServer/Dockerfile
+      context: ../..
+      dockerfile: src/RealtimeServer/Dockerfile
 
   web-xforge:
     image: ${DOCKER_REGISTRY-}sillsdev/web-xforge
     build:
-      context: ..
-      dockerfile: ./SIL.XForge.Scripture/Dockerfile
+      context: ../..
+      dockerfile: src/SIL.XForge.Scripture/Dockerfile
 
 volumes:
   mongo_config:
