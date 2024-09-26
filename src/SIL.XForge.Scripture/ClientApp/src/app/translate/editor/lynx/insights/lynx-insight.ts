@@ -1,5 +1,9 @@
 import { InjectionToken } from '@angular/core';
-import { RangeStatic } from 'quill';
+
+export interface LynxInsightRange {
+  index: number;
+  length: number;
+}
 
 // Ordered by severity, lowest to highest
 export const LynxInsightTypes = ['info', 'warning', 'error'] as const;
@@ -18,7 +22,7 @@ export interface LynxInsight {
   type: LynxInsightType;
   chapter: number;
   book: number;
-  range: RangeStatic;
+  range: LynxInsightRange;
   code: string;
   displayState?: LynxInsightDisplayState;
 }
@@ -43,12 +47,14 @@ export interface LynxInsightFilter {
 export interface LynxInsightConfig {
   filter: LynxInsightFilter;
   sortOrder: LynxInsightSortOrder;
+  queryParamName: string;
 }
 
 export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('EDITOR_INSIGHT_DEFAULTS', {
   providedIn: 'root',
   factory: () => ({
     filter: { types: ['info', 'warning', 'error'], scope: 'chapter' },
-    sortOrder: 'severity'
+    sortOrder: 'severity',
+    queryParamName: 'insight'
   })
 });
