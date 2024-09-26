@@ -1,21 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
-import { Canon } from '@sillsdev/scripture';
 import { isEqual } from 'lodash-es';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import {
-  BehaviorSubject,
-  Observable,
-  combineLatest,
-  distinctUntilChanged,
-  map,
-  of,
-  shareReplay,
-  startWith,
-  switchMap,
-  tap
-} from 'rxjs';
-import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
+import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, shareReplay, tap } from 'rxjs';
+import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -36,58 +22,6 @@ import { LynxInsightFilterService } from './lynx-insight-filter.service';
   providedIn: 'root'
 })
 export class LynxInsightStateService {
-  private projectUserConfig$: Observable<SFProjectUserConfig> = this.activatedProject.projectId$.pipe(
-    filterNullish(),
-    switchMap(projectId => this.projectService.getUserConfig(projectId, this.userService.currentUserId)),
-    switchMap(projectUserConfigDoc =>
-      projectUserConfigDoc.changes$.pipe(
-        map(() => projectUserConfigDoc.data),
-        startWith(projectUserConfigDoc.data)
-      )
-    ),
-    filterNullish(),
-    shareReplay(1)
-  );
-
-  private projectProfile$: Observable<SFProjectProfile> = this.activatedProject.projectId$.pipe(
-    filterNullish(),
-    switchMap(projectId => this.projectService.getProfile(projectId)),
-    switchMap(projectProfileDoc =>
-      projectProfileDoc.changes$.pipe(
-        map(() => projectProfileDoc.data),
-        startWith(projectProfileDoc.data)
-      )
-    ),
-    filterNullish(),
-    shareReplay(1)
-  );
-
-  private routeBookChapter$: Observable<RouteBookChapter | undefined> = combineLatest([
-    this.activatedBookChapter.routeBookChapter$.pipe(filterNullish()),
-    this.projectProfile$,
-    this.projectUserConfig$
-  ]).pipe(
-    switchMap(([{ bookId, chapter }, projectProfile, projectUserConfig]) => {
-      if (bookId == null) {
-        return of(undefined);
-      }
-
-      if (chapter == null) {
-        chapter = projectUserConfig.selectedChapterNum;
-
-        if (chapter == null) {
-          let bookNum: number = Canon.bookIdToNumber(bookId);
-          chapter = projectProfile.texts.find(t => t.bookNum === bookNum)?.chapters[0]?.number;
-        }
-      }
-
-      return of({ bookId, chapter });
-    }),
-    distinctUntilChanged(isEqual),
-    tap(routeBookChapter => console.log('routeBookChapter', routeBookChapter)),
-    shareReplay(1)
-  );
-
   private rawInsightSource$ = new BehaviorSubject<LynxInsight[]>([
     // Mark 1
     {
@@ -390,10 +324,7 @@ export class LynxInsightStateService {
   readonly filteredChapterInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.routeBookChapter$.pipe(
-      tap(params => console.log('routeBookChapter$ params changed (LynxInsightStateService)', params)),
-      filterNullish()
-    )
+    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish())
   ]).pipe(
     map(([insights, filter, routeBookChapter]) =>
       insights.filter(insight =>
@@ -408,7 +339,7 @@ export class LynxInsightStateService {
   readonly filteredInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.routeBookChapter$.pipe(filterNullish())
+    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish())
   ]).pipe(
     map(([insights, filter, routeBookChapter]) =>
       insights.filter(insight => this.insightFilterService.matchesFilter(insight, filter, routeBookChapter))
@@ -423,7 +354,7 @@ export class LynxInsightStateService {
   readonly filteredInsightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.routeBookChapter$.pipe(filterNullish())
+    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish())
   ]).pipe(
     map(([insights, filter, routeBookChapter]) => {
       const result: Record<LynxInsightFilterScope, number> = { project: 0, book: 0, chapter: 0 };
