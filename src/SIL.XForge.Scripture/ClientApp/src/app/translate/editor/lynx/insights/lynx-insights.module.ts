@@ -9,9 +9,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTreeModule } from '@angular/material/tree';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
-
 import { SF_QUILL_FORMAT_NAMES } from '../../../../shared/text/quill-formats.service';
 import { EditorReadyService } from './base-services/editor-ready.service';
+import { EditorSegmentService } from './base-services/editor-segment.service';
 import { InsightRenderService } from './base-services/insight-render.service';
 import { InsightCodePipe } from './insight-code.pipe';
 import { LynxInsightActionPromptComponent } from './lynx-insight-action-prompt/lynx-insight-action-prompt.component';
@@ -25,6 +25,7 @@ import { LynxInsightsPanelComponent } from './lynx-insights-panel/lynx-insights-
 import { lynxInsightBlots } from './quill-services/blots/lynx-insight-blot';
 import { LynxInsightBlotService } from './quill-services/lynx-insight-blot.service';
 import { QuillEditorReadyService } from './quill-services/quill-editor-ready.service';
+import { QuillEditorSegmentService } from './quill-services/quill-editor-segment.service';
 import { QuillInsightRenderService } from './quill-services/quill-insight-render.service';
 
 @NgModule({
@@ -70,7 +71,8 @@ export class LynxInsightsModule {
           multi: true
         },
         { provide: EditorReadyService, useClass: QuillEditorReadyService },
-        { provide: InsightRenderService, useClass: QuillInsightRenderService }
+        { provide: InsightRenderService, useClass: QuillInsightRenderService },
+        { provide: EditorSegmentService, useClass: QuillEditorSegmentService }
       ]
     };
   }
