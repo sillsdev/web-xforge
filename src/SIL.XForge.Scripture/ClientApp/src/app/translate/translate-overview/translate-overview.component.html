@@ -29,7 +29,10 @@
               <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
               <span matListItemTitle>{{ getBookName(textProgress.text) }}</span>
               <span matListItemLine>{{
-                t("translated_segments", { translatedSegments: textProgress.translated, total: textProgress.total })
+                t("translated_segments", {
+                  translatedSegments: (textProgress.translated | l10nNumber),
+                  total: (textProgress.total | l10nNumber)
+                })
               }}</span>
               <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
                 <app-donut-chart
@@ -69,7 +72,7 @@
             <div class="engine-card-quality-subtitle">{{ t("quality") }}</div>
           </div>
           <div class="engine-card-segments">
-            <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
+            <span class="engine-card-segments-count">{{ trainedSegmentCount | l10nNumber }}</span
             ><span>{{ t("trained_segments") }}</span>
           </div>
           @if (showCannotTrainEngineMessage || !progressService.canTrainSuggestions) {
