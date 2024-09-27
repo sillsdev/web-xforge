@@ -29,7 +29,6 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @Output() projectSelect = new EventEmitter<SelectableProject>();
 
   @Input() placeholder = '';
-  @Input() bookName?: string;
 
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
   @ViewChild(MatAutocompleteTrigger)
@@ -40,6 +39,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @Input() resources?: SelectableProject[];
   /** Projects that can be an already selected value, but not given as an option in the menu */
   @Input() nonSelectableProjects?: SelectableProject[];
+  @Input() invalidMessageMapper?: { [key: string]: string };
   readonly matcher = new ShowOnDirtyErrorStateMatcher();
 
   hiddenParatextIds$ = new BehaviorSubject<string[]>([]);
@@ -131,18 +131,9 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   }
 
   get invalidMessage(): string {
-    const invalidSelection = this.paratextIdControl.hasError('invalidProject');
-    const bookNotFound = this.paratextIdControl.hasError('bookNotFound');
-    const noWritePermissions = this.paratextIdControl.hasError('noWritePermissions');
-    if (invalidSelection) {
-      return translate('project_select.please_select_valid_project');
-    }
-    if (bookNotFound) {
-      const bookName: string = this.bookName == null ? translate('project_select.the_book') : this.bookName;
-      return translate('project_select.book_does_not_exist', { bookName });
-    }
-    if (noWritePermissions) {
-      return translate('project_select.no_write_permissions');
+    if (this.invalidMessageMapper != null && this.paratextIdControl.errors != null) {
+      const error: string = Object.keys(this.paratextIdControl.errors)[0];
+      return this.invalidMessageMapper[error];
     }
     return translate('project_select.please_select_valid_project_or_resource');
   }

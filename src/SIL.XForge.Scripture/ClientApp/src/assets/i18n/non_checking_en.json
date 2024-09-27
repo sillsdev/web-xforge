@@ -141,6 +141,7 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Add to project",
+    "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
     "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty.",
     "cancel": "Cancel",
     "confirm_overwrite": "Please confirm you want to overwrite the book.",
@@ -148,6 +149,8 @@
     "choose_project": "Choose project",
     "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
     "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first.",
+    "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
+    "please_select_valid_project": "Please select a valid project",
     "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
     "select_alternate_project": "Select the project you want to add the draft to"
   },
@@ -382,9 +385,6 @@
     "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
   "project_select": {
-    "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
-    "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
-    "please_select_valid_project": "Please select a valid project",
     "please_select_valid_project_or_resource": "Please select a valid project or resource",
     "projects": "Projects",
     "resources": "Resources",
