@@ -10,7 +10,7 @@
         [projects]="projects"
         [placeholder]="t('choose_project')"
         [isDisabled]="projects.length === 0"
-        [bookName]="bookName"
+        [invalidMessageMapper]="invalidMessageMapper"
         (projectSelect)="projectSelected($event.paratextId)"
         formControlName="targetParatextId"
       ></app-project-select>
