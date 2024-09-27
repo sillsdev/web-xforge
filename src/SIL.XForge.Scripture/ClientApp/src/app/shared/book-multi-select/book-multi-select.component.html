@@ -2,6 +2,7 @@
   @if (availableBooks.length > 0 && !readonly) {
     <div>
       <mat-checkbox
+        class="ot-checkbox"
         value="OT"
         [checked]="selectedAllOT"
         [disabled]="!isOldTestamentAvailable()"
@@ -11,6 +12,7 @@
         {{ t("old_testament") }}
       </mat-checkbox>
       <mat-checkbox
+        class="nt-checkbox"
         value="NT"
         [checked]="selectedAllNT"
         [(indeterminate)]="partialNT"
@@ -22,6 +24,7 @@
 
       @if (isDeuterocanonAvailable()) {
         <mat-checkbox
+          class="dc-checkbox"
           value="DC"
           [checked]="selectedAllDC"
           (change)="select($event.checked ? 'DC' : 'clearDC')"
