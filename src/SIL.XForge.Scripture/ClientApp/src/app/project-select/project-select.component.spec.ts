@@ -125,7 +125,12 @@ describe('ProjectSelectComponent', () => {
 
   it('allows using a custom error state matcher', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.component.projectSelect.bookName = 'Genesis';
+    const invalidMessageMapper = {
+      invalidProject: 'Please select a valid project',
+      bookNotFound: 'Genesis on the selected project',
+      noWritePermissions: 'You do not have permission'
+    };
+    env.component.projectSelect.invalidMessageMapper = invalidMessageMapper;
     expect(env.selectionInvalidMessage).toBeNull();
     env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.InvalidProject));
     tick();
