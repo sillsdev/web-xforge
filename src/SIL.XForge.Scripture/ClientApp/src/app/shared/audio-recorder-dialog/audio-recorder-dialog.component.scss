@@ -6,6 +6,7 @@
   justify-content: center;
   height: 150px;
   width: 150px;
+  margin: auto;
 
   .countdown {
     line-height: 1;
@@ -73,7 +74,10 @@
 
 .dialog-footer {
   height: 50px;
-  width: 220px;
+  position: relative;
+  canvas {
+    position: absolute;
+  }
 }
 
 .visualizer {
@@ -85,6 +89,7 @@
   transform: scale(0);
   display: flex;
   justify-content: space-between;
+  gap: 10px;
 
   &.visible {
     transform: scale(1);
