@@ -29,7 +29,6 @@ export const FONT_FACE_FALLBACKS: { [key: string]: string } = {
   'Andika New Basic Compact': 'Andika',
   'Andika Eng-Lit': 'Andika',
   'Andika SEB': 'Andika',
-  'Annapurna SIL Nepal': 'Annapurna SIL',
   'Annapurna SIL Thami': 'Annapurna SIL',
   Gentium: 'Gentium Plus',
   'Gentium Basic': 'Gentium Plus',
