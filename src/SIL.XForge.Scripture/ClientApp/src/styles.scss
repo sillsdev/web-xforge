@@ -8,6 +8,18 @@
 @import 'fonts';
 @import 'text';
 
+// Reset all elements to border-box
+html {
+  box-sizing: border-box;
+  -ms-overflow-style: scrollbar;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
 body {
   margin: 0;
   font-family: Roboto, sans-serif;
