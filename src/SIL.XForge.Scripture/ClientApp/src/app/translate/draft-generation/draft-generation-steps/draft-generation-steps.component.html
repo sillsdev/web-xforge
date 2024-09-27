@@ -115,7 +115,7 @@
             </div>
           </ng-template>
           <div>
-            <mat-checkbox [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
+            <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
           </div>
           @if (fastTraining) {
             <app-notice icon="warning" type="warning" class="warning">{{ t("fast_training_warning") }}</app-notice>
