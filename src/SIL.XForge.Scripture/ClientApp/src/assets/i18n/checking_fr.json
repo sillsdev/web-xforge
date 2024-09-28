@@ -165,6 +165,10 @@
       "LAO": "Laodiceans"
     }
   },
+  "chapter_nav": {
+    "previous_chapter": "Chapitre précédent",
+    "next_chapter": "Chapitre suivant"
+  },
   "checking": {
     "filter_questions": "Filtrer les questions",
     "input_required_before_saving": "Fournir du texte ou de l'audio avant d'enregistrer",
@@ -204,6 +208,7 @@
     "marked_for_export": "Marqué pour vérification",
     "mark_for_export": "Signaler pour vérification",
     "no_scripture_selected": "Aucun texte sélectionné pour l'instant.",
+    "record_question": "Enregistrer la question",
     "recording_automatically_stopped": "L'enregistrement de votre réponse a été arrêté automatiquement.",
     "resolve": "Résoudre",
     "resolved": "Résolue",
@@ -380,6 +385,12 @@
     "offline-accessible": "Accès hors ligne",
     "open": "Ouvrir",
     "problem_getting_pt_list": "Il y a eu un problème pour obtenir la liste des projets Paratext disponibles auxquels se connecter. Si ce problème persiste et que la déconnexion et la reconnexion ne règlent pas le problème, veuillez signaler le problème pour obtenir de l'aide."
+  },
+  "roles": {
+    "sf_community_checker": "Vérificateur de la communauté"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Répondre aux questions, Commenter les réponses"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choisissez le livre",

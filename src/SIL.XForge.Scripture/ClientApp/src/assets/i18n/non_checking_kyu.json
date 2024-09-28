@@ -24,11 +24,23 @@
   },
   "biblical_terms": {
     "actions": "Actions",
+    "all": "All",
+    "biblical_terms_renderings": "Biblical Terms Renderings",
+    "blank": "(Blank)",
     "category": "Category",
+    "current_book": "Current Book",
+    "current_chapter": "Current Chapter",
+    "current_verse": "Current Verse",
+    "edit_renderings": "Edit Renderings",
     "gloss": "Gloss",
+    "not_found": "No Biblical Terms match your criteria.",
+    "notes": "Notes",
     "renderings": "Renderings",
+    "settings": "ꤜꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬",
+    "show": "Show",
     "term": "Term",
-    "biblical_terms_renderings": "Biblical Terms Renderings"
+    "transliterate_terms": "Transliterate Terms",
+    "view_renderings": "View Renderings"
   },
   "book_select": {
     "clear": "Clear",
@@ -36,10 +48,6 @@
     "new_testament": "NT",
     "old_testament": "OT",
     "select": "ꤗꤟꤢꤩ꤬ꤗꤢ"
-  },
-  "chapter_nav": {
-    "previous_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤋꤛꤢꤩ꤭",
-    "next_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤑꤢꤩ꤭"
   },
   "checking": {
     "add_question": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭"
@@ -270,11 +278,13 @@
     "offline_notice": "Editor history is not available offline."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Biblical Terms",
     "history_menu_item": "History",
     "draft_menu_item": "Auto Draft",
     "project_resource_menu_item": "Resource..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Biblical Terms",
     "default_history_tab_header": "History",
     "default_project_tab_header": "Project",
     "default_resource_tab_header": "Resource",
@@ -415,7 +425,6 @@
     "roles": "Roles",
     "roles_from_pt_cannot_be_changed": "Roles can only be changed in Paratext",
     "save": "ꤙꤢꤩ꤬ꤘꤝꤥ",
-    "sf_community_checker": "Community Checker",
     "sf_commenter": "Commenter",
     "sf_observer": "Viewer",
     "user_pt": "Paratext User",
@@ -426,7 +435,6 @@
     "pt_consultant": "View translation - view questions & answers - add notes",
     "pt_observer": "View translation - view questions & answers - view notes",
     "pt_translator": "Edit translations - view questions - add answers - add notes - sync with Paratext",
-    "sf_community_checker": "Answer questions - comment on answers",
     "sf_commenter": "View translation - add notes",
     "sf_observer": "View translation - view notes"
   },
@@ -501,15 +509,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Better",
-    "biblical_terms": "Show Biblical Terms",
     "close": "ꤗꤟꤢꤩ꤬ꤙꤤ",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
     "translation_suggestions": "Translation suggestions",
-    "translator_settings": "Translator settings",
-    "transliterate_biblical_terms": "Transliterate Biblical Terms"
+    "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Supported Back Translation Languages"
