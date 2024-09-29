@@ -3948,8 +3948,8 @@ describe('EditorComponent', () => {
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
         env.wait();
 
-        const tabGroup = env.component.tabState.getTabGroup('source');
-        expect(tabGroup?.tabs[1].type).toEqual('biblical-terms');
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1].type).toEqual('biblical-terms');
 
         const targetTabGroup = env.component.tabState.getTabGroup('target');
         expect(targetTabGroup?.tabs[1]).toBeUndefined();
@@ -3991,7 +3991,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should not add the biblical terms tab when if the user had biblical terms disabled', fakeAsync(() => {
+      it('should not add the biblical terms tab if the user had biblical terms disabled', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
