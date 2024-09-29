@@ -1,5 +1,6 @@
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatSliderDragEvent } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
@@ -8,7 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, getAudioBlob } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
@@ -62,6 +63,8 @@ describe('CheckingAudioPlayerComponent', () => {
     await env.waitForPlayer(1100);
     env.fixture.detectChanges();
     env.clickButton(env.pauseButton(1));
+    await env.waitForPlayer(1100);
+    env.fixture.detectChanges();
     expect(env.currentTime).toBe('0:01');
   });
 
@@ -120,6 +123,16 @@ describe('CheckingAudioPlayerComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audioPlayer?.audio).not.toBeUndefined();
     expect(env.audioNotAvailableMessage).toBeNull();
+  });
+
+  it('it can seek to a new position', async () => {
+    const template = `<app-checking-audio-player #player1 source="${audioBlobFile.url}"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, true);
+    await env.waitForPlayer(playerLoadTimeMs);
+    expect(env.component.player1.audioPlayer).not.toBeUndefined();
+    expect(env.component.player1.audioPlayer?.seek).toBe(0);
+    env.component.player1.audioPlayer?.onSeek({ value: 0.1 } as MatSliderDragEvent);
+    expect(env.component.player1.audioPlayer?.seek).toBe(0.1);
   });
 
   it('it can play preloaded audio when offline', async () => {

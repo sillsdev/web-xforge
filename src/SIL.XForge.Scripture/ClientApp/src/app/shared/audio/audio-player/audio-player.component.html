@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
   @if (!hasProblem) {
     <div class="content" dir="ltr">
-      <div class="current-time">{{ audio?.currentTime ?? 0 | audioTime }}</div>
+      <div class="current-time">{{ currentTime | audioTime }}</div>
       <mat-slider class="slider" [disabled]="!isAudioAvailable" [min]="0" [max]="100">
         <input matSliderThumb [value]="seek" (dragEnd)="onSeek($event)" />
       </mat-slider>
