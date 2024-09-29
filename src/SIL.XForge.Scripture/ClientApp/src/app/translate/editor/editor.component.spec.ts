@@ -3938,6 +3938,76 @@ describe('EditorComponent', () => {
       }));
     });
 
+    describe('updateBiblicalTermsTabVisibility', () => {
+      it('should add biblical terms tab to source when enabled and "showSource" is true', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: true });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1].type).toEqual('biblical-terms');
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1]).toBeUndefined();
+
+        env.dispose();
+      }));
+
+      it('should add biblical terms tab to target when available and "showSource" is false', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: true });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1].type).toEqual('biblical-terms');
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+
+        env.dispose();
+      }));
+
+      it('should not add the biblical terms tab when opening project with biblical terms disabled', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: false } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: true });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(1);
+
+        env.dispose();
+      }));
+
+      it('should not add the biblical terms tab if the user had biblical terms disabled', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: false });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(1);
+
+        env.dispose();
+      }));
+    });
+
     describe('tab header tooltips', () => {
       it('should show source tab header tooltip', fakeAsync(async () => {
         const env = new TestEnvironment();
