@@ -46,8 +46,8 @@ describe('FontService', () => {
     expect(fontService.getCSSFontName('Tahoma')).toEqual('Andika');
   });
 
-  it('should fall back from Annapurna SIL Nepal to Annapurna SIL', () => {
-    expect(fontService.getCSSFontName('Annapurna SIL Nepal')).toEqual('Annapurna SIL');
+  it('should fall back from Annapurna SIL Thami to Annapurna SIL', () => {
+    expect(fontService.getCSSFontName('Annapurna SIL Thami')).toEqual('Annapurna SIL');
   });
 
   it('should not have any broken font fallbacks', () => {
