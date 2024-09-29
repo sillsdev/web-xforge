@@ -24,11 +24,23 @@
   },
   "biblical_terms": {
     "actions": "Funktionen",
+    "all": "Alles",
+    "biblical_terms_renderings": "Übersetzungsmöglichkeiten biblischer Begriffe",
+    "blank": "(Leer)",
     "category": "Kategorie",
+    "current_book": "Aktuelles Buch",
+    "current_chapter": "Aktuelles Kapitel",
+    "current_verse": "Aktueller Vers",
+    "edit_renderings": "Übersetzungsmöglichkeiten bearbeiten",
     "gloss": "Glossierung",
+    "not_found": "Keine biblischen Begriffe entsprechen Deinen Kriterien.",
+    "notes": "Notizen",
     "renderings": "Übersetzungsmöglichkeiten",
+    "settings": "Einstellungen",
+    "show": "Anzeigen",
     "term": "Begriff",
-    "biblical_terms_renderings": "Übersetzungsmöglichkeiten biblischer Begriffe"
+    "transliterate_terms": "Begriffe transliterieren",
+    "view_renderings": "Übersetzungsmöglichkeiten ansehen"
   },
   "book_select": {
     "clear": "Klar",
@@ -36,10 +48,6 @@
     "new_testament": "NT",
     "old_testament": "AT",
     "select": "Wählen"
-  },
-  "chapter_nav": {
-    "previous_chapter": "Vorheriges Kapitel",
-    "next_chapter": "Nächstes Kapitel"
   },
   "checking": {
     "add_question": "Frage hinzufügen"
@@ -270,11 +278,13 @@
     "offline_notice": "Der Editorverlauf ist offline nicht verfügbar."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Biblische Begriffe",
     "history_menu_item": "Verlauf",
     "draft_menu_item": "Automatischer Entwurf",
     "project_resource_menu_item": "Ressource..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Biblische Begriffe",
     "default_history_tab_header": "Verlauf",
     "default_project_tab_header": "Projekt",
     "default_resource_tab_header": "Ressource",
@@ -415,7 +425,6 @@
     "roles": "Rollen",
     "roles_from_pt_cannot_be_changed": "Rollen können nur im Paratext geändert werden",
     "save": "Speichern",
-    "sf_community_checker": "Überprüfer der Zielgruppe",
     "sf_commenter": "Kommentator",
     "sf_observer": "Betrachter",
     "user_pt": "Paratext Benutzer",
@@ -426,7 +435,6 @@
     "pt_consultant": "Übersetzung anzeigen - Fragen und Antworten anzeigen - Kommentare hinzufügen",
     "pt_observer": "Übersetzung anzeigen - Fragen und Antworten anzeigen - Kommentare anzeigen",
     "pt_translator": "Übersetzungen bearbeiten - Fragen anzeigen - Antworten hinzufügen - Kommentare hinzufügen - mit Paratext synchronisieren",
-    "sf_community_checker": "Fragen beantworten - Antworten kommentieren",
     "sf_commenter": "Übersetzung anzeigen - Kommentare hinzufügen",
     "sf_observer": "Übersetzung anzeigen - Kommentare anzeigen"
   },
@@ -501,15 +509,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Besser",
-    "biblical_terms": "Biblische Begriffe anzeigen",
     "close": "Schliessen",
     "more": "Mehr",
     "number_of_suggestions": "Anzahl Vorschläge",
     "settings_not_available_offline": "Diese Einstellungen sind nicht verfügbar, wenn Du offline bist.",
     "suggestion_confidence": "Vertrauen in Vorschlag",
     "translation_suggestions": "Übersetzungsvorschläge",
-    "translator_settings": "Übersetzungseinstellungen",
-    "transliterate_biblical_terms": "Biblische Begriffe umschreiben"
+    "translator_settings": "Übersetzungseinstellungen"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Unterstützte Rückübersetzungssprachen"

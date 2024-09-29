@@ -165,6 +165,10 @@
       "LAO": "Laodicenses"
     }
   },
+  "chapter_nav": {
+    "previous_chapter": "Capítulo anterior",
+    "next_chapter": "Capítulo siguiente"
+  },
   "checking": {
     "filter_questions": "Filtrar las preguntas",
     "input_required_before_saving": "Proporcione texto o audio antes de guardar",
@@ -204,6 +208,7 @@
     "marked_for_export": "Marcado para revisión",
     "mark_for_export": "Marcar para revisión",
     "no_scripture_selected": "Todavía no se ha seleccionado ninguna escritura.",
+    "record_question": "Grabar pregunta",
     "recording_automatically_stopped": "La grabación de su respuesta se detuvo automáticamente.",
     "resolve": "Resolver",
     "resolved": "Resueltas",
@@ -368,7 +373,7 @@
     "dbl_resources": "Recursos de la Biblioteca Digital de la Biblia",
     "drafting": "Redacción",
     "failed_to_connect_to_pt_server": "Ha habido un problema al conectar con Paratext para obtener sus proyectos. Por favor, inténtelo de nuevo más tarde. Si el problema persiste después de varias horas, informe del problema para obtener ayuda.",
-    "failed_to_join_project": "Failed to join the project. Please check your internet connection and try again later.",
+    "failed_to_join_project": "Error al unirse al proyecto. Comprueba tu conexión a Internet e inténtalo más tarde.",
     "join": "Unirse",
     "loading_more_pt_projects": "Cargando proyectos Paratext adicionales ...",
     "looking_for_another_project": "¿Busca otro proyecto?",
@@ -380,6 +385,12 @@
     "offline-accessible": "Acceso sin conexión",
     "open": "Abierto",
     "problem_getting_pt_list": "Se ha producido un problema al obtener la lista de proyectos Paratext disponibles a los que conectarse. Si esto sigue sucediendo, y cerrar la sesión y volver a entrar no soluciona el problema, por favor informe del problema para obtener ayuda."
+  },
+  "roles": {
+    "sf_community_checker": "Revisor de la comunidad"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Responder a las preguntas - comentar las respuestas"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Elegir libro",

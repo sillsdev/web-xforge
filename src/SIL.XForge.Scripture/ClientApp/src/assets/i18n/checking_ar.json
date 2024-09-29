@@ -165,6 +165,10 @@
       "LAO": "Laodiceans"
     }
   },
+  "chapter_nav": {
+    "previous_chapter": "الأصحاح / الفصل السابق",
+    "next_chapter": "الأصحاح / الفصل التالي"
+  },
   "checking": {
     "filter_questions": "تصفية الأسئلة",
     "input_required_before_saving": "Provide text or audio before saving",
@@ -204,6 +208,7 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "لم يتمّ تحديد مقطع كتابي بعد.",
+    "record_question": "Record question",
     "recording_automatically_stopped": "تمّ إيقاف تسجيل إجابتك بصورةآلية.",
     "resolve": "Resolve",
     "resolved": "تم الحل",
@@ -380,6 +385,12 @@
     "offline-accessible": "Offline Access",
     "open": "Open",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
+  },
+  "roles": {
+    "sf_community_checker": "تحقُّق المجتمع"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions - comment on answers"
   },
   "scripture_chooser_dialog": {
     "choose_book": "اختيار سفر/ كتاب",

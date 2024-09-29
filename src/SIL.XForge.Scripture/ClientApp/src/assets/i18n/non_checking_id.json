@@ -24,11 +24,23 @@
   },
   "biblical_terms": {
     "actions": "Aksi",
+    "all": "Semua",
+    "biblical_terms_renderings": "Padanan Istilah Alkitab",
+    "blank": "(Blank)",
     "category": "Kategori",
+    "current_book": "Current Book",
+    "current_chapter": "Current Chapter",
+    "current_verse": "Current Verse",
+    "edit_renderings": "Sunting Padanan",
     "gloss": "Petunjuk Arti",
+    "not_found": "No Biblical Terms match your criteria.",
+    "notes": "Notes",
     "renderings": "Padanan",
+    "settings": "Pengaturan",
+    "show": "Show",
     "term": "Istilah",
-    "biblical_terms_renderings": "Padanan Istilah Alkitab"
+    "transliterate_terms": "Transliterate Terms",
+    "view_renderings": "Tampilkan Padanan"
   },
   "book_select": {
     "clear": "Kosongkan",
@@ -36,10 +48,6 @@
     "new_testament": "PB",
     "old_testament": "PL",
     "select": "Pilih"
-  },
-  "chapter_nav": {
-    "previous_chapter": "Pasal sebelumnya",
-    "next_chapter": "Pasal berikutnya"
   },
   "checking": {
     "add_question": "Tambah pertanyaan"
@@ -270,11 +278,13 @@
     "offline_notice": "Editor history is not available offline."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Biblical Terms",
     "history_menu_item": "History",
     "draft_menu_item": "Auto Draft",
     "project_resource_menu_item": "Resource..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Biblical Terms",
     "default_history_tab_header": "History",
     "default_project_tab_header": "Project",
     "default_resource_tab_header": "Resource",
@@ -415,7 +425,6 @@
     "roles": "Peran",
     "roles_from_pt_cannot_be_changed": "Peran hanya dapat diubah di Paratext",
     "save": "Simpan",
-    "sf_community_checker": "Pemeriksa Komunitas",
     "sf_commenter": "Komentator",
     "sf_observer": "Penonton",
     "user_pt": "Pengguna Paratext",
@@ -426,7 +435,6 @@
     "pt_consultant": "Lihat terjemahan - lihat pertanyaan & jawaban - tambahkan catatan",
     "pt_observer": "Lihat terjemahan - lihat pertanyaan & jawaban - tambahkan catatan",
     "pt_translator": "Sunting terjemahan - lihat pertanyaan - tambahkan jawaban - tambahkan catatan - selaraskan dengan Paratext",
-    "sf_community_checker": "Menjawab pertanyaan - mengomentari jawaban",
     "sf_commenter": "Lihat terjemahan - tambahkan catatan",
     "sf_observer": "Lihat terjemahan - lihat catatan"
   },
@@ -501,15 +509,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Lebih baik",
-    "biblical_terms": "Tampilkan Istilah Alkitab",
     "close": "Tutup",
     "more": "Lebih banyak",
     "number_of_suggestions": "Jumlah saran",
     "settings_not_available_offline": "Pengaturan ini tidak tersedia saat Anda luring.",
     "suggestion_confidence": "Saran meyakinkan",
     "translation_suggestions": "Saran Terjemahan",
-    "translator_settings": "Pengaturan penerjemah",
-    "transliterate_biblical_terms": "Transliterasi Istilah-istilah Alkitab"
+    "translator_settings": "Pengaturan penerjemah"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Bahasa Terjemahan Balik yang Didukung"
