@@ -1,6 +1,11 @@
-@using Microsoft.AspNetCore.Mvc.Localization
 @using System.Globalization
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Microsoft.Extensions.Options
+@using SIL.XForge.Configuration
+@using SIL.XForge.Scripture.ViewComponents
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
+@inject IOptions<SiteOptions> SiteOptions
+
 
 <!DOCTYPE html>
 <html>
@@ -21,22 +26,22 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    @RenderSection("meta", required: false)
-    <title>Scripture Forge</title>
+    @await RenderSectionAsync("meta", required: false)
+    <title>@SiteOptions.Value.Name</title>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300&display=swap" />
     <link rel="stylesheet" href="~/lib/material-design-lite/css/material.sf_grey-pt_green.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="~/css/sf.min.css" />
-    @RenderSection("css", required: false)
+    @await RenderSectionAsync("css", required: false)
 </head>
 
 @{
-    var direction = CultureInfo.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
+    string direction = CultureInfo.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr";
 }
 
-<body dir=@direction>
+<body dir="@direction">
     <header>
         <div class="top-bar">
             <div class="mdl-grid">
@@ -67,7 +72,7 @@
         @RenderBody()
     </div>
     <vc:footer></vc:footer>
-    @RenderSection("scripts", required: false)
+    @await RenderSectionAsync("scripts", required: false)
 </body>
 
 </html>
