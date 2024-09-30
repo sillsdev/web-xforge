@@ -39,7 +39,6 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
-import { DiagnosticOverlayComponent } from '../../shared/diagnostic-overlay/diagnostic-overlay.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedAuthService = mock(AuthService);
@@ -52,7 +51,7 @@ const mockedPermissionService = mock(PermissionsService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TranslateOverviewComponent, TrainingProgressComponent, DiagnosticOverlayComponent],
+    declarations: [TranslateOverviewComponent, TrainingProgressComponent],
     imports: [
       RouterModule.forRoot([]),
       UICommonModule,
