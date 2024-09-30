@@ -39,6 +39,7 @@ import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
+import { DiagnosticOverlayComponent } from './shared/diagnostic-overlay/diagnostic-overlay.component';
 
 declare function gtag(...args: any): void;
 
@@ -108,6 +109,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     });
 
     this.subscribe(pwaService.hasUpdate$, () => (this.hasUpdate = true));
+
+    this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
+      if (isEnabled) {
+        this.dialogService.openDiagnosticOverlay(DiagnosticOverlayComponent);
+      } else {
+        this.dialogService.closeDiagnosticOverlay();
+      }
+    });
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
