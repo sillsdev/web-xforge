@@ -6,23 +6,16 @@ using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Scripture.Pages;
 
-public class IndexModel : PageModel
+public class IndexModel(IOptions<AuthOptions> authOptions, IStringLocalizerFactory localizerFactory) : PageModel
 {
-    public IStringLocalizer Localizer { get; }
-
-    private readonly IOptions<AuthOptions> _authOptions;
-
-    public IndexModel(IOptions<AuthOptions> authOptions, IStringLocalizerFactory localizerFactory)
-    {
-        _authOptions = authOptions;
-        Localizer = localizerFactory.Create("Pages.Index", Assembly.GetExecutingAssembly().GetName().Name);
-    }
+    public IStringLocalizer Localizer { get; } =
+        localizerFactory.Create("Pages.Index", Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty);
 
     public void OnGet()
     {
-        ViewData["Domain"] = _authOptions.Value.Domain;
-        ViewData["ClientId"] = _authOptions.Value.FrontendClientId;
-        ViewData["Audience"] = _authOptions.Value.Audience;
-        ViewData["Scope"] = _authOptions.Value.Scope;
+        ViewData["Domain"] = authOptions.Value.Domain;
+        ViewData["ClientId"] = authOptions.Value.FrontendClientId;
+        ViewData["Audience"] = authOptions.Value.Audience;
+        ViewData["Scope"] = authOptions.Value.Scope;
     }
 }
