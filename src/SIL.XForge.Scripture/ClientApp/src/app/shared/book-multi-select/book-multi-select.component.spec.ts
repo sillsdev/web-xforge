@@ -64,35 +64,35 @@ describe('BookMultiSelectComponent', () => {
   it('can select all OT books and clear all OT books', async () => {
     expect(component.selectedBooks.length).toEqual(2);
 
-    await component.select('OT');
+    await component.select('OT', true);
     expect(component.selectedBooks.length).toEqual(3);
 
-    await component.select('clearOT');
+    await component.select('OT', false);
     expect(component.selectedBooks.length).toEqual(0);
   });
 
   it('can select all NT books and clear all NT books', async () => {
     expect(component.selectedBooks.length).toEqual(2);
 
-    await component.select('NT');
+    await component.select('NT', true);
     expect(component.selectedBooks.length).toEqual(4);
 
-    await component.select('clearNT');
+    await component.select('NT', false);
     expect(component.selectedBooks.length).toEqual(2);
   });
 
   it('can select all DC books and clear all DC books', async () => {
     expect(component.selectedBooks.length).toEqual(2);
 
-    await component.select('DC');
+    await component.select('DC', true);
     expect(component.selectedBooks.length).toEqual(4);
 
-    await component.select('clearDC');
+    await component.select('DC', false);
     expect(component.selectedBooks.length).toEqual(2);
   });
 
   it('should show checkboxes for OT, NT, and DC as indeterminate when only some books from that category are selected', async () => {
-    await component.select('clearOT');
+    await component.select('OT', false);
     component.selectedBooks = [1];
     await component.ngOnChanges();
     fixture.detectChanges();
@@ -101,7 +101,7 @@ describe('BookMultiSelectComponent', () => {
     expect(component.partialNT).toBe(false);
     expect(component.partialDC).toBe(false);
 
-    await component.select('clearOT');
+    await component.select('OT', false);
     component.selectedBooks = [40];
     await component.ngOnChanges();
     fixture.detectChanges();
@@ -110,7 +110,7 @@ describe('BookMultiSelectComponent', () => {
     expect(component.partialNT).toBe(true);
     expect(component.partialDC).toBe(false);
 
-    await component.select('clearNT');
+    await component.select('NT', false);
     component.selectedBooks = [67];
     await component.ngOnChanges();
     fixture.detectChanges();
