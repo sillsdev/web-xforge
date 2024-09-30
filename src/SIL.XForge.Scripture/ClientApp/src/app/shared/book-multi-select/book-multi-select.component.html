@@ -4,20 +4,20 @@
       <mat-checkbox
         class="ot-checkbox"
         value="OT"
-        [checked]="selectedAllOT"
         [disabled]="!isOldTestamentAvailable()"
-        [(indeterminate)]="partialOT"
-        (change)="select($event.checked ? 'OT' : 'clearOT')"
+        [checked]="selectedAllOT"
+        [indeterminate]="partialOT"
+        (change)="select('OT', $event.checked)"
       >
         {{ t("old_testament") }}
       </mat-checkbox>
       <mat-checkbox
         class="nt-checkbox"
         value="NT"
-        [checked]="selectedAllNT"
-        [(indeterminate)]="partialNT"
         [disabled]="!isNewTestamentAvailable()"
-        (change)="select($event.checked ? 'NT' : 'clearNT')"
+        [checked]="selectedAllNT"
+        [indeterminate]="partialNT"
+        (change)="select('NT', $event.checked)"
       >
         {{ t("new_testament") }}
       </mat-checkbox>
@@ -27,8 +27,8 @@
           class="dc-checkbox"
           value="DC"
           [checked]="selectedAllDC"
-          (change)="select($event.checked ? 'DC' : 'clearDC')"
-          [(indeterminate)]="partialDC"
+          [indeterminate]="partialDC"
+          (change)="select('DC', $event.checked)"
         >
           {{ t("deuterocanon") }}
         </mat-checkbox>
