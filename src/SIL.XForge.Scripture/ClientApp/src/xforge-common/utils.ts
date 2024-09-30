@@ -62,8 +62,16 @@ export function getBrowserEngine(): string {
   return engine == null ? '' : engine.toLowerCase();
 }
 
+export function isBlink(): boolean {
+  return getBrowserEngine() === 'blink';
+}
+
 export function isGecko(): boolean {
   return getBrowserEngine() === 'gecko';
+}
+
+export function isWebkit(): boolean {
+  return getBrowserEngine() === 'webkit';
 }
 
 export function audioRecordingMimeType(): string {

@@ -96,7 +96,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { browserLinks, getLinkHTML, isGecko, issuesEmailTemplate, objectId } from 'xforge-common/utils';
+import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -529,7 +529,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get writingSystemWarningMessage(): string {
-    return translate('editor.browser_warning_banner', { firefoxLink: browserLinks().firefoxLink });
+    return translate('editor.browser_warning_banner', {
+      firefoxLink: browserLinks().firefoxLink,
+      safari: browserLinks().safariLink
+    });
   }
 
   get showMultiViewers(): boolean {
@@ -622,7 +625,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     */
     const languageCode = writingSystemTag?.split(/-_/)[0] ?? '';
     const unsupportedLanguageCode = UNSUPPORTED_LANGUAGE_CODES.includes(languageCode);
-    return !isGecko() && writingSystemTag != null && unsupportedLanguageCode && this.canEdit;
+    return isBlink() && writingSystemTag != null && unsupportedLanguageCode && this.canEdit;
   }
 
   /**
