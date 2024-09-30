@@ -15,6 +15,8 @@ export interface BookOption {
   progressPercentage: number;
 }
 
+type Scope = 'OT' | 'NT' | 'DC';
+
 @Component({
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
@@ -98,28 +100,20 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
     this.initBookOptions();
   }
 
-  async select(eventValue: string): Promise<void> {
-    if (eventValue === 'OT') {
+  isBookInScope(bookNum: number, scope: Scope): boolean {
+    if (scope === 'OT') return Canon.isBookOT(bookNum);
+    else if (scope === 'NT') return Canon.isBookNT(bookNum);
+    else if (scope === 'DC') return Canon.isBookDC(bookNum);
+    throw new Error('Invalid scope');
+  }
+
+  async select(scope: Scope, value: boolean): Promise<void> {
+    if (value) {
       this.selectedBooks.push(
-        ...this.availableBooks.filter(n => Canon.isBookOT(n) && this.selectedBooks.indexOf(n) === -1)
+        ...this.availableBooks.filter(n => this.isBookInScope(n, scope) && !this.selectedBooks.includes(n))
       );
-    } else if (eventValue === 'clearOT') {
-      const booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n));
-      this.selectedBooks = this.selectedBooks.filter(n => !booksOT.includes(n));
-    } else if (eventValue === 'NT') {
-      this.selectedBooks.push(
-        ...this.availableBooks.filter(n => Canon.isBookNT(n) && this.selectedBooks.indexOf(n) === -1)
-      );
-    } else if (eventValue === 'clearNT') {
-      const booksNT = this.selectedBooks.filter(n => Canon.isBookNT(n));
-      this.selectedBooks = this.selectedBooks.filter(n => !booksNT.includes(n));
-    } else if (eventValue === 'DC') {
-      this.selectedBooks.push(
-        ...this.availableBooks.filter(n => Canon.isBookDC(n) && this.selectedBooks.indexOf(n) === -1)
-      );
-    } else if (eventValue === 'clearDC') {
-      const booksDC = this.selectedBooks.filter(n => Canon.isBookDC(n));
-      this.selectedBooks = this.selectedBooks.filter(n => !booksDC.includes(n));
+    } else {
+      this.selectedBooks = this.selectedBooks.filter(n => !this.isBookInScope(n, scope));
     }
     await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
