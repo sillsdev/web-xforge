@@ -130,25 +130,25 @@ body[dir='rtl'] .mirror-rtl {
 // less than small. The same is not true of xl; xl has an actual value, and a screen can be larger than xl.
 
 .hide-lt-sm {
-  @include breakpoints.media-breakpoint-down(sm) {
+  @include breakpoints.media-breakpoint-down(xs) {
     display: none !important;
   }
 }
 
 .hide-lt-md {
-  @include breakpoints.media-breakpoint-down(md) {
+  @include breakpoints.media-breakpoint-down(sm) {
     display: none !important;
   }
 }
 
 .hide-lt-lg {
-  @include breakpoints.media-breakpoint-down(lg) {
+  @include breakpoints.media-breakpoint-down(md) {
     display: none !important;
   }
 }
 
 .hide-lt-xl {
-  @include breakpoints.media-breakpoint-down(xl) {
+  @include breakpoints.media-breakpoint-down(lg) {
     display: none !important;
   }
 }
