@@ -70,10 +70,6 @@ export function isGecko(): boolean {
   return getBrowserEngine() === 'gecko';
 }
 
-export function isWebkit(): boolean {
-  return getBrowserEngine() === 'webkit';
-}
-
 export function audioRecordingMimeType(): string {
   // MediaRecorder.isTypeSupported('audio/webm') will erroneously return true on Firefox,
   // and so we must use browser sniffing in this case.
