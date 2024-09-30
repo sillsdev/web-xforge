@@ -45,7 +45,6 @@ import { ProjectSelectComponent } from '../project-select/project-select.compone
 import { InfoComponent } from '../shared/info/info.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
-import { DiagnosticOverlayComponent } from '../shared/diagnostic-overlay/diagnostic-overlay.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedAuthService = mock(AuthService);
@@ -76,14 +75,7 @@ describe('SettingsComponent', () => {
       TestOnlineStatusModule.forRoot(),
       NoopAnimationsModule
     ],
-    declarations: [
-      SettingsComponent,
-      WriteStatusComponent,
-      MockComponent,
-      ProjectSelectComponent,
-      InfoComponent,
-      DiagnosticOverlayComponent
-    ],
+    declarations: [SettingsComponent, WriteStatusComponent, MockComponent, ProjectSelectComponent, InfoComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
