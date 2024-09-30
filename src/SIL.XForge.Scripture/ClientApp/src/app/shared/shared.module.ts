@@ -14,7 +14,6 @@ import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { TextDocIdPipe } from './text/text-doc-id.pipe';
 import { TextComponent } from './text/text.component';
-import { DiagnosticOverlayComponent } from './diagnostic-overlay/diagnostic-overlay.component';
 
 const componentExports = [
   BookChapterChooserComponent,
@@ -25,8 +24,7 @@ const componentExports = [
   TextComponent,
   CheckingQuestionComponent,
   SingleButtonAudioPlayerComponent,
-  TextDocIdPipe,
-  DiagnosticOverlayComponent
+  TextDocIdPipe
 ];
 
 @NgModule({
