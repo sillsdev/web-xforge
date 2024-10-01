@@ -36,6 +36,8 @@ describe('progress service', () => {
 
   it('populates progress and texts on init', fakeAsync(() => {
     const env = new TestEnvironment(100, 50);
+    const calculate = spyOn<any>(env.service, 'calculateProgress').and.callThrough();
+
     env.service.initialize('project01');
     tick();
 
@@ -53,6 +55,7 @@ describe('progress service', () => {
         expect(chapter.number).toEqual(j++);
       }
     }
+    expect(calculate).toHaveBeenCalledTimes(1);
 
     discardPeriodicTasks();
   }));
