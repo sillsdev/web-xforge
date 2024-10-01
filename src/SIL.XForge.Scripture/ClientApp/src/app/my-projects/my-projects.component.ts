@@ -17,7 +17,6 @@ import { ObjectPaths } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
@@ -36,8 +35,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
   sfProjects: SFProjectDoc[] = [];
   /** PT projects that the user can access that they are not connected to on SF. */
   userUnconnectedParatextProjects: ParatextProject[] = [];
-
-  userConfigDocs: SFProjectUserConfigDoc[] = [];
 
   user?: UserDoc;
   problemGettingPTProjects: boolean = false;
@@ -75,7 +72,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
   async ngOnInit(): Promise<void> {
     await this.loadUser();
-    await this.userProjectsService.updateProjectList(this.user);
     this.subscribe(this.userProjectsService.projectDocs$, (projects?: SFProjectProfileDoc[]) => {
       if (projects == null) return;
       this.userConnectedProjects = projects.filter(
@@ -83,10 +79,6 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       );
       this.userConnectedResources = projects.filter(project => project.data != null && isResource(project.data));
       this.initialLoadingSFProjects = false;
-    });
-    this.subscribe(this.userProjectsService.userConfigDocs$, (configs?: SFProjectUserConfigDoc[]) => {
-      if (configs == null) return;
-      this.userConfigDocs = configs;
     });
 
     await this.onlineStatusService.online;
