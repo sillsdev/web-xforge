@@ -61,11 +61,6 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         await this.calculateProgress();
       }
 
-      // Update the overview now if we are online, or when we are next online
-      this.onlineStatusService.online.then(async () => {
-        await this.calculateProgress();
-      });
-
       const chapterObservables = [];
       for (const book of this._projectDoc.data!.texts) {
         for (const chapter of book.chapters) {
@@ -76,7 +71,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       }
 
       this._allChaptersChangeSub?.unsubscribe();
-      this._allChaptersChangeSub = merge(...chapterObservables)
+      this._allChaptersChangeSub = merge(...chapterObservables, this.onlineStatusService.online)
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(async () => {
           await this.calculateProgress();
