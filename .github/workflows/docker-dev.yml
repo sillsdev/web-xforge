@@ -1,0 +1,42 @@
+name: Build Docker development images
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm/v8
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build and tag images
+        run: |
+          docker build -t ${{ github.repository }}/realtimeserver:latest \
+          --build-arg MIGRATOR_ENVIRONMENT=Development \
+          -f src/RealtimeServer/Dockerfile .
+          docker build -t ${{ github.repository }}:latest \
+          --build-arg AngularConfig=development \
+          --build-arg configuration=Debug \
+          --build-arg version=9.9.9 \
+          -f src/SIL.XForge.Scripture/Dockerfile .
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+      - name: Build and Push Docker Containers
+        run: |
+          docker build . --tag ghcr.io/${{ github.repository }}/realtimeserver:latest
+          docker push ghcr.io/${{ github.repository }}/realtimeserver:latest
+          docker build . --tag ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/${{ github.repository }}:latest
