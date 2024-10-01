@@ -74,8 +74,9 @@ public class RealtimeService : DisposableBase, IRealtimeService
         {
             object options = CreateOptions();
             Server.Start(options);
-            SetPingServiceSchedule();
         }
+
+        SetPingServiceSchedule();
     }
 
     public void StopServer()
