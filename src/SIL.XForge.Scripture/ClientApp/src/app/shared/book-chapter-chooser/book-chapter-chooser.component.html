@@ -32,7 +32,7 @@
       mat-icon-button
       (click)="prevChapter()"
       [disabled]="isPrevChapterDisabled()"
-      title="{{ t('previous_chapter') }}"
+      [title]="t('previous_chapter')"
       class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -41,7 +41,7 @@
       mat-icon-button
       (click)="nextChapter()"
       [disabled]="isNextChapterDisabled()"
-      title="{{ t('next_chapter') }}"
+      [title]="t('next_chapter')"
       class="hide-lt-sm"
     >
       <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>

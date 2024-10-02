@@ -2,12 +2,11 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { Meta, StoryObj, moduleMetadata } from '@storybook/angular';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { DBL_RESOURCE_ID_LENGTH, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { delay, of } from 'rxjs';
 import { anything, instance, mock, objectContaining, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -20,7 +19,6 @@ import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { ParatextService } from '../core/paratext.service';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
@@ -206,7 +204,6 @@ const meta: Meta = {
       let projectProfileDocs: SFProjectProfileDoc[] = [];
       // PT projects the user has access to.
       let userParatextProjects: ParatextProject[] = [];
-      let userConfigDocs: SFProjectUserConfigDoc[] = [];
       // Create the user who is viewing the page.
       const user: User = createTestUser({
         paratextId: context.args.isKnownPTUser ? 'pt-user-id' : undefined,
@@ -258,15 +255,6 @@ const meta: Meta = {
                 id: sfProjectId,
                 data: sfProjectProfile
               } as SFProjectProfileDoc);
-              userConfigDocs.push({
-                id: 'sf-user-id',
-                data: createTestProjectUserConfig({
-                  ownerRef: 'sf-user-id',
-                  projectRef: sfProjectId,
-                  selectedBookNum: 40,
-                  selectedChapterNum: 1
-                })
-              } as SFProjectUserConfigDoc);
             }
 
             // Define whether the project is on SF at all.
@@ -316,7 +304,6 @@ const meta: Meta = {
         const lastSelectedProjectId: string = projectProfileDocs[lastSelectedProject].id;
         user.sites.sf.currentProjectId = lastSelectedProjectId;
       }
-      when(mockedUserProjectsService.userConfigDocs$).thenReturn(of(userConfigDocs));
 
       when(mockedPermissionsService.canAccessCommunityChecking(anything())).thenReturn(true);
       when(mockedPermissionsService.canAccessTranslate(anything())).thenReturn(true);

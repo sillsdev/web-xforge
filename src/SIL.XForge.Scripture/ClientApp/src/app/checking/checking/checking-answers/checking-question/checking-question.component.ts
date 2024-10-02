@@ -2,11 +2,11 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import {
+  VerseRefData,
   toStartAndEndVerseRefs,
-  toVerseRef,
-  VerseRefData
+  toVerseRef
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -188,7 +188,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   ngOnDestroy(): void {
-    this.dispose();
+    super.ngOnDestroy();
     if (this._audioChangeSub != null) {
       this._audioChangeSub.unsubscribe();
     }
