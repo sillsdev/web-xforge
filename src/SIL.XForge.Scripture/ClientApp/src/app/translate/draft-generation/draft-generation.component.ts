@@ -10,7 +10,7 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
+import { Subscription, combineLatest, of } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -30,7 +30,7 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig, DraftZipProgress } from './draft-generation';
+import { BuildConfig, DraftZipProgress, activeBuildStates } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -128,6 +128,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   signupFormUrl?: string;
 
   cancelDialogRef?: MatDialogRef<any>;
+
+  readonly draftDurationHours = 8;
 
   constructor(
     private readonly route: ActivatedRoute,
