@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -14,7 +14,7 @@ import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -1679,7 +1679,7 @@ describe('DraftGenerationComponent', () => {
     }));
   });
 
-  describe('navigateToTab', () => {
+  describe('currentPage', () => {
     it('should navigate to pre-generate steps', fakeAsync(() => {
       let env = new TestEnvironment(() => {
         mockProjectService.getProfile.and.returnValue(
@@ -1692,9 +1692,17 @@ describe('DraftGenerationComponent', () => {
             data: createTestUser()
           }))
         );
+
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: instance(mock(SFProjectProfileDoc)),
+          projectDoc$: of(null),
+          changes$: of(null)
+        });
       });
 
-      env.component.navigateToTab('pre-generate-steps');
+      env.component.currentPage = 'steps';
       env.fixture.detectChanges();
       tick();
       expect(env.preGenerationStepper).not.toBeNull();
