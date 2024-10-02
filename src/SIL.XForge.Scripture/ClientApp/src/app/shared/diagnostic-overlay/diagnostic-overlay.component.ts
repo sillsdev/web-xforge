@@ -1,10 +1,10 @@
 import { OverlayModule } from '@angular/cdk/overlay';
-import { KeyValuePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
@@ -19,7 +19,7 @@ export interface DiagnosticOverlayData {
   templateUrl: './diagnostic-overlay.component.html',
   styleUrl: './diagnostic-overlay.component.scss',
   standalone: true,
-  imports: [OverlayModule, KeyValuePipe, MatIcon]
+  imports: [OverlayModule, CommonModule, UICommonModule]
 })
 export class DiagnosticOverlayComponent extends SubscriptionDisposable {
   showDiagnosticOverlay: boolean = false;

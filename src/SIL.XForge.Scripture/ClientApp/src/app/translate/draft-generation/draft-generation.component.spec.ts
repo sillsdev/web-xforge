@@ -26,6 +26,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -36,7 +37,6 @@ import { DraftGenerationService } from './draft-generation.service';
 import { DraftSource, DraftSourcesService } from './draft-sources.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 import { TrainingDataService } from './training-data/training-data.service';
-import { TestRealtimeModule } from '../../../xforge-common/test-realtime.module';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 
 describe('DraftGenerationComponent', () => {
