@@ -17,6 +17,7 @@ import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -24,7 +25,6 @@ import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SharedModule } from '../shared/shared.module';
 import { MyProjectsComponent } from './my-projects.component';
-import { TestRealtimeModule } from '../../xforge-common/test-realtime.module';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 
 @Component({ template: '' })

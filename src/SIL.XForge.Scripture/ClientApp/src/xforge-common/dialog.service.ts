@@ -56,9 +56,7 @@ export class DialogService {
   }
 
   closeDiagnosticOverlay(): void {
-    if (this.diagnosticOverlay) {
-      this.diagnosticOverlay.dispose();
-    }
+    this.diagnosticOverlay?.dispose();
   }
 
   async confirm(
