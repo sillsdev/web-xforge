@@ -55,7 +55,7 @@
         (click)="tabAddRequest.next(item.type)"
       >
         <mat-icon *ngIf="item.icon">{{ item.icon }}</mat-icon>
-        <mat-icon *ngIf="item.svgIcon" svgIcon="{{ item.svgIcon }}"></mat-icon>
+        <mat-icon *ngIf="item.svgIcon" [svgIcon]="item.svgIcon"></mat-icon>
         <span>{{ item.text }}</span>
       </button>
     </ng-container>

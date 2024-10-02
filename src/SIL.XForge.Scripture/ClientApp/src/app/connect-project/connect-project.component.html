@@ -37,7 +37,7 @@
                 <p>{{ t("translation_suggestions_require_source_text") }}</p>
                 <app-project-select
                   formControlName="sourceParatextId"
-                  placeholder="{{ t('source_text_placeholder') }}"
+                  [placeholder]="t('source_text_placeholder')"
                   [projects]="projects"
                   [resources]="resources"
                   [hiddenParatextIds]="[ptProjectId]"
