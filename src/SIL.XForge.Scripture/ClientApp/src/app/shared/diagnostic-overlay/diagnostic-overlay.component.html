@@ -19,12 +19,10 @@
         </thead>
         <tbody>
           @for (docType of showDocCollections | keyvalue; track docType.key) {
-            @if (docType) {
-              <tr>
-                <td>{{ docType.key }}</td>
-                <td>{{ docType.value }}</td>
-              </tr>
-            }
+            <tr>
+              <td>{{ docType.key }}</td>
+              <td>{{ docType.value }}</td>
+            </tr>
           }
         </tbody>
       </table>
