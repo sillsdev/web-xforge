@@ -86,7 +86,7 @@
                           <span fxFlex fxLayout class="book-chapter-heading"
                             >{{ getBookName(text) + " " + chapter?.number }}
                             @if (chapter.hasAudio) {
-                              <mat-icon title="{{ t('chapter_audio_attached') }}" class="material-icons-outlined"
+                              <mat-icon [title]="t('chapter_audio_attached')" class="material-icons-outlined"
                                 >audio_file</mat-icon
                               >
                             }
@@ -184,7 +184,7 @@
                                   <button
                                     mat-icon-button
                                     (click)="setQuestionArchiveStatus(questionDoc, true)"
-                                    title="{{ t('archive') }}"
+                                    [title]="t('archive')"
                                     class="archive-btn"
                                   >
                                     <mat-icon>archive</mat-icon>
@@ -373,7 +373,7 @@
                                 <button
                                   mat-icon-button
                                   (click)="setQuestionArchiveStatus(questionDoc, false)"
-                                  title="{{ t('republish') }}"
+                                  [title]="t('republish')"
                                   class="publish-btn"
                                 >
                                   <mat-icon>public</mat-icon>

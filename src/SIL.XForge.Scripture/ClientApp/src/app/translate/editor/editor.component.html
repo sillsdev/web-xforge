@@ -17,7 +17,7 @@
               appBlurOnClick
               type="button"
               (click)="isTargetTextRight = !isTargetTextRight"
-              title="{{ t('swap_source_and_target') }}"
+              [title]="t('swap_source_and_target')"
               class="hide-lt-sm"
             >
               <mat-icon>swap_horiz</mat-icon>
@@ -30,7 +30,7 @@
               type="button"
               id="settings-btn"
               (click)="openSuggestionsSettings()"
-              title="{{ t('configure_translation_suggestions') }}"
+              [title]="t('configure_translation_suggestions')"
             >
               <mat-icon>settings</mat-icon>
             </button>
@@ -60,7 +60,7 @@
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable" [tooltip]="tab.tooltip">
             <ng-template sf-tab-header>
               @if (tab.svgIcon) {
-                <mat-icon svgIcon="{{ tab.svgIcon }}"></mat-icon>
+                <mat-icon [svgIcon]="tab.svgIcon"></mat-icon>
               } @else if (tab.icon) {
                 <mat-icon>{{ tab.icon }}</mat-icon>
               }
@@ -223,7 +223,7 @@
                         #fabButton
                         class="insert-note-fab"
                         mat-mini-fab
-                        title="{{ t('add_comment') }}"
+                        [title]="t('add_comment')"
                         (click)="insertNote()"
                       >
                         <mat-icon>add_comment</mat-icon>

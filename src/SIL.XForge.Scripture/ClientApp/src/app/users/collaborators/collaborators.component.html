@@ -18,9 +18,9 @@
       tab text jumps a few pixels when navigating between tabs. -->
       <div class="tab-selector">
         <mat-tab-group [mat-stretch-tabs]="false" (selectedIndexChange)="currentTabIndex = $event">
-          <mat-tab label="{{ t('all') }}"></mat-tab>
-          <mat-tab label="{{ t('paratext_members') }}"></mat-tab>
-          <mat-tab label="{{ t('project_guests') }}"></mat-tab>
+          <mat-tab [label]="t('all')"></mat-tab>
+          <mat-tab [label]="t('paratext_members')"></mat-tab>
+          <mat-tab [label]="t('project_guests')"></mat-tab>
         </mat-tab-group>
       </div>
       <mat-form-field [formGroup]="filterForm" appearance="outline" id="project-user-filter">

@@ -17,7 +17,7 @@
             <div class="question-meta">
               <span class="question-verse">{{ questionVerseRef(questionDoc) }}</span>
               @if (getUnreadAnswers(questionDoc) > 0) {
-                <a class="view-answers" title="{{ t('view_answers') }}">
+                <a class="view-answers" [title]="t('view_answers')">
                   <div [matBadge]="getUnreadAnswers(questionDoc)" matBadgePosition="before" matBadgeSize="small">
                     <mat-icon aria-hidden="false" class="mirror-rtl">forum</mat-icon>
                   </div>
