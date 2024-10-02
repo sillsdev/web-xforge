@@ -63,7 +63,10 @@
           </button>
         </div>
       </mat-step>
-      <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
+      <mat-step
+        [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0"
+        [optional]="isTrainingOptional"
+      >
         <ng-template matStepLabel>
           {{ t("choose_books_for_training_label") }}
         </ng-template>
@@ -130,7 +133,7 @@
         </div>
       </mat-step>
       @if (trainingDataFilesAvailable) {
-        <mat-step [completed]="true">
+        <mat-step [completed]="true" [optional]="true">
           <ng-template matStepLabel>
             {{ t("choose_additional_training_data_files_label") }}
           </ng-template>
@@ -159,7 +162,7 @@
         </mat-step>
       }
       @if (featureFlags.allowFastTraining.enabled) {
-        <mat-step [completed]="true">
+        <mat-step [completed]="true" [optional]="true">
           <ng-template matStepLabel>
             {{ t("configure_advanced_settings_label") }}
           </ng-template>
