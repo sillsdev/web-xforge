@@ -225,6 +225,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
+  hasPersistentTabs: boolean = false;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -415,6 +416,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get hasEditRight(): boolean {
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === true;
+  }
+
+  get persistentTabs(): boolean {
+    return this.hasPersistentTabs;
   }
 
   get userHasGeneralEditRight(): boolean {
@@ -813,6 +818,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.tabState.deconsolidateTabGroups();
         }
       });
+
+    this.editorTabPersistenceService.persistedTabs$.subscribe(tabs => {
+      const persistentTabTypes = ['biblical-terms', 'history', 'draft', 'project-resource'];
+      this.hasPersistentTabs = tabs.some(tab => persistentTabTypes.includes(tab.tabType));
+    });
   }
 
   ngOnDestroy(): void {
