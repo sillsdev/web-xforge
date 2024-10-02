@@ -4006,6 +4006,25 @@ describe('EditorComponent', () => {
 
         env.dispose();
       }));
+
+      it('should keep source pane open if biblical tab has been opened in it', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({
+          biblicalTermsEnabled: true,
+          editorTabsOpen: [{ tabType: 'biblical-terms', groupId: 'source' }]
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'GEN', chapter: '1' });
+        env.wait();
+
+        expect(env.component.showSource).toBe(false);
+        expect(env.component.hasPersistentTabs).toBe(true);
+        expect(env.fixture.debugElement.query(By.css('.biblical-terms'))).not.toBeNull();
+
+        env.dispose();
+      }));
     });
 
     describe('tab header tooltips', () => {
