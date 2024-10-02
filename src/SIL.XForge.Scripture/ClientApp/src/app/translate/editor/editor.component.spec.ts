@@ -4075,7 +4075,7 @@ describe('EditorComponent', () => {
         env.wait();
 
         expect(env.component.showSource).toBe(false);
-        expect(env.component.hasPersistentTabs).toBe(true);
+        expect(env.component.showPersistentTabs).toBe(true);
         expect(env.fixture.debugElement.query(By.css('.biblical-terms'))).not.toBeNull();
 
         env.dispose();
