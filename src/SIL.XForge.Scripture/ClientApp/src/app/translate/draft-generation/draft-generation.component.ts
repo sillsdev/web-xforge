@@ -10,7 +10,7 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
+import { Subscription, combineLatest, of } from 'rxjs';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -30,7 +30,7 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig, DraftZipProgress } from './draft-generation';
+import { BuildConfig, DraftZipProgress, activeBuildStates } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -98,6 +98,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   jobSubscription?: Subscription;
   zipSubscription?: Subscription;
   isOnline = true;
+
+  currentPage: 'initial' | 'steps' = 'initial';
 
   /**
    * Once true, UI can proceed with display according to status of fetched job.
@@ -376,7 +378,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     }
 
     // Display pre-generation steps
-    this.navigateToTab('pre-generate-steps');
+    this.currentPage = 'steps';
   }
 
   downloadDraft(): void {
@@ -418,23 +420,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.cancelBuild();
   }
 
-  navigateToTab(tab: 'initial' | 'pre-generate-steps'): void {
-    if (this.tabGroup == null) {
-      return;
-    }
-
-    switch (tab) {
-      case 'initial':
-        this.tabGroup.selectedIndex = 0;
-        break;
-      case 'pre-generate-steps':
-        this.tabGroup.selectedIndex = 1;
-        break;
-    }
-  }
-
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
-    this.navigateToTab('initial');
+    this.currentPage = 'initial';
     this.startBuild({
       projectId: this.activatedProject.projectId!,
       trainingBooks: result.trainingBooks,
