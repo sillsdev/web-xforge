@@ -39,6 +39,7 @@ import { NgCircleProgressModule } from 'ng-circle-progress';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
+import { L10nNumberPipe } from './l10n-number.pipe';
 import { Paginator } from './paginator/paginator.component';
 import { RouterLinkDirective } from './router-link.directive';
 import { ScrollIntoViewDirective } from './scroll-into-view';
@@ -141,8 +142,15 @@ const appFlexLayoutBreakPoints = [
 
 @NgModule({
   declarations: [BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective, RouterLinkDirective],
-  imports: modules,
-  exports: [...modules, BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective, RouterLinkDirective],
+  imports: [...modules, L10nNumberPipe],
+  exports: [
+    ...modules,
+    BlurOnClickDirective,
+    AutofocusDirective,
+    ScrollIntoViewDirective,
+    RouterLinkDirective,
+    L10nNumberPipe
+  ],
   providers: [
     { provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true },
     {
