@@ -47,7 +47,8 @@ export interface DraftGenerationStepsResult {
   ]
 })
 export class DraftGenerationStepsComponent extends SubscriptionDisposable implements OnInit {
-  @Output() done = new EventEmitter<DraftGenerationStepsResult>();
+  @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
+  @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
   availableTranslateBooks?: number[] = undefined;
