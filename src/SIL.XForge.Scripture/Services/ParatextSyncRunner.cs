@@ -2007,31 +2007,21 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private Dictionary<string, ParatextUserProfile> GetCurrentProjectPtUsers()
     {
         UserSecret.RemoveForcedUsernames();
-        Dictionary<string, ParatextUserProfile> savedPtUsers = _projectDoc.Data.ParatextUsers.ToDictionary(p =>
+        Dictionary<string, ParatextUserProfile> availablePtUsers = _projectDoc.Data.ParatextUsers.ToDictionary(p =>
             p.Username
         );
         foreach (ParatextProjectUser paratextUser in _paratextUsers)
         {
-            if (!savedPtUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
+            ParatextUserProfile userProfileToAdd = null;
+            string sfUserId = paratextUser.Id;
+            if (!availablePtUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
             {
-                string sfUserId = paratextUser.Id;
-                if (!string.IsNullOrEmpty(sfUserId))
-                {
-                    // Detect if the SF user ID is already attached to a Paratext user. Force the old PT username
-                    ParatextUserProfile oldPtUser = savedPtUsers.Values.SingleOrDefault(u => u.SFUserId == sfUserId);
-                    if (oldPtUser != null)
-                    {
-                        sfUserId = null;
-                        UserSecret.ForceUsername(paratextUser.Username, oldPtUser.Username);
-                    }
-                }
-                ParatextUserProfile userProfile = new ParatextUserProfile
+                userProfileToAdd = new ParatextUserProfile
                 {
                     Username = paratextUser.Username,
                     SFUserId = sfUserId,
                     OpaqueUserId = _guidService.NewObjectId(),
                 };
-                savedPtUsers.TryAdd(paratextUser.Username, userProfile);
             }
             else
             {
@@ -2039,16 +2029,28 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 // We create a new object to so that the logic in projectDoc.SubmitJson0OpAsync() will see the change.
                 if (profile.SFUserId is null)
                 {
-                    savedPtUsers[paratextUser.Username] = new ParatextUserProfile
+                    userProfileToAdd = new ParatextUserProfile
                     {
                         Username = profile.Username,
-                        SFUserId = paratextUser.Id,
+                        SFUserId = sfUserId,
                         OpaqueUserId = profile.OpaqueUserId,
                     };
                 }
             }
+            if (!string.IsNullOrEmpty(sfUserId) && userProfileToAdd is not null)
+            {
+                // Detect if the SF user ID is already attached to a Paratext user. Force the old PT username
+                ParatextUserProfile oldPtUser = availablePtUsers.Values.SingleOrDefault(u => u.SFUserId == sfUserId);
+                if (oldPtUser is not null)
+                {
+                    userProfileToAdd.SFUserId = null;
+                    UserSecret.ForceUsername(paratextUser.Username, oldPtUser.Username);
+                }
+            }
+            if (userProfileToAdd is not null)
+                availablePtUsers[paratextUser.Username] = userProfileToAdd;
         }
-        return savedPtUsers;
+        return availablePtUsers;
     }
 
     /// <summary>
