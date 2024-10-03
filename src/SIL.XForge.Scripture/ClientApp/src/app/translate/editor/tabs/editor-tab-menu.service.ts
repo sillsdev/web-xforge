@@ -6,7 +6,7 @@ import {
   editorTabTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
+import { Observable, combineLatest, forkJoin, map, of } from 'rxjs';
 import { shareReplay, switchMap, take } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -147,7 +147,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   }
 
   private canShowBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
-    return projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true;
+    return this.permissionsService.canAccessBiblicalTerms(projectDoc);
   }
 
   private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {

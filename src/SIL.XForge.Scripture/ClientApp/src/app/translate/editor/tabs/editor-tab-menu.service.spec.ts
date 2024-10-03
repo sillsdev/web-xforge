@@ -49,6 +49,7 @@ describe('EditorTabMenuService', () => {
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(3);
@@ -72,6 +73,7 @@ describe('EditorTabMenuService', () => {
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
@@ -89,6 +91,7 @@ describe('EditorTabMenuService', () => {
     env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => false;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
@@ -104,6 +107,7 @@ describe('EditorTabMenuService', () => {
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
@@ -140,7 +144,6 @@ describe('EditorTabMenuService', () => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
     env.setLastCompletedBuildExists(false);
-    service['canShowBiblicalTerms'] = () => true;
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
 
@@ -152,12 +155,26 @@ describe('EditorTabMenuService', () => {
     });
   });
 
+  it('should not get "biblical terms" menu item', done => {
+    const env = new TestEnvironment();
+    env.setExistingTabs([]);
+    env.setLastCompletedBuildExists(false);
+    service['canShowHistory'] = () => false;
+    service['canShowResource'] = () => false;
+    service['canShowBiblicalTerms'] = () => false;
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(0);
+      done();
+    });
+  });
+
   it('should get no menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
     env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(0);
@@ -171,6 +188,7 @@ describe('EditorTabMenuService', () => {
     env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     env.onlineStatus.setIsOnline(false);
     service
@@ -257,7 +275,8 @@ class TestEnvironment {
       translateConfig: {
         preTranslate: true
       },
-      userRoles: TestEnvironment.rolesByUser
+      userRoles: TestEnvironment.rolesByUser,
+      biblicalTermsConfig: { biblicalTermsEnabled: true }
     })
   } as SFProjectProfileDoc;
 
