@@ -77,6 +77,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -226,6 +227,60 @@ describe('EditorComponent', () => {
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
 
     env.dispose();
+  }));
+
+  it('shows warning to users when translation is Korean, Japanese, or Chinese', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'ko' }
+    });
+    env.wait();
+
+    expect(env.component.canEdit).toBe(true);
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
+    expect(env.component.writingSystemWarningBanner).toBe(true);
+    expect(env.showWritingSystemWarningBanner).not.toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('does not show warning to users when translation is not Korean, Japanese, or Chinese', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'en' }
+    });
+    env.wait();
+
+    expect(env.component.canEdit).toBe(true);
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('en');
+    expect(env.component.writingSystemWarningBanner).toBe(false);
+    expect(env.showWritingSystemWarningBanner).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('does not show warning to users if they do not have edit permissions on the selected book', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'ko' },
+      translateConfig: defaultTranslateConfig
+    });
+    // user03 only has read permissions on Luke 1
+    // As the editor is disabled, we do not need to show the writing system warning
+    // The no_permission_edit_chapter message will be displayed instead
+    env.setCurrentUser('user03');
+    env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+    env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+    env.wait();
+
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
+    expect(env.component.writingSystemWarningBanner).toBe(false);
+    expect(env.showWritingSystemWarningBanner).toBeNull();
+    expect(env.component.userHasGeneralEditRight).toBe(true);
+    expect(env.component.hasChapterEditPermission).toBe(false);
+    expect(env.component.canEdit).toBe(false);
+    expect(env.component.showNoEditPermissionMessage).toBe(true);
+    expect(env.noChapterEditPermissionMessage).not.toBeNull();
+
+    discardPeriodicTasks();
   }));
 
   describe('Translation Suggestions enabled', () => {
@@ -4458,6 +4513,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.copyright-banner'));
   }
 
+  get showWritingSystemWarningBanner(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.writing-system-warning-banner'));
+  }
+
   get copyrightMoreInfo(): DebugElement {
     return this.fixture.debugElement.query(By.css('.copyright-banner .copyright-more-info'));
   }
@@ -4536,6 +4595,9 @@ class TestEnvironment {
       ...this.testProjectProfile,
       paratextUsers: this.paratextUsersOnProject
     });
+    if (data.writingSystem != null) {
+      projectProfileData.writingSystem = data.writingSystem as WritingSystem;
+    }
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;
