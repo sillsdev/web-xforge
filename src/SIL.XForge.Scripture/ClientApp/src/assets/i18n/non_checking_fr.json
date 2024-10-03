@@ -244,6 +244,7 @@
   "editor": {
     "add_comment": "Ajouter un commentaire",
     "anonymous": "Anonyme",
+    "browser_warning_banner": "L'éditeur n'est pas compatible avec le navigateur actuel pour la langue du projet. Nous vous recommandons de modifier ce projet en {{ firefoxLink }} ou {{ safari }}.",
     "cancel": "Annuler",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "Ce chapitre ne peut pas être édité car il contient un USFM non pris en charge. Pour le modifier, supprimez ces tags dans Paratext : {{ tags }}",
