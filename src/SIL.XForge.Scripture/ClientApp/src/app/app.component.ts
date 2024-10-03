@@ -397,6 +397,13 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
   }
 
+  versionNumberClicked(): void {
+    this.versionNumberClickCount++;
+    if (this.versionNumberClickCount >= 7) {
+      this.featureFlags.showDeveloperTools.enabled = true;
+    }
+  }
+
   private async showProjectDeletedDialog(): Promise<void> {
     await this.userService.setCurrentProjectId(this.currentUserDoc!, undefined);
     await this.dialogService.message('app.project_has_been_deleted');

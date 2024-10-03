@@ -662,7 +662,7 @@ class TestEnvironment {
     }
     when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.allowForwardTranslationNmtDrafting).thenReturn(createTestFeatureFlag(false));
-    when(mockedFeatureFlagService.showFeatureFlags).thenReturn(createTestFeatureFlag(false));
+    when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn(createTestFeatureFlag(false));
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
