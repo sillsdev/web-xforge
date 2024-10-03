@@ -2910,6 +2910,104 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task UpdateParatextComments_UsesExistingUserToAddComments()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        // Update the username
+        string newUsername = "New User 1";
+        env.MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(newUsername);
+        UserSecret.ForceUsername(newUsername, env.Username01);
+
+        ThreadNoteComponents note1 = new ThreadNoteComponents
+        {
+            content = "thread1 note 1",
+            syncUserRef = "syncuser01",
+            ownerRef = env.User01
+        };
+        ThreadNoteComponents note2 = new ThreadNoteComponents
+        {
+            content = "thread1 note 2",
+            syncUserRef = string.Empty,
+            ownerRef = env.User01
+        };
+        ThreadComponents sfThread1 = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 2,
+            username = env.Username01,
+            editable = true,
+            notes = [note1, note2],
+        };
+        ThreadComponents sfThread2 = new ThreadComponents
+        {
+            threadNum = 2,
+            noteCount = 1,
+            username = env.Username01,
+            editable = true,
+            isNew = true
+        };
+        env.AddNoteThreadData([sfThread1, sfThread2]);
+        ThreadComponents ptThread = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 1,
+            username = env.Username01,
+            notes = [note1],
+        };
+        env.AddParatextComments([ptThread]);
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc1 = await TestEnvironment.GetNoteThreadDocAsync(conn, "dataId1");
+        IDocument<NoteThread> noteThreadDoc2 = await TestEnvironment.GetNoteThreadDocAsync(conn, "dataId2");
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    OpaqueUserId = "syncuser01",
+                    Username = env.Username01,
+                    SFUserId = env.User01
+                }
+            },
+            {
+                env.Username02,
+                new ParatextUserProfile
+                {
+                    OpaqueUserId = "syncuser02",
+                    Username = env.Username02,
+                    SFUserId = env.User02
+                }
+            },
+            {
+                newUsername,
+                new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = newUsername, }
+            }
+        };
+        SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            ptProjectId,
+            [noteThreadDoc1, noteThreadDoc2],
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
+        CommentThread thread1 = env.ProjectCommentManager.FindThread("thread1");
+        Assert.That(thread1.Comments.Count, Is.EqualTo(2));
+        Assert.That(thread1.Comments[0].User, Is.EqualTo(env.Username01));
+        Assert.That(thread1.Comments[1].User, Is.EqualTo(env.Username01));
+        CommentThread thread2 = env.ProjectCommentManager.FindThread("thread2");
+        Assert.That(thread2.Comments.Count, Is.EqualTo(1));
+        Assert.That(thread2.Comments[0].User, Is.EqualTo(env.Username01));
+        UserSecret.RemoveForcedUsernames();
+    }
+
+    [Test]
     public async Task UpdateParatextComments_DoesNotEditNonEditableComment()
     {
         var env = new TestEnvironment();
@@ -4508,6 +4606,7 @@ public class ParatextServiceTests
         public bool? editable;
         public int? versionNumber;
         public bool forceNullContent;
+        public string? syncUserRef;
     }
 
     [Test]
@@ -5667,6 +5766,22 @@ public class ParatextServiceTests
         env.ProjectFileManager.Received().GetXml<CommentList>(Arg.Any<string>());
     }
 
+    [Test]
+    public void GetParatextUsername_ForcedUsername()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        string username = env.Service.GetParatextUsername(userSecret);
+        Assert.AreEqual(env.Username01, username);
+
+        string forcedUsername = "Forced Username";
+        UserSecret.ForceUsername(env.Username01, forcedUsername);
+
+        username = env.Service.GetParatextUsername(userSecret);
+        Assert.AreEqual(forcedUsername, username);
+        UserSecret.RemoveForcedUsernames();
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
@@ -6294,7 +6409,7 @@ public class ParatextServiceTests
                         ConflictType = Note.NoConflictType,
                         OwnerRef = noteComponent.ownerRef,
                         Content = noteComponent.content,
-                        SyncUserRef = comp.isNew ? null : "syncuser01",
+                        SyncUserRef = comp.isNew ? null : noteComponent.syncUserRef ?? "syncuser01",
                         DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                         TagId = noteComponent.tagsAdded == null ? null : int.Parse(noteComponent.tagsAdded[0]),
                         Deleted = comp.deletedNotes != null && comp.deletedNotes[i - 1],
