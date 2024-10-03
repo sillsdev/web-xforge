@@ -273,7 +273,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (this.selectedProjectDeleteSub != null) {
         this.selectedProjectDeleteSub.unsubscribe();
       }
-      this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
+      this.selectedProjectDeleteSub = this._selectedProjectDoc?.delete$.subscribe(() => {
         // handle remotely deleted project
         const userDoc = this.currentUserDoc;
         if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
@@ -282,7 +282,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       });
 
       this.permissionsChangedSub?.unsubscribe();
-      this.permissionsChangedSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
+      this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
         if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
           // If the user is in the Serval administration page, do not check access,
           // as they will be modifying the project's properties
