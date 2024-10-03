@@ -20,7 +20,7 @@ import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { Subject, Subscription, fromEvent, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
@@ -36,7 +36,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
-import { attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef, VERSE_REGEX } from '../utils';
+import { VERSE_REGEX, attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef } from '../utils';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
@@ -239,6 +239,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private currentUserDoc?: UserDoc;
   private readonly cursorColorStorageKey = 'cursor_color';
   private displayMessage: string = '';
+  private isDestroyed: boolean = false;
   private localPresenceChannel?: LocalPresence<PresenceData>;
   private localPresenceDoc?: LocalPresence<RangeStatic | null>;
   private readonly presenceId: string = objectId();
@@ -469,6 +470,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   ngOnDestroy(): void {
+    this.isDestroyed = true;
     super.ngOnDestroy();
     this.viewModel?.unbind();
     this.dismissPresences();
@@ -933,6 +935,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private async bindQuill(): Promise<void> {
+    // bindQuill can be called after the view was destroyed via onEditorCreated or the id being set in a Promise
+    if (this.isDestroyed) return;
     this.viewModel.unbind();
     await this.dismissPresences();
     if (this._id == null) {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -24,7 +24,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -1210,6 +1210,26 @@ describe('TextComponent', () => {
     const verseRef: VerseRef = new VerseRef('MRK 1:1');
     const segments: string[] = env.component.getVerseSegments(verseRef);
     expect(segments.length).withContext('should be no matching segments when book does not match').toBe(0);
+  }));
+
+  it('does not execute the logic in bindQuill if the object has been disposed', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    const mockedQuill = new MockQuill('quill-editor');
+    env.fixture.detectChanges();
+
+    // Destroy the component
+    env.component.ngOnDestroy();
+
+    // Subscribe to the loaded event
+    let wasLoaded: boolean | undefined;
+    env.component.loaded.subscribe(() => {
+      wasLoaded = true;
+    });
+    env.id = new TextDocId('project01', 40, 1);
+    env.component.onEditorCreated(mockedQuill);
+    env.waitForEditor();
+
+    expect(wasLoaded).toBeUndefined();
   }));
 });
 
