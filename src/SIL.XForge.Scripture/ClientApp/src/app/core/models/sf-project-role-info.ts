@@ -21,5 +21,9 @@ export function roleCanAccessCommunityChecking(role: SFProjectRole): boolean {
   return SF_PROJECT_RIGHTS.roleHasRight(role, 'questions', Operation.View);
 }
 
+export function roleCanAccessDrafts(role: SFProjectRole): boolean {
+  return SF_PROJECT_RIGHTS.roleHasRight(role, 'drafts', Operation.View);
+}
+
 export const SF_DEFAULT_SHARE_ROLE: SFProjectRole = SFProjectRole.CommunityChecker;
 export const SF_DEFAULT_TRANSLATE_SHARE_ROLE: SFProjectRole = SFProjectRole.Viewer;
