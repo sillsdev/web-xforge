@@ -1,6 +1,12 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
   @if (availableTranslateBooks && availableTranslateBooks.length > 0) {
-    <mat-stepper linear (selectionChange)="onStepChange()" labelPosition="bottom" [disableRipple]="true">
+    <mat-stepper
+      linear
+      (selectionChange)="onStepChange()"
+      labelPosition="bottom"
+      [disableRipple]="true"
+      (selectionChange)="updateTrainingBooks()"
+    >
       <!-- Icon overrides -->
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
 
