@@ -562,7 +562,11 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Get the Paratext username from the UserSecret. </summary>
-    public string? GetParatextUsername(UserSecret userSecret) => _jwtTokenHelper.GetParatextUsername(userSecret);
+    public string? GetParatextUsername(UserSecret userSecret)
+    {
+        string? username = _jwtTokenHelper.GetParatextUsername(userSecret);
+        return UserSecret.ParatextUsername(username);
+    }
 
     /// <summary>
     /// Gets the permission a user has to access a resource, according to a DBL server.

@@ -1801,6 +1801,34 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_SavesNewParatextUser()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(false, false, false, true);
+        env.SetupPTData(new Book("MAT", 1, true));
+        SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+
+        ParatextProjectUser newUser = new ParatextProjectUser
+        {
+            ParatextId = TestEnvironment.ParatextProjectUser01.ParatextId,
+            Username = "New User 1",
+            Id = TestEnvironment.ParatextProjectUser01.Id,
+            Role = TestEnvironment.ParatextProjectUser01.Role
+        };
+        env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+            .Returns([newUser, TestEnvironment.ParatextProjectUser02]);
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        project = env.GetProject();
+        Assert.That(
+            project.ParatextUsers.Select(u => u.Username),
+            Is.EquivalentTo(new[] { "User 1", "User 2", "New User 1" })
+        );
+        Assert.That(project.ParatextUsers.Single(u => u.Username == "New User 1").SFUserId, Is.EqualTo("user01"));
+        Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo(null));
+    }
+
+    [Test]
     public async Task SyncAsync_UpdatesParatextNoteThreadDoc()
     {
         var env = new TestEnvironment();
@@ -3639,7 +3667,12 @@ public class ParatextSyncRunnerTests
                     },
                     ParatextUsers = new List<ParatextUserProfile>
                     {
-                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
+                        new ParatextUserProfile
+                        {
+                            OpaqueUserId = "syncuser01",
+                            Username = "User 1",
+                            SFUserId = "user01"
+                        },
                         new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
                     },
                     NoteTags = new List<NoteTag>()
