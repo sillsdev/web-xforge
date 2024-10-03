@@ -3815,6 +3815,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3832,6 +3833,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3849,6 +3851,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -3865,10 +3868,26 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
+      it('should hide auto draft tab when user is commenter', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setCommenterUser();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(1);
+
+        env.dispose();
+      }));
+
       it('should hide target auto draft tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -3902,6 +3921,7 @@ describe('EditorComponent', () => {
       it('should select the draft tab if url query param is set', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3915,6 +3935,7 @@ describe('EditorComponent', () => {
       it('should not select the draft tab if url query param is not set', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
