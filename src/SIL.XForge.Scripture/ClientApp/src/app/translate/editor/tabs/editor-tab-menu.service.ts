@@ -139,7 +139,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   }
 
   private canShowBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
-    return projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true;
+    return this.permissionsService.canAccessBiblicalTerms(projectDoc);
   }
 
   private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {

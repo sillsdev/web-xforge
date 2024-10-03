@@ -191,6 +191,28 @@ describe('PermissionsService', () => {
         expect(env.service.canSync(env.projectDoc, role)).toBe(false);
       });
     });
+
+    describe('canAccessBiblicalTerms', () => {
+      it('returns true if user has permissions', () => {
+        const env = new TestEnvironment();
+        env.setCurrentUser(SFProjectRole.ParatextTranslator);
+        expect(env.service.canAccessBiblicalTerms(env.projectDoc)).toBe(true);
+      });
+
+      it('returns false if biblical terms enabled is false', () => {
+        const env = new TestEnvironment();
+        env.setCurrentUser(SFProjectRole.ParatextAdministrator);
+
+        env.setProjectProfile({ biblicalTermsConfig: { biblicalTermsEnabled: false } });
+        expect(env.service.canAccessBiblicalTerms(env.projectDoc)).toBe(false);
+      });
+
+      it('returns false if user does not has permissions', () => {
+        const env = new TestEnvironment();
+        env.setCurrentUser(SFProjectRole.Commenter);
+        expect(env.service.canAccessBiblicalTerms(env.projectDoc)).toBe(false);
+      });
+    });
   });
 });
 class TestEnvironment {
@@ -273,6 +295,7 @@ class TestEnvironment {
       checkingConfig: {
         checkingEnabled: this.checkingEnabled
       },
+      biblicalTermsConfig: { biblicalTermsEnabled: true },
       ...overrides
     };
     const data = createTestProjectProfile(config);
