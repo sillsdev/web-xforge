@@ -413,7 +413,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.hasSource && this.hasSourceViewRight;
   }
 
-  get showPersistentTabs(): boolean {
+  get showPersistedTabsOnSource(): boolean {
     return this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false;
   }
 
