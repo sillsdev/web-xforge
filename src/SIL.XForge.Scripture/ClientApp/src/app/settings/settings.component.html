@@ -10,7 +10,7 @@
           <mat-card-content>
             <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
-              @if (!isLoading && !isLoggedInToParatext && isAppOnline) {
+              @if (!isLoadingData && !isLoggedInToParatext && isAppOnline) {
                 <div class="paratext-login-container">
                   <button
                     class="action-button"
@@ -41,7 +41,7 @@
                     [resources]="resources"
                     [nonSelectableProjects]="nonSelectableProjects"
                     [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                    [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                    [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                   ></app-project-select>
                   <app-write-status
                     [state]="getControlState('sourceParatextId')"
@@ -134,7 +134,7 @@
                         [resources]="resources"
                         [nonSelectableProjects]="nonSelectableProjects"
                         [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                       ></app-project-select>
                       <app-write-status
                         [state]="getControlState('alternateSourceParatextId')"
@@ -168,7 +168,7 @@
                         [resources]="resources"
                         [nonSelectableProjects]="nonSelectableProjects"
                         [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                       ></app-project-select>
                       <app-write-status
                         [state]="getControlState('alternateTrainingSourceParatextId')"
@@ -204,7 +204,7 @@
                         [resources]="resources"
                         [nonSelectableProjects]="nonSelectableProjects"
                         [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                       ></app-project-select>
                       <app-write-status
                         [state]="getControlState('additionalTrainingSourceParatextId')"
