@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'editor'">
   <div class="content" [class.reverse-columns]="!isTargetTextRight" [class.target-only]="!showSource">
-    <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
-      <div fxFlex fxLayout="row wrap">
+    <div class="toolbar">
+      <div class="toolbar-options">
         <app-book-chapter-chooser
           [book]="bookNum"
           (bookChange)="setBook($event)"
@@ -42,7 +42,7 @@
         }
       </div>
       @if (showMultiViewers) {
-        <div fxFlexAlign="end" class="avatar-padding">
+        <div class="avatar-padding">
           <app-multi-viewer [viewers]="multiCursorViewers" (viewerClick)="onViewerClicked($event)"></app-multi-viewer>
         </div>
       }
