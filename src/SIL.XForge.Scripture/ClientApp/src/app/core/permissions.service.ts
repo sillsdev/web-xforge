@@ -85,7 +85,11 @@ export class PermissionsService {
 
   canAccessBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled !== true) return false;
-    const role: string = projectDoc.data.userRoles[this.userService.currentUserId];
-    return SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.BiblicalTerms, Operation.View);
+    return SF_PROJECT_RIGHTS.hasRight(
+      projectDoc.data,
+      this.userService.currentUserId,
+      SFProjectDomain.BiblicalTerms,
+      Operation.View
+    );
   }
 }

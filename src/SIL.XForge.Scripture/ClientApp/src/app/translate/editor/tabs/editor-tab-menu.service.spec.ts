@@ -153,18 +153,6 @@ describe('EditorTabMenuService', () => {
     });
   });
 
-  it('should not get "biblical terms" menu item', done => {
-    const env = new TestEnvironment();
-    env.setExistingTabs([]);
-    service['canShowHistory'] = () => false;
-    service['canShowResource'] = () => false;
-    service['canShowBiblicalTerms'] = () => false;
-    service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(0);
-      done();
-    });
-  });
-
   it('should get no menu items', done => {
     const env = new TestEnvironment(TestEnvironment.projectDocNoDraft);
     env.setExistingTabs([]);
