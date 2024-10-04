@@ -1849,14 +1849,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         if (!string.IsNullOrEmpty(activePtSyncUser.SFUserId))
                             userIdsAdded.Add(activePtSyncUser.SFUserId);
                     }
-                    else if (existingUser.SFUserId == null)
+                    else if (string.IsNullOrEmpty(existingUser.SFUserId))
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(u =>
                             u.Username == activePtSyncUser.Username
                         );
-                        string userId = _currentPtSyncUsers[existingUser.Username].SFUserId;
+                        string? userId = _paratextUsers
+                            .SingleOrDefault(u => u.Username == activePtSyncUser.Username)
+                            ?.Id;
                         if (!string.IsNullOrEmpty(userId))
+                        {
                             op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                            userIdsAdded.Add(userId);
+                        }
                     }
                 }
                 foreach (string userId in userIdsAdded)
