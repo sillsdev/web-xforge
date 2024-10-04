@@ -1829,6 +1829,32 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_UpdatesExistingParatextUser()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(false, false, false, true);
+        env.SetupPTData(new Book("MAT", 1, true));
+        SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+
+        // simulate user01 has changed name to "User 2" who already has a profile on the project but without an SFUserId
+        ParatextProjectUser user2 = new ParatextProjectUser
+        {
+            ParatextId = TestEnvironment.ParatextProjectUser01.ParatextId,
+            Username = "User 2",
+            Id = TestEnvironment.ParatextProjectUser01.Id,
+            Role = TestEnvironment.ParatextProjectUser01.Role
+        };
+        env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
+            .Returns([user2]);
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        Assert.That(project.ParatextUsers.Single(u => u.Username == "User 1").SFUserId, Is.EqualTo(null));
+        Assert.That(project.ParatextUsers.Single(u => u.Username == "User 2").SFUserId, Is.EqualTo("user01"));
+    }
+
+    [Test]
     public async Task SyncAsync_UpdatesParatextNoteThreadDoc()
     {
         var env = new TestEnvironment();
