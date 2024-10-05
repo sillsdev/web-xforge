@@ -82,4 +82,14 @@ export class PermissionsService {
     // Only PT admin and PT translator can sync non-resource projects
     return role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
   }
+
+  canAccessBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
+    if (projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled !== true) return false;
+    return SF_PROJECT_RIGHTS.hasRight(
+      projectDoc.data,
+      this.userService.currentUserId,
+      SFProjectDomain.BiblicalTerms,
+      Operation.View
+    );
+  }
 }
