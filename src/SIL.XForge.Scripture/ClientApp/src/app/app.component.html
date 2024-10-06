@@ -70,19 +70,14 @@
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">
             <mat-icon>copyright</mat-icon> {{ t("open_source_licenses") }}
           </a>
-          @if (versionNumberClickCount >= 7 || featureFlags.showFeatureFlags.enabled) {
+          @if (featureFlags.showDeveloperTools.enabled) {
             <button mat-menu-item (click)="openFeatureFlagDialog()">
               <mat-icon>science</mat-icon>
               Developer settings
             </button>
           }
           <mat-divider></mat-divider>
-          <div
-            mat-menu-item
-            disabled="true"
-            (click)="versionNumberClickCount = versionNumberClickCount + 1"
-            id="version-number"
-          >
+          <div mat-menu-item disabled="true" (click)="versionNumberClicked()" id="version-number">
             {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
           </div>
         </mat-menu>
