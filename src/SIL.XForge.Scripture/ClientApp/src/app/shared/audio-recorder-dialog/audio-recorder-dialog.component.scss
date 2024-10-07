@@ -70,6 +70,16 @@
       animation: growshrink 1s forwards;
     }
   }
+
+  .record-message {
+    position: absolute;
+    bottom: 70px;
+    opacity: 0%;
+    &.visible {
+      animation: fadein 0.5s;
+      opacity: 100%;
+    }
+  }
 }
 
 .dialog-footer {
@@ -128,5 +138,14 @@
     width: 120px;
     height: 120px;
     background-color: white;
+  }
+}
+
+@keyframes fadein {
+  0% {
+    opacity: 0%;
+  }
+  100% {
+    opacity: 100%;
   }
 }
