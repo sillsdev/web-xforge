@@ -4,7 +4,6 @@ name: scripture-forge
 services:
   db-xforge:
     container_name: db-xforge
-    restart: always
     ports:
       - "27017:27017"
     volumes:
