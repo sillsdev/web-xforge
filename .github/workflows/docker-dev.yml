@@ -2,6 +2,9 @@ name: Build Docker development images
 on:
   push:
     branches: [master]
+  # TODO: Remove pull_request config before merging
+  pull_request:
+    branches: [master]
 
 jobs:
   build:
