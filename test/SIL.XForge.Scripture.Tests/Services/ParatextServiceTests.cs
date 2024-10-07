@@ -2919,7 +2919,7 @@ public class ParatextServiceTests
         // Update the username
         string newUsername = "New User 1";
         env.MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(newUsername);
-        UserSecret.ForceUsername(newUsername, env.Username01);
+        env.Service.ForceParatextUsername(newUsername, env.Username01);
 
         ThreadNoteComponents note1 = new ThreadNoteComponents
         {
@@ -3004,7 +3004,6 @@ public class ParatextServiceTests
         CommentThread thread2 = env.ProjectCommentManager.FindThread("thread2");
         Assert.That(thread2.Comments.Count, Is.EqualTo(1));
         Assert.That(thread2.Comments[0].User, Is.EqualTo(env.Username01));
-        UserSecret.RemoveForcedUsernames();
     }
 
     [Test]
@@ -5775,11 +5774,11 @@ public class ParatextServiceTests
         Assert.AreEqual(env.Username01, username);
 
         string forcedUsername = "Forced Username";
-        UserSecret.ForceUsername(env.Username01, forcedUsername);
+        env.Service.ForceParatextUsername(env.Username01, forcedUsername);
 
         username = env.Service.GetParatextUsername(userSecret);
         Assert.AreEqual(forcedUsername, username);
-        UserSecret.RemoveForcedUsernames();
+        env.Service.ClearForcedUsernames();
     }
 
     private class TestEnvironment : IDisposable
