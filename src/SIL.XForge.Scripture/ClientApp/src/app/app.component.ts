@@ -375,7 +375,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       const expires = new Date();
       expires.setMinutes(expires.getMinutes() + 30);
       this.cookieService.set('Hangfire', accessToken, expires, '/hangfire');
-      this.locationService.go('/hangfire');
+      this.locationService.openInNewTab('/hangfire');
     }
   }
 

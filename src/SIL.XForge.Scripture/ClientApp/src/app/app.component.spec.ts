@@ -457,7 +457,7 @@ describe('AppComponent', () => {
     await env.component.hangfireDashboard();
     expect().nothing();
     verify(mockedCookieService.set(anything(), anything(), anything(), anything())).once();
-    verify(mockedLocationService.go(anything())).once();
+    verify(mockedLocationService.openInNewTab(anything())).once();
   }));
 
   describe('Community Checking', () => {
