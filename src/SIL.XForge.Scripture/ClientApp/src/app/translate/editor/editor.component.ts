@@ -47,7 +47,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
@@ -1415,8 +1415,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
       this.tabState.getFirstTabOfTypeIndex('draft');
 
+    const canRoleViewDrafts = isParatextRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId]);
     const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
-    if (hasDraft && (!draftApplied || urlDraftActive)) {
+    if (hasDraft && (!draftApplied || urlDraftActive) && canRoleViewDrafts) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 

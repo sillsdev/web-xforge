@@ -29,6 +29,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -77,7 +78,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -3950,6 +3950,25 @@ describe('EditorComponent', () => {
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
+        expect(addTab).not.toHaveBeenCalled();
+        env.dispose();
+      }));
+
+      it('should not add draft tab if user is not from paratext', fakeAsync(async () => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setCurrentUser('user07');
+        env.wait();
+
+        env.component.tabState.addTab('source', await env.tabFactory.createTab('draft'));
+        const addTab = spyOn(env.component.tabState, 'addTab');
+
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const tabs = env.component.tabState.getTabGroup('source');
+        expect(tabs?.tabs.findIndex(t => t.type === 'draft')).toEqual(-1);
         expect(addTab).not.toHaveBeenCalled();
         env.dispose();
       }));
