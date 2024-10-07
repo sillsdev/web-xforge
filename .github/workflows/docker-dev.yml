@@ -1,7 +1,8 @@
 name: Build Docker development images
+
+# Allow the images to be built manually until we have CI set up
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
 
 jobs:
   build:
