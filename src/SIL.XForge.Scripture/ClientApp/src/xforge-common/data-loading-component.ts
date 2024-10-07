@@ -20,11 +20,11 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
     super();
   }
 
-  get isLoading$(): Observable<boolean> {
+  get isLoadingData$(): Observable<boolean> {
     return this._isLoading$.asObservable();
   }
 
-  get isLoading(): boolean {
+  get isLoadingData(): boolean {
     return this._isLoading$.value;
   }
 
@@ -42,7 +42,7 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
   }
 
   protected loadingStarted(): void {
-    if (!this.isLoading) {
+    if (!this.isLoadingData) {
       this.noticeService.loadingStarted();
       this._isLoading$.next(true);
       this._isLoaded$.next(false);
@@ -50,7 +50,7 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
   }
 
   protected loadingFinished(): void {
-    if (this.isLoading) {
+    if (this.isLoadingData) {
       this.noticeService.loadingFinished();
       this._isLoading$.next(false);
       this._isLoaded$.next(true);
