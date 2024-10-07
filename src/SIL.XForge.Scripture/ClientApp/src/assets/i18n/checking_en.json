@@ -5,7 +5,7 @@
     "re_record": "Re-record",
     "save": "Save",
     "stop_recording": "Stop Recording",
-    "tap_to_record": "Tap to record"
+    "tap_to_record": "Tap the icon to record"
   },
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
