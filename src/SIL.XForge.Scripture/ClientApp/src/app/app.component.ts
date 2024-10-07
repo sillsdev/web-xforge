@@ -65,6 +65,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private permissionsChangedSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
+  private showDiagnosticOverlay: boolean = false;
 
   constructor(
     private readonly router: Router,
@@ -113,6 +114,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.subscribe(pwaService.hasUpdate$, () => (this.hasUpdate = true));
 
     this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
+      this.showDiagnosticOverlay = isEnabled;
       if (isEnabled) {
         this.dialogService.openDiagnosticOverlay(DiagnosticOverlayComponent);
       } else {
@@ -418,6 +420,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
+  openDiagnosticOverlay(): void {
+    this.featureFlags.showDiagnosticOverlay.enabled = !this.showDiagnosticOverlay;
   }
 
   versionNumberClicked(): void {
