@@ -12,12 +12,12 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
-import { TestOnlineStatusService } from '../../../../xforge-common/test-online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
@@ -141,6 +141,7 @@ describe('DraftApplyDialogComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.addButton.attributes['disabled']).toBeUndefined();
+    expect(env.bookDoesNotExistMessage).toBeNull();
     expect(env.cannotEditMessage).toBeNull();
   }));
 
@@ -152,7 +153,21 @@ describe('DraftApplyDialogComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.addButton.attributes['disabled']).toBeDefined();
+    expect(env.bookDoesNotExistMessage).toBeNull();
     expect(env.cannotEditMessage).not.toBeNull();
+  }));
+
+  it('notifies user if the book does not exist', fakeAsync(() => {
+    env.setupProject(2);
+    env.selectParatextProject('pt02');
+    expect(env.component['targetProjectId']).toBe('project02');
+    verify(mockedProjectService.getProfile(anything())).once();
+    verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.addButton.attributes['disabled']).toBeDefined();
+    expect(env.bookDoesNotExistMessage).not.toBeNull();
+    expect(env.cannotEditMessage).toBeNull();
   }));
 
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
@@ -236,6 +251,10 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.add-button');
   }
 
+  get bookDoesNotExistMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.book-does-not-exist-message');
+  }
+
   get cancelButton(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.cancel-button');
   }
@@ -281,7 +300,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private setupProject(): void {
+  setupProject(bookNum: number = 1): void {
     const projectPermissions = [
       { id: 'project01', permission: TextInfoPermission.Write },
       { id: 'project02', permission: TextInfoPermission.Read }
@@ -295,7 +314,7 @@ class TestEnvironment {
             userRoles: { user01: SFProjectRole.ParatextAdministrator },
             texts: [
               {
-                bookNum: 1,
+                bookNum: bookNum,
                 chapters: [{ number: 1, permissions: { user01: permission } }],
                 permissions: { user01: permission }
               }

@@ -6,13 +6,13 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Chapter } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -42,6 +42,7 @@ export class DraftApplyDialogComponent implements OnInit {
   connectOtherProject = this.i18n.translateTextAroundTemplateTags('draft_apply_dialog.looking_for_unlisted_project');
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  bookExistsInProject: boolean = true;
   canEditProject: boolean = true;
   projectLoadingFailed: boolean = false;
 
@@ -72,7 +73,13 @@ export class DraftApplyDialogComponent implements OnInit {
   }
 
   get addDisabled(): boolean {
-    return this.targetProjectId == null || !this.canEditProject || this.addToProjectForm.invalid || !this.isAppOnline;
+    return (
+      this.targetProjectId == null ||
+      !this.bookExistsInProject ||
+      !this.canEditProject ||
+      this.addToProjectForm.invalid ||
+      !this.isAppOnline
+    );
   }
 
   get bookName(): string {
@@ -105,6 +112,7 @@ export class DraftApplyDialogComponent implements OnInit {
     if (
       this.addToProjectForm.controls.targetParatextId.value == null ||
       this.targetProjectId == null ||
+      !this.bookExistsInProject ||
       !this.canEditProject
     ) {
       this.dialogRef.close();
@@ -122,11 +130,13 @@ export class DraftApplyDialogComponent implements OnInit {
     if (this.targetProjectId == null) return;
     const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(this.targetProjectId);
     if (projectDoc.data == null) {
+      this.bookExistsInProject = false;
       this.canEditProject = false;
       this.targetProjectDoc$.next(undefined);
       return;
     }
 
+    this.bookExistsInProject = projectDoc.data.texts.some(t => t.bookNum === this.data.bookNum);
     this.canEditProject =
       this.textDocService.userHasGeneralEditRight(projectDoc.data) &&
       projectDoc.data.texts.find(t => t.bookNum === this.data.bookNum)?.permissions[this.userService.currentUserId] ===
