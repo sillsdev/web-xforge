@@ -234,6 +234,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   onStepChange(): void {
     this.clearErrorMessage();
+    this.updateTrainingBooks();
   }
 
   tryAdvanceStep(): void {
