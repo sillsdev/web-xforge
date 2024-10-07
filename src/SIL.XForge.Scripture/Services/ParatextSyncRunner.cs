@@ -1980,7 +1980,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // Free the comment manager and versioning manager for this project from memory
         _paratextService.ClearParatextDataCaches(_userSecret, _projectDoc.Data.ParatextId);
-        UserSecret.RemoveForcedUsernames();
+        _paratextService.ClearForcedUsernames();
 
         await NotifySyncProgress(SyncPhase.Phase9, 100.0);
         Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
@@ -2011,7 +2011,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     private Dictionary<string, ParatextUserProfile> GetCurrentProjectPtUsers()
     {
-        UserSecret.RemoveForcedUsernames();
+        _paratextService.ClearForcedUsernames();
         Dictionary<string, ParatextUserProfile> availablePtUsers = _projectDoc.Data.ParatextUsers.ToDictionary(p =>
             p.Username
         );
@@ -2049,7 +2049,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 if (oldPtUser is not null)
                 {
                     userProfileToAdd.SFUserId = null;
-                    UserSecret.ForceUsername(paratextUser.Username, oldPtUser.Username);
+                    _paratextService.ForceParatextUsername(paratextUser.Username, oldPtUser.Username);
                 }
             }
             if (userProfileToAdd is not null)

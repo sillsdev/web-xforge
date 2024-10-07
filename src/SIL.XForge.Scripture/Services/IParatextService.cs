@@ -18,6 +18,8 @@ public interface IParatextService
     Task<bool> CanUserAuthenticateToPTArchivesAsync(string userSFId);
     Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
     string? GetParatextUsername(UserSecret userSecret);
+    void ForceParatextUsername(string username, string forcedUsername);
+    void ClearForcedUsernames();
     Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);
     ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId);
 
