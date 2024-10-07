@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -76,6 +77,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly locationService: LocationService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly breakpointService: MediaBreakpointService,
+    private readonly cookieService: CookieService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService,
@@ -363,6 +365,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   dismissInstallIcon(): void {
     this.pwaService.setInstallPromptLastShownTime();
+  }
+
+  async hangfireDashboard(): Promise<void> {
+    // The access token will be undefined if offline
+    const accessToken: string | undefined = await this.authService.getAccessToken();
+    if (accessToken != null) {
+      // Grant 30 minutes access to the dashboard
+      const expires = new Date();
+      expires.setMinutes(expires.getMinutes() + 30);
+      this.cookieService.set('Hangfire', accessToken, expires, '/hangfire');
+      this.locationService.openInNewTab('/hangfire');
+    }
   }
 
   installOnDevice(): void {
