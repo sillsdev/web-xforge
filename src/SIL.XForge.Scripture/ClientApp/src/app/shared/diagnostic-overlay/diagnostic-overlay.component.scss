@@ -19,7 +19,7 @@ $overlayBreakpointMD: 850px;
   overflow-y: scroll;
 
   &.collapsed {
-    width: 50px;
+    width: 100px;
   }
 
   @include media-breakpoint('<=', xl, $overlayBreakpointXL) {
@@ -34,23 +34,21 @@ $overlayBreakpointMD: 850px;
 .toggle-button {
   position: absolute;
   top: 8px;
-  right: calc(25vw - 50px);
+  right: calc(100% - 35px);
   background: none;
   border: none;
   font-size: 16px;
   cursor: pointer;
+}
 
-  &.collapsed {
-    right: 1%;
-  }
-
-  @include media-breakpoint('<=', xl, $overlayBreakpointXL) {
-    right: calc(40vw - 50px);
-  }
-
-  @include media-breakpoint('<=', md, $overlayBreakpointMD) {
-    right: calc(60vw - 50px);
-  }
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .diagnostic-overlay-table {

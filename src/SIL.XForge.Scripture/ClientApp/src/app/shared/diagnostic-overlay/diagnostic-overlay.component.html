@@ -7,6 +7,9 @@
         <mat-icon>chevron_left</mat-icon>
       }
     </button>
+    <button class="close-button" (click)="onClose()">
+      <mat-icon>close</mat-icon>
+    </button>
     @if (isExpanded) {
       <h1>Developer Diagnostics</h1>
       <h3>Currently subscribed to {{ totalDocsCount }} documents</h3>

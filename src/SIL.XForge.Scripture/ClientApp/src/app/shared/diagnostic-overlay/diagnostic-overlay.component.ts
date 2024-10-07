@@ -47,4 +47,8 @@ export class DiagnosticOverlayComponent extends SubscriptionDisposable {
   onToggle(): void {
     this.isExpanded = !this.isExpanded;
   }
+
+  onClose(): void {
+    this.featureFlags.showDiagnosticOverlay.enabled = !this.showDiagnosticOverlay;
+  }
 }
