@@ -2,10 +2,10 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
     "re_record": "Re-record",
     "save": "Save",
-    "stop_recording": "Stop Recording"
+    "stop_recording": "Stop Recording",
+    "tap_to_record": "Tap to record"
   },
   "app": {
     "action_not_available_offline": "This action isn't available while you are offline.",
