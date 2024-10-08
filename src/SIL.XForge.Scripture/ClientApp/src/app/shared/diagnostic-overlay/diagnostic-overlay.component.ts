@@ -1,10 +1,10 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { DialogService } from 'xforge-common/dialog.service';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
@@ -22,18 +22,14 @@ export interface DiagnosticOverlayData {
   imports: [OverlayModule, CommonModule, UICommonModule]
 })
 export class DiagnosticOverlayComponent extends SubscriptionDisposable {
-  showDiagnosticOverlay: boolean = false;
   isExpanded: boolean = true;
+  isOpen: boolean = true;
 
   constructor(
-    readonly featureFlags: FeatureFlagService,
-    private readonly realtimeService: RealtimeService
+    private readonly realtimeService: RealtimeService,
+    private readonly dialogService: DialogService
   ) {
     super();
-    this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
-      this.showDiagnosticOverlay = isEnabled;
-      this.isExpanded = isEnabled;
-    });
   }
 
   get showDocCollections(): { [key: string]: number } {
@@ -49,6 +45,7 @@ export class DiagnosticOverlayComponent extends SubscriptionDisposable {
   }
 
   onClose(): void {
-    this.featureFlags.showDiagnosticOverlay.enabled = !this.showDiagnosticOverlay;
+    this.isOpen = !this.isOpen;
+    this.dialogService.closeDiagnosticOverlay();
   }
 }

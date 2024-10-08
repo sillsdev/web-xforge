@@ -306,13 +306,6 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly showDiagnosticOverlay: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'ShowDiagnosticOverlay',
-    'Display overlay for diagnosing doc subscriptions',
-    14,
-    this.featureFlagStore
-  );
-
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

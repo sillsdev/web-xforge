@@ -48,15 +48,20 @@ export class DialogService {
     };
   }
 
-  openDiagnosticOverlay<T>(component: ComponentType<T>, config?: OverlayConfig): void {
-    const defaults: OverlayConfig = { direction: this.i18n.direction };
-    this.diagnosticOverlay = this.overlay.create({ ...defaults, ...(config ?? {}) });
-    const portal = new ComponentPortal(component);
-    this.diagnosticOverlay.attach(portal);
+  toggleDiagnosticOverlay<T>(component: ComponentType<T>, config?: OverlayConfig): void {
+    if (this.diagnosticOverlay == null) {
+      const defaults: OverlayConfig = { direction: this.i18n.direction };
+      this.diagnosticOverlay = this.overlay.create({ ...defaults, ...(config ?? {}) });
+      const portal = new ComponentPortal(component);
+      this.diagnosticOverlay.attach(portal);
+    } else {
+      this.closeDiagnosticOverlay();
+    }
   }
 
   closeDiagnosticOverlay(): void {
     this.diagnosticOverlay?.dispose();
+    this.diagnosticOverlay = undefined;
   }
 
   async confirm(

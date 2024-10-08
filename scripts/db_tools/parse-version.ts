@@ -36,8 +36,7 @@ class ParseVersion {
     'Use Echo for Pre-Translation Drafting',
     'Allow Fast Pre-Translation Training',
     'Upload Paratext Zip Files for Pre-Translation Drafting',
-    'Allow mixing in an additional training source',
-    'Display overlay for diagnosing doc subscriptions'
+    'Allow mixing in an additional training source'
   ];
 
   constructor() {

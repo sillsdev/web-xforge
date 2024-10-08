@@ -1,4 +1,4 @@
-<ng-template cdkConnectedOverlay [cdkConnectedOverlayOpen]="showDiagnosticOverlay">
+<ng-template cdkConnectedOverlay [cdkConnectedOverlayOpen]="isOpen">
   <div class="diagnostic-overlay" [class.collapsed]="!isExpanded">
     <button class="toggle-button" [class.collapsed]="!isExpanded" (click)="onToggle()">
       @if (isExpanded) {
