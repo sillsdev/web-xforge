@@ -131,8 +131,7 @@ describe('DraftGenerationComponent', () => {
         'FeatureFlagService',
         {},
         {
-          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false),
-          showDiagnosticOverlay: createTestFeatureFlag(false)
+          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false)
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
@@ -1578,8 +1577,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            showDiagnosticOverlay: createTestFeatureFlag(false)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
       });
@@ -1689,8 +1687,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
-            showDiagnosticOverlay: createTestFeatureFlag(false)
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true)
           }
         );
 
