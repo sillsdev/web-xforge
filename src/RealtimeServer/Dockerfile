@@ -39,7 +39,7 @@ WORKDIR /app
 ARG MIGRATOR_ENVIRONMENT
 LABEL org.opencontainers.image.source=https://github.com/sillsdev/web-xforge
 LABEL org.opencontainers.image.description="Scripture Forge Realtime Server"
-LABEL org.opencontainers.image.licenses=MIT
+LABEL org.opencontainers.image.licenses="MIT AND Apache-2.0 AND CC-BY-4.0"
 COPY src/SIL.XForge.Scripture/appsettings.json .
 COPY src/SIL.XForge.Scripture/appsettings.${MIGRATOR_ENVIRONMENT}.json .
 COPY --from=jering-build /src .
