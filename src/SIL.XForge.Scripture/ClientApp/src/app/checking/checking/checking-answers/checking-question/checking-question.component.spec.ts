@@ -4,16 +4,16 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { lastValueFrom, Subject } from 'rxjs';
+import { Subject, lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
@@ -178,7 +178,7 @@ describe('CheckingQuestionComponent', () => {
 
     await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
-  });
+  }, 7000); // Increase from the default 5000, as this test can take longer on Firefox
 
   it('plays the entire verse when timing files are phrase level', async () => {
     const env = new TestEnvironment();
