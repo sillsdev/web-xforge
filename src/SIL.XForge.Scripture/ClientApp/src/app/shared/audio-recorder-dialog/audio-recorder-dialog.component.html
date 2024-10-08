@@ -20,9 +20,11 @@
             </button>
           }
         </div>
-        <p class="record-message" [ngClass]="{ visible: !isRecording }">{{ t("tap_to_record") }}</p>
+        <div class="record-message" [class.visible]="!isRecording">
+          <p>{{ tapToRecordText!.before }}<mat-icon>mic</mat-icon>{{ tapToRecordText!.after }}</p>
+        </div>
       }
-      @if (hasAudioAttachment && !!audio.url) {
+      @if (hasAudioAttachment) {
         <div class="has-attachment">
           <app-single-button-audio-player [source]="audio.url" (click)="toggleAudio()">
             <mat-icon>{{ audioPlayer?.playing ? "stop" : "play_arrow" }}</mat-icon>
@@ -33,16 +35,17 @@
     <div class="dialog-footer">
       @if (showCanvas) {
         <canvas class="visualizer"></canvas>
+      } @else if (hasAudioAttachment) {
+        <div class="has-attachment">
+          <button mat-button (click)="resetRecording()" class="remove-audio-file">
+            <mat-icon>mic</mat-icon>
+            {{ t("re_record") }}
+          </button>
+          <button mat-flat-button color="primary" (click)="saveRecording()" class="save-audio-file">
+            <mat-icon>check</mat-icon> {{ t("save") }}
+          </button>
+        </div>
       }
-      <div class="has-attachment" [ngClass]="{ visible: hasAudioAttachment }">
-        <button mat-button (click)="resetRecording()" class="remove-audio-file">
-          <mat-icon>mic</mat-icon>
-          {{ t("re_record") }}
-        </button>
-        <button mat-flat-button color="primary" (click)="saveRecording()" class="save-audio-file">
-          <mat-icon>check</mat-icon> {{ t("save") }}
-        </button>
-      </div>
     </div>
   </mat-dialog-content>
 </ng-container>

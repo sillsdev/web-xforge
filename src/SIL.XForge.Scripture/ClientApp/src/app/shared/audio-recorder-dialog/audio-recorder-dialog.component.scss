@@ -79,12 +79,18 @@
       animation: fadein 0.5s;
       opacity: 100%;
     }
+
+    p {
+      display: flex;
+      align-items: center;
+    }
   }
 }
 
 .dialog-footer {
   height: 50px;
   position: relative;
+  min-width: 220px;
   canvas {
     position: absolute;
   }
@@ -96,14 +102,9 @@
 }
 
 .has-attachment {
-  transform: scale(0);
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-
-  &.visible {
-    transform: scale(1);
-  }
+  justify-content: space-evenly;
+  column-gap: 8px;
 }
 
 @keyframes countdown {
