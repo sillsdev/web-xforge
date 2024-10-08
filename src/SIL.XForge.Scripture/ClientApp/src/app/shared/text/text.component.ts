@@ -10,7 +10,6 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import isEqual from 'lodash-es/isEqual';
@@ -970,12 +969,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // Local system changes are big - usually complete rewrites of the document via TextDocService.overwrite()
     // As these are user initiated, it is OK to complete reload the editor, as the user will not be in the editor
     this.localSystemChangesSub?.unsubscribe();
-    this.localSystemChangesSub = this.textDocService
-      .getLocalSystemChanges$(this._id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.bindQuill();
-      });
+    this.localSystemChangesSub = this.textDocService.getLocalSystemChanges$(this._id).subscribe(() => {
+      this.bindQuill();
+    });
 
     this.loaded.emit();
     this.applyEditorStyles();
