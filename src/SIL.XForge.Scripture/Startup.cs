@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +20,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Services;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture;
 
@@ -262,6 +264,10 @@ public class Startup
             endpoints.MapControllers();
             endpoints.MapRazorPages();
             endpoints.MapHub<NotificationHub>(pattern: $"/{UrlConstants.ProjectNotifications}");
+            var authOptions = Configuration.GetOptions<AuthOptions>();
+            endpoints.MapHangfireDashboard(
+                new DashboardOptions { Authorization = [new HangfireDashboardAuthorizationFilter(authOptions)] }
+            );
         });
 
         // Map JSON-RPC controllers after MVC controllers, so that MVC controllers take precedence.
