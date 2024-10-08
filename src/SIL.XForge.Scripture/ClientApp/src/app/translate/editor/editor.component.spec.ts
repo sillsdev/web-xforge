@@ -29,6 +29,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -77,7 +78,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -4659,6 +4659,7 @@ class TestEnvironment {
   }
 
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
+    userConfig.editorTabsOpen = userConfig.editorTabsOpen ?? [];
     userConfig.noteRefsRead = userConfig.noteRefsRead ?? [];
     const user1Config = cloneDeep(userConfig);
     user1Config.ownerRef = 'user01';
