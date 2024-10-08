@@ -113,15 +113,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     this.subscribe(pwaService.hasUpdate$, () => (this.hasUpdate = true));
 
-    this.featureFlags.showDiagnosticOverlay.enabled$.subscribe(isEnabled => {
-      this.showDiagnosticOverlay = isEnabled;
-      if (isEnabled) {
-        this.dialogService.openDiagnosticOverlay(DiagnosticOverlayComponent);
-      } else {
-        this.dialogService.closeDiagnosticOverlay();
-      }
-    });
-
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
       const navEndEvent$ = router.events.pipe(
@@ -422,8 +413,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
   }
 
-  openDiagnosticOverlay(): void {
-    this.featureFlags.showDiagnosticOverlay.enabled = !this.showDiagnosticOverlay;
+  toggleDiagnosticOverlay(): void {
+    this.dialogService.toggleDiagnosticOverlay(DiagnosticOverlayComponent);
   }
 
   versionNumberClicked(): void {
