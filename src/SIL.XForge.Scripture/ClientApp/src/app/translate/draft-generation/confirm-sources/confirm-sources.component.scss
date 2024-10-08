@@ -9,6 +9,12 @@
   padding-inline: 2em;
 }
 
+.training-data,
+.translation-data {
+  background: #f0f0f0;
+  padding-block: 1em;
+}
+
 .sources,
 .targets,
 .arrow {
@@ -16,7 +22,6 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-block: 1em;
   gap: 1em;
 }
 
@@ -40,7 +45,7 @@
 }
 
 .training-data h3 {
-  margin-block: 0 0.5em;
+  margin-block: 0;
 }
 
 .training-data p {
@@ -56,11 +61,13 @@ strong {
 }
 
 h1 {
+  margin-top: 1em;
   margin-bottom: 0;
 }
 
 h2 {
-  margin-top: 2em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
 }
 
 .project {
@@ -71,9 +78,12 @@ h2 {
 
 .project-name {
   font-size: 1.1em;
-  font-weight: 500;
 }
 
-.translation-data {
-  margin-bottom: 2.5em;
+.language-code {
+  font-size: 0.9em;
+}
+
+app-notice {
+  margin-top: 4em;
 }
