@@ -1296,7 +1296,6 @@ class TestEnvironment {
     ]);
     when(mockedFeatureFlagService.showNmtDrafting).thenReturn(createTestFeatureFlag(true));
     when(mockedFeatureFlagService.allowAdditionalTrainingSource).thenReturn(createTestFeatureFlag(true));
-    when(mockedFeatureFlagService.showDiagnosticOverlay).thenReturn(createTestFeatureFlag(false));
 
     when(mockedSFProjectService.queryAudioText(anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {
