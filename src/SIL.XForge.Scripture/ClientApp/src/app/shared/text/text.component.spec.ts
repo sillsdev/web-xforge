@@ -27,6 +27,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { isGecko } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -166,8 +167,14 @@ describe('TextComponent', () => {
     tick();
 
     expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
-    // This is a CSS computed value, and it's a string, so it needs quotes around it
-    expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('"s - Heading - Section Level 1"');
+    if (isGecko()) {
+      // Firefox will not resolve the value
+      expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('attr(data-style-description)');
+    } else {
+      // Chrome will resolve the value
+      // This is a CSS computed value, and it's a string, so it needs quotes around it
+      expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('"s - Heading - Section Level 1"');
+    }
 
     // highlighting verse 1 does not cause a description to be shown because it's in a paragraph with style p
     env.component.highlight(['verse_1_1']);
@@ -272,7 +279,10 @@ describe('TextComponent', () => {
     expect(contents.ops![0].insert).toEqual('target: ');
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', pasteText);
-    const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+    // The ClipboardEvent constructor does not support setting clipboardData in Firefox,
+    // so instead we need to manually construct the paste Event.
+    const pasteEvent = new Event('paste') as any;
+    pasteEvent.clipboardData = dataTransfer;
     env.component.editor!.root.dispatchEvent(pasteEvent);
     tick(10);
     env.fixture.detectChanges();
@@ -936,7 +946,10 @@ describe('TextComponent', () => {
     expect(contents.ops![0].insert).toEqual('target: chapter 1, verse 1.');
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', pasteText);
-    const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+    // The ClipboardEvent constructor does not support setting clipboardData in Firefox,
+    // so instead we need to manually construct the paste Event.
+    const pasteEvent = new Event('paste') as any;
+    pasteEvent.clipboardData = dataTransfer;
     env.component.editor!.root.dispatchEvent(pasteEvent);
     tick(10);
     env.fixture.detectChanges();

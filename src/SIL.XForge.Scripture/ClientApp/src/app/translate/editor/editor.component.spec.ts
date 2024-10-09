@@ -78,6 +78,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { isBlink } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -229,7 +230,7 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
-  it('shows warning to users when translation is Korean, Japanese, or Chinese', fakeAsync(() => {
+  it('shows warning to users in Chrome when translation is Korean, Japanese, or Chinese', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProject({
       writingSystem: { tag: 'ko' }
@@ -238,9 +239,15 @@ describe('EditorComponent', () => {
 
     expect(env.component.canEdit).toBe(true);
     expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
-    expect(env.component.writingSystemWarningBanner).toBe(true);
-    expect(env.showWritingSystemWarningBanner).not.toBeNull();
-    discardPeriodicTasks();
+    if (isBlink()) {
+      expect(env.component.writingSystemWarningBanner).toBe(true);
+      expect(env.showWritingSystemWarningBanner).not.toBeNull();
+    } else {
+      expect(env.component.writingSystemWarningBanner).toBe(false);
+      expect(env.showWritingSystemWarningBanner).toBeNull();
+    }
+
+    env.dispose();
   }));
 
   it('does not show warning to users when translation is not Korean, Japanese, or Chinese', fakeAsync(() => {

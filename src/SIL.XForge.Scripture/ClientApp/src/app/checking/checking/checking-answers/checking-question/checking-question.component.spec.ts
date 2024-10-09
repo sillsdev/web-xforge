@@ -182,7 +182,7 @@ describe('CheckingQuestionComponent', () => {
 
     await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
-  });
+  }, 7000); // Increase from the default 5000, as this test can take longer on Firefox
 
   it('plays the entire verse when timing files are phrase level', async () => {
     const env = new TestEnvironment();

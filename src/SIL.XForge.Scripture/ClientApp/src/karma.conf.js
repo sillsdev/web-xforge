@@ -22,6 +22,7 @@ module.exports = function (config) {
   plugins.push(
     require('karma-jasmine'),
     require('karma-chrome-launcher'),
+    require('karma-firefox-launcher'),
     require('karma-jasmine-html-reporter'),
     require('karma-coverage-istanbul-reporter'),
     require('karma-teamcity-reporter'),
@@ -121,6 +122,23 @@ module.exports = function (config) {
           '--autoplay-policy=no-user-gesture-required',
           '--remote-debugging-port=9988'
         ]
+      },
+      xForgeFirefox: {
+        base: 'Firefox',
+        prefs: {
+          'media.autoplay.default': 0,
+          'permissions.default.microphone': 1
+        },
+        profile: require('path').join(__dirname, '../tmp')
+      },
+      xForgeFirefoxHeadless: {
+        base: 'Firefox',
+        flags: ['-headless'],
+        prefs: {
+          'media.autoplay.default': 0,
+          'permissions.default.microphone': 1
+        },
+        profile: require('path').join(__dirname, '../tmp')
       }
     },
     singleRun: false
