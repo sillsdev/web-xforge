@@ -128,7 +128,8 @@ module.exports = function (config) {
         prefs: {
           'media.autoplay.default': 0,
           'permissions.default.microphone': 1
-        }
+        },
+        profile: require('path').join(__dirname, '../tmp')
       },
       xForgeFirefoxHeadless: {
         base: 'Firefox',
@@ -136,7 +137,8 @@ module.exports = function (config) {
         prefs: {
           'media.autoplay.default': 0,
           'permissions.default.microphone': 1
-        }
+        },
+        profile: require('path').join(__dirname, '../tmp')
       }
     },
     singleRun: false
