@@ -1719,6 +1719,7 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
+        env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
         flush();
       }));
@@ -1729,9 +1730,11 @@ describe('CheckingComponent', () => {
         env.selectQuestion(14);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
+        env.waitForSliderUpdate();
         env.commentOnAnswer(0, 'Second comment to answer');
+        env.waitForSliderUpdate();
         env.clickButton(env.getEditCommentButton(0, 0));
-        expect(env.commentFormTextFields.length).toEqual(1);
+        expect(env.getYourCommentField(0)).not.toBeNull();
         env.setTextFieldValue(env.getYourCommentField(0), 'Edited comment');
         env.clickButton(env.getSaveCommentButton(0));
         env.waitForSliderUpdate();
@@ -1746,10 +1749,67 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
+        env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
         env.clickButton(env.getDeleteCommentButton(0, 0));
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(0);
+        flush();
+      }));
+
+      it('can record audio for a comment', fakeAsync(() => {
+        const env = new TestEnvironment({ user: CHECKER_USER });
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
+        env.commentOnAnswer(0, '', 'audioFile.mp3');
+        resolveUpload$.next();
+        env.waitForSliderUpdate();
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
+        env.waitForSliderUpdate();
+        expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
+        expect(env.getAnswerCommentText(0, 0)).toBe('');
+      }));
+
+      it('can remove audio from a comment', fakeAsync(() => {
+        const env = new TestEnvironment({ user: CHECKER_USER });
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
+        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        resolveUpload$.next();
+        env.waitForSliderUpdate();
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
+        env.waitForSliderUpdate();
+        expect(env.getAnswerCommentText(0, 0)).toContain('comment with audio');
+        expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
+        env.clickButton(env.getEditCommentButton(0, 0));
+        env.clickButton(env.removeAudioButton);
+        env.clickButton(env.getSaveCommentButton(0));
+        env.waitForSliderUpdate();
+        verify(
+          mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
+        ).once();
+      }));
+
+      it('will delete comment audio when comment is deleted', fakeAsync(() => {
+        const env = new TestEnvironment({ user: CHECKER_USER });
+        env.selectQuestion(1);
+        const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
+        env.answerQuestion('Answer question to be commented on');
+        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        resolveUpload$.next();
+        env.waitForSliderUpdate();
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
+        env.waitForSliderUpdate();
+        expect(env.getAnswerComments(0).length).toBe(1);
+        expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
+        env.clickButton(env.getDeleteCommentButton(0, 0));
+        env.waitForSliderUpdate();
+        expect(env.getAnswerComments(0).length).toBe(0);
+        verify(
+          mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
+        ).once();
         flush();
       }));
 
@@ -1759,10 +1819,12 @@ describe('CheckingComponent', () => {
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'First comment');
         env.commentOnAnswer(0, 'Second comment');
+        env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(2);
         env.selectQuestion(2);
         env.answerQuestion('Second answer question to be commented on');
         env.commentOnAnswer(0, 'Third comment');
+        env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toBe(1);
         expect(env.getAnswerCommentText(0, 0)).toBe('Third comment');
         env.selectQuestion(1);
@@ -2835,10 +2897,17 @@ class TestEnvironment {
     tick();
   }
 
-  commentOnAnswer(answerIndex: number, comment: string): void {
+  commentOnAnswer(answerIndex: number, comment: string, audioFilename?: string): void {
     this.clickButton(this.getAddCommentButton(answerIndex));
+    if (this.getYourCommentField(answerIndex) == null) return;
     this.setTextFieldValue(this.getYourCommentField(answerIndex), comment);
-    this.clickButton(this.getSaveCommentButton(answerIndex));
+    let commentAudio: AudioAttachment | undefined;
+    if (audioFilename != null) {
+      commentAudio = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
+    }
+    const commentsComponent = this.fixture.debugElement.query(By.css('#answer-comments'))!
+      .componentInstance as CheckingCommentsComponent;
+    commentsComponent.submit({ text: comment, audio: commentAudio });
     this.waitForSliderUpdate();
   }
 
@@ -2899,6 +2968,11 @@ class TestEnvironment {
     return commentText.query(By.css('.comment-text')).nativeElement.textContent;
   }
 
+  getAnswerCommentAudio(answerIndex: number, commentIndex: number): DebugElement {
+    const comment = this.getAnswerComment(answerIndex, commentIndex);
+    return comment.query(By.css('.comment-audio')).nativeElement;
+  }
+
   getDeleteCommentButton(answerIndex: number, commentIndex: number): DebugElement {
     return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-delete'));
   }
@@ -2925,7 +2999,7 @@ class TestEnvironment {
   }
 
   getYourCommentField(answerIndex: number): DebugElement {
-    return this.getAnswer(answerIndex).query(By.css('[formControlName="commentText"]'));
+    return this.getAnswer(answerIndex).query(By.css('textarea[formControlName="text"]'));
   }
 
   selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {

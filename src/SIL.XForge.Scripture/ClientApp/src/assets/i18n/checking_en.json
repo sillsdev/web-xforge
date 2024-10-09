@@ -265,7 +265,6 @@
   },
   "checking_comment_form": {
     "cancel": "Cancel",
-    "comment_cannot_be_blank": "You need to enter your comment before saving",
     "save_comment": "Save comment",
     "your_comment": "Your comment"
   },

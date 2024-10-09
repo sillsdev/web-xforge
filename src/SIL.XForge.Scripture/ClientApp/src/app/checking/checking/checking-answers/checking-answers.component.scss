@@ -102,12 +102,6 @@
         flex: 1;
         align-items: flex-end;
 
-        @include breakpoints.media-breakpoint-down(sm) {
-          align-items: flex-start;
-          flex-direction: column;
-          row-gap: 5px;
-        }
-
         button {
           &.answer-status {
             &.status-exportable {
@@ -154,8 +148,14 @@
         row-gap: 10px;
         border-bottom: 1px solid checking-vars.$borderColor;
         padding: 10px 0;
-        app-owner {
-          align-self: flex-end;
+
+        .bottom-row {
+          display: flex;
+          justify-content: space-between;
+
+          button {
+            height: 40px;
+          }
         }
       }
     }
