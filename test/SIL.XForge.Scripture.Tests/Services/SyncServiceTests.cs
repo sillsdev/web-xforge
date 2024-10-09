@@ -165,7 +165,7 @@ public class SyncServiceTests
             {
                 ProjectId = Project01,
                 UserId = "userid",
-                TrainEngine = true
+                TrainEngine = true,
             }
         );
 
@@ -240,12 +240,17 @@ public class SyncServiceTests
             {
                 ProjectId = Project03,
                 UserId = "userid",
-                TrainEngine = true
+                TrainEngine = true,
             }
         );
 
         // Verify that three jobs were created - source, target, and training
         env.BackgroundJobClient.Received(3).Create(Arg.Any<Job>(), Arg.Any<IState>());
+
+        // Verify the project secret
+        Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
+        Assert.That(env.ProjectSecrets.Get(Project03).ServalData?.TranslationQueuedAt, Is.Not.Null);
+        Assert.That(env.ProjectSecrets.Get(Project03).ServalData?.TranslationJobId, Is.Not.Null);
     }
 
     [Test]
@@ -482,7 +487,7 @@ public class SyncServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.SyncMetrics.Query().Any(), Is.False);
-        string curUserId = "userid";
+        const string curUserId = "userid";
 
         await env.Service.SyncAsync(new SyncConfig { ProjectId = Project01, UserId = curUserId });
 
@@ -577,12 +582,11 @@ public class SyncServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                new[]
-                {
+                [
                     new SFProjectSecret { Id = Project01 },
                     new SFProjectSecret { Id = Project02 },
-                    new SFProjectSecret { Id = Project03 },
-                }
+                    new SFProjectSecret { Id = Project03, ServalData = new ServalData() },
+                ]
             );
             SyncMetrics = new MemoryRepository<SyncMetrics>();
             RealtimeService = new SFMemoryRealtimeService();
@@ -591,8 +595,7 @@ public class SyncServiceTests
                 "sf_projects",
                 OTType.Json0,
                 new MemoryRepository<SFProject>(
-                    new[]
-                    {
+                    [
                         new SFProject
                         {
                             Id = Project01,
@@ -623,7 +626,7 @@ public class SyncServiceTests
                             Name = "project04",
                             ShortName = "P04",
                         },
-                    }
+                    ]
                 )
             );
 
