@@ -6,7 +6,6 @@ public class Answer : Comment
 {
     public VerseRefData? VerseRef { get; set; }
     public string? ScriptureText { get; set; }
-    public string? AudioUrl { get; set; }
     public List<Like> Likes { get; set; } = new List<Like>();
     public List<Comment> Comments { get; set; } = new List<Comment>();
     public string Status { get; set; } = AnswerStatus.None;
