@@ -250,12 +250,7 @@ public class ParatextControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetSnapshotAsync(
-            Project01,
-            Book,
-            Chapter,
-            Timestamp
-        );
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -268,12 +263,7 @@ public class ParatextControllerTests
         env.UserAccessor.UserId.Returns("invalid_user");
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetSnapshotAsync(
-            Project01,
-            Book,
-            Chapter,
-            Timestamp
-        );
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -287,12 +277,7 @@ public class ParatextControllerTests
             .Throws(new DataNotFoundException("Not Found"));
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetSnapshotAsync(
-            Project01,
-            Book,
-            Chapter,
-            Timestamp
-        );
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -304,12 +289,7 @@ public class ParatextControllerTests
         var env = new TestEnvironment();
 
         // SUT
-        ActionResult<Snapshot<TextData>> actual = await env.Controller.GetSnapshotAsync(
-            Project01,
-            Book,
-            Chapter,
-            Timestamp
-        );
+        ActionResult<TextSnapshot> actual = await env.Controller.GetSnapshotAsync(Project01, Book, Chapter, Timestamp);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         var snapshot = (Snapshot<TextData>)((OkObjectResult)actual.Result!).Value!;
@@ -404,11 +384,12 @@ public class ParatextControllerTests
             Source = OpSource.History,
         };
 
-        public readonly Snapshot<TextData> TestSnapshot = new Snapshot<TextData>
+        public readonly TextSnapshot TestSnapshot = new TextSnapshot
         {
             Data = new TextData(),
             Id = "textId",
             Version = 1,
+            IsValid = true
         };
 
         public readonly byte[] ZipHeader = [80, 75, 05, 06];
