@@ -70,7 +70,12 @@
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">
             <mat-icon>copyright</mat-icon> {{ t("open_source_licenses") }}
           </a>
+          <mat-divider></mat-divider>
+          <div mat-menu-item disabled="true" (click)="versionNumberClicked()" id="version-number">
+            {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
+          </div>
           @if (featureFlags.showDeveloperTools.enabled) {
+            <mat-divider></mat-divider>
             <button mat-menu-item (click)="openFeatureFlagDialog()">
               <mat-icon>science</mat-icon>
               Developer settings
@@ -80,10 +85,6 @@
               Developer diagnostics
             </button>
           }
-          <mat-divider></mat-divider>
-          <div mat-menu-item disabled="true" (click)="versionNumberClicked()" id="version-number">
-            {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
-          </div>
         </mat-menu>
 
         @if (currentUser) {
