@@ -122,7 +122,7 @@
             class="advance-button"
             [disabled]="isStepsCompleted"
           >
-            {{ featureFlags.allowFastTraining.enabled || trainingDataFilesAvailable ? t("next") : t("generate_draft") }}
+            {{ t("next") }}
           </button>
           @if (isStepsCompleted) {
             <mat-spinner diameter="24"></mat-spinner>
@@ -150,7 +150,7 @@
               class="advance-button"
               [disabled]="isStepsCompleted"
             >
-              {{ featureFlags.allowFastTraining.enabled ? t("next") : t("generate_draft") }}
+              {{ t("next") }}
             </button>
             @if (isStepsCompleted) {
               <mat-spinner diameter="24"></mat-spinner>
@@ -179,7 +179,7 @@
               class="advance-button"
               [disabled]="isStepsCompleted"
             >
-              {{ t("generate_draft") }}
+              {{ t("next") }}
             </button>
             @if (isStepsCompleted) {
               <mat-spinner diameter="24"></mat-spinner>
@@ -187,6 +187,55 @@
           </div>
         </mat-step>
       }
+      <mat-step [completed]="true">
+        <ng-template matStepLabel>
+          {{ t("confirm_label") }}
+        </ng-template>
+        <h1 class="mat-headline-4">{{ t("confirm") }}</h1>
+
+        <div class="confirm-section">
+          <span class="explanation">{{ t("confirm_training") }}</span>
+          <table mat-table class="confirm-training" [dataSource]="userSelectedTrainingBooks">
+            <ng-container matColumnDef="book">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let element" class="bookName">{{ element.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="source">
+              <th mat-header-cell *matHeaderCellDef>{{ trainingSources[0].writingSystem.tag }}</th>
+              <td mat-cell *matCellDef="let element">{{ element.source }}</td>
+            </ng-container>
+            <ng-container matColumnDef="target">
+              <th mat-header-cell *matHeaderCellDef>{{ trainingTargets[0].writingSystem.tag }}</th>
+              <td mat-cell *matCellDef="let element">{{ element.target }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="['book', 'source', 'target']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['book', 'source', 'target']"></tr>
+          </table>
+        </div>
+
+        <div class="confirm-section">
+          <span class="explanation">
+            <transloco
+              key="draft_generation_steps.confirm_translate"
+              [params]="{ source: trainingSources[0].shortName }"
+            ></transloco>
+          </span>
+          <div class="confirm-translate">
+            <div class="confirm-translate-books">
+              @for (book of userSelectedTranslateBooks; track book) {
+                <span class="readonly-book">{{ book.name }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="button-strip">
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
+            {{ t("generate_draft") }}
+          </button>
+        </div>
+      </mat-step>
     </mat-stepper>
   }
 
