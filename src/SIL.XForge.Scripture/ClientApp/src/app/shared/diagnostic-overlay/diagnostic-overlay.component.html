@@ -17,14 +17,16 @@
         <thead>
           <tr>
             <th>Collection</th>
-            <th>Count</th>
+            <th>Documents</th>
+            <th>Subscribers</th>
           </tr>
         </thead>
         <tbody>
           @for (docType of docCountsByCollection | keyvalue; track docType.key) {
             <tr>
               <td>{{ docType.key }}</td>
-              <td>{{ docType.value | l10nNumber }}</td>
+              <td>{{ docType.value.docCount | l10nNumber }}</td>
+              <td>{{ docType.value.subscriberCount | l10nNumber }}</td>
             </tr>
           }
         </tbody>
