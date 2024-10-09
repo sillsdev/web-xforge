@@ -66,6 +66,10 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
     return this.subscribedState || this.subscribeQueryCount > 0;
   }
 
+  get subscriberCount(): number {
+    return this.subscribeQueryCount;
+  }
+
   get collection(): string {
     return this.adapter.collection;
   }
