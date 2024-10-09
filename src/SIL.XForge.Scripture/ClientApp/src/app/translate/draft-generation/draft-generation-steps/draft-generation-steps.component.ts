@@ -3,8 +3,9 @@ import { MatStepper } from '@angular/material/stepper';
 import { translate, TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { ProjectScriptureRange, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { merge, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -34,6 +35,16 @@ export interface DraftGenerationStepsResult {
   translationScriptureRange?: string;
   translationScriptureRanges?: ProjectScriptureRange[];
   fastTraining: boolean;
+}
+
+export interface Book {
+  name: string;
+  number: number;
+}
+
+export interface TrainingBook extends Book {
+  source: string;
+  target: string;
 }
 
 @Component({
@@ -71,8 +82,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   initialSelectedTrainingBooks: number[] = [];
   initialSelectedTranslateBooks: number[] = [];
-  userSelectedTrainingBooks: number[] = [];
-  userSelectedTranslateBooks: number[] = [];
+  userSelectedTrainingBooks: TrainingBook[] = [];
+  userSelectedTranslateBooks: Book[] = [];
   userSelectedSourceTrainingBooks: number[] = [];
   userSelectedAdditionalSourceTrainingBooks: number[] = [];
 
@@ -103,6 +114,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;
 
+  readonly trainingSources: TranslateSource[] = [];
+  readonly trainingTargets: SFProjectProfile[] = [];
+
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
@@ -114,6 +128,23 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     private readonly noticeService: NoticeService
   ) {
     super();
+    const project = activatedProject.projectDoc!.data!;
+    this.trainingTargets.push(project);
+
+    let trainingSource: TranslateSource | undefined;
+    if (project.translateConfig.draftConfig.alternateTrainingSourceEnabled) {
+      trainingSource = project.translateConfig.draftConfig.alternateTrainingSource;
+    } else {
+      trainingSource = project.translateConfig.source;
+    }
+
+    if (trainingSource != null) {
+      this.trainingSources.push(trainingSource);
+    }
+
+    if (project.translateConfig.draftConfig.additionalTrainingSourceEnabled) {
+      this.trainingSources.push(project.translateConfig.draftConfig.additionalTrainingSource!);
+    }
   }
 
   get trainingSourceBooksSelected(): boolean {
@@ -254,8 +285,15 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onTrainingBookSelect(selectedBooks: number[]): void {
-    const newBookSelections: number[] = selectedBooks.filter(b => !this.userSelectedTrainingBooks.includes(b));
-    this.userSelectedTrainingBooks = [...selectedBooks];
+    const newBookSelections: number[] = selectedBooks.filter(
+      b => this.userSelectedTrainingBooks.find(x => x.number === b) === undefined
+    );
+    this.userSelectedTrainingBooks = selectedBooks.map((bookNum: number) => ({
+      number: bookNum,
+      name: Canon.bookNumberToEnglishName(bookNum),
+      source: this.trainingSources[0].shortName,
+      target: this.trainingTargets[0].shortName
+    }));
     this.selectableSourceTrainingBooks = [...selectedBooks];
     this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
       selectedBooks.includes(b)
@@ -296,7 +334,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   }
 
   onTranslateBookSelect(selectedBooks: number[]): void {
-    this.userSelectedTranslateBooks = selectedBooks;
+    this.userSelectedTranslateBooks = selectedBooks.map((bookNum: number) => ({
+      number: bookNum,
+      name: Canon.bookNumberToEnglishName(bookNum)
+    }));
     this.clearErrorMessage();
   }
 
@@ -343,7 +384,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       this.done.emit({
         trainingScriptureRanges,
         trainingDataFiles: this.selectedTrainingDataIds,
-        translationScriptureRange: this.userSelectedTranslateBooks.map(b => Canon.bookNumberToId(b)).join(';'),
+        translationScriptureRange: this.userSelectedTranslateBooks.map(b => Canon.bookNumberToId(b.number)).join(';'),
         fastTraining: this.fastTraining
       });
     }
@@ -355,25 +396,25 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
    * but this requirement may be removed in the future.
    */
   updateTrainingBooks(): void {
-    const selectedTranslateBooks = new Set<number>(this.userSelectedTranslateBooks);
+    const selectedTranslateBooks = new Set<number>(this.userSelectedTranslateBooks.map(book => book.number));
 
     this.availableTrainingBooks = this.initialAvailableTrainingBooks.filter(
       bookNum => !selectedTranslateBooks.has(bookNum)
     );
 
     const newSelectedTrainingBooks = this.userSelectedTrainingBooks.filter(
-      bookNum => !selectedTranslateBooks.has(bookNum)
+      book => !selectedTranslateBooks.has(book.number)
     );
 
-    this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
+    this.initialSelectedTrainingBooks = newSelectedTrainingBooks.map(book => book.number);
     this.userSelectedTrainingBooks = [...newSelectedTrainingBooks];
-    this.selectableSourceTrainingBooks = [...newSelectedTrainingBooks];
-    this.userSelectedSourceTrainingBooks = [...newSelectedTrainingBooks];
+    this.selectableSourceTrainingBooks = newSelectedTrainingBooks.map(book => book.number);
+    this.userSelectedSourceTrainingBooks = newSelectedTrainingBooks.map(book => book.number);
     this.selectableAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
-      newSelectedTrainingBooks.includes(b)
+      this.selectableSourceTrainingBooks.includes(b)
     );
     this.userSelectedAdditionalSourceTrainingBooks = this.selectableAdditionalSourceTrainingBooks.filter(b =>
-      newSelectedTrainingBooks.includes(b)
+      this.selectableSourceTrainingBooks.includes(b)
     );
   }
 
@@ -406,7 +447,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTranslateBooks = intersection.length > 0 ? intersection : [];
-    this.userSelectedTranslateBooks = [...this.initialSelectedTranslateBooks];
+    this.userSelectedTranslateBooks = this.initialSelectedTranslateBooks.map((bookNum: number) => ({
+      number: bookNum,
+      name: Canon.bookNumberToEnglishName(bookNum)
+    }));
   }
 
   private setInitialTrainingBooks(availableBooks: number[]): void {
@@ -429,11 +473,13 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     // Set the selected books to the intersection, or if the intersection is empty, do not select any
     this.initialSelectedTrainingBooks = intersection.length > 0 ? intersection : [];
-    this.userSelectedTrainingBooks = [...this.initialSelectedTrainingBooks];
-    this.userSelectedSourceTrainingBooks = [...this.initialSelectedTrainingBooks];
-    this.userSelectedAdditionalSourceTrainingBooks = this.availableAdditionalTrainingBooks.filter(b =>
-      this.initialSelectedTrainingBooks.includes(b)
-    );
+
+    this.userSelectedTrainingBooks = this.initialSelectedTrainingBooks.map((bookNum: number) => ({
+      number: bookNum,
+      name: Canon.bookNumberToEnglishName(bookNum),
+      source: this.trainingSources[0].shortName,
+      target: this.trainingTargets[0].shortName
+    }));
   }
 
   private setInitialTrainingDataFiles(availableDataFiles: string[]): void {
