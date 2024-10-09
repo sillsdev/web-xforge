@@ -1,10 +1,10 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { RealtimeService } from 'xforge-common/realtime.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { DialogService } from 'xforge-common/dialog.service';
+import { RealtimeService } from 'xforge-common/realtime.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { NoticeService } from '../../../xforge-common/notice.service';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
@@ -21,16 +21,15 @@ export interface DiagnosticOverlayData {
   standalone: true,
   imports: [OverlayModule, CommonModule, UICommonModule]
 })
-export class DiagnosticOverlayComponent extends SubscriptionDisposable {
+export class DiagnosticOverlayComponent {
   isExpanded: boolean = true;
   isOpen: boolean = true;
 
   constructor(
     private readonly realtimeService: RealtimeService,
-    private readonly dialogService: DialogService
-  ) {
-    super();
-  }
+    private readonly dialogService: DialogService,
+    readonly noticeService: NoticeService
+  ) {}
 
   get docCountsByCollection(): { [key: string]: number } {
     return this.realtimeService.docsCountByCollection;
