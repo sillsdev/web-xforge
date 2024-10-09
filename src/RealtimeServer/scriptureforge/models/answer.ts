@@ -13,8 +13,6 @@ export interface Answer extends Comment {
   scriptureText?: string;
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
-  audioUrl?: string;
-  text?: string;
   likes: Like[];
   comments: Comment[];
   status?: AnswerStatus;

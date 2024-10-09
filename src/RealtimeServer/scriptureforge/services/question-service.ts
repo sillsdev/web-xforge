@@ -6,7 +6,7 @@ import { ANY_INDEX } from '../../common/utils/obj-path';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { Answer } from '../models/answer';
 import { Comment } from '../models/comment';
-import { Question, QUESTIONS_COLLECTION, QUESTION_INDEX_PATHS } from '../models/question';
+import { QUESTIONS_COLLECTION, QUESTION_INDEX_PATHS, Question } from '../models/question';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectUserConfig, SF_PROJECT_USER_CONFIGS_COLLECTION } from '../models/sf-project-user-config';
 import { QUESTION_MIGRATIONS } from './question-migrations';
@@ -100,7 +100,10 @@ export class QuestionService extends SFProjectDataService<Question> {
                     bsonType: 'string'
                   },
                   text: {
-                    bsonType: ['null', 'string']
+                    bsonType: 'string'
+                  },
+                  audioUrl: {
+                    bsonType: 'string'
                   },
                   dateModified: {
                     bsonType: 'string'
