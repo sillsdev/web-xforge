@@ -1,17 +1,21 @@
 <ng-template cdkConnectedOverlay [cdkConnectedOverlayOpen]="isOpen">
   <div class="diagnostic-overlay mat-elevation-z4" [class.collapsed]="!isExpanded">
-    <button mat-icon-button class="toggle-button" [class.collapsed]="!isExpanded" (click)="toggle()">
+    <div class="header">
       @if (isExpanded) {
-        <mat-icon>chevron_right</mat-icon>
-      } @else {
-        <mat-icon>chevron_left</mat-icon>
+        <h2>Developer Diagnostics</h2>
       }
-    </button>
-    <button mat-icon-button class="close-button" (click)="close()">
-      <mat-icon>close</mat-icon>
-    </button>
+      <button mat-icon-button class="toggle-button" [class.collapsed]="!isExpanded" (click)="toggle()">
+        @if (isExpanded) {
+          <mat-icon>chevron_right</mat-icon>
+        } @else {
+          <mat-icon>chevron_left</mat-icon>
+        }
+      </button>
+      <button mat-icon-button class="close-button" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
     @if (isExpanded) {
-      <h1>Developer Diagnostics</h1>
       <h3>Total documents {{ totalDocsCount | l10nNumber }} tracked by realtime service</h3>
       <table>
         <thead>
