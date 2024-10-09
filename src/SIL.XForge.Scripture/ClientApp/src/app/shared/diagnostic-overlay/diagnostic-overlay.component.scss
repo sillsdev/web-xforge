@@ -1,4 +1,7 @@
 $toolbar-height: 56px;
+$background-color: #282828;
+$foreground-color: #ddd;
+$table-border-color: #404040;
 
 .diagnostic-overlay {
   position: fixed;
@@ -6,17 +9,18 @@ $toolbar-height: 56px;
   right: 0;
   bottom: 0;
 
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #9ba26d;
-  overflow-y: scroll;
+  background-color: $background-color;
+  color: $foreground-color;
+  font-size: 12px;
+  overflow-y: auto;
 
   &.collapsed {
-    width: 90px;
+    width: 44px;
+    padding: 2px;
   }
 
   &:not(.collapsed) {
+    padding: 4px 12px;
     width: 25vw;
     min-width: 300px;
   }
@@ -28,20 +32,46 @@ table {
 
   th,
   td {
-    border: 1px solid #000;
-    padding: 8px;
+    padding: 5px;
   }
 
   th {
-    color: #000;
+    border: 1px solid $table-border-color;
   }
 
   td {
-    text-align: center;
-    background-color: #f9f9f9;
+    border-inline: 1px solid $table-border-color;
+  }
+
+  tr:nth-child(even) {
+    background-color: #1f1f1f;
+  }
+
+  tr:last-child td {
+    border-bottom: 1px solid $table-border-color;
   }
 }
 
 .bold {
   font-weight: bold;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 500;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+
+  h2 {
+    margin: 0;
+    flex-grow: 1;
+  }
+}
+
+.collapsed .header {
+  flex-direction: column;
 }

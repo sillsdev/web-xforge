@@ -1,9 +1,10 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { DiagnosticOverlayService } from '../../../xforge-common/diagnostic-overlay.service';
+import { LocalSettingsService } from '../../../xforge-common/local-settings.service';
 import { NoticeService } from '../../../xforge-common/notice.service';
 
 export interface DiagnosticOverlayData {
@@ -13,6 +14,8 @@ export interface DiagnosticOverlayData {
   isRightToLeft?: boolean;
   selectedText?: string;
 }
+
+const diagnosticOverlayCollapsedKey = 'DIAGNOSTIC_OVERLAY_COLLAPSED';
 
 @Component({
   selector: 'app-diagnostic-overlay',
@@ -27,9 +30,14 @@ export class DiagnosticOverlayComponent {
 
   constructor(
     private readonly realtimeService: RealtimeService,
-    private readonly dialogService: DialogService,
-    readonly noticeService: NoticeService
-  ) {}
+    private readonly diagnosticOverlayService: DiagnosticOverlayService,
+    readonly noticeService: NoticeService,
+    private readonly localSettings: LocalSettingsService
+  ) {
+    if (this.localSettings.get<boolean>(diagnosticOverlayCollapsedKey) === false) {
+      this.isExpanded = false;
+    }
+  }
 
   get docCountsByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
     return this.realtimeService.docsCountByCollection;
@@ -41,10 +49,12 @@ export class DiagnosticOverlayComponent {
 
   toggle(): void {
     this.isExpanded = !this.isExpanded;
+    this.localSettings.set(diagnosticOverlayCollapsedKey, this.isExpanded);
   }
 
   close(): void {
     this.isOpen = false;
-    this.dialogService.closeDiagnosticOverlay();
+    this.diagnosticOverlayService.close();
+    this.localSettings.remove(diagnosticOverlayCollapsedKey);
   }
 }

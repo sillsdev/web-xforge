@@ -35,12 +35,12 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { DiagnosticOverlayService } from '../xforge-common/diagnostic-overlay.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
-import { DiagnosticOverlayComponent } from './shared/diagnostic-overlay/diagnostic-overlay.component';
 
 declare function gtag(...args: any): void;
 
@@ -72,6 +72,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService,
+    private readonly diagnosticOverlayService: DiagnosticOverlayService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProjectService: ActivatedProjectService,
@@ -412,8 +413,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
   }
 
-  toggleDiagnosticOverlay(): void {
-    this.dialogService.toggleDiagnosticOverlay(DiagnosticOverlayComponent);
+  openDiagnosticOverlay(): void {
+    this.diagnosticOverlayService.open();
   }
 
   versionNumberClicked(): void {
