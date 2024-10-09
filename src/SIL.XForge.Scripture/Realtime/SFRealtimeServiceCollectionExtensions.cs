@@ -15,23 +15,21 @@ public static class SFRealtimeServiceCollectionExtensions
         this IServiceCollection services,
         ILoggerFactory loggerFactory,
         IConfiguration configuration,
-        string? nodeOptions = null,
-        bool migrationsDisabled = false,
-        bool useExistingRealtimeServer = false
+        string? nodeOptions = null
     )
     {
+        var realtimeOptions = configuration.GetOptions<RealtimeOptions>();
         services.AddRealtimeServer(
             loggerFactory,
             configuration,
             o =>
             {
                 o.AppModuleName = "scriptureforge";
-                o.MigrationsDisabled = migrationsDisabled;
-                o.UseExistingRealtimeServer = useExistingRealtimeServer;
+                o.MigrationsDisabled = realtimeOptions.MigrationsDisabled;
+                o.UseExistingRealtimeServer = realtimeOptions.UseExistingRealtimeServer;
                 o.ProjectDoc = new DocConfig("sf_projects", typeof(SFProject));
                 o.ProjectDataDocs.AddRange(
-                    new[]
-                    {
+                    [
                         new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
                         new DocConfig("texts", typeof(TextData), OTType.RichText),
                         new DocConfig("questions", typeof(Question)),
@@ -39,14 +37,12 @@ public static class SFRealtimeServiceCollectionExtensions
                         new DocConfig("text_audio", typeof(TextAudio)),
                         new DocConfig("biblical_terms", typeof(BiblicalTerm)),
                         new DocConfig("training_data", typeof(TrainingData)),
-                    }
+                    ]
                 );
-                o.UserDataDocs.AddRange(
-                    new[] { new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)) }
-                );
+                o.UserDataDocs.AddRange([new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig))]);
             },
             nodeOptions,
-            useExistingRealtimeServer
+            realtimeOptions.UseExistingRealtimeServer
         );
         return services;
     }

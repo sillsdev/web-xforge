@@ -4,6 +4,7 @@
 **/.env
 **/.git
 **/.gitignore
+**/.nx
 **/.project
 **/.settings
 **/.toolstarget
@@ -15,14 +16,17 @@
 **/azds.yaml
 **/bin
 **/charts
+**/coverage
 **/dist
 **/docker-compose*
 **/Dockerfile*
+**/lib
 **/node_modules
 **/npm-debug.log
 **/obj
 **/RealtimeServer/lib/
 **/secrets.dev.yaml
+**/tmp
 **/values.dev.yaml
 ClientApp
 LICENSE
