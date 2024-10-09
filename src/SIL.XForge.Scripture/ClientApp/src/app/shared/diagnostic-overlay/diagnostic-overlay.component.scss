@@ -1,0 +1,52 @@
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
+@use 'src/variables';
+$toolbar-height: 56px;
+$overlayBreakpointXL: 1360px;
+$overlayBreakpointMD: 850px;
+
+.diagnostic-overlay {
+  position: fixed;
+  top: $toolbar-height;
+  right: 0;
+  width: 25%;
+  height: 92%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  background-color: #9ba26d;
+  z-index: 1000;
+  overflow-y: scroll;
+
+  &.collapsed {
+    width: 90px;
+  }
+
+  @include media-breakpoint('<=', xl, $overlayBreakpointXL) {
+    width: 40%;
+  }
+
+  @include media-breakpoint('<=', md, $overlayBreakpointMD) {
+    width: 60%;
+  }
+}
+
+.diagnostic-overlay-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 8px;
+  }
+
+  th {
+    color: #000;
+  }
+
+  td {
+    text-align: center;
+    background-color: #f9f9f9;
+  }
+}
