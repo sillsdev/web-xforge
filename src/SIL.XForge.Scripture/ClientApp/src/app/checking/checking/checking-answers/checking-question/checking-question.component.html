@@ -1,13 +1,13 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
   <div>
-    @if (scriptureAudioUrl != null) {
+    @if (scriptureAudioUrl$ | async; as audioSource) {
       <div class="scripture-audio" [class]="focusedText">
         <span class="spacer"></span>
         <app-single-button-audio-player
           #scriptureAudio
           id="scriptureAudio"
           [class]="focusedText"
-          [source]="scriptureAudioUrl"
+          [source]="audioSource"
           [start]="scriptureAudioStart"
           [end]="scriptureAudioEnd"
           (click)="playScripture()"
