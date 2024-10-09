@@ -19,14 +19,16 @@
             <th>Collection</th>
             <th>Documents</th>
             <th>Subscribers</th>
+            <th>Queries</th>
           </tr>
         </thead>
         <tbody>
           @for (docType of docCountsByCollection | keyvalue; track docType.key) {
             <tr>
               <td>{{ docType.key }}</td>
-              <td>{{ docType.value.docCount | l10nNumber }}</td>
-              <td>{{ docType.value.subscriberCount | l10nNumber }}</td>
+              <td>{{ docType.value.docs | l10nNumber }}</td>
+              <td>{{ docType.value.subscribers | l10nNumber }}</td>
+              <td>{{ docType.value.queries | l10nNumber }}</td>
             </tr>
           }
         </tbody>
