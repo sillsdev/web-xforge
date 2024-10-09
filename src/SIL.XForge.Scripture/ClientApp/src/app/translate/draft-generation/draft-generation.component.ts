@@ -24,6 +24,8 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
@@ -294,8 +296,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
-            this.hasDraftBooksAvailable =
-              projectDoc?.data?.texts?.some(t => t.chapters?.some(c => c.hasDraft)) ?? false;
+            this.hasDraftBooksAvailable = projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
           })
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$,
@@ -323,7 +324,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
-          if (!(projectDoc.data?.translateConfig.preTranslate ?? false)) {
+          if (!this.hasStartedBuild(projectDoc)) {
             return of(undefined);
           }
           return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
@@ -529,7 +530,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         filterNullish(),
         switchMap(projectDoc => {
           // Pre-translation must be enabled for the project
-          if (!(projectDoc.data?.translateConfig.preTranslate ?? false)) {
+          if (!this.hasStartedBuild(projectDoc)) {
             return of(undefined);
           }
           return this.draftGenerationService
@@ -559,5 +560,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       // If build is canceled, update job immediately instead of waiting for next poll cycle
       this.pollBuild();
     });
+  }
+
+  private hasStartedBuild(projectDoc: SFProjectProfileDoc): boolean {
+    return (
+      projectDoc.data?.translateConfig.preTranslate === true &&
+      projectDoc.data?.translateConfig.draftConfig.lastSelectedTranslationBooks.length > 0
+    );
   }
 }

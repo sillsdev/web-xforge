@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -76,6 +77,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly locationService: LocationService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly breakpointService: MediaBreakpointService,
+    private readonly cookieService: CookieService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService,
@@ -273,7 +275,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (this.selectedProjectDeleteSub != null) {
         this.selectedProjectDeleteSub.unsubscribe();
       }
-      this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
+      this.selectedProjectDeleteSub = this._selectedProjectDoc?.delete$.subscribe(() => {
         // handle remotely deleted project
         const userDoc = this.currentUserDoc;
         if (userDoc != null && this.userService.currentProjectId(userDoc) != null) {
@@ -282,7 +284,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       });
 
       this.permissionsChangedSub?.unsubscribe();
-      this.permissionsChangedSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
+      this.permissionsChangedSub = this._selectedProjectDoc?.remoteChanges$.subscribe(() => {
         if (this._selectedProjectDoc?.data != null && this.currentUserDoc != null) {
           // If the user is in the Serval administration page, do not check access,
           // as they will be modifying the project's properties
@@ -365,6 +367,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.pwaService.setInstallPromptLastShownTime();
   }
 
+  async hangfireDashboard(): Promise<void> {
+    // The access token will be undefined if offline
+    const accessToken: string | undefined = await this.authService.getAccessToken();
+    if (accessToken != null) {
+      // Grant 30 minutes access to the dashboard
+      const expires = new Date();
+      expires.setMinutes(expires.getMinutes() + 30);
+      this.cookieService.set('Hangfire', accessToken, expires, '/hangfire');
+      this.locationService.openInNewTab('/hangfire');
+    }
+  }
+
   installOnDevice(): void {
     this.pwaService.install();
   }
@@ -395,6 +409,13 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
+  versionNumberClicked(): void {
+    this.versionNumberClickCount++;
+    if (this.versionNumberClickCount >= 7) {
+      this.featureFlags.showDeveloperTools.enabled = true;
+    }
   }
 
   private async showProjectDeletedDialog(): Promise<void> {

@@ -6,7 +6,7 @@ import {
   editorTabTypes
 } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { combineLatest, forkJoin, map, Observable, of } from 'rxjs';
+import { Observable, combineLatest, forkJoin, map, of } from 'rxjs';
 import { shareReplay, switchMap, take } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -16,8 +16,8 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { TabMenuItem, TabMenuService, TabStateService } from '../../../shared/sf-tab-group';
-import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
 @Injectable()
@@ -28,7 +28,6 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     private readonly destroyRef: DestroyRef,
     private readonly userService: UserService,
     private readonly activatedProject: ActivatedProjectService,
-    private readonly draftGenerationService: DraftGenerationService,
     private readonly onlineStatus: OnlineStatusService,
     private readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
     private readonly permissionsService: PermissionsService,
@@ -47,17 +46,10 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
     ]).pipe(
       takeUntilDestroyed(this.destroyRef),
       switchMap(([projectDoc, isOnline]) => {
-        return combineLatest([
-          of(projectDoc),
-          of(isOnline),
-          !isOnline || projectDoc.data == null || ParatextService.isResource(projectDoc.data.paratextId)
-            ? of(undefined)
-            : this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
-          this.tabState.tabs$
-        ]);
+        return combineLatest([of(projectDoc), of(isOnline), this.tabState.tabs$]);
       }),
-      switchMap(([projectDoc, isOnline, buildDto, existingTabs]) => {
-        const showDraft = buildDto != null;
+      switchMap(([projectDoc, isOnline, existingTabs]) => {
+        const showDraft = isOnline && projectDoc.data != null && SFProjectService.hasDraft(projectDoc.data);
         const items: Observable<TabMenuItem>[] = [];
 
         for (const tabType of editorTabTypes) {
@@ -147,7 +139,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   }
 
   private canShowBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
-    return projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true;
+    return this.permissionsService.canAccessBiblicalTerms(projectDoc);
   }
 
   private canShowHistory(projectDoc: SFProjectProfileDoc): boolean {

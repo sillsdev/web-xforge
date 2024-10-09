@@ -8,7 +8,7 @@
   <div class="card-wrapper">
     <mat-card class="books-card">
       <mat-card-header id="translate-overview-title" class="books-card-title">
-        <mat-card-title fxLayout="row" fxLayoutAlign="space-between center"
+        <mat-card-title class="progress-header"
           >{{ t("progress") }}
           <div class="progress" [title]="progressService.overallProgress.percentage">
             <app-donut-chart

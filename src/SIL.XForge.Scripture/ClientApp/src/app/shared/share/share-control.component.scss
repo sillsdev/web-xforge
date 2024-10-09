@@ -2,6 +2,12 @@
 
 @import 'src/variables';
 
+.invite-forms {
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+}
+
 form {
   display: flex;
   width: 100%;

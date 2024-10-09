@@ -36,6 +36,8 @@ describe('progress service', () => {
 
   it('populates progress and texts on init', fakeAsync(() => {
     const env = new TestEnvironment(100, 50);
+    const calculate = spyOn<any>(env.service, 'calculateProgress').and.callThrough();
+
     env.service.initialize('project01');
     tick();
 
@@ -53,6 +55,7 @@ describe('progress service', () => {
         expect(chapter.number).toEqual(j++);
       }
     }
+    expect(calculate).toHaveBeenCalledTimes(1);
 
     discardPeriodicTasks();
   }));
@@ -126,6 +129,38 @@ describe('progress service', () => {
 
     discardPeriodicTasks();
   }));
+
+  it('resets train suggestions flag when switching projects', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    await env.service.initialize('project01');
+    tick();
+
+    expect(env.service.canTrainSuggestions).toBeTruthy();
+
+    // set up blank project
+    const data = createTestProjectProfile({
+      texts: env.createTexts(),
+      translateConfig: {
+        translationSuggestionsEnabled: true,
+        source: {
+          projectRef: 'sourceId'
+        }
+      }
+    });
+    when(mockSFProjectService.getProfile('project02')).thenResolve({
+      data,
+      id: 'project02',
+      remoteChanges$: new BehaviorSubject([])
+    } as unknown as SFProjectProfileDoc);
+    env.setUpGetText('project02', 0, 1000);
+
+    await env.service.initialize('project02');
+    tick();
+
+    expect(env.service.canTrainSuggestions).toBeFalsy();
+
+    discardPeriodicTasks();
+  }));
 });
 
 class TestEnvironment {
@@ -157,14 +192,11 @@ class TestEnvironment {
       remoteChanges$: new BehaviorSubject([])
     } as unknown as SFProjectProfileDoc);
 
-    this.setUpGetText('sourceId');
-    this.setUpGetText('project01');
+    this.setUpGetText('sourceId', this.translatedSegments, this.blankSegments);
+    this.setUpGetText('project01', this.translatedSegments, this.blankSegments);
   }
 
-  private setUpGetText(projectId: string): void {
-    let translatedSegments = this.translatedSegments;
-    let blankSegments = this.blankSegments;
-
+  setUpGetText(projectId: string, translatedSegments: number, blankSegments: number): void {
     for (let book = 0; book < this.numBooks; book++) {
       for (let chapter = 0; chapter < this.numChapters; chapter++) {
         const translated = translatedSegments >= 9 ? 9 : translatedSegments;
@@ -192,7 +224,7 @@ class TestEnvironment {
     return Array.from({ length: num }, () => 'verse' + ++count);
   }
 
-  private createTexts(): TextInfo[] {
+  createTexts(): TextInfo[] {
     const texts: TextInfo[] = [];
     for (let book = 0; book < this.numBooks; book++) {
       const chapters = [];

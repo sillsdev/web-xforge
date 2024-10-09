@@ -11,6 +11,31 @@
   }
 }
 
+.flex {
+  display: flex;
+  flex: 1;
+  flex-flow: wrap;
+  align-items: center;
+}
+
+.flex-info-end {
+  display: flex;
+  place-content: center flex-end;
+  width: 110px;
+}
+
+.flex-icon {
+  display: flex;
+  place-content: center flex-end;
+  width: 64px;
+}
+
+.flex-timestamp {
+  display: flex;
+  place-content: center flex-end;
+  width: 260px;
+}
+
 .add-question-button.hide-gt-sm {
   padding-inline-start: 1px;
   z-index: 1;
@@ -48,6 +73,8 @@ app-donut-chart {
 }
 
 #reviewer-questions-list {
+  flex: 1;
+
   .mat-mdc-list-item {
     cursor: pointer;
     height: 50px;
@@ -59,10 +86,11 @@ app-donut-chart {
   }
 }
 
-.no-overflow-ellipsis {
-  white-space: nowrap;
+.overflow-ellipsis {
   text-overflow: ellipsis;
   overflow: hidden;
+  flex-grow: 1;
+  flex-basis: 0%;
 }
 
 .mat-expansion-panel-header {
@@ -79,11 +107,15 @@ app-donut-chart {
 #loading-questions-message,
 #loading-archived-questions-message {
   text-align: center;
+  justify-content: center;
   color: variables.$text-hint-on-background;
 }
 
 .reviewer-panels {
   max-width: 800px;
+  flex-flow: wrap;
+  display: flex;
+  place-content: stretch space-between;
 }
 
 .stat-panels {
@@ -93,10 +125,21 @@ app-donut-chart {
 .card {
   margin: 8px 0;
   width: 130px;
+
+  .mat-mdc-card-content {
+    display: flex;
+    height: 100%;
+
+    .vertical-center {
+      display: flex;
+      align-items: center;
+    }
+  }
 }
 
 .stat-total {
   font-size: x-large;
+  width: 100%;
 }
 
 .stat-label {

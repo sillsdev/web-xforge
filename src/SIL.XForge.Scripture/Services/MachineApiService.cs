@@ -72,9 +72,6 @@ public class MachineApiService(
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
-        // Get the translation engine id
-        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
-
         // If we have pre-translation job information
         if (
             (await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
@@ -100,6 +97,9 @@ public class MachineApiService(
                 }
             );
         }
+
+        // Get the translation engine id
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
 
         try
         {

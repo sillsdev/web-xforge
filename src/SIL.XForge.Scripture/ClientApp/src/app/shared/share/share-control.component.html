@@ -5,10 +5,10 @@
   @if (!isAppOnline) {
     <div class="offline-text">{{ t("share_not_available_offline") }}</div>
   }
-  <div fxLayout="column" fxLayoutGap="20px">
+  <div class="invite-forms">
     <div class="invite-by-email">
       <h3>{{ t("send_a_link") }}</h3>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
+      <div>
         <form id="email-form" [formGroup]="sendInviteForm" #form="ngForm">
           <mat-form-field id="email">
             <mat-label>{{ t("email") }}</mat-label>

@@ -3,7 +3,7 @@ import { invert } from 'lodash-es';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of, take } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -14,16 +14,13 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { BuildDto } from '../../../machine-api/build-dto';
 import { TabStateService } from '../../../shared/sf-tab-group';
-import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { EditorTabMenuService } from './editor-tab-menu.service';
 import { EditorTabInfo } from './editor-tabs.types';
 
 let service: EditorTabMenuService;
 const userServiceMock = mock(UserService);
 const activatedProjectMock = mock(ActivatedProjectService);
-const draftGenerationServiceMock = mock(DraftGenerationService);
 const tabStateMock: TabStateService<any, any> = mock(TabStateService);
 const mockUserService = mock(UserService);
 const mockAuthService = mock(AuthService);
@@ -35,7 +32,6 @@ describe('EditorTabMenuService', () => {
       EditorTabMenuService,
       { provide: UserService, useMock: userServiceMock },
       { provide: ActivatedProjectService, useMock: activatedProjectMock },
-      { provide: DraftGenerationService, useMock: draftGenerationServiceMock },
       { provide: TabStateService, useMock: tabStateMock },
       { provide: UserService, useMock: mockUserService },
       { provide: AuthService, useMock: mockAuthService },
@@ -46,18 +42,15 @@ describe('EditorTabMenuService', () => {
   it('should get "history", "draft", and "project-resource" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
-    env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(3);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('draft');
-      expect(items[1].disabled).toBeFalsy();
       expect(items[2].type).toBe('project-resource');
-      expect(items[2].disabled).toBeFalsy();
       done();
     });
   });
@@ -69,31 +62,28 @@ describe('EditorTabMenuService', () => {
       { type: 'draft', headerText: 'Draft', closeable: true, movable: true, unique: true },
       { type: 'project-resource', headerText: 'ABC', closeable: true, movable: true }
     ]);
-    env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
 
   it('should get "history" (enabled), not "draft" (no draft build), and not "project-resource" menu items', done => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(TestEnvironment.projectDocNoDraft);
     env.setExistingTabs([{ type: 'history', headerText: 'History', closeable: true, movable: true }]);
-    env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => false;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(1);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       done();
     });
   });
@@ -101,16 +91,14 @@ describe('EditorTabMenuService', () => {
   it('should get "draft", "project-resource", and not "history" menu items', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
-    env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('draft');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
       done();
     });
   });
@@ -125,13 +113,28 @@ describe('EditorTabMenuService', () => {
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
 
-    verify(draftGenerationServiceMock.getLastCompletedBuild(anything())).never();
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(2);
       expect(items[0].type).toBe('history');
-      expect(items[0].disabled).toBeFalsy();
       expect(items[1].type).toBe('project-resource');
-      expect(items[1].disabled).toBeFalsy();
+      done();
+    });
+  });
+
+  it('should get "project-resources" and "history", and not "draft" when draft does not exist', done => {
+    const projectDoc = {
+      id: 'project-no-draft',
+      data: createTestProjectProfile({ translateConfig: { preTranslate: false } })
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment(projectDoc);
+    env.setExistingTabs([]);
+    service['canShowHistory'] = () => true;
+    service['canShowResource'] = () => true;
+
+    service.getMenuItems().subscribe(items => {
+      expect(items.length).toBe(2);
+      expect(items[0].type).toBe('history');
+      expect(items[1].type).toBe('project-resource');
       done();
     });
   });
@@ -139,25 +142,23 @@ describe('EditorTabMenuService', () => {
   it('should get "biblical terms" menu item', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
-    env.setLastCompletedBuildExists(false);
-    service['canShowBiblicalTerms'] = () => true;
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
 
     service.getMenuItems().subscribe(items => {
-      expect(items.length).toBe(1);
+      expect(items.length).toBe(2);
       expect(items[0].type).toBe('biblical-terms');
-      expect(items[0].disabled).toBeFalsy();
+      expect(items[1].type).toBe('draft');
       done();
     });
   });
 
   it('should get no menu items', done => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(TestEnvironment.projectDocNoDraft);
     env.setExistingTabs([]);
-    env.setLastCompletedBuildExists(false);
     service['canShowHistory'] = () => false;
     service['canShowResource'] = () => false;
+    service['canShowBiblicalTerms'] = () => false;
 
     service.getMenuItems().subscribe(items => {
       expect(items.length).toBe(0);
@@ -168,9 +169,9 @@ describe('EditorTabMenuService', () => {
   it('should handle offline', done => {
     const env = new TestEnvironment();
     env.setExistingTabs([]);
-    env.setLastCompletedBuildExists(true);
     service['canShowHistory'] = () => true;
     service['canShowResource'] = () => true;
+    service['canShowBiblicalTerms'] = () => false;
 
     env.onlineStatus.setIsOnline(false);
     service
@@ -179,7 +180,6 @@ describe('EditorTabMenuService', () => {
       .subscribe(items => {
         expect(items.length).toBe(1);
         expect(items[0].type).toBe('history');
-        expect(items[0].disabled).toBeFalsy();
       });
 
     env.onlineStatus.setIsOnline(true);
@@ -189,11 +189,8 @@ describe('EditorTabMenuService', () => {
       .subscribe(items => {
         expect(items.length).toBe(3);
         expect(items[0].type).toBe('history');
-        expect(items[0].disabled).toBeFalsy();
         expect(items[1].type).toBe('draft');
-        expect(items[1].disabled).toBeFalsy();
         expect(items[2].type).toBe('project-resource');
-        expect(items[2].disabled).toBeFalsy();
         done();
       });
   });
@@ -247,6 +244,15 @@ class TestEnvironment {
     user05: SFProjectRole.ParatextObserver,
     user06: SFProjectRole.Viewer
   };
+  static projectDocNoDraft: SFProjectProfileDoc = {
+    id: 'project-no-draft',
+    data: createTestProjectProfile({
+      texts: [
+        { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
+        { bookNum: 41, chapters: [{ number: 1, hasDraft: false }] }
+      ]
+    })
+  } as SFProjectProfileDoc;
 
   readonly onlineStatus: TestOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
   readonly usersByRole = invert(TestEnvironment.rolesByUser);
@@ -254,10 +260,16 @@ class TestEnvironment {
   readonly projectDoc = {
     id: 'project1',
     data: createTestProjectProfile({
+      texts: [
+        { bookNum: 40, chapters: [{ number: 1, hasDraft: false }] },
+        { bookNum: 41, chapters: [{ number: 1, hasDraft: true }] }
+      ],
       translateConfig: {
-        preTranslate: true
+        preTranslate: true,
+        draftConfig: { lastSelectedTranslationBooks: [40], lastSelectedTrainingBooks: [41] }
       },
-      userRoles: TestEnvironment.rolesByUser
+      userRoles: TestEnvironment.rolesByUser,
+      biblicalTermsConfig: { biblicalTermsEnabled: true }
     })
   } as SFProjectProfileDoc;
 
@@ -272,11 +284,6 @@ class TestEnvironment {
     when(tabStateMock.tabs$).thenReturn(of(tabs as any));
   }
 
-  setLastCompletedBuildExists(exists: boolean): void {
-    when(draftGenerationServiceMock.getLastCompletedBuild(this.projectDoc.id)).thenReturn(
-      of(exists ? ({} as BuildDto) : undefined)
-    );
-  }
   setUserByRole(userRole: SFProjectRole): void {
     when(mockUserService.currentUserId).thenReturn(this.usersByRole[userRole]);
   }
