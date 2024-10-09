@@ -247,7 +247,7 @@
       <mat-card class="card card-content-question mat-elevation-z2">
         <mat-card-content>
           <span class="flex">
-            <div class="stat-total">{{ allQuestionsCount }}</div>
+            <div class="stat-total">{{ allQuestionsCount | l10nNumber }}</div>
             <div class="stat-label">{{ t("questions") }}</div>
           </span>
           <span class="vertical-center"> <mat-icon class="mirror-rtl">help</mat-icon> </span>
@@ -257,7 +257,7 @@
     <mat-card class="card card-content-answer">
       <mat-card-content>
         <span class="flex">
-          <div class="stat-total">{{ myAnswerCount }}</div>
+          <div class="stat-total">{{ myAnswerCount | l10nNumber }}</div>
           <div class="stat-label">{{ t("answers") }}</div>
         </span>
         <span class="vertical-center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
@@ -266,7 +266,7 @@
     <mat-card class="card card-content-comment">
       <mat-card-content>
         <span class="flex">
-          <div class="stat-total">{{ myCommentCount }}</div>
+          <div class="stat-total">{{ myCommentCount | l10nNumber }}</div>
           <div class="stat-label">{{ t("comments") }}</div>
         </span>
         <span class="vertical-center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
@@ -276,7 +276,7 @@
       <mat-card class="card card-content-like">
         <mat-card-content>
           <span class="flex">
-            <div class="stat-total">{{ myLikeCount }}</div>
+            <div class="stat-total">{{ myLikeCount | l10nNumber }}</div>
             <div class="stat-label">{{ t("likes") }}</div>
           </span>
           <span class="vertical-center"> <mat-icon>thumb_up</mat-icon> </span>
