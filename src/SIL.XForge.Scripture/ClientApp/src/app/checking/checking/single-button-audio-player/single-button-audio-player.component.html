@@ -7,13 +7,11 @@
   }"
   *transloco="let t; read: 'checking_audio_player'"
 >
-  @if (isAudioAvailable$ | async) {
+  @if (isAudioAvailable) {
     <ng-content></ng-content>
-  }
-  @if (audioStatus === AudioStatus.Initializing) {
+  } @else if (audioStatus === AudioStatus.Initializing) {
     <mat-spinner diameter="20" color="primary"></mat-spinner>
-  }
-  @if (!isAudioAvailable$.value && audioStatus !== AudioStatus.Initializing) {
-    <mat-icon [matTooltip]="t(audioStatus)"> play_disabled </mat-icon>
+  } @else {
+    <mat-icon [matTooltip]="t(audioStatus)">play_disabled</mat-icon>
   }
 </button>

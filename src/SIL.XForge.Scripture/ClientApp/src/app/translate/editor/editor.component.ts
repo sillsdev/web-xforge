@@ -413,6 +413,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.hasSource && this.hasSourceViewRight;
   }
 
+  get showPersistedTabsOnSource(): boolean {
+    return this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false;
+  }
+
   get hasEditRight(): boolean {
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === true;
   }
@@ -1416,7 +1420,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.tabState.getFirstTabOfTypeIndex('draft');
 
     const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
-    if (hasDraft && (!draftApplied || urlDraftActive)) {
+    const canViewDrafts: boolean = this.permissionsService.canAccessDrafts(
+      this.projectDoc,
+      this.userService.currentUserId
+    );
+    if (hasDraft && (!draftApplied || urlDraftActive) && canViewDrafts) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 

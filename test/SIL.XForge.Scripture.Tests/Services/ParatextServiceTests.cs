@@ -469,7 +469,7 @@ public class ParatextServiceTests
         string ptProjectId = env.PTProjectIds[env.Project01].Id;
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-        env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
+        env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(_ => null);
 
         // SUT
         Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
@@ -503,10 +503,13 @@ public class ParatextServiceTests
 
         TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
         XDocument oldDocUsx = XDocument.Parse(ruthBookUsx);
-        var newDocUsx = env.DeltaUsxMapper.ToUsx(
-            oldDocUsx,
-            new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) }
+        var mapper = new DeltaUsxMapper(
+            new TestGuidService(),
+            Substitute.For<ILogger<DeltaUsxMapper>>(),
+            Substitute.For<IExceptionHandler>()
         );
+        var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
+
         int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx);
         env.ProjectFileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
         Assert.That(booksUpdated, Is.EqualTo(1));
@@ -5210,11 +5213,20 @@ public class ParatextServiceTests
         const int chapter = 1;
         TextData textData = env.AddTextDoc(Canon.BookIdToNumber(book), chapter);
 
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        ScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
+        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
+            .Returns([new ChapterDelta(chapter, 1, false, textData)]);
+
         // SUT
         var actual = await env.Service.GetSnapshotAsync(userSecret, project.Id, book, chapter, DateTime.UtcNow);
         Assert.AreEqual(textData.Ops.First(), actual.Data.Ops.First());
         Assert.AreEqual(textData.Id, actual.Id);
         Assert.AreEqual(0, actual.Version);
+        Assert.AreEqual(false, actual.IsValid);
     }
 
     [Test]
@@ -5310,6 +5322,9 @@ public class ParatextServiceTests
         );
         JToken token6 = JToken.Parse("{\"insert\": \"\n\" }");
         Delta expected = new Delta([token1, token2, token3, token4, token5, token6]);
+
+        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
+            .Returns([new ChapterDelta(-1, -1, false, expected)]);
 
         // SUT
         var delta = await env.Service.GetDeltaFromUsfmAsync(env.User01, project.Id, env.RuthBookUsfm, 8);
@@ -5720,7 +5735,7 @@ public class ParatextServiceTests
         public readonly IGuidService MockGuidService;
         public readonly ParatextService Service;
         public readonly HttpClient MockRegistryHttpClient;
-        public readonly IDeltaUsxMapper DeltaUsxMapper;
+        public readonly IDeltaUsxMapper MockDeltaUsxMapper;
         public readonly IAuthService MockAuthService;
         public readonly Dictionary<string, string> usernames;
         private bool disposed;
@@ -5742,11 +5757,7 @@ public class ParatextServiceTests
             MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
             MockGuidService = Substitute.For<IGuidService>();
             MockRegistryHttpClient = Substitute.For<HttpClient>();
-            DeltaUsxMapper = new DeltaUsxMapper(
-                new TestGuidService(),
-                Substitute.For<ILogger<DeltaUsxMapper>>(),
-                Substitute.For<IExceptionHandler>()
-            );
+            MockDeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             MockAuthService = Substitute.For<IAuthService>();
 
             DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
@@ -5817,7 +5828,7 @@ public class ParatextServiceTests
                 MockGuidService,
                 MockRestClientFactory,
                 MockHgWrapper,
-                DeltaUsxMapper,
+                MockDeltaUsxMapper,
                 MockAuthService
             )
             {

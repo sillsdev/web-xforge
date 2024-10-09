@@ -40,6 +40,7 @@ import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { checkAppAccess } from './shared/utils';
+import { DiagnosticOverlayComponent } from './shared/diagnostic-overlay/diagnostic-overlay.component';
 
 declare function gtag(...args: any): void;
 
@@ -409,6 +410,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
+  toggleDiagnosticOverlay(): void {
+    this.dialogService.toggleDiagnosticOverlay(DiagnosticOverlayComponent);
   }
 
   versionNumberClicked(): void {

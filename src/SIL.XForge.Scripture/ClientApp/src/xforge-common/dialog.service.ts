@@ -1,4 +1,5 @@
-import { ComponentType } from '@angular/cdk/portal';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal, ComponentType } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
@@ -16,8 +17,11 @@ import { I18nKey, I18nService } from './i18n.service';
 export class DialogService {
   constructor(
     private readonly i18n: I18nService,
-    private readonly matDialog: MatDialog
+    private readonly matDialog: MatDialog,
+    private readonly overlay: Overlay
   ) {}
+
+  diagnosticOverlay: OverlayRef | undefined;
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
     const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };
@@ -42,6 +46,22 @@ export class DialogService {
       dialogRef,
       result: dialogRef.afterClosed().toPromise()
     };
+  }
+
+  toggleDiagnosticOverlay<T>(component: ComponentType<T>, config?: OverlayConfig): void {
+    if (this.diagnosticOverlay == null) {
+      const defaults: OverlayConfig = { direction: this.i18n.direction };
+      this.diagnosticOverlay = this.overlay.create({ ...defaults, ...(config ?? {}) });
+      const portal = new ComponentPortal(component);
+      this.diagnosticOverlay.attach(portal);
+    } else {
+      this.closeDiagnosticOverlay();
+    }
+  }
+
+  closeDiagnosticOverlay(): void {
+    this.diagnosticOverlay?.dispose();
+    this.diagnosticOverlay = undefined;
   }
 
   async confirm(

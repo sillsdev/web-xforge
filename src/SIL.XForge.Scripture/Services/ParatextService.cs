@@ -1841,7 +1841,7 @@ public class ParatextService : DisposableBase, IParatextService
         }
     }
 
-    public async Task<Snapshot<TextData>> GetSnapshotAsync(
+    public async Task<TextSnapshot> GetSnapshotAsync(
         UserSecret userSecret,
         string sfProjectId,
         string book,
@@ -1870,16 +1870,19 @@ public class ParatextService : DisposableBase, IParatextService
         // Ensure that the timestamp is UTC
         timestamp = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
 
+        // Load the Paratext project
+        string ptProjectId = projectDoc.Data.ParatextId;
+        using ScrText scrText = GetScrText(userSecret, ptProjectId);
+        VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
+
+        TextSnapshot ret = null;
         string id = $"{sfProjectId}:{book}:{chapter}:target";
         Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
 
-        // We do not have a snapshot, so retrieve the data from Paratext
-        // Note: The following code is not testable due to ParatextData limitations
         if (snapshot.Data is null)
         {
-            // Load the Paratext project
-            string ptProjectId = projectDoc.Data.ParatextId;
-            using ScrText scrText = GetScrText(userSecret, ptProjectId);
+            // We do not have a snapshot, so retrieve the data from Paratext
+            // Note: The following code is not testable due to ParatextData limitations
 
             // Retrieve the first revision before or at the timestamp
             VersionedText versionedText = VersioningManager.Get(scrText);
@@ -1898,17 +1901,31 @@ public class ParatextService : DisposableBase, IParatextService
 
             // Retrieve the USFM for the chapter, and convert to USX, then to deltas
             IGetText version = versionedText.GetVersion(revision.Id);
-            VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
             string usfm = version.GetText(verseRef, true, false);
-            snapshot = new Snapshot<TextData>
+            ChapterDelta chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
+            ret = new TextSnapshot
             {
                 Id = id,
                 Version = 0,
-                Data = new TextData(GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm)),
+                Data = new TextData(chapterDelta.Delta),
+                IsValid = chapterDelta.IsValid
+            };
+        }
+        else
+        {
+            // We have the snapshot, but we need to determine if it's valid
+            var usfm = scrText.GetText(verseRef.BookNum);
+            ChapterDelta chapterDelta = GetDeltaFromUsfm(scrText, verseRef.BookNum, usfm);
+            ret = new TextSnapshot
+            {
+                Id = snapshot.Id,
+                Version = snapshot.Version,
+                Data = snapshot.Data,
+                IsValid = chapterDelta.IsValid
             };
         }
 
-        return snapshot;
+        return ret;
     }
 
     public async IAsyncEnumerable<DocumentRevision> GetRevisionHistoryAsync(
@@ -2075,7 +2092,7 @@ public class ParatextService : DisposableBase, IParatextService
         using ScrText scrText = GetScrText(userSecret, projectDoc.Data.ParatextId);
 
         // Get the USFM as a Delta
-        return GetDeltaFromUsfm(scrText, bookNum, usfm);
+        return GetDeltaFromUsfm(scrText, bookNum, usfm).Delta;
     }
 
     protected override void DisposeManagedResources()
@@ -2091,11 +2108,11 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="bookNum">The book number</param>
     /// <param name="usfm">The USFM data</param>
     /// <returns>The delta.</returns>
-    private Delta GetDeltaFromUsfm(ScrText scrText, int bookNum, string usfm)
+    private ChapterDelta GetDeltaFromUsfm(ScrText scrText, int bookNum, string usfm)
     {
         string usx = UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         XDocument usxDoc = XDocument.Parse(usx);
-        return _deltaUsxMapper.ToChapterDeltas(usxDoc).First().Delta;
+        return _deltaUsxMapper.ToChapterDeltas(usxDoc).First();
     }
 
     private ScrText GetScrText(UserSecret userSecret, string paratextId)

@@ -1,0 +1,47 @@
+$toolbar-height: 56px;
+
+.diagnostic-overlay {
+  position: fixed;
+  top: $toolbar-height;
+  right: 0;
+  bottom: 0;
+
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #9ba26d;
+  overflow-y: scroll;
+
+  &.collapsed {
+    width: 90px;
+  }
+
+  &:not(.collapsed) {
+    width: 25vw;
+    min-width: 300px;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 8px;
+  }
+
+  th {
+    color: #000;
+  }
+
+  td {
+    text-align: center;
+    background-color: #f9f9f9;
+  }
+}
+
+.bold {
+  font-weight: bold;
+}
