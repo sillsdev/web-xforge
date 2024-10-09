@@ -91,3 +91,55 @@ app-notice {
     margin-right: 1em;
   }
 }
+
+.confirm-section {
+  display: flex;
+  row-gap: 8px;
+  flex-direction: column;
+  background-color: #f0f0f0;
+  padding: 1.5em;
+  margin-block: 2em;
+  border-radius: 4px;
+  max-width: 750px;
+}
+
+.explanation {
+  font-style: italic;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.mat-mdc-table {
+  background-color: initial;
+}
+
+.bookName {
+  font-size: 1.1em;
+}
+
+.confirm-translate {
+  display: flex;
+  flex-direction: row;
+}
+
+.confirm-translate-books {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 24px;
+  row-gap: 8px;
+  max-width: 60%;
+  padding-inline-start: 16px;
+}
+
+.readonly-book {
+  padding-block: 4px;
+  font-weight: 500;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  font-size: 1.1em;
+}
