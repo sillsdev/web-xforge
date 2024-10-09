@@ -559,7 +559,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       action: action.action,
       comment: action.comment,
       answer: action.answer,
-      text: action.text
+      text: action.text,
+      audio: action.audio
     });
   }
 

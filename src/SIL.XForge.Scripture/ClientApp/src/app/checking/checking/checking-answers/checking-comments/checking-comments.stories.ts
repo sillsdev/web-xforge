@@ -90,10 +90,10 @@ export const OwnComments: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const editButtons = root.getAllByRole('button', { name: /Edit/i });
+    const editButtons = root.getAllByTestId('comment-edit');
     expect(editButtons.length).toBe(3);
 
-    const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
+    const deleteButtons = root.getAllByTestId('comment-delete');
     expect(deleteButtons.length).toBe(3);
   }
 };
@@ -108,10 +108,10 @@ export const OthersComments: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const editButtons = root.queryAllByRole('button', { name: /Edit/i });
+    const editButtons = root.queryAllByTestId('comment-edit');
     expect(editButtons.length).toBe(0);
 
-    const deleteButtons = root.queryAllByRole('button', { name: /Delete/i });
+    const deleteButtons = root.queryAllByTestId('comment-delete');
     expect(deleteButtons.length).toBe(0);
   }
 };
@@ -132,10 +132,10 @@ export const Admin: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const editButtons = root.getAllByRole('button', { name: /Edit/i });
+    const editButtons = root.getAllByTestId('comment-edit');
     expect(editButtons.length).toBe(1);
 
-    const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
+    const deleteButtons = root.getAllByTestId('comment-delete');
     expect(deleteButtons.length).toBe(3);
   }
 };

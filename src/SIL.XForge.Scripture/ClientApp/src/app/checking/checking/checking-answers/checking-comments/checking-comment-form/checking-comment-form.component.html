@@ -1,17 +1,20 @@
 <ng-container *transloco="let t; read: 'checking_comment_form'">
-  <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" appScrollIntoView>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t("your_comment") }}</mat-label>
-      <input matInput type="text" appAutofocus formControlName="commentText" />
-      @if (showValidationError) {
-        <mat-error>{{ t("comment_cannot_be_blank") }}</mat-error>
-      }
-    </mat-form-field>
+  <form autocomplete="off" appScrollIntoView>
+    <app-text-and-audio
+      #commentInput
+      appAutofocus
+      [input]="comment"
+      [textLabel]="t('your_comment')"
+      class="comment-input"
+    ></app-text-and-audio>
     <div class="form-actions">
-      <button mat-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
-      <button mat-flat-button color="primary" type="submit" class="save-comment">
-        {{ t("save_comment") }}
-      </button>
+      <app-attach-audio [textAndAudio]="commentInput"></app-attach-audio>
+      <div class="flex-row">
+        <button mat-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
+        <button mat-flat-button color="primary" type="button" class="save-comment" (click)="submit()">
+          {{ t("save_comment") }}
+        </button>
+      </div>
     </div>
   </form>
 </ng-container>
