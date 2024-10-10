@@ -101,6 +101,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   zipSubscription?: Subscription;
   isOnline = true;
 
+  currentPage: 'initial' | 'steps' = 'initial';
+
   /**
    * Once true, UI can proceed with display according to status of fetched job.
    * This is needed as an undefined `draftJob` could mean that no job has ever been started.
@@ -379,7 +381,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     }
 
     // Display pre-generation steps
-    this.navigateToTab('pre-generate-steps');
+    this.currentPage = 'steps';
   }
 
   downloadDraft(): void {
@@ -421,23 +423,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.cancelBuild();
   }
 
-  navigateToTab(tab: 'initial' | 'pre-generate-steps'): void {
-    if (this.tabGroup == null) {
-      return;
-    }
-
-    switch (tab) {
-      case 'initial':
-        this.tabGroup.selectedIndex = 0;
-        break;
-      case 'pre-generate-steps':
-        this.tabGroup.selectedIndex = 1;
-        break;
-    }
-  }
-
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
-    this.navigateToTab('initial');
+    this.currentPage = 'initial';
     this.startBuild({
       projectId: this.activatedProject.projectId!,
       trainingBooks: result.trainingBooks,

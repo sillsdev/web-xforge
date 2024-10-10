@@ -1,10 +1,14 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
   @if (availableTranslateBooks && availableTranslateBooks.length > 0) {
-    <mat-stepper orientation="vertical" linear (selectionChange)="onStepChange()">
+    <mat-stepper linear (selectionChange)="onStepChange()" labelPosition="bottom" [disableRipple]="true">
+      <!-- Icon overrides -->
+      <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
+
       <mat-step [completed]="userSelectedTranslateBooks.length > 0">
         <ng-template matStepLabel>
-          {{ t("choose_books_to_translate") }}
+          {{ t("choose_books_to_translate_label") }}
         </ng-template>
+        <h1 class="mat-headline-4">{{ t("choose_books_to_translate") }}</h1>
         <app-book-multi-select
           [availableBooks]="availableTranslateBooks"
           [selectedBooks]="initialSelectedTranslateBooks"
@@ -36,6 +40,9 @@
           </app-notice>
         }
         <div class="button-strip">
+          <button mat-stroked-button class="backout-button" (click)="cancel.emit()">
+            {{ t("back") }}
+          </button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ t("next") }}
           </button>
@@ -43,11 +50,9 @@
       </mat-step>
       <mat-step [completed]="isTrainingOptional || userSelectedTrainingBooks.length > 0">
         <ng-template matStepLabel>
-          <div class="stepper-multi-header">
-            <h2>{{ t("choose_books_for_training") }}</h2>
-            <h3>{{ t("choose_books_for_training_subheader") }}</h3>
-          </div>
+          {{ t("choose_books_for_training_label") }}
         </ng-template>
+        <h1 class="mat-headline-4">{{ t("choose_books_for_training") }}</h1>
         <app-book-multi-select
           [availableBooks]="availableTrainingBooks"
           [selectedBooks]="initialSelectedTrainingBooks"
@@ -88,11 +93,9 @@
       @if (trainingDataFilesAvailable) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
-            <div class="stepper-multi-header">
-              <h2>{{ t("choose_additional_training_data_files") }}</h2>
-              <h3>{{ t("choose_additional_training_data_files_subheader") }}</h3>
-            </div>
+            {{ t("choose_additional_training_data_files_label") }}
           </ng-template>
+          <h1 class="mat-headline-4">{{ t("choose_additional_training_data_files") }}</h1>
           <app-training-data-multi-select
             [availableTrainingData]="availableTrainingData"
             [selectedTrainingDataIds]="selectedTrainingDataIds"
@@ -110,10 +113,9 @@
       @if (featureFlags.allowFastTraining.enabled) {
         <mat-step [completed]="true">
           <ng-template matStepLabel>
-            <div class="stepper-multi-header">
-              <h2>{{ t("configure_advanced_settings") }}</h2>
-            </div>
+            {{ t("configure_advanced_settings_label") }}
           </ng-template>
+          <h1 class="mat-headline-4">{{ t("configure_advanced_settings") }}</h1>
           <div>
             <mat-checkbox class="fast-training" [(ngModel)]="fastTraining">{{ t("fast_training") }}</mat-checkbox>
           </div>
