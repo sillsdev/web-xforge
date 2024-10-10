@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Delta } from 'quill';
+import { DeltaOperation } from 'rich-text';
 import { isString } from '../../../../../../type-utils';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import { LynxInsightRange } from '../lynx-insight';
@@ -8,19 +8,14 @@ import { LynxInsightRange } from '../lynx-insight';
   providedIn: 'root'
 })
 export class QuillEditorSegmentService extends EditorSegmentService {
-  constructor() {
-    super();
-  }
-
-  parseSegments(delta: Delta): Map<string, LynxInsightRange> {
+  /**
+   * Parses ops to get a map of segment name -> segment range.
+   */
+  parseSegments(ops: DeltaOperation[]): Map<string, LynxInsightRange> {
     const segmentMap = new Map<string, LynxInsightRange>();
     let currentIndex = 0;
 
-    if (delta.ops == null) {
-      return segmentMap;
-    }
-
-    for (const op of delta.ops) {
+    for (const op of ops) {
       if (isString(op.insert)) {
         const length = op.insert.length;
         const segment = op.attributes?.segment;
@@ -39,5 +34,35 @@ export class QuillEditorSegmentService extends EditorSegmentService {
     }
 
     return segmentMap;
+  }
+
+  /**
+   * Get all segment references that intersect the given range.
+   * @param range The range to check.
+   * @param segments A map of segment name -> segment range.
+   * @returns An array of the intersecting segment refs.
+   */
+  getSegmentRefs(range: LynxInsightRange, segments: Map<string, LynxInsightRange>): string[] {
+    const segmentRefs: string[] = [];
+
+    if (range != null) {
+      const rangeEnd = range.index + range.length;
+
+      for (const [ref, segmentRange] of segments) {
+        const segEnd = segmentRange.index + segmentRange.length;
+
+        if (range.index < segEnd) {
+          if (rangeEnd > segmentRange.index) {
+            segmentRefs.push(ref);
+          }
+
+          if (rangeEnd <= segEnd) {
+            break;
+          }
+        }
+      }
+    }
+
+    return segmentRefs;
   }
 }
