@@ -665,7 +665,7 @@ public class MachineApiService(
         // We use project service, as it provides permission and token checks
         string syncJobId = await projectService.SyncAsync(curUserId, sfProjectId);
 
-        // Run the training after the sync has completed
+        // Run the training after the sync has completed. If the sync failed or stopped, retrain anyway
         string buildJobId = backgroundJobClient.ContinueJobWith<MachineProjectService>(
             syncJobId,
             r =>
@@ -674,7 +674,9 @@ public class MachineApiService(
                     new BuildConfig { ProjectId = sfProjectId },
                     false,
                     CancellationToken.None
-                )
+                ),
+            null,
+            JobContinuationOptions.OnAnyFinishedState
         );
 
         // Set the translation queued date and time, and hang fire job id
