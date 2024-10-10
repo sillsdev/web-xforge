@@ -428,6 +428,9 @@ export class SFProjectService extends ProjectService<SFProject> {
           },
           dataInSync: {
             bsonType: 'bool'
+          },
+          lastSyncErrorCode: {
+            bsonType: 'int'
           }
         },
         additionalProperties: false
