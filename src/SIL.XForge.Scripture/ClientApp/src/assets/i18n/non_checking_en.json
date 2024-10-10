@@ -44,11 +44,9 @@
     "view_renderings": "View Renderings"
   },
   "book_select": {
-    "clear": "Clear",
-    "deuterocanon": "DC",
-    "new_testament": "NT",
-    "old_testament": "OT",
-    "select": "Select"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Add question"
