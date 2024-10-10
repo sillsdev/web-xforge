@@ -1,21 +1,25 @@
 import { FlatTreeControl } from '@angular/cdk/tree';
-import { Component, DestroyRef, Inject, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
-import Quill, { RangeStatic } from 'quill';
-import { combineLatest, map, tap } from 'rxjs';
+import Quill, { DeltaStatic, RangeStatic } from 'quill';
+import { combineLatest, map, switchMap, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { TextDocId } from '../../../../../core/models/text-doc';
+import { SFProjectService } from '../../../../../core/sf-project.service';
 import { rangeComparer } from '../../../../../shared/text/quill-scripture';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
+import { EditorSegmentService } from '../base-services/editor-segment.service';
 import {
   EDITOR_INSIGHT_DEFAULTS,
   LynxInsight,
   LynxInsightConfig,
+  LynxInsightRange,
   LynxInsightSortOrder,
   LynxInsightType,
   LynxInsightTypes
@@ -46,8 +50,7 @@ interface InsightPanelFlatNode {
   styleUrl: './lynx-insights-panel.component.scss'
 })
 export class LynxInsightsPanelComponent implements OnInit {
-  @Input() editor?: Quill;
-  @Input() editorSegments?: ReadonlyMap<string, RangeStatic> | null;
+  // @Output() insightSelect = new EventEmitter<LynxInsight>();
 
   treeControl = new FlatTreeControl<InsightPanelFlatNode>(
     node => node.level,
@@ -70,13 +73,19 @@ export class LynxInsightsPanelComponent implements OnInit {
   orderBy?: LynxInsightSortOrder;
   activeBookChapter?: RouteBookChapter;
 
-  readonly linkTextMaxLength = 30; // TODO: Make this configurable
+  /** Map of TextDocId string -> (Map of segment ref -> segment range) */
+  private textDocSegments = new Map<string, Map<string, LynxInsightRange>>();
+
+  /** Map of TextDocId string -> Quill instance */
+  private quillDocs = new Map<string, Quill>();
 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly editorInsightState: LynxInsightStateService,
     private readonly activatedProject: ActivatedProjectService,
     private readonly activatedBookChapterService: ActivatedBookChapterService,
+    private readonly editorSegmentService: EditorSegmentService,
+    private readonly projectService: SFProjectService,
     private readonly router: Router,
     readonly i18n: I18nService,
     @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly lynxInsightConfig: LynxInsightConfig
@@ -84,11 +93,16 @@ export class LynxInsightsPanelComponent implements OnInit {
 
   ngOnInit(): void {
     combineLatest([
-      this.editorInsightState.filteredInsights$,
+      // TODO: Should updateSegmentMaps be in a service?
+      this.editorInsightState.filteredInsights$.pipe(
+        // Call updateSegmentMaps, wait for it to complete, then emit insights
+        switchMap(insights => this.updateSegmentMaps(insights).then(() => insights))
+      ),
       this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val)))
     ])
       .pipe(
         takeUntilDestroyed(this.destroyRef),
+
         map(([insights, orderBy]) => this.flatten(insights, orderBy))
       )
       .subscribe(flattenedInsightNodes => {
@@ -115,14 +129,26 @@ export class LynxInsightsPanelComponent implements OnInit {
       // Stop bubble to user event service, which will clear display state
       event.stopPropagation();
 
+      const insight: LynxInsight = node.insight;
+
       // Show action menu overlay in editor
-      if (!this.navInsight(node.insight)) {
-        this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
-        this.editorInsightState.updateDisplayState(node.insight.id, {
+      this.navInsight(insight).then(() => {
+        this.editorInsightState.updateDisplayState(insight.id, {
           promptActiveFull: false,
           actionMenuActive: true
         });
-      }
+
+        // TODO: scroll to selected insight
+      });
+
+      // this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
+      // if (!this.navInsight(node.insight)) {
+      //   // this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
+      //   this.editorInsightState.updateDisplayState(node.insight.id, {
+      //     promptActiveFull: false,
+      //     actionMenuActive: true
+      //   });
+      // }
     }
   }
 
@@ -189,7 +215,7 @@ export class LynxInsightsPanelComponent implements OnInit {
     }
   }
 
-  private navInsight(insight: LynxInsight): boolean {
+  private async navInsight(insight: LynxInsight): Promise<boolean> {
     if (this.activeBookChapter?.bookId == null || this.activeBookChapter?.chapter == null) {
       return false;
     }
@@ -200,7 +226,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       const insightBookId: string = Canon.bookNumberToId(insight.book);
 
       // Navigate to book/chapter with insight id as query params
-      this.router.navigate(
+      await this.router.navigate(
         ['/projects', this.activatedProject.projectId, 'translate', insightBookId, insight.chapter],
         {
           queryParams: { [this.lynxInsightConfig.queryParamName]: insight.id }
@@ -213,48 +239,62 @@ export class LynxInsightsPanelComponent implements OnInit {
     return false;
   }
 
-  /**
-   * Get all segment references that intersect the given range.
-   * TODO: move to service?
-   */
-  private getSegmentRefs(range: RangeStatic, segments: ReadonlyMap<string, RangeStatic>): string[] {
-    const segmentRefs: string[] = [];
+  private async updateSegmentMaps(insights: LynxInsight[]): Promise<void> {
+    if (this.activatedProject.projectId != null) {
+      const textRequests: Promise<void>[] = [];
+      const textDocIdStrings: Set<string> = new Set<string>();
 
-    if (range != null) {
-      const rangeEnd = range.index + range.length;
+      for (const insight of insights) {
+        const textDocId = new TextDocId(this.activatedProject.projectId!, insight.book, insight.chapter);
+        const textDocIdStr: string = textDocId.toString();
 
-      for (const [ref, segmentRange] of segments) {
-        const segEnd = segmentRange.index + segmentRange.length;
+        if (!textDocIdStrings.has(textDocIdStr)) {
+          textDocIdStrings.add(textDocIdStr);
+          textRequests.push(
+            this.projectService.getText(textDocId).then(textDoc => {
+              // Update segment map for text doc
+              this.textDocSegments.set(
+                textDocIdStr,
+                textDoc.data?.ops != null ? this.editorSegmentService.parseSegments(textDoc.data.ops) : new Map()
+              );
 
-        if (range.index < segEnd) {
-          if (rangeEnd > segmentRange.index) {
-            segmentRefs.push(ref);
-          }
+              // Create and cache a Quill instance to get text sample from delta
+              const quill: Quill = new Quill(document.createElement('div'));
+              const delta: DeltaStatic | undefined = textDoc.data as DeltaStatic;
 
-          if (rangeEnd <= segEnd) {
-            break;
-          }
+              if (delta != null) {
+                quill.setContents(delta, 'api');
+                this.quillDocs.set(textDocIdStr, quill);
+              }
+            })
+          );
         }
       }
-    }
 
-    // console.log('segmentRefs', segmentRefs);
-    return segmentRefs;
+      await Promise.all(textRequests);
+    }
   }
 
-  // TODO: this currently doesn't work for links from other chapters
   private getLinkText(insight: LynxInsight): string {
-    if (this.editorSegments == null) {
+    let textDocIdStr: string = '';
+
+    if (this.activatedProject.projectId != null) {
+      const textDocId = new TextDocId(this.activatedProject.projectId, insight.book, insight.chapter);
+      textDocIdStr = textDocId.toString();
+    }
+
+    const editorSegments = this.textDocSegments.get(textDocIdStr);
+
+    if (editorSegments == null) {
       return '...'; // TODO: better default text
     }
 
     const linkItems = [];
-    const segmentRefs: string[] = this.getSegmentRefs(insight.range, this.editorSegments);
+    const segmentRefs: string[] = this.editorSegmentService.getSegmentRefs(insight.range, editorSegments);
     let combinedVerseRef: VerseRef | undefined;
 
-    for (let i = 0; i < segmentRefs.length; i++) {
-      const ref = segmentRefs[i];
-      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(insight.book, ref);
+    for (const segmentRef of segmentRefs) {
+      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(insight.book, segmentRef);
 
       if (verseRef != null) {
         if (combinedVerseRef != null) {
@@ -264,16 +304,22 @@ export class LynxInsightsPanelComponent implements OnInit {
         }
       } else {
         if (combinedVerseRef != null) {
-          linkItems.push(this.i18n.localizeReference(combinedVerseRef));
+          linkItems.push(
+            `${this.i18n.localizeReference(combinedVerseRef)} ${this.getTextSample(insight, combinedVerseRef.toString(), false)}`
+          );
           combinedVerseRef = undefined;
         }
 
-        linkItems.push(this.getTextSample(insight, ref));
+        const bookChapter: string = this.i18n.localizeBookChapter(insight.book, insight.chapter);
+
+        linkItems.push(`${bookChapter}:${this.getTextSample(insight, segmentRef, true)}`);
       }
     }
 
     if (combinedVerseRef != null) {
-      linkItems.push(this.i18n.localizeReference(combinedVerseRef));
+      linkItems.push(
+        `${this.i18n.localizeReference(combinedVerseRef)} ${this.getTextSample(insight, combinedVerseRef.toString(), false)}`
+      );
     }
 
     return linkItems.join(', ');
@@ -282,14 +328,22 @@ export class LynxInsightsPanelComponent implements OnInit {
   /**
    * Get a window of text from the segmentRef that contains insight range.
    */
-  private getTextSample(insight: LynxInsight, segmentRef: string, maxLength?: number): string {
-    if (this.editor == null) {
+  private getTextSample(insight: LynxInsight, segmentRef: string, includeRef: boolean): string {
+    const textDocId = new TextDocId(this.activatedProject.projectId!, insight.book, insight.chapter);
+    const textDocIdStr: string = textDocId.toString();
+
+    // Get the cached Quill instance for the insight's book/chapter
+    const quill: Quill | undefined = this.quillDocs.get(textDocIdStr);
+
+    if (quill == null) {
       return segmentRef;
     }
 
-    maxLength = maxLength ?? this.linkTextMaxLength;
-    const text: string = this.editor?.getText(insight.range.index, Math.min(maxLength, insight.range.length));
+    const maxLength: number = this.lynxInsightConfig.panelLinkTextMaxLength;
+    const optionalRefStr: string = includeRef ? `[${segmentRef}] ` : '';
+    const text: string = quill.getText(insight.range.index, Math.min(maxLength, insight.range.length));
 
-    return `[${segmentRef}] "...${text}..."`;
+    // TODO: should '...' be dependent on verse boundaries?
+    return `${optionalRefStr}— "...${text}..."`;
   }
 }

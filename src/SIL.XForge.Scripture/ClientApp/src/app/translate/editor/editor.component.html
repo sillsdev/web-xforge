@@ -168,7 +168,7 @@
                   }
                   <div class="container-for-split">
                     <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
-                    <as-split direction="vertical" [useTransition]="true" [style.height]="targetSplitHeight">
+                    <as-split direction="vertical" [useTransition]="true">
                       <as-split-area size="*" [minSize]="20" [order]="1" [dir]="i18n.direction">
                         <div class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
                           <app-text
@@ -258,10 +258,7 @@
                         [order]="2"
                         [dir]="i18n.direction"
                       >
-                        <app-lynx-insights-panel
-                          [editor]="target.viewModel.editor"
-                          [editorSegments]="target.viewModel.segments$ | async"
-                        />
+                        <app-lynx-insights-panel />
                       </as-split-area>
                     </as-split>
                   </div>
