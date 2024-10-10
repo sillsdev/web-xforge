@@ -1,6 +1,6 @@
 @use 'src/variables';
 @use '../checking-global-vars' as checking-vars;
-@use 'bootstrap/scss/mixins/breakpoints';
+@use 'src/breakpoints';
 
 :host ::ng-deep .mat-mdc-tab {
   padding-inline: 16px;
@@ -85,11 +85,11 @@
       flex-direction: column;
       align-items: center;
       flex: 0 0 70px;
-      @include breakpoints.media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
+      @include breakpoints.media-breakpoint-down(sm) {
         flex: 0 0 35px;
       }
       mat-icon {
-        @include breakpoints.media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
+        @include breakpoints.media-breakpoint-down(sm) {
           font-size: 18px;
         }
       }
@@ -105,7 +105,7 @@
         flex: 1;
         align-items: flex-end;
 
-        @include breakpoints.media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
+        @include breakpoints.media-breakpoint-down(sm) {
           align-items: flex-start;
           flex-direction: column;
           row-gap: 5px;
@@ -133,7 +133,7 @@
         }
         button + .delete-divider {
           display: inline;
-          @include breakpoints.media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
+          @include breakpoints.media-breakpoint-down(sm) {
             transform: rotate(90deg);
           }
         }

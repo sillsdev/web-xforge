@@ -3,11 +3,22 @@
 
 // This creates css variables for common breakpoints (needed when using MediaBreakpointService with BreakpointObserver)
 @use 'src/xforge-common/media-breakpoints/css-vars';
+@use 'src/breakpoints';
 
 @import 'fonts';
-/* Only import relevant Bootstrap 4.x styles */
-@import 'bootstrap/scss/bootstrap-grid';
 @import 'text';
+
+// Reset all elements to border-box
+html {
+  box-sizing: border-box;
+  -ms-overflow-style: scrollbar;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
 
 body {
   margin: 0;
@@ -119,49 +130,49 @@ body[dir='rtl'] .mirror-rtl {
 // less than small. The same is not true of xl; xl has an actual value, and a screen can be larger than xl.
 
 .hide-lt-sm {
-  @media (width < map.get(variables.$grid-breakpoints, 'sm')) {
+  @include breakpoints.media-breakpoint-down(xs) {
     display: none !important;
   }
 }
 
 .hide-lt-md {
-  @media (width < map.get(variables.$grid-breakpoints, 'md')) {
+  @include breakpoints.media-breakpoint-down(sm) {
     display: none !important;
   }
 }
 
 .hide-lt-lg {
-  @media (width < map.get(variables.$grid-breakpoints, 'lg')) {
+  @include breakpoints.media-breakpoint-down(md) {
     display: none !important;
   }
 }
 
 .hide-lt-xl {
-  @media (width < map.get(variables.$grid-breakpoints, 'xl')) {
+  @include breakpoints.media-breakpoint-down(lg) {
     display: none !important;
   }
 }
 
 .hide-gt-sm {
-  @media (width >= map.get(variables.$grid-breakpoints, 'sm')) {
+  @include breakpoints.media-breakpoint-up(sm) {
     display: none !important;
   }
 }
 
 .hide-gt-md {
-  @media (width >= map.get(variables.$grid-breakpoints, 'md')) {
+  @include breakpoints.media-breakpoint-up(md) {
     display: none !important;
   }
 }
 
 .hide-gt-lg {
-  @media (width >= map.get(variables.$grid-breakpoints, 'lg')) {
+  @include breakpoints.media-breakpoint-up(lg) {
     display: none !important;
   }
 }
 
 .hide-gt-xl {
-  @media (width >= map.get(variables.$grid-breakpoints, 'xl')) {
+  @include breakpoints.media-breakpoint-up(xl) {
     display: none !important;
   }
 }

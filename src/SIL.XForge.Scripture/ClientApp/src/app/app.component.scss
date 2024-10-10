@@ -1,6 +1,5 @@
 @use 'src/variables';
-
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/breakpoints';
 
 $toolbar-height: 56px;
 
@@ -51,7 +50,7 @@ $toolbar-height: 56px;
       flex: 1;
       padding: 14px 20px;
       height: 100%;
-      @include media-breakpoint-only(xs, variables.$grid-breakpoints) {
+      @include breakpoints.media-breakpoint-only(xs) {
         padding: 10px;
       }
       display: flex;
@@ -74,7 +73,7 @@ header {
     align-items: center;
     column-gap: 1em;
     img {
-      @include media-breakpoint-up(sm, variables.$grid-breakpoints) {
+      @include breakpoints.media-breakpoint-up(sm) {
         margin-inline-start: 8px;
       }
     }

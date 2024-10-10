@@ -1,5 +1,5 @@
 @use 'src/variables';
-@use 'bootstrap/scss/mixins/breakpoints';
+@use 'src/breakpoints';
 
 :host {
   display: flex;
@@ -23,7 +23,7 @@ form {
   display: flex;
   align-items: center;
   column-gap: 20px;
-  @include breakpoints.media-breakpoint-only(xs, variables.$grid-breakpoints) {
+  @include breakpoints.media-breakpoint-only(xs) {
     flex-direction: column;
     align-items: normal;
   }

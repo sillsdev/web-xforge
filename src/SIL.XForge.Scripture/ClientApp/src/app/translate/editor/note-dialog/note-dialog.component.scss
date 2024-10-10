@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/variables';
+@use 'src/breakpoints';
 
 .dialog-container {
   display: flex;
@@ -23,7 +23,7 @@ h1 {
 }
 .mat-mdc-dialog-content {
   min-height: 300px;
-  @include media-breakpoint-down(sm) {
+  @include breakpoints.media-breakpoint-down(sm) {
     min-height: 200px;
   }
 }
@@ -31,7 +31,7 @@ h1 {
   display: flex;
   min-height: 30px;
   .text {
-    color: $greenDark;
+    color: variables.$greenDark;
     background: rgba(0, 0, 0, 0.05);
     padding: 6px;
     border-radius: 4px;
@@ -39,7 +39,7 @@ h1 {
     flex: 1;
     .segment-text {
       padding-top: 6px;
-      border-top: 2px solid $greenDark;
+      border-top: 2px solid variables.$greenDark;
       margin-top: 6px;
       white-space: pre-wrap;
     }
@@ -58,7 +58,7 @@ h1 {
       padding-top: 10px;
     }
     &:not(:last-child) {
-      border-bottom: 1px solid $greyLight;
+      border-bottom: 1px solid variables.$greyLight;
     }
     app-owner {
       display: block;
@@ -108,7 +108,7 @@ h1 {
 
 .note-content-and-actions {
   display: flex;
-  @include media-breakpoint-down(xs) {
+  @include breakpoints.media-breakpoint-down(xs) {
     flex-direction: column;
   }
   .note-content {
@@ -122,7 +122,7 @@ h1 {
 }
 
 .save-options {
-  background-color: $sf_grey;
+  background-color: variables.$sf_grey;
   color: white;
   ::ng-deep .mat-button-toggle-label-content {
     line-height: 36px;

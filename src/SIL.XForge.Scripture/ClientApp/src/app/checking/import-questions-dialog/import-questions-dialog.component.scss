@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/variables';
+@use 'src/breakpoints';
 
 // Section: General dialog styles
 
@@ -38,7 +38,7 @@
   display: flex;
   column-gap: 1em;
 
-  @include media-breakpoint-only(xs) {
+  @include breakpoints.media-breakpoint-only(xs) {
     flex-direction: column;
     row-gap: 1em;
   }
@@ -94,7 +94,7 @@
 // Section: Import errors screen
 
 .mat-column-rowNumber {
-  border-right: 1px solid $border-color;
+  border-right: 1px solid variables.$border-color;
   padding-right: 1em;
   text-align: right;
   font-weight: 500;
@@ -116,7 +116,7 @@
     mat-form-field:not(.mdc-text-field--textarea) {
       height: 36px;
       flex: 1;
-      @include media-breakpoint-up(sm) {
+      @include breakpoints.media-breakpoint-up(sm) {
         max-width: unset;
       }
       max-width: 70%;
@@ -146,7 +146,7 @@
 
 .filter-references {
   margin-top: 0.4em;
-  @include media-breakpoint-up(sm) {
+  @include breakpoints.media-breakpoint-up(sm) {
     display: flex;
     ::ng-deep {
       mat-form-field:first-child .mdc-notched-outline__trailing,
