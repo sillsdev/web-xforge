@@ -23,6 +23,7 @@ module.exports = function (config) {
     require('karma-jasmine'),
     require('karma-chrome-launcher'),
     require('karma-firefox-launcher'),
+    require('karma-safari-launcher'),
     require('karma-jasmine-html-reporter'),
     require('karma-coverage-istanbul-reporter'),
     require('karma-teamcity-reporter'),
@@ -139,6 +140,9 @@ module.exports = function (config) {
           'permissions.default.microphone': 1
         },
         profile: require('path').join(__dirname, '../tmp')
+      },
+      xForgeSafari: {
+        base: 'Safari'
       }
     },
     singleRun: false
