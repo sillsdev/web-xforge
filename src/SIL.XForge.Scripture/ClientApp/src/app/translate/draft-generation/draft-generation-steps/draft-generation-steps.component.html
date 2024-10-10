@@ -193,7 +193,8 @@
         </ng-template>
         <h1 class="mat-headline-4">{{ t("confirm") }}</h1>
 
-        <div class="confirm-section">
+        <h2>Training the language model</h2>
+        <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("confirm_training") }}</span>
           <table mat-table class="confirm-training" [dataSource]="userSelectedTrainingBooks">
             <ng-container matColumnDef="book">
@@ -211,15 +212,13 @@
             <tr mat-header-row *matHeaderRowDef="['book', 'source', 'target']"></tr>
             <tr mat-row *matRowDef="let row; columns: ['book', 'source', 'target']"></tr>
           </table>
-        </div>
+        </mat-card>
 
-        <div class="confirm-section">
-          <span class="explanation">
-            <transloco
-              key="draft_generation_steps.confirm_translate"
-              [params]="{ source: trainingSources[0].shortName }"
-            ></transloco>
-          </span>
+        <h2>
+          Drafting from <strong>{{ trainingSources[0].shortName }}</strong>
+        </h2>
+        <mat-card class="confirm-section mat-elevation-z2">
+          <span class="explanation">{{ t("confirm_translate") }}</span>
           <div class="confirm-translate">
             <div class="confirm-translate-books">
               @for (book of userSelectedTranslateBooks; track book) {
@@ -227,7 +226,7 @@
               }
             </div>
           </div>
-        </div>
+        </mat-card>
 
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
