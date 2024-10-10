@@ -78,6 +78,28 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_UserPermissionError()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(true, true, false, false);
+        env.ParatextService.GetParatextUsersAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Throws(new ForbiddenException());
+
+        await env.Runner.RunAsync("project01", "user02", "project01", false, CancellationToken.None);
+
+        SFProject project = env.VerifyProjectSync(false, projectSFId: "project01");
+        Assert.That(project.Sync.LastSyncSuccessful, Is.False);
+        Assert.That(project.Sync.LastSyncErrorCode, Is.EqualTo((int)SyncErrorCodes.UserPermissionError));
+
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+    }
+
+    [Test]
     public async Task SyncAsync_KeepsErrorStateWhenRunningAgain()
     {
         var env = new TestEnvironment();
@@ -1578,7 +1600,7 @@ public class ParatextSyncRunnerTests
                     string.Join('.', new ObjectPath(ex).Items) == "Sync.LastSyncSuccessful"
                 )
             );
-        env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+        env.Connection.Received(4).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
     }
 
     [Test]
@@ -3767,7 +3789,7 @@ public class ParatextSyncRunnerTests
                         // No SyncedToRepositoryVersion
                     },
                     NoteTags = new List<NoteTag>()
-                },
+                }
             };
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
             MockProjectDirsExist(sfProjects.Select((SFProject proj) => proj.ParatextId));

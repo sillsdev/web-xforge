@@ -7,6 +7,11 @@
     @if (syncDisabled) {
       <span id="sync-disabled-message" [innerHTML]="syncDisabledMessage"> </span>
     }
+    @if (showSyncUserPermissionsFailureMessage) {
+      <app-notice id="sync-user-permission-failure-message" type="error" icon="error">
+        {{ t("sync_user_permissions_failure_message") }}
+      </app-notice>
+    }
     @if (showSyncFailureSupportMessage) {
       <span id="sync-failure-support-message" [innerHTML]="syncFailureSupportMessage"></span>
     }
