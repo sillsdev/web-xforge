@@ -31,7 +31,7 @@ export class DiagnosticOverlayComponent {
     readonly noticeService: NoticeService
   ) {}
 
-  get docCountsByCollection(): { [key: string]: number } {
+  get docCountsByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
     return this.realtimeService.docsCountByCollection;
   }
 
