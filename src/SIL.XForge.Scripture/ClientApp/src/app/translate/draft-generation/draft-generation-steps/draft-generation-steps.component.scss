@@ -15,7 +15,12 @@
 }
 
 h1 {
-  margin: 12px 0;
+  margin: 24px 0;
+}
+
+h2 {
+  font-weight: 400;
+  margin-bottom: 0.5em;
 }
 
 h2 {
@@ -51,7 +56,7 @@ h2 {
 }
 
 .button-strip {
-  margin-top: 20px;
+  margin-top: 60px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -117,9 +122,8 @@ app-notice {
   display: flex;
   row-gap: 8px;
   flex-direction: column;
-  background-color: #f0f0f0;
   padding: 1.5em;
-  margin-block: 2em;
+  margin-block: 0 2em;
   border-radius: 4px;
   max-width: 750px;
 }
@@ -148,19 +152,10 @@ app-notice {
   flex-wrap: wrap;
   column-gap: 24px;
   row-gap: 8px;
-  max-width: 60%;
   padding-inline-start: 16px;
 }
 
 .readonly-book {
   padding-block: 4px;
   font-weight: 500;
-}
-
-.source {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-  font-size: 1.1em;
 }
