@@ -51,9 +51,6 @@
     align-items: center;
     column-gap: 8px;
   }
-  .stop-recording {
-    color: variables.$red;
-  }
 }
 
 .answers-container {
@@ -166,17 +163,12 @@
 }
 
 .answer-scripture,
-.scripture-text,
-.audio-added {
+.scripture-text {
   display: flex;
   align-items: center;
   background: rgba(0, 0, 0, 0.05);
   padding-inline-start: 6px;
   border-radius: 4px;
-}
-
-.audio-added {
-  margin-inline-end: 2px;
 }
 
 .answer-scripture-text {
