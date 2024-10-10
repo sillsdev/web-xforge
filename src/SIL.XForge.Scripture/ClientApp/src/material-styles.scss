@@ -217,3 +217,10 @@ mat-card-title {
     }
   }
 }
+
+div {
+  .title {
+    @extend .mat-headline-4;
+    margin-bottom: 0;
+  }
+}

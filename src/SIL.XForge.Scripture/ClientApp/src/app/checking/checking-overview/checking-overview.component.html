@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
   <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
-    <mat-icon class="mirror-rtl">list</mat-icon>
-    <h2>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h2>
+    <mat-icon class="mirror-rtl title-icon">list</mat-icon>
+    <div class="title">{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</div>
     @if (canCreateQuestion) {
       <ng-container class="primary-actions">
         @if (showImportButton) {
@@ -238,8 +238,8 @@
   }
 
   <div class="header">
-    <mat-icon class="mirror-rtl">bar_chart</mat-icon>
-    <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
+    <mat-icon class="mirror-rtl title-icon">bar_chart</mat-icon>
+    <div class="title">{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</div>
   </div>
 
   <div class="reviewer-panels stat-panels">
@@ -287,8 +287,8 @@
 
   @if (canEditQuestion) {
     <div class="header">
-      <mat-icon>archive</mat-icon>
-      <h2>{{ t("archived_questions") }}</h2>
+      <mat-icon class="title-icon">archive</mat-icon>
+      <div class="title">{{ t("archived_questions") }}</div>
     </div>
   }
 

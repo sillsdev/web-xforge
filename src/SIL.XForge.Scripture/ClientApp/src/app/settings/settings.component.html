@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div class="container">
-    <div class="mat-headline-4">{{ t("settings") }}</div>
+    <div class="title">{{ t("settings") }}</div>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     }

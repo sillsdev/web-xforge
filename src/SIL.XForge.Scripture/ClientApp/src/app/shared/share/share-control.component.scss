@@ -48,6 +48,11 @@ form {
   }
 }
 
+.title {
+  margin-block-start: 0.67em;
+  margin-block-end: 0.67em;
+}
+
 ::ng-deep .invitation-role-panel .mat-mdc-option {
   height: 4em !important;
 

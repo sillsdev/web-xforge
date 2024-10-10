@@ -6,8 +6,11 @@
       }
       <header [ngClass]="{ 'filter-applied': isQuestionFilterApplied }">
         <div class="header-main">
+          <div class="title">
+            {{ t("questions") }}
+          </div>
           <h2>
-            {{ t("questions") }} <span>({{ totalVisibleQuestionsString }})</span>
+            <span>({{ totalVisibleQuestionsString }})</span>
           </h2>
           <mat-menu #questionFilterMenu>
             <mat-selection-list [multiple]="true" class="menu-list">
