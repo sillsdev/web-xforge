@@ -34,8 +34,10 @@ describe('AttachAudioComponent', () => {
     env = new TestEnvironment();
   });
 
-  it('should show mic when not audio attached', () => {
+  it('should show mic when no audio attached', () => {
     when(mockTextAndAudio.input).thenReturn({});
+    when(mockTextAndAudio.audioAttachment).thenReturn({ status: 'reset' });
+    env.fixture.detectChanges();
     expect(env.iconButton.nativeElement.textContent).toBe('mic');
     env.iconButton.nativeElement.click();
     env.fixture.detectChanges();
