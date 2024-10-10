@@ -21,7 +21,6 @@ import {
 import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../shared/utils';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
-import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 
 export interface QuestionDialogData {
@@ -45,7 +44,6 @@ export interface QuestionDialogResult {
 })
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
-  @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   modeLabel =
     this.data && this.data.questionDoc != null
       ? translate('question_dialog.edit_question')
@@ -166,22 +164,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   updateScriptureEndEnabled(): void {
     this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
-  }
-
-  startRecording(): void {
-    this.textAndAudio?.audioComponent?.startRecording();
-  }
-
-  stopRecording(): void {
-    this.textAndAudio?.audioComponent?.stopRecording();
-  }
-
-  deleteAudio(): void {
-    this.textAndAudio?.audioComponent?.resetRecording();
-  }
-
-  toggleAudio(): void {
-    this.audioPlayer?.playing ? this.audioPlayer?.stop() : this.audioPlayer?.play();
   }
 
   async submit(): Promise<void> {

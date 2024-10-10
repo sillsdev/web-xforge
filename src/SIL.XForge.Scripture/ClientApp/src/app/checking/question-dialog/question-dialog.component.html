@@ -47,32 +47,7 @@
       </div>
       <app-text-and-audio #input [input]="question" [textLabel]="t('question')"></app-text-and-audio>
       <div class="attachments">
-        <div class="add-audio">
-          @if (!input.input?.audioUrl && input.audioAttachment.status !== "recording") {
-            <button mat-icon-button (click)="startRecording()" [matTooltip]="t('tooltip_record')">
-              <mat-icon>mic</mat-icon>
-            </button>
-          } @else if (input.audioAttachment.status === "recording") {
-            <button mat-icon-button (click)="stopRecording()" [matTooltip]="t('tooltip_stop')">
-              <mat-icon class="stop-recording">stop</mat-icon>
-            </button>
-          }
-        </div>
-        @if (input.input?.audioUrl) {
-          <div class="audio-added">
-            <app-single-button-audio-player
-              #audio
-              [source]="input.input?.audioUrl"
-              (click)="toggleAudio()"
-              theme="secondary"
-            >
-              <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
-            </app-single-button-audio-player>
-            <button mat-icon-button (click)="deleteAudio()" class="clear">
-              <mat-icon>clear</mat-icon>
-            </button>
-          </div>
-        }
+        <app-attach-audio [textAndAudio]="input"></app-attach-audio>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">
