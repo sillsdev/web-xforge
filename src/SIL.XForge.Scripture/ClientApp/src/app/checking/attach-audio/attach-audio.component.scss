@@ -1,0 +1,18 @@
+@use 'src/variables';
+
+.audio-added {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.05);
+  padding-inline-start: 6px;
+  border-radius: 4px;
+  margin-inline-end: 2px;
+}
+
+.stop-recording {
+  color: variables.$red;
+}
+
+.clear {
+  color: variables.$greenDark;
+}

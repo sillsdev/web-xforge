@@ -407,9 +407,7 @@
     "recording_stopped": "The recording for your question was automatically stopped.",
     "required_with_asterisk": "*Required",
     "save": "Save",
-    "scripture_reference": "Scripture reference",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "scripture_reference": "Scripture reference"
   },
   "roles": {
     "allow_add_edit_questions": "Can add & edit questions",

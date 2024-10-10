@@ -9,6 +9,7 @@ import { AudioPlayerComponent } from '../shared/audio/audio-player/audio-player.
 import { AudioTimePipe } from '../shared/audio/audio-time-pipe';
 import { SharedModule } from '../shared/shared.module';
 import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
+import { AttachAudioComponent } from './attach-audio/attach-audio.component';
 import { ChapterAudioDialogComponent } from './chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
 import { CheckingRoutingModule } from './checking-routing.module';
@@ -35,6 +36,7 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
     CheckingTextComponent,
     CheckingAnswersComponent,
     TextAndAudioComponent,
+    AttachAudioComponent,
     QuestionDialogComponent,
     ImportQuestionsDialogComponent,
     ImportQuestionsConfirmationDialogComponent,

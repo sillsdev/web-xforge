@@ -39,7 +39,6 @@ import { QuestionDialogService } from '../../question-dialog/question-dialog.ser
 import { TextAndAudioComponent } from '../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
-import { SingleButtonAudioPlayerComponent } from '../single-button-audio-player/single-button-audio-player.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
@@ -90,7 +89,6 @@ enum LikeAnswerResponse {
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit, AfterViewInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
-  @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
   @Input() checkingTextComponent?: CheckingTextComponent;
@@ -409,22 +407,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
         this.questionDoc.submitJson0Op(op => op.set(q => q.audioUrl, urlResult));
       }
     }
-  }
-
-  startRecording(): void {
-    this.textAndAudio?.audioComponent?.startRecording();
-  }
-
-  stopRecording(): void {
-    this.textAndAudio?.audioComponent?.stopRecording();
-  }
-
-  deleteAudio(): void {
-    this.textAndAudio?.audioComponent?.resetRecording();
-  }
-
-  toggleAudio(): void {
-    this.audioPlayer?.playing ? this.audioPlayer?.stop() : this.audioPlayer?.play();
   }
 
   selectScripture(): void {
