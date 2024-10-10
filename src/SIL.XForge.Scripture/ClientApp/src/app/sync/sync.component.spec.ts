@@ -3,6 +3,7 @@ import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -153,6 +154,26 @@ describe('SyncComponent', () => {
     verify(mockedDialogService.message(anything())).once();
   }));
 
+  it('should report user permissions error if sync failed for that reason', fakeAsync(() => {
+    const env = new TestEnvironment({ lastSyncErrorCode: -1, lastSyncWasSuccessful: false });
+    verify(mockedProjectService.get(env.projectId)).once();
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    expect(env.component.syncActive).toBe(true);
+    expect(env.progressBar).not.toBeNull();
+    // Simulate sync in progress
+    env.setQueuedCount(env.projectId);
+
+    // Simulate sync error
+    env.emitSyncComplete(false, env.projectId);
+
+    expect(env.component.syncActive).toBe(false);
+    expect(env.syncFailureSupportMessage.innerText).toEqual(
+      translate('sync.sync_user_permissions_failure_message', { projectName: 'Sync Test Project' })
+    );
+    verify(mockedDialogService.message(anything())).once();
+  }));
+
   it('should show progress if in-progress when loaded', fakeAsync(() => {
     const env = new TestEnvironment({ isParatextAccountConnected: true, isInProgress: true });
     expect(env.component.syncActive).toBe(true);
@@ -245,6 +266,7 @@ interface SyncComponentTestConstructorArgs {
   isOnline?: boolean;
   isSyncDisabled?: boolean;
   lastSyncWasSuccessful?: boolean;
+  lastSyncErrorCode?: number;
 }
 
 class TestEnvironment {
@@ -264,6 +286,7 @@ class TestEnvironment {
     const isOnline: boolean = args.isOnline ?? true;
     const isSyncDisabled: boolean = args.isSyncDisabled ?? false;
     const lastSyncWasSuccessful: boolean = args.lastSyncWasSuccessful ?? true;
+    const lastSyncErrorCode: number = args.lastSyncErrorCode ?? 0;
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.projectId }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
@@ -285,7 +308,8 @@ class TestEnvironment {
         sync: {
           queuedCount: isInProgress ? 1 : 0,
           lastSyncSuccessful: lastSyncWasSuccessful,
-          dateLastSuccessfulSync: date.toJSON()
+          dateLastSuccessfulSync: date.toJSON(),
+          lastSyncErrorCode: lastSyncErrorCode
         },
         syncDisabled: isSyncDisabled
       })

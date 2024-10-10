@@ -78,6 +78,30 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_UserPermissionError()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(true, true, false, false);
+        env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+        env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
+        env.ParatextService.GetParatextUsersAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Throws(new ForbiddenException());
+
+        await env.Runner.RunAsync("project06", "user02", "project06", false, CancellationToken.None);
+
+        SFProject project = env.VerifyProjectSync(false, projectSFId: "project06");
+        Assert.That(project.Sync.LastSyncSuccessful, Is.False);
+        Assert.That(project.Sync.LastSyncErrorCode, Is.EqualTo((int)SyncErrorCodes.UserPermissionError));
+
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project06");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+    }
+
+    [Test]
     public async Task SyncAsync_KeepsErrorStateWhenRunningAgain()
     {
         var env = new TestEnvironment();
@@ -1578,7 +1602,7 @@ public class ParatextSyncRunnerTests
                     string.Join('.', new ObjectPath(ex).Items) == "Sync.LastSyncSuccessful"
                 )
             );
-        env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+        env.Connection.Received(4).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
     }
 
     [Test]
@@ -3299,6 +3323,7 @@ public class ParatextSyncRunnerTests
                     new SFProjectSecret { Id = "project03" },
                     new SFProjectSecret { Id = "project04" },
                     new SFProjectSecret { Id = "project05" },
+                    new SFProjectSecret { Id = "project06" },
                 }
             );
             _syncMetrics = new MemoryRepository<SyncMetrics>(
@@ -3311,6 +3336,7 @@ public class ParatextSyncRunnerTests
                     new SyncMetrics { Id = "project03" },
                     new SyncMetrics { Id = "project04" },
                     new SyncMetrics { Id = "project05" },
+                    new SyncMetrics { Id = "project06" },
                 }
             );
             UserService = Substitute.For<IUserService>();
@@ -3765,6 +3791,45 @@ public class ParatextSyncRunnerTests
                         QueuedCount = 1,
                         DataInSync = false
                         // No SyncedToRepositoryVersion
+                    },
+                    NoteTags = new List<NoteTag>()
+                },
+                new SFProject
+                {
+                    // this project is to test that the sync error code is written to the project when a user with previous sync permissions was removed from the project and no longer has sync permissions
+                    Id = "project06",
+                    Name = "project06",
+                    ShortName = "P06",
+                    UserRoles = new Dictionary<string, string> { { "user01", SFProjectRole.Administrator } },
+                    ParatextId = "target",
+                    IsRightToLeft = false,
+                    DefaultFontSize = 10,
+                    DefaultFont = ProjectSettings.defaultFontName,
+                    TranslateConfig = new TranslateConfig
+                    {
+                        TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                        Source = new TranslateSource
+                        {
+                            ParatextId = "source",
+                            ProjectRef = "project02",
+                            Name = "Source",
+                            ShortName = "SRC",
+                            WritingSystem = new WritingSystem { Tag = "en" },
+                            IsRightToLeft = false
+                        },
+                        DefaultNoteTagId = translateNoteTagId
+                    },
+                    CheckingConfig = new CheckingConfig
+                    {
+                        CheckingEnabled = checkingEnabled,
+                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
+                        NoteTagId = checkingNoteTagId
+                    },
+                    Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
+                    Sync = new Sync { SyncedToRepositoryVersion = "beforeSR", },
+                    ParatextUsers = new List<ParatextUserProfile>
+                    {
+                        new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" }
                     },
                     NoteTags = new List<NoteTag>()
                 },

@@ -15,6 +15,8 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 
+const USER_PERMISSIONS_SYNC_ERROR_CODE = -1;
+
 @Component({
   selector: 'app-sync',
   templateUrl: './sync.component.html',
@@ -94,9 +96,15 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
           this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
           this.previousLastSyncDate = this.lastSyncDate;
         } else {
-          this.dialogService.message(
-            this.i18n.translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
-          );
+          if (this.projectDoc.data.sync.lastSyncErrorCode === USER_PERMISSIONS_SYNC_ERROR_CODE) {
+            this.dialogService.message(
+              this.i18n.translate('sync.user_permissions_failure_dialog_message', { projectName })
+            );
+          } else {
+            this.dialogService.message(
+              this.i18n.translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
+            );
+          }
         }
       }
     }
@@ -115,6 +123,9 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   get syncFailureSupportMessage(): string {
+    const projectName: string = this.projectDoc?.data?.name ?? '';
+    if (this.projectDoc?.data?.sync.lastSyncErrorCode === USER_PERMISSIONS_SYNC_ERROR_CODE)
+      return this.i18n.translateAndInsertTags('sync.sync_user_permissions_failure_message', { projectName });
     return this.i18n.translateAndInsertTags('sync.sync_failure_support_message', {
       email: `<a target="_blank" href="mailto:${environment.issueEmail}">${environment.issueEmail}</a>`
     });
