@@ -10,7 +10,7 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Subscription, asyncScheduler, firstValueFrom, timer } from 'rxjs';
-import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
+import { filter, map, repeat, retry, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -215,8 +215,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
           }
         }),
         repeat(),
-        filter(progress => progress.percentCompleted > 0),
-        retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
+        retry({ delay: () => timer(30000) })
       )
       .subscribe(progress => {
         this.trainingPercentage = Math.round(progress.percentCompleted * 100);

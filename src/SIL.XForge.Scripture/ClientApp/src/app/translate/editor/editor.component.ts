@@ -68,19 +68,7 @@ import {
   of,
   timer
 } from 'rxjs';
-import {
-  debounceTime,
-  delayWhen,
-  filter,
-  first,
-  map,
-  repeat,
-  retryWhen,
-  switchMap,
-  take,
-  tap,
-  throttleTime
-} from 'rxjs/operators';
+import { debounceTime, filter, first, map, repeat, retry, switchMap, take, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -1640,7 +1628,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }),
         repeat(),
         filter(progress => progress.percentCompleted > 0),
-        retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
+        retry({ delay: () => timer(30000) })
       )
       .subscribe();
     this.interactiveTranslatorFactory = this.translationEngineService.createInteractiveTranslatorFactory(
