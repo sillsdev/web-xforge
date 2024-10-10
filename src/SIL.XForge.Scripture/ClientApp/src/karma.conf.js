@@ -2,6 +2,7 @@
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
 module.exports = function (config) {
+  const isRunningInSafari = config.browsers && config.browsers.length === 1 && config.browsers[0] === 'Safari';
   const isRunningInTeamCity =
     config.browsers && config.browsers.length === 1 && config.browsers[0] === 'xForgeChromiumHeadless' && !config.watch;
 
@@ -39,7 +40,7 @@ module.exports = function (config) {
       clearContext: false, // leave Jasmine Spec Runner output visible in browser
       jasmine: {
         random: true,
-        seed: isRunningInTeamCity ? '12345' : null
+        seed: isRunningInTeamCity || isRunningInSafari ? '12345' : null
       }
     },
     coverageIstanbulReporter: {
@@ -140,9 +141,6 @@ module.exports = function (config) {
           'permissions.default.microphone': 1
         },
         profile: require('path').join(__dirname, '../tmp')
-      },
-      xForgeSafari: {
-        base: 'Safari'
       }
     },
     singleRun: false
