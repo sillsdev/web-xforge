@@ -80,7 +80,7 @@ public interface IParatextService
     void ClearParatextDataCaches(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
 
-    Task<Snapshot<TextData>> GetSnapshotAsync(
+    Task<TextSnapshot> GetSnapshotAsync(
         UserSecret userSecret,
         string sfProjectId,
         string book,

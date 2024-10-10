@@ -1,17 +1,28 @@
 # This override is loaded automatically via docker compose, and contains development/debug configuration
-version: "3.4"
-
 name: scripture-forge
 
 services:
   db-xforge:
     container_name: db-xforge
-    restart: always
     ports:
       - "27017:27017"
     volumes:
       - mongo_config:/data/configdb
       - mongo_data:/data/db
+
+  realtimeserver:
+    container_name: realtimeserver
+    build:
+      args:
+        - MIGRATOR_ENVIRONMENT=Development
+    environment:
+      - DataAccess__ConnectionString=mongodb://db-xforge:27017
+      - MIGRATOR_ENVIRONMENT=Development
+      - MIGRATOR_VERSION=9.9.9
+    ports:
+      # We do not expose 5002, as that port is for RPC communication between web-xforge and realtimeserver
+      - "5003:5003" # ShareDB
+      - "9230:9230" # Node Debugging
 
   web-xforge:
     container_name: web-xforge
@@ -23,12 +34,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - DataAccess__ConnectionString=mongodb://db-xforge:27017
+      - Realtime__UseExistingRealtimeServer=true
       - urls=http://*:5000 # Docker apps cannot bind to localhost, so we bind to all IP addresses
     ports:
-      - "5000:5000"
-      - "5003:5003"
+      - "5000:5000" # HTTP Server
+      - "4200:4200" # Angular CLI
     depends_on:
       - db-xforge
+      - realtimeserver
     volumes:
       - scriptureforge-data:/var/lib/scriptureforge
       - xforge-data:/var/lib/xforge

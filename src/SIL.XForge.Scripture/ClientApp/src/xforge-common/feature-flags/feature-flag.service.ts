@@ -28,7 +28,6 @@ interface IFeatureFlagStore {
 })
 export class FeatureFlagStore extends SubscriptionDisposable implements IFeatureFlagStore {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
-
   private localFlags: { [key: string]: boolean } = {};
   private remoteFlags: { [key: string]: boolean } = {};
   private remoteFlagCacheExpiry: Date = new Date();

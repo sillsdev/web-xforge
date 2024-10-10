@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import Bugsnag from '@bugsnag/js';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep } from 'lodash-es';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -34,6 +35,7 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { DiagnosticOverlayService } from '../xforge-common/diagnostic-overlay.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
@@ -70,12 +72,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService,
+    private readonly diagnosticOverlayService: DiagnosticOverlayService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly locationService: LocationService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly breakpointService: MediaBreakpointService,
+    private readonly cookieService: CookieService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly urls: ExternalUrlService,
@@ -365,6 +369,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.pwaService.setInstallPromptLastShownTime();
   }
 
+  async hangfireDashboard(): Promise<void> {
+    // The access token will be undefined if offline
+    const accessToken: string | undefined = await this.authService.getAccessToken();
+    if (accessToken != null) {
+      // Grant 30 minutes access to the dashboard
+      const expires = new Date();
+      expires.setMinutes(expires.getMinutes() + 30);
+      this.cookieService.set('Hangfire', accessToken, expires, '/hangfire');
+      this.locationService.openInNewTab('/hangfire');
+    }
+  }
+
   installOnDevice(): void {
     this.pwaService.install();
   }
@@ -395,6 +411,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
+  }
+
+  openDiagnosticOverlay(): void {
+    this.diagnosticOverlayService.open();
   }
 
   versionNumberClicked(): void {

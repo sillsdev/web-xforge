@@ -1,0 +1,77 @@
+$toolbar-height: 56px;
+$background-color: #282828;
+$foreground-color: #ddd;
+$table-border-color: #404040;
+
+.diagnostic-overlay {
+  position: fixed;
+  top: $toolbar-height;
+  right: 0;
+  bottom: 0;
+
+  background-color: $background-color;
+  color: $foreground-color;
+  font-size: 12px;
+  overflow-y: auto;
+
+  &.collapsed {
+    width: 44px;
+    padding: 2px;
+  }
+
+  &:not(.collapsed) {
+    padding: 4px 12px;
+    width: 25vw;
+    min-width: 300px;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 5px;
+  }
+
+  th {
+    border: 1px solid $table-border-color;
+  }
+
+  td {
+    border-inline: 1px solid $table-border-color;
+  }
+
+  tr:nth-child(even) {
+    background-color: #1f1f1f;
+  }
+
+  tr:last-child td {
+    border-bottom: 1px solid $table-border-color;
+  }
+}
+
+.bold {
+  font-weight: bold;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 500;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+
+  h2 {
+    margin: 0;
+    flex-grow: 1;
+  }
+}
+
+.collapsed .header {
+  flex-direction: column;
+}

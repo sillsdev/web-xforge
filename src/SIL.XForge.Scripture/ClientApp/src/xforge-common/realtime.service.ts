@@ -42,6 +42,29 @@ export class RealtimeService {
     });
   }
 
+  get totalDocCount(): number {
+    return this.docs.size;
+  }
+
+  get docsCountByCollection(): { [key: string]: { docs: number; subscribers: number; queries: number } } {
+    const countsByCollection: { [key: string]: { docs: number; subscribers: number; queries: number } } = {};
+    for (const [id, doc] of this.docs.entries()) {
+      const collection = id.split(':')[0];
+      if (countsByCollection[collection] == null) {
+        countsByCollection[collection] = { docs: 0, subscribers: 0, queries: 0 };
+      }
+      countsByCollection[collection].docs++;
+      countsByCollection[collection].subscribers += doc.subscriberCount;
+    }
+    for (const [collection, queries] of this.subscribeQueries.entries()) {
+      if (countsByCollection[collection] == null) {
+        countsByCollection[collection] = { docs: 0, subscribers: 0, queries: 0 };
+      }
+      countsByCollection[collection].queries += queries.size;
+    }
+    return countsByCollection;
+  }
+
   get<T extends RealtimeDoc>(collection: string, id: string): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);

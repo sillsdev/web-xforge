@@ -9,7 +9,11 @@ export class NoticeService {
   private _isAppLoading: boolean = false;
   private messageOnDisplay?: string;
 
-  private loadingCountsByCallerId: { [callerId: string]: number } = {};
+  private _loadingCountsByCallerId: { [callerId: string]: number } = {};
+
+  get loadingCountsByCallerId(): { [callerId: string]: number } {
+    return this._loadingCountsByCallerId;
+  }
 
   constructor(
     private readonly snackBar: MatSnackBar,
@@ -23,10 +27,10 @@ export class NoticeService {
   loadingStarted(): void {
     const callerId = this.getCallerClassName();
 
-    if (this.loadingCountsByCallerId[callerId] === undefined) {
-      this.loadingCountsByCallerId[callerId] = 0;
+    if (this._loadingCountsByCallerId[callerId] === undefined) {
+      this._loadingCountsByCallerId[callerId] = 0;
     }
-    this.loadingCountsByCallerId[callerId]++;
+    this._loadingCountsByCallerId[callerId]++;
 
     this.setAppLoadingAsync(true);
   }
@@ -34,15 +38,15 @@ export class NoticeService {
   loadingFinished(): void {
     const callerId = this.getCallerClassName();
 
-    if (!(this.loadingCountsByCallerId[callerId] > 0)) {
+    if (!(this._loadingCountsByCallerId[callerId] > 0)) {
       console.error(`loadingFinished called by ${callerId} without a corresponding loadingStarted call`);
       // Set it to 1 to avoid negative values
-      this.loadingCountsByCallerId[callerId] = 1;
+      this._loadingCountsByCallerId[callerId] = 1;
     }
 
-    this.loadingCountsByCallerId[callerId]--;
+    this._loadingCountsByCallerId[callerId]--;
     // check if every caller has finished loading
-    if (Object.values(this.loadingCountsByCallerId).every(count => count === 0)) {
+    if (Object.values(this._loadingCountsByCallerId).every(count => count === 0)) {
       this.setAppLoadingAsync(false);
     }
   }

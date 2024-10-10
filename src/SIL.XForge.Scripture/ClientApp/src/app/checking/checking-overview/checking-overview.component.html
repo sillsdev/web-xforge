@@ -86,9 +86,9 @@
                           <span class="book-chapter-heading flex"
                             >{{ getBookName(text) + " " + chapter?.number }}
                             @if (chapter.hasAudio) {
-                              <mat-icon [title]="t('chapter_audio_attached')" class="material-icons-outlined"
-                                >audio_file</mat-icon
-                              >
+                              <mat-icon [title]="t('chapter_audio_attached')" class="material-icons-outlined">
+                                audio_file
+                              </mat-icon>
                             }
                           </span>
                           <span class="questions-count hide-lt-sm flex-info-end">
@@ -170,13 +170,9 @@
                                 </button>
                                 v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                                 @if (questionDoc.data?.audioUrl) {
-                                  <mat-icon class="audio-icon material-icons-outlined"> audio_file </mat-icon>
+                                  <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                                 }
-                                <span class="no-overflow-ellipsis flex">
-                                  @if (questionDoc.data?.text) {
-                                    <span>{{ questionDoc.data?.text }}</span>
-                                  }
-                                </span>
+                                <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
                                 <span class="hide-lt-sm flex-info-end">
                                   {{ answerCountLabel(questionDoc.getAnswers().length) }}
                                 </span>
@@ -251,7 +247,7 @@
       <mat-card class="card card-content-question mat-elevation-z2">
         <mat-card-content>
           <span class="flex">
-            <div class="stat-total">{{ allQuestionsCount }}</div>
+            <div class="stat-total">{{ allQuestionsCount | l10nNumber }}</div>
             <div class="stat-label">{{ t("questions") }}</div>
           </span>
           <span class="vertical-center"> <mat-icon class="mirror-rtl">help</mat-icon> </span>
@@ -261,7 +257,7 @@
     <mat-card class="card card-content-answer">
       <mat-card-content>
         <span class="flex">
-          <div class="stat-total">{{ myAnswerCount }}</div>
+          <div class="stat-total">{{ myAnswerCount | l10nNumber }}</div>
           <div class="stat-label">{{ t("answers") }}</div>
         </span>
         <span class="vertical-center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
@@ -270,7 +266,7 @@
     <mat-card class="card card-content-comment">
       <mat-card-content>
         <span class="flex">
-          <div class="stat-total">{{ myCommentCount }}</div>
+          <div class="stat-total">{{ myCommentCount | l10nNumber }}</div>
           <div class="stat-label">{{ t("comments") }}</div>
         </span>
         <span class="vertical-center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
@@ -280,7 +276,7 @@
       <mat-card class="card card-content-like">
         <mat-card-content>
           <span class="flex">
-            <div class="stat-total">{{ myLikeCount }}</div>
+            <div class="stat-total">{{ myLikeCount | l10nNumber }}</div>
             <div class="stat-label">{{ t("likes") }}</div>
           </span>
           <span class="vertical-center"> <mat-icon>thumb_up</mat-icon> </span>
@@ -359,16 +355,12 @@
                             <div class="flex">
                               v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                               @if (questionDoc.data?.audioUrl) {
-                                <mat-icon class="audio-icon material-icons-outlined"> audio_file </mat-icon>
+                                <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                               }
-                              <span class="no-overflow-ellipsis flex">
-                                @if (questionDoc.data?.text) {
-                                  <span>{{ questionDoc.data?.text }}</span>
-                                }
+                              <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
+                              <span class="date-archived hide-lt-sm flex-timestamp">
+                                {{ timeArchivedStamp(questionDoc.data?.dateArchived) }}
                               </span>
-                              <span class="date-archived hide-lt-sm flex-timestamp">{{
-                                timeArchivedStamp(questionDoc.data?.dateArchived)
-                              }}</span>
                               <span class="flex-icon">
                                 <button
                                   mat-icon-button

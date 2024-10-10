@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router, RouterModule } from '@angular/router';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -56,6 +57,7 @@ const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedBugsnagService = mock(BugsnagService);
+const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
@@ -107,6 +109,7 @@ describe('AppComponent', () => {
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
+      { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
@@ -447,6 +450,16 @@ describe('AppComponent', () => {
     expect(env.avatarIcon).not.toBeNull();
   }));
 
+  it('navigate to the hangfire dashboard and set the cookie', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    env.init();
+
+    await env.component.hangfireDashboard();
+    expect().nothing();
+    verify(mockedCookieService.set(anything(), anything(), anything(), anything())).once();
+    verify(mockedLocationService.openInNewTab(anything())).once();
+  }));
+
   describe('Community Checking', () => {
     it('ensure local storage is cleared when removed from project', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -517,6 +530,23 @@ describe('AppComponent', () => {
       // Hide the user menu
       env.showHideUserMenu();
     }));
+
+    it('does not show hangfire dashboard menu item', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      env.init();
+
+      // Show the user menu
+      env.showHideUserMenu();
+
+      // Verify the menu item is not visible
+      expect(env.component.isSystemAdmin).toBe(false);
+      expect(env.userMenu).not.toBeNull();
+      expect(env.hangfireDashboardButton).toBeNull();
+
+      // Hide the user menu
+      env.showHideUserMenu();
+    }));
   });
 
   describe('System Administrator', () => {
@@ -549,6 +579,23 @@ describe('AppComponent', () => {
       expect(env.component.isServalAdmin).toBe(false);
       expect(env.userMenu).not.toBeNull();
       expect(env.servalAdminButton).toBeNull();
+
+      // Hide the user menu
+      env.showHideUserMenu();
+    }));
+
+    it('shows hangfire dashboard menu item', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.SystemAdmin]);
+      env.init();
+
+      // Show the user menu
+      env.showHideUserMenu();
+
+      // Verify the menu item is visible
+      expect(env.component.isSystemAdmin).toBe(true);
+      expect(env.userMenu).not.toBeNull();
+      expect(env.hangfireDashboardButton).not.toBeNull();
 
       // Hide the user menu
       env.showHideUserMenu();
@@ -635,6 +682,7 @@ class TestEnvironment {
     when(mockedLocationService.pathname).thenReturn('/projects/project01/checking');
 
     when(mockedAuthService.currentUserRoles).thenReturn([]);
+    when(mockedAuthService.getAccessToken()).thenReturn(Promise.resolve('access_token'));
     when(mockedAuthService.isLoggedIn).thenCall(() => Promise.resolve(this.loggedInState$.getValue().loggedIn));
     when(mockedAuthService.loggedIn).thenCall(() =>
       firstValueFrom(this.loggedInState$.pipe(filter((state: any) => state.loggedIn)))
@@ -691,6 +739,10 @@ class TestEnvironment {
 
   get editNameButton(): DebugElement {
     return this.userMenu.query(By.css('#edit-name-btn'));
+  }
+
+  get hangfireDashboardButton(): DebugElement {
+    return this.userMenu.query(By.css('#hangfire-dashboard-btn'));
   }
 
   get servalAdminButton(): DebugElement {

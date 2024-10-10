@@ -1,14 +1,18 @@
-version: "3.4"
-
 services:
   db-xforge:
     image: mongo:5.0
 
+  realtimeserver:
+    image: ${DOCKER_REGISTRY-}sillsdev/web-xforge/realtimeserver
+    build:
+      context: ../..
+      dockerfile: src/RealtimeServer/Dockerfile
+
   web-xforge:
     image: ${DOCKER_REGISTRY-}sillsdev/web-xforge
     build:
-      context: ..
-      dockerfile: ./SIL.XForge.Scripture/Dockerfile
+      context: ../..
+      dockerfile: src/SIL.XForge.Scripture/Dockerfile
 
 volumes:
   mongo_config:

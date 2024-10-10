@@ -133,6 +133,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   cancelDialogRef?: MatDialogRef<any>;
 
+  readonly draftDurationHours = 8;
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,

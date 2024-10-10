@@ -1,10 +1,9 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
-import { Snapshot } from 'xforge-common/models/snapshot';
+import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { PARATEXT_API_NAMESPACE } from 'xforge-common/url-constants';
 import { ParatextProject } from './models/paratext-project';
 import { TextDocSource } from './models/text-doc';
@@ -103,9 +102,9 @@ export class ParatextService {
     book: string,
     chapter: number,
     timestamp: string
-  ): Promise<Snapshot<TextData> | undefined> {
+  ): Promise<TextSnapshot | undefined> {
     return await firstValueFrom(
-      this.http.get<Snapshot<TextData>>(
+      this.http.get<TextSnapshot>(
         `${PARATEXT_API_NAMESPACE}/history/snapshot/${projectId}_${book}_${chapter}_target?timestamp=${timestamp}`,
         {
           headers: this.headers

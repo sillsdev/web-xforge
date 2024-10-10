@@ -204,5 +204,6 @@
 
 .short-button {
   line-height: unset;
-  height: 20px;
+  min-height: 20px;
+  height: auto;
 }

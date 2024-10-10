@@ -34,7 +34,7 @@
             {{ t("instructions_keep_in_mind_subtext") }}
           </p>
           <p>
-            <b>{{ t("instructions_draft_process", { count: 8 }) }}</b>
+            <b>{{ t("instructions_draft_process", { count: draftDurationHours | l10nNumber }) }}</b>
             <br />
             {{ t("instructions_draft_process_subtext") }}
           </p>
@@ -278,7 +278,7 @@
                 <section class="progress-active">
                   <h3>{{ t("draft_active_header") }}</h3>
                   <div class="progress-text">
-                    <p>{{ t("draft_active_detail", { count: 8 }) }}</p>
+                    <p>{{ t("draft_active_detail", { count: draftDurationHours | l10nNumber }) }}</p>
                   </div>
                   <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
                   <div class="button-strip">

@@ -86,10 +86,11 @@ app-donut-chart {
   }
 }
 
-.no-overflow-ellipsis {
-  white-space: nowrap;
+.overflow-ellipsis {
   text-overflow: ellipsis;
   overflow: hidden;
+  flex-grow: 1;
+  flex-basis: 0%;
 }
 
 .mat-expansion-panel-header {

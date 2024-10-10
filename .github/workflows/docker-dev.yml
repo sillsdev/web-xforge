@@ -1,0 +1,41 @@
+name: Build Docker development images
+
+# Allow the images to be built manually until we have CI set up
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm/v8
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build and tag Docker images
+        run: |
+          docker build --tag ghcr.io/${{ github.repository }}/realtimeserver:latest \
+          --build-arg MIGRATOR_ENVIRONMENT=Development \
+          -f src/RealtimeServer/Dockerfile .
+          docker build --tag ghcr.io/${{ github.repository }}:latest \
+          --build-arg AngularConfig=development \
+          --build-arg configuration=Debug \
+          --build-arg version=9.9.9 \
+          -f src/SIL.XForge.Scripture/Dockerfile .
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          password: ${{secrets.GITHUB_TOKEN}}
+      - name: Push Docker images
+        run: |
+          docker push ghcr.io/${{ github.repository }}/realtimeserver:latest
+          docker push ghcr.io/${{ github.repository }}:latest

@@ -37,8 +37,9 @@ RUN ln -s /usr/bin/hg /usr/local/bin/hg \
     <PermittedInternetUse>Enabled</PermittedInternetUse>\
     <ProxyPort>0</ProxyPort>\
     </InternetSettingsMemento>' > ~/.local/share/Paratext95/InternetSettings.xml
+
+# http port to dotnet
 EXPOSE 5000
-EXPOSE 5003
 
 FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS build
 ARG configuration=Release
@@ -50,23 +51,20 @@ RUN update-ca-certificates \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 # Install NPM
 RUN apt-get install -y \
+    build-essential \
     nodejs \
     && rm -rf /var/lib/apt/lists/*
-# Build the Realtime Server
-COPY ../RealtimeServer/ /src/RealtimeServer/
+# Get the Realtime Server files
+COPY src/RealtimeServer/ /src/RealtimeServer/
 WORKDIR /src/RealtimeServer
-RUN npm ci
-# Build the Angular Frontend
-COPY ../SIL.XForge.Scripture/locales.json /src/SIL.XForge.Scripture/locales.json
-COPY ../SIL.XForge.Scripture/version.json /src/SIL.XForge.Scripture/version.json
-COPY ../SIL.XForge.Scripture/fonts.json /src/SIL.XForge.Scripture/fonts.json
-COPY ../SIL.XForge.Scripture/ClientApp/ /src/SIL.XForge.Scripture/ClientApp/
-WORKDIR /src/SIL.XForge.Scripture/ClientApp
-RUN npm ci
-RUN npm run build
+# Get the Angular Frontend files
+COPY src/SIL.XForge.Scripture/locales.json /src/SIL.XForge.Scripture/locales.json
+COPY src/SIL.XForge.Scripture/version.json /src/SIL.XForge.Scripture/version.json
+COPY src/SIL.XForge.Scripture/fonts.json /src/SIL.XForge.Scripture/fonts.json
+COPY src/SIL.XForge.Scripture/ClientApp/ /src/SIL.XForge.Scripture/ClientApp/
 # Build the .NET Backend
-COPY ../SIL.XForge/ /src/SIL.XForge/
-COPY ../SIL.XForge.Scripture/ /src/SIL.XForge.Scripture/
+COPY src/SIL.XForge/ /src/SIL.XForge/
+COPY src/SIL.XForge.Scripture/ /src/SIL.XForge.Scripture/
 WORKDIR /src/SIL.XForge.Scripture
 RUN dotnet restore SIL.XForge.Scripture.csproj
 RUN dotnet build SIL.XForge.Scripture.csproj -c $configuration -o /app/build
@@ -81,5 +79,8 @@ RUN dotnet publish SIL.XForge.Scripture.csproj -c $configuration -o /app/publish
 
 FROM base AS final
 WORKDIR /app
+LABEL org.opencontainers.image.source=https://github.com/sillsdev/web-xforge
+LABEL org.opencontainers.image.description="Scripture Forge"
+LABEL org.opencontainers.image.licenses=MIT
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "SIL.XForge.Scripture.dll", "--start-ng-serve=none"]
+ENTRYPOINT [ "dotnet", "SIL.XForge.Scripture.dll", "--start-ng-serve=none"]
