@@ -504,7 +504,8 @@
     "error_offline": "You are offline. Please connect to the internet to load this resource.",
     "loading": "Loading",
     "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
-    "placeholder_ready": "Select paratext project or DBL resource",
+    "placeholder_ready": "Select a Paratext project or DBL resource.",
+    "project_or_resource": "Project or resource",
     "cancel": "Cancel",
     "select": "Select"
   },

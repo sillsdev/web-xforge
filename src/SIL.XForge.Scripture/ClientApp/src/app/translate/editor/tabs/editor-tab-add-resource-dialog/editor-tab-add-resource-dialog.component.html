@@ -7,10 +7,11 @@
 <ng-container *transloco="let t; read: 'editor_add_tab_resource_dialog'">
   <h1 mat-dialog-title>{{ t("dialog_title") }}</h1>
   <mat-dialog-content>
+    <div class="instruction">{{ isLoading ? t("placeholder_loading") : t("placeholder_ready") }}</div>
     <div [formGroup]="form">
       <app-project-select
         formControlName="sourceParatextId"
-        [placeholder]="isLoading ? t('placeholder_loading') : t('placeholder_ready')"
+        [placeholder]="t('project_or_resource')"
         [projects]="projects"
         [resources]="resources"
         [hiddenParatextIds]="dialogData.excludedParatextIds"
