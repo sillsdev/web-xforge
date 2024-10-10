@@ -2,15 +2,19 @@ import { CommonModule } from '@angular/common';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { instance, mock, when } from 'ts-mockito';
+import { instance, mock, verify, when } from 'ts-mockito';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { OnlineStatusService } from '../../../xforge-common/online-status.service';
-import { TestOnlineStatusModule } from '../../../xforge-common/test-online-status.module';
-import { TestOnlineStatusService } from '../../../xforge-common/test-online-status.service';
 import { SharedModule } from '../../shared/shared.module';
+import { CheckingAudioRecorderComponent } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AttachAudioComponent } from './attach-audio.component';
+
+const mockTextAndAudio = mock(TextAndAudioComponent);
+const mockCheckingAudioRecorder = mock(CheckingAudioRecorderComponent);
 
 describe('AttachAudioComponent', () => {
   let env: TestEnvironment;
@@ -31,25 +35,32 @@ describe('AttachAudioComponent', () => {
   });
 
   it('should show mic when not audio attached', () => {
+    when(mockTextAndAudio.input).thenReturn({});
     expect(env.iconButton.nativeElement.textContent).toBe('mic');
+    env.iconButton.nativeElement.click();
+    env.fixture.detectChanges();
+    verify(mockCheckingAudioRecorder.startRecording()).once();
   });
 
   it('should show stop when recording', () => {
-    const mockTextAndAudio = mock(TextAndAudioComponent);
     when(mockTextAndAudio.audioAttachment).thenReturn({ status: 'recording' });
     env.component.textAndAudio = instance(mockTextAndAudio);
     env.fixture.detectChanges();
     expect(env.iconButton.nativeElement.textContent).toBe('stop');
+    env.iconButton.nativeElement.click();
+    env.fixture.detectChanges();
+    verify(mockCheckingAudioRecorder.stopRecording()).once();
   });
 
-  it('should show play when audio is attached', () => {
-    const mockTextAndAudio = mock(TextAndAudioComponent);
+  it('should show clear when audio is attached', () => {
     when(mockTextAndAudio.audioAttachment).thenReturn({ status: 'processed' });
     when(mockTextAndAudio.input).thenReturn({ audioUrl: 'blob://audio' });
-    env.component.textAndAudio = instance(mockTextAndAudio);
     env.fixture.detectChanges();
     expect(env.component.audioPlayer).not.toBeNull();
     expect(env.iconButton.nativeElement.textContent).toBe('clear');
+    env.iconButton.nativeElement.click();
+    env.fixture.detectChanges();
+    verify(mockCheckingAudioRecorder.resetRecording()).once();
   });
 });
 
@@ -59,6 +70,8 @@ class TestEnvironment {
   constructor() {
     this.fixture = TestBed.createComponent(AttachAudioComponent);
     this.component = this.fixture.componentInstance;
+    when(mockTextAndAudio.audioComponent).thenReturn(instance(mockCheckingAudioRecorder));
+    this.component.textAndAudio = instance(mockTextAndAudio);
     this.fixture.detectChanges();
   }
 
