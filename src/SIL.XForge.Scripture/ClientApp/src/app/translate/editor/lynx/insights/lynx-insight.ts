@@ -48,6 +48,7 @@ export interface LynxInsightConfig {
   filter: LynxInsightFilter;
   sortOrder: LynxInsightSortOrder;
   queryParamName: string;
+  panelLinkTextMaxLength: number;
 }
 
 export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('EDITOR_INSIGHT_DEFAULTS', {
@@ -55,6 +56,7 @@ export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('ED
   factory: () => ({
     filter: { types: ['info', 'warning', 'error'], scope: 'chapter' },
     sortOrder: 'severity',
-    queryParamName: 'insight'
+    queryParamName: 'insight',
+    panelLinkTextMaxLength: 30
   })
 });
