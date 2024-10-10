@@ -81,6 +81,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly DotNetCoreAlert _alertSystem;
     private readonly IDeltaUsxMapper _deltaUsxMapper;
     private readonly IAuthService _authService;
+    private readonly Dictionary<string, string> _forcedUsernames = [];
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -562,7 +563,24 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Get the Paratext username from the UserSecret. </summary>
-    public string? GetParatextUsername(UserSecret userSecret) => _jwtTokenHelper.GetParatextUsername(userSecret);
+    public string? GetParatextUsername(UserSecret userSecret)
+    {
+        string? username = _jwtTokenHelper.GetParatextUsername(userSecret);
+        if (username is not null && _forcedUsernames.TryGetValue(username, out string forcedUsername))
+            return forcedUsername;
+        return username;
+    }
+
+    /// <summary> Force a Paratext username for a given user. </summary>
+    /// <remarks>
+    /// It is crucial to clear the forced usernames before or after synchronizing with Paratext.
+    /// Since ParatextService is a singleton, forced usernames that not cleared will remain for subsequent syncs.
+    /// </remarks>
+    public void ForceParatextUsername(string username, string forcedUsername) =>
+        _forcedUsernames.Add(username, forcedUsername);
+
+    /// <summary> Clear forced usernames. </summary>
+    public void ClearForcedUsernames() => _forcedUsernames.Clear();
 
     /// <summary>
     /// Gets the permission a user has to access a resource, according to a DBL server.
