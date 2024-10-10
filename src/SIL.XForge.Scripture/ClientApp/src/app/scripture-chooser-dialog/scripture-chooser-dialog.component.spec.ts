@@ -18,7 +18,7 @@ import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './s
 
 const mockedBugsnagService = mock(BugsnagService);
 
-describe('ScriptureChooserDialog', () => {
+fdescribe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
     imports: [TestModule],
     providers: [
