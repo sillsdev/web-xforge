@@ -33,4 +33,5 @@ public class Sync
     /// record of successfully importing all local PT repo data into SF DB at the new commit id.
     /// </summary>
     public bool? DataInSync { get; set; }
+    public int? LastSyncErrorCode { get; set; }
 }
