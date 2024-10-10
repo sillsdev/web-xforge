@@ -69,11 +69,26 @@
       animation: growshrink 1s forwards;
     }
   }
+
+  .record-message {
+    position: absolute;
+    bottom: 70px;
+    opacity: 0%;
+    &.visible {
+      animation: fadein 0.5s;
+      opacity: 100%;
+    }
+
+    p {
+      display: flex;
+      align-items: center;
+    }
+  }
 }
 
 .dialog-footer {
   height: 50px;
-  width: 220px;
+  min-width: 220px;
 }
 
 .visualizer {
@@ -82,13 +97,9 @@
 }
 
 .has-attachment {
-  transform: scale(0);
   display: flex;
-  justify-content: space-between;
-
-  &.visible {
-    transform: scale(1);
-  }
+  justify-content: space-evenly;
+  column-gap: 8px;
 }
 
 @keyframes countdown {
@@ -123,5 +134,14 @@
     width: 120px;
     height: 120px;
     background-color: white;
+  }
+}
+
+@keyframes fadein {
+  0% {
+    opacity: 0%;
+  }
+  100% {
+    opacity: 100%;
   }
 }
