@@ -255,6 +255,18 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
       expect(component.isTrainingOptional).toBe(true);
     }));
+
+    it('should update training books when a step changes', fakeAsync(() => {
+      component.userSelectedTranslateBooks = [3, 4]; //complete the first step
+      fixture.detectChanges();
+      spyOn(component, 'updateTrainingBooks');
+
+      var test = fixture.debugElement.queryAll(By.css('mat-step-header'));
+      test[1].nativeElement.click(); //click the next step
+      fixture.detectChanges();
+
+      expect(component.updateTrainingBooks).toHaveBeenCalledTimes(1);
+    }));
   });
 
   describe('allow fast training feature flag is enabled', () => {
