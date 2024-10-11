@@ -10,7 +10,7 @@ export const LynxInsightTypes = ['info', 'warning', 'error'] as const;
 export type LynxInsightType = (typeof LynxInsightTypes)[number];
 
 // Interface whose props are all boolean or undefined
-export interface LynxInsightDisplayState extends Record<string, boolean | undefined> {
+export interface LynxInsightDisplayState {
   promptActive?: boolean;
   actionMenuActive?: boolean;
   cursorActive?: boolean;
