@@ -134,7 +134,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       // Show action menu overlay in editor
       this.navInsight(insight).then(() => {
         this.editorInsightState.updateDisplayState(insight.id, {
-          promptActiveFull: false,
+          promptActive: false,
           actionMenuActive: true
         });
 
@@ -145,7 +145,7 @@ export class LynxInsightsPanelComponent implements OnInit {
       // if (!this.navInsight(node.insight)) {
       //   // this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
       //   this.editorInsightState.updateDisplayState(node.insight.id, {
-      //     promptActiveFull: false,
+      //     promptActive: false,
       //     actionMenuActive: true
       //   });
       // }
