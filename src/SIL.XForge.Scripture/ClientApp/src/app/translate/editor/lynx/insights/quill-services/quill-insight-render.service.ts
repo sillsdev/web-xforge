@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
-import Quill, { StringMap } from 'quill';
+import Quill, { DeltaStatic, StringMap } from 'quill';
+import { DeltaOperation } from 'rich-text';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsight, LynxInsightTypes } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
+
+const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
 @Injectable({
   providedIn: 'root'
@@ -15,8 +18,6 @@ export class QuillInsightRenderService extends InsightRenderService {
     super();
   }
 
-  // TODO: Render just display state changes if insight ids haven't changed?
-
   render(insights: LynxInsight[], editor: Quill | undefined): void {
     console.log('*** Render insights', insights);
 
@@ -25,14 +26,11 @@ export class QuillInsightRenderService extends InsightRenderService {
       return;
     }
 
-    // TODO: Ensure this is needed so that editor is fresh when adding/removing insights?
-    this.removeAllInsightFormatting(editor);
+    this.refreshInsightFormatting(insights, editor);
 
     let actionMenuInsight: LynxInsight | undefined;
 
     for (const insight of insights) {
-      this.renderInsight(insight, editor);
-
       if (this.renderActionMenu(insight, editor)) {
         actionMenuInsight = insight;
       }
@@ -41,8 +39,33 @@ export class QuillInsightRenderService extends InsightRenderService {
     this.setEditorAttention(actionMenuInsight, editor);
   }
 
-  private renderInsight(insight: LynxInsight, editor: Quill): void {
-    editor.formatText(insight.range.index, insight.range.length, `${this.prefix}-${insight.type}`, insight, 'api');
+  /**
+   * Creates a delta with all the insights' formatting applied, and sets the editor contents to that delta.
+   * This avoids multiple calls to quill `formatText`, which will re-render the DOM after each call.
+   */
+  private refreshInsightFormatting(insights: LynxInsight[], editor: Quill): void {
+    let delta: DeltaStatic = editor.getContents();
+    const formatsToRemove: StringMap = {};
+
+    // Prepare formats to remove
+    for (const type of LynxInsightTypes) {
+      formatsToRemove[`${this.prefix}-${type}`] = null;
+    }
+
+    // Apply removal of formats
+    delta = delta.compose(new Delta().retain(delta.length(), formatsToRemove));
+
+    // Apply formats, merging each format op with the result of the prev (let quill handle overlapping formats)
+    for (const insight of insights) {
+      const deltaToApply = new Delta().retain(insight.range.index).retain(insight.range.length, {
+        [`${this.prefix}-${insight.type}`]: insight
+      });
+
+      delta = delta.compose(deltaToApply);
+    }
+
+    // Set contents with the combined delta
+    editor.setContents(delta, 'api');
   }
 
   private renderActionMenu(insight: LynxInsight, editor: Quill): boolean {
@@ -55,16 +78,6 @@ export class QuillInsightRenderService extends InsightRenderService {
     this.overlayService.open(overlayAnchor, insight);
 
     return true;
-  }
-
-  private removeAllInsightFormatting(editor: Quill): void {
-    const formats: StringMap = {};
-
-    for (const type of LynxInsightTypes) {
-      formats[`${this.prefix}-${type}`] = false;
-    }
-
-    editor.formatText(0, editor.getLength(), formats);
   }
 
   private setEditorAttention(insight: LynxInsight | undefined, editor: Quill): void {
