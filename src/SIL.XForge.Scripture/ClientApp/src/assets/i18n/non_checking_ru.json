@@ -2,6 +2,7 @@
   "app": {
     "beta": "beta",
     "generate_draft": "Generate draft",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Manage questions",
     "settings": "Настройки",
     "synchronize": "Синхронизировать",
@@ -43,11 +44,9 @@
     "view_renderings": "Посмотреть переводы"
   },
   "book_select": {
-    "clear": "Clear",
-    "deuterocanon": "DC",
-    "new_testament": "NT",
-    "old_testament": "OT",
-    "select": "Выбрать"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Добавить вопрос"
@@ -154,7 +153,6 @@
     "select_alternate_project": "Select the project you want to add the draft to"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Back",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
     "cancel_generation_button": "Отменить",
     "criteria_project_language_not_in_nllb_with_language": "Your project language of [em]\"{{ targetLanguageDisplayName }}\"[/em] is not a supported language.",
@@ -214,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Back",
-    "choose_additional_training_data_files_subheader": "Select additional training files.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
-    "choose_books_for_training_subheader": "Select books that have been proofed.",
-    "choose_books_for_training": "Choose books for training the language model",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Training",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
-    "choose_books_to_translate": "Choose books to translate",
-    "configure_advanced_settings": "Configure advanced settings",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Drafting",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generate draft",

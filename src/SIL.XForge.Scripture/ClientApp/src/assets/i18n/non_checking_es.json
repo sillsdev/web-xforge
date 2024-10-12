@@ -2,6 +2,7 @@
   "app": {
     "beta": "beta",
     "generate_draft": "Generar borrador",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Administrar preguntas",
     "settings": "Configuración",
     "synchronize": "Sincronizar",
@@ -43,11 +44,9 @@
     "view_renderings": "Ver traducciones"
   },
   "book_select": {
-    "clear": "Eliminar",
-    "deuterocanon": "DC",
-    "new_testament": "NT",
-    "old_testament": "AT",
-    "select": "Seleccionar"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Agregar pregunta"
@@ -154,7 +153,6 @@
     "select_alternate_project": "Seleccione el proyecto al que desea añadir el borrador"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Atrás",
     "back_translation_requirement": "Un borrador de una retrotraducción sólo puede generarse en los aproximadamente 200 [link:supportedLanguagesUrl]idiomas compatibles[/link].",
     "cancel_generation_button": "Cancelar",
     "criteria_project_language_not_in_nllb_with_language": "El idioma de su proyecto de [em]\"{{ targetLanguageDisplayName }}\"[/em] no es un idioma compatible.",
@@ -214,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Atrás",
-    "choose_additional_training_data_files_subheader": "Seleccione archivos de formación adicionales.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
-    "choose_books_for_training_subheader": "Seleccione libros que hayan sido revisados.",
-    "choose_books_for_training": "Elegir libros para entrenar el modelo lingüístico",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Entrenamiento",
     "choose_books_to_translate_error": "No hay libros seleccionados. Seleccione los libros a traducir para continuar.",
-    "choose_books_to_translate": "Elegir libros para traducir",
-    "configure_advanced_settings": "Configurar los ajustes avanzados",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Redacción",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Si lo activa, ahorrará tiempo pero reducirá en gran medida la precisión.",
     "fast_training": "Permitir una formación rápida",
     "generate_draft": "Generar borrador",

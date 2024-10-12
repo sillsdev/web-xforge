@@ -2,6 +2,7 @@
   "app": {
     "beta": "beta",
     "generate_draft": "Buat konsep",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Mengelola pertanyaan",
     "settings": "Pengaturan",
     "synchronize": "Menyelaraskan",
@@ -43,11 +44,9 @@
     "view_renderings": "Tampilkan Padanan"
   },
   "book_select": {
-    "clear": "Kosongkan",
-    "deuterocanon": "DC",
-    "new_testament": "PB",
-    "old_testament": "PL",
-    "select": "Pilih"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Tambah pertanyaan"
@@ -154,7 +153,6 @@
     "select_alternate_project": "Select the project you want to add the draft to"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Kembali",
     "back_translation_requirement": "Konsep terjemahan balik hanya dapat dibuat ke dalam sekitar 200 bahasa yang didukung [link:supportedLanguagesUrl].",
     "cancel_generation_button": "Batal",
     "criteria_project_language_not_in_nllb_with_language": "Bahasa proyek Anda dari [em]\"{{ targetLanguageDisplayName }}\"[/em] adalah bahasa yang tidak didukung.",
@@ -214,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Kembali",
-    "choose_additional_training_data_files_subheader": "Pilih file pelatihan tambahan.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Memilih file tambahan untuk melatih model bahasa",
     "choose_books_for_training_error": "Tidak ada kitab yang dipilih. Pilih kitab pelatihan untuk melanjutkan.",
-    "choose_books_for_training_subheader": "Pilih kitab-kitab yang telah diperiksa.",
-    "choose_books_for_training": "Memilih kitab untuk melatih model bahasa",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Pelatihan",
     "choose_books_to_translate_error": "Tidak ada kitab yang dipilih. Pilih kitab yang akan diterjemahkan untuk melanjutkan.",
-    "choose_books_to_translate": "Memilih kitab yang akan diterjemahkan",
-    "configure_advanced_settings": "Mengatur pengaturan lanjutan",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Draf",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Mengaktifkan ini akan menghemat waktu, tetapi sangat mengurangi akurasi.",
     "fast_training": "Mengaktifkan Pelatihan Cepat",
     "generate_draft": "Buat konsep",
