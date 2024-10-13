@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json.Linq;
@@ -32,6 +33,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
         new DictionaryComparer<string, string>();
     private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly ILogger<SFProjectService> _logger;
     private readonly IMachineProjectService _machineProjectService;
     private readonly ISyncService _syncService;
     private readonly IParatextService _paratextService;
@@ -50,6 +52,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<SFProjectSecret> projectSecrets,
         ISecurityService securityService,
         IFileSystemService fileSystemService,
+        ILogger<SFProjectService> logger,
         IMachineProjectService machineProjectService,
         ISyncService syncService,
         IParatextService paratextService,
@@ -61,6 +64,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     )
         : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
     {
+        _logger = logger;
         _machineProjectService = machineProjectService;
         _syncService = syncService;
         _paratextService = paratextService;
@@ -238,10 +242,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task DeleteProjectAsync(string curUserId, string projectId)
     {
-        // Cancel any jobs before we delete
-        await _syncService.CancelSyncAsync(curUserId, projectId);
-
-        string ptProjectId;
         await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
         {
             IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -250,7 +250,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (!IsProjectAdmin(projectDoc.Data, curUserId))
                 throw new ForbiddenException();
 
-            ptProjectId = projectDoc.Data.ParatextId;
+            // Do not delete if any syncs are occurring
+            if (projectDoc.Data.Sync.QueuedCount > 0)
+                throw new InvalidOperationException("A project cannot be deleted while it is syncing.");
+
+            _logger.LogInformation(
+                "The project {projectId} ({shortName} - {name}) with Paratext id {paratextId} is being deleted by user {curUserId}.",
+                projectId,
+                projectDoc.Data.ShortName,
+                projectDoc.Data.Name,
+                projectDoc.Data.ParatextId,
+                curUserId
+            );
+            string ptProjectId = projectDoc.Data.ParatextId;
             string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
             if (FileSystemService.DirectoryExists(projectDir))
                 FileSystemService.DeleteDirectory(projectDir);

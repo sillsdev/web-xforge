@@ -2674,7 +2674,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task DeleteAsync()
+    public async Task DeleteProjectAsync_Success()
     {
         var env = new TestEnvironment();
         string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
@@ -2697,7 +2697,10 @@ public class SFProjectServiceTests
         Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
         await env.Service.DeleteProjectAsync(User01, SourceOnly);
 
-        await env.SyncService.Received().CancelSyncAsync(User01, SourceOnly);
+        env.Logger.AssertHasEvent(
+            e => e.Message!.Contains(SourceOnly) && e.Message.Contains(User01),
+            "The deletion should be logged"
+        );
         await env
             .MachineProjectService.Received()
             .RemoveProjectAsync(User01, SourceOnly, preTranslate: false, CancellationToken.None);
@@ -2705,6 +2708,20 @@ public class SFProjectServiceTests
         Assert.That(env.ContainsProject(SourceOnly), Is.False);
         Assert.That(env.GetUser(User01).Sites[SiteId].Projects, Does.Not.Contain(SourceOnly));
         Assert.That(env.GetProject(Project02).TranslateConfig.Source, Is.Null);
+    }
+
+    [Test]
+    public async Task DeleteProjectAsync_SyncRunning()
+    {
+        var env = new TestEnvironment();
+
+        // Update the project as syncing
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(Project01, u => u.Set(p => p.Sync.QueuedCount, 1));
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(() => env.Service.DeleteProjectAsync(User01, Project01));
     }
 
     [Test]
@@ -3933,8 +3950,7 @@ public class SFProjectServiceTests
                 "users",
                 OTType.Json0,
                 new MemoryRepository<User>(
-                    new[]
-                    {
+                    [
                         new User
                         {
                             Id = User01,
@@ -4025,15 +4041,14 @@ public class SFProjectServiceTests
                                 },
                             },
                         },
-                    }
+                    ]
                 )
             );
             RealtimeService.AddRepository(
                 "sf_projects",
                 OTType.Json0,
                 new MemoryRepository<SFProject>(
-                    new[]
-                    {
+                    [
                         new SFProject
                         {
                             Id = Project01,
@@ -4297,15 +4312,14 @@ public class SFProjectServiceTests
                             ShortName = "DSP",
                             UserRoles = { { User01, SFProjectRole.Administrator } },
                         },
-                    }
+                    ]
                 )
             );
             RealtimeService.AddRepository(
                 "sf_project_user_configs",
                 OTType.Json0,
                 new MemoryRepository<SFProjectUserConfig>(
-                    new[]
-                    {
+                    [
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
@@ -4320,15 +4334,14 @@ public class SFProjectServiceTests
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) },
-                    }
+                    ]
                 )
             );
             RealtimeService.AddRepository(
                 "text_audio",
                 OTType.Json0,
                 new MemoryRepository<TextAudio>(
-                    new[]
-                    {
+                    [
                         new TextAudio
                         {
                             Id = TextAudio.GetDocId(Project01, 41, 1),
@@ -4347,15 +4360,14 @@ public class SFProjectServiceTests
                                 },
                             ],
                         },
-                    }
+                    ]
                 )
             );
             RealtimeService.AddRepository(
                 "note_threads",
                 OTType.Json0,
                 new MemoryRepository<NoteThread>(
-                    new[]
-                    {
+                    [
                         new NoteThread
                         {
                             Id = "project01:dataId01",
@@ -4378,7 +4390,7 @@ public class SFProjectServiceTests
                                 new Note { DataId = "thread02:PT02", SyncUserRef = "PT02" },
                             ],
                         },
-                    }
+                    ]
                 )
             );
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
@@ -4394,8 +4406,7 @@ public class SFProjectServiceTests
             EmailService = Substitute.For<IEmailService>();
             var currentTime = DateTime.Now;
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                new[]
-                {
+                [
                     new SFProjectSecret
                     {
                         Id = Project01,
@@ -4406,7 +4417,7 @@ public class SFProjectServiceTests
                                 Key = "abcd",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4415,7 +4426,7 @@ public class SFProjectServiceTests
                                 ShareLinkType = ShareLinkType.Recipient,
                                 CreatedByAdmin = true,
                                 RecipientUserId = User03,
-                            }
+                            },
                         ],
                     },
                     new SFProjectSecret
@@ -4434,7 +4445,7 @@ public class SFProjectServiceTests
                                 Key = "reusableLinkFromAdmin",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4443,7 +4454,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                         ],
                     },
@@ -4468,7 +4479,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4477,7 +4488,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4486,7 +4497,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                         ],
                     },
@@ -4515,7 +4526,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                         ],
                     },
@@ -4530,7 +4541,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-1),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4538,7 +4549,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(-2),
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Anyone,
-                                CreatedByAdmin = false
+                                CreatedByAdmin = false,
                             },
                             new ShareKey
                             {
@@ -4562,7 +4573,7 @@ public class SFProjectServiceTests
                                 Key = "toBeReservedKey",
                                 ProjectRole = SFProjectRole.Commenter,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4577,7 +4588,7 @@ public class SFProjectServiceTests
                                 ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                CreatedByAdmin = true
+                                CreatedByAdmin = true,
                             },
                             new ShareKey
                             {
@@ -4589,14 +4600,15 @@ public class SFProjectServiceTests
                             },
                         ],
                     },
-                }
+                ]
             );
+            Logger = new MockLogger<SFProjectService>();
             MachineProjectService = Substitute.For<IMachineProjectService>();
             SyncService = Substitute.For<ISyncService>();
             SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
             ParatextService = Substitute.For<IParatextService>();
-            IReadOnlyList<ParatextProject> ptProjects = new[]
-            {
+            IReadOnlyList<ParatextProject> ptProjects =
+            [
                 new ParatextProject
                 {
                     ParatextId = "changedId",
@@ -4606,10 +4618,10 @@ public class SFProjectServiceTests
                 new ParatextProject { ParatextId = GetProject(Project01).ParatextId },
                 new ParatextProject { ParatextId = PTProjectIdNotYetInSF },
                 new ParatextProject { ParatextId = "ptProject123" },
-            };
+            ];
             ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
-            IReadOnlyList<ParatextResource> ptResources = new[]
-            {
+            IReadOnlyList<ParatextResource> ptResources =
+            [
                 new ParatextResource
                 {
                     ParatextId = "resource_project",
@@ -4617,18 +4629,17 @@ public class SFProjectServiceTests
                     LanguageTag = "qaa",
                 },
                 new ParatextResource { ParatextId = GetProject(Resource01).ParatextId },
-            };
+            ];
             ParatextService.GetResourcesAsync(Arg.Any<string>()).Returns(ptResources);
             ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(true));
             ParatextService.CanUserAuthenticateToPTArchivesAsync(Arg.Any<string>()).Returns(Task.FromResult(true));
             UserSecrets = new MemoryRepository<UserSecret>(
-                new[]
-                {
+                [
                     new UserSecret { Id = User01 },
                     new UserSecret { Id = User02 },
                     new UserSecret { Id = User03 },
                     new UserSecret { Id = User05 },
-                }
+                ]
             );
             var translateMetrics = new MemoryRepository<TranslateMetrics>();
             FileSystemService = Substitute.For<IFileSystemService>();
@@ -4654,6 +4665,7 @@ public class SFProjectServiceTests
                 ProjectSecrets,
                 SecurityService,
                 FileSystemService,
+                Logger,
                 MachineProjectService,
                 SyncService,
                 ParatextService,
@@ -4666,6 +4678,7 @@ public class SFProjectServiceTests
         }
 
         public SFProjectService Service { get; }
+        public MockLogger<SFProjectService> Logger { get; }
         public IMachineProjectService MachineProjectService { get; }
         public ISyncService SyncService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
