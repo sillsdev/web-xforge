@@ -111,6 +111,10 @@ public class SFProjectsRpcController(
         {
             return NotFoundError(dnfe.Message);
         }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
