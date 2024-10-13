@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -13,6 +13,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { Sync } from 'realtime-server/lib/esm/scriptureforge/models/sync';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import {
@@ -24,7 +25,7 @@ import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
@@ -32,7 +33,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
@@ -1220,6 +1221,16 @@ describe('SettingsComponent', () => {
       expect(env.sourceProjectMessage).not.toBeNull();
     }));
 
+    it('should disable Delete button if project is syncing', fakeAsync(() => {
+      const env = new TestEnvironment(true);
+      env.setupProject(undefined, undefined, undefined, undefined, { queuedCount: 1 });
+      env.wait();
+      env.fixture.detectChanges();
+      expect(env.deleteProjectButton).not.toBeNull();
+      expect(env.deleteProjectButton.disabled).toBe(true);
+      expect(env.projectSyncingMessage).not.toBeNull();
+    }));
+
     it('should delete project if user confirms on the dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
@@ -1407,6 +1418,10 @@ class TestEnvironment {
 
   get dangerZoneTitle(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#danger-zone div');
+  }
+
+  get projectSyncingMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#danger-zone .project-syncing-msg');
   }
 
   get sourceProjectMessage(): HTMLElement {
@@ -1639,7 +1654,10 @@ class TestEnvironment {
       usersSeeEachOthersResponses: false
     },
     biblicalTermsEnabled: boolean = false,
-    biblicalTermsMessage: string | undefined = undefined
+    biblicalTermsMessage: string | undefined = undefined,
+    sync: Partial<Sync> = {
+      queuedCount: 0
+    }
   ): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
@@ -1650,7 +1668,8 @@ class TestEnvironment {
           biblicalTermsEnabled: biblicalTermsEnabled,
           errorMessage: biblicalTermsMessage,
           hasRenderings: false
-        }
+        },
+        sync
       })
     });
   }
