@@ -74,6 +74,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   });
 
   isActiveSourceProject: boolean = false;
+  isProjectSyncing: boolean = false;
   projects?: ParatextProject[];
   resources?: SelectableProject[];
   nonSelectableProjects?: SelectableProject[];
@@ -176,7 +177,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get deleteButtonDisabled(): boolean {
-    return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject;
+    return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject || this.isProjectSyncing;
   }
 
   get canUpdateServalConfig(): boolean {
@@ -510,6 +511,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     } else {
       this.biblicalTermsEnabled.disable({ onlySelf: true });
     }
+
+    this.isProjectSyncing = (this.projectDoc?.data?.sync?.queuedCount ?? 0) > 0;
   }
 
   private setAllControlsToInSync(): void {
