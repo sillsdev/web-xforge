@@ -5,7 +5,7 @@
   <div mat-dialog-content>{{ message }}</div>
 }
 <div mat-dialog-actions align="end">
-  @for (option of options; track option) {
+  @for (option of options; track option.label) {
     @if (option.highlight) {
       <button mat-flat-button color="primary" [mat-dialog-close]="option.value">
         {{ option.label | async }}

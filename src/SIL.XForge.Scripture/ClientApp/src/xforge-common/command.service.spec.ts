@@ -1,4 +1,5 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { mock } from 'ts-mockito';
 import { BugsnagService } from './bugsnag.service';
@@ -9,8 +10,11 @@ const mockedBugsnagService = mock(BugsnagService);
 
 describe('CommandService', () => {
   configureTestingModule(() => ({
-    imports: [HttpClientTestingModule],
-    providers: [{ provide: BugsnagService, useMock: mockedBugsnagService }]
+    providers: [
+      { provide: BugsnagService, useMock: mockedBugsnagService },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
+    ]
   }));
 
   it('fetches', fakeAsync(() => {

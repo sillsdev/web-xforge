@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'checking_comments'">
-  @for (comment of getSortedComments(); track comment; let i = $index) {
+  @for (comment of getSortedComments(); track comment.dataId; let i = $index) {
     <div>
       @if (
         (activeComment == null || (commentFormVisible && activeComment.dataId !== comment.dataId)) &&

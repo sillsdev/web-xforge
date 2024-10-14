@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -102,13 +103,15 @@ class TestEnvironment {
   constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, OwnerComponent],
-      imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), HttpClientTestingModule, AvatarComponent],
+      imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), AvatarComponent],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: BugsnagService, useFactory: () => instance(this.mockedBugsnagService) },
         { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });

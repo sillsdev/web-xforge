@@ -1,4 +1,3 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -41,7 +40,6 @@ describe('JoinComponent', () => {
   configureTestingModule(() => ({
     declarations: [JoinComponent],
     imports: [
-      HttpClientTestingModule,
       NoopAnimationsModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),

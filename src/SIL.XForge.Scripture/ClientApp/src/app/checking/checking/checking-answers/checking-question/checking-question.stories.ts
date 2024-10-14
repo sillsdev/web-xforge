@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
+import { expect } from '@storybook/test';
 import { cloneDeep } from 'mingo/util';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import {

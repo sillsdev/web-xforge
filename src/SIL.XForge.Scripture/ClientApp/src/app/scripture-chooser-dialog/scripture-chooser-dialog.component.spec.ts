@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -409,17 +410,17 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   @NgModule({
+    declarations: [ScriptureChooserDialogComponent],
+    exports: [ScriptureChooserDialogComponent],
     imports: [
       BrowserModule,
-      HttpClientTestingModule,
       RouterModule.forRoot([]),
       UICommonModule,
       MatDialogModule,
       TestTranslocoModule,
       NoopAnimationsModule
     ],
-    declarations: [ScriptureChooserDialogComponent],
-    exports: [ScriptureChooserDialogComponent]
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   })
   class TestModule {}
 

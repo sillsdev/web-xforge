@@ -1,4 +1,5 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { anything, mock, verify } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
@@ -14,11 +15,12 @@ const mockedRetryingRequestService = mock(RetryingRequestService);
 
 describe('ServalAdministrationService', () => {
   configureTestingModule(() => ({
-    imports: [HttpClientTestingModule],
     providers: [
       { provide: CommandService, useMock: mockedCommandService },
       { provide: RealtimeService, useMock: mockedRealtimeService },
-      { provide: RetryingRequestService, useMock: mockedRetryingRequestService }
+      { provide: RetryingRequestService, useMock: mockedRetryingRequestService },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 

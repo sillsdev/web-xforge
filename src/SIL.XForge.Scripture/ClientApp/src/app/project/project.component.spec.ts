@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
@@ -41,7 +42,7 @@ const mockedDialogService = mock(DialogService);
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
     declarations: [ProjectComponent],
-    imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), HttpClientTestingModule],
+    imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -50,7 +51,9 @@ describe('ProjectComponent', () => {
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: PermissionsService, useMock: mockedPermissions },
       { provide: ResumeCheckingService, useMock: mockResumeCheckingService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 
