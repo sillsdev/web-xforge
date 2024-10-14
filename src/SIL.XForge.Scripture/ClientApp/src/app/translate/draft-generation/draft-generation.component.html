@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
-  @if (currentPage == "initial") {
+  @if (currentPage === "initial") {
     @if (isBackTranslationMode) {
       <h1 class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
     } @else {
@@ -366,7 +366,7 @@
         </mat-expansion-panel>
       </section>
     }
-  } @else if (currentPage == "steps") {
+  } @else if (currentPage === "steps") {
     <app-draft-generation-steps
       (done)="onPreGenerationStepsComplete($event)"
       (cancel)="currentPage = 'initial'"

@@ -52,7 +52,7 @@
       }
     </div>
 
-    @for (tabGroup of tabState.tabGroups$ | async | keyvalue; track tabGroup) {
+    @for (tabGroup of tabState.tabGroups$ | async | keyvalue; track tabGroup.key) {
       <app-tab-group
         id="{{ tabGroup.key }}-text-area"
         class="text-area"
@@ -60,7 +60,7 @@
         [selectedIndex]="tabGroup.value.selectedIndex"
         [connectedTo]="(tabState.groupIds$ | async) ?? []"
       >
-        @for (tab of tabGroup.value.tabs; track tab) {
+        @for (tab of tabGroup.value.tabs; track tab.type) {
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable" [tooltip]="tab.tooltip">
             <ng-template sf-tab-header>
               @if (tab.svgIcon) {

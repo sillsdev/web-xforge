@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
+import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { AnonymousService } from 'xforge-common/anonymous.service';
@@ -74,14 +74,23 @@ const meta: Meta = {
       declarations: [GenericDialogComponent],
       providers: [
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
-        { provide: AnonymousService, useValue: instance(mockedAnonymousService) },
+        {
+          provide: AnonymousService,
+          useValue: instance(mockedAnonymousService)
+        },
         { provide: AuthService, useValue: instance(mockedAuthService) },
         { provide: DialogService },
         { provide: LocationService, useValue: instance(mockedLocationService) },
         { provide: NoticeService, useValue: instance(mockedNoticeService) },
-        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
+        {
+          provide: OnlineStatusService,
+          useValue: instance(mockedOnlineStatusService)
+        },
         { provide: Router, useValue: instance(mockedRouter) },
-        { provide: SFProjectService, useValue: instance(mockedSFProjectService) }
+        {
+          provide: SFProjectService,
+          useValue: instance(mockedSFProjectService)
+        }
       ]
     }),
     (story, context) => {

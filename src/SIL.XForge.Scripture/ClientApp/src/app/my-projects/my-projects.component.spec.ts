@@ -1,5 +1,4 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -40,7 +39,6 @@ describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
     declarations: [MyProjectsComponent],
     imports: [
-      HttpClientTestingModule,
       UICommonModule,
       SharedModule,
       RouterModule.forRoot([

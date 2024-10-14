@@ -5,16 +5,15 @@
 @use '@angular/material' as mat;
 
 @mixin color($theme) {
-  $color-config: mat.get-color-config($theme);
-  $accent-palette: map.get($color-config, 'accent');
+  $accent-palette: mat.get-theme-color($theme, 'accent', 500);
 
   :root {
-    --sf-tab-header-active-tab-accent-color: #{mat.get-color-from-palette($accent-palette, 500)};
+    --sf-tab-header-active-tab-accent-color: #{$accent-palette};
   }
 }
 
 @mixin theme($theme) {
-  $color-config: mat.get-color-config($theme);
+  $color-config: mat.get-theme-color($theme, 'primary');
 
   @if $color-config != null {
     @include color($theme);

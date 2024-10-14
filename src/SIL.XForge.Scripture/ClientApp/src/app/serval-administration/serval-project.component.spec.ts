@@ -1,5 +1,4 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -36,7 +35,6 @@ const mockServalAdministrationService = mock(ServalAdministrationService);
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      HttpClientTestingModule,
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
