@@ -12,7 +12,7 @@
           <mat-menu #questionFilterMenu>
             <mat-selection-list [multiple]="true" class="menu-list">
               <h2 matSubheader>{{ t("questions_range") }}</h2>
-              @for (scope of questionScopes | keyvalue; track scope) {
+              @for (scope of questionScopes | keyvalue; track scope.key) {
                 <button
                   mat-menu-item
                   [class.selected]="scope.key === activeQuestionScope"
@@ -23,7 +23,7 @@
                 </button>
               }
               <h2 matSubheader>{{ t("filter_questions") }}</h2>
-              @for (filter of questionFilters | keyvalue; track filter) {
+              @for (filter of questionFilters | keyvalue; track filter.key) {
                 <button
                   mat-menu-item
                   [class.selected]="filter.key === activeQuestionFilter"

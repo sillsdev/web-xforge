@@ -36,7 +36,7 @@
     </div>
   }
   <div class="flex-row">
-    @for (book of bookOptions; track book) {
+    @for (book of bookOptions; track book.bookId) {
       <mat-chip-listbox
         hideSingleSelectionIndicator
         [selectable]="!readonly"

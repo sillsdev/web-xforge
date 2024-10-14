@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -24,7 +25,6 @@ const mockedDocumentBody = mock(HTMLBodyElement);
 describe('I18nService', () => {
   configureTestingModule(() => ({
     declarations: [],
-    imports: [HttpClientTestingModule],
     providers: [
       { provide: LocationService, useMock: mockedLocationService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -32,7 +32,9 @@ describe('I18nService', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: DOCUMENT, useMock: mockedDocument },
-      { provide: HTMLBodyElement, useMock: mockedDocumentBody }
+      { provide: HTMLBodyElement, useMock: mockedDocumentBody },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 

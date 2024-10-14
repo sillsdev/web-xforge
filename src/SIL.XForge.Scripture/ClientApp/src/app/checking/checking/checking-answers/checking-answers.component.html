@@ -126,7 +126,7 @@
               <div>{{ t("your_answer") }}</div>
             }
           </h3>
-          @for (answer of answers; track answer) {
+          @for (answer of answers; track answer.dataId) {
             <div class="answer" [ngClass]="{ attention: answersHighlightStatus.get(answer.dataId) }">
               @if (canSeeOtherUserResponses) {
                 <div class="like">

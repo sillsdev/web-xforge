@@ -111,7 +111,7 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
       this.joiningProjects.push(projectId);
       await this.projectService.onlineAddCurrentUser(projectId);
       this.router.navigate(['projects', projectId]);
-    } catch (err) {
+    } catch {
       this.noticeService.show(translate('my_projects.failed_to_join_project'));
     } finally {
       this.noticeService.loadingFinished(this.constructor.name);

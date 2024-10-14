@@ -75,19 +75,19 @@ $mat-sf-error: (
 );
 
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$matGreyPalette: mat.define-palette($mat-sf-grey, 800);
-$matGreenLightPalette: mat.define-palette($mat-sf-green, 500, 200);
-$matErrorPalette: mat.define-palette($mat-sf-error, 500);
+$matGreyPalette: mat.m2-define-palette($mat-sf-grey, 800);
+$matGreenLightPalette: mat.m2-define-palette($mat-sf-green, 500, 200);
+$matErrorPalette: mat.m2-define-palette($mat-sf-error, 500);
 
-$app-typography: mat.define-typography-config(
-  $body-1: mat.define-typography-level(16px, 1.2em)
+$app-typography: mat.m2-define-typography-config(
+  $body-1: mat.m2-define-typography-level(16px, 1.2em)
 );
 
-$dialog-typography: mat.define-typography-config(
-  $body-1: mat.define-typography-level(14px, 1.5em)
+$dialog-typography: mat.m2-define-typography-config(
+  $body-1: mat.m2-define-typography-level(14px, 1.5em)
 );
 
-$material-app-theme: mat.define-light-theme(
+$material-app-theme: mat.m2-define-light-theme(
   (
     color: (
       primary: $matGreyPalette,
@@ -100,7 +100,7 @@ $material-app-theme: mat.define-light-theme(
 
 // A Material input uses the accent color for the asterisk, but light green is an odd color to use there.
 // This theme uses the error color for accent and can be applied only where needed.
-$material-theme-accent-error: mat.define-light-theme(
+$material-theme-accent-error: mat.m2-define-light-theme(
   (
     color: (
       primary: $matGreyPalette,

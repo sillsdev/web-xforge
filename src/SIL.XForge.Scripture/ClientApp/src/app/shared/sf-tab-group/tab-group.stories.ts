@@ -136,8 +136,19 @@ const tabGroups: TabGroup<string, TabInfo<string>>[] = [
       closeable: false,
       movable: false
     },
-    { type: 'type-b', headerText: 'Tab 2 <em>wow!</em>', closeable: true, movable: true },
-    { type: 'type-c', headerText: 'Tab 3', icon: 'book', closeable: true, movable: true }
+    {
+      type: 'type-b',
+      headerText: 'Tab 2 <em>wow!</em>',
+      closeable: true,
+      movable: true
+    },
+    {
+      type: 'type-c',
+      headerText: 'Tab 3',
+      icon: 'book',
+      closeable: true,
+      movable: true
+    }
   ])
 ];
 
@@ -168,7 +179,12 @@ export const TabReorderAndMove: Story = {
     tabGroups: [
       ...tabGroups,
       new TabGroup<string, TabInfo<string>>('group-2', [
-        { type: 'type-a', headerText: 'Uncloseable, unmovable Tab 1', closeable: false, movable: false },
+        {
+          type: 'type-a',
+          headerText: 'Uncloseable, unmovable Tab 1',
+          closeable: false,
+          movable: false
+        },
         { type: 'type-b', headerText: 'Tab 2', closeable: true, movable: true },
         { type: 'type-c', headerText: 'Tab 3', closeable: true, movable: true },
         { type: 'type-c', headerText: 'Tab 4', closeable: true, movable: true }
