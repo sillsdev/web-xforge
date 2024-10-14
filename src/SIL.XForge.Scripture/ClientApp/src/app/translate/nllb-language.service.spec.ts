@@ -1,5 +1,5 @@
-import { HttpErrorResponse } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpErrorResponse, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -20,7 +20,7 @@ describe('NllbLanguageService', () => {
   beforeEach(() => {
     mockErrorReportingService = jasmine.createSpyObj<ErrorReportingService>(['silentError']);
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, TestOnlineStatusModule.forRoot()],
+      imports: [TestOnlineStatusModule.forRoot()],
       providers: [
         NllbLanguageService,
         {
@@ -36,7 +36,9 @@ describe('NllbLanguageService', () => {
         },
         { provide: ErrorReportingService, useValue: mockErrorReportingService },
         { provide: HttpClient, useValue: { get: () => of({}) } },
-        { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+        { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClientTesting()
       ]
     });
     service = TestBed.inject(NllbLanguageService);

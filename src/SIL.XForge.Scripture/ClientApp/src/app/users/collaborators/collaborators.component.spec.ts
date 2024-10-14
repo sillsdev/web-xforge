@@ -1,6 +1,5 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatMenuHarness } from '@angular/material/menu/testing';
@@ -62,7 +61,6 @@ describe('CollaboratorsComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       SharedModule,
       TestOnlineStatusModule.forRoot(),
-      HttpClientTestingModule,
       AvatarComponent
     ],
     providers: [

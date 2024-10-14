@@ -120,7 +120,7 @@ export class RetryingRequest<T> {
         }
       }
     }
-    return;
+    return undefined;
   }
 
   private async uponOnline(): Promise<void> {

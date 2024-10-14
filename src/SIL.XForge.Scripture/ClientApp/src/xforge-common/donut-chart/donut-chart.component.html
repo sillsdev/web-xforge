@@ -7,7 +7,7 @@
     [attr.stroke]="backgroundColor"
     [attr.stroke-width]="thickness"
   ></circle>
-  @for (v of data; track v; let i = $index) {
+  @for (v of data; track $index; let i = $index) {
     <ng-container>
       <circle
         #segmentCircle

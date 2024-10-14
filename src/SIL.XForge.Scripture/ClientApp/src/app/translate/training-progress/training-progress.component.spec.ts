@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ProgressStatus } from '@sillsdev/machine';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -26,17 +27,14 @@ const mockedUserService = mock(UserService);
 
 describe('TrainingProgressComponent', () => {
   configureTestingModule(() => ({
-    imports: [
-      TestTranslocoModule,
-      UICommonModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      HttpClientTestingModule
-    ],
+    imports: [TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     declarations: [TrainingProgressComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 

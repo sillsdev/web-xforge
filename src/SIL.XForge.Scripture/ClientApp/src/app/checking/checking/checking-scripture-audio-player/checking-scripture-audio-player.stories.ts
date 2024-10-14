@@ -41,8 +41,14 @@ const meta: Meta = {
       imports: [UICommonModule, CommonModule, I18nStoryModule],
       declarations: [AudioPlayerComponent, AudioTimePipe],
       providers: [
-        { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
-        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }
+        {
+          provide: SFProjectService,
+          useValue: instance(mockedSFProjectService)
+        },
+        {
+          provide: OnlineStatusService,
+          useValue: instance(mockedOnlineStatusService)
+        }
       ]
     }),
     (story, context) => {

@@ -1,6 +1,5 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -68,7 +67,6 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 describe('SettingsComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      HttpClientTestingModule,
       RouterModule.forRoot(ROUTES),
       UICommonModule,
       TestTranslocoModule,

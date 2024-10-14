@@ -1,6 +1,7 @@
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -60,6 +61,8 @@ describe('FeatureFlagsComponent', () => {
 });
 
 @NgModule({
+  declarations: [FeatureFlagsDialogComponent],
+  exports: [FeatureFlagsDialogComponent],
   imports: [
     CommonModule,
     UICommonModule,
@@ -67,11 +70,9 @@ describe('FeatureFlagsComponent', () => {
     ReactiveFormsModule,
     TestTranslocoModule,
     NoopAnimationsModule,
-    HttpClientTestingModule,
     NoticeComponent
   ],
-  declarations: [FeatureFlagsDialogComponent],
-  exports: [FeatureFlagsDialogComponent]
+  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}
 

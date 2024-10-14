@@ -90,7 +90,7 @@
             {{ t(errorMessage) }}
           </app-notice>
         }
-        @if (!(isOnline | async)) {
+        @if ((isOnline | async) === false) {
           <app-notice id="message-offline" icon="cloud_off" [type]="userHasProjects ? 'info' : 'error'">
             {{ t("offline") }}
           </app-notice>
@@ -128,7 +128,7 @@
                 mat-flat-button
                 color="primary"
                 (click)="joinProject(ptProject.projectId)"
-                [disabled]="!(isOnline | async) || joiningProjects.includes(ptProject.projectId)"
+                [disabled]="(isOnline | async) === false || joiningProjects.includes(ptProject.projectId)"
               >
                 {{ t("join") }}
               </button>

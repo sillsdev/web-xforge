@@ -117,7 +117,7 @@ export function issuesEmailTemplate(errorId?: string): string {
 export function parseJSON(str: string): any | undefined {
   try {
     return JSON.parse(str);
-  } catch (err) {
+  } catch {
     return undefined;
   }
 }

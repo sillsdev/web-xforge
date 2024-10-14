@@ -115,7 +115,7 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
           this.projectFetchFailed = true;
         }
       }
-    } catch (e) {
+    } catch {
       try {
         if (this.appOnline) {
           this.isSyncActive = false;
