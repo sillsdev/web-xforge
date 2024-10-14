@@ -1,6 +1,5 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { within } from '@storybook/testing-library';
+import { expect, within } from '@storybook/test';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -36,7 +35,12 @@ export default {
     },
     moduleMetadata({
       imports: [],
-      providers: [{ provide: ActivatedProjectService, useValue: instance(mockedActivatedProjectService) }]
+      providers: [
+        {
+          provide: ActivatedProjectService,
+          useValue: instance(mockedActivatedProjectService)
+        }
+      ]
     })
   ],
   args: defaultArgs

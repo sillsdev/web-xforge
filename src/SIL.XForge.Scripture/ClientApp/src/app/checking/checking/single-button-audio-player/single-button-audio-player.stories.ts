@@ -31,7 +31,12 @@ const meta: Meta<SingleButtonAudioPlayerComponent> = {
   decorators: [
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
-      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }],
+      providers: [
+        {
+          provide: OnlineStatusService,
+          useValue: instance(mockedOnlineStatusService)
+        }
+      ],
       declarations: [SingleButtonAudioPlayerComponent, TestComponent]
     })
   ]

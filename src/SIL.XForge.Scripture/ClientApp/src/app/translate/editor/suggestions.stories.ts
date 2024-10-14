@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { within } from '@storybook/testing-library';
+import { expect, within } from '@storybook/test';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SuggestionsComponent } from './suggestions.component';
 
@@ -23,8 +22,14 @@ export const Default: Story = {
   args: {
     show: true,
     suggestions: [
-      { words: ['there', 'was', 'dearth', 'in', 'the', 'earth'], confidence: 0.29 },
-      { words: ['there', 'was', 'a', 'famine', 'in', 'the', 'land'], confidence: 0.21 }
+      {
+        words: ['there', 'was', 'dearth', 'in', 'the', 'earth'],
+        confidence: 0.29
+      },
+      {
+        words: ['there', 'was', 'a', 'famine', 'in', 'the', 'land'],
+        confidence: 0.21
+      }
     ]
   },
   play: async ({ canvasElement }) => {
@@ -39,8 +44,14 @@ export const RTLSuggestions: Story = {
   args: {
     show: true,
     suggestions: [
-      { words: ' وَعَمَّتْ تِلْكَ الْبِلادَ مَجَاعَةٌ'.split(' '), confidence: 0.29 },
-      { words: 'ثُمَّ حَدَثْتْ مَجَاعَةٌ فِي الأرْضِ'.split(' '), confidence: 0.21 }
+      {
+        words: ' وَعَمَّتْ تِلْكَ الْبِلادَ مَجَاعَةٌ'.split(' '),
+        confidence: 0.29
+      },
+      {
+        words: 'ثُمَّ حَدَثْتْ مَجَاعَةٌ فِي الأرْضِ'.split(' '),
+        confidence: 0.21
+      }
     ]
   },
   parameters: { locale: 'ar' }
