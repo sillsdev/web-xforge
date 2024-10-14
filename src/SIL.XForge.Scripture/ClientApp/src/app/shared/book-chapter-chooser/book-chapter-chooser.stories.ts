@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Meta, StoryFn } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { userEvent, within } from '@storybook/testing-library';
+import { expect } from '@storybook/test';
+import { userEvent, within } from '@storybook/test';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';

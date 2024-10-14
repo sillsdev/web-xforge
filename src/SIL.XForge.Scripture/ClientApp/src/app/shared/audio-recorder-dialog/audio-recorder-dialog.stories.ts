@@ -2,10 +2,10 @@ import { Meta, moduleMetadata } from '@storybook/angular';
 import { NoticeService } from 'xforge-common/notice.service';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { DialogService } from 'xforge-common/dialog.service';
-import { expect } from '@storybook/jest';
+import { expect } from '@storybook/test';
 import { instance, mock, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { userEvent } from '@storybook/testing-library';
+import { userEvent } from '@storybook/test';
 import {
   AudioAttachment,
   AudioRecorderDialogComponent,
@@ -51,7 +51,10 @@ export default {
     },
     data: {
       description: 'Data to pass to the dialog',
-      table: { category: 'Dialog data', type: { summary: 'AudioRecorderDialogData' } }
+      table: {
+        category: 'Dialog data',
+        type: { summary: 'AudioRecorderDialogData' }
+      }
     },
     micAvailable: {
       control: { type: 'boolean' },
@@ -67,7 +70,9 @@ export default {
   decorators: [
     moduleMetadata({}),
     (story, context) => {
-      context.args.data = { countdown: context.args.countdown } as AudioRecorderDialogData;
+      context.args.data = {
+        countdown: context.args.countdown
+      } as AudioRecorderDialogData;
       when(mockedNavigator.mediaDevices).thenReturn({
         getUserMedia: (_: MediaStreamConstraints): Promise<MediaStream> => {
           return context.args.micPermission && context.args.micAvailable
