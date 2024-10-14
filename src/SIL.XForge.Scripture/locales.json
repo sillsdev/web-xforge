@@ -21,17 +21,17 @@
     "helps": "fr"
   },
   {
+    "localName": "Bahasa Indonesia",
+    "englishName": "Indonesian",
+    "tags": ["id", "id-ID"],
+    "production": true
+  },
+  {
     "localName": "Español",
     "englishName": "Spanish",
     "tags": ["es", "es-ES"],
     "production": true,
     "helps": "es"
-  },
-  {
-    "localName": "Bahasa Indonesia",
-    "englishName": "Indonesian",
-    "tags": ["id", "id-ID"],
-    "production": true
   },
   {
     "localName": "Română",
@@ -78,6 +78,13 @@
     "production": true
   },
   {
+    "localName": "Deutsch",
+    "englishName": "German",
+    "tags": ["de", "de-DE"],
+    "production": true,
+    "helps": "de"
+  },
+  {
     "localName": "नेपाली",
     "englishName": "Nepali",
     "tags": ["npi", "npi-NP"],
@@ -88,13 +95,6 @@
     "englishName": "Lao",
     "tags": ["lo", "lo-LA"],
     "production": true
-  },
-  {
-    "localName": "Deutsch",
-    "englishName": "German",
-    "tags": ["de", "de-DE"],
-    "production": true,
-    "helps": "de"
   },
   {
     "localName": "ខ្មែរ",
