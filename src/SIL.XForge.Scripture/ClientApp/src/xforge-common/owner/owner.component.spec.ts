@@ -1,6 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
@@ -16,6 +16,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
+import { isSafari } from '../utils';
 import { OwnerComponent } from './owner.component';
 
 describe('OwnerComponent', () => {
@@ -62,7 +63,12 @@ describe('OwnerComponent', () => {
     env.fixture.detectChanges();
     // As of Chromium 110 the space between the minutes and AM/PM is now a NARROW NO-BREAK SPACE (U+202F). Test for any
     // single whitespace character to maximize compatibility.
-    expect(env.dateTime).toMatch(/Apr 25, 2019, 12:30\sPM/);
+    if (isSafari()) {
+      expect(env.dateTime).toMatch(/Apr 25, 2019 at 12:30\sPM/);
+    } else {
+      // Chrome, Firefox
+      expect(env.dateTime).toMatch(/Apr 25, 2019, 12:30\sPM/);
+    }
   });
 
   it('layout set correctly', () => {

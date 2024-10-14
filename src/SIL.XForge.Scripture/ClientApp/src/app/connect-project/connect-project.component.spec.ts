@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -18,9 +18,10 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { isSafari } from 'xforge-common/utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -106,8 +107,14 @@ describe('ConnectProjectComponent', () => {
     // NOTE: The source projects list excludes pt01 (as it is our selected project above)
     expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(3);
     expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(3);
-    expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('THA - Thai');
-    expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('SJL - Sob Jonah and Luke');
+    if (isSafari()) {
+      // Angular inserts the group name at the end in a hidden span for the Safari screen reader
+      expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('THA - Thai(Projects)');
+      expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('SJL - Sob Jonah and Luke(Resources)');
+    } else {
+      expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('THA - Thai');
+      expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('SJL - Sob Jonah and Luke');
+    }
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);
   }));
