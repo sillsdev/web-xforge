@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -45,7 +46,6 @@ describe('SaUsersComponent', () => {
       DialogTestModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
-      HttpClientTestingModule,
       AvatarComponent
     ],
     declarations: [SaUsersComponent],
@@ -54,7 +54,9 @@ describe('SaUsersComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
-      emptyHammerLoader
+      emptyHammerLoader,
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 

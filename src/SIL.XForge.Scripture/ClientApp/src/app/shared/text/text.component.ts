@@ -622,18 +622,18 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     format: any
   ): string | undefined {
     if (this.editor == null) {
-      return;
+      return undefined;
     }
 
     // A single verse can be associated with multiple compatible segments (e.g verse_1_1, verse_1_1/p_1)
     const verseSegments: string[] = this.getCompatibleSegments(verseRef);
     if (verseSegments.length === 0) {
-      return;
+      return undefined;
     }
     let editorPosOfSegmentToModify: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let startTextPosInVerse: number = textAnchor.start;
     if (Array.from(this.viewModel.embeddedElements.keys()).includes(id)) {
-      return;
+      return undefined;
     }
 
     let embedSegmentRef: string = verseSegments[0];
@@ -665,7 +665,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (editorPosOfSegmentToModify == null) {
-      return;
+      return undefined;
     }
 
     const editorRange: EditorRange = this.viewModel.getEditorContentRange(
@@ -1036,7 +1036,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         return viewer[0];
       }
     }
-    return;
+    return undefined;
   }
 
   private isSelectionAtSegmentPosition(end: boolean): boolean {

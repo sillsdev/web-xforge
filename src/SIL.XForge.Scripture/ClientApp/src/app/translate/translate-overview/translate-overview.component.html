@@ -63,7 +63,7 @@
         <mat-card-content class="engine-card-content">
           <div class="engine-card-quality">
             <div class="engine-card-quality-stars mirror-rtl" [title]="(engineConfidence | l10nNumber) + ' BLEU'">
-              @for (star of engineQualityStars; track star) {
+              @for (star of engineQualityStars; track $index) {
                 <mat-icon>{{
                   engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
                 }}</mat-icon>

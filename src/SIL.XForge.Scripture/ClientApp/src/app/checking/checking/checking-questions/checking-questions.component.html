@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
   @if (hasQuestions) {
     <mat-list>
-      @for (questionDoc of questionDocs; track questionDoc) {
+      @for (questionDoc of questionDocs; track questionDoc.id) {
         <mat-list-item
           (click)="activateQuestion(questionDoc)"
           [ngClass]="{

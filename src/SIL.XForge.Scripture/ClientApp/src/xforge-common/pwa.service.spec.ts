@@ -117,7 +117,7 @@ Object.defineProperty(mockedWindow, 'dispatchEvent', {
   value: (event: Event) => {
     let listeners = windowEvents[event.type];
     if (listeners == null) {
-      return;
+      return undefined;
     }
     for (let listener of listeners) {
       if (typeof listener !== 'function') {

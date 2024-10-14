@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
+import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
@@ -22,7 +22,12 @@ const meta: Meta<CheckingAudioPlayerComponent> = {
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
       declarations: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
-      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
+      providers: [
+        {
+          provide: OnlineStatusService,
+          useValue: instance(mockedOnlineStatusService)
+        }
+      ]
     })
   ],
   args: { source: './test-audio-player.webm' }

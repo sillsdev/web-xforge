@@ -67,7 +67,7 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
 
   currentVerseRef(): VerseRef | undefined {
     if (this.data == null) {
-      return;
+      return undefined;
     }
     const lastReattach: Note | undefined = this.notesInOrderClone(this.data.notes)
       .reverse()
@@ -127,7 +127,7 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   }
 
   private getActiveTagOnThread(noteTags: NoteTag[]): NoteTag | undefined {
-    if (this.data == null) return;
+    if (this.data == null) return undefined;
 
     const iconDefinedNotes: Note[] = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
     let tagId: number | undefined =
