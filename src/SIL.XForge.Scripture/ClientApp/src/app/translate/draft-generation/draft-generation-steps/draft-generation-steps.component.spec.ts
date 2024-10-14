@@ -302,7 +302,7 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
 
       // Tick the checkbox
-      const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox input');
+      const fastTrainingCheckbox = fixture.nativeElement.querySelector('mat-checkbox.fast-training input');
       fastTrainingCheckbox.click();
 
       // Click next on the final step to generate the draft

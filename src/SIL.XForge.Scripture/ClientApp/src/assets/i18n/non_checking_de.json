@@ -2,6 +2,7 @@
   "app": {
     "beta": "Beta",
     "generate_draft": "Entwurf generieren",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Fragen verwalten",
     "settings": "Einstellungen",
     "synchronize": "Synchronisieren",
@@ -43,11 +44,9 @@
     "view_renderings": "Übersetzungsmöglichkeiten ansehen"
   },
   "book_select": {
-    "clear": "Klar",
-    "deuterocanon": "Deuterokanonisch",
-    "new_testament": "NT",
-    "old_testament": "AT",
-    "select": "Wählen"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Frage hinzufügen"
@@ -154,7 +153,6 @@
     "select_alternate_project": "Wähle das Projekt, dem Du den Entwurf hinzufügen möchtest"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Zurück",
     "back_translation_requirement": "Rückübersetzungsentwürfe können nur in den etwa 200 [link:supportedLanguagesUrl] unterstützten Sprachen[/link] erstellt werden.",
     "cancel_generation_button": "Abbrechen",
     "criteria_project_language_not_in_nllb_with_language": "Deine Projektsprache von [em]\"{{ targetLanguageDisplayName }}\"[/em] ist keine unterstützte Sprache.",
@@ -214,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Zurück",
-    "choose_additional_training_data_files_subheader": "Zusätzliche Schulungsdateien auswählen.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
-    "choose_books_for_training_subheader": "Büchern auswählen, die geprüft wurden.",
-    "choose_books_for_training": "Bücher für die Schulung des Sprachmodells auswählen",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Schulung",
     "choose_books_to_translate_error": "Keine Bücher ausgewählt. Wähle zu übersetzende Bücher aus, um fortzufahren.",
-    "choose_books_to_translate": "Auswahl der zu übersetzenden Bücher",
-    "configure_advanced_settings": "Erweiterte Einstellungen konfigurieren",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Entwurf erstellen",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Die Aktivierung dieser Option spart Zeit, verringert aber die Genauigkeit erheblich.",
     "fast_training": "Schnelle Schulung aktivieren",
     "generate_draft": "Entwurf generieren",
@@ -244,7 +244,7 @@
   "editor": {
     "add_comment": "Kommentar hinzufügen",
     "anonymous": "Anonym",
-    "browser_warning_banner": "The editor is not compatible with the current browser for the project language. We recommend editing this project in {{ firefoxLink }} or {{ safari }}.",
+    "browser_warning_banner": "Der Editor ist nicht mit dem aktuellen Browser für die Projektsprache kompatibel. Wir empfehlen, dieses Projekt in {{ firefoxLink }} oder {{ safari }} zu bearbeiten.",
     "cancel": "Abbrechen",
     "cannot_edit_chapter_formatting_invalid": "Dieses Kapitel kann nicht bearbeitet werden, da die Formatierung ungültig ist. Bitte korrigiere die Formatierung in Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "Dieses Kapitel kann nicht bearbeitet werden, da es nicht unterstützte USFM-Code enthält. Um es zu bearbeiten, entferne diese Tags in Paratext: {{ tags }}",

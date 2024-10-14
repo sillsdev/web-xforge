@@ -10,7 +10,7 @@
     "formulahendry.dotnet-test-explorer",
     "ms-dotnettools.csharp",
     "orta.vscode-jest",
-    "raagh.angular-karma-test-explorer",
+    "lucono.karma-test-explorer",
     "streetsidesoftware.code-spell-checker",
     "yzhang.markdown-all-in-one",
     "ms-azuretools.vscode-cosmosdb",

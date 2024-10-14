@@ -49,6 +49,14 @@ describe('PermissionsService', () => {
     expect(env.service.canAccessTranslate(env.projectDoc, SFProjectRole.Commenter)).toBe(true);
   }));
 
+  it('does not allow commenters to access drafts', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedUserService.currentUserId).thenReturn(SFProjectRole.Commenter);
+
+    expect(env.service.canAccessDrafts(env.projectDoc)).toBe(false);
+    expect(env.service.canAccessDrafts(env.projectDoc, SFProjectRole.Commenter)).toBe(false);
+  }));
+
   it('allows checkers to access Community Checking if enabled', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedUserService.currentUserId).thenReturn(SFProjectRole.CommunityChecker);
@@ -57,7 +65,7 @@ describe('PermissionsService', () => {
     expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.CommunityChecker)).toBe(true);
   }));
 
-  it('allows admins to access both', fakeAsync(() => {
+  it('allows admins to access translate, checking, and drafts', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedUserService.currentUserId).thenReturn(SFProjectRole.ParatextAdministrator);
 
@@ -65,6 +73,8 @@ describe('PermissionsService', () => {
     expect(env.service.canAccessTranslate(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(true);
     expect(env.service.canAccessCommunityChecking(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
+    expect(env.service.canAccessDrafts(env.projectDoc)).toBe(true);
+    expect(env.service.canAccessDrafts(env.projectDoc, SFProjectRole.ParatextAdministrator)).toBe(true);
   }));
 
   it('does not allow checkers to access Translate', fakeAsync(() => {

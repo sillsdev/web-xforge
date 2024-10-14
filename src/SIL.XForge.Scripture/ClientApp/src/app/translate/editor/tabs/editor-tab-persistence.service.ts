@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { isEqual, isUndefined, omitBy } from 'lodash-es';
+import { editorTabTypes } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
 import { EditorTabPersistData } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab-persist-data';
-import { combineLatest, firstValueFrom, Observable, of, startWith, Subject, Subscription, switchMap, tap } from 'rxjs';
+import { Observable, Subject, Subscription, combineLatest, firstValueFrom, of, startWith, switchMap, tap } from 'rxjs';
 import { distinctUntilChanged, finalize, shareReplay } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserService } from 'xforge-common/user.service';
@@ -19,7 +20,7 @@ export class EditorTabPersistenceService {
    * Observable list of open editor tabs.
    */
   readonly persistedTabs$: Observable<EditorTabPersistData[]> = this.projectUserConfigDoc$.pipe(
-    switchMap(configDoc => of(configDoc.data?.editorTabsOpen ?? [])),
+    switchMap(configDoc => of(configDoc.data?.editorTabsOpen.filter(t => editorTabTypes.includes(t.tabType)) ?? [])),
     distinctUntilChanged(isEqual)
   );
 

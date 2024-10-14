@@ -5,18 +5,19 @@ import { Canon } from '@sillsdev/scripture';
 import { DeltaStatic } from 'quill';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import {
-  asyncScheduler,
   BehaviorSubject,
+  Observable,
+  Subject,
+  asyncScheduler,
   combineLatest,
   map,
-  Observable,
   observeOn,
   startWith,
-  Subject,
   tap
 } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
+import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -45,7 +46,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
 
   historyRevisions: Revision[] = [];
   selectedRevision: Revision | undefined;
-  selectedSnapshot: Snapshot<TextData> | undefined;
+  selectedSnapshot: TextSnapshot | undefined;
 
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
@@ -155,6 +156,12 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     const delta: DeltaStatic = new Delta(this.selectedSnapshot.data.ops);
     const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
     await this.textDocService.overwrite(textDocId, delta, 'History');
+    await this.projectService.onlineSetIsValid(
+      textDocId.projectId,
+      textDocId.bookNum,
+      textDocId.chapterNum,
+      this.selectedSnapshot.isValid
+    );
 
     // Force the history editor to reload
     this.revisionSelect.emit({ revision: this.selectedRevision, snapshot: this.selectedSnapshot });

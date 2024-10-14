@@ -1,6 +1,4 @@
 # This additional file contains configuration for Windows and support for Visual Studio's Fast Mode
-version: "3.4"
-
 services:
   web-xforge:
     environment:

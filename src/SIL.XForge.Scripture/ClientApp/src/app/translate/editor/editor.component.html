@@ -1,5 +1,9 @@
 <ng-container *transloco="let t; read: 'editor'">
-  <div class="content" [class.reverse-columns]="!isTargetTextRight" [class.target-only]="!showSource">
+  <div
+    class="content"
+    [class.reverse-columns]="!isTargetTextRight"
+    [class.target-only]="!showSource && !showPersistedTabsOnSource"
+  >
     <div class="toolbar">
       <div class="toolbar-options">
         <app-book-chapter-chooser
@@ -69,6 +73,7 @@
             @switch (tab.type) {
               @case ("biblical-terms") {
                 <app-biblical-terms
+                  class="biblical-terms"
                   [bookNum]="bookNum"
                   [chapter]="chapter"
                   [verse]="verse"

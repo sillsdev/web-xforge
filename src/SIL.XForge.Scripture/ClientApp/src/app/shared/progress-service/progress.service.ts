@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { asyncScheduler, merge, Subscription, throttleTime } from 'rxjs';
+import { Subscription, asyncScheduler, merge, throttleTime } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -53,17 +53,13 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
   async initialize(projectId: string): Promise<void> {
     if (this._projectDoc?.id !== projectId) {
+      this._canTrainSuggestions = false;
       this._projectDoc = await this.projectService.getProfile(projectId);
 
       // If we are offline, just update the progress with what we have
       if (!this.onlineStatusService.isOnline) {
         await this.calculateProgress();
       }
-
-      // Update the overview now if we are online, or when we are next online
-      this.onlineStatusService.online.then(async () => {
-        await this.calculateProgress();
-      });
 
       const chapterObservables = [];
       for (const book of this._projectDoc.data!.texts) {
@@ -75,7 +71,7 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       }
 
       this._allChaptersChangeSub?.unsubscribe();
-      this._allChaptersChangeSub = merge(...chapterObservables)
+      this._allChaptersChangeSub = merge(...chapterObservables, this.onlineStatusService.online)
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(async () => {
           await this.calculateProgress();
@@ -156,7 +152,6 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
         // 9 is the minimum number found in testing, but we will use 10 to be safe
         if (numTranslatedSegments >= 10) {
           this._canTrainSuggestions = true;
-          return;
         }
       }
     }
