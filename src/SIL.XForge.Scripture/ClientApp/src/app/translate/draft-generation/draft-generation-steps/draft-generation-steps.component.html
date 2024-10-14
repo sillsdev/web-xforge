@@ -196,17 +196,23 @@
         <h2>Training the language model</h2>
         <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("confirm_training") }}</span>
-          <table mat-table class="confirm-training" [dataSource]="userSelectedTrainingBooks">
+          <table mat-table class="confirm-training" [dataSource]="selectedTrainingBooksCollapsed()">
             <ng-container matColumnDef="book">
               <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let element" class="bookName">{{ element.name }}</td>
+              <td mat-cell *matCellDef="let element" class="bookName">
+                <span class="confirm-book">{{ element.ranges.join(", ") }}</span>
+              </td>
             </ng-container>
             <ng-container matColumnDef="source">
-              <th mat-header-cell *matHeaderCellDef>{{ trainingSources[0].writingSystem.tag }}</th>
+              <th mat-header-cell *matHeaderCellDef>
+                {{ this.i18n.getLanguageDisplayName(trainingSources[0].writingSystem.tag) }}
+              </th>
               <td mat-cell *matCellDef="let element">{{ element.source }}</td>
             </ng-container>
             <ng-container matColumnDef="target">
-              <th mat-header-cell *matHeaderCellDef>{{ trainingTargets[0].writingSystem.tag }}</th>
+              <th mat-header-cell *matHeaderCellDef>
+                {{ this.i18n.getLanguageDisplayName(trainingTargets[0].writingSystem.tag) }}
+              </th>
               <td mat-cell *matCellDef="let element">{{ element.target }}</td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="['book', 'source', 'target']"></tr>
@@ -222,7 +228,7 @@
           <div class="confirm-translate">
             <div class="confirm-translate-books">
               @for (book of userSelectedTranslateBooks; track book) {
-                <span class="readonly-book">{{ book.name }}</span>
+                <span class="confirm-book">{{ book.name }}</span>
               }
             </div>
           </div>
