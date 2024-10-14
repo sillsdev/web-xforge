@@ -3342,9 +3342,9 @@ public class ParatextService : DisposableBase, IParatextService
     private async Task<UserSecret> GetUserSecretWithCurrentParatextTokens(string sfUserId, CancellationToken token)
     {
         SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(sfUserId, _ => new SemaphoreSlim(1, 1));
+        await semaphore.WaitAsync(token);
         try
         {
-            await semaphore.WaitAsync(token);
             Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(sfUserId);
             if (!attempt.TryResult(out UserSecret userSecret))
             {
