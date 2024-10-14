@@ -38,7 +38,13 @@ export interface Book {
   number: number;
 }
 
-export interface TrainingBook extends Book {
+export interface TrainingBook extends Book, TrainingPair {}
+
+export interface TrainingGroup extends TrainingPair {
+  ranges: string[];
+}
+
+interface TrainingPair {
   source: string;
   target: string;
 }
@@ -106,10 +112,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   constructor(
     private readonly activatedProject: ActivatedProjectService,
     private readonly draftSourcesService: DraftSourcesService,
-    readonly featureFlags: FeatureFlagService,
+    protected readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
     private readonly trainingDataService: TrainingDataService,
-    readonly i18n: I18nService
+    protected readonly i18n: I18nService
   ) {
     super();
     const project = activatedProject.projectDoc!.data!;
@@ -249,6 +255,53 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         })
       )
     );
+  }
+
+  selectedTrainingBooksCollapsed(): TrainingGroup[] {
+    const continguousGroups: TrainingGroup[] = [];
+    let currentGroup: TrainingBook[] = [];
+    for (const book of this.userSelectedTrainingBooks) {
+      const isBookConsecutiveAndMatching =
+        book.source === currentGroup[0]?.source &&
+        book.target === currentGroup[0]?.target &&
+        book.number === currentGroup[currentGroup.length - 1]?.number + 1;
+      if (currentGroup.length > 0 && !isBookConsecutiveAndMatching) {
+        //process and reset current group
+        addGroup(currentGroup);
+        currentGroup.length = 0;
+      }
+      //add book to current group
+      currentGroup.push(book);
+    }
+
+    //add last group
+    if (currentGroup.length > 0) {
+      addGroup(currentGroup);
+    }
+
+    const groupsCollapsed: TrainingGroup[] = [];
+    for (const group of continguousGroups) {
+      const matchIndex = groupsCollapsed.findIndex(g => g.source === group.source && g.target === group.target);
+      if (matchIndex === -1) {
+        //make a new group for this source/target
+        groupsCollapsed.push(group);
+      } else {
+        //append the current group onto the matching group
+        groupsCollapsed[matchIndex].ranges.push(group.ranges[0]);
+      }
+    }
+
+    return groupsCollapsed;
+
+    function addGroup(group: TrainingBook[]): void {
+      let range;
+      if (group.length === 1) {
+        range = Canon.bookNumberToId(group[0].number);
+      } else {
+        range = Canon.bookNumberToId(group[0].number) + '-' + Canon.bookNumberToId(group[group.length - 1].number);
+      }
+      continguousGroups.push({ ranges: [range], source: group[0].source, target: group[0].target });
+    }
   }
 
   onTrainingBookSelect(selectedBooks: number[]): void {
