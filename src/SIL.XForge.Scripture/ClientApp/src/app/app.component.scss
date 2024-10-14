@@ -147,7 +147,7 @@ header {
       visibility: hidden;
     }
 
-    .mat-mdc-menu-item {
+    .mat-mdc-menu-item .mat-mdc-menu-item-text {
       font-family: variables.$languageFonts;
     }
   }
