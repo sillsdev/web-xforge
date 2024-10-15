@@ -29,6 +29,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { WritingSystem } from 'realtime-server/lib/esm/common/models/writing-system';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -77,6 +78,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { isBlink } from 'xforge-common/utils';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -226,6 +228,66 @@ describe('EditorComponent', () => {
     expect(env.component.target!.segmentRef).toEqual('verse_2_1');
 
     env.dispose();
+  }));
+
+  it('shows warning to users in Chrome when translation is Korean, Japanese, or Chinese', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'ko' }
+    });
+    env.wait();
+
+    expect(env.component.canEdit).toBe(true);
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
+    if (isBlink()) {
+      expect(env.component.writingSystemWarningBanner).toBe(true);
+      expect(env.showWritingSystemWarningBanner).not.toBeNull();
+    } else {
+      expect(env.component.writingSystemWarningBanner).toBe(false);
+      expect(env.showWritingSystemWarningBanner).toBeNull();
+    }
+
+    env.dispose();
+  }));
+
+  it('does not show warning to users when translation is not Korean, Japanese, or Chinese', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'en' }
+    });
+    env.wait();
+
+    expect(env.component.canEdit).toBe(true);
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('en');
+    expect(env.component.writingSystemWarningBanner).toBe(false);
+    expect(env.showWritingSystemWarningBanner).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('does not show warning to users if they do not have edit permissions on the selected book', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      writingSystem: { tag: 'ko' },
+      translateConfig: defaultTranslateConfig
+    });
+    // user03 only has read permissions on Luke 1
+    // As the editor is disabled, we do not need to show the writing system warning
+    // The no_permission_edit_chapter message will be displayed instead
+    env.setCurrentUser('user03');
+    env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+    env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+    env.wait();
+
+    expect(env.component.projectDoc?.data?.writingSystem.tag).toEqual('ko');
+    expect(env.component.writingSystemWarningBanner).toBe(false);
+    expect(env.showWritingSystemWarningBanner).toBeNull();
+    expect(env.component.userHasGeneralEditRight).toBe(true);
+    expect(env.component.hasChapterEditPermission).toBe(false);
+    expect(env.component.canEdit).toBe(false);
+    expect(env.component.showNoEditPermissionMessage).toBe(true);
+    expect(env.noChapterEditPermissionMessage).not.toBeNull();
+
+    discardPeriodicTasks();
   }));
 
   describe('Translation Suggestions enabled', () => {
@@ -3815,6 +3877,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3832,6 +3895,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3849,6 +3913,7 @@ describe('EditorComponent', () => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => true });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -3865,10 +3930,26 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
+      it('should hide auto draft tab when user is commenter', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setCommenterUser();
+        env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
+        env.wait();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(1);
+
+        env.dispose();
+      }));
+
       it('should hide target auto draft tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment(env => {
           Object.defineProperty(env.component, 'showSource', { get: () => false });
         });
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
 
@@ -3902,6 +3983,7 @@ describe('EditorComponent', () => {
       it('should select the draft tab if url query param is set', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: { 'draft-active': 'true' } } as any);
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3915,6 +3997,7 @@ describe('EditorComponent', () => {
       it('should not select the draft tab if url query param is not set', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         env.wait();
         env.routeWithParams({ projectId: 'project01', bookId: 'LUK', chapter: '1' });
         env.wait();
@@ -3933,6 +4016,95 @@ describe('EditorComponent', () => {
         env.component.source = undefined;
 
         expect(() => env.updateFontSize('project01', 24)).not.toThrow();
+
+        env.dispose();
+      }));
+    });
+
+    describe('updateBiblicalTermsTabVisibility', () => {
+      it('should add biblical terms tab to source when enabled and "showSource" is true', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: true });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1].type).toEqual('biblical-terms');
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1]).toBeUndefined();
+
+        env.dispose();
+      }));
+
+      it('should add biblical terms tab to target when available and "showSource" is false', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: true });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const targetTabGroup = env.component.tabState.getTabGroup('target');
+        expect(targetTabGroup?.tabs[1].type).toEqual('biblical-terms');
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+
+        env.dispose();
+      }));
+
+      it('should not add the biblical terms tab when opening project with biblical terms disabled', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: false } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: true });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(1);
+
+        env.dispose();
+      }));
+
+      it('should not add the biblical terms tab if the user had biblical terms disabled', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => true });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({ biblicalTermsEnabled: false });
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        const sourceTabGroup = env.component.tabState.getTabGroup('source');
+        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(env.component.chapter).toBe(1);
+
+        env.dispose();
+      }));
+
+      it('should keep source pane open if biblical tab has been opened in it', fakeAsync(() => {
+        const env = new TestEnvironment(env => {
+          Object.defineProperty(env.component, 'showSource', { get: () => false });
+        });
+        env.setupProject({ biblicalTermsConfig: { biblicalTermsEnabled: true } });
+        env.setProjectUserConfig({
+          biblicalTermsEnabled: true,
+          editorTabsOpen: [{ tabType: 'biblical-terms', groupId: 'source' }]
+        });
+        env.routeWithParams({ projectId: 'project01', bookId: 'GEN', chapter: '1' });
+        env.wait();
+
+        expect(env.component.showSource).toBe(false);
+        expect(env.component.showPersistedTabsOnSource).toBe(true);
+        expect(env.fixture.debugElement.query(By.css('.biblical-terms'))).not.toBeNull();
 
         env.dispose();
       }));
@@ -4388,6 +4560,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.copyright-banner'));
   }
 
+  get showWritingSystemWarningBanner(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.writing-system-warning-banner'));
+  }
+
   get copyrightMoreInfo(): DebugElement {
     return this.fixture.debugElement.query(By.css('.copyright-banner .copyright-more-info'));
   }
@@ -4466,6 +4642,9 @@ class TestEnvironment {
       ...this.testProjectProfile,
       paratextUsers: this.paratextUsersOnProject
     });
+    if (data.writingSystem != null) {
+      projectProfileData.writingSystem = data.writingSystem as WritingSystem;
+    }
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;
@@ -4527,6 +4706,7 @@ class TestEnvironment {
   }
 
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
+    userConfig.editorTabsOpen = userConfig.editorTabsOpen ?? [];
     userConfig.noteRefsRead = userConfig.noteRefsRead ?? [];
     const user1Config = cloneDeep(userConfig);
     user1Config.ownerRef = 'user01';

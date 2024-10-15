@@ -17,6 +17,7 @@ export interface SFProjectUserConfig extends ProjectData {
   selectedBiblicalTermsFilter?: string;
   isTargetTextRight: boolean;
   confidenceThreshold: number;
+  biblicalTermsEnabled?: boolean;
   transliterateBiblicalTerms: boolean;
   translationSuggestionsEnabled: boolean;
   numSuggestions: number;

@@ -111,6 +111,44 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_ThrowsExceptionWhenSourceMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.BuildProjectAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_ThrowsExceptionWhenSourceRemoved()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
+        await env.Projects.UpdateAsync(Project02, op => op.Unset(p => p.TranslateConfig.Source));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.BuildProjectAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project02 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public async Task BuildProjectAsync_CallsServalIfTranslationEngineIdPresent()
     {
         // Set up test environment
@@ -1250,17 +1288,113 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void SyncProjectCorporaAsync_ThrowsExceptionWhenProjectSecretMissing()
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenProjectMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        await env.Projects.DeleteAllAsync(_ => true);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
                 env.Service.SyncProjectCorporaAsync(
                     User01,
-                    new BuildConfig { ProjectId = "invalid_project_id" },
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenProjectSecretMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenServalConfigMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenPreTranslationEngineIdMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: true,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenTranslationEngineIdMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
                     CancellationToken.None
                 )
@@ -2292,7 +2426,7 @@ public class MachineProjectServiceTests
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
             FileSystemService
                 .EnumerateFiles(Arg.Any<string>())
-                .Returns(callInfo => new[] { Path.Combine(callInfo.ArgAt<string>(0), "file") });
+                .Returns(callInfo => [Path.Combine(callInfo.ArgAt<string>(0), "file")]);
             FileSystemService
                 .OpenFile(Arg.Any<string>(), FileMode.Open)
                 .Returns(callInfo => new MemoryStream(
@@ -2300,8 +2434,7 @@ public class MachineProjectServiceTests
                 ));
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                new[]
-                {
+                [
                     new SFProjectSecret { Id = Project01 },
                     new SFProjectSecret
                     {
@@ -2347,16 +2480,15 @@ public class MachineProjectServiceTests
                         },
                     },
                     new SFProjectSecret { Id = Project03 },
-                }
+                ]
             );
 
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
             siteOptions.Value.Returns(new SiteOptions { SiteDir = "xForge" });
-            var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 } });
+            var userSecrets = new MemoryRepository<UserSecret>([new UserSecret { Id = User01 }]);
 
             Projects = new MemoryRepository<SFProject>(
-                new[]
-                {
+                [
                     new SFProject
                     {
                         Id = Project01,
@@ -2403,7 +2535,7 @@ public class MachineProjectServiceTests
                                     {
                                         ProjectRef = Project01,
                                         ParatextId = Paratext01,
-                                        WritingSystem = new WritingSystem { Tag = "en_GB" }
+                                        WritingSystem = new WritingSystem { Tag = "en_GB" },
                                     }
                                     : null,
                                 AlternateTrainingSourceEnabled = options.AlternateTrainingSourceEnabled,
@@ -2412,13 +2544,13 @@ public class MachineProjectServiceTests
                                     {
                                         ProjectRef = Project01,
                                         ParatextId = Paratext01,
-                                        WritingSystem = new WritingSystem { Tag = "en_GB" }
+                                        WritingSystem = new WritingSystem { Tag = "en_GB" },
                                     }
                                     : null,
                                 AdditionalTrainingSourceEnabled = options.AdditionalTrainingSourceConfigured,
                                 AdditionalTrainingSource = options.AdditionalTrainingSourceConfigured
                                     ? new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 }
-                                    : null
+                                    : null,
                             },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
@@ -2437,7 +2569,7 @@ public class MachineProjectServiceTests
                             Source = new TranslateSource { ProjectRef = Project01, ParatextId = Paratext01 },
                         },
                     },
-                }
+                ]
             );
 
             TrainingDataService = Substitute.For<ITrainingDataService>();

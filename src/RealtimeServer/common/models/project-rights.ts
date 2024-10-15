@@ -53,6 +53,14 @@ export class ProjectRights {
     return userId != null && data?.ownerRef === userId && rights.includes(this.joinRight(projectDomain, ownOperation));
   }
 
+  /**
+   * Checks whether a project role has a right.
+   * @deprecated Use hasRight instead in nearly every case. The only reason this method ever existed was so that when
+   * granting extra permissions to a user, a check could be made whether the user's role already granted the permission.
+   * Specifically, when granting non-admins the ability to add and edit questions, this method was used to check if the
+   * a user already had the ability to manage questions based on their role (i.e. was an admin), and then show the
+   * checkbox as disabled but already checked.
+   */
   roleHasRight(role: string, projectDomain: string, operation: Operation): boolean {
     return (this.rights.get(role) || []).includes(this.joinRight(projectDomain, operation));
   }

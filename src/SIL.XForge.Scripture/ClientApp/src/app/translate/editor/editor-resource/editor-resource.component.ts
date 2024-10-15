@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { combineLatest, EMPTY, startWith, Subject, switchMap } from 'rxjs';
+import { EMPTY, Subject, combineLatest, startWith, switchMap } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -53,7 +53,7 @@ export class EditorResourceComponent implements AfterViewInit, OnChanges {
         })
       )
       .subscribe((projectDoc: SFProjectProfileDoc) => {
-        this.isRightToLeft = projectDoc.data?.translateConfig?.source?.isRightToLeft ?? false;
+        this.isRightToLeft = projectDoc.data?.isRightToLeft ?? false;
         this.fontSize = formatFontSizeToRems(projectDoc.data?.defaultFontSize);
         this.font = this.fontService.getFontFamilyFromProject(projectDoc);
       });

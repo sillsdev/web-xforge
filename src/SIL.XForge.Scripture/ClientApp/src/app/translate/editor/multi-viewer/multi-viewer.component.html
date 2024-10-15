@@ -1,4 +1,4 @@
-<div fxLayout="row" fxLayoutAlign="start center">
+<div class="multi-viewer-container">
   @for (viewer of avatarViewers; track viewer) {
     <div class="app-avatar-container" [title]="viewer.displayName">
       <app-avatar
@@ -32,9 +32,9 @@
       <mat-menu #menu="matMenu" (closed)="closeMenu()">
         <button mat-menu-item disabled>{{ otherViewersLabel }}</button>
         @for (viewer of viewers; track viewer) {
-          <button mat-menu-item (click)="closeMenu(); clickAvatar(viewer)">
+          <button mat-menu-item class="other-viewer" (click)="closeMenu(); clickAvatar(viewer)">
             <app-avatar [user]="viewer" [size]="32" [borderColor]="viewer.cursorColor"></app-avatar>
-            <span fxFlex>{{ viewer.displayName }}</span>
+            <span>{{ viewer.displayName }}</span>
           </button>
         }
       </mat-menu>

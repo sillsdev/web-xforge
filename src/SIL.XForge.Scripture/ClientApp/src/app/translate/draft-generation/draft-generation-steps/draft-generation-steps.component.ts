@@ -47,7 +47,8 @@ export interface DraftGenerationStepsResult {
   ]
 })
 export class DraftGenerationStepsComponent extends SubscriptionDisposable implements OnInit {
-  @Output() done = new EventEmitter<DraftGenerationStepsResult>();
+  @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
+  @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
   availableTranslateBooks?: number[] = undefined;
@@ -233,6 +234,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
   onStepChange(): void {
     this.clearErrorMessage();
+    this.updateTrainingBooks();
   }
 
   tryAdvanceStep(): void {
@@ -241,7 +243,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     }
 
     if (this.stepper.selected !== this.stepper.steps.last) {
-      this.updateTrainingBooks(); // Filter selected translate books from available/selected training books
       this.stepper.next();
     } else {
       this.done.emit({
@@ -251,6 +252,26 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         fastTraining: this.fastTraining
       });
     }
+  }
+
+  /**
+   * Filter selected translate books from available/selected training books.
+   * Currently, training books cannot in the set of translate books,
+   * but this requirement may be removed in the future.
+   */
+  updateTrainingBooks(): void {
+    const selectedTranslateBooks = new Set<number>(this.userSelectedTranslateBooks);
+
+    this.availableTrainingBooks = this.initialAvailableTrainingBooks.filter(
+      bookNum => !selectedTranslateBooks.has(bookNum)
+    );
+
+    const newSelectedTrainingBooks = this.userSelectedTrainingBooks.filter(
+      bookNum => !selectedTranslateBooks.has(bookNum)
+    );
+
+    this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
+    this.userSelectedTrainingBooks = newSelectedTrainingBooks;
   }
 
   private validateCurrentStep(): boolean {
@@ -316,25 +337,5 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       draftingSource != null ? `${draftingSource.shortName} - ${draftingSource.name}` : '';
     this.trainingSourceProjectName =
       trainingSource != null ? `${trainingSource.shortName} - ${trainingSource.name}` : this.draftingSourceProjectName;
-  }
-
-  /**
-   * Filter selected translate books from available/selected training books.
-   * Currently, training books cannot in the set of translate books,
-   * but this requirement may be removed in the future.
-   */
-  private updateTrainingBooks(): void {
-    const selectedTranslateBooks = new Set<number>(this.userSelectedTranslateBooks);
-
-    this.availableTrainingBooks = this.initialAvailableTrainingBooks.filter(
-      bookNum => !selectedTranslateBooks.has(bookNum)
-    );
-
-    const newSelectedTrainingBooks = this.userSelectedTrainingBooks.filter(
-      bookNum => !selectedTranslateBooks.has(bookNum)
-    );
-
-    this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
-    this.userSelectedTrainingBooks = newSelectedTrainingBooks;
   }
 }

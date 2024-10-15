@@ -2,6 +2,7 @@
   "app": {
     "beta": "bêta",
     "generate_draft": "Générer un brouillon",
+    "hangfire_dashboard": "Tableau de bord Hangfire",
     "manage_questions": "Gérer les questions",
     "settings": "Paramètres",
     "synchronize": "Synchronisation avec Paratext",
@@ -24,22 +25,28 @@
   },
   "biblical_terms": {
     "actions": "Actions",
+    "all": "Tous",
+    "biblical_terms_renderings": "Équivalents des termes bibliques",
+    "blank": "(Vides)",
     "category": "Catégorie",
+    "current_book": "Livre actuel",
+    "current_chapter": "Chapitre actuel",
+    "current_verse": "Verset actuel",
+    "edit_renderings": "Modifier les équivalents",
     "gloss": "Glose",
+    "not_found": "Aucun terme biblique ne correspond à vos critères.",
+    "notes": "Remarques",
     "renderings": "Équivalents",
+    "settings": "Paramètres",
+    "show": "Afficher",
     "term": "Terme",
-    "biblical_terms_renderings": "Équivalents des termes bibliques"
+    "transliterate_terms": "Termes translittérés",
+    "view_renderings": "Afficher les équivalents"
   },
   "book_select": {
-    "clear": "Effacer",
-    "deuterocanon": "DC",
-    "new_testament": "NT",
-    "old_testament": "AT",
-    "select": "Sélectionner"
-  },
-  "chapter_nav": {
-    "previous_chapter": "Chapitre précédent",
-    "next_chapter": "Chapitre suivant"
+    "deuterocanon": "Deutérocanoniques",
+    "new_testament": "Nouveau Testament",
+    "old_testament": "Ancien Testament"
   },
   "checking": {
     "add_question": "Ajouter une question"
@@ -146,7 +153,6 @@
     "select_alternate_project": "Sélectionnez le projet auquel vous souhaitez ajouter le brouillon"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Retour",
     "back_translation_requirement": "Les ébauches de retraduction ne peuvent être générés que dans les quelque 200 [link:supportedLanguagesUrl]langues prises en charge[/link].",
     "cancel_generation_button": "Annuler",
     "criteria_project_language_not_in_nllb_with_language": "La langue de votre projet [em]\"{{ targetLanguageDisplayName }}\"[/em] n'est pas une langue prise en charge.",
@@ -206,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Retour",
-    "choose_additional_training_data_files_subheader": "Sélectionnez des fichiers de formation supplémentaires.",
+    "choose_additional_training_data_files_label": "Formation complémentaire",
     "choose_additional_training_data_files": "Choisir des fichiers supplémentaires pour la formation du modèle de langue",
     "choose_books_for_training_error": "Aucun livre sélectionné. Sélectionnez les livres de formation pour continuer.",
-    "choose_books_for_training_subheader": "Sélectionnez les livres qui ont été vérifiés.",
-    "choose_books_for_training": "Choisir les livres pour la formation du modèle de langue",
+    "choose_books_for_training": "Sélectionner des livres pour s'entraîner",
+    "choose_books_for_training_label": "Formation",
     "choose_books_to_translate_error": "Aucun livre sélectionné. Sélectionnez les livres pour continuer à traduire.",
-    "choose_books_to_translate": "Choisir les livres à traduire",
-    "configure_advanced_settings": "Configurer les paramètres avancés",
+    "choose_books_to_translate": "Sélectionnez les livres à brouiller",
+    "choose_books_to_translate_label": "Brouillon en cours",
+    "configure_advanced_settings": "Paramètres avancés",
+    "configure_advanced_settings_label": "Avancé",
     "fast_training_warning": "L'activation de ceci permettra de gagner du temps mais réduira considérablement la précision.",
     "fast_training": "Activer un apprentissage rapide",
     "generate_draft": "Générer un brouillon",
@@ -236,6 +244,7 @@
   "editor": {
     "add_comment": "Ajouter un commentaire",
     "anonymous": "Anonyme",
+    "browser_warning_banner": "L'éditeur n'est pas compatible avec le navigateur actuel pour la langue du projet. Nous vous recommandons de modifier ce projet en {{ firefoxLink }} ou {{ safari }}.",
     "cancel": "Annuler",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "Ce chapitre ne peut pas être édité car il contient un USFM non pris en charge. Pour le modifier, supprimez ces tags dans Paratext : {{ tags }}",
@@ -270,11 +279,13 @@
     "offline_notice": "L'historique de l'éditeur n'est pas disponible hors connexion."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Termes bibliques",
     "history_menu_item": "Historique",
     "draft_menu_item": "Brouillon automatique",
     "project_resource_menu_item": "Ressource..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Termes bibliques",
     "default_history_tab_header": "Historique",
     "default_project_tab_header": "Projet",
     "default_resource_tab_header": "Ressource",
@@ -415,7 +426,6 @@
     "roles": "Rôles",
     "roles_from_pt_cannot_be_changed": "Les rôles ne peuvent être modifiés que dans Paratext",
     "save": "Enregistrer",
-    "sf_community_checker": "Vérificateur de la communauté",
     "sf_commenter": "Commentateur",
     "sf_observer": "Observateur",
     "user_pt": "Utilisateur Paratext",
@@ -426,7 +436,6 @@
     "pt_consultant": "Voir la traduction - voir les questions et réponses - ajouter des notes",
     "pt_observer": "Voir la traduction - voir les questions et réponses - voir les notes",
     "pt_translator": "Modifier les traductions - voir les questions - ajouter des réponses - ajouter des notes - synchroniser avec Paratext",
-    "sf_community_checker": "Répondre aux questions, Commenter les réponses",
     "sf_commenter": "Afficher la traduction, Ajouter des commentaires",
     "sf_observer": "Afficher la traduction - afficher les notes"
   },
@@ -501,15 +510,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Meilleures",
-    "biblical_terms": "Afficher les termes bibliques",
     "close": "Fermer",
     "more": "Plus",
     "number_of_suggestions": "Nombre de suggestions",
     "settings_not_available_offline": "Ces paramètres ne sont pas disponibles lorsque vous êtes hors connexion.",
     "suggestion_confidence": "Confiance dans les suggestions",
     "translation_suggestions": "Suggestions de traduction",
-    "translator_settings": "Paramètres du traducteur",
-    "transliterate_biblical_terms": "Translittérer les termes bibliques"
+    "translator_settings": "Paramètres du traducteur"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Langues de retraduction supportées"

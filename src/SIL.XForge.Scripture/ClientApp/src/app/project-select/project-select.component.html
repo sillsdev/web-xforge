@@ -17,14 +17,14 @@
       class="project-select"
     >
       @if (nullableLength(projects$ | async) > 0) {
-        <mat-optgroup label="{{ t('projects') }}">
+        <mat-optgroup [label]="t('projects')">
           @for (project of projects$ | async; track project) {
             <mat-option [value]="project">{{ projectLabel(project) }}</mat-option>
           }
         </mat-optgroup>
       }
       @if (nullableLength(resources$ | async) > 0) {
-        <mat-optgroup label="{{ t('resources') }}">
+        <mat-optgroup [label]="t('resources')">
           @for (resource of resources$ | async; track resource) {
             <mat-option [value]="resource">{{ projectLabel(resource) }}</mat-option>
           }

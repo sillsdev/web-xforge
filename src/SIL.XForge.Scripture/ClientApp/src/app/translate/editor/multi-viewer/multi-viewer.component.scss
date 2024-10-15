@@ -1,3 +1,7 @@
+.multi-viewer-container {
+  display: flex;
+}
+
 .app-avatar-container {
   border-radius: 50%;
   border: 2px solid white;
@@ -18,4 +22,12 @@
 
 app-avatar {
   cursor: pointer;
+}
+
+.other-viewer ::ng-deep {
+  > span {
+    display: flex;
+    align-items: center;
+    column-gap: 4px;
+  }
 }

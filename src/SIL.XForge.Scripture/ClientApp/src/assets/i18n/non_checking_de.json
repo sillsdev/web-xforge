@@ -2,6 +2,7 @@
   "app": {
     "beta": "Beta",
     "generate_draft": "Entwurf generieren",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Fragen verwalten",
     "settings": "Einstellungen",
     "synchronize": "Synchronisieren",
@@ -24,22 +25,28 @@
   },
   "biblical_terms": {
     "actions": "Funktionen",
+    "all": "Alles",
+    "biblical_terms_renderings": "Übersetzungsmöglichkeiten biblischer Begriffe",
+    "blank": "(Leer)",
     "category": "Kategorie",
+    "current_book": "Aktuelles Buch",
+    "current_chapter": "Aktuelles Kapitel",
+    "current_verse": "Aktueller Vers",
+    "edit_renderings": "Übersetzungsmöglichkeiten bearbeiten",
     "gloss": "Glossierung",
+    "not_found": "Keine biblischen Begriffe entsprechen Deinen Kriterien.",
+    "notes": "Notizen",
     "renderings": "Übersetzungsmöglichkeiten",
+    "settings": "Einstellungen",
+    "show": "Anzeigen",
     "term": "Begriff",
-    "biblical_terms_renderings": "Übersetzungsmöglichkeiten biblischer Begriffe"
+    "transliterate_terms": "Begriffe transliterieren",
+    "view_renderings": "Übersetzungsmöglichkeiten ansehen"
   },
   "book_select": {
-    "clear": "Klar",
-    "deuterocanon": "Deuterokanonisch",
-    "new_testament": "NT",
-    "old_testament": "AT",
-    "select": "Wählen"
-  },
-  "chapter_nav": {
-    "previous_chapter": "Vorheriges Kapitel",
-    "next_chapter": "Nächstes Kapitel"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Frage hinzufügen"
@@ -146,7 +153,6 @@
     "select_alternate_project": "Wähle das Projekt, dem Du den Entwurf hinzufügen möchtest"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Zurück",
     "back_translation_requirement": "Rückübersetzungsentwürfe können nur in den etwa 200 [link:supportedLanguagesUrl] unterstützten Sprachen[/link] erstellt werden.",
     "cancel_generation_button": "Abbrechen",
     "criteria_project_language_not_in_nllb_with_language": "Deine Projektsprache von [em]\"{{ targetLanguageDisplayName }}\"[/em] ist keine unterstützte Sprache.",
@@ -206,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Zurück",
-    "choose_additional_training_data_files_subheader": "Zusätzliche Schulungsdateien auswählen.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
-    "choose_books_for_training_subheader": "Büchern auswählen, die geprüft wurden.",
-    "choose_books_for_training": "Bücher für die Schulung des Sprachmodells auswählen",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Schulung",
     "choose_books_to_translate_error": "Keine Bücher ausgewählt. Wähle zu übersetzende Bücher aus, um fortzufahren.",
-    "choose_books_to_translate": "Auswahl der zu übersetzenden Bücher",
-    "configure_advanced_settings": "Erweiterte Einstellungen konfigurieren",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Entwurf erstellen",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Die Aktivierung dieser Option spart Zeit, verringert aber die Genauigkeit erheblich.",
     "fast_training": "Schnelle Schulung aktivieren",
     "generate_draft": "Entwurf generieren",
@@ -236,6 +244,7 @@
   "editor": {
     "add_comment": "Kommentar hinzufügen",
     "anonymous": "Anonym",
+    "browser_warning_banner": "Der Editor ist nicht mit dem aktuellen Browser für die Projektsprache kompatibel. Wir empfehlen, dieses Projekt in {{ firefoxLink }} oder {{ safari }} zu bearbeiten.",
     "cancel": "Abbrechen",
     "cannot_edit_chapter_formatting_invalid": "Dieses Kapitel kann nicht bearbeitet werden, da die Formatierung ungültig ist. Bitte korrigiere die Formatierung in Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "Dieses Kapitel kann nicht bearbeitet werden, da es nicht unterstützte USFM-Code enthält. Um es zu bearbeiten, entferne diese Tags in Paratext: {{ tags }}",
@@ -270,11 +279,13 @@
     "offline_notice": "Der Editorverlauf ist offline nicht verfügbar."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Biblische Begriffe",
     "history_menu_item": "Verlauf",
     "draft_menu_item": "Automatischer Entwurf",
     "project_resource_menu_item": "Ressource..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Biblische Begriffe",
     "default_history_tab_header": "Verlauf",
     "default_project_tab_header": "Projekt",
     "default_resource_tab_header": "Ressource",
@@ -415,7 +426,6 @@
     "roles": "Rollen",
     "roles_from_pt_cannot_be_changed": "Rollen können nur im Paratext geändert werden",
     "save": "Speichern",
-    "sf_community_checker": "Überprüfer der Zielgruppe",
     "sf_commenter": "Kommentator",
     "sf_observer": "Betrachter",
     "user_pt": "Paratext Benutzer",
@@ -426,7 +436,6 @@
     "pt_consultant": "Übersetzung anzeigen - Fragen und Antworten anzeigen - Kommentare hinzufügen",
     "pt_observer": "Übersetzung anzeigen - Fragen und Antworten anzeigen - Kommentare anzeigen",
     "pt_translator": "Übersetzungen bearbeiten - Fragen anzeigen - Antworten hinzufügen - Kommentare hinzufügen - mit Paratext synchronisieren",
-    "sf_community_checker": "Fragen beantworten - Antworten kommentieren",
     "sf_commenter": "Übersetzung anzeigen - Kommentare hinzufügen",
     "sf_observer": "Übersetzung anzeigen - Kommentare anzeigen"
   },
@@ -501,15 +510,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Besser",
-    "biblical_terms": "Biblische Begriffe anzeigen",
     "close": "Schliessen",
     "more": "Mehr",
     "number_of_suggestions": "Anzahl Vorschläge",
     "settings_not_available_offline": "Diese Einstellungen sind nicht verfügbar, wenn Du offline bist.",
     "suggestion_confidence": "Vertrauen in Vorschlag",
     "translation_suggestions": "Übersetzungsvorschläge",
-    "translator_settings": "Übersetzungseinstellungen",
-    "transliterate_biblical_terms": "Biblische Begriffe umschreiben"
+    "translator_settings": "Übersetzungseinstellungen"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Unterstützte Rückübersetzungssprachen"

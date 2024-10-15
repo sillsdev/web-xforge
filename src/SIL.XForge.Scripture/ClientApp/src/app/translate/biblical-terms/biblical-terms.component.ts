@@ -8,15 +8,15 @@ import { getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/mod
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ID } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
-  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType
+  NoteType,
+  getNoteThreadDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { BehaviorSubject, combineLatest, firstValueFrom, merge, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, combineLatest, firstValueFrom, merge } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -32,7 +32,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { getVerseNumbers, XmlUtils } from '../../shared/utils';
+import { XmlUtils, getVerseNumbers } from '../../shared/utils';
 import { SaveNoteParameters } from '../editor/editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
@@ -294,24 +294,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.bookNum$ != null) {
-      this.bookNum$.unsubscribe();
-    }
-    if (this.chapter$ != null) {
-      this.chapter$.unsubscribe();
-    }
-    if (this.verse$ != null) {
-      this.verse$.unsubscribe();
-    }
-    if (this.projectId$ != null) {
-      this.projectId$.unsubscribe();
-    }
-    if (this.biblicalTermQuery != null) {
-      this.biblicalTermQuery.dispose();
-    }
-    if (this.biblicalTermSub != null) {
-      this.biblicalTermSub.unsubscribe();
-    }
+    this.biblicalTermQuery?.dispose();
+    this.biblicalTermSub?.unsubscribe();
   }
 
   ngOnInit(): void {
@@ -324,6 +308,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       this.categoriesLoading = true;
       const biblicalTermsAndNotesChanges$: Observable<any> = await this.getBiblicalTermsAndNotesChanges(projectId);
       this.biblicalTermSub?.unsubscribe();
+
       this.biblicalTermSub = this.subscribe(
         combineLatest([
           this.bookNum$,

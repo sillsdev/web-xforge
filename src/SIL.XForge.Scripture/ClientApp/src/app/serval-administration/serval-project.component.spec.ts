@@ -167,6 +167,26 @@ describe('ServalProjectComponent', () => {
     }));
   });
 
+  describe('get last completed build', () => {
+    it('does not get last completed build if project does not have draft books', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.preTranslate).toBe(false);
+      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).never();
+      verify(mockDraftGenerationService.getBuildProgress(anything())).never();
+    }));
+
+    it('gets last completed build if drafting enabled and draft books exist', fakeAsync(() => {
+      const env = new TestEnvironment(true, {} as BuildDto);
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.preTranslate).toBe(true);
+      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).once();
+      verify(mockDraftGenerationService.getBuildProgress(anything())).once();
+    }));
+  });
+
   class TestEnvironment {
     readonly component: ServalProjectComponent;
     readonly fixture: ComponentFixture<ServalProjectComponent>;
@@ -183,6 +203,12 @@ describe('ServalProjectComponent', () => {
         data: createTestProjectProfile({
           name: 'Project 01',
           shortName: 'P1',
+          texts: [
+            { bookNum: 1, chapters: [{ number: 1, hasDraft: false }] },
+            { bookNum: 2, chapters: [{ number: 1, hasDraft: false }] },
+            { bookNum: 3, chapters: [{ number: 1, hasDraft: preTranslate }] },
+            { bookNum: 4, chapters: [{ number: 1, hasDraft: preTranslate }] }
+          ],
           translateConfig: {
             draftConfig: {
               alternateSource: {
@@ -197,10 +223,10 @@ describe('ServalProjectComponent', () => {
                 name: 'Project 04',
                 shortName: 'P4'
               },
-              lastSelectedTrainingBooks: [1, 2],
-              lastSelectedTranslationBooks: [3, 4]
+              lastSelectedTrainingBooks: preTranslate ? [1, 2] : [],
+              lastSelectedTranslationBooks: preTranslate ? [3, 4] : []
             },
-            preTranslate: preTranslate,
+            preTranslate,
             source: {
               paratextId: 'ptproject02',
               projectRef: 'project02',
@@ -218,6 +244,7 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
 
       when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(of(lastCompletedBuild));
+      when(mockDraftGenerationService.getBuildProgress(this.mockProjectId)).thenReturn(of(lastCompletedBuild));
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));

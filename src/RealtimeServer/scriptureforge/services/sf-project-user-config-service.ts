@@ -49,6 +49,9 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       confidenceThreshold: {
         bsonType: 'number'
       },
+      biblicalTermsEnabled: {
+        bsonType: 'bool'
+      },
       transliterateBiblicalTerms: {
         bsonType: 'bool'
       },

@@ -9,6 +9,9 @@ public static class Migrator
 {
     public static void RunMigrations(string environment)
     {
+        // In a container, the migration process will be run by start.sh
+        if (Product.RunningInContainer)
+            return;
         string version = Product.Version;
         string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
@@ -25,7 +28,7 @@ public static class Migrator
         {
             FileName = "node",
             RedirectStandardOutput = true,
-            ArgumentList = { migratorPath, environment, version }
+            ArgumentList = { migratorPath, environment, version },
         };
 
         var startTime = DateTime.Now;

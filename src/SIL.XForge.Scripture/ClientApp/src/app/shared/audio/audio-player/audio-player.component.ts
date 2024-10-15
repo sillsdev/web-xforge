@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { MatSliderDragEvent } from '@angular/material/slider';
+import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';
@@ -9,12 +10,20 @@ import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base
   templateUrl: './audio-player.component.html',
   styleUrls: ['./audio-player.component.scss']
 })
-export class AudioPlayerComponent extends AudioPlayerBaseComponent {
+export class AudioPlayerComponent extends AudioPlayerBaseComponent implements OnDestroy {
+  private _currentTime: number = 0;
+  private _seek: number = 0;
+  private _timeUpdatedSubscription: Subscription | undefined;
+
   constructor(
     onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService
   ) {
     super(onlineStatusService);
+  }
+
+  get currentTime(): number {
+    return this._currentTime;
   }
 
   get duration(): number {
@@ -26,10 +35,27 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent {
   }
 
   get seek(): number {
-    return this.audio?.seek ?? 0;
+    return this._seek;
+  }
+
+  set source(source: string | undefined) {
+    this._currentTime = 0;
+    this._seek = 0;
+    this._timeUpdatedSubscription?.unsubscribe();
+    super.source = source;
+    this._timeUpdatedSubscription = this.audio?.timeUpdated$.subscribe(() => {
+      this._currentTime = this.audio?.currentTime ?? 0;
+      this._seek = this.audio?.seek ?? 0;
+    });
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this._timeUpdatedSubscription?.unsubscribe();
   }
 
   onSeek(event: MatSliderDragEvent): void {
-    this.audio?.setSeek(event.value);
+    this._seek = event.value;
+    this.audio?.setSeek(this._seek);
   }
 }

@@ -21,17 +21,17 @@
     "helps": "fr"
   },
   {
+    "localName": "Bahasa Indonesia",
+    "englishName": "Indonesian",
+    "tags": ["id", "id-ID"],
+    "production": true
+  },
+  {
     "localName": "Español",
     "englishName": "Spanish",
     "tags": ["es", "es-ES"],
     "production": true,
     "helps": "es"
-  },
-  {
-    "localName": "Bahasa Indonesia",
-    "englishName": "Indonesian",
-    "tags": ["id", "id-ID"],
-    "production": true
   },
   {
     "localName": "Română",
@@ -66,7 +66,7 @@
     "production": true
   },
   {
-    "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬ (W. Kayah Li)",
+    "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬",
     "englishName": "Western Kayah Li",
     "tags": ["kyu", "kyu-Kali"],
     "production": true
@@ -76,6 +76,13 @@
     "englishName": "Russian",
     "tags": ["ru", "ru-RU"],
     "production": true
+  },
+  {
+    "localName": "Deutsch",
+    "englishName": "German",
+    "tags": ["de", "de-DE"],
+    "production": true,
+    "helps": "de"
   },
   {
     "localName": "नेपाली",
@@ -88,13 +95,6 @@
     "englishName": "Lao",
     "tags": ["lo", "lo-LA"],
     "production": true
-  },
-  {
-    "localName": "Deutsch",
-    "englishName": "German",
-    "tags": ["de", "de-DE"],
-    "production": true,
-    "helps": "de"
   },
   {
     "localName": "ខ្មែរ",

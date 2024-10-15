@@ -33,7 +33,7 @@
         }
         <span class="toolbar-spacer"></span>
         @if (isAppOnline) {
-          <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu">
+          <button mat-icon-button [title]="t('language')" [matMenuTriggerFor]="localeMenu">
             <mat-icon>translate</mat-icon>
           </button>
         }
@@ -50,7 +50,7 @@
           }
         </mat-menu>
 
-        <button mat-icon-button title="{{ t('help') }}" [matMenuTriggerFor]="helpMenu">
+        <button mat-icon-button [title]="t('help')" [matMenuTriggerFor]="helpMenu">
           <mat-icon class="mirror-rtl">help</mat-icon>
         </button>
         <mat-menu #helpMenu="matMenu" class="help-menu">
@@ -70,27 +70,27 @@
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">
             <mat-icon>copyright</mat-icon> {{ t("open_source_licenses") }}
           </a>
-          @if (versionNumberClickCount >= 7 || featureFlags.showFeatureFlags.enabled) {
+          <mat-divider></mat-divider>
+          <div mat-menu-item disabled="true" (click)="versionNumberClicked()" id="version-number">
+            {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
+          </div>
+          @if (featureFlags.showDeveloperTools.enabled) {
+            <mat-divider></mat-divider>
             <button mat-menu-item (click)="openFeatureFlagDialog()">
               <mat-icon>science</mat-icon>
               Developer settings
             </button>
+            <button mat-menu-item (click)="openDiagnosticOverlay()">
+              <mat-icon>integration_instructions</mat-icon>
+              Developer diagnostics
+            </button>
           }
-          <mat-divider></mat-divider>
-          <div
-            mat-menu-item
-            disabled="true"
-            (click)="versionNumberClickCount = versionNumberClickCount + 1"
-            id="version-number"
-          >
-            {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
-          </div>
         </mat-menu>
 
         @if (currentUser) {
           <button
             mat-icon-button
-            title="{{ currentUser.displayName }}"
+            [title]="currentUser.displayName"
             [matMenuTriggerFor]="userMenu"
             (click)="dismissInstallIcon()"
             class="user-menu-btn"
@@ -135,6 +135,12 @@
             >
               <mat-icon>tune</mat-icon>
               {{ t("serval_administration") }}
+            </button>
+          }
+          @if (isSystemAdmin) {
+            <button mat-menu-item id="hangfire-dashboard-btn" [disabled]="!isAppOnline" (click)="hangfireDashboard()">
+              <mat-icon>pending_actions</mat-icon>
+              {{ t("hangfire_dashboard") }}
             </button>
           }
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">

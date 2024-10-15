@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'settings'">
-  <div fxLayout="column" fxLayoutGap="2rem" class="container">
+  <div class="container">
     <div class="mat-headline-4">{{ t("settings") }}</div>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
@@ -10,7 +10,7 @@
           <mat-card-content>
             <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
-              @if (!isLoading && !isLoggedInToParatext && isAppOnline) {
+              @if (!isLoadingData && !isLoggedInToParatext && isAppOnline) {
                 <div class="paratext-login-container">
                   <button
                     class="action-button"
@@ -41,7 +41,7 @@
                     [resources]="resources"
                     [nonSelectableProjects]="nonSelectableProjects"
                     [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                    [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                    [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                   ></app-project-select>
                   <app-write-status
                     [state]="getControlState('sourceParatextId')"
@@ -134,7 +134,7 @@
                         [resources]="resources"
                         [nonSelectableProjects]="nonSelectableProjects"
                         [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                       ></app-project-select>
                       <app-write-status
                         [state]="getControlState('alternateSourceParatextId')"
@@ -168,7 +168,7 @@
                         [resources]="resources"
                         [nonSelectableProjects]="nonSelectableProjects"
                         [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                       ></app-project-select>
                       <app-write-status
                         [state]="getControlState('alternateTrainingSourceParatextId')"
@@ -204,7 +204,7 @@
                         [resources]="resources"
                         [nonSelectableProjects]="nonSelectableProjects"
                         [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                        [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                        [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
                       ></app-project-select>
                       <app-write-status
                         [state]="getControlState('additionalTrainingSourceParatextId')"
@@ -384,19 +384,17 @@
             <span>{{ synchronizeWarning?.after }}</span>
           </p>
         }
-        <div fxLayout="row" fxLayoutAlign="end stretch">
-          <button
-            id="delete-btn"
-            mat-flat-button
-            type="button"
-            color="warn"
-            (click)="openDeleteProjectDialog()"
-            [class.enabled]="!deleteButtonDisabled"
-            [disabled]="deleteButtonDisabled"
-          >
-            {{ t("delete_this_project") }}
-          </button>
-        </div>
+        <button
+          id="delete-btn"
+          mat-flat-button
+          type="button"
+          color="warn"
+          (click)="openDeleteProjectDialog()"
+          [class.enabled]="!deleteButtonDisabled"
+          [disabled]="deleteButtonDisabled"
+        >
+          {{ t("delete_this_project") }}
+        </button>
       </mat-card>
     </div>
   </div>

@@ -37,7 +37,7 @@
                 <p>{{ t("translation_suggestions_require_source_text") }}</p>
                 <app-project-select
                   formControlName="sourceParatextId"
-                  placeholder="{{ t('source_text_placeholder') }}"
+                  [placeholder]="t('source_text_placeholder')"
                   [projects]="projects"
                   [resources]="resources"
                   [hiddenParatextIds]="[ptProjectId]"
@@ -47,16 +47,14 @@
                   <mat-error>{{ t("error_fetching_resources") }}</mat-error>
                 }
                 @if (isBasedOnProjectSet) {
-                  <div fxLayout="row" fxLayoutAlign="start center">
-                    <div fxLayout="column" fxFlex="grow">
-                      <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                        {{ t("enable_translation_suggestions") }}
-                      </mat-checkbox>
-                      <p
-                        class="helper-text"
-                        [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                      ></p>
-                    </div>
+                  <div>
+                    <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
+                      {{ t("enable_translation_suggestions") }}
+                    </mat-checkbox>
+                    <p
+                      class="helper-text"
+                      [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
+                    ></p>
                   </div>
                 }
               </mat-card-content>

@@ -6,6 +6,10 @@
   padding: 0;
   max-width: 800px;
   padding-block-end: 10px;
+
+  .mat-headline-4 {
+    margin-bottom: 32px;
+  }
 }
 
 .mat-mdc-card {
@@ -157,5 +161,13 @@ mat-radio-group.tool-setting {
   h4,
   p {
     margin-block-start: 0;
+  }
+}
+
+#danger-zone {
+  margin-top: 32px;
+
+  button {
+    align-self: end;
   }
 }

@@ -2,6 +2,7 @@
   "app": {
     "beta": "beta",
     "generate_draft": "Generar borrador",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Administrar preguntas",
     "settings": "Configuración",
     "synchronize": "Sincronizar",
@@ -24,22 +25,28 @@
   },
   "biblical_terms": {
     "actions": "Acciones",
+    "all": "Todos",
+    "biblical_terms_renderings": "Traducciones de vocablos bíblicos",
+    "blank": "(Vacio)",
     "category": "Categoría",
+    "current_book": "Libro actual",
+    "current_chapter": "Capítulo actual",
+    "current_verse": "Versículo actual",
+    "edit_renderings": "Editar traducciones",
     "gloss": "Glosa",
+    "not_found": "Ningún término bíblico coincide con sus criterios.",
+    "notes": "Notas",
     "renderings": "Traducciones",
+    "settings": "Configuración",
+    "show": "Mostrar",
     "term": "Término",
-    "biblical_terms_renderings": "Traducciones de vocablos bíblicos"
+    "transliterate_terms": "Transliterar términos",
+    "view_renderings": "Ver traducciones"
   },
   "book_select": {
-    "clear": "Eliminar",
-    "deuterocanon": "DC",
-    "new_testament": "NT",
-    "old_testament": "AT",
-    "select": "Seleccionar"
-  },
-  "chapter_nav": {
-    "previous_chapter": "Capítulo anterior",
-    "next_chapter": "Capítulo siguiente"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Agregar pregunta"
@@ -134,19 +141,18 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Añadir al proyecto",
-    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty",
+    "book_is_empty": "{{ bookName }} en el proyecto {{ projectName }} está vacío",
     "cancel": "Cancelar",
-    "connect_to_the_internet": "Please connect to the internet to add the draft to your project",
-    "choose_project": "Choose project",
-    "error_fetching_projects": "There was an error fetching projects.",
-    "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
-    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first",
-    "no_write_permission": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
-    "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
-    "select_alternate_project": "Select the project you want to add the draft to"
+    "connect_to_the_internet": "Por favor, conéctate a internet para añadir el borrador a tu proyecto",
+    "choose_project": "Elegir proyecto",
+    "error_fetching_projects": "Hubo un error al recuperar proyectos.",
+    "i_understand_overwrite_book": "Entiendo que el borrador sobrescribirá {{ bookName }} en el proyecto {{ projectName }}",
+    "looking_for_unlisted_project": "¿Buscas un proyecto que no esté en la lista? Conéctalo en {{ templateTagBoundary }}la página de proyectos{{ templateTagBoundary }} primero",
+    "no_write_permission": "No tiene permiso para escribir a este libro en este proyecto. Póngase en contacto con el administrador del proyecto para obtener el permiso.",
+    "project_has_text_in_chapters": "{{ bookName }} en {{ projectName }} tiene texto en los capítulos {{ numChapters }}",
+    "select_alternate_project": "Seleccione el proyecto al que desea añadir el borrador"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Atrás",
     "back_translation_requirement": "Un borrador de una retrotraducción sólo puede generarse en los aproximadamente 200 [link:supportedLanguagesUrl]idiomas compatibles[/link].",
     "cancel_generation_button": "Cancelar",
     "criteria_project_language_not_in_nllb_with_language": "El idioma de su proyecto de [em]\"{{ targetLanguageDisplayName }}\"[/em] no es un idioma compatible.",
@@ -206,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Atrás",
-    "choose_additional_training_data_files_subheader": "Seleccione archivos de formación adicionales.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
-    "choose_books_for_training_subheader": "Seleccione libros que hayan sido revisados.",
-    "choose_books_for_training": "Elegir libros para entrenar el modelo lingüístico",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Entrenamiento",
     "choose_books_to_translate_error": "No hay libros seleccionados. Seleccione los libros a traducir para continuar.",
-    "choose_books_to_translate": "Elegir libros para traducir",
-    "configure_advanced_settings": "Configurar los ajustes avanzados",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Redacción",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Si lo activa, ahorrará tiempo pero reducirá en gran medida la precisión.",
     "fast_training": "Permitir una formación rápida",
     "generate_draft": "Generar borrador",
@@ -226,7 +234,7 @@
   },
   "draft_preview_books": {
     "add_to_project": "Añadir al proyecto",
-    "add_to_different_project": "Add to a different project",
+    "add_to_different_project": "Añadir a un proyecto diferente",
     "draft_successfully_applied": "El borrador para {{ bookName }} se ha aplicado con éxito a su proyecto.",
     "one_or_more_drafts_failed": "Los borradores de uno o más capítulos no se aplicaron. Vea los capítulos del libro para ver a qué capítulos se aplicaron borradores con éxito.",
     "no_books_have_drafts": "Ningún libro tiene borradores.",
@@ -236,6 +244,7 @@
   "editor": {
     "add_comment": "Añadir comentario",
     "anonymous": "Anónimo",
+    "browser_warning_banner": "El editor no es compatible con el navegador actual para el idioma del proyecto. Recomendamos editar este proyecto en {{ firefoxLink }} o {{ safari }}.",
     "cancel": "Cancelar",
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "Este capítulo no puede editarse porque contiene USFM no admitidos. Para editarlo, elimine estas etiquetas en Paratext: {{ tags }}",
@@ -270,11 +279,13 @@
     "offline_notice": "El historial del editor no está disponible sin conexión."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Vocablos bíblicos",
     "history_menu_item": "Historial",
     "draft_menu_item": "Guardado Automático",
     "project_resource_menu_item": "Recurso..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Vocablos bíblicos",
     "default_history_tab_header": "Historial",
     "default_project_tab_header": "Proyecto",
     "default_resource_tab_header": "Recurso",
@@ -415,7 +426,6 @@
     "roles": "Roles",
     "roles_from_pt_cannot_be_changed": "Los roles sólo pueden cambiarse en Paratext",
     "save": "Guardar",
-    "sf_community_checker": "Revisor de la comunidad",
     "sf_commenter": "Comentarista",
     "sf_observer": "Observador",
     "user_pt": "Usuario de Paratext",
@@ -426,7 +436,6 @@
     "pt_consultant": "Ver traducción - ver preguntas y respuestas - añadir notas",
     "pt_observer": "Ver traducción - ver preguntas y respuestas - ver notas",
     "pt_translator": "Editar traducciones - ver preguntas - añadir respuestas - añadir notas - sincronizar con Paratext",
-    "sf_community_checker": "Responder a las preguntas - comentar las respuestas",
     "sf_commenter": "Ver traducción, Añadir comentarios",
     "sf_observer": "Ver traducción"
   },
@@ -492,7 +501,7 @@
     "error_fetching_projects": "Se ha producido un error al obtener los proyectos. Sólo podrá seleccionar recursos de la Biblioteca Bíblica Digital.",
     "error_fetching_resources": "Se ha producido un error al recuperar los recursos de la Biblioteca Bíblica Digital. Sólo podrá seleccionar proyectos.",
     "error_loading_resource": "Se ha producido un error al cargar el recurso seleccionado.",
-    "error_offline": "You are offline. Please connect to the internet to load this resource.",
+    "error_offline": "No está conectado. Conéctese a Internet para cargar este recurso.",
     "loading": "Cargando",
     "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
     "placeholder_ready": "Seleccione el proyecto paratexto o el recurso DBL",
@@ -501,15 +510,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Mejor",
-    "biblical_terms": "Mostrar Vocablos bíblicos",
     "close": "Cerrar",
     "more": "Más",
     "number_of_suggestions": "Número de sugerencias",
     "settings_not_available_offline": "Estos ajustes no están disponibles mientras está fuera de línea.",
     "suggestion_confidence": "Confianza en la sugerencia",
     "translation_suggestions": "Sugerencias de traducción",
-    "translator_settings": "Configuración del traductor",
-    "transliterate_biblical_terms": "Transliterar Vocablos bíblicos"
+    "translator_settings": "Configuración del traductor"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Idiomas de retrotraducción admitidos"

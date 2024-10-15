@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -24,9 +24,10 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { isGecko } from 'xforge-common/utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -166,8 +167,14 @@ describe('TextComponent', () => {
     tick();
 
     expect(titleSegment.getAttribute('data-style-description')).toEqual('s - Heading - Section Level 1');
-    // This is a CSS computed value, and it's a string, so it needs quotes around it
-    expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('"s - Heading - Section Level 1"');
+    if (isGecko()) {
+      // Firefox will not resolve the value
+      expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('attr(data-style-description)');
+    } else {
+      // Chrome will resolve the value
+      // This is a CSS computed value, and it's a string, so it needs quotes around it
+      expect(window.getComputedStyle(titleSegment, '::before').content).toEqual('"s - Heading - Section Level 1"');
+    }
 
     // highlighting verse 1 does not cause a description to be shown because it's in a paragraph with style p
     env.component.highlight(['verse_1_1']);
@@ -272,7 +279,10 @@ describe('TextComponent', () => {
     expect(contents.ops![0].insert).toEqual('target: ');
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', pasteText);
-    const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+    // The ClipboardEvent constructor does not support setting clipboardData in Firefox,
+    // so instead we need to manually construct the paste Event.
+    const pasteEvent = new Event('paste') as any;
+    pasteEvent.clipboardData = dataTransfer;
     env.component.editor!.root.dispatchEvent(pasteEvent);
     tick(10);
     env.fixture.detectChanges();
@@ -936,7 +946,10 @@ describe('TextComponent', () => {
     expect(contents.ops![0].insert).toEqual('target: chapter 1, verse 1.');
     const dataTransfer = new DataTransfer();
     dataTransfer.setData('text/plain', pasteText);
-    const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+    // The ClipboardEvent constructor does not support setting clipboardData in Firefox,
+    // so instead we need to manually construct the paste Event.
+    const pasteEvent = new Event('paste') as any;
+    pasteEvent.clipboardData = dataTransfer;
     env.component.editor!.root.dispatchEvent(pasteEvent);
     tick(10);
     env.fixture.detectChanges();
@@ -1210,6 +1223,26 @@ describe('TextComponent', () => {
     const verseRef: VerseRef = new VerseRef('MRK 1:1');
     const segments: string[] = env.component.getVerseSegments(verseRef);
     expect(segments.length).withContext('should be no matching segments when book does not match').toBe(0);
+  }));
+
+  it('does not execute the logic in bindQuill if the object has been disposed', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    const mockedQuill = new MockQuill('quill-editor');
+    env.fixture.detectChanges();
+
+    // Destroy the component
+    env.component.ngOnDestroy();
+
+    // Subscribe to the loaded event
+    let wasLoaded: boolean | undefined;
+    env.component.loaded.subscribe(() => {
+      wasLoaded = true;
+    });
+    env.id = new TextDocId('project01', 40, 1);
+    env.component.onEditorCreated(mockedQuill);
+    env.waitForEditor();
+
+    expect(wasLoaded).toBeUndefined();
   }));
 });
 

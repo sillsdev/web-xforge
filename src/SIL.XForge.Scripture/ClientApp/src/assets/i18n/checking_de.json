@@ -165,6 +165,10 @@
       "LAO": "Laodiceans"
     }
   },
+  "chapter_nav": {
+    "previous_chapter": "Vorheriges Kapitel",
+    "next_chapter": "Nächstes Kapitel"
+  },
   "checking": {
     "filter_questions": "Fragen filtern",
     "input_required_before_saving": "Vor dem Speichern Text oder Audio eingeben",
@@ -204,6 +208,7 @@
     "marked_for_export": "Für Überprüfung markiert",
     "mark_for_export": "Für Überprüfung markieren",
     "no_scripture_selected": "Noch kein Bibeltext ausgewählt.",
+    "record_question": "Frage aufnehmen",
     "recording_automatically_stopped": "Das Erfassen Deiner Antwort wurde automatisch gestoppt.",
     "resolve": "Erledigen",
     "resolved": "Erledigt",
@@ -380,6 +385,12 @@
     "offline-accessible": "Offline-Zugang",
     "open": "Öffnen",
     "problem_getting_pt_list": "Es gab ein Problem beim Abrufen der Liste der verfügbaren Paratext-Projekte, mit denen eine Verbindung hergestellt werden kann. Wenn dieses Problem weiterhin auftritt und das Ab- und Wiederanmelden das Problem nicht behebt, bitte melde das Problem."
+  },
+  "roles": {
+    "sf_community_checker": "Überprüfer der Zielgruppe"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Fragen beantworten - Antworten kommentieren"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Buch wählen",

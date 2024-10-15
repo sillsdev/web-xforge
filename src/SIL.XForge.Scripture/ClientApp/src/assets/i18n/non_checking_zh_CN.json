@@ -2,6 +2,7 @@
   "app": {
     "beta": "beta",
     "generate_draft": "Generate draft",
+    "hangfire_dashboard": "Hangfire Dashboard",
     "manage_questions": "Manage questions",
     "settings": "Settings",
     "synchronize": "Sync with Paratext",
@@ -24,22 +25,28 @@
   },
   "biblical_terms": {
     "actions": "操作",
+    "all": "All",
+    "biblical_terms_renderings": "圣经专门用词译法",
+    "blank": "(Blank)",
     "category": "类别",
+    "current_book": "Current Book",
+    "current_chapter": "Current Chapter",
+    "current_verse": "Current Verse",
+    "edit_renderings": "编辑译法",
     "gloss": "译词",
+    "not_found": "No Biblical Terms match your criteria.",
+    "notes": "Notes",
     "renderings": "译法",
+    "settings": "Settings",
+    "show": "Show",
     "term": "词条",
-    "biblical_terms_renderings": "圣经专门用词译法"
+    "transliterate_terms": "Transliterate Terms",
+    "view_renderings": "查看译法"
   },
   "book_select": {
-    "clear": "Clear",
-    "deuterocanon": "DC",
-    "new_testament": "NT",
-    "old_testament": "OT",
-    "select": "选择"
-  },
-  "chapter_nav": {
-    "previous_chapter": "Previous chapter",
-    "next_chapter": "Next chapter"
+    "deuterocanon": "Deuterocanon",
+    "new_testament": "New Testament",
+    "old_testament": "Old Testament"
   },
   "checking": {
     "add_question": "Add question"
@@ -146,7 +153,6 @@
     "select_alternate_project": "Select the project you want to add the draft to"
   },
   "draft_generation": {
-    "back_from_stepper_button": "Back",
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
     "cancel_generation_button": "取消",
     "criteria_project_language_not_in_nllb_with_language": "Your project language of [em]\"{{ targetLanguageDisplayName }}\"[/em] is not a supported language.",
@@ -206,14 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Back",
-    "choose_additional_training_data_files_subheader": "Select additional training files.",
+    "choose_additional_training_data_files_label": "Additional training",
     "choose_additional_training_data_files": "Choose additional files for training the language model",
     "choose_books_for_training_error": "No books selected. Select training books to continue.",
-    "choose_books_for_training_subheader": "Select books that have been proofed.",
-    "choose_books_for_training": "Choose books for training the language model",
+    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training_label": "Training",
     "choose_books_to_translate_error": "No books selected. Select books to translate to continue.",
-    "choose_books_to_translate": "Choose books to translate",
-    "configure_advanced_settings": "Configure advanced settings",
+    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate_label": "Drafting",
+    "configure_advanced_settings": "Advanced settings",
+    "configure_advanced_settings_label": "Advanced",
     "fast_training_warning": "Enabling this will save time but greatly reduce accuracy.",
     "fast_training": "Enable Fast Training",
     "generate_draft": "Generate draft",
@@ -236,6 +244,7 @@
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "browser_warning_banner": "The editor is not compatible with the current browser for the project language. We recommend editing this project in {{ firefoxLink }} or {{ safari }}.",
     "cancel": "取消",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
     "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
@@ -270,11 +279,13 @@
     "offline_notice": "Editor history is not available offline."
   },
   "editor_tabs_menu": {
+    "biblical_terms_menu_item": "Biblical Terms",
     "history_menu_item": "History",
     "draft_menu_item": "Auto Draft",
     "project_resource_menu_item": "Resource..."
   },
   "editor_tab_factory": {
+    "default_biblical_terms_tab_header": "Biblical Terms",
     "default_history_tab_header": "History",
     "default_project_tab_header": "Project",
     "default_resource_tab_header": "Resource",
@@ -415,7 +426,6 @@
     "roles": "Roles",
     "roles_from_pt_cannot_be_changed": "Roles can only be changed in Paratext",
     "save": "保存",
-    "sf_community_checker": "Community Checker",
     "sf_commenter": "Commenter",
     "sf_observer": "Viewer",
     "user_pt": "Paratext User",
@@ -426,7 +436,6 @@
     "pt_consultant": "View translation - view questions & answers - add notes",
     "pt_observer": "View translation - view questions & answers - view notes",
     "pt_translator": "Edit translations - view questions - add answers - add notes - sync with Paratext",
-    "sf_community_checker": "Answer questions - comment on answers",
     "sf_commenter": "View translation - add notes",
     "sf_observer": "View translation - view notes"
   },
@@ -501,15 +510,13 @@
   },
   "suggestions_settings_dialog": {
     "better": "Better",
-    "biblical_terms": "Show Biblical Terms",
     "close": "关闭",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
     "translation_suggestions": "Translation suggestions",
-    "translator_settings": "Translator settings",
-    "transliterate_biblical_terms": "Transliterate Biblical Terms"
+    "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
     "supported_back_translation_languages_dialog_header": "Supported Back Translation Languages"

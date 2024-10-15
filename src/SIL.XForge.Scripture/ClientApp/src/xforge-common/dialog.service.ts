@@ -1,3 +1,4 @@
+import { OverlayRef } from '@angular/cdk/overlay';
 import { ComponentType } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -18,6 +19,8 @@ export class DialogService {
     private readonly i18n: I18nService,
     private readonly matDialog: MatDialog
   ) {}
+
+  diagnosticOverlay: OverlayRef | undefined;
 
   openMatDialog<T, D = any, R = any>(component: ComponentType<T>, config?: MatDialogConfig<D>): MatDialogRef<T, R> {
     const defaults: MatDialogConfig = { direction: this.i18n.direction, autoFocus: false };

@@ -82,6 +82,7 @@ export class CheckingAudioRecorderComponent
   }
 
   ngOnDestroy(): void {
+    super.ngOnDestroy();
     if (this.isRecording) {
       this.stopRecording();
     }

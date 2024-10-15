@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'join'">
-  @if (!isLoading) {
+  @if (!isLoadingData) {
     <h1 [innerHTML]="inviteText"></h1>
     @if (!isOnline) {
       <app-notice type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>

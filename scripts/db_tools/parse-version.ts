@@ -23,7 +23,7 @@ class ParseVersion {
 
   // This array is ordered based on the bit position of the feature flag
   featureFlags: string[] = [
-    'Show feature flags',
+    'Show developer tools',
     'Show non-published localizations',
     'Show NMT drafting',
     'Allow Forward Translation NMT drafting',

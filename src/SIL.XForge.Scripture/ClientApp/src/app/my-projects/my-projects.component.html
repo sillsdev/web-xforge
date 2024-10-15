@@ -15,7 +15,7 @@
       <mat-card
         [class.active-project]="isLastSelectedProject(projectDoc)"
         id="user-connected-project-card-{{ projectDoc.data?.paratextId }}"
-        attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
+        [attr.data-pt-project-id]="projectDoc.data?.paratextId"
         class="user-connected-project mat-elevation-z4"
         appRouterLink="/projects/{{ projectDoc.id }}"
         matRipple
@@ -55,7 +55,7 @@
     @for (projectDoc of userConnectedResources; track projectDoc) {
       <mat-card
         [class.active-project]="isLastSelectedProject(projectDoc)"
-        attr.data-pt-project-id="{{ projectDoc.data?.paratextId }}"
+        [attr.data-pt-project-id]="projectDoc.data?.paratextId"
         appRouterLink="/projects/{{ projectDoc.id }}"
         class="user-connected-resource mat-elevation-z4"
       >
@@ -97,7 +97,7 @@
         }
         @for (ptProject of userUnconnectedParatextProjects; track ptProject) {
           <div
-            attr.data-pt-project-id="{{ ptProject.paratextId }}"
+            [attr.data-pt-project-id]="ptProject.paratextId"
             class="user-unconnected-project"
             [class.cannot-connect]="!ptProject.isConnectable"
           >

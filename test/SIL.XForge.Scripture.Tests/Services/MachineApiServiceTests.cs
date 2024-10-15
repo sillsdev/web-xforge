@@ -93,6 +93,24 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task CancelPreTranslationBuildAsync_NoTranslationEngineAndJobQueued()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData.PreTranslationEngineId));
+        await env.QueueBuildAsync(preTranslate: true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        );
+
+        env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+    }
+
+    [Test]
     public async Task CancelPreTranslationBuildAsync_Success()
     {
         // Set up test environment
@@ -103,6 +121,7 @@ public class MachineApiServiceTests
         await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
+        env.BackgroundJobClient.Received(1).ChangeState(JobId, Arg.Any<DeletedState>(), null); // Same as Delete()
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
     }

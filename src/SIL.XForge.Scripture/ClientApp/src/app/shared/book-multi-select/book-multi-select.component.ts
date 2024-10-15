@@ -15,6 +15,8 @@ export interface BookOption {
   progressPercentage: number;
 }
 
+type Scope = 'OT' | 'NT' | 'DC';
+
 @Component({
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
@@ -30,7 +32,19 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
 
   bookOptions: BookOption[] = [];
 
-  selection: any = '';
+  booksOT: number[] = [];
+  availableBooksOT: number[] = [];
+  booksNT: number[] = [];
+  availableBooksNT: number[] = [];
+  booksDC: number[] = [];
+  availableBooksDC: number[] = [];
+
+  partialOT: boolean = false;
+  partialNT: boolean = false;
+  partialDC: boolean = false;
+  selectedAllOT: boolean = false;
+  selectedAllNT: boolean = false;
+  selectedAllDC: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -61,38 +75,46 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
       selected: selectedSet.has(bookNum),
       progressPercentage: progress.find(p => p.text.bookNum === bookNum)!.percentage
     }));
+
+    this.booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n));
+    this.availableBooksOT = this.availableBooks.filter(n => Canon.isBookOT(n));
+    this.booksNT = this.selectedBooks.filter(n => Canon.isBookNT(n));
+    this.availableBooksNT = this.availableBooks.filter(n => Canon.isBookNT(n));
+    this.booksDC = this.selectedBooks.filter(n => Canon.isBookDC(n));
+    this.availableBooksDC = this.availableBooks.filter(n => Canon.isBookDC(n));
+
+    this.selectedAllOT = this.booksOT.length > 0 && this.booksOT.length === this.availableBooksOT.length;
+    this.selectedAllNT = this.booksNT.length > 0 && this.booksNT.length === this.availableBooksNT.length;
+    this.selectedAllDC = this.booksDC.length > 0 && this.booksDC.length === this.availableBooksDC.length;
+
+    this.partialOT = !this.selectedAllOT && this.booksOT.length > 0;
+    this.partialNT = !this.selectedAllNT && this.booksNT.length > 0;
+    this.partialDC = !this.selectedAllDC && this.booksDC.length > 0;
   }
 
   onChipListChange(book: BookOption): void {
     const bookIndex: number = this.bookOptions.findIndex(n => n.bookId === book.bookId);
     this.bookOptions[bookIndex].selected = !this.bookOptions[bookIndex].selected;
     this.selectedBooks = this.bookOptions.filter(n => n.selected).map(n => n.bookNum);
-
-    this.selection = undefined;
     this.bookSelect.emit(this.selectedBooks);
+    this.initBookOptions();
   }
 
-  async select(eventValue: string): Promise<void> {
-    if (eventValue === 'OT') {
+  isBookInScope(bookNum: number, scope: Scope): boolean {
+    if (scope === 'OT') return Canon.isBookOT(bookNum);
+    else if (scope === 'NT') return Canon.isBookNT(bookNum);
+    else if (scope === 'DC') return Canon.isBookDC(bookNum);
+    throw new Error('Invalid scope');
+  }
+
+  async select(scope: Scope, value: boolean): Promise<void> {
+    if (value) {
       this.selectedBooks.push(
-        ...this.availableBooks.filter(n => Canon.isBookOT(n) && this.selectedBooks.indexOf(n) === -1)
+        ...this.availableBooks.filter(n => this.isBookInScope(n, scope) && !this.selectedBooks.includes(n))
       );
-    } else if (eventValue === 'NT') {
-      this.selectedBooks.push(
-        ...this.availableBooks.filter(n => Canon.isBookNT(n) && this.selectedBooks.indexOf(n) === -1)
-      );
-    } else if (eventValue === 'DC') {
-      this.selectedBooks.push(
-        ...this.availableBooks.filter(n => Canon.isBookDC(n) && this.selectedBooks.indexOf(n) === -1)
-      );
+    } else {
+      this.selectedBooks = this.selectedBooks.filter(n => !this.isBookInScope(n, scope));
     }
-    await this.initBookOptions();
-    this.bookSelect.emit(this.selectedBooks);
-  }
-
-  async clear(): Promise<void> {
-    this.selectedBooks.length = 0;
-    this.selection = undefined;
     await this.initBookOptions();
     this.bookSelect.emit(this.selectedBooks);
   }

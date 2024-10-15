@@ -163,7 +163,7 @@
             <div colspan="2" class="filter-text">
               <div>
                 <mat-form-field appearance="fill" subscriptSizing="dynamic">
-                  <input matInput type="text" formControlName="filter" placeholder="{{ t('filter_questions') }}" />
+                  <input matInput type="text" formControlName="filter" [placeholder]="t('filter_questions')" />
                 </mat-form-field>
                 <button mat-button type="button" (click)="clearFilters()">{{ t("show_all") }}</button>
               </div>

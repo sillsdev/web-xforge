@@ -40,6 +40,10 @@ export class LocationService {
     window.location.href = url;
   }
 
+  openInNewTab(url: string): void {
+    window.open(url, '_blank');
+  }
+
   reload(): void {
     window.location.reload();
   }

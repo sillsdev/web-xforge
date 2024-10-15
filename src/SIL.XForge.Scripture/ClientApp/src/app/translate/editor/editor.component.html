@@ -1,7 +1,11 @@
 <ng-container *transloco="let t; read: 'editor'">
-  <div class="content" [class.reverse-columns]="!isTargetTextRight" [class.target-only]="!showSource">
-    <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
-      <div fxFlex fxLayout="row wrap">
+  <div
+    class="content"
+    [class.reverse-columns]="!isTargetTextRight"
+    [class.target-only]="!showSource && !showPersistedTabsOnSource"
+  >
+    <div class="toolbar">
+      <div class="toolbar-options">
         <app-book-chapter-chooser
           [book]="bookNum"
           (bookChange)="setBook($event)"
@@ -17,7 +21,7 @@
               appBlurOnClick
               type="button"
               (click)="isTargetTextRight = !isTargetTextRight"
-              title="{{ t('swap_source_and_target') }}"
+              [title]="t('swap_source_and_target')"
               class="hide-lt-sm"
             >
               <mat-icon>swap_horiz</mat-icon>
@@ -30,7 +34,7 @@
               type="button"
               id="settings-btn"
               (click)="openSuggestionsSettings()"
-              title="{{ t('configure_translation_suggestions') }}"
+              [title]="t('configure_translation_suggestions')"
             >
               <mat-icon>settings</mat-icon>
             </button>
@@ -42,7 +46,7 @@
         }
       </div>
       @if (showMultiViewers) {
-        <div fxFlexAlign="end" class="avatar-padding">
+        <div class="avatar-padding">
           <app-multi-viewer [viewers]="multiCursorViewers" (viewerClick)="onViewerClicked($event)"></app-multi-viewer>
         </div>
       }
@@ -60,7 +64,7 @@
           <app-tab [closeable]="tab.closeable" [movable]="tab.movable" [tooltip]="tab.tooltip">
             <ng-template sf-tab-header>
               @if (tab.svgIcon) {
-                <mat-icon svgIcon="{{ tab.svgIcon }}"></mat-icon>
+                <mat-icon [svgIcon]="tab.svgIcon"></mat-icon>
               } @else if (tab.icon) {
                 <mat-icon>{{ tab.icon }}</mat-icon>
               }
@@ -69,6 +73,7 @@
             @switch (tab.type) {
               @case ("biblical-terms") {
                 <app-biblical-terms
+                  class="biblical-terms"
                   [bookNum]="bookNum"
                   [chapter]="chapter"
                   [verse]="verse"
@@ -113,6 +118,11 @@
               }
               @case ("project-target") {
                 <div class="project-tab-container">
+                  @if (writingSystemWarningBanner) {
+                    <app-notice icon="warning" type="warning" class="writing-system-warning-banner">
+                      <span [innerHtml]="writingSystemWarningMessage"></span>
+                    </app-notice>
+                  }
                   @if (hasTargetCopyrightBanner) {
                     <app-notice icon="copyright" type="warning" class="copyright-banner">
                       <div>
@@ -223,7 +233,7 @@
                         #fabButton
                         class="insert-note-fab"
                         mat-mini-fab
-                        title="{{ t('add_comment') }}"
+                        [title]="t('add_comment')"
                         (click)="insertNote()"
                       >
                         <mat-icon>add_comment</mat-icon>

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -8,13 +8,14 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, createTestFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -146,7 +147,6 @@ describe('DraftGenerationComponent', () => {
         'downloadGeneratedDraftZip'
       ]);
       TestEnvironment.initProject('user01');
-      mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
       mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
       mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
 
@@ -162,7 +162,7 @@ describe('DraftGenerationComponent', () => {
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
     }
 
-    static initProject(currentUserId: string): void {
+    static initProject(currentUserId: string, preTranslate: boolean = true): void {
       const projectDoc = {
         id: projectId,
         data: createTestProjectProfile({
@@ -170,15 +170,27 @@ describe('DraftGenerationComponent', () => {
             tag: 'en'
           },
           translateConfig: {
-            preTranslate: true,
+            preTranslate,
             projectType: ProjectType.BackTranslation,
             source: {
               projectRef: 'testSourceProjectId',
               writingSystem: {
                 tag: 'es'
               }
+            },
+            draftConfig: {
+              lastSelectedTrainingBooks: preTranslate ? [1] : [],
+              lastSelectedTranslationBooks: preTranslate ? [2] : []
             }
           },
+          texts: [
+            { bookNum: 1, chapters: [{ number: 1 }], permissions: { user01: TextInfoPermission.Write } },
+            {
+              bookNum: 2,
+              chapters: [{ number: 1, hasDraft: preTranslate }],
+              permissions: { user01: TextInfoPermission.Write }
+            }
+          ],
           userRoles: {
             user01: SFProjectRole.ParatextAdministrator,
             user02: SFProjectRole.ParatextTranslator
@@ -239,6 +251,12 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.isSourceAndTrainingSourceLanguageIdentical).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
+    });
+
+    it('does not subscribe to build when project does not have drafting enabled', () => {
+      const _ = new TestEnvironment(() => TestEnvironment.initProject('user01', false));
+      expect(mockDraftGenerationService.getLastCompletedBuild).not.toHaveBeenCalled();
+      expect(mockDraftGenerationService.getBuildProgress).not.toHaveBeenCalled();
     });
 
     it('should detect project requirements', fakeAsync(() => {
@@ -1679,22 +1697,25 @@ describe('DraftGenerationComponent', () => {
     }));
   });
 
-  describe('navigateToTab', () => {
+  describe('currentPage', () => {
     it('should navigate to pre-generate steps', fakeAsync(() => {
       let env = new TestEnvironment(() => {
-        mockProjectService.getProfile.and.returnValue(
-          new Promise<SFProjectProfileDoc>(() => ({
-            data: createTestProjectProfile({ texts: [] })
-          }))
-        );
         mockUserService.getCurrentUser.and.returnValue(
           new Promise<UserDoc>(() => ({
             data: createTestUser()
           }))
         );
+
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: projectId,
+          projectId$: of(projectId),
+          projectDoc: instance(mock(SFProjectProfileDoc)),
+          projectDoc$: of(null),
+          changes$: of(null)
+        });
       });
 
-      env.component.navigateToTab('pre-generate-steps');
+      env.component.currentPage = 'steps';
       env.fixture.detectChanges();
       tick();
       expect(env.preGenerationStepper).not.toBeNull();
@@ -2035,7 +2056,6 @@ describe('DraftGenerationComponent', () => {
       env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
       env.component.hasDraftBooksAvailable = true;
       env.fixture.detectChanges();
-
       expect(env.downloadButton).not.toBe(null);
     });
 
@@ -2095,7 +2115,7 @@ describe('DraftGenerationComponent', () => {
       const env = new TestEnvironment(() => {
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [], {
           projectDoc: projectDoc,
-          projectDoc$: of(projectDoc),
+          projectDoc$: projectObservable,
           changes$: projectObservable
         });
         mockDraftGenerationService.getBuildProgress.and.returnValue(buildObservable);
@@ -2109,6 +2129,7 @@ describe('DraftGenerationComponent', () => {
 
       // Update the has draft flag for the project
       projectDoc.data!.texts[0].chapters[0].hasDraft = true;
+      projectDoc.data!.translateConfig.draftConfig.lastSelectedTranslationBooks = [1];
       projectSubject.next(projectDoc);
       buildSubject.next({ ...buildDto, state: BuildStates.Completed });
 

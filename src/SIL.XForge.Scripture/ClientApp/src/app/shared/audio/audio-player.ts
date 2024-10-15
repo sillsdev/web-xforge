@@ -4,6 +4,7 @@ import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { isIosDevice } from 'xforge-common/utils';
 
 export enum AudioStatus {
   Initializing = 'audio_initializing',
@@ -32,7 +33,8 @@ export class AudioPlayer extends SubscriptionDisposable {
     super();
     // Loaded metadata works best for blobs
     this.audio.addEventListener('loadedmetadata', () => {
-      if (isLocalBlobUrl(this.audio.src)) {
+      // The loadeddata event does not fire on iOS, so we must check if the audio is loaded here
+      if (isLocalBlobUrl(this.audio.src) || isIosDevice()) {
         this.audioIsLoaded();
       }
     });

@@ -165,6 +165,10 @@
       "LAO": "Laodiceans"
     }
   },
+  "chapter_nav": {
+    "previous_chapter": "Previous chapter",
+    "next_chapter": "Next chapter"
+  },
   "checking": {
     "filter_questions": "प्रश्‍नहरू फिल्टर गर्नुहोस्",
     "input_required_before_saving": "Provide text or audio before saving",
@@ -204,6 +208,7 @@
     "marked_for_export": "समीक्षाको लागि फ्‍ल्‍याग गरियो",
     "mark_for_export": "समीक्षाको लागि फ्‍ल्‍याग गर्नुहोस्",
     "no_scripture_selected": "हिलेसम्म कुनै धर्मशास्त्र चयन गरिएको छैन।",
+    "record_question": "Record question",
     "recording_automatically_stopped": "तपाइँको जवाफको लागि रेकर्डिङ स्वतः रोकियो।",
     "resolve": "समाधान गर्नुहोस्",
     "resolved": "समाधान गरियो",
@@ -380,6 +385,12 @@
     "offline-accessible": "Offline Access",
     "open": "Open",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help."
+  },
+  "roles": {
+    "sf_community_checker": "सामुदायिक परीक्षक"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions - comment on answers"
   },
   "scripture_chooser_dialog": {
     "choose_book": "पुस्‍तक चयन गर्नुहोस्",

@@ -18,14 +18,14 @@
             {{ t("log_in_to_paratext") }}
           </button>
         }
-        @if (isLoggedIntoParatext || isLoading || !isAppOnline) {
+        @if (isLoggedIntoParatext || isLoadingData || !isAppOnline) {
           @if (!syncActive) {
             <button
               mat-flat-button
               color="primary"
               type="button"
               (click)="syncProject()"
-              [disabled]="isLoading || !isAppOnline || syncDisabled"
+              [disabled]="isLoadingData || !isAppOnline || syncDisabled"
               id="btn-sync"
             >
               <mat-icon>sync</mat-icon>
@@ -39,7 +39,7 @@
               mat-button
               type="button"
               (click)="cancelSync()"
-              [disabled]="isLoading || !isAppOnline || syncDisabled"
+              [disabled]="isLoadingData || !isAppOnline || syncDisabled"
               id="btn-cancel-sync"
             >
               {{ t("cancel") }}

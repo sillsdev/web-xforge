@@ -154,12 +154,18 @@ public class MachineProjectService(
                     throw new DataNotFoundException("The project does not exist.");
                 }
 
+                // This error can occur if the project source is cleared while the build is running
+                if (projectDoc.Data.TranslateConfig.Source is null)
+                {
+                    throw new DataNotFoundException("The project source is not specified.");
+                }
+
                 // Update the source writing system tag
-                if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source!.WritingSystem.Tag))
+                if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag))
                 {
                     string sourceLanguageTag = paratextService.GetLanguageId(
                         userSecret,
-                        projectDoc.Data.TranslateConfig.Source!.ParatextId
+                        projectDoc.Data.TranslateConfig.Source.ParatextId
                     );
                     if (!string.IsNullOrEmpty(sourceLanguageTag))
                     {
@@ -634,6 +640,12 @@ public class MachineProjectService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
+        // Ensure we have a source
+        if (project.TranslateConfig.Source is null)
+        {
+            throw new DataNotFoundException("The project source is not specified.");
+        }
+
         // Load the project secrets, so we can get the corpus files
         if (!(await projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
         {
@@ -687,8 +699,8 @@ public class MachineProjectService(
 
         // If we are to use the alternate source, only use it for drafting
         bool useSourceAsAlternateTrainingSource = false;
-        string sourceProjectId = project.TranslateConfig.Source!.ProjectRef;
-        string sourceParatextId = project.TranslateConfig.Source!.ParatextId;
+        string sourceProjectId = project.TranslateConfig.Source.ProjectRef;
+        string sourceParatextId = project.TranslateConfig.Source.ParatextId;
         if (useAlternateSource)
         {
             sourceProjectId = project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef;
@@ -1089,6 +1101,12 @@ public class MachineProjectService(
         if (project is null)
         {
             throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // This error can occur if the project source is cleared while the build is running
+        if (project.TranslateConfig.Source is null)
+        {
+            throw new DataNotFoundException("The project source is not specified.");
         }
 
         if (useAlternateTrainingSource)

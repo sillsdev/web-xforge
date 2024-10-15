@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Security.Claims;
 using IdentityModel;
@@ -7,13 +6,9 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services;
 
-public class UserAccessor : IUserAccessor
+public class UserAccessor(IHttpContextAccessor httpContextAccessor) : IUserAccessor
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public UserAccessor(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
-
-    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
+    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     public string AuthId => User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
@@ -28,7 +23,9 @@ public class UserAccessor : IUserAccessor
             return User?.FindFirst(JwtClaimTypes.Subject)?.Value ?? string.Empty;
         }
     }
-    public string[] SystemRoles =>
-        User?.FindAll(XFClaimTypes.Role).Select(c => c.Value).ToArray() ?? Array.Empty<string>();
+    public string[] SystemRoles => GetSystemRoles(User);
     public string UserId => User?.FindFirst(XFClaimTypes.UserId)?.Value ?? string.Empty;
+
+    public static string[] GetSystemRoles(ClaimsPrincipal? user) =>
+        user?.FindAll(XFClaimTypes.Role).Select(c => c.Value).ToArray() ?? [];
 }

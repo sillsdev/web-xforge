@@ -48,14 +48,9 @@
   <mat-menu #newTabMenu>
     <!-- Migrating to control flow causes an "Expression changed after check" error when tabs are dragged -->
     <ng-container *ngIf="(menuItems$ | async)?.length; else emptyMenu">
-      <button
-        *ngFor="let item of menuItems$ | async"
-        mat-menu-item
-        [disabled]="item.disabled"
-        (click)="tabAddRequest.next(item.type)"
-      >
+      <button *ngFor="let item of menuItems$ | async" mat-menu-item (click)="tabAddRequest.next(item.type)">
         <mat-icon *ngIf="item.icon">{{ item.icon }}</mat-icon>
-        <mat-icon *ngIf="item.svgIcon" svgIcon="{{ item.svgIcon }}"></mat-icon>
+        <mat-icon *ngIf="item.svgIcon" [svgIcon]="item.svgIcon"></mat-icon>
         <span>{{ item.text }}</span>
       </button>
     </ng-container>

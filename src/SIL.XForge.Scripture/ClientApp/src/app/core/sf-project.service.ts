@@ -4,7 +4,11 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { getNoteThreadDocId, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import {
+  SF_PROJECTS_COLLECTION,
+  SFProject,
+  SFProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
@@ -45,6 +49,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     protected readonly retryingRequestService: RetryingRequestService
   ) {
     super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
+  }
+
+  static hasDraft(project: SFProjectProfile): boolean {
+    return project.texts.some(text => text.chapters.some(chapter => chapter.hasDraft));
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {

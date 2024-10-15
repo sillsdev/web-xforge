@@ -28,7 +28,6 @@ interface IFeatureFlagStore {
 })
 export class FeatureFlagStore extends SubscriptionDisposable implements IFeatureFlagStore {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
-
   private localFlags: { [key: string]: boolean } = {};
   private remoteFlags: { [key: string]: boolean } = {};
   private remoteFlagCacheExpiry: Date = new Date();
@@ -209,9 +208,9 @@ export class FeatureFlagService {
   // Also, the position is important - this is the bit wise position of the feature flag in the version.
   // The position in the dialog is determined by the order in this class.
 
-  readonly showFeatureFlags: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'SHOW_FEATURE_FLAGS',
-    'Show feature flags',
+  readonly showDeveloperTools: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'SHOW_DEVELOPER_TOOLS',
+    'Show developer tools',
     0,
     this.featureFlagStore
   );

@@ -16,6 +16,9 @@
   > .training-title {
     padding: 2px;
     padding-inline-start: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     > div {
       color: white;
@@ -26,6 +29,9 @@
   > .training-content {
     padding: 10px;
     height: 44px;
+    display: flex;
+    justify-content: space-between;
+    column-gap: 5px;
   }
 }
 

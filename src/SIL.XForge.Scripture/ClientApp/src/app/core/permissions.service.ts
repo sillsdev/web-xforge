@@ -7,7 +7,11 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
-import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './models/sf-project-role-info';
+import {
+  roleCanAccessCommunityChecking,
+  roleCanAccessDrafts,
+  roleCanAccessTranslate
+} from './models/sf-project-role-info';
 import { TextDocId } from './models/text-doc';
 import { ParatextService } from './paratext.service';
 import { SFProjectService } from './sf-project.service';
@@ -34,6 +38,12 @@ export class PermissionsService {
     if (project.data == null) return false;
     const role = project.data.userRoles[userId ?? this.userService.currentUserId];
     return role != null && roleCanAccessTranslate(role as SFProjectRole);
+  }
+
+  canAccessDrafts(project?: SFProjectProfileDoc, userId?: string): boolean {
+    if (project?.data == null) return false;
+    const role = project.data.userRoles[userId ?? this.userService.currentUserId];
+    return role != null && roleCanAccessDrafts(role as SFProjectRole);
   }
 
   async isUserOnProject(projectId: string): Promise<boolean> {
@@ -81,5 +91,15 @@ export class PermissionsService {
 
     // Only PT admin and PT translator can sync non-resource projects
     return role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
+  }
+
+  canAccessBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
+    if (projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled !== true) return false;
+    return SF_PROJECT_RIGHTS.hasRight(
+      projectDoc.data,
+      this.userService.currentUserId,
+      SFProjectDomain.BiblicalTerms,
+      Operation.View
+    );
   }
 }

@@ -96,7 +96,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
-import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
+import { browserLinks, getLinkHTML, isBlink, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon, defaultNoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -161,7 +161,35 @@ export interface SaveNoteParameters {
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
-
+const UNSUPPORTED_LANGUAGE_CODES = [
+  'ko',
+  'kor',
+  'ja',
+  'jpn',
+  'cmn',
+  'czh',
+  'cdo',
+  'cjy',
+  'cmn',
+  'cpx',
+  'czh',
+  'czo',
+  'gan',
+  'hak',
+  'hsn',
+  'lzh',
+  'mnp',
+  'nan',
+  'quu',
+  'yue',
+  'cnp',
+  'csp',
+  'cpi',
+  'lzh',
+  'lpz',
+  'wuu',
+  'zh'
+];
 /** Scripture editing area. Used for Translate task.
  * ```
  * ┌─────────────────────────────────────┐
@@ -385,6 +413,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.hasSource && this.hasSourceViewRight;
   }
 
+  get showPersistedTabsOnSource(): boolean {
+    return this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false;
+  }
+
   get hasEditRight(): boolean {
     return this.userHasGeneralEditRight && this.hasChapterEditPermission === true;
   }
@@ -500,6 +532,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
   }
 
+  get writingSystemWarningMessage(): string {
+    return translate('editor.browser_warning_banner', {
+      firefoxLink: browserLinks().firefoxLink,
+      safari: browserLinks().safariLink
+    });
+  }
+
   get showMultiViewers(): boolean {
     return this.onlineStatusService.isOnline && this.multiCursorViewers.length > 0;
   }
@@ -579,6 +618,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
   get targetLabel(): string | undefined {
     return this.projectDoc?.data?.shortName;
+  }
+
+  get writingSystemWarningBanner(): boolean {
+    const writingSystemTag = this.projectDoc?.data?.writingSystem.tag;
+    /*
+      We only want the beginning part of the language code identifier from Paratext.
+      Standard format is with a hyphen, checking for an underscore in the off
+      chance a SF project has saved the writing system tag with one.
+    */
+    const languageCode = writingSystemTag?.split(/-_/)[0] ?? '';
+    const unsupportedLanguageCode = UNSUPPORTED_LANGUAGE_CODES.includes(languageCode);
+    return isBlink() && writingSystemTag != null && unsupportedLanguageCode && this.canEdit;
   }
 
   /**
@@ -1369,7 +1420,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.tabState.getFirstTabOfTypeIndex('draft');
 
     const urlDraftActive: boolean = this.activatedRoute.snapshot.queryParams['draft-active'] === 'true';
-    if (hasDraft && (!draftApplied || urlDraftActive)) {
+    const canViewDrafts: boolean = this.permissionsService.canAccessDrafts(
+      this.projectDoc,
+      this.userService.currentUserId
+    );
+    if (hasDraft && (!draftApplied || urlDraftActive) && canViewDrafts) {
       // URL may indicate to select the 'draft' tab (such as when coming from generate draft page)
       const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
 
@@ -1409,6 +1464,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else if (existingDraftTab != null) {
       // No draft for chapter, so remove the draft tab
       this.tabState.removeTab(existingDraftTab.groupId, existingDraftTab.index);
+    }
+  }
+
+  private async updateBiblicalTermsTabVisibility(): Promise<void> {
+    // If the user does not have an existing Biblical Terms tab, and BT is enabled in their project and project-user
+    // configuration, show the Biblical Terms tab then remove that setting from their project-user configuration.
+    const existingDraftTab: { groupId: EditorTabGroupType; index: number } | undefined =
+      this.tabState.getFirstTabOfTypeIndex('biblical-terms');
+    if (
+      existingDraftTab == null &&
+      this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
+      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
+    ) {
+      const groupIdToAddTo: EditorTabGroupType = this.showSource ? 'source' : 'target';
+      this.tabState.addTab(groupIdToAddTo, await this.editorTabFactory.createTab('biblical-terms'), false);
+      await this.projectUserConfigDoc?.submitJson0Op(op => op.unset(p => p.biblicalTermsEnabled));
     }
   }
 
@@ -1891,6 +1962,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.changeText();
     this.toggleNoteThreadVerses(true);
     this.updateAutoDraftTabVisibility();
+    this.updateBiblicalTermsTabVisibility();
   }
 
   private loadTranslateSuggesterConfidence(): void {

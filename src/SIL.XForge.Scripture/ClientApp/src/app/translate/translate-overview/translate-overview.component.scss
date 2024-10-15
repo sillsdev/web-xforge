@@ -28,6 +28,11 @@ mat-card {
 .books-card {
   width: 18rem;
 
+  .progress-header {
+    display: flex;
+    place-content: center space-between;
+  }
+
   .books-card-title ::ng-deep {
     margin-top: 4px;
     padding: 0 16px;

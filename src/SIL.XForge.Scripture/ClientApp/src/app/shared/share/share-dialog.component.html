@@ -9,7 +9,7 @@
       <div>
         {{ t(shareLinkType + "_can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
         @if (canUserChangeRole) {
-          <a [matMenuTriggerFor]="roleMenu" title="{{ t('invitation_role') }}">({{ t("change") }})</a>
+          <a [matMenuTriggerFor]="roleMenu" [title]="t('invitation_role')">({{ t("change") }})</a>
         }
       </div>
       <mat-menu #roleMenu>
@@ -29,7 +29,7 @@
         <div>
           {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
           @if (shareLinkUsageOptions.length > 1) {
-            <a [matMenuTriggerFor]="linkUsageMenu" title="{{ t('invitation_link_type') }}">({{ t("change") }})</a>
+            <a [matMenuTriggerFor]="linkUsageMenu" [title]="t('invitation_link_type')">({{ t("change") }})</a>
           }
         </div>
         <mat-menu #linkUsageMenu>
@@ -49,7 +49,7 @@
         <div>
           <transloco key="share_dialog.will_expire_in" [params]="{ count: shareExpiration }"></transloco>
           @if (linkExpirationOptions.length > 1) {
-            <a [matMenuTriggerFor]="expireMenu" title="{{ t('expiration_description') }}"> ({{ t("change") }}) </a>
+            <a [matMenuTriggerFor]="expireMenu" [title]="t('expiration_description')"> ({{ t("change") }}) </a>
           }
         </div>
         <mat-menu #expireMenu>
@@ -75,7 +75,7 @@
           } @else {
             <b class="empty-field" [ngClass]="{ error: error }"> ________________ </b>
           }
-          <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}"> ({{ t("change") }}) </a>
+          <a [matMenuTriggerFor]="langMenu" [title]="t('invitation_language')"> ({{ t("change") }}) </a>
         </div>
         <span class="error help-text" [ngClass]="{ hidden: !error }">{{ t("error_language") }}</span>
       </div>
@@ -106,7 +106,7 @@
       mat-flat-button
       (click)="copyLink()"
       [disabled]="!isLinkReady"
-      color="{{ !supportsShareAPI ? 'primary' : '' }}"
+      [color]="!supportsShareAPI ? 'primary' : ''"
     >
       <mat-icon>content_copy</mat-icon>{{ t("copy_link") }}
     </button>

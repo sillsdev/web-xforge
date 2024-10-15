@@ -103,107 +103,19 @@ describe('SFProjectUserConfigMigrations', () => {
   });
 
   describe('version 7', () => {
-    it('creates the tab in the source if there are source tabs', async () => {
+    it('does not modify the document', async () => {
       const env = new TestEnvironment(6);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
-        biblicalTermsEnabled: true,
-        editorTabsOpen: [{ groupId: 'source' }]
+        biblicalTermsEnabled: true
       });
       let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
-      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
-
-      await env.server.migrateIfNecessary();
-
-      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(2);
-      expect(userConfigDoc.data.editorTabsOpen[1]).toEqual({
-        tabType: 'biblical-terms',
-        groupId: 'source',
-        isSelected: false
-      });
-    });
-
-    it('creates the tab in the target if there are no source tabs', async () => {
-      const env = new TestEnvironment(6);
-      const conn = env.server.connect();
-      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
-        biblicalTermsEnabled: true,
-        editorTabsOpen: []
-      });
-      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(0);
-      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
-
-      await env.server.migrateIfNecessary();
-
-      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
-      expect(userConfigDoc.data.editorTabsOpen[0]).toEqual({
-        tabType: 'biblical-terms',
-        groupId: 'target',
-        isSelected: false
-      });
-    });
-
-    it('does not create a tab if one already exists', async () => {
-      const env = new TestEnvironment(6);
-      const conn = env.server.connect();
-      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
-        biblicalTermsEnabled: true,
-        editorTabsOpen: [
-          {
-            tabType: 'biblical-terms',
-            groupId: 'target',
-            isSelected: false
-          }
-        ]
-      });
-      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
-      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
-
-      await env.server.migrateIfNecessary();
-
-      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(1);
-    });
-
-    it('does not migrate if already migrated', async () => {
-      const env = new TestEnvironment(6);
-      const conn = env.server.connect();
-      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
-      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
       expect(userConfigDoc.version).toBe(1);
 
       await env.server.migrateIfNecessary();
 
       userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
       expect(userConfigDoc.version).toBe(1);
-    });
-
-    it('removes the biblicalTermsEnabled property', async () => {
-      const env = new TestEnvironment(6);
-      const conn = env.server.connect();
-      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {
-        biblicalTermsEnabled: false,
-        editorTabsOpen: []
-      });
-      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(0);
-      expect(userConfigDoc.data.biblicalTermsEnabled).toBeDefined();
-
-      await env.server.migrateIfNecessary();
-
-      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.editorTabsOpen.length).toBe(0);
-      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
     });
   });
 });

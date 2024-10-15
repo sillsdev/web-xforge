@@ -1,23 +1,35 @@
-.stepper-multi-header {
-  h2,
-  h3 {
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
-  h2 {
-    font-size: inherit;
-    font-weight: inherit;
-    margin: 0;
-  }
+h1 {
+  margin: 12px 0;
+}
 
-  h3 {
-    font-size: 0.9em;
-    font-weight: inherit;
-    font-style: italic;
-    margin: 2px 0 0;
-    color: #777;
+// Prevent font increase when selecting a step
+.mat-stepper-horizontal {
+  --mat-stepper-header-selected-state-label-text-size: var(--mat-stepper-header-label-text-size);
+}
+
+// Enable hover effects when step is not complete and not selected
+:host ::ng-deep .mat-step-header:hover[aria-disabled='true'] {
+  cursor: pointer;
+  background-color: var(--mat-stepper-header-hover-state-layer-color);
+  border-radius: var(--mat-stepper-header-hover-state-layer-shape);
+}
+
+:host ::ng-deep .mat-horizontal-stepper-header-container {
+  @include media-breakpoint('>', sm) {
+    margin-inline: 24px;
   }
+}
+
+:host ::ng-deep .mat-step-label {
+  @include media-breakpoint('<', sm) {
+    display: none;
+  }
+}
+
+:host ::ng-deep .mat-step-icon:not(.mat-step-icon-selected) {
+  background-color: var(--mat-stepper-header-edit-state-icon-background-color);
 }
 
 .button-strip {
@@ -29,7 +41,7 @@
 
 app-notice {
   margin-top: 20px;
-  display: inline-flex;
+  width: fit-content;
 
   h4 {
     font-style: italic;

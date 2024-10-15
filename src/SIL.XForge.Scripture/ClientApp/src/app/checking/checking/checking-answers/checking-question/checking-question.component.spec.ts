@@ -4,16 +4,16 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { lastValueFrom, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, lastValueFrom } from 'rxjs';
 import { takeWhile } from 'rxjs/operators';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
@@ -42,6 +42,7 @@ class MockComponent {
   questionDoc: QuestionDoc = instance(mockedQuestionDoc);
   projectUserConfigDoc: SFProjectUserConfigDoc = instance(mockedSFProjectUserConfigDoc);
   played: boolean = false;
+  questionDocChangeSubject$: BehaviorSubject<any> = new BehaviorSubject<void>(undefined);
   constructor() {
     when(mockedQuestion.projectRef).thenReturn('project01');
     when(mockedQuestion.text).thenReturn('some text');
@@ -52,8 +53,10 @@ class MockComponent {
       verseNum: 1
     };
     when(mockedQuestion.verseRef).thenReturn(verseRef);
+    when(mockedQuestionDoc.changes$).thenReturn(this.questionDocChangeSubject$.asObservable());
     when(mockedQuestionDoc.data).thenReturn(instance(mockedQuestion));
     when(mockedSFProjectUserConfigDoc.data).thenReturn(instance(mockedSFProjectUserConfig));
+    this.questionDoc = instance(mockedQuestionDoc);
   }
 }
 
@@ -133,7 +136,8 @@ describe('CheckingQuestionComponent', () => {
         projectRef: 'project01',
         text: 'another question',
         verseRef: verseRef
-      }
+      },
+      changes$: env.component.questionDocChangeSubject$.asObservable()
     } as QuestionDoc;
 
     await env.wait();
@@ -178,7 +182,7 @@ describe('CheckingQuestionComponent', () => {
 
     await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
-  });
+  }, 7000); // Increase from the default 5000, as this test can take longer on Firefox
 
   it('plays the entire verse when timing files are phrase level', async () => {
     const env = new TestEnvironment();
@@ -228,6 +232,7 @@ describe('CheckingQuestionComponent', () => {
     when(newQuestion.projectRef).thenReturn('project01');
     when(newQuestion.text).thenReturn('another question');
     when(newQuestion.audioUrl).thenReturn('test-audio-player-b.webm');
+    when(newQuestionDoc.changes$).thenReturn(env.component.questionDocChangeSubject$.asObservable());
     const verseRef: VerseRefData = {
       bookNum: 1,
       chapterNum: 11,
@@ -239,13 +244,13 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
 
     expect(env.component.question.questionAudioUrl).toEqual('test-audio-player.webm');
-    expect(env.component.question.scriptureAudioUrl).toEqual('test-audio-player-b.webm');
+    expect(env.component.question['scriptureAudioUrl']).toEqual('test-audio-player-b.webm');
 
     env.component.questionDoc = instance(newQuestionDoc);
     await env.wait();
 
     expect(env.component.question.questionAudioUrl).toEqual('test-audio-player-b.webm');
-    expect(env.component.question.scriptureAudioUrl).toEqual('test-audio-player.webm');
+    expect(env.component.question['scriptureAudioUrl']).toEqual('test-audio-player.webm');
   });
 
   it('reloads audio files when audio data changes', async () => {
@@ -253,7 +258,7 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     await env.wait();
 
-    expect(env.component.question.scriptureAudioUrl).not.toEqual(undefined);
+    expect(env.component.question['scriptureAudioUrl']).not.toEqual(undefined);
     expect(env.component.question.focusedText).toEqual('scripture-audio-label');
 
     //modify the query
@@ -263,7 +268,7 @@ describe('CheckingQuestionComponent', () => {
     env.queryChanged$.next();
     await env.wait();
 
-    expect(env.component.question.scriptureAudioUrl).toEqual(undefined);
+    expect(env.component.question['scriptureAudioUrl']).toEqual(undefined);
     expect(env.component.question.focusedText).toEqual('question-audio-label');
   });
 
@@ -286,6 +291,20 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
 
     expect(env.component.played).toBe(true);
+  });
+
+  it('updates the scripture audio verse play button when question verse reference changes', async () => {
+    const env = new TestEnvironment();
+    await env.wait();
+    await env.wait();
+    expect(env.scriptureAudio).not.toBeNull();
+
+    const chapterWithoutAudio = 2;
+    when(mockedQuestion.verseRef).thenReturn({ bookNum: 8, chapterNum: chapterWithoutAudio, verseNum: 1 });
+
+    env.component.questionDocChangeSubject$.next(undefined);
+    await env.wait();
+    expect(env.scriptureAudio).toBeNull();
   });
 });
 

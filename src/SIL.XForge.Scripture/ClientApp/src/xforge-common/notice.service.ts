@@ -4,13 +4,16 @@ import { firstValueFrom } from 'rxjs';
 import { I18nService } from './i18n.service';
 
 /** Manages and provides access to notices shown to user on the web site. */
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class NoticeService {
   private _isAppLoading: boolean = false;
-  private loadingCount: number = 0;
   private messageOnDisplay?: string;
+
+  private _loadingCountsByCallerId: { [callerId: string]: number } = {};
+
+  get loadingCountsByCallerId(): { [callerId: string]: number } {
+    return this._loadingCountsByCallerId;
+  }
 
   constructor(
     private readonly snackBar: MatSnackBar,
@@ -22,16 +25,29 @@ export class NoticeService {
   }
 
   loadingStarted(): void {
-    if (this.loadingCount === 0) {
-      setTimeout(() => (this._isAppLoading = true));
+    const callerId = this.getCallerClassName();
+
+    if (this._loadingCountsByCallerId[callerId] === undefined) {
+      this._loadingCountsByCallerId[callerId] = 0;
     }
-    this.loadingCount++;
+    this._loadingCountsByCallerId[callerId]++;
+
+    this.setAppLoadingAsync(true);
   }
 
   loadingFinished(): void {
-    this.loadingCount--;
-    if (this.loadingCount === 0) {
-      setTimeout(() => (this._isAppLoading = false));
+    const callerId = this.getCallerClassName();
+
+    if (!(this._loadingCountsByCallerId[callerId] > 0)) {
+      console.error(`loadingFinished called by ${callerId} without a corresponding loadingStarted call`);
+      // Set it to 1 to avoid negative values
+      this._loadingCountsByCallerId[callerId] = 1;
+    }
+
+    this._loadingCountsByCallerId[callerId]--;
+    // check if every caller has finished loading
+    if (Object.values(this._loadingCountsByCallerId).every(count => count === 0)) {
+      this.setAppLoadingAsync(false);
     }
   }
 
@@ -71,5 +87,15 @@ export class NoticeService {
     this.messageOnDisplay = message;
 
     firstValueFrom(snackBarRef.afterDismissed()).then(() => (this.messageOnDisplay = undefined));
+  }
+
+  private getCallerClassName(): string {
+    return new Error().stack?.split('\n')[3].match(/^\s*at (\w+)\./)?.[1] ?? 'unknown';
+  }
+
+  private setAppLoadingAsync(value: boolean): void {
+    setTimeout(() => {
+      this._isAppLoading = value;
+    });
   }
 }

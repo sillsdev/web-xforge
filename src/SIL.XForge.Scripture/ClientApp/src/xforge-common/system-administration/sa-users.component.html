@@ -4,7 +4,7 @@
     <input matInput id="user-filter" (input)="updateSearchTerm($event.target)" />
   </mat-form-field>
 </div>
-@if (!isLoading) {
+@if (!isLoadingData) {
   @if (totalRecordCount > 0) {
     <table mat-table id="users-table" [dataSource]="userRows">
       <ng-container matColumnDef="avatar">

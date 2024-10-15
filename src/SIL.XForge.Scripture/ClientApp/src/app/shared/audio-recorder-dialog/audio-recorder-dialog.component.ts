@@ -46,6 +46,8 @@ export class AudioRecorderDialogComponent
   extends SubscriptionDisposable
   implements ControlValueAccessor, OnInit, OnDestroy
 {
+  destroyed = false;
+
   @ViewChild(SingleButtonAudioPlayerComponent) audioPlayer?: SingleButtonAudioPlayerComponent;
   @Output() status = new EventEmitter<AudioAttachment>();
 
@@ -99,6 +101,8 @@ export class AudioRecorderDialogComponent
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    super.ngOnDestroy();
     if (this.isRecording) {
       this.stopRecording();
     }
@@ -163,7 +167,7 @@ export class AudioRecorderDialogComponent
       },
       complete: () => {
         this.showCountdown = false;
-        this.startRecording();
+        if (!this.destroyed) this.startRecording();
       }
     });
   }

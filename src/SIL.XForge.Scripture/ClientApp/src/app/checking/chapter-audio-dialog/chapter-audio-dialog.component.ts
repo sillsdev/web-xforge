@@ -230,6 +230,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   ngOnDestroy(): void {
+    super.ngOnDestroy();
     if (this.textAudioQuery != null) {
       this.textAudioQuery.dispose();
     }

@@ -30,7 +30,7 @@
         appBlurOnClick
         type="button"
         (click)="toggleDiff()"
-        matTooltip="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
+        [matTooltip]="!showDiff ? t('show_diff') : t('hide_diff')"
       >
         <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
         {{ showDiff ? t("hide_changes") : t("show_changes") }}
@@ -41,7 +41,7 @@
           mat-button
           type="button"
           (click)="revertToSnapshot()"
-          matTooltip="{{ t('revert_details') }}"
+          [matTooltip]="t('revert_details')"
         >
           <mat-icon class="material-icons-outlined">undo</mat-icon>
           {{ t("revert") }}

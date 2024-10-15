@@ -4,9 +4,9 @@ import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { asyncScheduler, merge, Subscription } from 'rxjs';
+import { Subscription, asyncScheduler, merge } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -16,6 +16,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
+import { L10nNumberPipe } from '../../../xforge-common/l10n-number.pipe';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -62,7 +63,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly questionDialogService: QuestionDialogService,
     private readonly permissions: PermissionsService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly l10nNumberPipe: L10nNumberPipe
   ) {
     super(noticeService);
   }
@@ -355,7 +357,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   answerCountLabel(count?: number): string {
-    return count != null && count > 0 ? translate('checking_overview.answer_count_label', { count: count }) : '';
+    return count != null && count > 0
+      ? translate('checking_overview.answer_count_label', { count: this.l10nNumberPipe.transform(count) })
+      : '';
   }
 
   async setArchiveStatusForQuestionsInBook(text: TextInfo, archive: boolean): Promise<void> {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SIL.XForge.Models;
 
@@ -28,6 +29,9 @@ public class SFProjectUserConfig : ProjectData
     public List<string> CommentRefsRead { get; set; } = [];
     public List<EditorTabPersistData> EditorTabsOpen { get; set; } = [];
     public string? SelectedQuestionRef { get; set; }
+
+    [Obsolete("For backwards compatibility with older frontend clients. Deprecated September 2024.")]
+    public bool? BiblicalTermsEnabled { get; set; }
     public bool TransliterateBiblicalTerms { get; set; }
     public string? SelectedBiblicalTermsCategory { get; set; }
     public string? SelectedBiblicalTermsFilter { get; set; }

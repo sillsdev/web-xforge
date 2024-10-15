@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, RouterModule } from '@angular/router';
@@ -86,6 +86,8 @@ describe('TranslateOverviewComponent', () => {
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
       env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
+
+      discardPeriodicTasks();
     }));
 
     it('should update books when chapter changes in project', fakeAsync(() => {
@@ -98,6 +100,8 @@ describe('TranslateOverviewComponent', () => {
 
       env.addVerse(40, 1);
       env.expectContainsTextProgress(0, 'Matthew', '11 of 21 segments');
+
+      discardPeriodicTasks();
     }));
   });
 
@@ -108,6 +112,8 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.engineCard).toBeNull();
+
+      discardPeriodicTasks();
     }));
 
     it('should be hidden when user cannot edit texts', fakeAsync(() => {
@@ -117,6 +123,8 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.engineCard).toBeNull();
+
+      discardPeriodicTasks();
     }));
 
     it('should display engine stats', fakeAsync(() => {
@@ -125,6 +133,8 @@ describe('TranslateOverviewComponent', () => {
 
       expect(env.qualityStarIcons).toEqual(['star', 'star_half', 'star_border']);
       expect(env.segmentsCount.nativeElement.textContent).toBe('100');
+
+      discardPeriodicTasks();
     }));
 
     it('should start training engine if not initially enabled', fakeAsync(() => {
@@ -136,6 +146,8 @@ describe('TranslateOverviewComponent', () => {
       env.simulateTranslateSuggestionsEnabled();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       expect(env.retrainButton).toBeTruthy();
+
+      discardPeriodicTasks();
     }));
 
     it('training progress status', fakeAsync(() => {
@@ -155,6 +167,8 @@ describe('TranslateOverviewComponent', () => {
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
+
+      discardPeriodicTasks();
     }));
 
     it('error in training status', fakeAsync(() => {
@@ -175,6 +189,8 @@ describe('TranslateOverviewComponent', () => {
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
+
+      discardPeriodicTasks();
     }));
 
     it('retrain', fakeAsync(() => {
@@ -190,6 +206,8 @@ describe('TranslateOverviewComponent', () => {
       expect(env.component.isTraining).toBe(true);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.mode).toBe('determinate');
+
+      discardPeriodicTasks();
     }));
 
     it('should display the Paratext credentials update prompt when get projects throws a forbidden error', fakeAsync(() => {
@@ -204,6 +222,8 @@ describe('TranslateOverviewComponent', () => {
       verify(mockedAuthService.requestParatextCredentialUpdate()).once();
       expect(env.trainingProgressShown).toBe(false);
       expect(env.component.isTraining).toBe(false);
+
+      discardPeriodicTasks();
     }));
 
     it('should not create engine if no source text docs', fakeAsync(() => {
@@ -217,6 +237,8 @@ describe('TranslateOverviewComponent', () => {
       env.clickRetrainButton();
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeTruthy();
+
+      discardPeriodicTasks();
     }));
 
     it('retrain should be disabled if offline', fakeAsync(() => {
@@ -228,6 +250,8 @@ describe('TranslateOverviewComponent', () => {
 
       env.isOnline = false;
       expect(env.retrainButton.nativeElement.disabled).toBe(true);
+
+      discardPeriodicTasks();
     }));
   });
 });

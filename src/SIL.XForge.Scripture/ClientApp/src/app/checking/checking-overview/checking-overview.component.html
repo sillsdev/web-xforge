@@ -9,7 +9,7 @@
             {{ t("import_questions") }}
           </button>
         }
-        @if (!isLoading) {
+        @if (!isLoadingData) {
           <button
             class="add-question-button hide-lt-sm"
             mat-flat-button
@@ -38,7 +38,7 @@
   </div>
 
   @if (canEditQuestion) {
-    <div fxLayout="column" fxLayoutAlign="space-around" id="text-with-questions-list">
+    <div id="text-with-questions-list">
       @if (!isOnline && (canCreateScriptureAudio || canDeleteScriptureAudio)) {
         <app-notice id="warning-some-actions-unavailable-offline" icon="cloud_off" type="warning">{{
           t("some_actions_unavailable_offline")
@@ -49,14 +49,14 @@
           <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <span fxFlex>{{ getBookName(text) }}</span>
-                <span fxFlex="110px" fxLayoutAlign="end center" class="questions-count hide-lt-sm">
+                <span class="flex">{{ getBookName(text) }}</span>
+                <span class="questions-count hide-lt-sm flex-info-end">
                   {{ questionCountLabel(bookQuestionCount(text)) }}
                 </span>
-                <span fxFlex="110px" class="hide-lt-sm" fxLayoutAlign="end center">
+                <span class="hide-lt-sm flex-info-end">
                   {{ answerCountLabel(bookAnswerCount(text)) }}
                 </span>
-                <span fxFlex="64px" fxLayoutAlign="end center">
+                <span class="flex-icon">
                   <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                   @if (bookQuestionCount(text) > 0) {
                     <button
@@ -82,22 +82,22 @@
                       class="mat-elevation-z0"
                     >
                       <mat-expansion-panel-header>
-                        <mat-panel-title fxLayoutAlign="start center">
-                          <span fxFlex fxLayout class="book-chapter-heading"
+                        <mat-panel-title>
+                          <span class="book-chapter-heading flex"
                             >{{ getBookName(text) + " " + chapter?.number }}
                             @if (chapter.hasAudio) {
-                              <mat-icon title="{{ t('chapter_audio_attached') }}" class="material-icons-outlined"
-                                >audio_file</mat-icon
-                              >
+                              <mat-icon [title]="t('chapter_audio_attached')" class="material-icons-outlined">
+                                audio_file
+                              </mat-icon>
                             }
                           </span>
-                          <span fxFlex="110px" fxLayoutAlign="end center" class="questions-count hide-lt-sm">
+                          <span class="questions-count hide-lt-sm flex-info-end">
                             {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                           </span>
-                          <span fxFlex="110px" class="hide-lt-sm" fxLayoutAlign="end center">
+                          <span class="hide-lt-sm flex-info-end">
                             {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                           </span>
-                          <span fxFlex="64px" fxLayoutAlign="end center">
+                          <span class="flex-icon">
                             <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                             <button
                               class="chapter-menu-button"
@@ -158,7 +158,7 @@
                             track questionDoc
                           ) {
                             <mat-list-item disableRipple>
-                              <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                              <div class="flex">
                                 <button
                                   mat-icon-button
                                   (click)="questionDialog(questionDoc)"
@@ -170,21 +170,17 @@
                                 </button>
                                 v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                                 @if (questionDoc.data?.audioUrl) {
-                                  <mat-icon class="audio-icon material-icons-outlined"> audio_file </mat-icon>
+                                  <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                                 }
-                                <span fxFlex class="no-overflow-ellipsis">
-                                  @if (questionDoc.data?.text) {
-                                    <span>{{ questionDoc.data?.text }}</span>
-                                  }
-                                </span>
-                                <span fxFlex="110px" class="hide-lt-sm" fxLayoutAlign="end center">
+                                <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
+                                <span class="hide-lt-sm flex-info-end">
                                   {{ answerCountLabel(questionDoc.getAnswers().length) }}
                                 </span>
-                                <span fxFlex="64px" fxLayoutAlign="end center">
+                                <span class="flex-icon">
                                   <button
                                     mat-icon-button
                                     (click)="setQuestionArchiveStatus(questionDoc, true)"
-                                    title="{{ t('archive') }}"
+                                    [title]="t('archive')"
                                     class="archive-btn"
                                   >
                                     <mat-icon>archive</mat-icon>
@@ -205,13 +201,13 @@
       }
     </div>
   } @else {
-    <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
+    <div class="reviewer-panels" id="reviewer-question-panel">
       <mat-list dense id="reviewer-questions-list">
         @for (text of texts; track text) {
           @if (bookQuestionCount(text) > 0) {
             <mat-list-item [appRouterLink]="getRouterLink(getBookId(text))">
-              <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                <span fxFlex>{{ getBookName(text) }}</span>
+              <div class="flex">
+                <span class="flex">{{ getBookName(text) }}</span>
                 <span>
                   <app-donut-chart
                     [colors]="['#3a3a3a', '#edecec', '#B8D332']"
@@ -227,7 +223,7 @@
   }
 
   @if (showNoQuestionsMessage) {
-    <div fxLayout="row" fxLayoutAlign="space-around" class="reviewer-panels" id="no-questions-label">
+    <div class="reviewer-panels flex" id="no-questions-label">
       <p>
         {{ t("no_questions") }}
         @if (canCreateQuestion) {
@@ -246,44 +242,44 @@
     <h2>{{ t(canCreateQuestion ? "project_stats" : "my_contributions") }}</h2>
   </div>
 
-  <div fxLayout="row wrap" fxLayoutAlign="space-between" class="reviewer-panels stat-panels">
+  <div class="reviewer-panels stat-panels">
     @if (canCreateQuestion) {
       <mat-card class="card card-content-question mat-elevation-z2">
         <mat-card-content>
-          <span fxFlex>
-            <div class="stat-total">{{ allQuestionsCount }}</div>
+          <span class="flex">
+            <div class="stat-total">{{ allQuestionsCount | l10nNumber }}</div>
             <div class="stat-label">{{ t("questions") }}</div>
           </span>
-          <span fxLayoutAlign="start center"> <mat-icon class="mirror-rtl">help</mat-icon> </span>
+          <span class="vertical-center"> <mat-icon class="mirror-rtl">help</mat-icon> </span>
         </mat-card-content>
       </mat-card>
     }
     <mat-card class="card card-content-answer">
       <mat-card-content>
-        <span fxFlex>
-          <div class="stat-total">{{ myAnswerCount }}</div>
+        <span class="flex">
+          <div class="stat-total">{{ myAnswerCount | l10nNumber }}</div>
           <div class="stat-label">{{ t("answers") }}</div>
         </span>
-        <span fxLayoutAlign="start center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
+        <span class="vertical-center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
       </mat-card-content>
     </mat-card>
     <mat-card class="card card-content-comment">
       <mat-card-content>
-        <span fxFlex>
-          <div class="stat-total">{{ myCommentCount }}</div>
+        <span class="flex">
+          <div class="stat-total">{{ myCommentCount | l10nNumber }}</div>
           <div class="stat-label">{{ t("comments") }}</div>
         </span>
-        <span fxLayoutAlign="start center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
+        <span class="vertical-center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
       </mat-card-content>
     </mat-card>
     @if (canSeeOtherUserResponses) {
       <mat-card class="card card-content-like">
         <mat-card-content>
-          <span fxFlex>
-            <div class="stat-total">{{ myLikeCount }}</div>
+          <span class="flex">
+            <div class="stat-total">{{ myLikeCount | l10nNumber }}</div>
             <div class="stat-label">{{ t("likes") }}</div>
           </span>
-          <span fxLayoutAlign="start center"> <mat-icon>thumb_up</mat-icon> </span>
+          <span class="vertical-center"> <mat-icon>thumb_up</mat-icon> </span>
         </mat-card-content>
       </mat-card>
     }
@@ -297,18 +293,18 @@
   }
 
   @if (canEditQuestion) {
-    <div fxLayout="column" id="text-with-archived-questions">
+    <div id="text-with-archived-questions">
       @for (text of texts; track text) {
         @if (bookQuestionCount(text, true) > 0) {
           <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
             <mat-expansion-panel-header>
               <mat-panel-title>
-                <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                  <span fxFlex>{{ getBookName(text) }}</span>
-                  <span fxFlex="110px" fxLayoutAlign="end center" class="archived-questions-count hide-lt-sm">
+                <div class="flex">
+                  <span class="flex">{{ getBookName(text) }}</span>
+                  <span class="archived-questions-count hide-lt-sm flex-info-end">
                     {{ questionCountLabel(bookQuestionCount(text, true)) }}
                   </span>
-                  <span fxFlex="64px" fxLayoutAlign="end center">
+                  <span class="flex-icon">
                     <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                     <button
                       mat-icon-button
@@ -328,12 +324,12 @@
                   <mat-expansion-panel [togglePosition]="'before'" class="mat-elevation-z0">
                     <mat-expansion-panel-header>
                       <mat-panel-title>
-                        <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                          <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-                          <span fxFlex="110px" fxLayoutAlign="end center" class="archived-questions-count hide-lt-sm">
+                        <div class="flex">
+                          <span class="flex">{{ getBookName(text) + " " + chapter?.number }}</span>
+                          <span class="archived-questions-count hide-lt-sm flex-info-end">
                             {{ questionCountLabel(questionCount(text.bookNum, chapter.number, true)) }}
                           </span>
-                          <span fxFlex="64px" fxLayoutAlign="end center">
+                          <span class="flex-icon">
                             <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                             <button
                               mat-icon-button
@@ -356,24 +352,20 @@
                           track questionDoc
                         ) {
                           <mat-list-item disableRipple>
-                            <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                            <div class="flex">
                               v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
                               @if (questionDoc.data?.audioUrl) {
-                                <mat-icon class="audio-icon material-icons-outlined"> audio_file </mat-icon>
+                                <mat-icon class="audio-icon material-icons-outlined">audio_file</mat-icon>
                               }
-                              <span fxFlex class="no-overflow-ellipsis">
-                                @if (questionDoc.data?.text) {
-                                  <span>{{ questionDoc.data?.text }}</span>
-                                }
+                              <span class="overflow-ellipsis">{{ questionDoc.data?.text ?? "" }}</span>
+                              <span class="date-archived hide-lt-sm flex-timestamp">
+                                {{ timeArchivedStamp(questionDoc.data?.dateArchived) }}
                               </span>
-                              <span fxFlex="260px" fxLayoutAlign="end center" class="date-archived hide-lt-sm">{{
-                                timeArchivedStamp(questionDoc.data?.dateArchived)
-                              }}</span>
-                              <span fxFlex="64px" fxLayoutAlign="end center">
+                              <span class="flex-icon">
                                 <button
                                   mat-icon-button
                                   (click)="setQuestionArchiveStatus(questionDoc, false)"
-                                  title="{{ t('republish') }}"
+                                  [title]="t('republish')"
                                   class="publish-btn"
                                 >
                                   <mat-icon>public</mat-icon>
@@ -392,7 +384,7 @@
         }
       }
       @if (showNoArchivedQuestionsMessage) {
-        <div fxLayout="row" fxLayoutAlign="space-around" class="reviewer-panels" id="no-archived-questions-label">
+        <div class="reviewer-panels" id="no-archived-questions-label">
           <p>{{ t("no_archived_questions") }}</p>
         </div>
       }
