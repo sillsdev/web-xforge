@@ -132,6 +132,7 @@ app-notice {
   font-style: italic;
   display: inline-block;
   margin-bottom: 12px;
+  font-weight: 100;
 }
 
 .mat-mdc-table {
@@ -148,14 +149,20 @@ app-notice {
 }
 
 .confirm-translate-books {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 24px;
-  row-gap: 8px;
   padding-inline-start: 16px;
+}
+
+.cell-padding-block {
+  padding-block: 16px;
+}
+
+.confirm-books {
+  display: flex;
+  flex-direction: column;
+  column-gap: 32px;
+  row-gap: 8px;
 }
 
 .confirm-book {
   padding-block: 4px;
-  font-weight: 500;
 }
