@@ -853,8 +853,7 @@ public class MachineProjectServiceTests
         // The old corpus and its files should be deleted
         await env
             .TranslationEnginesClient.Received()
-            .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
-        await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
+            .DeleteCorpusAsync(TranslationEngine02, Corpus02, deleteFiles: true, CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
@@ -1287,9 +1286,7 @@ public class MachineProjectServiceTests
         await env.TranslationEnginesClient.Received(1).DeleteAsync(TranslationEngine02, CancellationToken.None);
         await env
             .TranslationEnginesClient.Received(1)
-            .DeleteCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
-        await env.DataFilesClient.Received(1).DeleteAsync(File01, CancellationToken.None);
-        await env.DataFilesClient.Received(1).DeleteAsync(File02, CancellationToken.None);
+            .DeleteCorpusAsync(TranslationEngine02, Corpus01, deleteFiles: true, CancellationToken.None);
     }
 
     [Test]
@@ -1307,8 +1304,7 @@ public class MachineProjectServiceTests
             .DeleteAsync(TranslationEngine01, CancellationToken.None);
         await env
             .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .DeleteCorpusAsync(TranslationEngine01, Corpus01, CancellationToken.None);
-        await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(File01, CancellationToken.None);
+            .DeleteCorpusAsync(TranslationEngine01, Corpus01, deleteFiles: true, CancellationToken.None);
     }
 
     [Test]
@@ -1490,7 +1486,7 @@ public class MachineProjectServiceTests
         Assert.IsTrue(actual);
         await env
             .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool?>(), CancellationToken.None);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
     }
 
@@ -1696,7 +1692,12 @@ public class MachineProjectServiceTests
             alternateTrainingSource: true
         );
         ServalApiException ex = ServalApiExceptions.NotFound;
-        env.TranslationEnginesClient.DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None)
+        env.TranslationEnginesClient.DeleteCorpusAsync(
+                TranslationEngine02,
+                Corpus02,
+                deleteFiles: true,
+                CancellationToken.None
+            )
             .Throws(ex);
 
         // Check that we have more than one pre-translate corpora
@@ -1714,56 +1715,7 @@ public class MachineProjectServiceTests
         // The old corpus and its files should be deleted
         await env
             .TranslationEnginesClient.Received()
-            .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
-        await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
-
-        // Ensure we have just one pre-translate corpora
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
-
-        // The 404 exception was logged
-        env.MockLogger.AssertHasEvent(logEvent =>
-            logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
-        );
-    }
-
-    [Test]
-    public async Task BuildProjectAsync_DoesNotCrashWhenDeletingMissingAlternateTrainingSourceFiles()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(
-            new TestEnvironmentOptions
-            {
-                LocalSourceTextHasData = true,
-                LocalTargetTextHasData = true,
-                AlternateTrainingSourceEnabled = false,
-            }
-        );
-        await env.SetDataInSync(
-            Project02,
-            preTranslate: true,
-            uploadParatextZipFile: false,
-            alternateTrainingSource: true
-        );
-        ServalApiException ex = ServalApiExceptions.NotFound;
-        env.DataFilesClient.DeleteAsync(File01, CancellationToken.None).Throws(ex);
-
-        // Check that we have more than one pre-translate corpora
-        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
-
-        // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
-            User01,
-            new BuildConfig { ProjectId = Project02 },
-            preTranslate: true,
-            CancellationToken.None
-        );
-        Assert.IsTrue(actual);
-
-        // The old corpus and its files should be deleted
-        await env
-            .TranslationEnginesClient.Received()
-            .DeleteCorpusAsync(TranslationEngine02, Corpus02, CancellationToken.None);
-        await env.DataFilesClient.Received().DeleteAsync(File01, CancellationToken.None);
+            .DeleteCorpusAsync(TranslationEngine02, Corpus02, deleteFiles: true, CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
@@ -1931,7 +1883,7 @@ public class MachineProjectServiceTests
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
         await env
             .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
-            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool?>(), CancellationToken.None);
         await env
             .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
@@ -1964,7 +1916,7 @@ public class MachineProjectServiceTests
                     {
                         Id = args.ArgAt<string>(1),
                         SourceLanguage = "fr",
-                        TargetLanguage = "de"
+                        TargetLanguage = "de",
                     }
                 )
             );
@@ -1982,7 +1934,7 @@ public class MachineProjectServiceTests
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
         await env
             .TranslationEnginesClient.Received(1)
-            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), deleteFiles: false, CancellationToken.None);
         await env
             .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .UpdateCorpusAsync(
@@ -2419,14 +2371,7 @@ public class MachineProjectServiceTests
             {
                 TranslationEnginesClient
                     .GetCurrentBuildAsync(Arg.Any<string>(), null, CancellationToken.None)
-                    .Returns(
-                        Task.FromResult(
-                            new TranslationBuild
-                            {
-                                Pretranslate = new List<PretranslateCorpus> { new PretranslateCorpus() },
-                            }
-                        )
-                    );
+                    .Returns(Task.FromResult(new TranslationBuild { Pretranslate = [new PretranslateCorpus()], }));
             }
             else
             {
