@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace SIL.XForge.Services;
 
-public class MockHttpMessageHandler((string url, string message, HttpStatusCode statusCode)[] responses)
-    : HttpMessageHandler
+public class MockHttpMessageHandler(
+    (string url, string message, HttpStatusCode statusCode, DateTime utcDate)[] responses
+) : HttpMessageHandler
 {
     public string? LastInput { get; private set; }
     public int NumberOfCalls { get; private set; }
@@ -22,7 +23,7 @@ public class MockHttpMessageHandler((string url, string message, HttpStatusCode 
         LastInput = request.Content is not null ? await request.Content.ReadAsStringAsync(cancellationToken) : null;
 
         foreach (
-            (string _, string message, HttpStatusCode statusCode) in responses.Where(response =>
+            (string _, string message, HttpStatusCode statusCode, DateTime utcDate) in responses.Where(response =>
                 request.RequestUri!.PathAndQuery.Contains(response.url)
             )
         )
@@ -30,6 +31,7 @@ public class MockHttpMessageHandler((string url, string message, HttpStatusCode 
             return new HttpResponseMessage
             {
                 StatusCode = statusCode,
+                Headers = { Date = utcDate },
                 Content = new StringContent(message),
                 RequestMessage = request,
             };

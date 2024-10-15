@@ -38,9 +38,10 @@ public class AuthServiceTests
                 (
                     url: "oauth/token",
                     message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
-                    statusCode: HttpStatusCode.OK
+                    statusCode: HttpStatusCode.OK,
+                    utcDate: DateTime.UtcNow
                 ),
-                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
+                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK, utcDate: DateTime.UtcNow),
             ]
         );
         var httpClient = TestEnvironment.CreateHttpClient(handler);
@@ -63,12 +64,14 @@ public class AuthServiceTests
                 (
                     url: "oauth/token",
                     message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
-                    statusCode: HttpStatusCode.OK
+                    statusCode: HttpStatusCode.OK,
+                    utcDate: DateTime.UtcNow
                 ),
                 (
                     url: "users/auth01",
                     message: """{"statusCode":404,"error":"Not Found","message":"The user does not exist.","errorCode":"inexistent_user"}""",
-                    statusCode: HttpStatusCode.NotFound
+                    statusCode: HttpStatusCode.NotFound,
+                    utcDate: DateTime.UtcNow
                 ),
             ]
         );
@@ -117,9 +120,10 @@ public class AuthServiceTests
                 (
                     url: "oauth/token",
                     message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
-                    statusCode: HttpStatusCode.OK
+                    statusCode: HttpStatusCode.OK,
+                    utcDate: DateTime.UtcNow
                 ),
-                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
+                (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK, utcDate: DateTime.UtcNow),
             ]
         );
         var httpClient = TestEnvironment.CreateHttpClient(handler);
