@@ -140,7 +140,7 @@
     "karma-mocha-reporter": "^2.2.5",
     "karma-parallel": "^0.3.1",
     "karma-teamcity-reporter": "^1.1.0",
-    "lint-staged": "^13.0.3",
+    "lint-staged": "^15.2.10",
     "npm": "^10.9",
     "prettier": "^3.3.3",
     "react": "^18.2.0",
