@@ -7,7 +7,7 @@ import { Observable, Subscription, interval, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import {
@@ -64,9 +64,6 @@ export class AudioRecorderDialogComponent
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
   showCanvas: boolean = false;
-  tapToRecordText?: TextAroundTemplate = this.i18n.translateTextAroundTemplateTags(
-    'audio_recorder_dialog.tap_to_record'
-  );
 
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
