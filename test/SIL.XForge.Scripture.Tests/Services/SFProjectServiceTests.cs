@@ -2680,9 +2680,14 @@ public class SFProjectServiceTests
         string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
-        // SUT
+
+        // SUT 1
         await env.Service.DeleteProjectAsync(User01, Project01);
 
+        env.Logger.AssertHasEvent(
+            e => e.Message!.Contains(Project01) && e.Message.Contains(User01),
+            "The deletion should be logged"
+        );
         Assert.That(env.ContainsProject(Project01), Is.False);
         User user = env.GetUser(User01);
         Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
@@ -2695,6 +2700,8 @@ public class SFProjectServiceTests
         ptProjectDir = Path.Combine("xforge", "sync", "pt_source_no_suggestions");
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.GetProject(Project03).TranslateConfig.Source, Is.Not.Null);
+
+        // SUT 2
         await env.Service.DeleteProjectAsync(User01, SourceOnly);
 
         env.Logger.AssertHasEvent(
