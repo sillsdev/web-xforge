@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
@@ -14,12 +15,8 @@ using SIL.XForge.Models;
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary> Helper methods to access information involving JWT tokens </summary>
-public class JwtTokenHelper : IJwtTokenHelper
+public class JwtTokenHelper(IExceptionHandler exceptionHandler, ILogger<JwtTokenHelper> logger) : IJwtTokenHelper
 {
-    private readonly IExceptionHandler _exceptionHandler;
-
-    public JwtTokenHelper(IExceptionHandler exceptionHandler) => _exceptionHandler = exceptionHandler;
-
     /// <summary> Get the Paratext username from the access token stored in the UserSecret. </summary>
     public string? GetParatextUsername(UserSecret userSecret)
     {
@@ -62,13 +59,31 @@ public class JwtTokenHelper : IJwtTokenHelper
         request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
         HttpResponseMessage response = await client.SendAsync(request, token);
 
+        // Track the clock drift between the Scripture Forge and the Paratext Registry servers
+        // Note: There will be a margin of error of the time between the Registry Server sends the HTTP Response, and
+        // when the Scripture Forge server receives and converts it to an object. This usually be under a second, but
+        // may be up to a second or two under difficult network conditions or extreme CPU pressure.
+        DateTime scriptureForgeServerDate = DateTime.UtcNow;
+        if (response.Headers.Date.HasValue)
+        {
+            DateTime registryServerDateTime = response.Headers.Date.Value.UtcDateTime;
+            TimeSpan difference = registryServerDateTime - scriptureForgeServerDate;
+            string drift = @$"{(difference.TotalSeconds > 0 ? "+" : "-")}{difference:hh\:mm\:ss}";
+            string message = $"Registry Server Clock Drift: {drift}";
+            logger.LogInformation(message);
+            if (Math.Abs(difference.TotalSeconds) > 30)
+            {
+                exceptionHandler.ReportException(new ArgumentOutOfRangeException(message));
+            }
+        }
+
         // Rethrow 400 errors as unauthorized, as these are related to invalid or expired tokens
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
             throw new UnauthorizedAccessException();
         }
 
-        await _exceptionHandler.EnsureSuccessStatusCode(response);
+        await exceptionHandler.EnsureSuccessStatusCode(response);
 
         string responseJson = await response.Content.ReadAsStringAsync(token);
         JObject responseObj = JObject.Parse(responseJson);
