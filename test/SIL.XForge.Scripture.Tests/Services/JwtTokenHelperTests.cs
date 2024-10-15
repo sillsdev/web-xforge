@@ -22,16 +22,9 @@ public class JwtTokenHelperTests
 
         // Mock the Registry Server response
         var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "api8/token",
-                    message: string.Empty,
-                    statusCode: HttpStatusCode.BadRequest,
-                    utcDate: DateTime.UtcNow
-                ),
-            ]
+            [(url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.BadRequest)]
         );
-        HttpClient httpClient = TestEnvironment.CreateHttpClient(handler);
+        HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
         Assert.ThrowsAsync<UnauthorizedAccessException>(
@@ -46,24 +39,46 @@ public class JwtTokenHelperTests
     }
 
     [Test]
+    public async Task RefreshAccessTokenAsync_NotExpired()
+    {
+        var env = new TestEnvironment();
+
+        // Mock the Registry Server response
+        var handler = new MockHttpMessageHandler([]);
+        HttpClient httpClient = handler.CreateHttpClient();
+
+        Tokens tokens = new Tokens { AccessToken = MockHttpMessageHandler.GenerateToken() };
+
+        // SUT
+        Tokens actual = await env.Service.RefreshAccessTokenAsync(
+            new ParatextOptions(),
+            tokens,
+            httpClient,
+            CancellationToken.None
+        );
+
+        Assert.Zero(handler.NumberOfCalls);
+        Assert.AreEqual(tokens, actual);
+    }
+
+    [Test]
     public async Task RefreshAccessTokenAsync_RegistryServerPositiveClockDrift()
     {
         var env = new TestEnvironment();
 
         // Mock the Registry Server response
-        const string accessToken = "123";
-        const string refreshToken = "456";
+        string accessToken = MockHttpMessageHandler.GenerateToken(DateTime.UtcNow.AddSeconds(35));
+        const string refreshToken = "123456";
         var handler = new MockHttpMessageHandler(
             [
                 (
                     url: "api8/token",
                     message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
-                    statusCode: HttpStatusCode.OK,
-                    utcDate: DateTime.UtcNow.AddSeconds(35)
+                    statusCode: HttpStatusCode.OK
                 ),
             ]
         );
-        HttpClient httpClient = TestEnvironment.CreateHttpClient(handler);
+        HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
         Tokens actual = await env.Service.RefreshAccessTokenAsync(
@@ -85,19 +100,18 @@ public class JwtTokenHelperTests
         var env = new TestEnvironment();
 
         // Mock the Registry Server response
-        const string accessToken = "123";
-        const string refreshToken = "456";
+        string accessToken = MockHttpMessageHandler.GenerateToken(DateTime.UtcNow.AddSeconds(-35));
+        const string refreshToken = "123456";
         var handler = new MockHttpMessageHandler(
             [
                 (
                     url: "api8/token",
                     message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
-                    statusCode: HttpStatusCode.OK,
-                    utcDate: DateTime.UtcNow.AddSeconds(-35)
+                    statusCode: HttpStatusCode.OK
                 ),
             ]
         );
-        HttpClient httpClient = TestEnvironment.CreateHttpClient(handler);
+        HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
         Tokens actual = await env.Service.RefreshAccessTokenAsync(
@@ -120,16 +134,9 @@ public class JwtTokenHelperTests
 
         // Mock the Registry Server response
         var handler = new MockHttpMessageHandler(
-            [
-                (
-                    url: "api8/token",
-                    message: string.Empty,
-                    statusCode: HttpStatusCode.InternalServerError,
-                    utcDate: DateTime.UtcNow
-                ),
-            ]
+            [(url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.InternalServerError)]
         );
-        HttpClient httpClient = TestEnvironment.CreateHttpClient(handler);
+        HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
         Assert.ThrowsAsync<HttpRequestException>(
@@ -149,19 +156,18 @@ public class JwtTokenHelperTests
         var env = new TestEnvironment();
 
         // Mock the Registry Server response
-        const string accessToken = "123";
-        const string refreshToken = "456";
+        string accessToken = MockHttpMessageHandler.GenerateToken();
+        const string refreshToken = "123456";
         var handler = new MockHttpMessageHandler(
             [
                 (
                     url: "api8/token",
                     message: $$"""{"access_token": "{{accessToken}}", "refresh_token": "{{refreshToken}}"}""",
-                    statusCode: HttpStatusCode.OK,
-                    utcDate: DateTime.UtcNow
+                    statusCode: HttpStatusCode.OK
                 ),
             ]
         );
-        HttpClient httpClient = TestEnvironment.CreateHttpClient(handler);
+        HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
         Tokens actual = await env.Service.RefreshAccessTokenAsync(
@@ -173,7 +179,7 @@ public class JwtTokenHelperTests
 
         Assert.AreEqual(accessToken, actual.AccessToken);
         Assert.AreEqual(refreshToken, actual.RefreshToken);
-        env.MockLogger.AssertHasEvent(e => e.Message!.Contains("Registry"));
+        env.MockLogger.AssertNoEvent(e => e.Message!.Contains("Registry"));
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
     }
 
@@ -192,8 +198,5 @@ public class JwtTokenHelperTests
         public IExceptionHandler ExceptionHandler { get; }
         public MockLogger<JwtTokenHelper> MockLogger { get; }
         public JwtTokenHelper Service { get; }
-
-        public static HttpClient CreateHttpClient(HttpMessageHandler handler) =>
-            new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
     }
 }
