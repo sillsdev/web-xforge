@@ -301,9 +301,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     function addGroup(group: TrainingBook[]): void {
       let range;
       if (group.length === 1) {
-        range = Canon.bookNumberToId(group[0].number);
+        range = Canon.bookNumberToEnglishName(group[0].number);
       } else {
-        range = Canon.bookNumberToId(group[0].number) + '-' + Canon.bookNumberToId(group[group.length - 1].number);
+        range =
+          Canon.bookNumberToEnglishName(group[0].number) +
+          ' - ' +
+          Canon.bookNumberToEnglishName(group[group.length - 1].number);
       }
       continguousGroups.push({ ranges: [range], source: group[0].source, target: group[0].target });
     }

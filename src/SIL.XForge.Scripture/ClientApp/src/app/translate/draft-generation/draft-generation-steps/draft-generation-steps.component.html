@@ -212,7 +212,11 @@
             <ng-container matColumnDef="book">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let element" class="bookName">
-                <span class="confirm-book">{{ element.ranges.join(", ") }}</span>
+                <div class="confirm-books cell-padding-block">
+                  @for (range of element.ranges; track range) {
+                    <span class="confirm-book">{{ range }}</span>
+                  }
+                </div>
               </td>
             </ng-container>
             <ng-container matColumnDef="source">
@@ -238,7 +242,7 @@
         <mat-card class="confirm-section mat-elevation-z2">
           <span class="explanation">{{ t("confirm_translate") }}</span>
           <div class="confirm-translate">
-            <div class="confirm-translate-books">
+            <div class="confirm-books confirm-translate-books">
               @for (book of userSelectedTranslateBooks; track book) {
                 <span class="confirm-book">{{ book.name }}</span>
               }
