@@ -52,7 +52,7 @@ Vagrant.configure("2") do |config|
     tryharderto ansible-playbook playbook_focal.yml --limit localhost
 
     cd ~/code/web-xforge/
-    sudo npm install --global npm@8.10
+    sudo npm install --global npm@10.9
 
     # Remove canary
     rm ~/Desktop/warning-not-provisioned.txt
