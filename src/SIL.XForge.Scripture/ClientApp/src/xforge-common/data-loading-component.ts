@@ -43,7 +43,7 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
 
   protected loadingStarted(): void {
     if (!this.isLoadingData) {
-      this.noticeService.loadingStarted();
+      this.noticeService.loadingStarted(this.constructor.name);
       this._isLoading$.next(true);
       this._isLoaded$.next(false);
     }
@@ -51,7 +51,7 @@ export abstract class DataLoadingComponent extends SubscriptionDisposable implem
 
   protected loadingFinished(): void {
     if (this.isLoadingData) {
-      this.noticeService.loadingFinished();
+      this.noticeService.loadingFinished(this.constructor.name);
       this._isLoading$.next(false);
       this._isLoaded$.next(true);
     }

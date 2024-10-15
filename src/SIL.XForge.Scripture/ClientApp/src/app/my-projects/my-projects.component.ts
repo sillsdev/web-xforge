@@ -107,14 +107,14 @@ export class MyProjectsComponent extends SubscriptionDisposable implements OnIni
 
   async joinProject(projectId: string): Promise<void> {
     try {
-      this.noticeService.loadingStarted();
+      this.noticeService.loadingStarted(this.constructor.name);
       this.joiningProjects.push(projectId);
       await this.projectService.onlineAddCurrentUser(projectId);
       this.router.navigate(['projects', projectId]);
     } catch (err) {
       this.noticeService.show(translate('my_projects.failed_to_join_project'));
     } finally {
-      this.noticeService.loadingFinished();
+      this.noticeService.loadingFinished(this.constructor.name);
       this.joiningProjects.pop();
     }
   }

@@ -24,9 +24,7 @@ export class NoticeService {
     return this._isAppLoading;
   }
 
-  loadingStarted(): void {
-    const callerId = this.getCallerClassName();
-
+  loadingStarted(callerId: string): void {
     if (this._loadingCountsByCallerId[callerId] === undefined) {
       this._loadingCountsByCallerId[callerId] = 0;
     }
@@ -35,9 +33,7 @@ export class NoticeService {
     this.setAppLoadingAsync(true);
   }
 
-  loadingFinished(): void {
-    const callerId = this.getCallerClassName();
-
+  loadingFinished(callerId: string): void {
     if (!(this._loadingCountsByCallerId[callerId] > 0)) {
       console.error(`loadingFinished called by ${callerId} without a corresponding loadingStarted call`);
       // Set it to 1 to avoid negative values
@@ -87,10 +83,6 @@ export class NoticeService {
     this.messageOnDisplay = message;
 
     firstValueFrom(snackBarRef.afterDismissed()).then(() => (this.messageOnDisplay = undefined));
-  }
-
-  private getCallerClassName(): string {
-    return new Error().stack?.split('\n')[3].match(/^\s*at (\w+)\./)?.[1] ?? 'unknown';
   }
 
   private setAppLoadingAsync(value: boolean): void {
