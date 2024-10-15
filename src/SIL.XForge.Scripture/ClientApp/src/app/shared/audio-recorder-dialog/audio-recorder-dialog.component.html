@@ -5,9 +5,10 @@
       @if (!hasAudioAttachment && !showCountdown) {
         <div class="no-attachment" id="audioRecordContainer">
           @if (!isRecording) {
-            <button mat-icon-button (click)="startRecording()" class="record">
-              <mat-icon>mic</mat-icon>
-            </button>
+            <div (click)="startRecording()" class="record">
+              <mat-icon class="record-button">mic</mat-icon>
+              <span class="record-message">{{ t("tap_to_record") }}</span>
+            </div>
           } @else {
             <button
               mat-icon-button
@@ -19,9 +20,6 @@
               <mat-icon>stop</mat-icon>
             </button>
           }
-        </div>
-        <div class="record-message" [class.visible]="!isRecording">
-          <p>{{ tapToRecordText!.before }}<mat-icon>mic</mat-icon>{{ tapToRecordText!.after }}</p>
         </div>
       }
       @if (hasAudioAttachment) {
