@@ -528,47 +528,20 @@ public class MachineProjectService(
             return;
         }
 
-        // Remove the corpus files
+        // Remove the corpora and files
         foreach (
             (string corpusId, _) in projectSecret.ServalData.Corpora.Where(c => c.Value.PreTranslate == preTranslate)
         )
         {
-            foreach (
-                string fileId in projectSecret
-                    .ServalData.Corpora[corpusId]
-                    .SourceFiles.Concat(projectSecret.ServalData.Corpora[corpusId].TargetFiles)
-                    .Select(f => f.FileId)
-            )
-            {
-                try
-                {
-                    await dataFilesClient.DeleteAsync(fileId, cancellationToken);
-                }
-                catch (ServalApiException e)
-                {
-                    // A 404 means that the file does not exist
-                    string message;
-                    if (e.StatusCode == StatusCodes.Status404NotFound)
-                    {
-                        message =
-                            $"Corpora file {fileId} in corpus {corpusId} for project {sfProjectId}"
-                            + " was missing or already deleted.";
-                        logger.LogInformation(message);
-                    }
-                    else
-                    {
-                        message =
-                            $"Ignored exception while deleting file {fileId} in corpus {corpusId}"
-                            + $" for project {sfProjectId}.";
-                        logger.LogError(e, message);
-                    }
-                }
-            }
-
             // Delete the corpus
             try
             {
-                await translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
+                await translationEnginesClient.DeleteCorpusAsync(
+                    translationEngineId,
+                    corpusId,
+                    deleteFiles: true,
+                    cancellationToken
+                );
             }
             catch (ServalApiException e)
             {
@@ -834,6 +807,7 @@ public class MachineProjectService(
                 await translationEnginesClient.DeleteCorpusAsync(
                     translationEngineId,
                     alternateTrainingSourceCorpusId,
+                    deleteFiles: true,
                     cancellationToken
                 );
             }
@@ -844,23 +818,6 @@ public class MachineProjectService(
                     $"Corpus {alternateTrainingSourceCorpusId} in project {buildConfig.ProjectId}"
                     + " was missing or already deleted.";
                 logger.LogInformation(e, message);
-            }
-
-            // Remove the files from Serval
-            foreach (ServalCorpusFile corpusFile in oldAlternateTrainingSourceCorpusFiles)
-            {
-                try
-                {
-                    await dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
-                }
-                catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
-                {
-                    // If the file was already deleted, just log a message
-                    string message =
-                        $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {buildConfig.ProjectId}"
-                        + " was missing or already deleted.";
-                    logger.LogInformation(e, message);
-                }
             }
 
             // Remove the reference to the corpus from the project secret
@@ -1194,7 +1151,7 @@ public class MachineProjectService(
         if (buildConfig.FastTraining)
         {
             // Ensure that there is a servalConfig JSON object
-            servalConfig ??= new JObject();
+            servalConfig ??= [];
 
             // 20 is the number of steps used on Serval QA by default
             servalConfig["max_steps"] = 20;
@@ -1612,7 +1569,12 @@ public class MachineProjectService(
                 // Delete the old corpus
                 if (deleteCorpus)
                 {
-                    await translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
+                    await translationEnginesClient.DeleteCorpusAsync(
+                        translationEngineId,
+                        corpusId,
+                        deleteFiles: false,
+                        cancellationToken
+                    );
                 }
 
                 // Recreate the corpus
