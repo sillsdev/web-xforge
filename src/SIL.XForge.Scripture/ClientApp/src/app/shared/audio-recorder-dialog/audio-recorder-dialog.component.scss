@@ -22,7 +22,6 @@
     }
   }
 
-  .record,
   .stop,
   .has-attachment {
     transform: scale(2);
@@ -49,6 +48,24 @@
     }
   }
 
+  .record {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 2px variables.$greyLight;
+    animation: fadein 0.5s;
+
+    .record-button {
+      transform: scale(2);
+    }
+  }
+
   .no-attachment {
     height: 100%;
     width: 100%;
@@ -68,21 +85,6 @@
       left: 0;
       margin: auto;
       animation: growshrink 1s forwards;
-    }
-  }
-
-  .record-message {
-    position: absolute;
-    bottom: 70px;
-    opacity: 0%;
-    &.visible {
-      animation: fadein 0.5s;
-      opacity: 100%;
-    }
-
-    p {
-      display: flex;
-      align-items: center;
     }
   }
 }
