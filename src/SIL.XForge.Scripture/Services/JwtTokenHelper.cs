@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -57,25 +58,10 @@ public class JwtTokenHelper(IExceptionHandler exceptionHandler, ILogger<JwtToken
             new JProperty("refresh_token", paratextTokens.RefreshToken)
         );
         request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
+        Stopwatch stopwatch = Stopwatch.StartNew();
         HttpResponseMessage response = await client.SendAsync(request, token);
-
-        // Track the clock drift between the Scripture Forge and the Paratext Registry servers
-        // Note: There will be a margin of error of the time between the Registry Server sends the HTTP Response, and
-        // when the Scripture Forge server receives and converts it to an object. This usually be under a second, but
-        // may be up to a second or two under difficult network conditions or extreme CPU pressure.
-        DateTime scriptureForgeServerDate = DateTime.UtcNow;
-        if (response.Headers.Date.HasValue)
-        {
-            DateTime registryServerDateTime = response.Headers.Date.Value.UtcDateTime;
-            TimeSpan difference = registryServerDateTime - scriptureForgeServerDate;
-            string drift = @$"{(difference.TotalSeconds > 0 ? "+" : "-")}{difference:hh\:mm\:ss}";
-            string message = $"Registry Server Clock Drift: {drift}";
-            logger.LogInformation(message);
-            if (Math.Abs(difference.TotalSeconds) > 30)
-            {
-                exceptionHandler.ReportException(new ArgumentOutOfRangeException(message));
-            }
-        }
+        stopwatch.Stop();
+        DateTime requestTime = DateTime.UtcNow;
 
         // Rethrow 400 errors as unauthorized, as these are related to invalid or expired tokens
         if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -87,10 +73,25 @@ public class JwtTokenHelper(IExceptionHandler exceptionHandler, ILogger<JwtToken
 
         string responseJson = await response.Content.ReadAsStringAsync(token);
         JObject responseObj = JObject.Parse(responseJson);
-        return new Tokens
+        Tokens tokens = new Tokens
         {
             AccessToken = (string)responseObj["access_token"],
             RefreshToken = (string)responseObj["refresh_token"]
         };
+
+        // Track the clock drift between the Scripture Forge and the Paratext Registry servers
+        if (
+            tokens.IssuedAt > requestTime.AddSeconds(15)
+            || tokens.IssuedAt < requestTime.Subtract(stopwatch.Elapsed).AddSeconds(-15)
+        )
+        {
+            TimeSpan difference = tokens.IssuedAt - requestTime;
+            string drift = @$"{(difference.TotalSeconds > 0 ? "+" : "-")}{difference:hh\:mm\:ss}";
+            string message = $"Registry Server Clock Drift: {drift}";
+            logger.LogWarning(message);
+            exceptionHandler.ReportException(new ArgumentOutOfRangeException(message));
+        }
+
+        return tokens;
     }
 }
