@@ -288,8 +288,18 @@ public class MachineProjectService(
             logger.LogInformation($"Created Translation Engine {translationEngineId}.");
         }
 
+        // TODO: Remove the legacy serval data, if present
+        // await RemoveLegacyServalDataAsync(buildConfig.ProjectId, preTranslate, cancellationToken);
+
+        // TODO: Perform the new serval sync
+        // await SyncProjectCorporaAsync(curUserId, buildConfig, preTranslate, cancellationToken)
+
         // Sync the corpus
-        if ((await SyncProjectCorporaAsync(curUserId, buildConfig, preTranslate, cancellationToken)) || preTranslate)
+        // TODO: Remove the legacy sync
+        if (
+            (await SyncLegacyProjectCorporaAsync(curUserId, buildConfig, preTranslate, cancellationToken))
+            || preTranslate
+        )
         {
             // If the corpus was updated (or this is a pre-translation engine), start the build
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
@@ -505,8 +515,7 @@ public class MachineProjectService(
         };
     }
 
-    public async Task RemoveProjectAsync(
-        string curUserId,
+    public async Task RemoveLegacyServalDataAsync(
         string sfProjectId,
         bool preTranslate,
         CancellationToken cancellationToken
@@ -568,10 +577,45 @@ public class MachineProjectService(
             await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora[corpusId]));
         }
 
+        // Remove the corpora property if it is empty
+        if (projectSecret.ServalData.Corpora?.Any(c => c.Value.PreTranslate != preTranslate) == false)
+        {
+            await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora));
+        }
+    }
+
+    public async Task RemoveProjectAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    )
+    {
+        // Load the target project secrets, so we can get the translation engine ID
+        if (!(await projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
+        {
+            throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        // Ensure we have a translation engine id
+        string translationEngineId = preTranslate
+            ? projectSecret.ServalData?.PreTranslationEngineId
+            : projectSecret.ServalData?.TranslationEngineId;
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
+            return;
+        }
+
+        // Remove the legacy serval data
+        await RemoveLegacyServalDataAsync(sfProjectId, preTranslate, cancellationToken);
+
+        // TODO: Remove the parallel corpora, corpora, and files
+
         // Remove the project from Serval
         await translationEnginesClient.DeleteAsync(translationEngineId, cancellationToken);
 
-        // Remove the Serval Data
+        // Remove the translation engine identifier
         if (preTranslate)
         {
             await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationEngineId));
@@ -579,6 +623,48 @@ public class MachineProjectService(
         else
         {
             await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.TranslationEngineId));
+        }
+    }
+
+    public async Task SyncProjectCorporaAsync(
+        string curUserId,
+        BuildConfig buildConfig,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    )
+    {
+        // Load the project from the realtime service
+        Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(buildConfig.ProjectId);
+        if (!attempt.TryResult(out SFProject project))
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Ensure we have a source
+        if (project.TranslateConfig.Source is null)
+        {
+            throw new DataNotFoundException("The project source is not specified.");
+        }
+
+        // Load the project secrets, so we can get the corpus files
+        if (!(await projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
+        {
+            throw new DataNotFoundException("The project secret cannot be found.");
+        }
+
+        // Ensure we have serval data
+        if (projectSecret.ServalData is null)
+        {
+            throw new DataNotFoundException("The Serval data cannot be found.");
+        }
+
+        // Ensure we have a translation engine ID
+        string translationEngineId = preTranslate
+            ? projectSecret.ServalData?.PreTranslationEngineId
+            : projectSecret.ServalData?.TranslationEngineId;
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("The translation engine ID cannot be found.");
         }
     }
 
@@ -597,7 +683,7 @@ public class MachineProjectService(
     ///  - If a corpus is not configured on Serval, one is created and recorded in the project secret.
     ///  - Any corpus files without project ids will be deleted and recreated with project ids.
     /// </remarks>
-    public async Task<bool> SyncProjectCorporaAsync(
+    public async Task<bool> SyncLegacyProjectCorporaAsync(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,
@@ -696,7 +782,7 @@ public class MachineProjectService(
         }
 
         // Upload the translation source
-        corpusUpdated |= await UploadNewCorpusFilesAsync(
+        corpusUpdated |= await UploadLegacyCorpusFilesAsync(
             targetProjectId: project.Id,
             sourceProjectId,
             paratextId: sourceParatextId,
@@ -708,7 +794,7 @@ public class MachineProjectService(
         );
 
         // Upload the translation target
-        corpusUpdated |= await UploadNewCorpusFilesAsync(
+        corpusUpdated |= await UploadLegacyCorpusFilesAsync(
             targetProjectId: project.Id,
             sourceProjectId: project.Id,
             project.ParatextId,
@@ -757,7 +843,7 @@ public class MachineProjectService(
                 : project.TranslateConfig.Source.ProjectRef;
 
             // Upload the training corpus
-            corpusUpdated |= await UploadNewCorpusFilesAsync(
+            corpusUpdated |= await UploadLegacyCorpusFilesAsync(
                 targetProjectId: project.Id,
                 sourceProjectId: projectId,
                 paratextId,
@@ -771,7 +857,7 @@ public class MachineProjectService(
             // Upload the additional training source
             if (useAdditionalTrainingSource)
             {
-                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                corpusUpdated |= await UploadLegacyCorpusFilesAsync(
                     targetProjectId: project.Id,
                     sourceProjectId: project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ProjectRef,
                     paratextId: project.TranslateConfig.DraftConfig.AdditionalTrainingSource.ParatextId,
@@ -870,7 +956,7 @@ public class MachineProjectService(
                 }
 
                 // Upload the source files for the training data
-                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                corpusUpdated |= await UploadLegacyCorpusFilesAsync(
                     targetProjectId: project.Id,
                     sourceProjectId: project.Id,
                     project.ParatextId,
@@ -882,7 +968,7 @@ public class MachineProjectService(
                 );
 
                 // Upload the target files for the training data
-                corpusUpdated |= await UploadNewCorpusFilesAsync(
+                corpusUpdated |= await UploadLegacyCorpusFilesAsync(
                     targetProjectId: project.Id,
                     sourceProjectId: project.Id,
                     project.ParatextId,
@@ -1366,6 +1452,79 @@ public class MachineProjectService(
     }
 
     private async Task<bool> UploadFileAsync(
+        ServalCorpusFile servalCorpusFile,
+        string textFileData,
+        FileFormat fileFormat,
+        CancellationToken cancellationToken
+    )
+    {
+        byte[] buffer = Encoding.UTF8.GetBytes(textFileData);
+        await using Stream stream = new MemoryStream(buffer, false);
+        return await UploadFileAsync(servalCorpusFile, stream, fileFormat, cancellationToken);
+    }
+
+    private async Task<bool> UploadFileAsync(
+        ServalCorpusFile servalCorpusFile,
+        Stream stream,
+        FileFormat fileFormat,
+        CancellationToken cancellationToken
+    )
+    {
+        // Reset the stream to the start
+        stream.Seek(0, SeekOrigin.Begin);
+
+        // Calculate the checksum from the stream
+        using MD5 md5 = MD5.Create();
+        StringBuilder sb = new StringBuilder();
+        foreach (var hashByte in await md5.ComputeHashAsync(stream, cancellationToken))
+        {
+            sb.Append(hashByte.ToString("X2").ToLower());
+        }
+
+        // See if the file has changed
+        string checksum = sb.ToString();
+        if (servalCorpusFile.FileChecksum == checksum)
+        {
+            // No update, so do not upload
+            return false;
+        }
+
+        // Reset the stream to the start
+        stream.Seek(0, SeekOrigin.Begin);
+
+        // See if the file exists, and it is the same format
+        bool dataFileExists = false;
+        if (!string.IsNullOrWhiteSpace(servalCorpusFile.FileId))
+        {
+            try
+            {
+                DataFile existingDataFile = await dataFilesClient.GetAsync(servalCorpusFile.FileId, cancellationToken);
+                dataFileExists = existingDataFile.Format == fileFormat;
+            }
+            catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+            {
+                logger.LogInformation($"File {servalCorpusFile.FileId} does not exist - creating.");
+            }
+        }
+
+        // Update the file if it exists, otherwise create it
+        DataFile dataFile = dataFileExists
+            ? await dataFilesClient.UpdateAsync(servalCorpusFile.FileId, new FileParameter(stream), cancellationToken)
+            : await dataFilesClient.CreateAsync(
+                new FileParameter(stream),
+                fileFormat,
+                servalCorpusFile.TextId,
+                cancellationToken
+            );
+
+        // Update the Serval Corpus File
+        servalCorpusFile.FileChecksum = checksum;
+        servalCorpusFile.FileId = dataFile.Id;
+
+        return true;
+    }
+
+    private async Task<bool> UploadLegacyFileAsync(
         string textId,
         string projectId,
         string textFileData,
@@ -1377,7 +1536,7 @@ public class MachineProjectService(
     {
         byte[] buffer = Encoding.UTF8.GetBytes(textFileData);
         await using Stream stream = new MemoryStream(buffer, false);
-        return await UploadFileAsync(
+        return await UploadLegacyFileAsync(
             textId,
             projectId,
             stream,
@@ -1388,7 +1547,7 @@ public class MachineProjectService(
         );
     }
 
-    private async Task<bool> UploadFileAsync(
+    private async Task<bool> UploadLegacyFileAsync(
         string textId,
         string projectId,
         Stream stream,
@@ -1653,7 +1812,7 @@ public class MachineProjectService(
     /// <remarks>
     /// The project secret is updated with the corpus file details added to or removed from Serval.
     /// </remarks>
-    private async Task<bool> UploadNewCorpusFilesAsync(
+    private async Task<bool> UploadLegacyCorpusFilesAsync(
         string targetProjectId,
         string sourceProjectId,
         string paratextId,
@@ -1695,7 +1854,7 @@ public class MachineProjectService(
             }
 
             // Upload the zip file
-            corpusUpdated = await UploadFileAsync(
+            corpusUpdated = await UploadLegacyFileAsync(
                 textId: targetProjectId,
                 projectId: sourceProjectId,
                 memoryStream,
@@ -1722,7 +1881,7 @@ public class MachineProjectService(
                     textId = textId.StartsWith($"{sourceProjectId}_") ? textId[(sourceProjectId.Length + 1)..] : textId;
 
                     // Upload the text file
-                    corpusUpdated |= await UploadFileAsync(
+                    corpusUpdated |= await UploadLegacyFileAsync(
                         textId,
                         sourceProjectId,
                         textFileData,

@@ -28,13 +28,20 @@ public interface IMachineProjectService
     );
     Task<string> GetProjectZipAsync(string sfProjectId, Stream outputStream, CancellationToken cancellationToken);
     Task<string> GetTranslationEngineTypeAsync(bool preTranslate);
+    Task RemoveLegacyServalDataAsync(string sfProjectId, bool preTranslate, CancellationToken cancellationToken);
     Task RemoveProjectAsync(
         string curUserId,
         string sfProjectId,
         bool preTranslate,
         CancellationToken cancellationToken
     );
-    Task<bool> SyncProjectCorporaAsync(
+    Task<bool> SyncLegacyProjectCorporaAsync(
+        string curUserId,
+        BuildConfig buildConfig,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    );
+    Task SyncProjectCorporaAsync(
         string curUserId,
         BuildConfig buildConfig,
         bool preTranslate,

@@ -1232,6 +1232,124 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task RemoveLegacyServalDataAsync_DoesNotCallServalIfNoTranslationEngineId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RemoveLegacyServalDataAsync(Project01, preTranslate: false, CancellationToken.None);
+
+        // Ensure that the corpus and its files were not deleted
+        await env
+            .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
+            .DeleteCorpusAsync(TranslationEngine01, Corpus01, deleteFiles: true, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RemoveLegacyServalDataAsync_LogsAnErrorWhenAServalErrorOccurs()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
+        env.TranslationEnginesClient.DeleteCorpusAsync(
+                TranslationEngine02,
+                Corpus01,
+                deleteFiles: true,
+                CancellationToken.None
+            )
+            .ThrowsAsync(ServalApiExceptions.InternalServerError);
+
+        // SUT
+        await env.Service.RemoveLegacyServalDataAsync(Project02, preTranslate: false, CancellationToken.None);
+
+        // Ensure that the corpus and its files were deleted
+        env.MockLogger.AssertHasEvent(l => l.LogLevel == LogLevel.Error && l.Message!.Contains(TranslationEngine02));
+    }
+
+    [Test]
+    public async Task RemoveLegacyServalDataAsync_LogsAnEventWhenTheFileIsNotFound()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
+        env.TranslationEnginesClient.DeleteCorpusAsync(
+                TranslationEngine02,
+                Corpus01,
+                deleteFiles: true,
+                CancellationToken.None
+            )
+            .ThrowsAsync(ServalApiExceptions.NotFound);
+
+        // SUT
+        await env.Service.RemoveLegacyServalDataAsync(Project02, preTranslate: false, CancellationToken.None);
+
+        // Ensure that the corpus and its files were deleted
+        env.MockLogger.AssertHasEvent(l =>
+            l.LogLevel == LogLevel.Information && l.Message!.Contains(TranslationEngine02)
+        );
+    }
+
+    [Test]
+    public async Task RemoveLegacyServalDataAsync_OnlyRemovesRelevantCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
+
+        // Verify there are two corpora
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count);
+
+        // SUT
+        await env.Service.RemoveLegacyServalDataAsync(Project02, preTranslate: false, CancellationToken.None);
+
+        // Ensure that the corpus and its files were deleted
+        await env
+            .TranslationEnginesClient.Received(1)
+            .DeleteCorpusAsync(TranslationEngine02, Corpus01, deleteFiles: true, CancellationToken.None);
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count);
+    }
+
+    [Test]
+    public async Task RemoveLegacyServalDataAsync_RemovesCorporaPropertyIfNoMoreCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetDataInSync(
+            Project02,
+            preTranslate: true,
+            uploadParatextZipFile: true,
+            alternateTrainingSource: true
+        );
+
+        // Verify there are two corpora
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count);
+
+        // SUT
+        await env.Service.RemoveLegacyServalDataAsync(Project02, preTranslate: true, CancellationToken.None);
+
+        // Ensure that the corpus and its files were deleted
+        await env
+            .TranslationEnginesClient.Received(1)
+            .DeleteCorpusAsync(TranslationEngine02, Corpus01, deleteFiles: true, CancellationToken.None);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.Corpora);
+    }
+
+    [Test]
+    public void RemoveLegacyServalDataAsync_ThrowsExceptionWhenProjectSecretMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.RemoveLegacyServalDataAsync(
+                    "invalid_project_id",
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public void RemoveProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
@@ -1281,6 +1399,25 @@ public class MachineProjectServiceTests
         await env
             .TranslationEnginesClient.DidNotReceiveWithAnyArgs()
             .DeleteCorpusAsync(TranslationEngine01, Corpus01, deleteFiles: true, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenPreTranslationEngineIdMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: true,
+                    CancellationToken.None
+                )
+        );
     }
 
     [Test]
@@ -1341,11 +1478,11 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenPreTranslationEngineIdMissing()
+    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
+        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -1353,7 +1490,7 @@ public class MachineProjectServiceTests
                 env.Service.SyncProjectCorporaAsync(
                     User01,
                     new BuildConfig { ProjectId = Project01 },
-                    preTranslate: true,
+                    preTranslate: false,
                     CancellationToken.None
                 )
         );
@@ -1379,16 +1516,16 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_ThrowsExceptionWhenSourceMissing()
+    public async Task SyncLegacyProjectCorporaAsync_ThrowsExceptionWhenProjectMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+        await env.Projects.DeleteAllAsync(_ => true);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
             () =>
-                env.Service.SyncProjectCorporaAsync(
+                env.Service.SyncLegacyProjectCorporaAsync(
                     User01,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
@@ -1398,7 +1535,102 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_CreatesRemoteCorpusIfMissing()
+    public async Task SyncLegacyProjectCorporaAsync_ThrowsExceptionWhenProjectSecretMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncLegacyProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncLegacyProjectCorporaAsync_ThrowsExceptionWhenServalConfigMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncLegacyProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncLegacyProjectCorporaAsync_ThrowsExceptionWhenPreTranslationEngineIdMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncLegacyProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: true,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncLegacyProjectCorporaAsync_ThrowsExceptionWhenTranslationEngineIdMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncLegacyProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncLegacyProjectCorporaAsync_ThrowsExceptionWhenSourceMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(Project01, op => op.Unset(p => p.TranslateConfig.Source));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.SyncLegacyProjectCorporaAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    preTranslate: false,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public async Task SyncLegacyProjectCorporaAsync_CreatesRemoteCorpusIfMissing()
     {
         // Set up test environment
         var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
@@ -1408,7 +1640,7 @@ public class MachineProjectServiceTests
         Assert.AreNotEqual(sourceLanguage, targetLanguage);
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project01 },
             preTranslate: false,
@@ -1432,7 +1664,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_DoesNotUpdateAlternateTrainingSourceOnSmtBuilds()
+    public async Task SyncLegacyProjectCorporaAsync_DoesNotUpdateAlternateTrainingSourceOnSmtBuilds()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1453,7 +1685,7 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: false,
@@ -1467,7 +1699,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_FailsLocallyOnRemoteFailure()
+    public async Task SyncLegacyProjectCorporaAsync_FailsLocallyOnRemoteFailure()
     {
         // Set up test environment
         var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
@@ -1484,7 +1716,7 @@ public class MachineProjectServiceTests
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
             () =>
-                env.Service.SyncProjectCorporaAsync(
+                env.Service.SyncLegacyProjectCorporaAsync(
                     User01,
                     new BuildConfig { ProjectId = Project01 },
                     preTranslate: false,
@@ -1494,7 +1726,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_UpdatesRemoteCorpusIfLocalTextChanges()
+    public async Task SyncLegacyProjectCorporaAsync_UpdatesRemoteCorpusIfLocalTextChanges()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1539,7 +1771,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new DataFile { Format = FileFormat.Paratext }));
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: false,
@@ -1555,7 +1787,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_AddsAndDeletesLocalSourceAndTargetFilesToRemote()
+    public async Task SyncLegacyProjectCorporaAsync_AddsAndDeletesLocalSourceAndTargetFilesToRemote()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1594,7 +1826,7 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: false,
@@ -1609,7 +1841,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_DoesNotCrashWhenDeletingAlreadyDeletedRemoteFiles()
+    public async Task SyncLegacyProjectCorporaAsync_DoesNotCrashWhenDeletingAlreadyDeletedRemoteFiles()
     {
         // Set up test environment
         var env = new TestEnvironment(new TestEnvironmentOptions { HasTranslationEngineForSmt = true });
@@ -1634,7 +1866,7 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: false,
@@ -1680,7 +1912,7 @@ public class MachineProjectServiceTests
         Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: true,
@@ -1703,7 +1935,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_SynchronizesTheAlternateSource()
+    public async Task SyncLegacyProjectCorporaAsync_SynchronizesTheAlternateSource()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1718,7 +1950,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02, preTranslate: true, uploadParatextZipFile: true);
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: true,
@@ -1737,7 +1969,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_UsesTheSourceWhenAlternateSourceIsEnabledButNotConfigured()
+    public async Task SyncLegacyProjectCorporaAsync_UsesTheSourceWhenAlternateSourceIsEnabledButNotConfigured()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1752,7 +1984,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02, preTranslate: true, uploadParatextZipFile: true);
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: true,
@@ -1769,7 +2001,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_SynchronizesTheAdditionalTrainingSourceCorpora()
+    public async Task SyncLegacyProjectCorporaAsync_SynchronizesTheAdditionalTrainingSourceCorpora()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1783,7 +2015,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02, preTranslate: true, uploadParatextZipFile: true);
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: true,
@@ -1798,7 +2030,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_SynchronizesTheAdditionalTrainingSourceIntoTheAlternateTrainingSourceCorpora()
+    public async Task SyncLegacyProjectCorporaAsync_SynchronizesTheAdditionalTrainingSourceIntoTheAlternateTrainingSourceCorpora()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1814,7 +2046,7 @@ public class MachineProjectServiceTests
         await env.SetDataInSync(Project02, preTranslate: true, uploadParatextZipFile: true);
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: true,
@@ -1829,7 +2061,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_RecreatesDeletedCorpora()
+    public async Task SyncLegacyProjectCorporaAsync_RecreatesDeletedCorpora()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1847,7 +2079,7 @@ public class MachineProjectServiceTests
             .Throws(ServalApiExceptions.NotFound);
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: false,
@@ -1871,7 +2103,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_RecreatesCorporaWhenLanguageChanges()
+    public async Task SyncLegacyProjectCorporaAsync_RecreatesCorporaWhenLanguageChanges()
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -1898,7 +2130,7 @@ public class MachineProjectServiceTests
             );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(
+        bool actual = await env.Service.SyncLegacyProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: false,

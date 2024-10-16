@@ -6,6 +6,11 @@ namespace SIL.XForge.Scripture.Models;
 public class ServalCorpusFile
 {
     /// <summary>
+    /// Gets or sets the corpus this file is associated with.
+    /// </summary>
+    public string CorpusId { get; set; } = string.Empty;
+
+    /// <summary>
     /// The MD5 Hash of the corpus file's contents.
     /// This is used to see if the file has changed since its last upload to Serval.
     /// </summary>
@@ -15,6 +20,11 @@ public class ServalCorpusFile
     /// Gets or sets the file identifier used on Serval for this file.
     /// </summary>
     public string FileId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the language of the file and corpus.
+    /// </summary>
+    public string LanguageCode { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the project this file is from. For example, the mixed source project.

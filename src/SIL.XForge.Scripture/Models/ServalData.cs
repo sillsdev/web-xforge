@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// Serval Data.
+/// Serval Configuration Data.
 /// </summary>
 public class ServalData
 {
@@ -111,4 +111,26 @@ public class ServalData
     /// The dictionary key is the corpus ID.
     /// </remarks>
     public Dictionary<string, ServalCorpus>? Corpora { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used in the PreTranslate section of the
+    /// <see cref="Serval.Client.TranslationBuildConfig"/>.
+    /// </summary>
+    public string? PreTranslateParallelCorpusId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used in the TrainOne section of the
+    /// <see cref="Serval.Client.TranslationBuildConfig"/>.
+    /// </summary>
+    public string? TrainOnParallelCorpusId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the additional training data configuration.
+    /// </summary>
+    public ServalAdditionalTrainingData? AdditionalTrainingData { get; set; }
+
+    /// <summary>
+    /// Gets or sets the corpora and data files configuration.
+    /// </summary>
+    public List<ServalCorpusFile> CorporaFiles { get; set; } = [];
 }
