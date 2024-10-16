@@ -50,7 +50,7 @@ public class ServalCorpus
     /// <value>
     /// The source corpus files.
     /// </value>
-    public List<ServalCorpusFile> SourceFiles { get; set; } = new List<ServalCorpusFile>();
+    public List<ServalCorpusFile> SourceFiles { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the target files uploaded to Serval.
@@ -58,5 +58,5 @@ public class ServalCorpus
     /// <value>
     /// The target corpus files.
     /// </value>
-    public List<ServalCorpusFile> TargetFiles { get; set; } = new List<ServalCorpusFile>();
+    public List<ServalCorpusFile> TargetFiles { get; set; } = [];
 }
