@@ -1,9 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, merge, throttleTime } from 'rxjs';
+import { Subscription, asyncScheduler, merge, tap, throttleTime } from 'rxjs';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { filterNullish } from '../../../xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -44,39 +46,25 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
 
   constructor(
     readonly noticeService: NoticeService,
+    private readonly activatedProject: ActivatedProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService
   ) {
     super(noticeService);
-  }
 
-  async initialize(projectId: string): Promise<void> {
-    if (this._projectDoc?.id !== projectId) {
-      this._canTrainSuggestions = false;
-      this._projectDoc = await this.projectService.getProfile(projectId);
-
-      // If we are offline, just update the progress with what we have
-      if (!this.onlineStatusService.isOnline) {
-        await this.calculateProgress();
-      }
-
-      const chapterObservables = [];
-      for (const book of this._projectDoc.data!.texts) {
-        for (const chapter of book.chapters) {
-          const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
-          const chapterText: TextDoc = await this.projectService.getText(textDocId);
-          chapterObservables.push(chapterText.changes$);
-        }
-      }
-
-      this._allChaptersChangeSub?.unsubscribe();
-      this._allChaptersChangeSub = merge(...chapterObservables, this.onlineStatusService.online)
-        .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
-        .subscribe(async () => {
-          await this.calculateProgress();
-        });
-    }
+    this.subscribe(
+      this.activatedProject.projectDoc$.pipe(
+        filterNullish(),
+        tap(async project => {
+          merge(project.remoteChanges$, project.changes$)
+            .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
+            .subscribe(() => {
+              this.initialize(project.id);
+            });
+        })
+      )
+    );
   }
 
   ngOnDestroy(): void {
@@ -91,6 +79,32 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   // Whether or not we have the minimum number of segment pairs
   get canTrainSuggestions(): boolean {
     return this._canTrainSuggestions;
+  }
+
+  private async initialize(projectId: string): Promise<void> {
+    this._canTrainSuggestions = false;
+    this._projectDoc = await this.projectService.getProfile(projectId);
+
+    // If we are offline, just update the progress with what we have
+    if (!this.onlineStatusService.isOnline) {
+      await this.calculateProgress();
+    }
+
+    const chapterObservables = [];
+    for (const book of this._projectDoc.data!.texts) {
+      for (const chapter of book.chapters) {
+        const textDocId = new TextDocId(this._projectDoc.id, book.bookNum, chapter.number, 'target');
+        const chapterText: TextDoc = await this.projectService.getText(textDocId);
+        chapterObservables.push(chapterText.changes$);
+      }
+    }
+
+    this._allChaptersChangeSub?.unsubscribe();
+    this._allChaptersChangeSub = merge(...chapterObservables, this.onlineStatusService.online)
+      .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
+      .subscribe(async () => {
+        await this.calculateProgress();
+      });
   }
 
   private async calculateProgress(): Promise<void> {

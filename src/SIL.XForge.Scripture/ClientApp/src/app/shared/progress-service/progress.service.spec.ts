@@ -1,16 +1,18 @@
 import { NgZone } from '@angular/core';
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { OtJson0Op } from 'ot-json0';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, mock, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
@@ -21,6 +23,7 @@ import { ProgressService } from '../../shared/progress-service/progress.service'
 const mockSFProjectService = mock(SFProjectService);
 const mockNoticeService = mock(NoticeService);
 const mockPermissionService = mock(PermissionsService);
+const mockProjectService = mock(ActivatedProjectService);
 
 describe('progress service', () => {
   configureTestingModule(() => ({
@@ -30,15 +33,15 @@ describe('progress service', () => {
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: PermissionsService, useMock: mockPermissionService },
       { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: ActivatedProjectService, useMock: mockProjectService }
     ]
   }));
 
-  it('populates progress and texts on init', fakeAsync(() => {
+  it('populates progress and texts on construction', fakeAsync(() => {
     const env = new TestEnvironment(100, 50);
     const calculate = spyOn<any>(env.service, 'calculateProgress').and.callThrough();
 
-    env.service.initialize('project01');
     tick();
 
     expect(env.service.overallProgress.translated).toEqual(100);
@@ -60,6 +63,46 @@ describe('progress service', () => {
     discardPeriodicTasks();
   }));
 
+  it('re-initializes when switching projects', fakeAsync(() => {
+    const env = new TestEnvironment(100, 50);
+    tick();
+
+    const initialize = spyOn<any>(env.service, 'initialize').and.callThrough();
+
+    when(env.mockProject.id).thenReturn('project02');
+    env.project$.next(instance(env.mockProject));
+    tick();
+
+    expect(initialize).toHaveBeenCalledTimes(1);
+    discardPeriodicTasks();
+  }));
+
+  it('re-initializes for local project changes', fakeAsync(() => {
+    const env = new TestEnvironment(100, 50);
+    tick();
+
+    const initialize = spyOn<any>(env.service, 'initialize').and.callThrough();
+
+    tick(1000); // wait for the throttle time
+    env.projectChange$.next([]);
+
+    expect(initialize).toHaveBeenCalledTimes(1);
+    discardPeriodicTasks();
+  }));
+
+  it('re-initializes for remote project changes', fakeAsync(() => {
+    const env = new TestEnvironment(100, 50);
+    tick();
+
+    const initialize = spyOn<any>(env.service, 'initialize').and.callThrough();
+
+    tick(1000); // wait for the throttle time
+    env.projectRemoteChange$.next([]);
+
+    expect(initialize).toHaveBeenCalledTimes(1);
+    discardPeriodicTasks();
+  }));
+
   it('updates total progress when chapter content changes', fakeAsync(async () => {
     const env = new TestEnvironment();
     const changeEvent = new BehaviorSubject({});
@@ -73,7 +116,6 @@ describe('progress service', () => {
       };
     });
 
-    await env.service.initialize('project01');
     tick();
 
     // mock a change
@@ -93,27 +135,22 @@ describe('progress service', () => {
     changeEvent.next({});
 
     expect(env.service.overallProgress.translated).toEqual(originalProgress + 1);
-
     discardPeriodicTasks();
   }));
 
   it('can train suggestions', fakeAsync(async () => {
     const env = new TestEnvironment();
-    await env.service.initialize('project01');
     tick();
 
     expect(env.service.canTrainSuggestions).toBeTruthy();
-
     discardPeriodicTasks();
   }));
 
   it('cannot train suggestions if too few segments', fakeAsync(async () => {
     const env = new TestEnvironment(9);
-    await env.service.initialize('project01');
     tick();
 
     expect(env.service.canTrainSuggestions).toBeFalsy();
-
     discardPeriodicTasks();
   }));
 
@@ -122,43 +159,23 @@ describe('progress service', () => {
     when(
       mockPermissionService.canAccessText(deepEqual(new TextDocId('sourceId', anything(), anything(), 'target')))
     ).thenResolve(false);
-    await env.service.initialize('project01');
     tick();
 
     expect(env.service.canTrainSuggestions).toBeFalsy();
-
     discardPeriodicTasks();
   }));
 
   it('resets train suggestions flag when switching projects', fakeAsync(async () => {
     const env = new TestEnvironment();
-    await env.service.initialize('project01');
     tick();
 
     expect(env.service.canTrainSuggestions).toBeTruthy();
 
-    // set up blank project
-    const data = createTestProjectProfile({
-      texts: env.createTexts(),
-      translateConfig: {
-        translationSuggestionsEnabled: true,
-        source: {
-          projectRef: 'sourceId'
-        }
-      }
-    });
-    when(mockSFProjectService.getProfile('project02')).thenResolve({
-      data,
-      id: 'project02',
-      remoteChanges$: new BehaviorSubject([])
-    } as unknown as SFProjectProfileDoc);
-    env.setUpGetText('project02', 0, 1000);
-
-    await env.service.initialize('project02');
+    when(env.mockProject.id).thenReturn('project02');
+    env.project$.next(instance(env.mockProject));
     tick();
 
     expect(env.service.canTrainSuggestions).toBeFalsy();
-
     discardPeriodicTasks();
   }));
 });
@@ -169,12 +186,15 @@ class TestEnvironment {
   private readonly numBooks = 20;
   private readonly numChapters = 20;
 
+  readonly mockProject = mock(SFProjectProfileDoc);
+  readonly project$ = new BehaviorSubject(instance(this.mockProject));
+  readonly projectChange$ = new BehaviorSubject<OtJson0Op[]>([]);
+  readonly projectRemoteChange$ = new BehaviorSubject<OtJson0Op[]>([]);
+
   constructor(
     private readonly translatedSegments: number = 1000,
     private readonly blankSegments: number = 500
   ) {
-    this.service = TestBed.inject(ProgressService);
-
     const data = createTestProjectProfile({
       texts: this.createTexts(),
       translateConfig: {
@@ -185,6 +205,11 @@ class TestEnvironment {
       }
     });
 
+    when(this.mockProject.id).thenReturn('project01');
+    when(this.mockProject.changes$).thenReturn(this.projectChange$);
+    when(this.mockProject.remoteChanges$).thenReturn(this.projectRemoteChange$);
+    when(mockProjectService.projectDoc$).thenReturn(this.project$);
+
     when(mockPermissionService.canAccessText(anything())).thenResolve(true);
     when(mockSFProjectService.getProfile('project01')).thenResolve({
       data,
@@ -192,8 +217,18 @@ class TestEnvironment {
       remoteChanges$: new BehaviorSubject([])
     } as unknown as SFProjectProfileDoc);
 
+    // set up blank project
+    when(mockSFProjectService.getProfile('project02')).thenResolve({
+      data,
+      id: 'project02',
+      remoteChanges$: new BehaviorSubject([])
+    } as unknown as SFProjectProfileDoc);
+    this.setUpGetText('project02', 0, 1000);
+
     this.setUpGetText('sourceId', this.translatedSegments, this.blankSegments);
     this.setUpGetText('project01', this.translatedSegments, this.blankSegments);
+
+    this.service = TestBed.inject(ProgressService);
   }
 
   setUpGetText(projectId: string, translatedSegments: number, blankSegments: number): void {

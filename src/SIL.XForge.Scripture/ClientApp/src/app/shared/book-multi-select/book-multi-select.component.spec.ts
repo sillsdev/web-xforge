@@ -19,10 +19,7 @@ describe('BookMultiSelectComponent', () => {
 
   configureTestingModule(() => ({
     imports: [MatChipsModule, TestTranslocoModule],
-    providers: [
-      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: ProgressService, useMock: mockedProgressService }
-    ]
+    providers: [{ provide: ProgressService, useMock: mockedProgressService }]
   }));
 
   beforeEach(() => {
