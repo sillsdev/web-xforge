@@ -16,7 +16,8 @@
       "port": 9977,
       "request": "attach",
       "type": "pwa-chrome",
-      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp"
+      "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
+      "sourceMaps": true
     },
     {
       // Attach to and debug the running backend
