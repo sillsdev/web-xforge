@@ -179,7 +179,7 @@ public class MachineProjectService(
             // Clear the existing translation engine id and corpora, based on whether this is pre-translation or not
             string[] corporaIds =
                 projectSecret
-                    .ServalData?.Corpora.Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
+                    .ServalData?.Corpora?.Where(c => preTranslate ? c.Value.PreTranslate : !c.Value.PreTranslate)
                     .Select(c => c.Key)
                     .ToArray() ?? [];
             await projectSecrets.UpdateAsync(
@@ -530,7 +530,8 @@ public class MachineProjectService(
 
         // Remove the corpora and files
         foreach (
-            (string corpusId, _) in projectSecret.ServalData.Corpora.Where(c => c.Value.PreTranslate == preTranslate)
+            (string corpusId, _) in projectSecret.ServalData.Corpora?.Where(c => c.Value.PreTranslate == preTranslate)
+                ?? []
         )
         {
             // Delete the corpus
@@ -642,7 +643,7 @@ public class MachineProjectService(
 
         // See if there is a translation corpus
         string? corpusId = projectSecret
-            .ServalData.Corpora.FirstOrDefault(c =>
+            .ServalData.Corpora?.FirstOrDefault(c =>
                 c.Value.PreTranslate == preTranslate && !c.Value.AlternateTrainingSource
             )
             .Key;
@@ -667,7 +668,7 @@ public class MachineProjectService(
 
         // Get the alternate training source corpus id, if present
         string? alternateTrainingSourceCorpusId = projectSecret
-            .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
+            .ServalData.Corpora?.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
             .Key;
 
         // If we are to use the alternate source, only use it for drafting
@@ -832,7 +833,7 @@ public class MachineProjectService(
         {
             // Get the training data corpus id
             string trainingDataCorpusId = projectSecret
-                .ServalData.Corpora.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+                .ServalData.Corpora?.FirstOrDefault(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
                 .Key;
 
             // If there are training data files, or they were removed (i.e. we have a corpus record for it)
@@ -1168,9 +1169,9 @@ public class MachineProjectService(
 
         // Add the pre-translation books
         foreach (
-            KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(s =>
+            KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora?.Where(s =>
                 s.Value.PreTranslate && !s.Value.AlternateTrainingSource && !s.Value.AdditionalTrainingData
-            )
+            ) ?? []
         )
         {
             var preTranslateCorpusConfig = new PretranslateCorpusConfig { CorpusId = corpus.Key };
@@ -1228,9 +1229,9 @@ public class MachineProjectService(
         {
             trainOn = [];
             foreach (
-                KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora.Where(s =>
+                KeyValuePair<string, ServalCorpus> corpus in servalData.Corpora?.Where(s =>
                     s.Value.PreTranslate && s.Value.AlternateTrainingSource
-                )
+                ) ?? []
             )
             {
                 var trainingCorpusConfig = new TrainingCorpusConfig { CorpusId = corpus.Key };
@@ -1268,7 +1269,7 @@ public class MachineProjectService(
             // Include the additional training data with the alternate training corpora
             translationBuildConfig.TrainOn.AddRange(
                 servalData
-                    .Corpora.Where(s => s.Value.PreTranslate && s.Value.AdditionalTrainingData)
+                    .Corpora?.Where(s => s.Value.PreTranslate && s.Value.AdditionalTrainingData)
                     .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
                     .ToList()
             );
@@ -1340,7 +1341,11 @@ public class MachineProjectService(
                 // Store the Pre-Translation Engine ID
                 await projectSecrets.UpdateAsync(
                     sfProject.Id,
-                    u => u.Set(p => p.ServalData, new ServalData { PreTranslationEngineId = translationEngine.Id })
+                    u =>
+                        u.Set(
+                            p => p.ServalData,
+                            new ServalData { PreTranslationEngineId = translationEngine.Id, Corpora = [] }
+                        )
                 );
             }
             else
@@ -1348,7 +1353,11 @@ public class MachineProjectService(
                 // Store the Translation Engine ID
                 await projectSecrets.UpdateAsync(
                     sfProject.Id,
-                    u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = translationEngine.Id })
+                    u =>
+                        u.Set(
+                            p => p.ServalData,
+                            new ServalData { TranslationEngineId = translationEngine.Id, Corpora = [] }
+                        )
                 );
             }
         }
