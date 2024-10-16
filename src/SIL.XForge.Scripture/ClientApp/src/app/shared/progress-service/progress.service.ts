@@ -57,8 +57,9 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
       this.activatedProject.projectDoc$.pipe(
         filterNullish(),
         tap(async project => {
+          this.initialize(project.id);
           merge(project.remoteChanges$, project.changes$)
-            .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
+            .pipe(throttleTime(1000, asyncScheduler, { leading: false, trailing: true }))
             .subscribe(() => {
               this.initialize(project.id);
             });
