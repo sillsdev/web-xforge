@@ -24,7 +24,11 @@ export class DiagnosticOverlayService {
   open(): void {
     if (this.overlayRef != null) return;
 
-    this.overlayRef = this.overlay.create({ direction: this.i18n.direction });
+    this.overlayRef = this.overlay.create({
+      positionStrategy: this.overlay.position().global().end('0').top('56px'),
+      direction: this.i18n.direction,
+      panelClass: 'diagnostic-overlay-panel'
+    });
     const portal = new ComponentPortal(DiagnosticOverlayComponent);
     this.overlayRef.attach(portal);
     this.localSettings.set(diagnosticOverlayOpenKey, true);

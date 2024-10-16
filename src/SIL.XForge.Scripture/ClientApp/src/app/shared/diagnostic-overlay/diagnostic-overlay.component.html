@@ -1,60 +1,58 @@
-<ng-template cdkConnectedOverlay [cdkConnectedOverlayOpen]="isOpen">
-  <div class="diagnostic-overlay mat-elevation-z4" [class.collapsed]="!isExpanded">
-    <div class="header">
-      @if (isExpanded) {
-        <h2>Developer Diagnostics</h2>
-      }
-      <button mat-icon-button class="toggle-button" [class.collapsed]="!isExpanded" (click)="toggle()">
-        @if (isExpanded) {
-          <mat-icon>chevron_right</mat-icon>
-        } @else {
-          <mat-icon>chevron_left</mat-icon>
-        }
-      </button>
-      <button mat-icon-button class="close-button" (click)="close()">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
+<div class="wrapper" [class.collapsed]="!isExpanded">
+  <div class="header">
     @if (isExpanded) {
-      <h3>Total documents {{ totalDocsCount | l10nNumber }} tracked by realtime service</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Collection</th>
-            <th>Documents</th>
-            <th>Subscribers</th>
-            <th>Queries</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (docType of docCountsByCollection | keyvalue; track docType.key) {
-            <tr>
-              <td>{{ docType.key }}</td>
-              <td>{{ docType.value.docs | l10nNumber }}</td>
-              <td>{{ docType.value.subscribers | l10nNumber }}</td>
-              <td>{{ docType.value.queries | l10nNumber }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-
-      <h3>Components affecting loading indicator</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Component</th>
-            <th>Count</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (component of noticeService.loadingCountsByCallerId | keyvalue; track component.key) {
-            <tr [class.bold]="component.value > 0">
-              <td>{{ component.key }}</td>
-              <td>{{ component.value | l10nNumber }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <h2>Developer Diagnostics</h2>
     }
+    <button mat-icon-button class="toggle-button" [class.collapsed]="!isExpanded" (click)="toggle()">
+      @if (isExpanded) {
+        <mat-icon>chevron_right</mat-icon>
+      } @else {
+        <mat-icon>chevron_left</mat-icon>
+      }
+    </button>
+    <button mat-icon-button class="close-button" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
-</ng-template>
+  @if (isExpanded) {
+    <h3>{{ totalDocsCount | l10nNumber }} documents tracked by realtime service</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Collection</th>
+          <th>Docs</th>
+          <th>Subscribers</th>
+          <th>Queries</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (docType of docCountsByCollection | keyvalue; track docType.key) {
+          <tr>
+            <td>{{ docType.key }}</td>
+            <td>{{ docType.value.docs | l10nNumber }}</td>
+            <td>{{ docType.value.subscribers | l10nNumber }}</td>
+            <td>{{ docType.value.queries | l10nNumber }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h3>Components affecting loading indicator</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (component of noticeService.loadingCountsByCallerId | keyvalue; track component.key) {
+          <tr [class.bold]="component.value > 0">
+            <td>{{ component.key }}</td>
+            <td>{{ component.value | l10nNumber }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
