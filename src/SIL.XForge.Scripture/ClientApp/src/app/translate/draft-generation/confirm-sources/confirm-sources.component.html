@@ -1,0 +1,50 @@
+<h1 class="mat-headline-4">Confirm project setup</h1>
+<h2>Training the language model</h2>
+<div class="training-data">
+  <div class="source-description">
+    <h3>References ({{ referenceLanguage }})</h3>
+  </div>
+  <span class="gap"></span>
+  <div class="target-description">
+    <h3>Translation project ({{ targetLanguage }})</h3>
+  </div>
+  <div class="sources">
+    @for (project of trainingSources; track project.paratextId) {
+      <div class="project">
+        <span class="project-name">{{ project.name }}</span>
+        <span class="language-code">
+          Language code: <strong>{{ project.writingSystem.tag }}</strong>
+        </span>
+      </div>
+    }
+  </div>
+  <span class="arrow mirror-rtl"><mat-icon>arrow_right_alt</mat-icon></span>
+  <div class="targets">
+    @for (project of trainingTargets; track project.paratextId) {
+      <div class="project">
+        <span class="project-name">{{ project.name }}</span>
+        <span class="language-code">
+          Language code: <strong>{{ project.writingSystem.tag }}</strong>
+        </span>
+      </div>
+    }
+  </div>
+</div>
+
+<h2>Drafting from {{ draftingSourceShortNames }} ({{ draftingSourceLanguage }})</h2>
+<div class="translation-data">
+  @for (project of draftingSources; track project.paratextId) {
+    <div class="project">
+      <span class="project-name">{{ project.name }}</span>
+      <span class="language-code">
+        Language code: <strong>{{ project.writingSystem.tag }}</strong>
+      </span>
+    </div>
+  }
+</div>
+
+<app-notice mode="outline">
+  <strong>Incorrect language codes will dramatically reduce draft quality.</strong>
+  <p>Language codes can be changed in Paratext by going to Project Settings > Project Properties > Language.</p>
+  <mat-checkbox (change)="confirmationChanged($event)">All the language codes are correct.</mat-checkbox>
+</app-notice>
