@@ -11,6 +11,7 @@ import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
 import { I18nService } from './i18n.service';
 import { LocationService } from './location.service';
+import { isSafari } from './utils';
 
 const mockedLocationService = mock(LocationService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -94,10 +95,20 @@ describe('I18nService', () => {
     const service = getI18nService();
     // As of Chromium 110 the space between the minutes and AM/PM has been changed to U+202F (NARROW NO-BREAK SPACE)
     // Test for any white space character for maximum compatibility
-    expect(service.formatDate(date)).toMatch(/Nov 25, 1991, 5:28\sPM/);
+    if (isSafari()) {
+      expect(service.formatDate(date)).toMatch(/Nov 25, 1991 at 5:28\sPM/);
+    } else {
+      // Chrome, Firefox
+      expect(service.formatDate(date)).toMatch(/Nov 25, 1991, 5:28\sPM/);
+    }
 
     service.setLocale('en-GB');
-    expect(service.formatDate(date)).toMatch(/25 Nov 1991, 5:28\spm/);
+    if (isSafari()) {
+      expect(service.formatDate(date)).toMatch(/25 Nov 1991 at 5:28\spm/);
+    } else {
+      // Chrome, Firefox
+      expect(service.formatDate(date)).toMatch(/25 Nov 1991, 5:28\spm/);
+    }
 
     // As of Chromium 98 for zh-CN it's changed from using characters to indicate AM/PM, to using a 24 hour clock. It's
     // unclear whether the cause is Chromium itself or a localization library. The tests should pass with either version

@@ -1,9 +1,10 @@
 import { Component, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { isSafari } from 'xforge-common/utils';
 import { SelectableProject } from '../core/paratext.service';
 import { ProjectSelectComponent } from './project-select.component';
 
@@ -15,8 +16,14 @@ describe('ProjectSelectComponent', () => {
     expect(env.groupLabels.length).toBe(2);
     expect(env.groupLabels[0]).toBe('Projects');
     expect(env.groupLabels[1]).toBe('Resources');
-    expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P3 - Project 3']);
-    expect(env.optionsText(1)).toEqual(['R1 - Resource 1', 'R2 - Resource 2']);
+    if (isSafari()) {
+      // Angular inserts the group name at the end in a hidden span for the Safari screen reader
+      expect(env.optionsText(0)).toEqual(['P1 - Project 1(Projects)', 'P3 - Project 3(Projects)']);
+      expect(env.optionsText(1)).toEqual(['R1 - Resource 1(Resources)', 'R2 - Resource 2(Resources)']);
+    } else {
+      expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P3 - Project 3']);
+      expect(env.optionsText(1)).toEqual(['R1 - Resource 1', 'R2 - Resource 2']);
+    }
   }));
 
   it('it only lists groups with menu items', fakeAsync(() => {
@@ -72,8 +79,14 @@ describe('ProjectSelectComponent', () => {
   it("doesn't list multiple hidden projects", fakeAsync(() => {
     const env = new TestEnvironment(['p01', 'p03', 'r02']);
     env.clickInput();
-    expect(env.optionsText(0)).toEqual(['P2 - Project 2']);
-    expect(env.optionsText(1)).toEqual(['R1 - Resource 1']);
+    if (isSafari()) {
+      // Angular inserts the group name at the end in a hidden span for the Safari screen reader
+      expect(env.optionsText(0)).toEqual(['P2 - Project 2(Projects)']);
+      expect(env.optionsText(1)).toEqual(['R1 - Resource 1(Resources)']);
+    } else {
+      expect(env.optionsText(0)).toEqual(['P2 - Project 2']);
+      expect(env.optionsText(1)).toEqual(['R1 - Resource 1']);
+    }
   }));
 
   it('adds list items as the user scrolls the list', fakeAsync(() => {
@@ -85,7 +98,12 @@ describe('ProjectSelectComponent', () => {
     const env = new TestEnvironment(['p03'], undefined, resources);
     env.clickInput();
     expect(env.optGroups.length).toBe(2);
-    expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P2 - Project 2']);
+    if (isSafari()) {
+      // Angular inserts the group name at the end in a hidden span for the Safari screen reader
+      expect(env.optionsText(0)).toEqual(['P1 - Project 1(Projects)', 'P2 - Project 2(Projects)']);
+    } else {
+      expect(env.optionsText(0)).toEqual(['P1 - Project 1', 'P2 - Project 2']);
+    }
     expect(env.options(1).length).toBe(25);
     env.scrollMenu(2500);
     expect(env.options(1).length).toBe(50);
