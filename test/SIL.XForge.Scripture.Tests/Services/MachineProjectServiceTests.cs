@@ -242,7 +242,7 @@ public class MachineProjectServiceTests
             .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
         Assert.IsNotEmpty(
             env.ProjectSecrets.Get(Project01)
-                .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+                .ServalData!.Corpora!.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
                 .Key
         );
         await env
@@ -322,7 +322,7 @@ public class MachineProjectServiceTests
         // Ensure that the build passed the additional files corpus in the train_on parameter
         string corpusId = env
             .ProjectSecrets.Get(Project02)
-            .ServalData!.Corpora.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
+            .ServalData!.Corpora!.First(c => c.Value.PreTranslate && c.Value.AdditionalTrainingData)
             .Key;
         await env
             .TranslationEnginesClient.Received()
@@ -797,7 +797,7 @@ public class MachineProjectServiceTests
             );
 
         // Check that we have more than one pre-translate corpora
-        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -817,7 +817,7 @@ public class MachineProjectServiceTests
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
     }
 
     [Test]
@@ -840,7 +840,7 @@ public class MachineProjectServiceTests
         );
 
         // Check that we have more than one pre-translate corpora
-        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -856,7 +856,7 @@ public class MachineProjectServiceTests
             .DeleteCorpusAsync(TranslationEngine02, Corpus02, deleteFiles: true, CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
     }
 
     [Test]
@@ -1452,7 +1452,7 @@ public class MachineProjectServiceTests
         await env
             .DataFilesClient.Received(2)
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Paratext, Project01, CancellationToken.None);
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).ServalData?.Corpora[Corpus01].SourceFiles.Count);
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).ServalData!.Corpora![Corpus01].SourceFiles.Count);
     }
 
     [Test]
@@ -1701,7 +1701,7 @@ public class MachineProjectServiceTests
             .Throws(ex);
 
         // Check that we have more than one pre-translate corpora
-        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(
@@ -1718,7 +1718,7 @@ public class MachineProjectServiceTests
             .DeleteCorpusAsync(TranslationEngine02, Corpus02, deleteFiles: true, CancellationToken.None);
 
         // Ensure we have just one pre-translate corpora
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora.Count(c => c.Value.PreTranslate));
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData!.Corpora!.Count(c => c.Value.PreTranslate));
 
         // The 404 exception was logged
         env.MockLogger.AssertHasEvent(logEvent =>
@@ -2672,7 +2672,8 @@ public class MachineProjectServiceTests
         public async Task BeforeFirstSync(string projectId) =>
             await ProjectSecrets.UpdateAsync(
                 projectId,
-                u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = TranslationEngine01 })
+                u =>
+                    u.Set(p => p.ServalData, new ServalData { TranslationEngineId = TranslationEngine01, Corpora = [] })
             );
 
         /// <summary>
