@@ -1833,21 +1833,44 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
+                List<string> userIdsAdded = [];
                 foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
                 {
                     ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(u =>
                         u.Username == activePtSyncUser.Username
                     );
                     if (existingUser == null)
+                    {
+                        // Ensure the PT user gets the up-to-date SF user ID
+                        activePtSyncUser.SFUserId = _paratextUsers
+                            .SingleOrDefault(u => u.Username == activePtSyncUser.Username)
+                            ?.Id;
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
-                    else if (existingUser.SFUserId == null)
+                        if (!string.IsNullOrEmpty(activePtSyncUser.SFUserId))
+                            userIdsAdded.Add(activePtSyncUser.SFUserId);
+                    }
+                    else if (string.IsNullOrEmpty(existingUser.SFUserId))
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(u =>
                             u.Username == activePtSyncUser.Username
                         );
-                        string userId = _currentPtSyncUsers[existingUser.Username].SFUserId;
+                        string? userId = _paratextUsers
+                            .SingleOrDefault(u => u.Username == activePtSyncUser.Username)
+                            ?.Id;
                         if (!string.IsNullOrEmpty(userId))
+                        {
                             op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                            userIdsAdded.Add(userId);
+                        }
+                    }
+                }
+                foreach (string userId in userIdsAdded)
+                {
+                    int index = _projectDoc.Data.ParatextUsers.FindIndex(u => u.SFUserId == userId);
+                    if (index > -1)
+                    {
+                        // Unset the old user that had the same ID
+                        op.Unset(pd => pd.ParatextUsers[index].SFUserId);
                     }
                 }
             });
@@ -1957,6 +1980,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // Free the comment manager and versioning manager for this project from memory
         _paratextService.ClearParatextDataCaches(_userSecret, _projectDoc.Data.ParatextId);
+        _paratextService.ClearForcedUsernames();
 
         await NotifySyncProgress(SyncPhase.Phase9, 100.0);
         Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
@@ -1987,20 +2011,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     private Dictionary<string, ParatextUserProfile> GetCurrentProjectPtUsers()
     {
-        Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc.Data.ParatextUsers.ToDictionary(p =>
+        _paratextService.ClearForcedUsernames();
+        Dictionary<string, ParatextUserProfile> availablePtUsers = _projectDoc.Data.ParatextUsers.ToDictionary(p =>
             p.Username
         );
         foreach (ParatextProjectUser paratextUser in _paratextUsers)
         {
-            if (!paratextUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
+            ParatextUserProfile userProfileToAdd = null;
+            string sfUserId = paratextUser.Id;
+            if (!availablePtUsers.TryGetValue(paratextUser.Username, out ParatextUserProfile profile))
             {
-                ParatextUserProfile userProfile = new ParatextUserProfile
+                userProfileToAdd = new ParatextUserProfile
                 {
                     Username = paratextUser.Username,
-                    SFUserId = paratextUser.Id,
+                    SFUserId = sfUserId,
                     OpaqueUserId = _guidService.NewObjectId(),
                 };
-                paratextUsers.TryAdd(paratextUser.Username, userProfile);
             }
             else
             {
@@ -2008,16 +2034,28 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 // We create a new object to so that the logic in projectDoc.SubmitJson0OpAsync() will see the change.
                 if (profile.SFUserId is null)
                 {
-                    paratextUsers[paratextUser.Username] = new ParatextUserProfile
+                    userProfileToAdd = new ParatextUserProfile
                     {
                         Username = profile.Username,
-                        SFUserId = paratextUser.Id,
+                        SFUserId = sfUserId,
                         OpaqueUserId = profile.OpaqueUserId,
                     };
                 }
             }
+            if (!string.IsNullOrEmpty(sfUserId) && userProfileToAdd is not null)
+            {
+                // Detect if the SF user ID is already attached to a Paratext user. Force the old PT username
+                ParatextUserProfile oldPtUser = availablePtUsers.Values.SingleOrDefault(u => u.SFUserId == sfUserId);
+                if (oldPtUser is not null)
+                {
+                    userProfileToAdd.SFUserId = null;
+                    _paratextService.ForceParatextUsername(paratextUser.Username, oldPtUser.Username);
+                }
+            }
+            if (userProfileToAdd is not null)
+                availablePtUsers[paratextUser.Username] = userProfileToAdd;
         }
-        return paratextUsers;
+        return availablePtUsers;
     }
 
     /// <summary>
