@@ -3,7 +3,7 @@ import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
-import { delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
+import { filter, repeat, retry, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -151,7 +151,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
         }),
         repeat(),
         filter(progress => progress.percentCompleted > 0),
-        retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
+        retry({ delay: () => timer(30000) })
       )
       .subscribe(progress => {
         if (this.trainingCompletedTimeout != null) {

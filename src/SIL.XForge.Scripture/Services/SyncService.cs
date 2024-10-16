@@ -205,8 +205,16 @@ public class SyncService(
                         JobContinuationOptions.OnAnyFinishedState
                     );
 
-                    // Store the build job id, so we can cancel the job later if needed
-                    await projectSecrets.UpdateAsync(projectSecret.Id, u => u.Add(p => p.JobIds, buildJobId));
+                    // Set the translation queued date and time, and hang fire job id
+                    await projectSecrets.UpdateAsync(
+                        projectSecret.Id,
+                        u =>
+                        {
+                            u.Set(p => p.ServalData.TranslationJobId, buildJobId);
+                            u.Set(p => p.ServalData.TranslationQueuedAt, DateTime.UtcNow);
+                            u.Unset(p => p.ServalData.TranslationErrorMessage);
+                        }
+                    );
 
                     // Return the build job id as it is the last in the chain
                     return buildJobId;
