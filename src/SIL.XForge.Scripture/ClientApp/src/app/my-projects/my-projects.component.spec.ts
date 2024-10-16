@@ -92,7 +92,7 @@ describe('MyProjectsComponent', () => {
     const resolve$: BehaviorSubject<boolean> = env.mockJoinProjectPromise('sf-cbntt');
 
     env.click(env.buttonForUnconnectedProject('pt-connButNotThisUser'));
-    verify(mockedNoticeService.loadingStarted()).once();
+    verify(mockedNoticeService.loadingStarted(anything())).once();
     verify(mockedSFProjectService.onlineAddCurrentUser('sf-cbntt')).once();
     expect(env.buttonForUnconnectedProject('pt-connButNotThisUser').nativeElement.disabled).toBe(true);
     expect(env.component.joiningProjects).toEqual(['sf-cbntt']);

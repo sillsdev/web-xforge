@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
@@ -18,7 +18,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -126,7 +126,7 @@ describe('ConnectProjectComponent', () => {
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('input');
-    verify(mockedNoticeService.loadingStarted()).once();
+    verify(mockedNoticeService.loadingStarted(anything())).once();
     expect(env.component.showSettings).toBe(true);
     expect(env.component.projects.length).toEqual(0);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -138,7 +138,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.connectProjectForm).not.toBeNull();
     expect(env.component.projects.length).toEqual(env.paratextProjects.length);
     expect(env.submitButton.nativeElement.disabled).toBe(false);
-    verify(mockedNoticeService.loadingFinished()).once();
+    verify(mockedNoticeService.loadingFinished(anything())).once();
   }));
 
   it('disables page if offline', fakeAsync(() => {

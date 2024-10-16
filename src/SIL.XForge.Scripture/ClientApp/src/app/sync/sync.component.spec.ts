@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { DebugElement, ErrorHandler } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
@@ -18,7 +18,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -271,8 +271,8 @@ class TestEnvironment {
     when(mockedProjectService.onlineSync(anything()))
       .thenCall(id => this.setQueuedCount(id))
       .thenResolve();
-    when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
-    when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
+    when(mockedNoticeService.loadingStarted(anything())).thenCall(() => (this.isLoading = true));
+    when(mockedNoticeService.loadingFinished(anything())).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
     this.testOnlineStatusService.setIsOnline(isOnline);
 
