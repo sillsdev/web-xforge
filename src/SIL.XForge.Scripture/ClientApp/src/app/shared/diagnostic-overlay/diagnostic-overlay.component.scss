@@ -1,29 +1,28 @@
-$toolbar-height: 56px;
 $background-color: #282828;
 $foreground-color: #ddd;
 $table-border-color: #404040;
 
-.diagnostic-overlay {
-  position: fixed;
-  top: $toolbar-height;
-  right: 0;
-  bottom: 0;
+::ng-deep .diagnostic-overlay-panel {
+  height: 100%;
+}
 
+:host {
   background-color: $background-color;
   color: $foreground-color;
+
   font-size: 12px;
   overflow-y: auto;
+}
 
-  &.collapsed {
-    width: 44px;
-    padding: 2px;
-  }
+.wrapper:not(.collapsed) {
+  padding: 4px 12px;
+  width: 25vw;
+  min-width: 300px;
+}
 
-  &:not(.collapsed) {
-    padding: 4px 12px;
-    width: 25vw;
-    min-width: 300px;
-  }
+.wrapper.collapsed {
+  width: 44px;
+  padding: 2px;
 }
 
 table {
