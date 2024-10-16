@@ -181,11 +181,6 @@ class TestEnvironment {
   constructor() {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
-    when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn({
-      before: '',
-      templateTagText: 'text',
-      after: ''
-    });
     this.setupProject();
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);

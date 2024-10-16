@@ -17,15 +17,13 @@
       @if (!isAppOnline) {
         <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
       }
-      @if (connectOtherProject != null) {
-        <div class="unlisted-project-message">
-          <p>
-            <span [innerHTML]="connectOtherProject.before"></span>
-            <a [appRouterLink]="['projects']" (click)="close()">{{ connectOtherProject.templateTagText }}</a>
-            <span>{{ connectOtherProject.after }}</span>
-          </p>
-        </div>
-      }
+      <div class="unlisted-project-message">
+        <a
+          [appRouterLink]="['projects']"
+          (click)="close()"
+          [innerHtml]="i18n.translateAndInsertTags('draft_apply_dialog.looking_for_unlisted_project')"
+        ></a>
+      </div>
       @if (targetProject$ | async; as project) {
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
