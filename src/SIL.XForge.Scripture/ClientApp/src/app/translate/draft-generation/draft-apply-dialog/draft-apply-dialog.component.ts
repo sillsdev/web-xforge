@@ -45,7 +45,6 @@ export class DraftApplyDialogComponent implements OnInit {
     targetParatextId: new FormControl<string | undefined>('', Validators.required),
     overwrite: new FormControl(false, Validators.requiredTrue)
   });
-  connectOtherProject = this.i18n.translateTextAroundTemplateTags('draft_apply_dialog.looking_for_unlisted_project');
   /** An observable that emits the number of chapters in the target project that have some text. */
   targetChapters$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   canEditProject: boolean = true;
@@ -71,7 +70,7 @@ export class DraftApplyDialogComponent implements OnInit {
     private readonly userProjectsService: SFUserProjectsService,
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly i18n: I18nService,
+    readonly i18n: I18nService,
     private readonly userService: UserService,
     private readonly onlineStatusService: OnlineStatusService
   ) {

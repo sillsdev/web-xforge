@@ -1,3 +1,5 @@
+@use 'src/variables';
+
 .mat-mdc-dialog-actions {
   justify-content: flex-end;
 }
@@ -19,6 +21,19 @@
   align-items: center;
   column-gap: 12px;
   padding: 8px 0;
+}
+
+a {
+  text-decoration: none;
+  color: initial;
+  cursor: initial;
+
+  ::ng-deep u {
+    cursor: pointer;
+    &:hover {
+      color: variables.$theme-secondary;
+    }
+  }
 }
 
 .overwrite-content {
