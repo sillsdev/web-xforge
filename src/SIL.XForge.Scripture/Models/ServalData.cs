@@ -110,5 +110,5 @@ public class ServalData
     /// <remarks>
     /// The dictionary key is the corpus ID.
     /// </remarks>
-    public Dictionary<string, ServalCorpus> Corpora { get; set; } = new Dictionary<string, ServalCorpus>();
+    public Dictionary<string, ServalCorpus>? Corpora { get; set; }
 }
