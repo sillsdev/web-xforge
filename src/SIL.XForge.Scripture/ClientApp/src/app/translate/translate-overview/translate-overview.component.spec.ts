@@ -36,6 +36,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { Progress, ProgressService } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
@@ -48,6 +49,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedUserService = mock(UserService);
 const mockedPermissionService = mock(PermissionsService);
+const mockedProgressService = mock(ProgressService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
@@ -71,7 +73,8 @@ describe('TranslateOverviewComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mock(CookieService) },
       { provide: PermissionsService, useMock: mockedPermissionService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: ProgressService, useMock: mockedProgressService }
     ]
   }));
 
@@ -81,25 +84,11 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.progressService.texts!.length).toEqual(4);
+      expect(env.component.progressService.texts.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
       env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
-
-      discardPeriodicTasks();
-    }));
-
-    it('should update books when chapter changes in project', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.wait();
-
-      expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.progressService.texts!.length).toEqual(4);
-      env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
-
-      env.addVerse(40, 1);
-      env.expectContainsTextProgress(0, 'Matthew', '11 of 21 segments');
 
       discardPeriodicTasks();
     }));
@@ -293,6 +282,15 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
+    when(mockedProgressService.isLoaded$).thenReturn(of(true));
+    when(mockedProgressService.overallProgress).thenReturn(new Progress());
+    when(mockedProgressService.texts).thenReturn([
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 40 } as any } as any,
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 41 } as any } as any,
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 42 } as any } as any,
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 43 } as any } as any
+    ]);
+
     this.setCurrentUser();
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);

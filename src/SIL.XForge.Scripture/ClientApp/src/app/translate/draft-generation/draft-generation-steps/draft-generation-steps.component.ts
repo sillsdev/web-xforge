@@ -14,7 +14,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
-import { ProgressService } from '../../../shared/progress-service/progress.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
@@ -89,8 +88,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     private readonly draftSourcesService: DraftSourcesService,
     readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
-    private readonly trainingDataService: TrainingDataService,
-    private readonly progressService: ProgressService
+    private readonly trainingDataService: TrainingDataService
   ) {
     super();
   }
@@ -182,8 +180,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
       this.activatedProject.projectDoc$.pipe(
         filterNullish(),
         tap(async projectDoc => {
-          this.progressService.initialize(projectDoc.id);
-
           // Query for all training data files in the project
           this.trainingDataQuery?.dispose();
           this.trainingDataQuery = await this.trainingDataService.queryTrainingDataAsync(projectDoc.id);
