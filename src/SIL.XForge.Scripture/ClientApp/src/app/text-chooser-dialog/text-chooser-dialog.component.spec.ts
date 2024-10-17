@@ -372,7 +372,7 @@ class TestEnvironment {
     permissions: {}
   };
   static textsByBookId = { ['MAT']: TestEnvironment.matthewText };
-  static testProject: SFProjectProfile = createTestProjectProfile();
+  static testProject: SFProjectProfile = createTestProjectProfile({ texts: [TestEnvironment.matthewText] });
 
   static defaultDialogData = {
     bookNum: 40,
