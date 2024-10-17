@@ -304,7 +304,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
         book.number === currentGroup[currentGroup.length - 1]?.number + 1;
       if (currentGroup.length > 0 && !isBookConsecutiveAndMatching) {
         //process and reset current group
-        addGroup(currentGroup);
+        addGroup(currentGroup, this.i18n);
         currentGroup.length = 0;
       }
       //add book to current group
@@ -313,7 +313,7 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     //add last group
     if (currentGroup.length > 0) {
-      addGroup(currentGroup);
+      addGroup(currentGroup, this.i18n);
     }
 
     const groupsCollapsed: TrainingGroup[] = [];
@@ -330,15 +330,12 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     return groupsCollapsed;
 
-    function addGroup(group: TrainingBook[]): void {
+    function addGroup(group: TrainingBook[], i18n: I18nService): void {
       let range;
       if (group.length === 1) {
-        range = Canon.bookNumberToEnglishName(group[0].number);
+        range = i18n.localizeBook(group[0].number);
       } else {
-        range =
-          Canon.bookNumberToEnglishName(group[0].number) +
-          ' - ' +
-          Canon.bookNumberToEnglishName(group[group.length - 1].number);
+        range = i18n.localizeBook(group[0].number) + ' - ' + i18n.localizeBook(group[group.length - 1].number);
       }
       continguousGroups.push({ ranges: [range], source: group[0].source, target: group[0].target });
     }
