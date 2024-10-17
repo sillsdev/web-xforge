@@ -31,6 +31,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine, objectId } from 'xforge-common/utils';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -232,6 +233,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private _editor?: Quill;
   private _segment?: Segment;
   private contentSet: boolean = false;
+  /** State that the component is in with respect to loading content. */
+  private loadingState: 'loading' | 'offline-or-loading' | 'no-content' | 'empty-viewModel' | 'unloaded' = 'loading';
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
@@ -288,13 +291,32 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.areOpsCorrupted;
   }
 
+  /** Message for Quill to display when there is no content loaded to display. */
   get placeholder(): string {
-    if (this._id == null && this._placeholder != null) {
-      return this._placeholder;
+    switch (this.loadingState) {
+      case 'loading':
+        // We are working to show the content soon.
+        return this.transloco.translate('text.loading');
+      case 'no-content':
+        // There isn't any content to show, even if we were online. Setting the placeholder Input customizes this
+        // no-content message.
+        return this._placeholder ?? this.transloco.translate('text.book_does_not_exist');
+      case 'offline-or-loading':
+        if (this.onlineStatusService.isOnline) {
+          return this.transloco.translate('text.loading');
+        } else {
+          // We can't show content because we need to come online to fetch it.
+          return this.transloco.translate('text.not_available_offline');
+        }
+      case 'empty-viewModel':
+        return this.transloco.translate('text.book_is_empty');
+      case 'unloaded':
+      default:
+        return '';
     }
-    return this.displayMessage;
   }
-  @Input() set placeholder(value: string) {
+
+  @Input() set placeholder(value: string | undefined) {
     this._placeholder = value;
   }
 
@@ -313,7 +335,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         if (this.highlightMarker != null) {
           this.highlightMarker.style.visibility = 'hidden';
         }
-        this.bindQuill();
+        this.bindQuill(); // not awaited
       }
       this.setLangFromText();
     }
@@ -471,7 +493,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   ngAfterViewInit(): void {
     this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
-      this.updatePlaceholderText(isOnline);
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {
         const cursors: QuillCursors = this._editor.getModule('cursors');
@@ -484,6 +505,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.isDestroyed = true;
     super.ngOnDestroy();
     this.viewModel?.unbind();
+    this.loadingState = 'unloaded';
     this.dismissPresences();
     this.onDeleteSub?.unsubscribe();
     this.localSystemChangesSub?.unsubscribe();
@@ -498,10 +520,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
     this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
-    if (this.id != null) {
-      this.bindQuill();
-    }
-
+    this.bindQuill(); // not awaited
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
     this.editorCreated.emit();
   }
@@ -755,7 +774,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const preDeltaSegmentCache: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
     const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
     this.viewModel.update(delta, source as Sources, this.onlineStatusService.isOnline);
-    this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       const isUserEdit: boolean = source === 'user';
@@ -895,6 +913,19 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
+  /** Does the project referred to by this.id contain metadata for a book, with a chapter, as specified by this.id? In
+   * other words, does the project "have" the book and chapter, whether or not it has been downloaded to the client's
+   * IndexedDB? */
+  async projectHasText(): Promise<boolean> {
+    if (this.id == null) throw new Error('Invalid state. id is null.');
+    const id: TextDocId = this.id;
+    const profile: SFProjectProfileDoc = await this.projectService.getProfile(this.id.projectId);
+    if (profile.data == null) throw new Error('Failed to fetch project profile.');
+    return profile.data.texts.some(
+      text => text.bookNum === id.bookNum && text.chapters.some(chapter => chapter.number === id.chapterNum)
+    );
+  }
+
   private attachPresences(textDoc: TextDoc): void {
     if (!this.isPresenceEnabled || this.editor == null) {
       return;
@@ -947,20 +978,32 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private async bindQuill(): Promise<void> {
     // bindQuill can be called after the view was destroyed via onEditorCreated or the id being set in a Promise
-    if (this.isDestroyed) return;
+    if (this.isDestroyed) {
+      return;
+    }
+    this.loadingState = 'loading';
+
     this.viewModel.unbind();
     await this.dismissPresences();
     if (this._id == null) {
+      this.loadingState = 'no-content';
       return;
     }
-    if (this.onlineStatusService.isOnline) {
-      this.displayMessage = this.transloco.translate('text.loading');
-    } else {
-      this.displayMessage = this.transloco.translate('text.not_available_offline');
+
+    if (!(await this.projectHasText())) {
+      this.loadingState = 'no-content';
+      return;
     }
+
+    // Fetch the text. This could be blocked indefinitely if offline until getText returns. If we are offline but have
+    // the text in IndexedDB, we will unfortunately briefly show that a book is unavailable offline, before it loads.
+    // But if getText does not return, then we are showing a good message.
+    this.loadingState = 'offline-or-loading';
     const textDoc = await this.projectService.getText(this._id);
+    this.loadingState = 'loading';
     this.viewModel.bind(this._id, textDoc, this.subscribeToUpdates);
-    this.updatePlaceholderText();
+    if (this.viewModel.isEmpty) this.loadingState = 'empty-viewModel';
+
     this.attachPresences(textDoc);
     if (this.onDeleteSub != null) {
       this.onDeleteSub.unsubscribe();
@@ -974,8 +1017,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       await this.dismissPresences();
       // Completely disable it to avoid any other interactions from events
       this.enablePresence = false;
+      this.loadingState = 'unloaded';
       this._id = undefined;
-      this.updatePlaceholderText();
     });
 
     // Local system changes are big - usually complete rewrites of the document via TextDocService.overwrite()
@@ -1616,23 +1659,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     } else {
       this.highlightMarker.style.marginTop = marginTop + 'px';
       this.highlightMarker.style.height = this.highlightMarkerHeight + 'px';
-    }
-  }
-
-  private updatePlaceholderText(forceAndConnected?: boolean): void {
-    if (!this.viewModel.isLoaded) {
-      this.displayMessage = this.onlineStatusService.isOnline
-        ? this.transloco.translate('text.book_does_not_exist')
-        : this.transloco.translate('text.not_available_offline');
-    } else if (this.viewModel.isEmpty) {
-      this.displayMessage = this.transloco.translate('text.book_is_empty');
-    } else {
-      if (forceAndConnected == null) {
-        return;
-      }
-      this.displayMessage = forceAndConnected
-        ? this.transloco.translate('text.loading')
-        : this.transloco.translate('text.not_available_offline');
     }
   }
 

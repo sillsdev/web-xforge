@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import isObjectLike from 'lodash-es/isObjectLike';
 import { environment } from '../environments/environment';
 import { OfflineData, OfflineStore } from './offline-store';
-import { performQuery, PropertyFilter, QueryParameters, QueryResults } from './query-parameters';
+import { PropertyFilter, QueryParameters, QueryResults, performQuery } from './query-parameters';
 import { TypeRegistry } from './type-registry';
 
 const DATABASE_NAME = 'xforge';
@@ -96,6 +96,7 @@ export class IndexeddbOfflineStore extends OfflineStore {
     return await getAllFromCursor(objectStore);
   }
 
+  /** When offline this may return or it might wait until the user comes online before returning. */
   async get<T extends OfflineData>(collection: string, id: string): Promise<T | undefined> {
     const db = await this.openDB();
 

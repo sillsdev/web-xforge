@@ -269,6 +269,12 @@ class TestEnvironment {
             ],
             hasSource: true,
             permissions: {}
+          },
+          {
+            bookNum: 41,
+            chapters: [{ number: 1, lastVerse: 3, isValid: true, permissions: {} }],
+            hasSource: true,
+            permissions: {}
           }
         ]
       })
