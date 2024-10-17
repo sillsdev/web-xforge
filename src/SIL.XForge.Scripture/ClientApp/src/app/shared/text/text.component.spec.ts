@@ -152,6 +152,53 @@ describe('TextComponent', () => {
     TestEnvironment.waitForPresenceTimer();
   }));
 
+  it('can highlight segments of a verse', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 42, 1);
+    env.waitForEditor();
+    env.hostComponent.isReadOnly = true;
+
+    // verse 1 has 4 lines of poetry
+    env.component.setSegment('verse_1_1');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.segment!.ref).toEqual('verse_1_1');
+    env.component.highlight();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.isSegmentHighlighted(1, '1')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/q_1')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/q_2')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '1/q_3')).toBe(true);
+
+    TestEnvironment.waitForPresenceTimer();
+  }));
+
+  it('does not highlight blank new paragraph segment of a highlighted verse', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+    env.hostComponent.isReadOnly = true;
+
+    // verse 5 has a blank second segment
+    env.component.setSegment('verse_1_5');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.segment!.ref).toEqual('verse_1_5');
+    env.component.highlight();
+    env.component.toggleFeaturedVerseRefs(true, [new VerseRef('MAT 1:5')], 'question');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.isSegmentHighlighted(1, '5')).toBe(true);
+    expect(env.isSegmentHighlighted(1, '5/p_1')).toBe(false);
+    expect(env.isSegmentUnderlined(1, '5')).toBe(true);
+    expect(env.isSegmentUnderlined(1, '5/p_1')).toBe(false);
+
+    TestEnvironment.waitForPresenceTimer();
+  }));
+
   it('adds data attributes for usfm labels', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
     env.fixture.detectChanges();
@@ -1500,6 +1547,14 @@ class TestEnvironment {
   isSegmentHighlighted(chapter: number, verse: number | string): boolean {
     const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
     return segment != null && segment.classList.contains('highlight-segment');
+  }
+
+  isSegmentUnderlined(chapter: number, verse: number | string): boolean {
+    const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
+    return (
+      segment != null &&
+      (segment.classList.contains('question-segment') || segment.classList.contains('note-thread-segment'))
+    );
   }
 
   insertText(index: number, text: string): void {
