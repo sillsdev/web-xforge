@@ -32,6 +32,67 @@ public class SFProjectsRpcControllerTests
     private static readonly Uri WebsiteUrl = new Uri("https://scriptureforge.org", UriKind.Absolute);
 
     [Test]
+    public async Task Delete_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.Delete(Project01);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().DeleteProjectAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task Delete_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteProjectAsync(User01, Project01).Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.Delete(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task Delete_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Invalid Format";
+        env.SFProjectService.DeleteProjectAsync(User01, Project01).Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.Delete(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+    }
+
+    [Test]
+    public async Task Delete_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.DeleteProjectAsync(User01, Project01).Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.Delete(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void Delete_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.DeleteProjectAsync(User01, Project01).Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Delete(Project01));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task DeleteTrainingData_Success()
     {
         var env = new TestEnvironment();

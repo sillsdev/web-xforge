@@ -114,7 +114,8 @@ mat-icon {
 
 #delete-project {
   border: 2px solid red;
-  .source-project-msg {
+  .source-project-msg,
+  .project-syncing-msg {
     color: red;
   }
 }
