@@ -503,11 +503,13 @@ public class TrainingDataServiceTests
             SiteOptions.Value.Returns(new SiteOptions { SiteDir = "site-dir" });
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
-            FileSystemService.FileExists(Arg.Any<string>()).Returns(true);
+
+            // Check for a question mark to ensure the raw FileUrl from the TrainingData document is not specified
+            FileSystemService.FileExists(Arg.Is<string>(f => f.Contains('?'))).Returns(false);
+            FileSystemService.FileExists(Arg.Is<string>(f => !f.Contains('?'))).Returns(true);
 
             var projects = new MemoryRepository<SFProject>(
-                new[]
-                {
+                [
                     new SFProject
                     {
                         Id = Project01,
@@ -518,11 +520,10 @@ public class TrainingDataServiceTests
                             { User03, SFProjectRole.Consultant },
                         },
                     },
-                }
+                ]
             );
             var trainingData = new MemoryRepository<TrainingData>(
-                new[]
-                {
+                [
                     new TrainingData
                     {
                         Id = TrainingData.GetDocId(Project01, Data01),
@@ -544,7 +545,7 @@ public class TrainingDataServiceTests
                         MimeType = "text/csv",
                         SkipRows = 1,
                     },
-                }
+                ]
             );
             var realtimeService = new SFMemoryRealtimeService();
             realtimeService.AddRepository("sf_projects", OTType.Json0, projects);

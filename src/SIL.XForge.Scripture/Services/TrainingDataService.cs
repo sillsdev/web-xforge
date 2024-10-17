@@ -117,8 +117,13 @@ public class TrainingDataService(
                 continue;
             }
 
-            // Get the filename
+            // Get the filename without the "?t=12345" query string
             string fileName = Path.GetFileName(trainingDataDoc.Data.FileUrl);
+            if (fileName.Contains('?', StringComparison.OrdinalIgnoreCase))
+            {
+                fileName = fileName.Split('?').First();
+            }
+
             string path = Path.Combine(trainingDataDir, fileName);
             if (!fileSystemService.FileExists(path))
             {
