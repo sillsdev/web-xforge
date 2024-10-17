@@ -68,7 +68,7 @@
     }
 
     &:hover {
-      background-color: variables.$greenLight;
+      background-color: rgba(0, 0, 0, 0.15);
       color: variables.$sf_grey;
     }
   }
