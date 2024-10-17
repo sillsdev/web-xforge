@@ -1,18 +1,17 @@
 import { NgZone } from '@angular/core';
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { OtJson0Op } from 'ot-json0';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
@@ -63,7 +62,7 @@ describe('progress service', () => {
     discardPeriodicTasks();
   }));
 
-  it('re-initializes when switching projects', fakeAsync(() => {
+  it('re-initializes when project changes', fakeAsync(() => {
     const env = new TestEnvironment(100, 50);
     tick();
 
@@ -72,32 +71,6 @@ describe('progress service', () => {
     when(env.mockProject.id).thenReturn('project02');
     env.project$.next(instance(env.mockProject));
     tick();
-
-    expect(initialize).toHaveBeenCalledTimes(1);
-    discardPeriodicTasks();
-  }));
-
-  it('re-initializes for local project changes', fakeAsync(() => {
-    const env = new TestEnvironment(100, 50);
-    tick();
-
-    const initialize = spyOn<any>(env.service, 'initialize').and.callThrough();
-
-    tick(1000); // wait for the throttle time
-    env.projectChange$.next([]);
-
-    expect(initialize).toHaveBeenCalledTimes(1);
-    discardPeriodicTasks();
-  }));
-
-  it('re-initializes for remote project changes', fakeAsync(() => {
-    const env = new TestEnvironment(100, 50);
-    tick();
-
-    const initialize = spyOn<any>(env.service, 'initialize').and.callThrough();
-
-    tick(1000); // wait for the throttle time
-    env.projectRemoteChange$.next([]);
 
     expect(initialize).toHaveBeenCalledTimes(1);
     discardPeriodicTasks();
@@ -188,8 +161,7 @@ class TestEnvironment {
 
   readonly mockProject = mock(SFProjectProfileDoc);
   readonly project$ = new BehaviorSubject(instance(this.mockProject));
-  readonly projectChange$ = new BehaviorSubject<OtJson0Op[]>([]);
-  readonly projectRemoteChange$ = new BehaviorSubject<OtJson0Op[]>([]);
+  // readonly projectChange$ = new BehaviorSubject<OtJson0Op[]>([]);
 
   constructor(
     private readonly translatedSegments: number = 1000,
@@ -206,9 +178,7 @@ class TestEnvironment {
     });
 
     when(this.mockProject.id).thenReturn('project01');
-    when(this.mockProject.changes$).thenReturn(this.projectChange$);
-    when(this.mockProject.remoteChanges$).thenReturn(this.projectRemoteChange$);
-    when(mockProjectService.projectDoc$).thenReturn(this.project$);
+    when(mockProjectService.changes$).thenReturn(this.project$);
 
     when(mockPermissionService.canAccessText(anything())).thenResolve(true);
     when(mockSFProjectService.getProfile('project01')).thenResolve({
