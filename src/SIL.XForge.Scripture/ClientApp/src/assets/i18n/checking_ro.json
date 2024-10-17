@@ -38,6 +38,10 @@
     "scripture_checking_not_available": "Verificarea textului Scripturii nu este disponibilă în acest proiect.",
     "update_is_available": "Este disponibilă o actualizare. Vă rugăm, reîncărcați pagina."
   },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
+  },
   "canon": {
     "book_names": {
       "GEN": "Geneza",
@@ -216,8 +220,6 @@
     "select_verses": "Selectare versete",
     "show_more_unread": "Arată încă {{ count }} răspuns(uri) necitit(e)",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Răspunsul dvs."

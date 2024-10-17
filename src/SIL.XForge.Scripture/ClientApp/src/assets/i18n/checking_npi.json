@@ -38,6 +38,10 @@
     "scripture_checking_not_available": "यस प्रोजेक्टमा ​​धर्मशास्त्र जाँच उपलब्ध छैन।",
     "update_is_available": "अद्यावधिक उपलब्ध छ। कृपया पृष्ठ रिफ्रेस गर्नुहोस्।"
   },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
+  },
   "canon": {
     "book_names": {
       "GEN": "उत्‍पत्ति",
@@ -216,8 +220,6 @@
     "select_verses": "पदहरू चयन",
     "show_more_unread": "थप {{ count }} नपढिएका जवाफहरू देखाउनुहोस्",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "यदि सेटिङहरूमा कन्‍फिगर गरिएको छ भने प्‍याराटेक्‍स्‍टमा निर्यात गर्नुहोस्\n",
     "tooltip_status_resolve": "समाधान भएको भनेर जवाफलाई अंकित गर्नुहोस्",
     "your_answer": "तपाइँकाे जवाफ"

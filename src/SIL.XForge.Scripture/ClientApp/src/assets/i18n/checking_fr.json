@@ -38,6 +38,10 @@
     "scripture_checking_not_available": "La vérification des écritures n'est pas disponible dans ce projet.",
     "update_is_available": "Une mise à jour est disponible. Veuillez rafraîchir la page."
   },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
+  },
   "canon": {
     "book_names": {
       "GEN": "Genèse",
@@ -216,8 +220,6 @@
     "select_verses": "Sélectionner des versets",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
     "tooltip_attach": "Joindre les écritures",
-    "tooltip_record": "Enregistrer l'audio",
-    "tooltip_stop": "Arrêter l'enregistrement",
     "tooltip_status_export": "Exporter vers Paratext si les paramètre sont configurés",
     "tooltip_status_resolve": "Marquer la réponse comme résolue",
     "your_answer": "Votre réponse"

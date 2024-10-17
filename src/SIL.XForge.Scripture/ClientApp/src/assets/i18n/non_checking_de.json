@@ -44,9 +44,9 @@
     "view_renderings": "Übersetzungsmöglichkeiten ansehen"
   },
   "book_select": {
-    "deuterocanon": "Deuterocanon",
-    "new_testament": "New Testament",
-    "old_testament": "Old Testament"
+    "deuterocanon": "Deuterokanonische Bücher",
+    "new_testament": "Neues Testament",
+    "old_testament": "Altes Testament"
   },
   "checking": {
     "add_question": "Frage hinzufügen"
@@ -212,16 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Zurück",
-    "choose_additional_training_data_files_label": "Additional training",
+    "choose_additional_training_data_files_label": "Zusätzliche Schulung",
     "choose_additional_training_data_files": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
-    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training": "Bücher für die Schulung auswählen",
     "choose_books_for_training_label": "Schulung",
     "choose_books_to_translate_error": "Keine Bücher ausgewählt. Wähle zu übersetzende Bücher aus, um fortzufahren.",
-    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate": "Bücher zum Entwurf auswählen",
     "choose_books_to_translate_label": "Entwurf erstellen",
-    "configure_advanced_settings": "Advanced settings",
-    "configure_advanced_settings_label": "Advanced",
+    "configure_advanced_settings": "Erweiterte Einstellungen",
+    "configure_advanced_settings_label": "Erweitert",
     "fast_training_warning": "Die Aktivierung dieser Option spart Zeit, verringert aber die Genauigkeit erheblich.",
     "fast_training": "Schnelle Schulung aktivieren",
     "generate_draft": "Entwurf generieren",
@@ -407,9 +407,7 @@
     "recording_stopped": "Das Erfassen Deiner Frage wurde automatisch gestoppt.",
     "required_with_asterisk": "*Erforderlich",
     "save": "Speichern",
-    "scripture_reference": "Verweis auf Bibelstelle",
-    "tooltip_record": "Audio aufnehmen",
-    "tooltip_stop": "Aufnahme beenden"
+    "scripture_reference": "Verweis auf Bibelstelle"
   },
   "roles": {
     "allow_add_edit_questions": "Kann Fragen hinzufügen und bearbeiten",
@@ -443,6 +441,7 @@
     "anyone_with_a_link": "Jeder mit einem Link",
     "biblical_terms_will_be_enabled": "Biblische Begriffe werden angezeigt und können in Scripture Forge aktualisiert werden",
     "biblical_terms": "Biblische Begriffe aktivieren",
+    "cannot_delete_project_while_syncing": "You cannot delete a project while it is syncing with Paratext. Please wait for the synchronization to complete.",
     "community_checking_settings": "Überprüfung mit der Zielgruppe",
     "connect_network_to_change_settings": "Projekteinstellungen können offline nicht geändert werden. Bitte stelle eine Verbindung zum Internet her, um Änderungen vorzunehmen.",
     "danger_zone": "Gefahrenbereich",
@@ -503,8 +502,9 @@
     "error_loading_resource": "Es ist ein Fehler beim Laden der ausgewählten Ressource aufgetreten.",
     "error_offline": "Du bist offline. Bitte stelle eine Verbindung zum Internet her, um diese Ressource zu laden.",
     "loading": "Wird geladen",
-    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
-    "placeholder_ready": "Paratext-Projekt oder DBL-Ressource auswählen",
+    "loading_ellipsis": "{{ editor_add_tab_resource_dialog.loading }} ...",
+    "select_project_or_resource": "Select a Paratext project or DBL resource.",
+    "project_or_resource": "Project or resource",
     "cancel": "Abbrechen",
     "select": "Wählen"
   },

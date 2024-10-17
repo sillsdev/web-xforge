@@ -407,9 +407,7 @@
     "recording_stopped": "L'enregistrement de votre question a été arrêté automatiquement.",
     "required_with_asterisk": "*Requis",
     "save": "Enregistrer",
-    "scripture_reference": "Référence biblique",
-    "tooltip_record": "Enregistrer l'audio",
-    "tooltip_stop": "Arrêter l'enregistrement"
+    "scripture_reference": "Référence biblique"
   },
   "roles": {
     "allow_add_edit_questions": "Peut ajouter & modifier des questions",
@@ -443,6 +441,7 @@
     "anyone_with_a_link": "Toute personne ayant le lien",
     "biblical_terms_will_be_enabled": "Les termes bibliques seront affichés et pourront être mis à jour dans Scripture Forge",
     "biblical_terms": "Activer les termes bibliques",
+    "cannot_delete_project_while_syncing": "You cannot delete a project while it is syncing with Paratext. Please wait for the synchronization to complete.",
     "community_checking_settings": "Paramètres de Vérification par la communauté",
     "connect_network_to_change_settings": "Les paramètres du projet ne peuvent pas être modifiés lorsque vous êtes hors connexion. Veuillez vous connecter à Internet pour effectuer des modifications.",
     "danger_zone": "Attention danger",
@@ -503,8 +502,9 @@
     "error_loading_resource": "Une erreur s'est produite lors du chargement de la ressource sélectionnée.",
     "error_offline": "Vous êtes déconnecté. Veuillez vous connecter à internet pour charger cette ressource.",
     "loading": "Chargement en cours",
-    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
-    "placeholder_ready": "Sélectionner un projet paratext ou une ressource BBN",
+    "loading_ellipsis": "{{ editor_add_tab_resource_dialog.loading }} ...",
+    "select_project_or_resource": "Select a Paratext project or DBL resource.",
+    "project_or_resource": "Project or resource",
     "cancel": "Annuler",
     "select": "Sélectionner"
   },
