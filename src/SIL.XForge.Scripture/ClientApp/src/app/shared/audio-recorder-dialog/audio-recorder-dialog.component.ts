@@ -7,6 +7,7 @@ import { Observable, Subscription, interval, timer } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import {
@@ -63,6 +64,7 @@ export class AudioRecorderDialogComponent
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
   showCanvas: boolean = false;
+
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
   private recordedChunks: Blob[] = [];
@@ -80,7 +82,8 @@ export class AudioRecorderDialogComponent
     @Inject(MAT_DIALOG_DATA) public data: AudioRecorderDialogData,
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private i18n: I18nService
   ) {
     super();
     this.showCountdown = data?.countdown ?? false;
@@ -93,7 +96,7 @@ export class AudioRecorderDialogComponent
   }
 
   get hasAudioAttachment(): boolean {
-    return this.audio.url !== undefined;
+    return !!this.audio.url;
   }
 
   get isRecording(): boolean {

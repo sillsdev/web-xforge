@@ -151,6 +151,11 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(countdown: boolean = false) {
+    when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn({
+      before: 'before ',
+      templateTagText: '',
+      after: ' after'
+    });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(AudioRecorderDialogComponent, {
       data: { countdown } as AudioRecorderDialogData
