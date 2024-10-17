@@ -35,7 +35,13 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
-import { VERSE_REGEX, attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef } from '../utils';
+import {
+  VERSE_REGEX,
+  attributeFromMouseEvent,
+  getBaseVerse,
+  getVerseRefFromSegmentRef,
+  getVerseStrFromSegmentRef
+} from '../utils';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
@@ -443,6 +449,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return (this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty) || this.contentSet;
   }
 
+  private set highlightMarkerVisible(value: boolean) {
+    if (!this._isReadOnly && this._id?.textType === 'target' && this.highlightMarker != null) {
+      this.highlightMarker.style.visibility = value ? '' : 'hidden';
+    }
+  }
+
   /**
    * Is presence enabled and currently available to use
    */
@@ -574,8 +586,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const verseFeatureCount = new Map<string, number>();
     const chapterFeaturedVerseRefs: VerseRef[] = featureVerseRefs.filter(fvr => fvr.chapterNum === this.id!.chapterNum);
     for (const verseRef of chapterFeaturedVerseRefs) {
-      const featuredVerseSegments: string[] =
+      let featuredVerseSegments: string[] =
         featureName === 'question' ? this.getVerseSegmentsNoHeadings(verseRef) : this.getVerseSegments(verseRef);
+      featuredVerseSegments = this.filterBlankFinalSegment(featuredVerseSegments);
       if (featuredVerseSegments.length === 0) {
         continue;
       }
@@ -711,7 +724,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   toggleVerseSelection(verseRef: VerseRef): boolean {
     if (this.editor == null) return false;
-    const verseSegments: string[] = this.getCompatibleSegments(verseRef);
+    const verseSegments: string[] = this.filterBlankFinalSegment(this.getCompatibleSegments(verseRef));
     const verseRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let selectionValue: true | null = true;
     if (verseRange != null) {
@@ -765,25 +778,24 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
     if (segmentRefs == null && this._segment != null) {
-      segmentRefs = [this._segment.ref];
+      const baseVerse: VerseRef | undefined = getVerseRefFromSegmentRef(this._id.bookNum, this._segment.ref);
+      segmentRefs = this.getVerseSegments(baseVerse);
     }
-    if (segmentRefs != null) {
-      // this changes the underlying HTML, which can mess up some Quill events, so defer this call
-      Promise.resolve(segmentRefs).then(refs => {
-        this.viewModel.highlight(refs);
-        if (!this.readOnlyEnabled) {
-          this.viewModel.updateUsfmDescription();
-        }
-      });
+    if (segmentRefs == null) {
+      this.highlightMarkerVisible = false;
+      return;
     }
 
-    if (!this._isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
-      if (segmentRefs != null && segmentRefs.length > 0) {
-        this.highlightMarker.style.visibility = '';
-      } else {
-        this.highlightMarker.style.visibility = 'hidden';
+    segmentRefs = this.filterBlankFinalSegment(segmentRefs);
+    // this changes the underlying HTML, which can mess up some Quill events, so defer this call
+    Promise.resolve(segmentRefs).then(refs => {
+      this.viewModel.highlight(refs);
+      if (!this.readOnlyEnabled) {
+        this.viewModel.updateUsfmDescription();
       }
-    }
+    });
+
+    this.highlightMarkerVisible = segmentRefs.length > 0;
   }
 
   /**
@@ -1403,6 +1415,15 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     const text = this.viewModel.getSegmentText(this._segment.ref);
     this._segment.update(text, segmentRange);
+  }
+
+  private filterBlankFinalSegment(segmentRefs: string[]): string[] {
+    const lastSegment: string = segmentRefs[segmentRefs.length - 1];
+    if (segmentRefs.length > 1 && this.isSegmentBlank(lastSegment)) {
+      // remove the last segment if it is blank
+      segmentRefs.pop();
+    }
+    return segmentRefs;
   }
 
   /** Gets the embeds affected */

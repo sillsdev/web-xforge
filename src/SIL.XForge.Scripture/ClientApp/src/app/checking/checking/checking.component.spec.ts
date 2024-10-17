@@ -2315,7 +2315,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
       expect(env.isSegmentHighlighted(1, 2)).toBe(false);
       expect(env.isSegmentHighlighted(1, 3)).toBe(false);
-      expect(env.isSegmentHighlighted(1, '4/p_1')).toBe(true);
+      expect(env.isSegmentHighlighted(1, '4/p_1')).toBe(false);
 
       env.component.highlightSegments('verse_1_5,6');
       env.waitForSliderUpdate();
