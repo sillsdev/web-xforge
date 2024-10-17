@@ -54,23 +54,17 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
     super(noticeService);
 
     this.subscribe(
-      this.activatedProject.projectDoc$.pipe(
+      this.activatedProject.changes$.pipe(
         filterNullish(),
         tap(async project => {
           this.initialize(project.id);
-          merge(project.remoteChanges$, project.changes$)
-            .pipe(throttleTime(1000, asyncScheduler, { leading: false, trailing: true }))
-            .subscribe(() => {
-              this.initialize(project.id);
-            });
-        })
-      )
+        }),
+        throttleTime(1000, asyncScheduler, { leading: false, trailing: true })
+      ),
+      project => {
+        this.initialize(project.id);
+      }
     );
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this._allChaptersChangeSub?.unsubscribe();
   }
 
   get texts(): TextProgress[] {
@@ -80,6 +74,11 @@ export class ProgressService extends DataLoadingComponent implements OnDestroy {
   // Whether or not we have the minimum number of segment pairs
   get canTrainSuggestions(): boolean {
     return this._canTrainSuggestions;
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this._allChaptersChangeSub?.unsubscribe();
   }
 
   private async initialize(projectId: string): Promise<void> {
