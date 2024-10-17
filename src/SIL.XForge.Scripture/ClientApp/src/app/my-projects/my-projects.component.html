@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'my_projects'">
   <div class="content">
-    <h1>{{ t("my_projects") }}</h1>
+    <div class="title">{{ t("my_projects") }}</div>
     @if (!userHasProjects && !initialLoadingSFProjects && !loadingPTProjects) {
       <app-notice id="message-no-pt-or-sf-projects" icon="warning" type="warning">
         {{ t("no_projects") }} {{ t("access_another_project") }}
