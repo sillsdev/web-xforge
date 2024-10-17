@@ -1011,6 +1011,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
         _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.DataInSync);
         _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.LastSyncSuccessful);
+        _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.LastSyncErrorCode);
         _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
         if (!_projectDoc.IsLoaded)
         {
@@ -1039,7 +1040,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Report on authentication success before other attempts.
         await PreflightAuthenticationReportAsync();
 
-        _paratextUsers = await _paratextService.GetParatextUsersAsync(_userSecret, _projectDoc.Data, token);
+        try
+        {
+            _paratextUsers = await _paratextService.GetParatextUsersAsync(_userSecret, _projectDoc.Data, token);
+        }
+        catch (ForbiddenException)
+        {
+            Log($"User does not have permission to sync project {projectSFId}.", projectSFId, userId);
+            await _projectDoc.SubmitJson0OpAsync(op =>
+                op.Set(pd => pd.Sync.LastSyncErrorCode, (int)SyncErrorCodes.UserPermissionError)
+            );
+            return false;
+        }
+
         _currentPtSyncUsers = GetCurrentProjectPtUsers();
 
         _notesMapper.Init(_userSecret, _paratextUsers);
@@ -1713,6 +1726,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 Log($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
                 op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
                 op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
+                // If the sync was successful, then the last sync error code should be cleared
+                op.Unset(pd => pd.Sync.LastSyncErrorCode);
             }
             else
             {
