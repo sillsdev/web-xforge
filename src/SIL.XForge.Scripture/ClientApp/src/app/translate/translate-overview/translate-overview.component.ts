@@ -93,7 +93,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.projectDoc = await this.projectService.getProfile(projectId);
-      this.progressService.initialize(projectId);
 
       // Update the overview now if we are online, or when we are next online
       this.onlineStatusService.online.then(async () => {

@@ -13,6 +13,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
@@ -36,6 +37,7 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { Progress, ProgressService, TextProgress } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
@@ -48,6 +50,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedUserService = mock(UserService);
 const mockedPermissionService = mock(PermissionsService);
+const mockedProgressService = mock(ProgressService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
@@ -71,7 +74,8 @@ describe('TranslateOverviewComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mock(CookieService) },
       { provide: PermissionsService, useMock: mockedPermissionService },
-      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: ProgressService, useMock: mockedProgressService }
     ]
   }));
 
@@ -81,25 +85,11 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.progressService.texts!.length).toEqual(4);
+      expect(env.component.progressService.texts.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
       env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
-
-      discardPeriodicTasks();
-    }));
-
-    it('should update books when chapter changes in project', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.wait();
-
-      expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.progressService.texts!.length).toEqual(4);
-      env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
-
-      env.addVerse(40, 1);
-      env.expectContainsTextProgress(0, 'Matthew', '11 of 21 segments');
 
       discardPeriodicTasks();
     }));
@@ -293,6 +283,15 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
+    when(mockedProgressService.isLoaded$).thenReturn(of(true));
+    when(mockedProgressService.overallProgress).thenReturn(new Progress());
+    when(mockedProgressService.texts).thenReturn([
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 40 } as TextInfo } as TextProgress,
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 41 } as TextInfo } as TextProgress,
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 42 } as TextInfo } as TextProgress,
+      { translated: 10, blank: 10, total: 20, percentage: 50, text: { bookNum: 43 } as TextInfo } as TextProgress
+    ]);
+
     this.setCurrentUser();
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);

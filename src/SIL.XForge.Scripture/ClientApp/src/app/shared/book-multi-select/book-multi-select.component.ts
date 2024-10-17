@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
-import { ActivatedRoute } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { filter, firstValueFrom, map } from 'rxjs';
+import { filter, firstValueFrom } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ProgressService } from '../progress-service/progress.service';
@@ -24,7 +23,7 @@ type Scope = 'OT' | 'NT' | 'DC';
   imports: [UICommonModule, MatChipsModule, TranslocoModule],
   styleUrls: ['./book-multi-select.component.scss']
 })
-export class BookMultiSelectComponent extends SubscriptionDisposable implements OnInit, OnChanges {
+export class BookMultiSelectComponent extends SubscriptionDisposable implements OnChanges {
   @Input() availableBooks: number[] = [];
   @Input() selectedBooks: number[] = [];
   @Input() readonly: boolean = false;
@@ -46,17 +45,8 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   selectedAllNT: boolean = false;
   selectedAllDC: boolean = false;
 
-  constructor(
-    private readonly activatedRoute: ActivatedRoute,
-    private readonly progressService: ProgressService
-  ) {
+  constructor(private readonly progressService: ProgressService) {
     super();
-  }
-
-  ngOnInit(): void {
-    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.progressService.initialize(projectId);
-    });
   }
 
   async ngOnChanges(): Promise<void> {
