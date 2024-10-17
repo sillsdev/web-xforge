@@ -36,6 +36,7 @@
     right: 0;
     left: 0;
     margin: auto;
+    animation: fadein 0.5s;
   }
 
   .stop {
@@ -54,15 +55,21 @@
     row-gap: 8px;
     align-items: center;
     justify-content: center;
-    height: 120px;
     border-radius: 50%;
     cursor: pointer;
-    background-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 2px 2px variables.$greyLight;
-    animation: fadein 0.5s;
+    background-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.15);
+    transition:
+      color 0.15s,
+      background-color 0.15s;
 
-    .record-button {
+    .record-icon {
       transform: scale(2);
+    }
+
+    &:hover {
+      background-color: variables.$greenLight;
+      color: variables.$sf_grey;
     }
   }
 

@@ -6,8 +6,8 @@
         <div class="no-attachment" id="audioRecordContainer">
           @if (!isRecording) {
             <div (click)="startRecording()" class="record">
-              <mat-icon class="record-button">mic</mat-icon>
-              <span class="record-message">{{ t("tap_to_record") }}</span>
+              <mat-icon class="record-icon">mic</mat-icon>
+              <span class="record-message">{{ t("record") }}</span>
             </div>
           } @else {
             <button
