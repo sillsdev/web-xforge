@@ -14,6 +14,7 @@ public class Comment : IOwnedData
     /// </summary>
     public string? SyncUserRef { get; set; }
     public string? Text { get; set; }
+    public string? AudioUrl { get; set; }
     public DateTime DateModified { get; set; }
     public DateTime DateCreated { get; set; }
 

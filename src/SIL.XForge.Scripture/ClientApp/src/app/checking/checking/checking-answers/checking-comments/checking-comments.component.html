@@ -6,8 +6,21 @@
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       ) {
         <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }">
-          <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
-          <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
+          @if (comment.audioUrl != null) {
+            <app-single-button-audio-player
+              #audio
+              [source]="comment.audioUrl"
+              class="comment-audio"
+              (click)="audio.play()"
+            >
+              <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
+            </app-single-button-audio-player>
+          }
+          <span class="comment-text">{{ comment.text }}</span>
+          <div class="flex-row">
+            <span class="divider">-</span>
+            <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
+          </div>
           <div class="actions">
             @if (canEditComment(comment)) {
               <button mat-button type="button" (click)="editComment(comment)" class="comment-edit">
@@ -24,9 +37,9 @@
       }
       @if (commentFormVisible && activeComment?.dataId === comment.dataId) {
         <app-checking-comment-form
+          [comment]="activeComment"
           (save)="submit($event)"
           (cancel)="hideCommentForm()"
-          [text]="comment.text"
         ></app-checking-comment-form>
       }
     </div>
