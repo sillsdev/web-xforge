@@ -74,6 +74,7 @@ import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-play
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
+import { AttachAudioComponent } from '../attach-audio/attach-audio.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
@@ -154,7 +155,8 @@ describe('CheckingComponent', () => {
       CheckingQuestionsComponent,
       CheckingTextComponent,
       TextAndAudioComponent,
-      FontSizeComponent
+      FontSizeComponent,
+      AttachAudioComponent
     ],
     imports: [
       AngularSplitModule,
