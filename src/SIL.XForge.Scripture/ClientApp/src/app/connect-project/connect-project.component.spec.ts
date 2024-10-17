@@ -106,8 +106,9 @@ describe('ConnectProjectComponent', () => {
     // NOTE: The source projects list excludes pt01 (as it is our selected project above)
     expect(env.selectableSourceProjectsAndResources.projects.length).toEqual(3);
     expect(env.selectableSourceProjectsAndResources.resources.length).toEqual(3);
-    expect(env.selectableSourceProjectsAndResources.projects[2]).toBe('THA - Thai');
-    expect(env.selectableSourceProjectsAndResources.resources[0]).toBe('SJL - Sob Jonah and Luke');
+    // NOTE: Angular inserts the group name (in brackets) in a hidden span at the end for the Safari screen reader
+    expect(env.selectableSourceProjectsAndResources.projects[2]).toContain('THA - Thai');
+    expect(env.selectableSourceProjectsAndResources.resources[0]).toContain('SJL - Sob Jonah and Luke');
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);
   }));
