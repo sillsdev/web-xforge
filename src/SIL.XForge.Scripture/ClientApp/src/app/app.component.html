@@ -38,7 +38,7 @@
           </button>
         }
         <mat-menu #localeMenu="matMenu" class="locale-menu">
-          @for (locale of i18n.locales; track locale) {
+          @for (locale of i18n.locales; track locale.canonicalTag) {
             <button
               mat-menu-item
               [class.active-locale]="locale.canonicalTag === i18n.localeCode"

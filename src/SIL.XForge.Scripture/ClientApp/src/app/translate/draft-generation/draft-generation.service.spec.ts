@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
@@ -30,13 +30,7 @@ describe('DraftGenerationService', () => {
   let testOnlineStatusService: TestOnlineStatusService;
 
   configureTestingModule(() => ({
-    imports: [
-      HttpClientTestingModule,
-      NoopAnimationsModule,
-      TestOnlineStatusModule.forRoot(),
-      TestTranslocoModule,
-      UICommonModule
-    ],
+    imports: [NoopAnimationsModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule, UICommonModule],
     providers: [
       DraftGenerationService,
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },

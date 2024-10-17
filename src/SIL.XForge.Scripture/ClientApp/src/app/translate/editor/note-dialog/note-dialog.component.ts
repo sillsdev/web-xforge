@@ -177,7 +177,7 @@ export class NoteDialogComponent implements OnInit {
     if (verseRef == null) {
       return '';
     }
-    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum);
+    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum.toString());
   }
 
   get canInsertNote(): boolean {

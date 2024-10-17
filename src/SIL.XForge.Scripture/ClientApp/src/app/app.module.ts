@@ -1,6 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ErrorHandler, NgModule } from '@angular/core';
 import { MatRipple } from '@angular/material/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -57,11 +57,11 @@ import { UsersModule } from './users/users.module';
     TextNoteDialogComponent,
     JoinComponent
   ],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     BrowserAnimationsModule,
     CoreModule,
-    HttpClientModule,
     ServiceWorkerModule.register('sf-service-worker.js', {
       enabled: environment.pwaTest || environment.production,
       registrationStrategy: 'registerImmediately'
@@ -84,8 +84,8 @@ import { UsersModule } from './users/users.module';
     translocoMarkupRouterLinkRenderer(),
     defaultTranslocoMarkupTranspilers(),
     { provide: ErrorHandler, useClass: ExceptionHandlingService },
-    { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
-  ],
-  bootstrap: [AppComponent]
+    { provide: OverlayContainer, useClass: InAppRootOverlayContainer },
+    provideHttpClient(withInterceptorsFromDi())
+  ]
 })
 export class AppModule {}

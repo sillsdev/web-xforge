@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -53,7 +54,8 @@ describe('ShareButtonComponent', () => {
 });
 
 @NgModule({
-  imports: [NoopAnimationsModule, UICommonModule, TestTranslocoModule, HttpClientTestingModule]
+  imports: [NoopAnimationsModule, UICommonModule, TestTranslocoModule],
+  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}
 
