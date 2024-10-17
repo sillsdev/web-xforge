@@ -6,6 +6,7 @@ import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { isSafari } from 'xforge-common/utils';
 import { SelectableProject } from '../core/paratext.service';
+import { CustomValidatorState, SFValidators } from '../shared/sfvalidators';
 import { ProjectSelectComponent } from './project-select.component';
 
 describe('ProjectSelectComponent', () => {
@@ -129,6 +130,40 @@ describe('ProjectSelectComponent', () => {
     env.clickInput();
     env.clickOption(0, 0);
     expect(env.selectionInvalidMessage).toBeNull();
+  }));
+
+  it('allows marking the selection invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.selectionInvalidMessage).toBeNull();
+    env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.InvalidProject));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.selectionInvalidMessage).not.toBeNull();
+  }));
+
+  it('allows using a custom error state matcher', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const invalidMessageMapper = {
+      invalidProject: 'Please select a valid project',
+      bookNotFound: 'Genesis on the selected project',
+      noWritePermissions: 'You do not have permission'
+    };
+    env.component.projectSelect.invalidMessageMapper = invalidMessageMapper;
+    expect(env.selectionInvalidMessage).toBeNull();
+    env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.InvalidProject));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.selectionInvalidMessage!.textContent).toContain('Please select a valid project');
+
+    env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.BookNotFound));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.selectionInvalidMessage!.textContent).toContain('Genesis on the selected project');
+
+    env.component.projectSelect.customValidate(SFValidators.customValidator(CustomValidatorState.NoWritePermissions));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.selectionInvalidMessage!.textContent).toContain('You do not have permission');
   }));
 });
 

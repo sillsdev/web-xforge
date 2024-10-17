@@ -10,25 +10,26 @@ import { Route, RouterModule } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { UserService } from 'xforge-common/user.service';
-import { OnlineStatusService } from '../../../../xforge-common/online-status.service';
-import { TestOnlineStatusService } from '../../../../xforge-common/test-online-status.service';
-import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TextDoc } from '../../../core/models/text-doc';
-import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
+import { CustomValidatorState } from '../../../shared/sfvalidators';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftApplyDialogComponent } from './draft-apply-dialog.component';
 
 const mockedDraftHandlingService = mock(DraftHandlingService);
-const mockedParatextService = mock(ParatextService);
+const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogRef = mock(MatDialogRef);
@@ -57,7 +58,7 @@ describe('DraftApplyDialogComponent', () => {
     ],
     providers: [
       { provide: DraftHandlingService, useMock: mockedDraftHandlingService },
-      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: TextDocService, useMock: mockedTextDocService },
@@ -74,11 +75,7 @@ describe('DraftApplyDialogComponent', () => {
 
   it('can get projects', fakeAsync(() => {
     expect(env.cancelButton).toBeTruthy();
-    verify(mockedParatextService.getProjects()).once();
-    tick();
-    env.fixture.detectChanges();
-    expect(env.component.projects.length).toEqual(env.projects.length - 1);
-    expect(env.component.projects.map(p => p.paratextId)).toEqual(['pt01', 'pt02']);
+    expect(env.component.projects.map(p => p.paratextId)).toEqual(['paratextId1', 'paratextId2']);
     verify(mockedDraftHandlingService.getAndApplyDraftAsync(anything(), anything(), anything())).never();
     env.cancelButton.click();
     tick();
@@ -89,34 +86,30 @@ describe('DraftApplyDialogComponent', () => {
     expect(env.unlistedProjectMessage).not.toBeNull();
     expect(env.overwriteContentMessage).toBeNull();
     expect(env.targetProjectContent).toBeNull();
-    expect(env.getProjectsFailedMessage).toBeNull();
   }));
 
-  it('shows error when loading project fails', fakeAsync(() => {
-    env.component.projectLoadingFailed = true;
-    verify(mockedParatextService.getProjects()).once();
+  it('add button does not work until form is valid', fakeAsync(async () => {
+    expect(env.addButton).toBeTruthy();
+    env.selectParatextProject('paratextId1');
+    expect(env.confirmOverwriteErrorMessage).toBeNull();
+    env.addButton.click();
     tick();
     env.fixture.detectChanges();
-    expect(env.getProjectsFailedMessage).not.toBeNull();
-  }));
-
-  it('add button is disabled until project is selected', fakeAsync(async () => {
-    expect(env.addButton).toBeTruthy();
-    expect(env.addButton.attributes['disabled']).toBeDefined();
-    env.selectParatextProject('pt01');
-    expect(env.addButton.attributes['disabled']).toBeDefined();
+    verify(mockedDialogRef.close()).never();
+    expect(env.confirmOverwriteErrorMessage).not.toBeNull();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
     env.fixture.detectChanges();
-    expect(env.addButton.attributes['disabled']).toBeUndefined();
-    env.cancelButton.click();
+    expect(env.confirmOverwriteErrorMessage).toBeNull();
+    env.addButton.click();
     tick();
     env.fixture.detectChanges();
+    verify(mockedDialogRef.close(anything())).once();
   }));
 
   it('can add draft to project when project selected', fakeAsync(async () => {
-    env.selectParatextProject('pt01');
+    env.selectParatextProject('paratextId1');
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
@@ -129,54 +122,52 @@ describe('DraftApplyDialogComponent', () => {
   }));
 
   it('checks if the user has edit permissions', fakeAsync(async () => {
-    env.selectParatextProject('pt01');
+    env.selectParatextProject('paratextId1');
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
     env.fixture.detectChanges();
     expect(env.targetProjectContent).not.toBeNull();
     expect(env.component['targetProjectId']).toBe('project01');
-    verify(mockedProjectService.getProfile(anything())).once();
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
     tick();
     env.fixture.detectChanges();
-    expect(env.addButton.attributes['disabled']).toBeUndefined();
-    expect(env.cannotEditMessage).toBeNull();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.None);
   }));
 
   it('notifies user if no edit permissions', fakeAsync(() => {
-    env.selectParatextProject('pt02');
+    env.selectParatextProject('paratextId2');
     expect(env.component['targetProjectId']).toBe('project02');
-    verify(mockedProjectService.getProfile(anything())).once();
     verify(mockedTextDocService.userHasGeneralEditRight(anything())).once();
     tick();
     env.fixture.detectChanges();
-    expect(env.addButton.attributes['disabled']).toBeDefined();
-    expect(env.cannotEditMessage).not.toBeNull();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.NoWritePermissions);
+    // hides the message when an invalid project is selected
+    env.selectParatextProject('');
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component['getCustomErrorState']()).toBe(CustomValidatorState.InvalidProject);
   }));
 
   it('updates the target project info when updating the project in the selector', fakeAsync(() => {
-    env.selectParatextProject('pt01');
+    env.selectParatextProject('paratextId1');
     expect(env.targetProjectContent.textContent).toContain('Test project 1');
-    // the user does not have permission to edit 'pt02' so the info section is hidden
-    env.selectParatextProject('pt02');
+    // the user does not have permission to edit 'paratextId2' so the info section is hidden
+    env.selectParatextProject('paratextId2');
     expect(env.targetProjectContent).toBeNull();
   }));
 
   it('notifies user if offline', fakeAsync(async () => {
-    env.selectParatextProject('pt01');
+    env.selectParatextProject('paratextId1');
     expect(env.offlineWarning).toBeNull();
     const harness = await env.checkboxHarnessAsync();
     harness.check();
     tick();
     env.fixture.detectChanges();
-    expect(env.addButton.attributes['disabled']).toBeUndefined();
-    // when(mockedOnlineStatusService.isOnline).thenReturn(false);
     env.onlineStatus = false;
     tick();
     env.fixture.detectChanges();
     expect(env.offlineWarning).not.toBeNull();
-    expect(env.addButton.attributes['disabled']).toBeDefined();
   }));
 });
 
@@ -185,46 +176,11 @@ class TestEnvironment {
   fixture: ComponentFixture<DraftApplyDialogComponent>;
   loader: HarnessLoader;
 
-  projects: ParatextProject[] = [
-    {
-      paratextId: 'pt01',
-      projectId: 'project01',
-      name: 'Test project 1',
-      shortName: 'P01',
-      languageTag: 'en',
-      isConnectable: true,
-      isConnected: true
-    },
-    {
-      paratextId: 'pt02',
-      projectId: 'project02',
-      name: 'Test project 2',
-      shortName: 'P02',
-      languageTag: 'fr',
-      isConnectable: true,
-      isConnected: true
-    },
-    {
-      paratextId: 'pt03',
-      projectId: undefined,
-      name: 'Project 03',
-      shortName: 'P03',
-      languageTag: 'es',
-      isConnectable: true,
-      isConnected: false
-    }
-  ];
   onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
   constructor() {
-    when(mockedParatextService.getProjects()).thenResolve(this.projects);
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localizeBook(anything())).thenReturn('Genesis');
-    when(mockedI18nService.translateTextAroundTemplateTags(anything())).thenReturn({
-      before: '',
-      templateTagText: 'text',
-      after: ''
-    });
     this.setupProject();
     this.fixture = TestBed.createComponent(DraftApplyDialogComponent);
     this.loader = TestbedHarnessEnvironment.loader(this.fixture);
@@ -240,10 +196,6 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.cancel-button');
   }
 
-  get cannotEditMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.cannot-edit-message');
-  }
-
   get targetProjectContent(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.target-project-content');
   }
@@ -256,12 +208,12 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.unlisted-project-message');
   }
 
-  get getProjectsFailedMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.fetch-projects-failed-message');
-  }
-
   get offlineWarning(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.offline-message');
+  }
+
+  get confirmOverwriteErrorMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.form-error.visible');
   }
 
   set onlineStatus(online: boolean) {
@@ -276,7 +228,6 @@ class TestEnvironment {
 
   selectParatextProject(paratextId: string): void {
     env.component.addToProjectForm.controls.targetParatextId.setValue(paratextId);
-    env.component.projectSelectedAsync(paratextId);
     tick();
     this.fixture.detectChanges();
   }
@@ -284,14 +235,17 @@ class TestEnvironment {
   private setupProject(): void {
     const projectPermissions = [
       { id: 'project01', permission: TextInfoPermission.Write },
-      { id: 'project02', permission: TextInfoPermission.Read }
+      { id: 'project02', permission: TextInfoPermission.Read },
+      { id: 'resource03', permission: TextInfoPermission.Read }
     ];
+    const mockProjectDocs: SFProjectProfileDoc[] = [];
     let projectNum = 1;
     for (const { id, permission } of projectPermissions) {
       const mockedProject = {
         id,
         data: createTestProjectProfile(
           {
+            paratextId: id.startsWith('resource') ? `resource16char0${projectNum}` : `paratextId${projectNum}`,
             userRoles: { user01: SFProjectRole.ParatextAdministrator },
             texts: [
               {
@@ -304,8 +258,9 @@ class TestEnvironment {
           projectNum++
         )
       } as SFProjectProfileDoc;
-      when(mockedProjectService.getProfile(id)).thenResolve(mockedProject);
+      mockProjectDocs.push(mockedProject);
     }
+    when(mockedUserProjectsService.projectDocs$).thenReturn(of(mockProjectDocs));
     const mockedTextDoc = {
       getNonEmptyVerses: (): string[] => ['verse_1_1', 'verse_1_2', 'verse_1_3']
     } as TextDoc;
