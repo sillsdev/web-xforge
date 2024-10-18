@@ -407,9 +407,7 @@
     "recording_stopped": "Perekaman jawaban Anda dihentikan otomatis.",
     "required_with_asterisk": "*Harus diisi",
     "save": "Simpan",
-    "scripture_reference": "Ayat Alkitab",
-    "tooltip_record": "Merekam audio",
-    "tooltip_stop": "Berhenti merekam"
+    "scripture_reference": "Ayat Alkitab"
   },
   "roles": {
     "allow_add_edit_questions": "Dapat menambahkan & menyunting pertanyaan",
@@ -443,6 +441,7 @@
     "anyone_with_a_link": "Siapapun yang punya tautan",
     "biblical_terms_will_be_enabled": "Istilah-istilah Alkitab akan ditampilkan dan dapat diperbarui di Scripture Forge",
     "biblical_terms": "Aktifkan Istilah Alkitab",
+    "cannot_delete_project_while_syncing": "You cannot delete a project while it is syncing with Paratext. Please wait for the synchronization to complete.",
     "community_checking_settings": "Pemeriksaan Komunitas",
     "connect_network_to_change_settings": "Pengaturan proyek tidak dapat diubah saat luring. Harap sambungkan ke internet untuk membuat perubahan.",
     "danger_zone": "Zona Bahaya",
@@ -503,8 +502,9 @@
     "error_loading_resource": "There was an error loading the selected resource.",
     "error_offline": "You are offline. Please connect to the internet to load this resource.",
     "loading": "Loading",
-    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
-    "placeholder_ready": "Select paratext project or DBL resource",
+    "loading_ellipsis": "{{ editor_add_tab_resource_dialog.loading }} ...",
+    "select_project_or_resource": "Select a Paratext project or DBL resource.",
+    "project_or_resource": "Project or resource",
     "cancel": "Batal",
     "select": "Pilih"
   },

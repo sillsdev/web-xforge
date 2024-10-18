@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "तपाइँको माइक्रोफोनमा पहुँच हुन सकेन। कृपया आफ्नो ब्राउजरबाट माइक्रोफोनलाई सक्षम गर्नुहोस्।",
     "mic_not_found": "कुनै माइक्रोफोन फेला परेन। कृपया आफ्‍नो उपकरणमा माइक्रोफोन जडान गर्नुहोस्।",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "जवाफ सेभ गर्नुहोस्",
     "stop_recording": "रिकर्डिङ्ग रोक्नुहोस्"
@@ -37,6 +37,10 @@
     "report_issue": "समस्‍या रिपोर्ट गर्नुहोस्",
     "scripture_checking_not_available": "यस प्रोजेक्टमा ​​धर्मशास्त्र जाँच उपलब्ध छैन।",
     "update_is_available": "अद्यावधिक उपलब्ध छ। कृपया पृष्ठ रिफ्रेस गर्नुहोस्।"
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "पदहरू चयन",
     "show_more_unread": "थप {{ count }} नपढिएका जवाफहरू देखाउनुहोस्",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "यदि सेटिङहरूमा कन्‍फिगर गरिएको छ भने प्‍याराटेक्‍स्‍टमा निर्यात गर्नुहोस्\n",
     "tooltip_status_resolve": "समाधान भएको भनेर जवाफलाई अंकित गर्नुहोस्",
     "your_answer": "तपाइँकाे जवाफ"

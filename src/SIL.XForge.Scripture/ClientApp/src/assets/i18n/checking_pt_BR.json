@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "O acesso ao seu microfone foi negado. Ative o microfone a partir do seu navegador.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "Salvar Resposta",
     "stop_recording": "Parar gravação"
@@ -37,6 +37,10 @@
     "report_issue": "Relatar um problema",
     "scripture_checking_not_available": "A verificação do Texto Bíblico não está disponível neste projeto.",
     "update_is_available": "Uma atualização está disponível. Por favor, atualize a página."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Selecionar versículos",
     "show_more_unread": "Exibir {{ count }} mais respostas não lidas",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Sua resposta"

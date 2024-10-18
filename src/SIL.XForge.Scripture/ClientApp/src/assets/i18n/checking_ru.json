@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Доступ к микрофону был ограничен. Пожалуйста, включите микрофон из браузера.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "Сохранить ответ",
     "stop_recording": "Остановить запись"
@@ -37,6 +37,10 @@
     "report_issue": "Сообщить о проблеме",
     "scripture_checking_not_available": "Проверка Писания в этом проекте недоступна.",
     "update_is_available": "An update is available. Please refresh the page."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Выбрать стихи",
     "show_more_unread": "Показать ещё {{ count }} непрочитанных ответов",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Ваш ответ"

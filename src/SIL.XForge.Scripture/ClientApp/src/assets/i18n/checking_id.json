@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "mic_not_found": "Mikrofon tidak ditemukan. Sambungkan mikrofon ke perangkat Anda.",
-    "record_audio": "Rekam audio",
+    "record": "Record",
     "re_record": "Rekam ulang",
     "save": "Simpan Jawaban",
     "stop_recording": "Hentikan Perekaman"
@@ -37,6 +37,10 @@
     "report_issue": "Laporkan masalah",
     "scripture_checking_not_available": "Pemeriksaan Alkitab tidak tersedia pada proyek ini.",
     "update_is_available": "Pembaruan telah tersedia. Silakan muat ulang halaman."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Pilih ayat-ayat",
     "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
     "tooltip_attach": "Melampirkan Alkitab",
-    "tooltip_record": "Merekam audio",
-    "tooltip_stop": "Berhenti merekam",
     "tooltip_status_export": "Ekspor ke Paratext jika dikonfigurasi di Pengaturan",
     "tooltip_status_resolve": "Tandai jawaban sebagai terselesaikan",
     "your_answer": "Jawaban Anda"
