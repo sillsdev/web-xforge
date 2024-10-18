@@ -36,7 +36,6 @@
     right: 0;
     left: 0;
     margin: auto;
-    animation: fadein 0.5s;
   }
 
   .stop {
@@ -59,6 +58,7 @@
     cursor: pointer;
     background-color: rgba(0, 0, 0, 0.08);
     box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.15);
+    animation: fadein 0.5s;
     transition:
       color 0.15s,
       background-color 0.15s;
@@ -77,6 +77,7 @@
     height: 100%;
     width: 100%;
     position: relative;
+    animation: fadein 0.5s;
 
     // the div elements with the animate class are created dynamically and the
     // ng-deep was needed for these styles to apply
@@ -153,6 +154,9 @@
 
 @keyframes fadein {
   0% {
+    opacity: 0%;
+  }
+  50% {
     opacity: 0%;
   }
   100% {
