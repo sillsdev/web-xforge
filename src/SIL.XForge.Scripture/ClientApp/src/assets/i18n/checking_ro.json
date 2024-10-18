@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Accesul la microfonul dvs. a fost refuzat. Vă rugăm, activați microfonul din browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "Salvează răspunsul",
     "stop_recording": "Oprește înregistrarea"
@@ -37,6 +37,10 @@
     "report_issue": "Raportați o problemă",
     "scripture_checking_not_available": "Verificarea textului Scripturii nu este disponibilă în acest proiect.",
     "update_is_available": "Este disponibilă o actualizare. Vă rugăm, reîncărcați pagina."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Selectare versete",
     "show_more_unread": "Arată încă {{ count }} răspuns(uri) necitit(e)",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Răspunsul dvs."

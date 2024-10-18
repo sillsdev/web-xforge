@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "保存答案",
     "stop_recording": "停止录音"
@@ -37,6 +37,10 @@
     "report_issue": "报告问题",
     "scripture_checking_not_available": "圣经检查在该项目中不可用。",
     "update_is_available": "An update is available. Please refresh the page."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "选择文本",
     "show_more_unread": "显示{{ count }} 个未读答案",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "你的答案"

@@ -2,7 +2,7 @@
   "app": {
     "beta": "beta",
     "generate_draft": "Generar borrador",
-    "hangfire_dashboard": "Hangfire Dashboard",
+    "hangfire_dashboard": "Panel de Hangfire",
     "manage_questions": "Administrar preguntas",
     "settings": "Configuración",
     "synchronize": "Sincronizar",
@@ -44,9 +44,9 @@
     "view_renderings": "Ver traducciones"
   },
   "book_select": {
-    "deuterocanon": "Deuterocanon",
-    "new_testament": "New Testament",
-    "old_testament": "Old Testament"
+    "deuterocanon": "Deuterocanónico",
+    "new_testament": "Nuevo Testamento",
+    "old_testament": "Antiguo Testamento"
   },
   "checking": {
     "add_question": "Agregar pregunta"
@@ -212,16 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Atrás",
-    "choose_additional_training_data_files_label": "Additional training",
+    "choose_additional_training_data_files_label": "Entrenamiento adicional",
     "choose_additional_training_data_files": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
-    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training": "Seleccione libros en los que entrenar",
     "choose_books_for_training_label": "Entrenamiento",
     "choose_books_to_translate_error": "No hay libros seleccionados. Seleccione los libros a traducir para continuar.",
-    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate": "Seleccionar libros para el borrador",
     "choose_books_to_translate_label": "Redacción",
-    "configure_advanced_settings": "Advanced settings",
-    "configure_advanced_settings_label": "Advanced",
+    "configure_advanced_settings": "Configuración avanzada",
+    "configure_advanced_settings_label": "Avanzado",
     "fast_training_warning": "Si lo activa, ahorrará tiempo pero reducirá en gran medida la precisión.",
     "fast_training": "Permitir una formación rápida",
     "generate_draft": "Generar borrador",
@@ -407,9 +407,7 @@
     "recording_stopped": "La grabación de su pregunta se detuvo automáticamente.",
     "required_with_asterisk": "*Requerido",
     "save": "Guardar",
-    "scripture_reference": "Referencia bíblica",
-    "tooltip_record": "Grabar audio",
-    "tooltip_stop": "Parar de grabar"
+    "scripture_reference": "Referencia bíblica"
   },
   "roles": {
     "allow_add_edit_questions": "Puede añadir y editar preguntas",
@@ -443,6 +441,7 @@
     "anyone_with_a_link": "Cualquiera con un enlace",
     "biblical_terms_will_be_enabled": "Los Vocablos bíblicos se mostrarán y podrán actualizarse en Scripture Forge",
     "biblical_terms": "Habilitar Vocablos bíblicos",
+    "cannot_delete_project_while_syncing": "You cannot delete a project while it is syncing with Paratext. Please wait for the synchronization to complete.",
     "community_checking_settings": "Configuración de comprobación por la comunidad",
     "connect_network_to_change_settings": "La configuración del proyecto no puede cambiarse mientras está fuera de línea. Por favor, conéctese a Internet para hacer cambios.",
     "danger_zone": "Zona de Peligro",
@@ -503,8 +502,9 @@
     "error_loading_resource": "Se ha producido un error al cargar el recurso seleccionado.",
     "error_offline": "No está conectado. Conéctese a Internet para cargar este recurso.",
     "loading": "Cargando",
-    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
-    "placeholder_ready": "Seleccione el proyecto paratexto o el recurso DBL",
+    "loading_ellipsis": "{{ editor_add_tab_resource_dialog.loading }} ...",
+    "select_project_or_resource": "Select a Paratext project or DBL resource.",
+    "project_or_resource": "Project or resource",
     "cancel": "Cancelar",
     "select": "Seleccionar"
   },

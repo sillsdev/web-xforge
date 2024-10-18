@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
     "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecta un micrófono a tu dispositivo.",
-    "record_audio": "Grabar audio",
+    "record": "Record",
     "re_record": "Regrabar",
     "save": "Guardar respuesta",
     "stop_recording": "Detener grabación"
@@ -37,6 +37,10 @@
     "report_issue": "Informar de un problema",
     "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto.",
     "update_is_available": "Hay una actualización disponible. Por favor, actualice la página."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Seleccionar versículos",
     "show_more_unread": "Mostrar {{ count }} más respuestas no leídas",
     "tooltip_attach": "Adjuntar escritura",
-    "tooltip_record": "Grabar audio",
-    "tooltip_stop": "Parar de grabar",
     "tooltip_status_export": "Exportar a Paratext si se ha configurado en Configuración",
     "tooltip_status_resolve": "Marcar la respuesta como resuelta",
     "your_answer": "Su respuesta"

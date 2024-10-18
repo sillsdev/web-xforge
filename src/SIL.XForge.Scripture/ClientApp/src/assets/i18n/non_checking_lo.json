@@ -407,9 +407,7 @@
     "recording_stopped": "The recording for your question was automatically stopped.",
     "required_with_asterisk": "*Required",
     "save": "ວັກທີ່ມີຄຳຖາມ",
-    "scripture_reference": "Scripture reference",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "scripture_reference": "Scripture reference"
   },
   "roles": {
     "allow_add_edit_questions": "Can add & edit questions",
@@ -443,6 +441,7 @@
     "anyone_with_a_link": "Anyone with a link",
     "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
     "biblical_terms": "Enable Biblical Terms",
+    "cannot_delete_project_while_syncing": "You cannot delete a project while it is syncing with Paratext. Please wait for the synchronization to complete.",
     "community_checking_settings": "ກວດກັບຊຸມຊົນ",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Danger Zone",
@@ -503,8 +502,9 @@
     "error_loading_resource": "There was an error loading the selected resource.",
     "error_offline": "You are offline. Please connect to the internet to load this resource.",
     "loading": "Loading",
-    "placeholder_loading": "{{ editor_add_tab_resource_dialog.loading }}...",
-    "placeholder_ready": "Select paratext project or DBL resource",
+    "loading_ellipsis": "{{ editor_add_tab_resource_dialog.loading }} ...",
+    "select_project_or_resource": "Select a Paratext project or DBL resource.",
+    "project_or_resource": "Project or resource",
     "cancel": "ຍົກເລີກ",
     "select": "ເລືອກ"
   },

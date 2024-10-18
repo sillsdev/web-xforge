@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "Cavabınızı saxlamaq",
     "stop_recording": "Səs yazmanı dayandırmaq"
@@ -37,6 +37,10 @@
     "report_issue": "Problemi bildirin.",
     "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. ",
     "update_is_available": "Yeniləmə mümkündür Xahiş edirəm səhifəni yeniləyin."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Ayələri seçmək",
     "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Sizin cavabınız"

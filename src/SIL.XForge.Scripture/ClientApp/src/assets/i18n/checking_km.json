@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
-    "record_audio": "Record Audio",
+    "record": "Record",
     "re_record": "Re-record",
     "save": "Save",
     "stop_recording": "Stop Recording"
@@ -37,6 +37,10 @@
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project.",
     "update_is_available": "An update is available. Please refresh the page."
+  },
+  "attach_audio": {
+    "tooltip_record": "Record audio",
+    "tooltip_stop": "Stop recording"
   },
   "canon": {
     "book_names": {
@@ -216,8 +220,6 @@
     "select_verses": "Select verses",
     "show_more_unread": "Show {{ count }} more unread answers",
     "tooltip_attach": "Attach scripture",
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
