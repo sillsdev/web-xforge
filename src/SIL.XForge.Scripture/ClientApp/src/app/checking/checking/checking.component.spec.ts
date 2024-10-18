@@ -1768,12 +1768,13 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
-        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        env.commentOnAnswer(0, '', 'audioFile.mp3');
         resolveUpload$.next();
         env.waitForSliderUpdate();
         expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
         env.waitForSliderUpdate();
         expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
+        expect(env.getAnswerCommentText(0, 0)).toContain('Audio comment');
       }));
 
       it('can remove audio from a comment', fakeAsync(() => {
@@ -1786,6 +1787,7 @@ describe('CheckingComponent', () => {
         env.waitForSliderUpdate();
         expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
         env.waitForSliderUpdate();
+        expect(env.getAnswerCommentText(0, 0)).toContain('comment with audio');
         expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
         env.clickButton(env.getEditCommentButton(0, 0));
         env.clickButton(env.removeAudioButton);
