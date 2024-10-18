@@ -32,10 +32,9 @@ $insightTypes: 'info', 'warning', 'error';
   $color-s: var(--lynx-insights-#{$insight-type}-color-s);
   $color-l: var(--lynx-insights-#{$insight-type}-color-l);
   $text-decoration: var(--lynx-insights-#{$insight-type}-text-decoration);
-  // $bgColor: hsl(var($color-h), var($color-s), $bg-color-l);
-  // $bgColor: hsla(var($color-h), var($color-s), var($color-s), 0.4);
-  $bgColor: hsla($color-h, $color-s, $color-l, 0.2);
+
   $decorationColor: hsl($color-h, $color-s, $color-l);
+  $bgColor: hsl($color-h, $color-s, $bg-color-l);
 
   text-decoration: $text-decoration;
   text-decoration-color: $decorationColor;
@@ -75,19 +74,11 @@ $insightTypes: 'info', 'warning', 'error';
   &.info {
     @include insight-styles('info');
     text-underline-offset: 9px;
-
-    .info {
-      background-color: transparent;
-    }
   }
 
   &.warning {
     @include insight-styles('warning');
     text-underline-offset: 4px;
-
-    .warning {
-      background-color: transparent;
-    }
 
     .info {
       background-color: transparent;
@@ -97,10 +88,6 @@ $insightTypes: 'info', 'warning', 'error';
   &.error {
     @include insight-styles('error');
     text-underline-offset: 2px;
-
-    .error {
-      background-color: transparent;
-    }
 
     .warning {
       background-color: transparent;
