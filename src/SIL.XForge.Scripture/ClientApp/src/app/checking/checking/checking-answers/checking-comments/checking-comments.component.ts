@@ -13,12 +13,14 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
+import { AudioAttachment } from '../../checking-audio-recorder/checking-audio-recorder.component';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
   comment?: Comment;
   answer?: Answer;
   text?: string;
+  audio?: AudioAttachment;
 }
 
 @Component({
@@ -189,12 +191,13 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     });
   }
 
-  submit(text: string): void {
+  submit(comment: { text?: string; audio?: AudioAttachment }): void {
     this.action.emit({
       action: 'save',
       answer: this.answer,
-      text,
-      comment: this.activeComment
+      text: comment.text,
+      comment: this.activeComment,
+      audio: comment?.audio
     });
     this.hideCommentForm();
     this.showAllComments = true;
