@@ -1,12 +1,39 @@
+@use 'src/variables';
+
 .mat-mdc-dialog-actions {
   justify-content: flex-end;
+}
+
+.mat-mdc-dialog-content {
+  padding-bottom: 0;
+
+  .form-error {
+    visibility: hidden;
+
+    &.visible {
+      visibility: visible;
+    }
+  }
 }
 
 .target-project-content {
   display: flex;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 12px;
   padding: 8px 0;
+}
+
+a {
+  text-decoration: none;
+  color: initial;
+  cursor: initial;
+
+  ::ng-deep u {
+    cursor: pointer;
+    &:hover {
+      color: variables.$theme-secondary;
+    }
+  }
 }
 
 .overwrite-content {
