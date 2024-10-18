@@ -706,6 +706,9 @@ public class ParatextService : DisposableBase, IParatextService
 
             return users;
         }
+        /* If the project is not registered (e.g., back translation)
+         or a user previously had sync access on the project has been removed
+         you will end up here */
         else
         {
             // Get the list of users from the repository
@@ -722,7 +725,17 @@ public class ParatextService : DisposableBase, IParatextService
                 + $"On SF project, user has {(hasRole ? $"role '{userRole}'." : "no role.")}";
 
             IEnumerable<SharedRepository> remotePtProjects = GetRepositories(ptRepoSource, contextInformation);
-            SharedRepository remotePtProject = remotePtProjects.Single(p => p.SendReceiveId.Id == project.ParatextId);
+
+            SharedRepository remotePtProject = remotePtProjects.SingleOrDefault(p =>
+                p.SendReceiveId.Id == project.ParatextId
+            );
+
+            // if the paratext id could not be found then the user does not have access.
+            // Throw the ForbiddenException and fail the sync.
+            if (remotePtProject is null)
+            {
+                throw new ForbiddenException();
+            }
 
             // Build a dictionary of user IDs mapped to usernames using the user secrets
             foreach (
