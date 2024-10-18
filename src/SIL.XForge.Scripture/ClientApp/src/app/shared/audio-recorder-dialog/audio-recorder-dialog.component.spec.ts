@@ -61,6 +61,7 @@ describe('AudioRecorderDialogComponent', () => {
 
   it('can record', async () => {
     const env = new TestEnvironment();
+    env.waitForRecorder(300);
     expect(env.recordButton).toBeTruthy();
     expect(env.stopRecordingButton).toBeFalsy();
     expect(env.recordingIndicator).toBeNull();
