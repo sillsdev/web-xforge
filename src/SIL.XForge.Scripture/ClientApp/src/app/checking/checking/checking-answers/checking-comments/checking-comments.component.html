@@ -16,7 +16,7 @@
               <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
             </app-single-button-audio-player>
           }
-          <span class="comment-text">{{ comment.text }}</span>
+          <span class="comment-text">{{ comment.text ? comment.text : "- " + t("audio_comment") + " -" }}</span>
           <div class="flex-row">
             <span class="divider">-</span>
             <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
