@@ -46,7 +46,18 @@ app-notice {
   h4 {
     font-style: italic;
     font-weight: 400;
-    margin: 0 0 16px;
+    font-size: 0.9em;
+    margin: 0;
+  }
+
+  .notice-container {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+  }
+
+  .books-hidden-message {
+    cursor: pointer;
   }
 
   &.warning {
