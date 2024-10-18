@@ -22,7 +22,6 @@
     }
   }
 
-  .record,
   .stop,
   .has-attachment {
     transform: scale(2);
@@ -49,10 +48,36 @@
     }
   }
 
+  .record {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.15);
+    animation: fadein 0.5s;
+    transition:
+      color 0.15s,
+      background-color 0.15s;
+
+    .record-icon {
+      transform: scale(2);
+    }
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.15);
+      color: variables.$sf_grey;
+    }
+  }
+
   .no-attachment {
     height: 100%;
     width: 100%;
     position: relative;
+    animation: fadein 0.5s;
 
     // the div elements with the animate class are created dynamically and the
     // ng-deep was needed for these styles to apply
@@ -75,6 +100,7 @@
 .dialog-footer {
   height: 50px;
   position: relative;
+  min-width: 220px;
   canvas {
     position: absolute;
   }
@@ -86,14 +112,9 @@
 }
 
 .has-attachment {
-  transform: scale(0);
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-
-  &.visible {
-    transform: scale(1);
-  }
+  justify-content: space-evenly;
+  column-gap: 8px;
 }
 
 @keyframes countdown {
@@ -128,5 +149,17 @@
     width: 120px;
     height: 120px;
     background-color: white;
+  }
+}
+
+@keyframes fadein {
+  0% {
+    opacity: 0%;
+  }
+  50% {
+    opacity: 0%;
+  }
+  100% {
+    opacity: 100%;
   }
 }
