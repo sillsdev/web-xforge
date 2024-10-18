@@ -2,7 +2,7 @@
   <div class="loading-indicator"><span></span> <span></span> <span></span></div>
 } @else {
   <mat-selection-list #list dense [multiple]="false" (click)="selectAll($event)" hideSingleSelectionIndicator>
-    @for (suggestion of suggestions; track suggestion; let i = $index) {
+    @for (suggestion of suggestions; track $index; let i = $index) {
       <mat-list-option [selected]="suggestion && i === 0">
         <div class="suggestion">
           {{ suggestion.words.join(" ") }}

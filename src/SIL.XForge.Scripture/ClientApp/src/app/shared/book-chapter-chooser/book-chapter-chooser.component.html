@@ -8,7 +8,7 @@
       panelWidth="200"
       panelClass="book-select-menu"
     >
-      @for (b of books; track b) {
+      @for (b of books; track $index) {
         <mat-option [value]="b">{{ bookName(b) }}</mat-option>
       }
     </mat-select>
@@ -22,7 +22,7 @@
       panelClass="chapter-select-menu"
       [panelWidth]="chapters.length < 100 ? 70 : 80"
     >
-      @for (c of chapters; track c) {
+      @for (c of chapters; track $index) {
         <mat-option [value]="c">{{ c }}</mat-option>
       }
     </mat-select>
