@@ -2725,8 +2725,8 @@ public class MachineProjectServiceTests
             }
         }
 
-        private static MockText GetMockTrainingData(bool source) =>
-            new MockText
+        private static SFTrainingText GetMockTrainingData(bool source) =>
+            new SFTrainingText
             {
                 Id = Data01,
                 Segments = new List<SFTextSegment>
