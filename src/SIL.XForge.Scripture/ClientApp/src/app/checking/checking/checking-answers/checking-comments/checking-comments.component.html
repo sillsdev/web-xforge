@@ -6,32 +6,49 @@
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       ) {
         <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }">
-          @if (comment.audioUrl != null) {
-            <app-single-button-audio-player
-              #audio
-              [source]="comment.audioUrl"
-              class="comment-audio"
-              (click)="audio.play()"
-            >
-              <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
-            </app-single-button-audio-player>
-          }
-          <span class="comment-text">{{ comment.text ? comment.text : "- " + t("audio_comment") + " -" }}</span>
-          <div class="flex-row">
-            <span class="divider">-</span>
-            <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
+          <div class="comment-content">
+            @if (comment.audioUrl != null) {
+              <app-single-button-audio-player
+                #audio
+                [source]="comment.audioUrl"
+                class="comment-audio"
+                (click)="audio.togglePlay()"
+              >
+                <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
+              </app-single-button-audio-player>
+            }
+            @if (comment.text != null) {
+              <span class="comment-text">{{ comment.text }}</span>
+            }
           </div>
-          <div class="actions">
-            @if (canEditComment(comment)) {
-              <button mat-button type="button" (click)="editComment(comment)" class="comment-edit">
-                {{ t("edit") }}
-              </button>
-            }
-            @if (canDeleteComment(comment)) {
-              <button mat-button type="button" (click)="deleteCommentClicked(comment)" class="comment-delete">
-                {{ t("delete") }}
-              </button>
-            }
+          <div class="comment-footer">
+            <div class="actions">
+              @if (canEditComment(comment)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="editComment(comment)"
+                  class="comment-edit"
+                  [matTooltip]="t('edit')"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+              @if (canDeleteComment(comment)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="deleteCommentClicked(comment)"
+                  class="comment-delete"
+                  [matTooltip]="t('delete')"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </div>
+            <div class="owner">
+              <app-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-owner>
+            </div>
           </div>
         </div>
       }
@@ -55,6 +72,7 @@
   @if (!commentFormVisible && (commentCount <= maxCommentsToShow || showAllComments) && canAddComment) {
     <button mat-button type="button" (click)="showCommentForm()" class="add-comment">
       {{ t("add_a_comment") }}
+      <mat-icon>forum</mat-icon>
     </button>
   }
 </ng-container>

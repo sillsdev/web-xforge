@@ -23,22 +23,20 @@
     }
   }
 
-  .comment-text {
-    flex: 1 0 50%;
+  .comment-content {
+    display: flex;
+    align-items: center;
+    column-gap: 8px;
   }
 
-  .actions {
-    flex: 1;
+  .comment-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    flex-grow: 1;
+  }
 
-    button {
-      height: auto;
-    }
-
-    .mat-mdc-button {
-      line-height: unset;
-      padding: 0 8px;
-    }
+  .owner {
+    display: flex;
+    align-items: center;
   }
 }
