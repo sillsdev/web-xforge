@@ -1,7 +1,8 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl, ValidatorFn } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
+import { translate } from '@ngneat/transloco';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -38,6 +39,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @Input() resources?: SelectableProject[];
   /** Projects that can be an already selected value, but not given as an option in the menu */
   @Input() nonSelectableProjects?: SelectableProject[];
+  @Input() invalidMessageMapper?: { [key: string]: string };
   readonly matcher = new ShowOnDirtyErrorStateMatcher();
 
   hiddenParatextIds$ = new BehaviorSubject<string[]>([]);
@@ -123,8 +125,24 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     }
     this.hiddenParatextIds$.next(value);
   }
+
   get hiddenParatextIds(): string[] {
     return this.hiddenParatextIds$.getValue();
+  }
+
+  get invalidMessage(): string {
+    if (this.invalidMessageMapper != null && this.paratextIdControl.errors != null) {
+      const error: string = Object.keys(this.paratextIdControl.errors)[0];
+      return this.invalidMessageMapper[error];
+    }
+    return translate('project_select.please_select_valid_project_or_resource');
+  }
+
+  customValidate(customValidator: ValidatorFn): void {
+    this.paratextIdControl.clearValidators();
+    this.paratextIdControl.setValidators([SFValidators.selectableProject(true), customValidator]);
+    this.paratextIdControl.markAsDirty();
+    this.paratextIdControl.updateValueAndValidity();
   }
 
   writeValue(value: any): void {
