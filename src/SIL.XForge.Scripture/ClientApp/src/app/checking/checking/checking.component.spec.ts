@@ -1774,7 +1774,7 @@ describe('CheckingComponent', () => {
         expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
         env.waitForSliderUpdate();
         expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
-        expect(env.getAnswerCommentText(0, 0)).toContain('Audio comment');
+        expect(env.getAnswerCommentText(0, 0)).toBe('');
       }));
 
       it('can remove audio from a comment', fakeAsync(() => {
