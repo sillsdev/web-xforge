@@ -29,6 +29,7 @@
                   type="button"
                   (click)="editComment(comment)"
                   class="comment-edit"
+                  data-testid="comment-edit"
                   [matTooltip]="t('edit')"
                 >
                   <mat-icon>edit</mat-icon>
@@ -40,6 +41,7 @@
                   type="button"
                   (click)="deleteCommentClicked(comment)"
                   class="comment-delete"
+                  data-testid="answer-delete"
                   [matTooltip]="t('delete')"
                 >
                   <mat-icon>delete</mat-icon>
