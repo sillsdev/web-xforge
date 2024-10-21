@@ -183,8 +183,26 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should set "unusableTranslateSourceBooks" and "unusableTrainingSourceBooks" correctly', fakeAsync(() => {
+      tick();
+      fixture.detectChanges();
       expect(component.unusableTranslateSourceBooks).toEqual([6, 7]);
       expect(component.unusableTrainingSourceBooks).toEqual([6, 7]);
+
+      // interact with unusable books notice
+      const unusableTranslateBooks = fixture.nativeElement.querySelector('.unusable-translate-books');
+      expect(unusableTranslateBooks).not.toBeNull();
+      expect(unusableTranslateBooks.querySelector('.explanation')).toBeNull();
+      unusableTranslateBooks.querySelector('.books-hidden-message')!.click();
+      tick();
+      fixture.detectChanges();
+      expect(unusableTranslateBooks.querySelector('.explanation')).not.toBeNull();
+      const unusableTrainingBooks = fixture.nativeElement.querySelector('.unusable-training-books');
+      expect(unusableTrainingBooks).not.toBeNull();
+      expect(unusableTrainingBooks.querySelector('.explanation')).toBeNull();
+      unusableTrainingBooks.querySelector('.books-hidden-message')!.click();
+      tick();
+      fixture.detectChanges();
+      expect(unusableTrainingBooks.querySelector('.explanation')).not.toBeNull();
     }));
 
     it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
