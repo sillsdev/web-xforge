@@ -1,7 +1,12 @@
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
 h1 {
-  margin: 12px 0;
+  margin: 24px 0;
+}
+
+h2 {
+  font-weight: 400;
+  margin-bottom: 0.5em;
 }
 
 // Prevent font increase when selecting a step
@@ -33,7 +38,7 @@ h1 {
 }
 
 .button-strip {
-  margin-top: 20px;
+  margin-top: 60px;
   display: flex;
   justify-content: flex-start;
   gap: 8px;
@@ -60,4 +65,53 @@ app-notice {
   mat-spinner {
     margin-right: 1em;
   }
+}
+
+.confirm-section {
+  display: flex;
+  row-gap: 8px;
+  flex-direction: column;
+  padding: 1.5em;
+  margin-block: 0 2em;
+  border-radius: 4px;
+  max-width: 750px;
+}
+
+.explanation {
+  font-style: italic;
+  display: inline-block;
+  margin-bottom: 12px;
+  font-weight: 100;
+}
+
+.mat-mdc-table {
+  background-color: initial;
+}
+
+.bookName {
+  font-size: 1.1em;
+}
+
+.confirm-translate {
+  display: flex;
+  flex-direction: row;
+}
+
+.confirm-translate-books {
+  padding-inline-start: 16px;
+}
+
+.cell-padding-block {
+  padding-block: 16px;
+}
+
+.confirm-books {
+  display: flex;
+  flex-direction: column;
+  column-gap: 32px;
+  row-gap: 8px;
+}
+
+.confirm-book {
+  padding-block: 4px;
 }
