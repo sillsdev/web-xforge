@@ -1,16 +1,12 @@
-# web-xforge <!-- omit in toc -->
+# web-xforge (Scripture Forge) <!-- omit in toc -->
 
 ## Users
 
-To use **Scripture Forge** go to [scriptureforge.org](https://scriptureforge.org).
+To use Scripture Forge, go to [scriptureforge.org](https://scriptureforge.org).
 
-To use **Language Forge** go to [languageforge.org](https://languageforge.org).
+For documentation, go to [help.scriptureforge.org](https://help.scriptureforge.org/).
 
-### Report problems
-
-To report an issue with the **Scripture Forge** application, email "scriptureforgeissues @ sil dot org".
-
-To report an issue with the **Language Forge** application, email "languageforgeissues @ sil dot org".
+To report a problem with Scripture Forge, email "help @ scriptureforge dot org".
 
 ## Contents <!-- omit in toc -->
 
@@ -18,7 +14,6 @@ To report an issue with the **Language Forge** application, email "languageforge
 "yzhang.markdown-all-in-one" when saving. -->
 
 - [Users](#users)
-  - [Report problems](#report-problems)
 - [Build status](#build-status)
 - [Development documentation](#development-documentation)
 - [Special Thanks To](#special-thanks-to)
@@ -27,15 +22,9 @@ To report an issue with the **Language Forge** application, email "languageforge
 
 Status of builds from our continuous integration (CI) [server](https://build.palaso.org):
 
-| Site            | Master Unit                                                                                                                                                                                                                                                                                                                                               | QA                                                                                                                                                                                                                                            | Live                                                                                                                                                                                                                                         |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scripture Forge | [![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>)](https://build.palaso.org/viewType.html?buildTypeId=SFv2_ScriptureForgeMasterUnitTests) [![Codecov](https://img.shields.io/codecov/c/github/sillsdev/web-xforge.svg?style=flat)](https://app.codecov.io/gh/sillsdev/web-xforge) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeQa)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeLive)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fscriptureforge.org) |
-
-Successful builds from our CI server deploy to:
-
-| Site            | QA                                                     | Live                                             |
-| --------------- | ------------------------------------------------------ | ------------------------------------------------ |
-| Scripture Forge | [qa.scriptureforge.org](https://qa.scriptureforge.org) | [scriptureforge.org](https://scriptureforge.org) |
+| Automated tests                                                                                                                                                                                                                                                                                                        | QA site                                                                                                                                                                                                                                                                                                  | Production                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [![Build](https://github.com/sillsdev/web-xforge/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/sillsdev/web-xforge/actions/workflows/build-and-test.yml) [![Codecov](https://img.shields.io/codecov/c/github/sillsdev/web-xforge.svg?style=flat)](https://app.codecov.io/gh/sillsdev/web-xforge) | [![Release to QA](https://github.com/sillsdev/web-xforge/actions/workflows/release-qa.yml/badge.svg)](https://github.com/sillsdev/web-xforge/actions/workflows/release-qa.yml) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.scriptureforge.org) | [![Release to Live](https://github.com/sillsdev/web-xforge/actions/workflows/release-live.yml/badge.svg)](https://github.com/sillsdev/web-xforge/actions/workflows/release-live.yml) ![NodePing status](https://img.shields.io/nodeping/status/1se8kfir-kgtg-4ue0-809k-frxze9csoi42) ![NodePing uptime](https://img.shields.io/nodeping/uptime/1se8kfir-kgtg-4ue0-809k-frxze9csoi42) |
 
 ## Development documentation
 
