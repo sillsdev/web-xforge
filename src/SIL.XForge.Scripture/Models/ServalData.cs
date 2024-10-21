@@ -4,15 +4,15 @@ using System.Collections.Generic;
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// Serval Data.
+/// Serval Configuration Data.
 /// </summary>
 public class ServalData
 {
     /// <summary>
-    /// Gets or sets the SMT Translation Engine Id for the project.
+    /// Gets or sets the SMT Translation Engine identifier for the project.
     /// </summary>
     /// <value>
-    /// The SMT Translation Engine Id.
+    /// The SMT Translation Engine identifier.
     /// </value>
     /// <remarks>
     /// The user should not interact with the translation engine directly by ID.
@@ -32,9 +32,21 @@ public class ServalData
     public string? TranslationErrorMessage { get; set; }
 
     /// <summary>
-    /// Gets or sets the Hangfire Job Id for the Translation job.
+    /// Gets or sets the Hangfire Job identifier for the Translation job.
     /// </summary>
     public string? TranslationJobId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used in the PreTranslate section of the
+    /// <see cref="Serval.Client.TranslationBuildConfig"/> for translation (SMT) builds.
+    /// </summary>
+    public string? TranslationParallelCorpusIdForPreTranslate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used in the TrainOn section of the
+    /// <see cref="Serval.Client.TranslationBuildConfig"/> for translation (SMT) builds.
+    /// </summary>
+    public string? TranslationParallelCorpusIdForTrainOn { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time that the translation build was queued.
@@ -50,10 +62,10 @@ public class ServalData
     public DateTime? TranslationQueuedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the NMT Translation Engine Id for the project.
+    /// Gets or sets the NMT Translation Engine identifier for the project.
     /// </summary>
     /// <value>
-    /// The NMT Translation Engine Id.
+    /// The NMT Translation Engine identifier.
     /// </value>
     public string? PreTranslationEngineId { get; set; }
 
@@ -70,9 +82,21 @@ public class ServalData
     public string? PreTranslationErrorMessage { get; set; }
 
     /// <summary>
-    /// Gets or sets the Hangfire Job Id for the Pre-Translation job.
+    /// Gets or sets the Hangfire Job identifier for the Pre-Translation job.
     /// </summary>
     public string? PreTranslationJobId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used in the PreTranslate section of the
+    /// <see cref="Serval.Client.TranslationBuildConfig"/> for pre-translation (NMT) builds.
+    /// </summary>
+    public string? PreTranslationParallelCorpusIdForPreTranslate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used in the TrainOn section of the
+    /// <see cref="Serval.Client.TranslationBuildConfig"/> for pre-translation (NMT) builds.
+    /// </summary>
+    public string? PreTranslationParallelCorpusIdForTrainOn { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time that the pre-translation build was queued.
@@ -111,4 +135,17 @@ public class ServalData
     /// The dictionary key is the corpus ID.
     /// </remarks>
     public Dictionary<string, ServalCorpus>? Corpora { get; set; }
+
+    /// <summary>
+    /// Gets or sets the additional training data configuration for pre-translation (NMT) builds.
+    /// </summary>
+    public ServalAdditionalTrainingData? AdditionalTrainingData { get; set; }
+
+    /// <summary>
+    /// Gets or sets the corpus and data files configuration.
+    /// </summary>
+    /// <remarks>
+    /// These are shared by translation (SMT) and pre-translation (NMT) translation engines.
+    /// </remarks>
+    public List<ServalCorpusFile> CorpusFiles { get; set; } = [];
 }
