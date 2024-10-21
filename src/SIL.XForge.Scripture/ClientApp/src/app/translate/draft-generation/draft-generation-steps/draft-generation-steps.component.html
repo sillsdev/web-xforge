@@ -15,13 +15,8 @@
           (bookSelect)="onTranslateBookSelect($event)"
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
-        @if (unusableTranslateTargetBooks.length) {
-          <app-notice>
-            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-          </app-notice>
-        }
         @if (unusableTranslateSourceBooks.length) {
-          <app-notice icon="info" class="unusable-translate-books">
+          <app-notice icon="info" mode="basic" type="light" class="unusable-translate-books">
             <div class="notice-container">
               <span
                 class="books-hidden-message"
@@ -49,6 +44,11 @@
             </div>
           </app-notice>
         }
+        @if (unusableTranslateTargetBooks.length) {
+          <app-notice>
+            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
+          </app-notice>
+        }
         @if (showBookSelectionError) {
           <app-notice type="error">
             {{ t("choose_books_to_translate_error") }}
@@ -74,13 +74,8 @@
           (bookSelect)="onTrainingBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
-        @if (unusableTranslateTargetBooks.length) {
-          <app-notice>
-            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-          </app-notice>
-        }
         @if (unusableTrainingSourceBooks.length) {
-          <app-notice icon="info" class="unusable-training-books">
+          <app-notice icon="info" mode="basic" type="light" class="unusable-training-books">
             <div class="notice-container">
               <span
                 class="books-hidden-message"
@@ -106,6 +101,11 @@
                 <span class="book-names">{{ bookNames(unusableTrainingSourceBooks) }}</span>
               }
             </div>
+          </app-notice>
+        }
+        @if (unusableTranslateTargetBooks.length) {
+          <app-notice>
+            <transloco key="draft_generation_steps.unusable_target_books"></transloco>
           </app-notice>
         }
         @if (showBookSelectionError) {
