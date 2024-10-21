@@ -74,8 +74,8 @@ export class QuillInsightRenderService extends InsightRenderService {
       return false;
     }
 
-    const overlayAnchor = this.getElementAtIndex(editor, insight.range.index + 1);
-    this.overlayService.open(overlayAnchor, insight);
+    const overlayAnchor: HTMLElement = this.getElementAtIndex(editor, insight.range.index + 1);
+    this.overlayService.open(overlayAnchor, insight, editor.root);
 
     return true;
   }
