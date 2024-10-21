@@ -1,5 +1,6 @@
 import { HTTP_INTERCEPTORS, HttpClient, HttpErrorResponse, HttpRequest, HttpStatusCode } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { mock, verify, when } from 'ts-mockito';
@@ -13,10 +14,11 @@ const mockedAuthService = mock(AuthService);
 
 describe('AuthHttpInterceptor', () => {
   configureTestingModule(() => ({
-    imports: [HttpClientTestingModule],
     providers: [
       { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
-      { provide: AuthService, useMock: mockedAuthService }
+      { provide: AuthService, useMock: mockedAuthService },
+      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClientTesting()
     ]
   }));
 

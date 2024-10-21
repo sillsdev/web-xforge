@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { userEvent, within } from '@storybook/testing-library';
+import { userEvent, within } from '@storybook/test';
 import { of } from 'rxjs';
 import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';

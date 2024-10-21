@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController, RequestMatch } from '@angular/common/http/testing';
+import { HttpTestingController, RequestMatch } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ProjectData } from 'realtime-server/lib/esm/common/models/project-data';
 import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -26,7 +26,6 @@ const mockedDialogService = mock(DialogService);
 describe('FileService', () => {
   configureTestingModule(() => ({
     imports: [
-      HttpClientTestingModule,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio], []))

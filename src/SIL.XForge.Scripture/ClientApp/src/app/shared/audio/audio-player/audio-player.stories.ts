@@ -19,7 +19,12 @@ const meta: Meta<AudioPlayerComponent> = {
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
       declarations: [AudioTimePipe],
-      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
+      providers: [
+        {
+          provide: OnlineStatusService,
+          useValue: instance(mockedOnlineStatusService)
+        }
+      ]
     })
   ],
   args: { source: './test-audio-player.webm' }

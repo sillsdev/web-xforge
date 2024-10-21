@@ -190,7 +190,7 @@ export class CheckingQuestionsService {
       );
 
       if (audioUrl == null) {
-        return;
+        return undefined;
       }
 
       question.audioUrl = audioUrl;

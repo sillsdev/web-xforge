@@ -84,7 +84,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.startVerse.toString()
     );
-    if (verseTimings == null || verseTimings.length === 0) return;
+    if (verseTimings == null || verseTimings.length === 0) return undefined;
     return Math.min(...verseTimings.map(t => t.from));
   }
 
@@ -94,7 +94,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.endVerse.toString()
     );
-    if (verseTimings == null || verseTimings.length === 0) return;
+    if (verseTimings == null || verseTimings.length === 0) return undefined;
     return Math.max(...verseTimings.map(t => t.to));
   }
 

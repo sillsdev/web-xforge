@@ -38,7 +38,7 @@
           </button>
         }
         <mat-menu #localeMenu="matMenu" class="locale-menu">
-          @for (locale of i18n.locales; track locale) {
+          @for (locale of i18n.locales; track locale.canonicalTag) {
             <button
               mat-menu-item
               [class.active-locale]="locale.canonicalTag === i18n.localeCode"
@@ -98,10 +98,11 @@
             @if (showInstallIconOnAvatar$ | async) {
               <mat-icon class="install-badge">install_mobile</mat-icon>
             }
-            <app-avatar id="avatarId" [user]="currentUser"></app-avatar>
-            @if (!isAppOnline) {
-              <mat-icon class="offline-indicator"> cloud_off</mat-icon>
-            }
+            <app-avatar id="avatarId" [user]="currentUser">
+              @if (!isAppOnline) {
+                <mat-icon class="offline-indicator"> cloud_off</mat-icon>
+              }
+            </app-avatar>
           </button>
         }
         <mat-menu #userMenu="matMenu" class="user-menu">
