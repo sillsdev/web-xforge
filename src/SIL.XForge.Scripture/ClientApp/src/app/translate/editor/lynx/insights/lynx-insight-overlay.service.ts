@@ -1,6 +1,13 @@
-import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import {
+  CdkScrollable,
+  Overlay,
+  OverlayConfig,
+  OverlayRef,
+  PositionStrategy,
+  ScrollDispatcher
+} from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 
@@ -9,11 +16,18 @@ import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight
 })
 export class LynxInsightOverlayService {
   private openRefs = new Map<string, OverlayRef>();
+  private scrollableContainer?: CdkScrollable;
 
-  constructor(private overlay: Overlay) {}
+  constructor(
+    private overlay: Overlay,
+    private scrollDispatcher: ScrollDispatcher,
+    private ngZone: NgZone
+  ) {}
 
-  open(origin: HTMLElement, insight: LynxInsight): void {
-    const overlayRef: OverlayRef | null = this.overlay.create(this.getConfig(origin));
+  open(origin: HTMLElement, insight: LynxInsight, scrollContainerEl: HTMLElement): void {
+    this.registerScrollable(scrollContainerEl);
+
+    const overlayRef: OverlayRef = this.overlay.create(this.getConfig(origin));
     const componentRef = overlayRef.attach(new ComponentPortal(LynxInsightOverlayComponent));
     componentRef.instance.insight = insight;
     this.openRefs.set(insight.id, overlayRef);
@@ -37,12 +51,16 @@ export class LynxInsightOverlayService {
     return {
       positionStrategy: this.getPositionStrategy(origin),
       hasBackdrop: false,
-      backdropClass: 'cdk-overlay-transparent-backdrop',
-      panelClass: 'lynx-insight-overlay-panel'
+      panelClass: 'lynx-insight-overlay-panel',
+      scrollStrategy: this.overlay.scrollStrategies.reposition()
     };
   }
 
-  private getPositionStrategy(origin: HTMLElement): any {
+  private getPositionStrategy(origin: HTMLElement): PositionStrategy {
+    if (this.scrollableContainer == null) {
+      throw new Error('Scrollable container is not registered');
+    }
+
     const positionStrategy = this.overlay
       .position()
       .flexibleConnectedTo(origin)
@@ -54,5 +72,28 @@ export class LynxInsightOverlayService {
       ]);
 
     return positionStrategy;
+  }
+
+  /**
+   * Converts the scroll container element into a CdkScrollable and registers it with the ScrollDispatcher.
+   * This allows the overlay to reposition itself when the scroll container is scrolled.
+   * @param scrollContainer The scrolling element that contains the insight.
+   */
+  private registerScrollable(scrollContainer: HTMLElement): void {
+    if (this.scrollableContainer?.getElementRef().nativeElement === scrollContainer) {
+      return;
+    }
+
+    if (this.scrollableContainer != null) {
+      this.scrollDispatcher.deregister(this.scrollableContainer);
+    }
+
+    this.scrollableContainer = new CdkScrollable(
+      { nativeElement: scrollContainer },
+      this.scrollDispatcher,
+      this.ngZone
+    );
+
+    this.scrollDispatcher.register(this.scrollableContainer);
   }
 }
