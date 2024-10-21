@@ -29,24 +29,24 @@
     "biblical_terms_renderings": "Padanan Istilah Alkitab",
     "blank": "(Blank)",
     "category": "Kategori",
-    "current_book": "Current Book",
-    "current_chapter": "Current Chapter",
-    "current_verse": "Current Verse",
+    "current_book": "Kitab saat ini",
+    "current_chapter": "Pasal saat ini",
+    "current_verse": "Ayat Saat Ini",
     "edit_renderings": "Sunting Padanan",
     "gloss": "Petunjuk Arti",
-    "not_found": "No Biblical Terms match your criteria.",
-    "notes": "Notes",
+    "not_found": "Tidak ada Istilah Alkitab yang sesuai dengan kriteria Anda.",
+    "notes": "Catatan",
     "renderings": "Padanan",
     "settings": "Pengaturan",
-    "show": "Show",
+    "show": "Tampilkan",
     "term": "Istilah",
-    "transliterate_terms": "Transliterate Terms",
+    "transliterate_terms": "Transliterasi istilah",
     "view_renderings": "Tampilkan Padanan"
   },
   "book_select": {
-    "deuterocanon": "Deuterocanon",
-    "new_testament": "New Testament",
-    "old_testament": "Old Testament"
+    "deuterocanon": "Deuterokanonika",
+    "new_testament": "Perjanjian Baru",
+    "old_testament": "Perjanjian Lama"
   },
   "checking": {
     "add_question": "Tambah pertanyaan"
@@ -140,17 +140,17 @@
     "readd_to_project": "Tambahkan kembali ke proyek"
   },
   "draft_apply_dialog": {
-    "add_to_project": "Add to project",
-    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty",
+    "add_to_project": "Tambahkan ke proyek",
+    "book_is_empty": "{{ bookName }} di {{ projectName }} proyek kosong",
     "cancel": "Batal",
-    "connect_to_the_internet": "Please connect to the internet to add the draft to your project",
-    "choose_project": "Choose project",
-    "error_fetching_projects": "There was an error fetching projects.",
-    "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
+    "connect_to_the_internet": "Harap sambungkan ke internet untuk menambahkan draf ke proyek Anda",
+    "choose_project": "Pilih Proyek",
+    "error_fetching_projects": "Ada kesalahan dalam mengambil proyek.",
+    "i_understand_overwrite_book": "Saya memahami bahwa konsep tersebut akan menimpa {{ bookName }} dalam proyek {{ projectName }}",
     "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first",
-    "no_write_permission": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
-    "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
-    "select_alternate_project": "Select the project you want to add the draft to"
+    "no_write_permission": "Anda tidak memiliki izin untuk menulis pada kitab ini. Hubungi administrator proyek Anda untuk mendapatkan izin.",
+    "project_has_text_in_chapters": "{{ bookName }} dalam {{ projectName }} memiliki teks dalam pasal {{ numChapters }}",
+    "select_alternate_project": "Pilih proyek yang ingin Anda tambahkan konsepnya"
   },
   "draft_generation": {
     "back_translation_requirement": "Konsep terjemahan balik hanya dapat dibuat ke dalam sekitar 200 bahasa yang didukung [link:supportedLanguagesUrl].",
@@ -212,16 +212,16 @@
   },
   "draft_generation_steps": {
     "back": "Kembali",
-    "choose_additional_training_data_files_label": "Additional training",
+    "choose_additional_training_data_files_label": "Pelatihan tambahan",
     "choose_additional_training_data_files": "Memilih file tambahan untuk melatih model bahasa",
     "choose_books_for_training_error": "Tidak ada kitab yang dipilih. Pilih kitab pelatihan untuk melanjutkan.",
-    "choose_books_for_training": "Select books to train on",
+    "choose_books_for_training": "Memilih kitab untuk dilatih",
     "choose_books_for_training_label": "Pelatihan",
     "choose_books_to_translate_error": "Tidak ada kitab yang dipilih. Pilih kitab yang akan diterjemahkan untuk melanjutkan.",
-    "choose_books_to_translate": "Select books to draft",
+    "choose_books_to_translate": "Memilih buku yang akan dibuat konsep",
     "choose_books_to_translate_label": "Draf",
-    "configure_advanced_settings": "Advanced settings",
-    "configure_advanced_settings_label": "Advanced",
+    "configure_advanced_settings": "Pengaturan lanjutan",
+    "configure_advanced_settings_label": "Lanjutan",
     "fast_training_warning": "Mengaktifkan ini akan menghemat waktu, tetapi sangat mengurangi akurasi.",
     "fast_training": "Mengaktifkan Pelatihan Cepat",
     "generate_draft": "Buat konsep",
@@ -234,7 +234,7 @@
   },
   "draft_preview_books": {
     "add_to_project": "Tambahkan ke proyek",
-    "add_to_different_project": "Add to a different project",
+    "add_to_different_project": "Tambahkan ke proyek yang berbeda",
     "draft_successfully_applied": "Draf untuk {{ bookName }} telah berhasil diterapkan ke proyek Anda.",
     "one_or_more_drafts_failed": "Draf dari satu atau beberapa pasal gagal diterapkan. Lihat pasal-pasal dalam kitab untuk melihat pasal mana yang drafnya berhasil diterapkan.",
     "no_books_have_drafts": "Tidak ada kitab yang memiliki draf.",
@@ -244,10 +244,10 @@
   "editor": {
     "add_comment": "Tambah Komentar",
     "anonymous": "Anonim",
-    "browser_warning_banner": "The editor is not compatible with the current browser for the project language. We recommend editing this project in {{ firefoxLink }} or {{ safari }}.",
+    "browser_warning_banner": "Editor ini tidak kompatibel dengan peramban saat ini untuk bahasa proyek. Kami menyarankan untuk menyunting proyek ini di {{ firefoxLink }} atau {{ safari }}.",
     "cancel": "Batal",
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
-    "cannot_edit_chapter_unsupported_usfm": "This chapter cannot be edited because it contains unsupported USFM. To edit, remove these tags in Paratext: {{ tags }}",
+    "cannot_edit_chapter_unsupported_usfm": "Pasal ini tidak dapat disunting karena berisi USFM yang tidak didukung. Untuk menyunting, hapus tagar ini di Paratext: {{ tags }}",
     "cannot_edit_note_paratext": "Anda tidak dapat menyunting catatan ini karena telah disunting di Paratext.",
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",
     "more_info": "Informasi selengkapnya...",
@@ -265,36 +265,36 @@
     "your_comment": "Komentar Anda"
   },
   "editor_draft_tab": {
-    "apply_to_project": "Add to project",
+    "apply_to_project": "Tambahkan ke proyek",
     "click_book_to_preview": "Klik kitab di bawah ini untuk melihat pratinjau draf dan menambahkannya ke proyek Anda.",
-    "draft_indicator_applied": "Added",
+    "draft_indicator_applied": "Ditambahkan",
     "draft_legacy_warning": "We have updated our drafting functionality. You can take advantage of this by [link:generateDraftUrl]generating a new draft[/link].",
-    "no_draft_notice": "{{ bookChapterName }} has no draft.",
-    "offline_notice": "Auto draft is not available offline.",
-    "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "no_draft_notice": "{{ bookChapterName }} tidak memiliki konsep.",
+    "offline_notice": "Konsep otomatis tidak tersedia secara luring.",
+    "overwrite": "Menambahkan konsep akan menimpa pasal yang sedang berjalan. Apakah Anda yakin ingin melanjutkan?",
     "reapply_to_project": "Tambahkan kembali ke proyek",
-    "yes": "Overwrite chapter"
+    "yes": "Menimpa pasal"
   },
   "editor_history_tab": {
-    "offline_notice": "Editor history is not available offline."
+    "offline_notice": "Riwayat editor tidak tersedia secara luring."
   },
   "editor_tabs_menu": {
-    "biblical_terms_menu_item": "Biblical Terms",
-    "history_menu_item": "History",
-    "draft_menu_item": "Auto Draft",
-    "project_resource_menu_item": "Resource..."
+    "biblical_terms_menu_item": "Istilah Alkitab",
+    "history_menu_item": "Riwayat",
+    "draft_menu_item": "Konsep Otomatis",
+    "project_resource_menu_item": "Sumber..."
   },
   "editor_tab_factory": {
-    "default_biblical_terms_tab_header": "Biblical Terms",
-    "default_history_tab_header": "History",
-    "default_project_tab_header": "Project",
-    "default_resource_tab_header": "Resource",
-    "draft_tab_header": "Auto Draft"
+    "default_biblical_terms_tab_header": "Istilah Alkitab",
+    "default_history_tab_header": "Riwayat",
+    "default_project_tab_header": "Proyek",
+    "default_resource_tab_header": "Sumber",
+    "draft_tab_header": "Konsep Otomatis"
   },
   "font_unsupported_message": {
-    "change_font_or_contact_for_help": "If this does not meet the needs of this project, please select a different font in the Paratext project settings, or { 1 }contact us for help.{ 2 }",
-    "contact_for_help": "If this does not meet the needs of this project, please { 1 }contact us for help.{ 2 }",
-    "warn_font_requires_graphite": "The font selected for this project, {{ selectedFont }}, can only be rendered by web browsers that support {{ graphite }}. This means it will only work in Firefox, except on iOS devices, where it will not work even in Firefox. In browsers that do not support Graphite, {{ fallbackFont }} is used instead.",
+    "change_font_or_contact_for_help": "Jika ini tidak memenuhi kebutuhan proyek ini, silakan pilih font yang berbeda dalam pengaturan proyek Paratext, atau { 1 }hubungi kami untuk mendapatkan bantuan.{ 2 }",
+    "contact_for_help": "Jika hal ini tidak memenuhi kebutuhan proyek ini, silakan { 1 }hubungi kami untuk mendapatkan bantuan.{ 2 }",
+    "warn_font_requires_graphite": "Font yang dipilih untuk proyek ini, {{ selectedFont }}, hanya dapat dipadankan oleh peramban web yang mendukung {{ graphite }}. Ini berarti font ini hanya dapat digunakan di Firefox, kecuali di perangkat iOS, di mana font ini tidak dapat digunakan di Firefox. Pada browser yang tidak mendukung Graphite, {{ fallbackFont }} digunakan sebagai gantinya.",
     "warn_font_unsupported": "The font selected for this project, {{ selectedFont }}, is not supported. {{ fallbackFont }} is used instead."
   },
   "history_chooser": {
