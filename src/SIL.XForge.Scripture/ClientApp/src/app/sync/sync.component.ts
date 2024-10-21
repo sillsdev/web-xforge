@@ -15,6 +15,10 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 
+enum SyncErrorCodes {
+  UserPermission = -1
+}
+
 @Component({
   selector: 'app-sync',
   templateUrl: './sync.component.html',
@@ -72,6 +76,10 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     return this.lastSyncDate?.toLocaleString() || '';
   }
 
+  get lastSyncErrorCode(): number | undefined {
+    return this.projectDoc?.data?.sync.lastSyncErrorCode;
+  }
+
   get projectName(): string {
     return this.projectDoc?.data == null ? '' : this.projectDoc.data.name;
   }
@@ -93,6 +101,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
           this.noticeService.show(translate('sync.successfully_synchronized_with_paratext', { projectName }));
           this.previousLastSyncDate = this.lastSyncDate;
+        } else if (this.showSyncUserPermissionsFailureMessage) {
+          this.dialogService.message(this.i18n.translate('sync.user_permissions_failure_dialog_message'));
         } else {
           this.dialogService.message(
             this.i18n.translate('sync.something_went_wrong_synchronizing_this_project', { projectName })
@@ -108,6 +118,10 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     return this.i18n.translateAndInsertTags('sync.sync_is_disabled', {
       email: `<a target="_blank" href="mailto:${environment.issueEmail}">${environment.issueEmail}</a>`
     });
+  }
+
+  get showSyncUserPermissionsFailureMessage(): boolean {
+    return this.lastSyncErrorCode === SyncErrorCodes.UserPermission;
   }
 
   get showSyncFailureSupportMessage(): boolean {
