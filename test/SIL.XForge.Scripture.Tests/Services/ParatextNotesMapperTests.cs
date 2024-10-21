@@ -269,7 +269,7 @@ public class ParatextNotesMapperTests
                                 <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
-                                <content>Test comment 1.</content>
+                                <content>- xForge audio-only response -</content>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer02"">
@@ -1017,7 +1017,7 @@ public class ParatextNotesMapperTests
                             Id = "project01:question01",
                             DataId = "question01",
                             VerseRef = new VerseRefData(40, 1, 1),
-                            Text = useAudioResponses ? "" : "Test question?",
+                            Text = useAudioResponses ? null : "Test question?",
                             Answers =
                             {
                                 new Answer
@@ -1026,7 +1026,7 @@ public class ParatextNotesMapperTests
                                     OwnerRef = "user02",
                                     SyncUserRef = answerSyncUserId1,
                                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
-                                    Text = useAudioResponses ? "" : "Test answer 1.",
+                                    Text = useAudioResponses ? null : "Test answer 1.",
                                     Comments =
                                     {
                                         new Comment
@@ -1035,7 +1035,7 @@ public class ParatextNotesMapperTests
                                             OwnerRef = "user03",
                                             SyncUserRef = commentSyncUserId1,
                                             DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
-                                            Text = "Test comment 1.",
+                                            Text = useAudioResponses ? null : "Test comment 1.",
                                         },
                                     },
                                 },

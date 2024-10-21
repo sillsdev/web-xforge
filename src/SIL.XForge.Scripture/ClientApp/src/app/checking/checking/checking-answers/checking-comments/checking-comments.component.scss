@@ -3,6 +3,8 @@
 .comment {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
   border-bottom: 1px solid $borderColor;
   padding: 10px 0;
 
@@ -21,8 +23,8 @@
     }
   }
 
-  .divider {
-    padding: 0 10px;
+  .comment-text {
+    flex: 1 0 50%;
   }
 
   .actions {

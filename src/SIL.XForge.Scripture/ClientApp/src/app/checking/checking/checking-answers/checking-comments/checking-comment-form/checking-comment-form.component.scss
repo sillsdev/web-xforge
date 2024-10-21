@@ -1,9 +1,12 @@
 .form-actions {
+  padding-top: 8px;
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+  .button-actions {
+    gap: 10px;
+  }
 }
 
-.mat-mdc-form-field {
-  width: 100%;
+.comment-input ::ng-deep textarea {
+  height: 24px;
 }
