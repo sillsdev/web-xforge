@@ -31,6 +31,18 @@ export function rangeComparer(a: { range: RangeStatic }, b: { range: RangeStatic
   return a.range.length - b.range.length;
 }
 
+/**
+ * Extracts text from a delta within a range.
+ */
+export function getText(delta: DeltaStatic, range: RangeStatic): string {
+  const { index, length } = range;
+  return delta
+    .slice(index, index + length)
+    .filter(op => typeof op.insert === 'string')
+    .map(op => op.insert)
+    .join('');
+}
+
 export function getAttributesAtPosition(editor: Quill, editorPosition: number): StringMap {
   // The format of the insertion point may only contain the block level formatting,
   // the format classes and other information we get from the character following the insertion point
