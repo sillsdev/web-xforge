@@ -95,7 +95,9 @@ export class LynxInsightsPanelComponent implements OnInit {
 
   ngOnInit(): void {
     combineLatest([
-      this.editorInsightState.filteredInsights$.pipe(switchMap(insights => this.addRangeText(insights))),
+      this.editorInsightState.filteredInsightsSansDisplayState$.pipe(
+        switchMap(insights => this.addRangeText(insights))
+      ),
       this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val)))
     ])
       .pipe(
