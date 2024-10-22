@@ -28,6 +28,7 @@ $trackWidth: 18px; // Width of the scrollbar track
     var(--lynx-insights-info-color-s),
     var(--lynx-insights-info-color-l)
   );
+  z-index: 1;
 }
 
 .warning {
@@ -36,6 +37,7 @@ $trackWidth: 18px; // Width of the scrollbar track
     var(--lynx-insights-warning-color-s),
     var(--lynx-insights-warning-color-l)
   );
+  z-index: 2;
 }
 
 .error {
@@ -44,4 +46,5 @@ $trackWidth: 18px; // Width of the scrollbar track
     var(--lynx-insights-error-color-s),
     var(--lynx-insights-error-color-l)
   );
+  z-index: 3;
 }
