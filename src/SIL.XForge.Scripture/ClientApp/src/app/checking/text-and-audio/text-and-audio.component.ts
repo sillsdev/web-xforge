@@ -1,9 +1,6 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import {
-  AudioAttachment,
-  CheckingAudioRecorderComponent
-} from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 @Component({
   selector: 'app-text-and-audio',
@@ -11,14 +8,16 @@ import {
   styleUrls: ['./text-and-audio.component.scss']
 })
 export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
-  @ViewChild(CheckingAudioRecorderComponent) audioComponent?: CheckingAudioRecorderComponent;
   @Input() input?: { text?: string; audioUrl?: string };
   @Input() textLabel: string = '';
+
   suppressErrors: boolean = true;
   form = new UntypedFormGroup({
     text: new UntypedFormControl(''),
     audio: new UntypedFormControl({})
   });
+
+  private _audioAttachment?: AudioAttachment;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -42,19 +41,19 @@ export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.form.controls.text;
   }
 
-  get audio(): AbstractControl {
+  get audioAttachment(): AudioAttachment | undefined {
+    return this._audioAttachment;
+  }
+
+  private get audio(): AbstractControl {
     return this.form.controls.audio;
   }
 
-  get audioAttachment(): AudioAttachment {
-    return this.audioComponent?.audio ?? {};
-  }
-
   updateFormValidity(): void {
-    if (this.hasTextOrAudio() || this.audioAttachment.status === 'recording') {
+    if (this.hasTextOrAudio() || this._audioAttachment?.status === 'processed') {
       this.text.setErrors(null);
-      this.input!.audioUrl = this.audioAttachment.url;
-    } else if (this.audioAttachment.status === 'reset') {
+      this.input!.audioUrl = this._audioAttachment?.url;
+    } else if (this._audioAttachment?.status === 'reset') {
       this.input!.audioUrl = '';
     }
   }
@@ -64,10 +63,20 @@ export class TextAndAudioComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   hasAudio(): boolean {
-    return this.audioComponent?.hasAudioAttachment ?? false;
+    return !!this.input!.audioUrl;
   }
 
   hasTextOrAudio(): boolean {
     return this.text.value || this.hasAudio();
+  }
+
+  resetAudio(): void {
+    this._audioAttachment = { status: 'reset' };
+    this.updateFormValidity();
+  }
+
+  setAudioAttachment(audio: AudioAttachment): void {
+    this._audioAttachment = audio;
+    this.updateFormValidity();
   }
 }

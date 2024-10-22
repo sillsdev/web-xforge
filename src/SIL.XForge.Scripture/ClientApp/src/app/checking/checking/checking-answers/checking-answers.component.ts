@@ -526,10 +526,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   async submit(): Promise<void> {
     if (this.textAndAudio != null) {
       this.textAndAudio.suppressErrors = false;
-      if (this.textAndAudio.audioComponent?.isRecording) {
-        await this.textAndAudio.audioComponent.stopRecording();
-        this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
-      }
     }
     if (!this.textAndAudio?.hasTextOrAudio()) {
       this.textAndAudio?.text.setErrors({ invalid: true });
