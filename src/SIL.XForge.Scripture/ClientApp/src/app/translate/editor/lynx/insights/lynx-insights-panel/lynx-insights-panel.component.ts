@@ -5,14 +5,15 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
-import Quill, { DeltaStatic, RangeStatic } from 'quill';
+import { RangeStatic } from 'quill';
+import { Delta } from 'rich-text';
 import { combineLatest, map, switchMap, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { TextDocId } from '../../../../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../../core/sf-project.service';
-import { rangeComparer } from '../../../../../shared/text/quill-scripture';
+import { getText, rangeComparer } from '../../../../../shared/text/quill-scripture';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
 import {
@@ -42,6 +43,10 @@ interface InsightPanelFlatNode {
   level: number;
   insight?: LynxInsight;
   count?: number;
+}
+
+interface LynxInsightWithText extends LynxInsight {
+  rangeText: string;
 }
 
 @Component({
@@ -76,9 +81,6 @@ export class LynxInsightsPanelComponent implements OnInit {
   /** Map of TextDocId string -> (Map of segment ref -> segment range) */
   private textDocSegments = new Map<string, Map<string, LynxInsightRange>>();
 
-  /** Map of TextDocId string -> Quill instance */
-  private quillDocs = new Map<string, Quill>();
-
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly editorInsightState: LynxInsightStateService,
@@ -93,11 +95,7 @@ export class LynxInsightsPanelComponent implements OnInit {
 
   ngOnInit(): void {
     combineLatest([
-      // TODO: Should updateSegmentMaps be in a service?
-      this.editorInsightState.filteredInsights$.pipe(
-        // Call updateSegmentMaps, wait for it to complete, then emit insights
-        switchMap(insights => this.updateSegmentMaps(insights).then(() => insights))
-      ),
+      this.editorInsightState.filteredInsights$.pipe(switchMap(insights => this.addRangeText(insights))),
       this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val)))
     ])
       .pipe(
@@ -164,7 +162,7 @@ export class LynxInsightsPanelComponent implements OnInit {
   }
 
   // TODO: move to service?
-  private flatten(insights: LynxInsight[], orderBy: LynxInsightSortOrder): InsightPanelNode[] {
+  private flatten(insights: LynxInsightWithText[], orderBy: LynxInsightSortOrder): InsightPanelNode[] {
     const flattenedInsightNodes: InsightPanelNode[] = [];
 
     for (const [code, byCode] of Object.entries(groupBy(insights, 'code'))) {
@@ -239,18 +237,21 @@ export class LynxInsightsPanelComponent implements OnInit {
     return false;
   }
 
-  private async updateSegmentMaps(insights: LynxInsight[]): Promise<void> {
-    if (this.activatedProject.projectId != null) {
-      const textRequests: Promise<void>[] = [];
-      const textDocIdStrings: Set<string> = new Set<string>();
+  /**
+   * Adds text to insights according to their ranges.
+   */
+  private addRangeText(insights: LynxInsight[]): Promise<LynxInsightWithText[]> {
+    const textDocMap = new Map<string, Promise<TextDoc>>();
+    const insightWithSamples: Promise<LynxInsightWithText>[] = [];
 
+    if (this.activatedProject.projectId != null) {
       for (const insight of insights) {
         const textDocId = new TextDocId(this.activatedProject.projectId!, insight.book, insight.chapter);
         const textDocIdStr: string = textDocId.toString();
 
-        if (!textDocIdStrings.has(textDocIdStr)) {
-          textDocIdStrings.add(textDocIdStr);
-          textRequests.push(
+        if (!textDocMap.has(textDocIdStr)) {
+          textDocMap.set(
+            textDocIdStr,
             this.projectService.getText(textDocId).then(textDoc => {
               // Update segment map for text doc
               this.textDocSegments.set(
@@ -258,24 +259,32 @@ export class LynxInsightsPanelComponent implements OnInit {
                 textDoc.data?.ops != null ? this.editorSegmentService.parseSegments(textDoc.data.ops) : new Map()
               );
 
-              // Create and cache a Quill instance to get text sample from delta
-              const quill: Quill = new Quill(document.createElement('div'));
-              const delta: DeltaStatic | undefined = textDoc.data as DeltaStatic;
-
-              if (delta != null) {
-                quill.setContents(delta, 'api');
-                this.quillDocs.set(textDocIdStr, quill);
-              }
+              return textDoc;
             })
           );
         }
-      }
 
-      await Promise.all(textRequests);
+        insightWithSamples.push(
+          textDocMap.get(textDocIdStr)!.then(textDoc => {
+            return {
+              ...insight,
+              rangeText: getText(new Delta(textDoc.data?.ops), insight.range)
+            };
+          })
+        );
+      }
     }
+
+    return Promise.all(insightWithSamples);
   }
 
-  private getLinkText(insight: LynxInsight): string {
+  /**
+   * Get the link text for an insight.  The format is as follows:
+   * - If the range is within a single verse, the link text is the verse reference followed by a text sample.
+   * - If the range spans multiple verses, the link text is a list of verse references followed by a text sample.
+   * - Non-verse segments are included as [segment_ref] in the place of verse references.
+   */
+  private getLinkText(insight: LynxInsightWithText): string {
     let textDocIdStr: string = '';
 
     if (this.activatedProject.projectId != null) {
@@ -328,20 +337,14 @@ export class LynxInsightsPanelComponent implements OnInit {
   /**
    * Get a window of text from the segmentRef that contains insight range.
    */
-  private getTextSample(insight: LynxInsight, segmentRef: string, includeRef: boolean): string {
-    const textDocId = new TextDocId(this.activatedProject.projectId!, insight.book, insight.chapter);
-    const textDocIdStr: string = textDocId.toString();
-
-    // Get the cached Quill instance for the insight's book/chapter
-    const quill: Quill | undefined = this.quillDocs.get(textDocIdStr);
-
-    if (quill == null) {
+  private getTextSample(insight: LynxInsightWithText, segmentRef: string, includeRef: boolean): string {
+    if (insight.rangeText == null) {
       return segmentRef;
     }
 
     const maxLength: number = this.lynxInsightConfig.panelLinkTextMaxLength;
     const optionalRefStr: string = includeRef ? `[${segmentRef}] ` : '';
-    const text: string = quill.getText(insight.range.index, Math.min(maxLength, insight.range.length));
+    const text: string = insight.rangeText.substring(0, maxLength);
 
     // TODO: should '...' be dependent on verse boundaries?
     return `${optionalRefStr}— "...${text}..."`;
