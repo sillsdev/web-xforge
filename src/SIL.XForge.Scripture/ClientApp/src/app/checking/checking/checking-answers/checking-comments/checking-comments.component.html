@@ -5,22 +5,20 @@
         (activeComment == null || (commentFormVisible && activeComment.dataId !== comment.dataId)) &&
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       ) {
-        <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }">
-          <div class="comment-content">
-            @if (comment.audioUrl != null) {
-              <app-single-button-audio-player
-                #audio
-                [source]="comment.audioUrl"
-                class="comment-audio"
-                (click)="audio.togglePlay()"
-              >
-                <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
-              </app-single-button-audio-player>
-            }
-            @if (comment.text != null) {
-              <span class="comment-text">{{ comment.text }}</span>
-            }
-          </div>
+        <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment), shaded: i % 2 !== 0 }">
+          @if (comment.audioUrl != null) {
+            <app-single-button-audio-player
+              #audio
+              [source]="comment.audioUrl"
+              class="comment-audio"
+              (click)="audio.togglePlay()"
+            >
+              <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
+            </app-single-button-audio-player>
+          }
+          @if (comment.text != null) {
+            <span class="comment-text">{{ comment.text }}</span>
+          }
           <div class="comment-footer">
             <div class="actions">
               @if (canEditComment(comment)) {

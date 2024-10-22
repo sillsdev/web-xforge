@@ -4,9 +4,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: 8px;
-  border-bottom: 1px solid $borderColor;
-  padding: 10px 0;
+  gap: 4px;
+  padding: 8px 4px;
 
   &.comment-unread {
     animation-name: comment-unread;
@@ -23,20 +22,31 @@
     }
   }
 
-  .comment-content {
+  &.shaded {
+    background-color: $shadedBackgroundColor;
+  }
+
+  .comment-text {
     display: flex;
-    align-items: center;
-    column-gap: 8px;
+    flex: 1 0 90%;
   }
 
   .comment-footer {
     display: flex;
     justify-content: space-between;
     flex-grow: 1;
+
+    .mat-icon {
+      transform: scale(0.8);
+    }
   }
 
   .owner {
     display: flex;
     align-items: center;
   }
+}
+
+.add-comment {
+  margin-top: 4px;
 }
