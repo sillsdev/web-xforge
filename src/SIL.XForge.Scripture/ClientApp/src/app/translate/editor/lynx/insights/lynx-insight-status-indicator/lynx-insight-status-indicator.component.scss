@@ -3,9 +3,7 @@
 :host {
   position: absolute;
   z-index: 1;
-  inset-inline-end: calc(
-    2px + var(--lynx-scrollbar-width, 0px)
-  ); // Adjust for scrollbar width (css var set in component)
+  inset-inline-end: var(--lynx-insights-status-indicator-offset);
   top: 0;
   display: flex;
   gap: 0.5em;
