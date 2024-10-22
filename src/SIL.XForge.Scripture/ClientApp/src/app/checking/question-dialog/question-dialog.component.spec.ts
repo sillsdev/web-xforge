@@ -435,7 +435,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
-    expect(env.component.textAndAudio?.audioAttachment.url).toBeDefined();
+    expect(env.component.textAndAudio?.input?.audioUrl).toBeDefined();
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
@@ -752,7 +752,7 @@ class TestEnvironment {
     if (status === 'uploaded' || status === 'processed') {
       audio.url = 'some/url';
     }
-    this.component.textAndAudio?.audio.setValue(audio);
+    this.component.textAndAudio?.setAudioAttachment(audio);
   }
 
   private addTextDoc(id: TextDocId): void {

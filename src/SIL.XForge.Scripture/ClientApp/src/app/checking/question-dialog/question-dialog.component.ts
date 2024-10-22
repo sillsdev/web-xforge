@@ -169,10 +169,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   async submit(): Promise<void> {
     if (this.textAndAudio != null) {
       this.textAndAudio.suppressErrors = false;
-      if (this.textAndAudio.audioComponent?.isRecording) {
-        await this.textAndAudio.audioComponent.stopRecording();
-        this.noticeService.show(translate('question_dialog.recording_stopped'));
-      }
     }
     if (!this.textAndAudio?.hasTextOrAudio()) {
       this.textAndAudio?.text.markAsTouched();

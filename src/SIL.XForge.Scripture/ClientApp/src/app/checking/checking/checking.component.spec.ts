@@ -1207,7 +1207,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
-      env.clickButton(env.removeAudioButton);
+      env.component.answersPanel!.textAndAudio.resetAudio();
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       verify(
@@ -2641,10 +2641,6 @@ class TestEnvironment {
     return this.answerPanel.query(By.css('.record-question-button'));
   }
 
-  get removeAudioButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
-  }
-
   get saveAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#save-answer'));
   }
@@ -2819,7 +2815,7 @@ class TestEnvironment {
     this.setTextFieldValue(this.yourAnswerField, answer);
     if (audioFilename != null) {
       const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
-      this.component.answersPanel?.textAndAudio?.audio.setValue(audio);
+      this.component.answersPanel?.textAndAudio?.setAudioAttachment(audio);
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
@@ -3025,10 +3021,10 @@ class TestEnvironment {
 
   /** To use if the Stop Recording button isn't showing up in the test DOM. */
   simulateAudioRecordingFinishedProcessing(): void {
-    this.component.answersPanel!.textAndAudio!.audioComponent!.audio = {
+    this.component.answersPanel!.textAndAudio!.setAudioAttachment({
       status: 'processed',
       url: 'test-audio-short.mp3'
-    };
+    });
     flush();
     this.fixture.detectChanges();
   }
