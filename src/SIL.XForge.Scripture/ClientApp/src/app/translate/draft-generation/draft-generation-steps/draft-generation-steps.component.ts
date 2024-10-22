@@ -363,6 +363,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     }
   }
 
+  selectedTranslateBooks(): string {
+    return this.userSelectedTranslateBooks.map(b => b.name).join(', ');
+  }
+
   /**
    * Filter selected translate books from available/selected training books.
    * Currently, training books cannot in the set of translate books,
