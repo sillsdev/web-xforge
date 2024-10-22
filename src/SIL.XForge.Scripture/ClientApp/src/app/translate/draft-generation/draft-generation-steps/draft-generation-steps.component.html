@@ -269,9 +269,7 @@
           <span class="explanation">{{ t("confirm_translate") }}</span>
           <div class="confirm-translate">
             <div class="confirm-books confirm-translate-books">
-              @for (book of userSelectedTranslateBooks; track book) {
-                <span class="confirm-book">{{ book.name }}</span>
-              }
+              <span class="confirm-book">{{ selectedTranslateBooks() }}</span>
             </div>
           </div>
         </mat-card>
