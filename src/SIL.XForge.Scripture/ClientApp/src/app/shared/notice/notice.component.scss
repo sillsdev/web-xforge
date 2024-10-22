@@ -89,6 +89,10 @@ $colors: (
     border-color: var(--notice-color-outline);
     color: var(--notice-color-outline-text);
   }
+  &.mode-basic {
+    background-color: var(--notice-color);
+    border-color: var(--notice-color);
+  }
 
   // Style buttons inside notices
   ::ng-deep .mat-mdc-button-base {

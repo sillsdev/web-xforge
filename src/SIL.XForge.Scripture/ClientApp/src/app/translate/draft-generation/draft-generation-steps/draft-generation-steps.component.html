@@ -15,23 +15,38 @@
           (bookSelect)="onTranslateBookSelect($event)"
           data-test-id="draft-stepper-translate-books"
         ></app-book-multi-select>
+        @if (unusableTranslateSourceBooks.length) {
+          <app-notice icon="info" mode="basic" type="light" class="unusable-translate-books">
+            <div class="notice-container">
+              <span
+                class="books-hidden-message"
+                (click)="expandUnusableTranslateBooks = !expandUnusableTranslateBooks"
+                [innerHtml]="
+                  !expandUnusableTranslateBooks
+                    ? i18n.translateAndInsertTags('draft_generation_steps.books_are_hidden_show_why', {
+                        numBooks: unusableTranslateSourceBooks.length
+                      })
+                    : i18n.translateAndInsertTags('draft_generation_steps.books_are_hidden_hide_explanation', {
+                        numBooks: unusableTranslateSourceBooks.length
+                      })
+                "
+              >
+              </span>
+              @if (expandUnusableTranslateBooks) {
+                <h4 class="explanation">
+                  <transloco
+                    key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
+                    [params]="{ draftingSourceProjectName }"
+                  ></transloco>
+                </h4>
+                <span class="book-names">{{ bookNames(unusableTranslateSourceBooks) }}</span>
+              }
+            </div>
+          </app-notice>
+        }
         @if (unusableTranslateTargetBooks.length) {
           <app-notice>
             <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-          </app-notice>
-        }
-        @if (unusableTranslateSourceBooks.length) {
-          <app-notice>
-            <h4>
-              <transloco
-                key="draft_generation_steps.these_source_books_cannot_be_used_for_translating"
-                [params]="{ draftingSourceProjectName }"
-              ></transloco>
-            </h4>
-            <app-book-multi-select
-              [availableBooks]="unusableTranslateSourceBooks"
-              [readonly]="true"
-            ></app-book-multi-select>
           </app-notice>
         }
         @if (showBookSelectionError) {
@@ -59,23 +74,38 @@
           (bookSelect)="onTrainingBookSelect($event)"
           data-test-id="draft-stepper-training-books"
         ></app-book-multi-select>
+        @if (unusableTrainingSourceBooks.length) {
+          <app-notice icon="info" mode="basic" type="light" class="unusable-training-books">
+            <div class="notice-container">
+              <span
+                class="books-hidden-message"
+                (click)="expandUnusableTrainingBooks = !expandUnusableTrainingBooks"
+                [innerHtml]="
+                  !expandUnusableTrainingBooks
+                    ? i18n.translateAndInsertTags('draft_generation_steps.books_are_hidden_show_why', {
+                        numBooks: unusableTrainingSourceBooks.length
+                      })
+                    : i18n.translateAndInsertTags('draft_generation_steps.books_are_hidden_hide_explanation', {
+                        numBooks: unusableTrainingSourceBooks.length
+                      })
+                "
+              >
+              </span>
+              @if (expandUnusableTrainingBooks) {
+                <h4 class="explanation">
+                  <transloco
+                    key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
+                    [params]="{ trainingSourceProjectName }"
+                  ></transloco>
+                </h4>
+                <span class="book-names">{{ bookNames(unusableTrainingSourceBooks) }}</span>
+              }
+            </div>
+          </app-notice>
+        }
         @if (unusableTranslateTargetBooks.length) {
           <app-notice>
             <transloco key="draft_generation_steps.unusable_target_books"></transloco>
-          </app-notice>
-        }
-        @if (unusableTrainingSourceBooks.length) {
-          <app-notice>
-            <h4>
-              <transloco
-                key="draft_generation_steps.these_source_books_cannot_be_used_for_training"
-                [params]="{ trainingSourceProjectName }"
-              ></transloco>
-            </h4>
-            <app-book-multi-select
-              [availableBooks]="unusableTrainingSourceBooks"
-              [readonly]="true"
-            ></app-book-multi-select>
           </app-notice>
         }
         @if (showBookSelectionError) {

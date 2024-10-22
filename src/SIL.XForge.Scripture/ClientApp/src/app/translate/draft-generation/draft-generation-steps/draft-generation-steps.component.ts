@@ -8,6 +8,7 @@ import { Subscription, merge } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -80,6 +81,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   trainingDataFilesAvailable = false;
   fastTraining: boolean = false;
 
+  expandUnusableTranslateBooks = false;
+  expandUnusableTrainingBooks = false;
+
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;
 
@@ -88,7 +92,8 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
     private readonly draftSourcesService: DraftSourcesService,
     readonly featureFlags: FeatureFlagService,
     private readonly nllbLanguageService: NllbLanguageService,
-    private readonly trainingDataService: TrainingDataService
+    private readonly trainingDataService: TrainingDataService,
+    readonly i18n: I18nService
   ) {
     super();
   }
@@ -268,6 +273,10 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
 
     this.initialSelectedTrainingBooks = newSelectedTrainingBooks;
     this.userSelectedTrainingBooks = newSelectedTrainingBooks;
+  }
+
+  bookNames(books: number[]): string {
+    return books.map(bookNum => this.i18n.localizeBook(bookNum)).join(', ');
   }
 
   private validateCurrentStep(): boolean {
