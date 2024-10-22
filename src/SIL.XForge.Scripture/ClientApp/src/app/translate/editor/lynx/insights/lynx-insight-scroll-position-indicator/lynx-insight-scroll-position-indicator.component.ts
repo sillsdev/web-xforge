@@ -39,7 +39,7 @@ export class LynxInsightScrollPositionIndicatorComponent implements OnInit {
     ])
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        switchMap(() => this.editorInsightState.filteredChapterInsights$),
+        switchMap(() => this.editorInsightState.filteredChapterInsightsSansDisplayState$),
         map(insights => insights.map(insight => this.getScrollPosition(insight, this.editor!)))
       )
       .subscribe(scrollPositions => {

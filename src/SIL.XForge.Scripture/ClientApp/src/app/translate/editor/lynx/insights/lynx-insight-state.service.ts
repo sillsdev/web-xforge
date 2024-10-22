@@ -346,6 +346,26 @@ export class LynxInsightStateService {
   );
 
   /**
+   * Filtered chapter insights without the 'displayState' property.
+   * This can be useful when display state changes should not trigger updates.
+   */
+  readonly filteredChapterInsightsSansDisplayState$: Observable<LynxInsight[]> = this.filteredChapterInsights$.pipe(
+    map(insights => insights.map(({ displayState, ...insight }) => insight)), // Strip out 'displayState' prop
+    distinctUntilChanged(isEqual),
+    shareReplay(1)
+  );
+
+  /**
+   * Filtered insights without the 'displayState' property.
+   * This can be useful when display state changes should not trigger updates.
+   */
+  readonly filteredInsightsSansDisplayState$: Observable<LynxInsight[]> = this.filteredInsights$.pipe(
+    map(insights => insights.map(({ displayState, ...insight }) => insight)), // Strip out 'displayState' prop
+    distinctUntilChanged(isEqual),
+    shareReplay(1)
+  );
+
+  /**
    * Insight counts for the currently filtered types grouped by scope.
    */
   readonly filteredInsightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
