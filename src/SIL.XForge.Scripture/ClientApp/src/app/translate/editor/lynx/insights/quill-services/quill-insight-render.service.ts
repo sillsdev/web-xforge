@@ -74,6 +74,9 @@ export class QuillInsightRenderService extends InsightRenderService {
       return false;
     }
 
+    // Scroll to the insight in the editor
+    editor.setSelection(insight.range.index, 'api');
+
     const overlayAnchor: HTMLElement = this.getElementAtIndex(editor, insight.range.index + 1);
     this.overlayService.open(overlayAnchor, insight, editor.root);
 
