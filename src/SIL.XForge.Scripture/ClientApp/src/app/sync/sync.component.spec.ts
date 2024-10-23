@@ -343,7 +343,7 @@ class TestEnvironment {
   }
 
   get title(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#title');
+    return this.fixture.nativeElement.querySelector('.title');
   }
 
   get lastSyncDate(): HTMLElement {
