@@ -1,5 +1,5 @@
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
@@ -13,7 +13,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
+import { MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -29,16 +29,13 @@ import {
   AudioRecorderDialogData,
   AudioRecorderDialogResult
 } from '../../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
-import {
-  TextChooserDialogComponent,
-  TextChooserDialogData,
-  TextSelection
-} from '../../../text-chooser-dialog/text-chooser-dialog.component';
+import { CheckingUtils } from '../../checking.utils';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { TextAndAudioComponent } from '../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
+import { CheckingResponse } from './checking-comments/checking-comment-form/checking-comment-form.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
@@ -86,7 +83,7 @@ enum LikeAnswerResponse {
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss']
 })
-export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit, AfterViewInit {
+export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -131,15 +128,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     super();
-  }
-
-  ngAfterViewInit(): void {
-    this.subscribe(
-      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
-      (state: BreakpointState) => {
-        this.isScreenSmall = state.matches;
-      }
-    );
   }
 
   get project(): SFProjectProfile | undefined {
@@ -305,13 +293,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionDocAudioUrls());
   }
 
-  clearSelection(): void {
-    this.selectedText = '';
-    this.verseRef = undefined;
-    this.selectionStartClipped = undefined;
-    this.selectionEndClipped = undefined;
-  }
-
   async archiveQuestion(): Promise<void> {
     await this._questionDoc!.submitJson0Op(op => {
       op.set<boolean>(qd => qd.isArchived, true);
@@ -409,29 +390,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
   }
 
-  selectScripture(): void {
-    const verseRef = this._questionDoc!.data!.verseRef;
-    const dialogData: TextChooserDialogData = {
-      bookNum: (this.verseRef && this.verseRef.bookNum) || verseRef.bookNum,
-      chapterNum: (this.verseRef && this.verseRef.chapterNum) || verseRef.chapterNum,
-      textsByBookId: this.textsByBookId!,
-      projectId: this.projectId!,
-      isRightToLeft: this.project?.isRightToLeft,
-      selectedText: this.selectedText || '',
-      selectedVerses: this.verseRef
-    };
-    const dialogRef = this.dialogService.openMatDialog(TextChooserDialogComponent, { data: dialogData });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result != null && result !== 'close') {
-        const selection = result as TextSelection;
-        this.verseRef = toVerseRef(selection.verses);
-        this.selectedText = selection.text;
-        this.selectionStartClipped = selection.startClipped;
-        this.selectionEndClipped = selection.endClipped;
-      }
-    });
-  }
-
   canChangeAnswerStatus(answer: Answer): boolean {
     const userId = this.userService.currentUserId;
     return (
@@ -462,7 +420,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   hideAnswerForm(): void {
     this.activeAnswer = undefined;
-    this.clearSelection();
     if (this.answerFormVisible) {
       this.answerFormVisible = false;
       this.action.emit({ action: 'hide-form' });
@@ -504,12 +461,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return answer.likes.some(like => like.ownerRef === this.userService.currentUserId);
   }
 
-  scriptureTextVerseRef(verse: VerseRef | VerseRefData | undefined): string {
-    if (verse == null) {
-      return '';
-    }
-    const verseRef = verse instanceof VerseRef ? verse : toVerseRef(verse);
-    return `${this.i18n.localizeReference(verseRef)}`;
+  scriptureTextVerseRef(verseRef: VerseRefData | VerseRef | undefined): string {
+    return CheckingUtils.scriptureTextVerseRef(verseRef, this.i18n);
   }
 
   showAnswerForm(): void {
@@ -523,24 +476,13 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.action.emit({ action: 'play-audio' });
   }
 
-  async submit(): Promise<void> {
-    if (this.textAndAudio != null) {
-      this.textAndAudio.suppressErrors = false;
-      if (this.textAndAudio.audioComponent?.isRecording) {
-        await this.textAndAudio.audioComponent.stopRecording();
-        this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
-      }
-    }
-    if (!this.textAndAudio?.hasTextOrAudio()) {
-      this.textAndAudio?.text.setErrors({ invalid: true });
-      return;
-    }
+  async submit(response: CheckingResponse): Promise<void> {
     this.submittingAnswer = true;
     const userDoc = await this.userService.getCurrentUser();
     if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
     }
-    this.emitAnswerToSave();
+    this.emitAnswerToSave(response);
   }
 
   /** If a given answer should have attention drawn to it in the UI. */
@@ -622,15 +564,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private emitAnswerToSave(): void {
+  private emitAnswerToSave(response: CheckingResponse): void {
     this.action.emit({
       action: 'save',
-      text: this.textAndAudio?.text.value,
+      text: response.text,
       answer: this.activeAnswer,
-      audio: this.textAndAudio?.audioAttachment,
-      scriptureText: this.selectedText || undefined,
-      selectionStartClipped: this.selectionStartClipped,
-      selectionEndClipped: this.selectionEndClipped,
+      audio: response.audio,
+      scriptureText: response.scripture,
+      selectionStartClipped: response.scriptureStartClipped,
+      selectionEndClipped: response.scriptureEndClipped,
       verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef),
       questionDoc: this.questionDoc,
       savedCallback: () => {

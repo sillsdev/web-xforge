@@ -2,8 +2,24 @@
   padding-top: 8px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+
   .button-actions {
     gap: 10px;
+  }
+  .attach-icon {
+    rotate: 45deg;
+  }
+
+  .clear,
+  .answer-scripture-clear {
+    padding: 6px;
+  }
+
+  .large-form-action-buttons {
+    display: flex;
+    align-items: center;
+    column-gap: 8px;
   }
 }
 

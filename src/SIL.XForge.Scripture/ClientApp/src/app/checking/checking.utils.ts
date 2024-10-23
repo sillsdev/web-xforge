@@ -1,7 +1,9 @@
+import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { I18nService } from 'xforge-common/i18n.service';
 
 /**
  * Detects if a string is in a format that can be used to parse audio timing for a verse of Scripture.
@@ -111,5 +113,13 @@ export class CheckingUtils {
 
     let iteration: number = timingData.filter(t => t.to <= currentAudioTiming.to && t.textRef === ref).length;
     return { label: match[1], iteration };
+  }
+
+  static scriptureTextVerseRef(verse: VerseRef | VerseRefData | undefined, i18n: I18nService): string {
+    if (verse == null) {
+      return '';
+    }
+    const verseRef = verse instanceof VerseRef ? verse : toVerseRef(verse);
+    return `${i18n.localizeReference(verseRef)}`;
   }
 }
