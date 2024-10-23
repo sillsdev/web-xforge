@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect, userEvent, within } from '@storybook/test';
+import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AttachAudioComponent } from '../../../../attach-audio/attach-audio.component';
-import { TextAndAudioComponent } from '../../../../text-and-audio/text-and-audio.component';
-import { CheckingAudioRecorderComponent } from '../../../checking-audio-recorder/checking-audio-recorder.component';
+import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
+import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
+import { CheckingAudioRecorderComponent } from '../../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingCommentFormComponent } from './checking-comment-form.component';
 
 const meta: Meta<CheckingCommentFormComponent> = {
@@ -32,14 +33,14 @@ export const NewForm: Story = {
 
 export const EditForm: Story = {
   args: {
-    comment: {
+    answer: {
       dataId: 'c01',
       ownerRef: 'user01',
       text: 'This is a comment',
       deleted: false,
       dateCreated: '',
       dateModified: ''
-    }
+    } as Answer
   },
   parameters: {
     // Disabled for the same reason the story above
