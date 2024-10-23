@@ -159,12 +159,6 @@
                   <app-checking-audio-player [source]="getFileSource(answer.audioUrl)"> </app-checking-audio-player>
                 }
                 <div class="answer-footer">
-                  <app-owner
-                    [ownerRef]="answer.ownerRef"
-                    [includeAvatar]="true"
-                    [layoutStacked]="true"
-                    [dateTime]="answer.dateCreated"
-                  ></app-owner>
                   <div class="actions">
                     @if (canChangeAnswerStatus(answer)) {
                       <button
@@ -190,25 +184,42 @@
                         {{ t(isAnswerResolved(answer) ? "resolved" : "resolve") }}
                       </button>
                     }
-                    @if (canEditAnswer(answer)) {
-                      <button mat-button type="button" (click)="editAnswer(answer)" class="answer-edit short-button">
-                        {{ t("edit") }}
-                      </button>
-                    }
-                    @if (canDeleteAnswer(answer)) {
-                      <div class="delete-divider">|</div>
-                      <button
-                        mat-button
-                        type="button"
-                        (click)="deleteAnswerClicked(answer)"
-                        class="answer-delete short-button"
-                      >
-                        {{ t("delete") }}
-                      </button>
-                    }
+                  </div>
+                  <div class="bottom-row">
+                    <div>
+                      @if (canEditAnswer(answer)) {
+                        <button
+                          mat-icon-button
+                          type="button"
+                          (click)="editAnswer(answer)"
+                          class="answer-edit short-button"
+                          [matTooltip]="t('edit')"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                      }
+                      @if (canDeleteAnswer(answer)) {
+                        <button
+                          mat-icon-button
+                          type="button"
+                          (click)="deleteAnswerClicked(answer)"
+                          class="answer-delete short-button"
+                          [matTooltip]="t('delete')"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </div>
+                    <app-owner
+                      [ownerRef]="answer.ownerRef"
+                      [includeAvatar]="true"
+                      [layoutStacked]="true"
+                      [dateTime]="answer.dateCreated"
+                    ></app-owner>
                   </div>
                 </div>
                 <app-checking-comments
+                  id="answer-comments"
                   [project]="project"
                   [projectUserConfigDoc]="projectUserConfigDoc"
                   [questionDoc]="questionDoc"

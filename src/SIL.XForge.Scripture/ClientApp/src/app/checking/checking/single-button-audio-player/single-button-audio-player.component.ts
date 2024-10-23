@@ -49,6 +49,14 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this.audio?.stop();
   }
 
+  togglePlay(): void {
+    if (this.audio?.isPlaying) {
+      this.stop();
+    } else {
+      this.play();
+    }
+  }
+
   ngOnChanges(): void {
     this.isAudioAvailable$.next(false);
     this.hasFinishedPlayingOnce$.next(false);

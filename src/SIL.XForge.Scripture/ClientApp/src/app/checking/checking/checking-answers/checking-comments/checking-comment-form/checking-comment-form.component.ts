@@ -1,6 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { XFValidators } from 'xforge-common/xfvalidators';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { translate } from '@ngneat/transloco';
+import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { NoticeService } from 'xforge-common/notice.service';
+import { TextAndAudioComponent } from '../../../../text-and-audio/text-and-audio.component';
+import { AudioAttachment } from '../../../checking-audio-recorder/checking-audio-recorder.component';
 
 @Component({
   selector: 'app-checking-comment-form',
@@ -8,36 +11,33 @@ import { XFValidators } from 'xforge-common/xfvalidators';
   styleUrls: ['./checking-comment-form.component.scss']
 })
 export class CheckingCommentFormComponent {
-  @Input() set text(value: string | undefined) {
-    if (value != null) {
-      this.commentForm.controls.commentText.setValue(value);
-    }
-  }
-
-  @Output() save: EventEmitter<string> = new EventEmitter<string>();
+  @Input() comment?: Comment;
+  @Output() save: EventEmitter<{ text?: string; audio?: AudioAttachment }> = new EventEmitter<{
+    text?: string;
+    audio?: AudioAttachment;
+  }>();
   @Output() cancel: EventEmitter<void> = new EventEmitter<void>();
+  @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
 
-  commentForm = new FormGroup({
-    commentText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
-  });
+  constructor(private readonly noticeService: NoticeService) {}
 
-  constructor() {}
-
-  submit(): void {
-    const commentText = this.commentForm.controls.commentText.value;
-    if (this.commentForm.valid && typeof commentText === 'string') {
-      this.save.emit(commentText);
-      this.commentForm.reset();
+  async submit(): Promise<void> {
+    if (this.textAndAudio != null) {
+      this.textAndAudio.suppressErrors = false;
+      if (this.textAndAudio.audioComponent?.isRecording) {
+        await this.textAndAudio.audioComponent.stopRecording();
+        this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
+      }
     }
+    if (!this.textAndAudio?.hasTextOrAudio()) {
+      this.textAndAudio?.text.setErrors({ invalid: true });
+      return;
+    }
+    const comment = { text: this.textAndAudio?.text.value, audio: this.textAndAudio?.audioAttachment };
+    this.save.emit(comment);
   }
 
   submitCancel(): void {
-    this.commentForm.reset();
     this.cancel.emit();
-  }
-
-  get showValidationError(): boolean {
-    const control = this.commentForm.controls.commentText;
-    return control.invalid && control.touched;
   }
 }
