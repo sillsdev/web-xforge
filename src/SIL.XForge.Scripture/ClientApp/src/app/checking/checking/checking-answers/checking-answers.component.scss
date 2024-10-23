@@ -27,32 +27,6 @@
   }
 }
 
-#answer-form {
-  display: flex;
-  flex-direction: column;
-  row-gap: 2px;
-  .attach-icon {
-    rotate: 45deg;
-  }
-  .bottom-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  .attachments {
-    display: flex;
-    flex-direction: row;
-    .clear,
-    .answer-scripture-clear {
-      padding: 6px;
-    }
-  }
-  .large-form-action-buttons {
-    display: flex;
-    align-items: center;
-    column-gap: 8px;
-  }
-}
-
 .answers-container {
   .answer {
     display: flex;
@@ -175,7 +149,6 @@
   padding-block: 6px;
 }
 
-.answer-scripture-clear,
 .clear {
   width: 36px;
   height: 36px;
