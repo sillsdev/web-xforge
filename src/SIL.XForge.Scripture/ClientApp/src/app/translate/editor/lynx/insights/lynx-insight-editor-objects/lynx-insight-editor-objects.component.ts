@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
 import { filter, switchMap, tap } from 'rxjs';
@@ -12,7 +12,7 @@ import { LynxInsightStateService } from '../lynx-insight-state.service';
   templateUrl: './lynx-insight-editor-objects.component.html',
   styleUrl: './lynx-insight-editor-objects.component.scss'
 })
-export class LynxInsightEditorObjectsComponent implements OnInit {
+export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
   @Input() editor?: Quill;
 
   constructor(
@@ -43,5 +43,9 @@ export class LynxInsightEditorObjectsComponent implements OnInit {
       .subscribe(chapterInsights => {
         this.insightRenderService.render(chapterInsights, this.editor);
       });
+  }
+
+  ngOnDestroy(): void {
+    this.insightRenderService.removeAllInsightFormatting(this.editor);
   }
 }
