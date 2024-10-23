@@ -74,6 +74,7 @@ import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -214,7 +215,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
-  showInsights: boolean = true; // TODO: Where to get this value from?
+  showInsights = false;
 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('fabButton', { read: ElementRef }) insertNoteFab?: ElementRef<HTMLElement>;
@@ -295,6 +296,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly permissionsService: PermissionsService,
+    private readonly featureFlagService: FeatureFlagService,
     readonly editorInsightState: LynxInsightStateService
   ) {
     super(noticeService);
@@ -654,6 +656,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         switchMap(doc => this.initEditorTabs(doc))
       )
       .subscribe();
+
+    this.featureFlagService.enableLynxInsights.enabled$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(enabled => (this.showInsights = enabled));
   }
 
   ngAfterViewInit(): void {

@@ -253,7 +253,8 @@
                       </as-split-area>
 
                       <as-split-area
-                        [visible]="showInsights && (editorInsightState.insightPanelVisible$ | async) == true"
+                        *ngIf="showInsights"
+                        [visible]="(editorInsightState.insightPanelVisible$ | async) == true"
                         [size]="20"
                         [order]="2"
                         [dir]="i18n.direction"

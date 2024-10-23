@@ -306,6 +306,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  readonly enableLynxInsights: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'EnableLynxInsights',
+    'Enable Lynx insights',
+    14,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }

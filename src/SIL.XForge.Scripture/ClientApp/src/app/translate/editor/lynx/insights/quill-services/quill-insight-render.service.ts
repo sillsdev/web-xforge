@@ -18,6 +18,9 @@ export class QuillInsightRenderService extends InsightRenderService {
     super();
   }
 
+  /**
+   * Renders the insights in the editor, applying formatting, action menus, and attention (opacity overlay).
+   */
   render(insights: LynxInsight[], editor: Quill | undefined): void {
     console.log('*** Render insights', insights);
 
@@ -37,6 +40,19 @@ export class QuillInsightRenderService extends InsightRenderService {
     }
 
     this.setEditorAttention(actionMenuInsight, editor);
+  }
+
+  /**
+   * Removes all lynx insight formatting from the editor.
+   */
+  removeAllInsightFormatting(editor: Quill): void {
+    const formats: StringMap = {};
+
+    for (const type of LynxInsightTypes) {
+      formats[`${this.prefix}-${type}`] = false;
+    }
+
+    editor.formatText(0, editor.getLength(), formats);
   }
 
   /**
