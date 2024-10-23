@@ -1,6 +1,19 @@
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @use 'src/variables';
 
+:host {
+  display: block;
+  max-width: 80em;
+}
+
+.stepper-multi-header {
+  h2,
+  h3 {
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+}
+
 h1 {
   margin: 12px 0;
 }

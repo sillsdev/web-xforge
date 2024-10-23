@@ -4,6 +4,20 @@
       <!-- Icon overrides -->
       <ng-template matStepperIcon="edit" let-index="index">{{ index + 1 }}</ng-template>
 
+      <mat-step [completed]="languagesVerified">
+        <ng-template matStepLabel> Confirm setup</ng-template>
+        <app-confirm-sources (languageCodesVerified)="languagesVerified = $event"></app-confirm-sources>
+        @if (nextClickedOnLanguageVerification && !languagesVerified) {
+          <app-notice type="error" mode="fill-dark">
+            Please confirm the language codes are correct before continuing.
+          </app-notice>
+        }
+        <div class="button-strip">
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">{{ t("next") }}</button>
+        </div>
+      </mat-step>
+
       <mat-step [completed]="userSelectedTranslateBooks.length > 0">
         <ng-template matStepLabel>
           {{ t("choose_books_to_translate_label") }}

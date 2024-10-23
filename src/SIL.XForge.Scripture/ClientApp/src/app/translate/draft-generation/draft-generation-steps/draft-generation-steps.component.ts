@@ -17,6 +17,7 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { SharedModule } from '../../../shared/shared.module';
 import { NllbLanguageService } from '../../nllb-language.service';
+import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
 import { DraftSource, DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataMultiSelectComponent } from '../training-data/training-data-multi-select.component';
 import { TrainingDataUploadDialogComponent } from '../training-data/training-data-upload-dialog.component';
@@ -43,13 +44,17 @@ export interface DraftGenerationStepsResult {
     TranslocoMarkupModule,
     BookMultiSelectComponent,
     TrainingDataMultiSelectComponent,
-    TrainingDataUploadDialogComponent
+    TrainingDataUploadDialogComponent,
+    ConfirmSourcesComponent
   ]
 })
 export class DraftGenerationStepsComponent extends SubscriptionDisposable implements OnInit {
   @Output() readonly done = new EventEmitter<DraftGenerationStepsResult>();
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
+
+  languagesVerified = false;
+  nextClickedOnLanguageVerification = false;
 
   availableTranslateBooks?: number[] = undefined;
   availableTrainingBooks: number[] = [];
