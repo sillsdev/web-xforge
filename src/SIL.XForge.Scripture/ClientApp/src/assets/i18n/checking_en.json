@@ -218,7 +218,6 @@
     "save_answer": "Save",
     "select_verses": "Select verses",
     "show_more_unread": "Show {{ count }} more unread answers",
-    "tooltip_attach": "Attach scripture",
     "tooltip_status_export": "Export to Paratext if configured in Settings",
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
@@ -264,8 +263,9 @@
     "stop_recording": "Stop Recording"
   },
   "checking_comment_form": {
+    "attach": "Attach Scripture",
     "cancel": "Cancel",
-    "save_comment": "Save comment",
+    "save": "Save",
     "your_comment": "Your comment"
   },
   "checking_comments": {

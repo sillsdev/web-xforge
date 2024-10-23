@@ -48,71 +48,16 @@
           }
         </div>
       } @else {
-        <div>
-          <form autocomplete="off" id="answer-form" appScrollIntoView>
-            <app-text-and-audio
-              #answer
-              appAutofocus
-              [input]="activeAnswer"
-              [textLabel]="t('your_answer')"
-            ></app-text-and-audio>
-            <div class="bottom-row">
-              <div class="attachments">
-                <app-attach-audio [textAndAudio]="answer"></app-attach-audio>
-                @if (!selectedText) {
-                  <button
-                    mat-icon-button
-                    id="select-scripture"
-                    (click)="selectScripture()"
-                    [matTooltip]="t('tooltip_attach')"
-                  >
-                    <mat-icon class="attach-icon">attach_file</mat-icon>
-                  </button>
-                } @else {
-                  <div class="answer-scripture">
-                    <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
-                    <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
-                      <mat-icon>clear</mat-icon>
-                    </button>
-                  </div>
-                }
-              </div>
-              @if (isScreenSmall) {
-                <div>
-                  <button mat-icon-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
-                    <mat-icon class="material-icons-outlined">cancel</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    color="primary"
-                    id="save-answer"
-                    (click)="submit()"
-                    [disabled]="submittingAnswer"
-                  >
-                    <mat-icon>check_circle</mat-icon>
-                  </button>
-                </div>
-              }
-              @if (!isScreenSmall) {
-                <div class="large-form-action-buttons">
-                  <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">
-                    <mat-icon>close</mat-icon>
-                    {{ t("cancel") }}
-                  </button>
-                  <button
-                    mat-flat-button
-                    color="primary"
-                    id="save-answer"
-                    (click)="submit()"
-                    [disabled]="submittingAnswer"
-                  >
-                    <mat-icon>check</mat-icon>
-                    {{ t("save_answer") }}
-                  </button>
-                </div>
-              }
-            </div>
-          </form>
+        <div id="answer-form">
+          <app-checking-comment-form
+            [answer]="this.activeAnswer"
+            [project]="project"
+            [questionDoc]="questionDoc"
+            [textsByBookId]="textsByBookId"
+            [textSelectionEnabled]="true"
+            (cancel)="hideAnswerForm()"
+            (save)="submit($event)"
+          ></app-checking-comment-form>
         </div>
       }
       @if (shouldShowAnswers) {
