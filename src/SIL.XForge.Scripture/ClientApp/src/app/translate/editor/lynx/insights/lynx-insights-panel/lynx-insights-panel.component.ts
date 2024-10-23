@@ -137,18 +137,7 @@ export class LynxInsightsPanelComponent implements OnInit {
           promptActive: false,
           actionMenuActive: true
         });
-
-        // TODO: scroll to selected insight
       });
-
-      // this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
-      // if (!this.navInsight(node.insight)) {
-      //   // this.editor?.setSelection(node.insight.range.index, 0, 'api'); // Scroll to range
-      //   this.editorInsightState.updateDisplayState(node.insight.id, {
-      //     promptActive: false,
-      //     actionMenuActive: true
-      //   });
-      // }
     }
   }
 
