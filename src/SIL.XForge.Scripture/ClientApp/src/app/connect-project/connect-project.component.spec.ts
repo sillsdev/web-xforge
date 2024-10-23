@@ -1,5 +1,4 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -50,7 +49,6 @@ const mockedErrorHandler = mock(ErrorHandler);
 describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      HttpClientTestingModule,
       NoopAnimationsModule,
       UICommonModule,
       TestTranslocoModule,

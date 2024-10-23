@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -113,8 +114,9 @@ describe('DeleteProjectDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule, HttpClientTestingModule],
   declarations: [DeleteProjectDialogComponent],
-  exports: [DeleteProjectDialogComponent]
+  exports: [DeleteProjectDialogComponent],
+  imports: [UICommonModule, TestTranslocoModule],
+  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}

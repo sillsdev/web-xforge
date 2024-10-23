@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
@@ -453,16 +454,10 @@ describe('ImportQuestionsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [
-    CommonModule,
-    UICommonModule,
-    TestTranslocoModule,
-    NoopAnimationsModule,
-    ngfModule,
-    HttpClientTestingModule
-  ],
   declarations: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
-  exports: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent]
+  exports: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
+  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
+  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class DialogTestModule {}
 

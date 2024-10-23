@@ -114,7 +114,7 @@ export function getVerseNumbers(verseRef: VerseRef): number[] {
 export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): VerseRef | undefined {
   const baseRef: string | undefined = getBaseVerse(segmentRef);
   if (baseRef == null) {
-    return;
+    return undefined;
   }
   const parts = baseRef.split('_');
   return new VerseRef(Canon.bookNumberToId(bookNum), parts[1], parts[2]);
@@ -136,7 +136,7 @@ export function verseSlug(verse: VerseRef): string {
 export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): VerseRef | undefined {
   const clickSegment = attributeFromMouseEvent(event, 'USX-SEGMENT', 'data-segment');
   if (clickSegment == null) {
-    return;
+    return undefined;
   }
   const segmentParts = clickSegment.split('_', 3);
   const versePart = segmentParts[2].split('/')[0];
@@ -151,7 +151,7 @@ export function attributeFromMouseEvent(event: MouseEvent, nodeName: string, att
   // Target is actually a EventTarget but if we treat it as any then we can improve null checks
   let target = event.target as any;
   if (target == null) {
-    return;
+    return undefined;
   }
   if (target?.offsetParent?.nodeName === nodeName) {
     target = target.offsetParent;
@@ -162,7 +162,7 @@ export function attributeFromMouseEvent(event: MouseEvent, nodeName: string, att
   if (target?.nodeName === nodeName) {
     return target?.attributes[attribute].value;
   }
-  return;
+  return undefined;
 }
 
 export function checkAppAccess(

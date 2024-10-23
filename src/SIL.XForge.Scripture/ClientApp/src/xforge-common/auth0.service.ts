@@ -52,7 +52,7 @@ export class Auth0Service {
    */
   async tryTransparentAuthentication(): Promise<undefined | GetTokenSilentlyVerboseResponse> {
     if (!this.cookieService.check(TransparentAuthenticationCookie)) {
-      return;
+      return undefined;
     }
     const credentials: TransparentAuthenticationCookieCredentials = JSON.parse(
       this.cookieService.get(TransparentAuthenticationCookie)
@@ -75,7 +75,7 @@ export class Auth0Service {
         Username: credentials.Username,
         error: ErrorReportingService.normalizeError(e)
       });
-      return;
+      return undefined;
     }
   }
 

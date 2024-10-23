@@ -1,4 +1,3 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
 import { User } from '@bugsnag/js';
@@ -32,7 +31,6 @@ describe('PermissionsService', () => {
       RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
-      HttpClientTestingModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [

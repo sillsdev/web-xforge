@@ -44,7 +44,7 @@
           t("some_actions_unavailable_offline")
         }}</app-notice>
       }
-      @for (text of texts; track text) {
+      @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text) > 0 || bookHasChapterAudio(text)) {
           <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
             <mat-expansion-panel-header>
@@ -73,7 +73,7 @@
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <mat-selection-list>
-                @for (chapter of text.chapters; track chapter) {
+                @for (chapter of text.chapters; track chapter.number) {
                   @if (questionCount(text.bookNum, chapter.number) > 0 || chapter.hasAudio) {
                     <mat-expansion-panel
                       [disabled]="!questionCount(text.bookNum, chapter.number)"
@@ -155,7 +155,7 @@
                         <mat-selection-list [multiple]="false">
                           @for (
                             questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number));
-                            track questionDoc
+                            track questionDoc.data.dataId
                           ) {
                             <mat-list-item disableRipple>
                               <div class="flex">
@@ -203,7 +203,7 @@
   } @else {
     <div class="reviewer-panels" id="reviewer-question-panel">
       <mat-list dense id="reviewer-questions-list">
-        @for (text of texts; track text) {
+        @for (text of texts; track text.bookNum) {
           @if (bookQuestionCount(text) > 0) {
             <mat-list-item [appRouterLink]="getRouterLink(getBookId(text))">
               <div class="flex">
@@ -294,7 +294,7 @@
 
   @if (canEditQuestion) {
     <div id="text-with-archived-questions">
-      @for (text of texts; track text) {
+      @for (text of texts; track text.bookNum) {
         @if (bookQuestionCount(text, true) > 0) {
           <mat-expansion-panel [togglePosition]="'before'" class="book-expander mat-elevation-z0">
             <mat-expansion-panel-header>
@@ -319,7 +319,7 @@
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              @for (chapter of text.chapters; track chapter) {
+              @for (chapter of text.chapters; track chapter.number) {
                 @if (questionCount(text.bookNum, chapter.number, true) > 0) {
                   <mat-expansion-panel [togglePosition]="'before'" class="mat-elevation-z0">
                     <mat-expansion-panel-header>
@@ -349,7 +349,7 @@
                       <mat-selection-list [multiple]="false">
                         @for (
                           questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true);
-                          track questionDoc
+                          track questionDoc.data.dataId
                         ) {
                           <mat-list-item disableRipple>
                             <div class="flex">

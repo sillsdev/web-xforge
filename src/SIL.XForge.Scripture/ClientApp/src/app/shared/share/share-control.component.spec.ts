@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
@@ -251,7 +252,8 @@ describe('ShareControlComponent', () => {
 });
 
 @NgModule({
-  imports: [BrowserModule, HttpClientTestingModule, RouterModule.forRoot([]), UICommonModule, TestTranslocoModule]
+  imports: [BrowserModule, RouterModule.forRoot([]), UICommonModule, TestTranslocoModule],
+  providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
 })
 class TestModule {}
 

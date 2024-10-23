@@ -1,4 +1,3 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -33,7 +32,6 @@ const mockedTextDocService = mock(TextDocService);
 describe('HistoryChooserComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      HttpClientTestingModule,
       NoopAnimationsModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),

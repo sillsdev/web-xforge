@@ -1,6 +1,5 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
@@ -53,7 +52,6 @@ describe('DraftApplyDialogComponent', () => {
       TestTranslocoModule,
       RouterModule.forRoot(ROUTES),
       NoopAnimationsModule,
-      HttpClientTestingModule,
       TestOnlineStatusModule.forRoot()
     ],
     providers: [

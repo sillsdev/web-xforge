@@ -1907,8 +1907,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async getSourceProjectDoc(): Promise<SFProjectProfileDoc | undefined> {
     // Only get the project doc if the user is on the project to avoid an error.
-    if (this.sourceProjectId == null) return;
-    if (this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId) !== true) return;
+    if (this.sourceProjectId == null) return undefined;
+    if (this.currentUser?.sites[environment.siteId].projects.includes(this.sourceProjectId) !== true) return undefined;
     return await this.projectService.getProfile(this.sourceProjectId);
   }
 
@@ -2003,7 +2003,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const verseRef: VerseRef | undefined = threadDoc.currentVerseRef();
     if (threadDoc.data == null || verseRef == null) {
-      return;
+      return undefined;
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
     const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
@@ -2319,7 +2319,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /** Gets the first edit position within the given range. */
   private getEditPositionWithinRange(range: RangeStatic, delta: DeltaStatic): number | undefined {
     if (delta.ops == null) {
-      return;
+      return undefined;
     }
     let curIndex = 0;
     for (const op of delta.ops) {
@@ -2333,7 +2333,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const retainOp: number | undefined = op.retain;
       curIndex += retainOp == null ? 0 : retainOp;
     }
-    return;
+    return undefined;
   }
 
   private calculateDeletionUpdate(
@@ -2388,7 +2388,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private embedNoteThread(featured: FeaturedVerseRefInfo, role: string): string | undefined {
     if (this.target == null) {
-      return;
+      return undefined;
     }
 
     const format = {

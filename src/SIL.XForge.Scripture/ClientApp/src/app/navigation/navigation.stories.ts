@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
 import { Meta, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
+import { expect } from '@storybook/test';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -68,7 +68,10 @@ function setUpMocks(args: StoryState): void {
     imports: [I18nStoryModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useValue: instance(mockedUserService) },
-      { provide: PermissionsService, useValue: instance(mockedPermissionsService) }
+      {
+        provide: PermissionsService,
+        useValue: instance(mockedPermissionsService)
+      }
     ]
   });
 
@@ -112,15 +115,30 @@ const meta: Meta = {
         imports: [UICommonModule, CommonModule, I18nStoryModule],
         providers: [
           { provide: AuthService, useValue: instance(mockedAuthService) },
-          { provide: OnlineStatusService, useValue: instance(onlineStatusService) },
-          { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
+          {
+            provide: OnlineStatusService,
+            useValue: instance(onlineStatusService)
+          },
+          {
+            provide: SFProjectService,
+            useValue: instance(mockedSFProjectService)
+          },
           { provide: UserService, useValue: instance(mockedUserService) },
           { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
           { provide: SwUpdate, useValue: instance(mockedSwUpdate) },
-          { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) },
+          {
+            provide: FeatureFlagService,
+            useValue: instance(mockedFeatureFlagService)
+          },
           { provide: Router, useValue: instance(mockedRouter) },
-          { provide: ResumeCheckingService, useValue: instance(mockedResumeCheckingService) },
-          { provide: ActivatedProjectService, useValue: testActivatedProjectService },
+          {
+            provide: ResumeCheckingService,
+            useValue: instance(mockedResumeCheckingService)
+          },
+          {
+            provide: ActivatedProjectService,
+            useValue: testActivatedProjectService
+          },
 
           { provide: NmtDraftAuthGuard, useClass: NmtDraftAuthGuard },
           { provide: AuthGuard, useClass: AuthGuard },

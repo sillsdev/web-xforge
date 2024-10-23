@@ -189,14 +189,26 @@ const meta: Meta = {
       declarations: [MyProjectsComponent],
       providers: [
         provideAnimations(),
-        { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
+        {
+          provide: SFProjectService,
+          useValue: instance(mockedSFProjectService)
+        },
         { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
         { provide: UserService, useValue: instance(mockedUserService) },
         { provide: ParatextService, useValue: instance(mockedParatextService) },
-        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
-        { provide: SFUserProjectsService, useValue: instance(mockedUserProjectsService) },
+        {
+          provide: OnlineStatusService,
+          useValue: instance(mockedOnlineStatusService)
+        },
+        {
+          provide: SFUserProjectsService,
+          useValue: instance(mockedUserProjectsService)
+        },
         { provide: NoticeService, useValue: instance(mockedNoticeService) },
-        { provide: PermissionsService, useValue: instance(mockedPermissionsService) }
+        {
+          provide: PermissionsService,
+          useValue: instance(mockedPermissionsService)
+        }
       ]
     }),
     (story, context) => {
@@ -429,7 +441,9 @@ export const AllProjectScenarios: Story = {
 };
 
 // User was last working with a particular project. That project is highlighted in the list.
-export const LastSelectedProject: Story = { args: { ...PTAdmin.args, lastSelectedProject: 1 } };
+export const LastSelectedProject: Story = {
+  args: { ...PTAdmin.args, lastSelectedProject: 1 }
+};
 
 // A non-PT user is working as an SF translator. The user is offline. We know the user account doesn't have any PT
 // projects that it can connect to. But the user might be looking for a recent project invitation and not see it because
@@ -443,10 +457,14 @@ export const SFTranslatorOffline: Story = {
 };
 
 // PT user, with SF projects, is offline.
-export const PTTranslatorOffline: Story = { args: { ...PTTranslator.args, online: false } };
+export const PTTranslatorOffline: Story = {
+  args: { ...PTTranslator.args, online: false }
+};
 
 // PT user, with SF projects, is offline.
-export const PTAdminOffline: Story = { args: { ...PTAdmin.args, online: false } };
+export const PTAdminOffline: Story = {
+  args: { ...PTAdmin.args, online: false }
+};
 
 // User with PT projects comes to page, and experiences delay in waiting for the PT project list to come back from the
 // server.

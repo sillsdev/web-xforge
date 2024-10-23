@@ -64,7 +64,7 @@ export class CheckingUtils {
     let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(ref);
 
     // return if the text ref is for a heading and not a verse
-    if (audioTimingMatch == null) return;
+    if (audioTimingMatch == null) return undefined;
     const audioTextRef: AudioTextRef = { verseStr: audioTimingMatch[1] };
     if (audioTimingMatch[2] !== '') audioTextRef.phrase = audioTimingMatch[2].toLowerCase();
     return audioTextRef;
@@ -84,11 +84,11 @@ export class CheckingUtils {
       }
     }
 
-    if (indexInTimings < 0) return;
+    if (indexInTimings < 0) return undefined;
     const textRefParts: string[] = timingData[indexInTimings].textRef.split('_');
     const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(textRefParts[0]);
     // return if the text ref is for a heading and not a verse
-    if (audioTextRef == null) return;
+    if (audioTextRef == null) return undefined;
     if (textRefParts.length > 1) audioTextRef.word = textRefParts[1];
     return audioTextRef;
   }
@@ -100,10 +100,10 @@ export class CheckingUtils {
    */
   static parseAudioHeadingRefByTime(timingData: AudioTiming[], currentTime: number): AudioHeadingRef | undefined {
     const indexInTimings: number = timingData.findIndex(t => t.to > currentTime && t.from <= currentTime);
-    if (indexInTimings < 0) return;
+    if (indexInTimings < 0) return undefined;
     const currentAudioTiming: AudioTiming | undefined = timingData[indexInTimings];
     const match: RegExpExecArray | null = AUDIO_HEADING_REF_REGEX.exec(currentAudioTiming.textRef);
-    if (match == null) return;
+    if (match == null) return undefined;
     const ref: string = match[0];
     const label: string = match[1];
     let iterationStr: string = match[2];
