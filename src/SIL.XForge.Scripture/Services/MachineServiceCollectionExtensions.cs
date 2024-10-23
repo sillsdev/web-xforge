@@ -78,6 +78,13 @@ public static class MachineServiceCollectionExtensions
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new DataFilesClient(httpClient);
         });
+        services.AddSingleton<ICorporaClient, CorporaClient>(sp =>
+        {
+            // Instantiate the corpora client with our named HTTP client
+            var factory = sp.GetService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
+            return new CorporaClient(httpClient);
+        });
         services.AddSingleton<IMachineApiService, MachineApiService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
         services.AddSingleton<IPreTranslationService, PreTranslationService>();
