@@ -63,7 +63,6 @@ export class AudioRecorderDialogComponent
   showCountdown: boolean;
   countdownTimer: number = 0;
   mediaDevicesUnsupported: boolean = false;
-  showCanvas: boolean = false;
 
   private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
@@ -182,7 +181,6 @@ export class AudioRecorderDialogComponent
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
-    this.showCanvas = true;
     this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
@@ -193,7 +191,7 @@ export class AudioRecorderDialogComponent
       return;
     }
     this.refreshWaveformSub?.unsubscribe();
-    this.showCanvas = false;
+    this.canvasContext?.reset();
     this.mediaRecorder.stop();
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.audio = { status: 'stopped' };
