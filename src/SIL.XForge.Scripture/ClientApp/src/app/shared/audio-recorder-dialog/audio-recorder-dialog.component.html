@@ -31,9 +31,9 @@
       }
     </div>
     <div class="dialog-footer">
-      @if (showCanvas) {
+      @if (!hasAudioAttachment) {
         <canvas class="visualizer"></canvas>
-      } @else if (hasAudioAttachment) {
+      } @else {
         <div class="has-attachment">
           <button mat-button (click)="resetRecording()" class="remove-audio-file">
             <mat-icon>mic</mat-icon>
