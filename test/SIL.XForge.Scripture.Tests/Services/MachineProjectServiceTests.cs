@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NSubstitute.Extensions;
@@ -53,6 +54,8 @@ public class MachineProjectServiceTests
     private const string File06 = "file06";
     private const string Job01 = "job01";
     private const string ParallelCorpus01 = "parallelCorpus01";
+    private const string ParallelCorpus02 = "parallelCorpus02";
+    private const string ParallelCorpus03 = "parallelCorpus03";
     private const string TranslationEngine01 = "translationEngine01";
     private const string TranslationEngine02 = "translationEngine02";
     private const string LanguageTag = "he";
@@ -359,10 +362,15 @@ public class MachineProjectServiceTests
             .Returns(Task.CompletedTask);
         env.Service.Configure()
             .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
         var translationBuildConfig = new TranslationBuildConfig();
         env.Service.Configure()
-            .GetTranslationBuildConfig(Arg.Any<ServalData>(), Arg.Any<DraftConfig>(), buildConfig)
+            .GetTranslationBuildConfig(
+                Arg.Any<ServalData>(),
+                servalConfig: null,
+                buildConfig,
+                Arg.Any<IList<ServalCorpusSyncInfo>>()
+            )
             .Returns(translationBuildConfig);
 
         // SUT
@@ -409,7 +417,7 @@ public class MachineProjectServiceTests
             .Returns(Task.CompletedTask);
         env.Service.Configure()
             .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: false, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
         await env.Service.BuildProjectAsync(User01, buildConfig, preTranslate: false, CancellationToken.None);
@@ -487,7 +495,7 @@ public class MachineProjectServiceTests
             .Returns(Task.CompletedTask);
         env.Service.Configure()
             .SyncProjectCorporaAsync(User01, buildConfig, preTranslate: true, CancellationToken.None)
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -1230,11 +1238,117 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         const string targetWritingSystemTag = "target_writing_system_tag";
-        var project = new SFProject { WritingSystem = new WritingSystem { Tag = targetWritingSystemTag }, };
+        var project = new SFProject { WritingSystem = new WritingSystem { Tag = targetWritingSystemTag } };
 
         // SUT
         string actual = await env.Service.GetTargetLanguageAsync(project);
         Assert.AreEqual(targetWritingSystemTag, actual);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_DoesNotSpecifyAdditionalTrainingDataIfNoFilesSpecified()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData
+        {
+            ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+            ParallelCorpusIdForTrainOn = ParallelCorpus02,
+            AdditionalTrainingData = new ServalAdditionalTrainingData { ParallelCorpusId = ParallelCorpus03 },
+        };
+        var buildConfig = new BuildConfig();
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig: null,
+            buildConfig,
+            corporaSyncInfo: []
+        );
+        Assert.IsTrue(actual.Pretranslate!.Any(c => c.ParallelCorpusId == ParallelCorpus01));
+        Assert.IsTrue(actual.TrainOn!.Any(c => c.ParallelCorpusId == ParallelCorpus02));
+        Assert.IsFalse(actual.TrainOn!.Any(c => c.ParallelCorpusId == ParallelCorpus03));
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_MergesFastTrainingConfiguration()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData();
+        const string servalConfig = """{"max_steps":35}""";
+        var buildConfig = new BuildConfig { FastTraining = true };
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig,
+            buildConfig,
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(20, (int)(actual.Options as JObject)?["max_steps"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_PassesFastTrainingConfiguration()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData();
+        var buildConfig = new BuildConfig { FastTraining = true };
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig: null,
+            buildConfig,
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(20, (int)(actual.Options as JObject)?["max_steps"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_PassesServalConfig()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData();
+        const string servalConfig = """{"max_steps":35}""";
+        var buildConfig = new BuildConfig();
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig,
+            buildConfig,
+            corporaSyncInfo: []
+        );
+        Assert.AreEqual(35, (int)(actual.Options as JObject)?["max_steps"]);
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_SpecifiesAdditionalTrainingData()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData
+        {
+            ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+            ParallelCorpusIdForTrainOn = ParallelCorpus02,
+            AdditionalTrainingData = new ServalAdditionalTrainingData { ParallelCorpusId = ParallelCorpus03 },
+        };
+        var buildConfig = new BuildConfig { TrainingDataFiles = [Data01] };
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig: null,
+            buildConfig,
+            corporaSyncInfo: []
+        );
+        Assert.IsTrue(actual.Pretranslate!.Any(c => c.ParallelCorpusId == ParallelCorpus01));
+        Assert.IsTrue(actual.TrainOn!.Any(c => c.ParallelCorpusId == ParallelCorpus02));
+        Assert.IsTrue(actual.TrainOn!.Any(c => c.ParallelCorpusId == ParallelCorpus03));
     }
 
     [Test]
@@ -2002,6 +2116,15 @@ public class MachineProjectServiceTests
         Assert.AreEqual(ParallelCorpus01, actual?.ParallelCorpusId);
         await env.CorporaClient.Received(1).UpdateAsync(Corpus01, Arg.Any<IEnumerable<CorpusFileConfig>>());
         await env.CorporaClient.Received(1).UpdateAsync(Corpus02, Arg.Any<IEnumerable<CorpusFileConfig>>());
+        await env
+            .TrainingDataService.Received(1)
+            .GetTextsAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<IList<ISFText>>(),
+                Arg.Any<IList<ISFText>>()
+            );
     }
 
     [Test]
@@ -2062,6 +2185,15 @@ public class MachineProjectServiceTests
         // UploadAdditionalTrainingDataAsync will perform the initial corpus CreateAsync()
         await env.CorporaClient.Received(1).UpdateAsync(Corpus01, Arg.Any<IEnumerable<CorpusFileConfig>>());
         await env.CorporaClient.Received(1).UpdateAsync(Corpus02, Arg.Any<IEnumerable<CorpusFileConfig>>());
+        await env
+            .TrainingDataService.Received(1)
+            .GetTextsAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<IEnumerable<string>>(),
+                Arg.Any<IList<ISFText>>(),
+                Arg.Any<IList<ISFText>>()
+            );
     }
 
     [Test]
@@ -2086,7 +2218,7 @@ public class MachineProjectServiceTests
 
     [Test]
     [TestCaseSource(nameof(SyncProjectCorporaAsyncOptions))]
-    public async Task SyncProjectCorporaAsync_PreTranslation(TestEnvironmentOptions options)
+    public async Task SyncProjectCorporaAsync_Success(TestEnvironmentOptions options)
     {
         // Set up test environment
         var env = new TestEnvironment(
@@ -2104,7 +2236,7 @@ public class MachineProjectServiceTests
             .Returns(Task.CompletedTask);
         env.Service.Configure()
             .CreateOrUpdateParallelCorpusAsync(
-                TranslationEngine01,
+                options.PreTranslate ? TranslationEngine01 : TranslationEngine02,
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<IList<string>>(),
@@ -2116,7 +2248,7 @@ public class MachineProjectServiceTests
             .SyncAdditionalTrainingData(
                 User01,
                 Arg.Any<SFProject>(),
-                TranslationEngine01,
+                options.PreTranslate ? TranslationEngine01 : TranslationEngine02,
                 Arg.Any<BuildConfig>(),
                 Arg.Any<ServalAdditionalTrainingData?>(),
                 CancellationToken.None
@@ -2124,25 +2256,25 @@ public class MachineProjectServiceTests
             .Returns(args => args[4] as ServalAdditionalTrainingData);
 
         // SUT 1
-        await env.Service.SyncProjectCorporaAsync(
+        IList<ServalCorpusSyncInfo> actual = await env.Service.SyncProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: options.PreTranslate,
             CancellationToken.None
         );
-        await env.AssertSyncProjectCorporaAsync(options, createsServalCorpora: true);
+        await env.AssertSyncProjectCorporaAsync(options, actual, createsServalCorpora: true);
 
         // Re-run using existing ServalCorpusFiles
         Assert.IsNotEmpty(env.ProjectSecrets.Get(Project02).ServalData!.CorpusFiles);
 
         // SUT 2
-        await env.Service.SyncProjectCorporaAsync(
+        actual = await env.Service.SyncProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: options.PreTranslate,
             CancellationToken.None
         );
-        await env.AssertSyncProjectCorporaAsync(options, createsServalCorpora: false);
+        await env.AssertSyncProjectCorporaAsync(options, actual, createsServalCorpora: false);
 
         // Re-run after changing the languages
         await env.Projects.UpdateAsync(
@@ -2169,13 +2301,13 @@ public class MachineProjectServiceTests
         );
 
         // SUT 3
-        await env.Service.SyncProjectCorporaAsync(
+        actual = await env.Service.SyncProjectCorporaAsync(
             User01,
             new BuildConfig { ProjectId = Project02 },
             preTranslate: options.PreTranslate,
             CancellationToken.None
         );
-        await env.AssertSyncProjectCorporaAsync(options, createsServalCorpora: true);
+        await env.AssertSyncProjectCorporaAsync(options, actual, createsServalCorpora: true);
     }
 
     [Test]
@@ -2979,12 +3111,10 @@ public class MachineProjectServiceTests
         public bool AlternateSource { get; init; }
         public bool AlternateTrainingSource { get; init; }
         public bool AlternateTrainingSourceAndSourceAreTheSame { get; init; }
-        public bool BuildIsPending { get; init; }
         public bool HasTranslationEngineForNmt { get; init; }
         public bool HasTranslationEngineForSmt { get; init; }
         public bool LegacyCorpora { get; init; }
         public bool PreTranslate { get; init; }
-        public string? ServalConfig { get; init; }
         public bool UseEchoForPreTranslation { get; init; }
     }
 
@@ -3045,18 +3175,6 @@ public class MachineProjectServiceTests
             CorporaClient
                 .CreateAsync(Arg.Any<CorpusConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(new Corpus { Id = Corpus01 }));
-            if (options.BuildIsPending)
-            {
-                TranslationEnginesClient
-                    .GetCurrentBuildAsync(Arg.Any<string>(), null, CancellationToken.None)
-                    .Returns(Task.FromResult(new TranslationBuild { Pretranslate = [new PretranslateCorpus()], }));
-            }
-            else
-            {
-                TranslationEnginesClient
-                    .GetCurrentBuildAsync(Arg.Any<string>(), null, CancellationToken.None)
-                    .ThrowsAsync(ServalApiExceptions.NoContent);
-            }
 
             ParatextService = Substitute.For<IParatextService>();
             ParatextService.GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns("en");
@@ -3156,7 +3274,7 @@ public class MachineProjectServiceTests
                                 ParatextId = Paratext02,
                                 WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
-                            DraftConfig = new DraftConfig { ServalConfig = options.ServalConfig },
+                            DraftConfig = new DraftConfig(),
                         },
                         WritingSystem = new WritingSystem { Tag = "en_GB" },
                     },
@@ -3267,8 +3385,8 @@ public class MachineProjectServiceTests
         public IParatextService ParatextService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
+        private MemoryRepository<TrainingData> TrainingData { get; }
         public ITrainingDataService TrainingDataService { get; }
-        public MemoryRepository<TrainingData> TrainingData { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
@@ -3278,9 +3396,14 @@ public class MachineProjectServiceTests
         /// Asserts whether the correct API calls have bene made for SyncProjectCorporaAsync.
         /// </summary>
         /// <param name="options">The test environment.</param>
+        /// <param name="actual">The actual results from the synchronization.</param>
         /// <param name="createsServalCorpora">If <c>true</c>, expect corpora to be created on Serval.</param>
         /// <returns>An asynchronous task.</returns>
-        public async Task AssertSyncProjectCorporaAsync(TestEnvironmentOptions options, bool createsServalCorpora)
+        public async Task AssertSyncProjectCorporaAsync(
+            TestEnvironmentOptions options,
+            IList<ServalCorpusSyncInfo> actual,
+            bool createsServalCorpora
+        )
         {
             int numberOfServalCorpusFiles = 2;
 
@@ -3288,11 +3411,25 @@ public class MachineProjectServiceTests
             await CorporaClient
                 .Received(createsServalCorpora ? 1 : 0)
                 .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project02}"));
+            Assert.AreEqual(options.PreTranslate ? 2 : 1, actual.Count(s => s.ProjectId == Project02));
 
             // Source
             await CorporaClient
                 .Received(createsServalCorpora ? 1 : 0)
                 .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project01}"));
+
+            // See how many times the source corpus was used in the parallel corpora
+            int expected = options switch
+            {
+                { PreTranslate: false } => 1,
+                { PreTranslate: true, AlternateTrainingSource: true, AlternateTrainingSourceAndSourceAreTheSame: true }
+                    => 2,
+                { PreTranslate: true, AlternateTrainingSource: true, AlternateSource: true } => 0,
+                { PreTranslate: true, AlternateTrainingSource: true } => 1,
+                { PreTranslate: true, AlternateSource: true } => 1,
+                { PreTranslate: true } => 2,
+            };
+            Assert.AreEqual(expected, actual.Count(s => s.ProjectId == Project01));
 
             // Alternate Source
             if (options.AlternateSource)
@@ -3300,6 +3437,7 @@ public class MachineProjectServiceTests
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project03}"));
+                Assert.AreEqual(options.PreTranslate ? 1 : 0, actual.Count(s => s.ProjectId == Project03));
                 numberOfServalCorpusFiles++;
             }
 
@@ -3310,6 +3448,7 @@ public class MachineProjectServiceTests
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project04}"));
+                Assert.AreEqual(options.PreTranslate ? 1 : 0, actual.Count(s => s.ProjectId == Project04));
                 numberOfServalCorpusFiles++;
             }
 
@@ -3319,6 +3458,7 @@ public class MachineProjectServiceTests
                 await CorporaClient
                     .Received(createsServalCorpora ? 1 : 0)
                     .CreateAsync(Arg.Is<CorpusConfig>(c => c.Name == $"{Project02}_{Project05}"));
+                Assert.AreEqual(options.PreTranslate ? 1 : 0, actual.Count(s => s.ProjectId == Project05));
                 numberOfServalCorpusFiles++;
             }
 
@@ -3331,6 +3471,18 @@ public class MachineProjectServiceTests
             await Service
                 .Received(numberOfServalCorpusFiles)
                 .UploadParatextFileAsync(Arg.Any<ServalCorpusFile>(), Arg.Any<string>(), CancellationToken.None);
+
+            // The parallel corpora will be created or updated
+            await Service
+                .Received(options.PreTranslate ? 2 : 1)
+                .CreateOrUpdateParallelCorpusAsync(
+                    options.PreTranslate ? TranslationEngine01 : TranslationEngine02,
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IList<string>>(),
+                    Arg.Any<IList<string>>(),
+                    CancellationToken.None
+                );
 
             // Unused corpora will be removed
             await Service

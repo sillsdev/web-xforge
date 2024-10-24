@@ -37,18 +37,6 @@ public class ServalData
     public string? TranslationJobId { get; set; }
 
     /// <summary>
-    /// Gets or sets the Identifier of the Parallel Corpus to be used in the PreTranslate section of the
-    /// <see cref="Serval.Client.TranslationBuildConfig"/> for translation (SMT) builds.
-    /// </summary>
-    public string? TranslationParallelCorpusIdForPreTranslate { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Identifier of the Parallel Corpus to be used in the TrainOn section of the
-    /// <see cref="Serval.Client.TranslationBuildConfig"/> for translation (SMT) builds.
-    /// </summary>
-    public string? TranslationParallelCorpusIdForTrainOn { get; set; }
-
-    /// <summary>
     /// Gets or sets the date and time that the translation build was queued.
     /// </summary>
     /// <value>
@@ -90,13 +78,18 @@ public class ServalData
     /// Gets or sets the Identifier of the Parallel Corpus to be used in the PreTranslate section of the
     /// <see cref="Serval.Client.TranslationBuildConfig"/> for pre-translation (NMT) builds.
     /// </summary>
-    public string? PreTranslationParallelCorpusIdForPreTranslate { get; set; }
+    public string? ParallelCorpusIdForPreTranslate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Identifier of the Parallel Corpus to be used for translation (SMT) builds.
+    /// </summary>
+    public string? ParallelCorpusIdForSmt { get; set; }
 
     /// <summary>
     /// Gets or sets the Identifier of the Parallel Corpus to be used in the TrainOn section of the
     /// <see cref="Serval.Client.TranslationBuildConfig"/> for pre-translation (NMT) builds.
     /// </summary>
-    public string? PreTranslationParallelCorpusIdForTrainOn { get; set; }
+    public string? ParallelCorpusIdForTrainOn { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time that the pre-translation build was queued.
