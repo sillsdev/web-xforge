@@ -141,14 +141,16 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Añadir al proyecto",
-    "book_is_empty": "{{ bookName }} en el proyecto {{ projectName }} está vacío",
+    "book_does_not_exist": "{{ bookName }} en el proyecto seleccionado no existe",
+    "book_is_empty": "{{ bookName }} en el proyecto {{ projectName }} está vacío.",
     "cancel": "Cancelar",
-    "connect_to_the_internet": "Por favor, conéctate a internet para añadir el borrador a tu proyecto",
+    "confirm_overwrite": "Please confirm you want to overwrite the book.",
+    "connect_to_the_internet": "Please connect to the internet to add the draft to your project.",
     "choose_project": "Elegir proyecto",
-    "error_fetching_projects": "Hubo un error al recuperar proyectos.",
     "i_understand_overwrite_book": "Entiendo que el borrador sobrescribirá {{ bookName }} en el proyecto {{ projectName }}",
-    "looking_for_unlisted_project": "¿Buscas un proyecto que no esté en la lista? Conéctalo en {{ templateTagBoundary }}la página de proyectos{{ templateTagBoundary }} primero",
-    "no_write_permission": "No tiene permiso para escribir a este libro en este proyecto. Póngase en contacto con el administrador del proyecto para obtener el permiso.",
+    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ underlineStart }}the projects page{{ underlineEnd }} first.",
+    "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
+    "please_select_valid_project": "Please select a valid project",
     "project_has_text_in_chapters": "{{ bookName }} en {{ projectName }} tiene texto en los capítulos {{ numChapters }}",
     "select_alternate_project": "Seleccione el proyecto al que desea añadir el borrador"
   },
@@ -212,6 +214,8 @@
   },
   "draft_generation_steps": {
     "back": "Atrás",
+    "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
+    "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
     "choose_additional_training_data_files_label": "Entrenamiento adicional",
     "choose_additional_training_data_files": "Elija archivos adicionales para entrenar el modelo lingüístico",
     "choose_books_for_training_error": "No hay libros seleccionados. Seleccione libros de formación para continuar.",
@@ -385,7 +389,8 @@
   "project_select": {
     "please_select_valid_project_or_resource": "Por favor, seleccione un proyecto o recurso válido",
     "projects": "Proyectos",
-    "resources": "Recursos"
+    "resources": "Recursos",
+    "the_book": "The book"
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",
@@ -533,7 +538,9 @@
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
     "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado...",
     "sync_is_disabled": "La sincronización para este proyecto tuvo que ser desactivada, por lo que no está disponible en este momento. Por favor, contacte con {{ email }} para discutir lo que hay que hacer para que la sincronización del proyecto pueda ser activada de nuevo.",
-    "sync_failure_support_message": "Algo salió mal la última vez que Scripture Forge intentó sincronizar el proyecto con Paratext. Si sigue sin funcionar después de intentarlo de nuevo, por favor, envíe un informe de problema al respecto escribiendo a {{email}}."
+    "sync_failure_support_message": "Algo salió mal la última vez que Scripture Forge intentó sincronizar el proyecto con Paratext. Si sigue sin funcionar después de intentarlo de nuevo, por favor, envíe un informe de problema al respecto escribiendo a {{email}}.",
+    "sync_user_permissions_failure_message": "The last user to synchronize this project no longer has permission to sync. Please contact the project administrator.",
+    "user_permissions_failure_dialog_message": "You no longer have permission to synchronize this project with Paratext. Please contact the project administrator."
   },
   "tab_group_header": {
     "no_tabs_available": "No hay pistañas disponibles."

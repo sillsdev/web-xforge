@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "Der Zugriff auf Dein Mikrofon wurde verweigert. Bitte aktiviere das Mikrofon über Deinen Browser.",
     "mic_not_found": "Kein Mikrofon gefunden. Bitte verbinde ein Mikrofon mit Deinem Gerät.",
-    "record": "Record",
+    "record": "Aufnehmen",
     "re_record": "Erneut aufnehmen",
     "save": "Speichern",
     "stop_recording": "Aufnahme stoppen"
@@ -39,8 +39,8 @@
     "update_is_available": "Ein Update ist verfügbar. Bitte aktualisiere die Seite."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_record": "Audio aufnehmen",
+    "tooltip_stop": "Aufnahme beenden"
   },
   "canon": {
     "book_names": {
