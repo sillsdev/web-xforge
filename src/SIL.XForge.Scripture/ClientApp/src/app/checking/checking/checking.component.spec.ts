@@ -43,6 +43,7 @@ import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
+import { MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -81,7 +82,10 @@ import { QuestionDialogData } from '../question-dialog/question-dialog.component
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
-import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
+import {
+  CheckingCommentFormComponent,
+  CheckingResponse
+} from './checking-answers/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
@@ -105,6 +109,7 @@ const mockedDialogService = mock(DialogService);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
+const mockedMediaBreakpointService = mock(MediaBreakpointService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
@@ -181,6 +186,7 @@ describe('CheckingComponent', () => {
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
+      { provide: MediaBreakpointService, useMock: mockedMediaBreakpointService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
@@ -1258,7 +1264,6 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(0);
       const question = env.getQuestionDoc('q1Id');
       expect(env.saveAnswerButton).not.toBeNull();
-      expect(env.saveAnswerButton.nativeElement.disabled).toBe(true);
       env.selectQuestion(2);
       resolveUpload$.next();
       env.waitForSliderUpdate();
@@ -1421,11 +1426,9 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(John 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
-      // env.clickButton(env.selectTextTab);
       env.waitForSliderUpdate();
       env.clickButton(env.clearScriptureButton);
-      env.clickButton(env.saveAnswerButton);
-      expect(env.getAnswerScripture(0)).toBeFalsy();
+      expect(env.selectVersesButton).not.toBeNull();
       flush();
       discardPeriodicTasks();
     }));
@@ -1443,24 +1446,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerEditButton(0)).toBeNull();
       env.selectQuestion(7);
       expect(env.getAnswerEditButton(0)).not.toBeNull();
-    }));
-
-    it('error about "answer or recording required" goes away after add recording', fakeAsync(() => {
-      const env = new TestEnvironment({ user: CHECKER_USER });
-      env.selectQuestion(1);
-      env.clickButton(env.addAnswerButton);
-      env.clickButton(env.saveAnswerButton);
-      // Have not given any answer yet, so clicking Save should show a validation error.
-      expect(env.component.answersPanel!.textAndAudio?.form.invalid).withContext('setup').toBe(true);
-      expect(env.answerFormErrors.length).withContext('setup').toEqual(1);
-      expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('before saving');
-      env.waitForSliderUpdate();
-
-      // SUT
-      env.simulateAudioRecordingFinishedProcessing();
-
-      // We made a recording, so we should not be showing a validation error.
-      expect(env.component.answersPanel!.textAndAudio?.form.valid).toBe(true);
     }));
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
@@ -2524,6 +2509,8 @@ class TestEnvironment {
     when(doc.data).thenReturn(instance(textAudio));
     when(query.docs).thenReturn([instance(doc)]);
     when(mockedProjectService.queryAudioText('project01')).thenResolve(instance(query));
+    when(mockedMediaBreakpointService.width(anything(), anything())).thenReturn('(width < 576px)');
+    when(mockedMediaBreakpointService.width(anything(), anything(), anything())).thenReturn('(width > 576px)');
 
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
@@ -2598,7 +2585,7 @@ class TestEnvironment {
   }
 
   get cancelAnswerButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#cancel-answer'));
+    return this.fixture.debugElement.query(By.css('#cancel-response'));
   }
 
   async getCurrentBookAndChapter(): Promise<string> {
@@ -2695,10 +2682,6 @@ class TestEnvironment {
     return this.fixture.debugElement.nativeElement.querySelectorAll('usx-para');
   }
 
-  get recordButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form button.record'));
-  }
-
   get recordQuestionButton(): DebugElement {
     return this.answerPanel.query(By.css('.record-question-button'));
   }
@@ -2708,7 +2691,7 @@ class TestEnvironment {
   }
 
   get saveAnswerButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#save-answer'));
+    return this.fixture.debugElement.query(By.css('#save-response'));
   }
 
   get yourAnswerContainer(): DebugElement {
@@ -2878,12 +2861,14 @@ class TestEnvironment {
 
   answerQuestion(answer: string, audioFilename?: string): void {
     this.clickButton(this.addAnswerButton);
-    this.setTextFieldValue(this.yourAnswerField, answer);
+    const response: CheckingResponse = { text: answer };
+    const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
     if (audioFilename != null) {
-      const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
-      this.component.answersPanel?.textAndAudio?.audio.setValue(audio);
+      response.audio = audio;
     }
-    this.clickButton(this.saveAnswerButton);
+    this.component.answersPanel?.submit(response);
+    tick();
+    this.fixture.detectChanges();
     this.waitForSliderUpdate();
   }
 
@@ -3000,7 +2985,7 @@ class TestEnvironment {
   }
 
   getSaveCommentButton(answerIndex: number): DebugElement {
-    return this.getAnswer(answerIndex).query(By.css('.save-comment'));
+    return this.getAnswer(answerIndex).query(By.css('#save-response'));
   }
 
   getUnread(question: DebugElement): number {
@@ -3095,16 +3080,6 @@ class TestEnvironment {
       data: newQuestion
     });
     this.realtimeService.updateAllSubscribeQueries();
-  }
-
-  /** To use if the Stop Recording button isn't showing up in the test DOM. */
-  simulateAudioRecordingFinishedProcessing(): void {
-    this.component.answersPanel!.textAndAudio!.audioComponent!.audio = {
-      status: 'processed',
-      url: 'test-audio-short.mp3'
-    };
-    flush();
-    this.fixture.detectChanges();
   }
 
   resolveFileUploadSubject(fileUrl: string): Subject<void> {

@@ -1,4 +1,3 @@
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
@@ -8,12 +7,11 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { VerseRefData, fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -32,10 +30,9 @@ import {
 import { CheckingUtils } from '../../checking.utils';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
-import { TextAndAudioComponent } from '../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
-import { CheckingResponse } from './checking-comments/checking-comment-form/checking-comment-form.component';
+import { CheckingResponse } from './checking-comment-form/checking-comment-form.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
@@ -84,7 +81,6 @@ enum LikeAnswerResponse {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
   @ViewChild(CheckingQuestionComponent) questionComponent?: CheckingQuestionComponent;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
@@ -123,9 +119,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService,
-    private readonly breakpointObserver: BreakpointObserver,
-    private readonly mediaBreakpointService: MediaBreakpointService
+    private readonly projectService: SFProjectService
   ) {
     super();
   }
@@ -570,10 +564,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       text: response.text,
       answer: this.activeAnswer,
       audio: response.audio,
-      scriptureText: response.scripture,
-      selectionStartClipped: response.scriptureStartClipped,
-      selectionEndClipped: response.scriptureEndClipped,
-      verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef),
+      scriptureText: response.selectedText,
+      selectionStartClipped: response.selectionStartClipped,
+      selectionEndClipped: response.selectionEndClipped,
+      verseRef: response.verseRef == null ? undefined : response.verseRef,
       questionDoc: this.questionDoc,
       savedCallback: () => {
         this.hideAnswerForm();

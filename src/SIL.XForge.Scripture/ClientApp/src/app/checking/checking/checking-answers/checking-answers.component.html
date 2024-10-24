@@ -48,18 +48,16 @@
           }
         </div>
       } @else {
-        <div>
-          <form autocomplete="off" id="answer-form" appScrollIntoView>
-            <app-checking-comment-form
-              [comment]="this.activeAnswer"
-              [project]="project"
-              [questionDoc]="questionDoc"
-              [verseRef]="verseRef"
-              [textsByBookId]="textsByBookId"
-              [textSelectionEnabled]="true"
-              (cancel)="hideAnswerForm()"
-            ></app-checking-comment-form>
-          </form>
+        <div id="answer-form">
+          <app-checking-comment-form
+            [answer]="this.activeAnswer"
+            [project]="project"
+            [questionDoc]="questionDoc"
+            [textsByBookId]="textsByBookId"
+            [textSelectionEnabled]="true"
+            (cancel)="hideAnswerForm()"
+            (save)="submit($event)"
+          ></app-checking-comment-form>
         </div>
       }
       @if (shouldShowAnswers) {
