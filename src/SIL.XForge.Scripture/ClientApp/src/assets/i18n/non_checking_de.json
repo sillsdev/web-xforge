@@ -141,14 +141,16 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Zum Projekt hinzufügen",
-    "book_is_empty": "{{ bookName }} im {{ projectName }} Projekt ist leer",
+    "book_does_not_exist": "{{ bookName }} ist im ausgewählten Projekt nicht enthalten",
+    "book_is_empty": "{{ bookName }} ist im Projekt {{ projectName }} leer.",
     "cancel": "Abbrechen",
-    "connect_to_the_internet": "Bitte stelle eine Verbindung zum Internet her, um den Entwurf zu Deinem Projekt hinzuzufügen",
+    "confirm_overwrite": "Bitte bestätige, dass Du das Buch überschreiben möchtest.",
+    "connect_to_the_internet": "Bitte stelle eine Verbindung zum Internet her, um den Entwurf zu Deinem Projekt hinzuzufügen.",
     "choose_project": "Projekt auswählen",
-    "error_fetching_projects": "Es gab einen Fehler beim Abrufen von Projekten.",
     "i_understand_overwrite_book": "Mir ist bewusst, dass der Entwurf von {{ bookName }} im Projekt {{ projectName }} überschreiben wird",
-    "looking_for_unlisted_project": "Suchst Du ein Projekt, das nicht aufgelistet ist? Verbinde es zuerst auf {{ templateTagBoundary }}mit der Projektseite{{ templateTagBoundary }}",
-    "no_write_permission": "Du hast keine Schreibberechtigung für dieses Buch in diesem Projekt. Kontaktiere den Projektadministrator, um die Berechtigung zu erhalten.",
+    "looking_for_unlisted_project": "Suchst Du ein Projekt, das nicht aufgelistet ist? Verbinde es zuerst auf {{ underlineStart }}der Projektseite{{ underlineEnd }}.",
+    "no_write_permissions": "Du hast keine Schreibberechtigung für dieses Buch in diesem Projekt. Kontaktiere den Administrator des Projekts, um die Berechtigung zu erhalten.",
+    "please_select_valid_project": "Bitte wähle ein gültiges Produkt",
     "project_has_text_in_chapters": "{{ bookName }} im {{ projectName }} hat Text in {{ numChapters }} Kapiteln",
     "select_alternate_project": "Wähle das Projekt, dem Du den Entwurf hinzufügen möchtest"
   },
@@ -212,6 +214,8 @@
   },
   "draft_generation_steps": {
     "back": "Zurück",
+    "books_are_hidden_show_why": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Grund anzeigen{{ underlineEnd }}",
+    "books_are_hidden_hide_explanation": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Erklärung ausblenden{{ underlineEnd }}",
     "choose_additional_training_data_files_label": "Zusätzliche Schulung",
     "choose_additional_training_data_files": "Zusätzliche Dateien für die Schulung des Sprachmodells wählen",
     "choose_books_for_training_error": "Keine Bücher ausgewählt. Wähle Bücher für die Schulung aus, um fortzufahren.",
@@ -385,7 +389,8 @@
   "project_select": {
     "please_select_valid_project_or_resource": "Bitte wähle ein gültiges Projekt oder eine gültige Ressource aus",
     "projects": "Projekte",
-    "resources": "Ressourcen"
+    "resources": "Ressourcen",
+    "the_book": "Das Buch"
   },
   "question_answered_dialog": {
     "cancel": "Abbrechen",
@@ -441,7 +446,7 @@
     "anyone_with_a_link": "Jeder mit einem Link",
     "biblical_terms_will_be_enabled": "Biblische Begriffe werden angezeigt und können in Scripture Forge aktualisiert werden",
     "biblical_terms": "Biblische Begriffe aktivieren",
-    "cannot_delete_project_while_syncing": "You cannot delete a project while it is syncing with Paratext. Please wait for the synchronization to complete.",
+    "cannot_delete_project_while_syncing": "Du kannst ein Projekt nicht löschen, während es mit Paratext synchronisiert wird. Bitte warte, bis die Synchronisierung abgeschlossen ist.",
     "community_checking_settings": "Überprüfung mit der Zielgruppe",
     "connect_network_to_change_settings": "Projekteinstellungen können offline nicht geändert werden. Bitte stelle eine Verbindung zum Internet her, um Änderungen vorzunehmen.",
     "danger_zone": "Gefahrenbereich",
@@ -503,8 +508,8 @@
     "error_offline": "Du bist offline. Bitte stelle eine Verbindung zum Internet her, um diese Ressource zu laden.",
     "loading": "Wird geladen",
     "loading_ellipsis": "{{ editor_add_tab_resource_dialog.loading }} ...",
-    "select_project_or_resource": "Select a Paratext project or DBL resource.",
-    "project_or_resource": "Project or resource",
+    "select_project_or_resource": "Wähle ein Paratext-Projekt oder eine Ressource der digitalen Bibelbibliothek.",
+    "project_or_resource": "Projekt oder Ressource",
     "cancel": "Abbrechen",
     "select": "Wählen"
   },
@@ -533,7 +538,9 @@
     "synchronize_project": "{{ projectName }} mit Paratext synchronisieren",
     "your_project_is_being_synchronized": "Dein Projekt wird synchronisiert...",
     "sync_is_disabled": "Die Synchronisierung für dieses Projekt musste deaktiviert werden und ist daher im Moment nicht verfügbar. Bitte kontaktiere {{ email }}, um zu besprechen, was zu tun ist, damit die Projektsynchronisation wieder aktiviert werden kann.",
-    "sync_failure_support_message": "Beim letzten Versuch von Scripture Forge, das Projekt mit Paratext zu synchronisieren, ist ein Fehler aufgetreten. Wenn es nach einem erneuten Versuch immer noch nicht funktioniert, melde das Problem bitte an {{email}}."
+    "sync_failure_support_message": "Beim letzten Versuch von Scripture Forge, das Projekt mit Paratext zu synchronisieren, ist ein Fehler aufgetreten. Wenn es nach einem erneuten Versuch immer noch nicht funktioniert, melde das Problem bitte an {{email}}.",
+    "sync_user_permissions_failure_message": "Der letzte Benutzer, der dieses Projekt synchronisiert hat, hat keine Berechtigung mehr für die Synchronisierung. Bitte wende Dich an den Projektadministrator.",
+    "user_permissions_failure_dialog_message": "Du hast keine Berechtigung mehr, dieses Projekt mit Paratext zu synchronisieren. Bitte kontaktiere den Projektadministrator."
   },
   "tab_group_header": {
     "no_tabs_available": "Keine Registerkarten verfügbar."

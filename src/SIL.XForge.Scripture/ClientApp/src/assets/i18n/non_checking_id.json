@@ -141,14 +141,16 @@
   },
   "draft_apply_dialog": {
     "add_to_project": "Tambahkan ke proyek",
-    "book_is_empty": "{{ bookName }} di {{ projectName }} proyek kosong",
+    "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
+    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty.",
     "cancel": "Batal",
-    "connect_to_the_internet": "Harap sambungkan ke internet untuk menambahkan draf ke proyek Anda",
+    "confirm_overwrite": "Please confirm you want to overwrite the book.",
+    "connect_to_the_internet": "Please connect to the internet to add the draft to your project.",
     "choose_project": "Pilih Proyek",
-    "error_fetching_projects": "Ada kesalahan dalam mengambil proyek.",
     "i_understand_overwrite_book": "Saya memahami bahwa konsep tersebut akan menimpa {{ bookName }} dalam proyek {{ projectName }}",
-    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ templateTagBoundary }}the projects page{{ templateTagBoundary }} first",
-    "no_write_permission": "Anda tidak memiliki izin untuk menulis pada kitab ini. Hubungi administrator proyek Anda untuk mendapatkan izin.",
+    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ underlineStart }}the projects page{{ underlineEnd }} first.",
+    "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
+    "please_select_valid_project": "Please select a valid project",
     "project_has_text_in_chapters": "{{ bookName }} dalam {{ projectName }} memiliki teks dalam pasal {{ numChapters }}",
     "select_alternate_project": "Pilih proyek yang ingin Anda tambahkan konsepnya"
   },
@@ -212,6 +214,8 @@
   },
   "draft_generation_steps": {
     "back": "Kembali",
+    "books_are_hidden_show_why": "{{ numBooks }} books are hidden. {{ underlineStart }}Show why{{ underlineEnd }}",
+    "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
     "choose_additional_training_data_files_label": "Pelatihan tambahan",
     "choose_additional_training_data_files": "Memilih file tambahan untuk melatih model bahasa",
     "choose_books_for_training_error": "Tidak ada kitab yang dipilih. Pilih kitab pelatihan untuk melanjutkan.",
@@ -385,7 +389,8 @@
   "project_select": {
     "please_select_valid_project_or_resource": "Pilih proyek atau sumber yang benar",
     "projects": "Proyek",
-    "resources": "Sumber"
+    "resources": "Sumber",
+    "the_book": "The book"
   },
   "question_answered_dialog": {
     "cancel": "Batal",
@@ -533,7 +538,9 @@
     "synchronize_project": "Menyelaraskan {{ projectName }} dengan Paratext",
     "your_project_is_being_synchronized": "Proyek Anda sedang diselaraskan...",
     "sync_is_disabled": "Penyelarasan untuk proyek ini perlu dinonaktifkan, sehingga tidak tersedia untuk saat ini. Silakan hubungi {{ email }} untuk mendiskusikan apa yang perlu dilakukan agar penyelarasan proyek dapat diaktifkan kembali.",
-    "sync_failure_support_message": "Ada kesalahan saat terakhir kali Scripture Forge mencoba menyelaraskan proyek dengan Paratext. Jika masih tidak berhasil setelah Anda mencoba lagi, silakan laporkan masalahnya dengan menulis ke {{email}}."
+    "sync_failure_support_message": "Ada kesalahan saat terakhir kali Scripture Forge mencoba menyelaraskan proyek dengan Paratext. Jika masih tidak berhasil setelah Anda mencoba lagi, silakan laporkan masalahnya dengan menulis ke {{email}}.",
+    "sync_user_permissions_failure_message": "The last user to synchronize this project no longer has permission to sync. Please contact the project administrator.",
+    "user_permissions_failure_dialog_message": "You no longer have permission to synchronize this project with Paratext. Please contact the project administrator."
   },
   "tab_group_header": {
     "no_tabs_available": "No tabs available."
