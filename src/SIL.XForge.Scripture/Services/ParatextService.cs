@@ -804,6 +804,11 @@ public class ParatextService : DisposableBase, IParatextService
                 }
             }
 
+            // if the project is a back translation, we want to check if user is still
+            // on project with permission to sync or return an error to UI
+            if (!users.Select(u => u.Id).ToList().Contains(userSecret.Id))
+                throw new ForbiddenException();
+
             return users;
         }
     }

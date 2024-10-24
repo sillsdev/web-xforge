@@ -4391,6 +4391,21 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetParatextUsersAsync_UserNoLongerOnBackTranslationError()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User03, env.Username03, env.ParatextUserId03);
+        env.SetSharedRepositorySource(userSecret, UserRoles.Administrator);
+        var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+        SFProject project = projects.First();
+        Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
+        env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
+        Assert.ThrowsAsync<ForbiddenException>(
+            async () => await env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public async Task GetParatextUsersAsync_UsesTheRepositoryForUnregisteredProjects()
     {
         var env = new TestEnvironment();
