@@ -1,13 +1,14 @@
 import { InjectionToken } from '@angular/core';
+import {
+  LynxInsightFilter,
+  LynxInsightSortOrder,
+  LynxInsightType
+} from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 
 export interface LynxInsightRange {
   index: number;
   length: number;
 }
-
-// Ordered by severity, lowest to highest
-export const LynxInsightTypes = ['info', 'warning', 'error'] as const;
-export type LynxInsightType = (typeof LynxInsightTypes)[number];
 
 // Interface whose props are all boolean or undefined
 export interface LynxInsightDisplayState {
@@ -30,18 +31,6 @@ export interface LynxInsight {
 export interface LynxInsightNode {
   code: string;
   children?: LynxInsight[];
-}
-
-// Ordered from widest to narrowest scope
-export const LynxInsightFilterScopes = ['project', 'book', 'chapter'] as const;
-export type LynxInsightFilterScope = (typeof LynxInsightFilterScopes)[number];
-
-export const LynxInsightSortOrders = ['severity', 'appearance'] as const;
-export type LynxInsightSortOrder = (typeof LynxInsightSortOrders)[number];
-
-export interface LynxInsightFilter {
-  types: LynxInsightType[];
-  scope: LynxInsightFilterScope;
 }
 
 export interface LynxInsightConfig {

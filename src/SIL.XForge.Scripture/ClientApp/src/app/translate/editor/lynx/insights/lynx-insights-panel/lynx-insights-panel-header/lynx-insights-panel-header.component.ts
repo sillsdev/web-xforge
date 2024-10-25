@@ -1,7 +1,6 @@
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { I18nService } from 'xforge-common/i18n.service';
 import {
   LynxInsightFilter,
   LynxInsightFilterScope,
@@ -10,7 +9,8 @@ import {
   LynxInsightSortOrders,
   LynxInsightType,
   LynxInsightTypes
-} from '../../lynx-insight';
+} from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LynxInsightStateService } from '../../lynx-insight-state.service';
 
 @Component({
