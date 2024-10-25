@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import Quill, { DeltaStatic, StringMap } from 'quill';
+import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { DeltaOperation } from 'rich-text';
 import { InsightRenderService } from '../base-services/insight-render.service';
-import { LynxInsight, LynxInsightTypes } from '../lynx-insight';
+import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 
 const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
