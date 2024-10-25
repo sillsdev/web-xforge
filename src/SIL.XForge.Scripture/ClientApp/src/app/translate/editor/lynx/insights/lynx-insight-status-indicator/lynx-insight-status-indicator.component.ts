@@ -1,7 +1,7 @@
 import { Component, HostListener, Input } from '@angular/core';
 import Quill from 'quill';
+import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { Observable, map } from 'rxjs';
-import { LynxInsightType } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface InsightCount {

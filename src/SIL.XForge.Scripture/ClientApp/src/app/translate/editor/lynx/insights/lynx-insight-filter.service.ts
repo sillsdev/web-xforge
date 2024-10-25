@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
+import { LynxInsightFilter, LynxInsightFilterScope } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
-import { LynxInsight, LynxInsightFilter, LynxInsightFilterScope } from './lynx-insight';
+import { LynxInsight } from './lynx-insight';
 
 @Injectable({
   providedIn: 'root'

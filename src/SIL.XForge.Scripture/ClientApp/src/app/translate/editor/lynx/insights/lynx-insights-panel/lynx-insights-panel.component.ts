@@ -6,6 +6,11 @@ import { Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { groupBy } from 'lodash-es';
 import { RangeStatic } from 'quill';
+import {
+  LynxInsightSortOrder,
+  LynxInsightType,
+  LynxInsightTypes
+} from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { Delta } from 'rich-text';
 import { combineLatest, map, switchMap, tap } from 'rxjs';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
@@ -16,15 +21,7 @@ import { SFProjectService } from '../../../../../core/sf-project.service';
 import { getText, rangeComparer } from '../../../../../shared/text/quill-scripture';
 import { combineVerseRefStrs, getVerseRefFromSegmentRef } from '../../../../../shared/utils';
 import { EditorSegmentService } from '../base-services/editor-segment.service';
-import {
-  EDITOR_INSIGHT_DEFAULTS,
-  LynxInsight,
-  LynxInsightConfig,
-  LynxInsightRange,
-  LynxInsightSortOrder,
-  LynxInsightType,
-  LynxInsightTypes
-} from '../lynx-insight';
+import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightRange } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface InsightPanelNode {
