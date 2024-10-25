@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "L'accès à votre microphone a été refusé. Veuillez activer le microphone depuis votre navigateur.",
     "mic_not_found": "Aucun microphone n'a été détecté. Veuillez connecter un microphone à votre appareil.",
-    "record": "Record",
+    "record": "Enregistrer",
     "re_record": "Re-enregistrer",
     "save": "Envoyer la réponse",
     "stop_recording": "Arrêter l'enregistrement"
@@ -39,8 +39,8 @@
     "update_is_available": "Une mise à jour est disponible. Veuillez rafraîchir la page."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_record": "Enregistrer l'audio",
+    "tooltip_stop": "Arrêter l'enregistrement"
   },
   "canon": {
     "book_names": {

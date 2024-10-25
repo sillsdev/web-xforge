@@ -2,7 +2,7 @@
   "audio_recorder_dialog": {
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
     "mic_not_found": "No se ha encontrado ningún micrófono. Por favor, conecta un micrófono a tu dispositivo.",
-    "record": "Record",
+    "record": "Grabar",
     "re_record": "Regrabar",
     "save": "Guardar respuesta",
     "stop_recording": "Detener grabación"
@@ -39,8 +39,8 @@
     "update_is_available": "Hay una actualización disponible. Por favor, actualice la página."
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording"
+    "tooltip_record": "Grabar audio",
+    "tooltip_stop": "Parar de grabar"
   },
   "canon": {
     "book_names": {
