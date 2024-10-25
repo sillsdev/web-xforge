@@ -1,9 +1,10 @@
 import { Component, DestroyRef, Input, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Quill from 'quill';
+import { LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { combineLatest, debounceTime, filter, fromEvent, map, startWith, switchMap } from 'rxjs';
 import { EditorReadyService } from '../base-services/editor-ready.service';
-import { LynxInsight, LynxInsightType } from '../lynx-insight';
+import { LynxInsight } from '../lynx-insight';
 import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface LynxInsightScrollPosition {

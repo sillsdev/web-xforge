@@ -1,18 +1,28 @@
 import { Inject, Injectable } from '@angular/core';
 import { isEqual } from 'lodash-es';
-import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, shareReplay, tap } from 'rxjs';
-import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
-import { filterNullish } from 'xforge-common/util/rxjs-util';
 import {
-  EDITOR_INSIGHT_DEFAULTS,
-  LynxInsight,
-  LynxInsightConfig,
-  LynxInsightDisplayState,
   LynxInsightFilter,
   LynxInsightFilterScope,
   LynxInsightSortOrder,
   LynxInsightType
-} from './lynx-insight';
+} from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
+import { LynxInsightUserData } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight-user-data';
+import {
+  BehaviorSubject,
+  Observable,
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+  take,
+  tap,
+  withLatestFrom
+} from 'rxjs';
+import { ActivatedBookChapterService } from 'xforge-common/activated-book-chapter.service';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightFilterService } from './lynx-insight-filter.service';
 
 @Injectable({
@@ -314,9 +324,11 @@ export class LynxInsightStateService {
     tap(insights => console.log('rawInsights$ changed (LynxInsightStateService)', insights))
   );
 
-  // TODO: Load stored filter from user project config
-  readonly filter$ = new BehaviorSubject<LynxInsightFilter>(this.defaults.filter);
-  readonly orderBy$ = new BehaviorSubject<LynxInsightSortOrder>(this.defaults.sortOrder);
+  // Stored filter and order are loaded from project user config
+  private filterSource$ = new BehaviorSubject<LynxInsightFilter>(this.defaults.filter);
+  readonly filter$ = this.filterSource$.pipe(distinctUntilChanged());
+  private orderBySource$ = new BehaviorSubject<LynxInsightSortOrder>(this.defaults.sortOrder);
+  readonly orderBy$ = this.orderBySource$.pipe(distinctUntilChanged());
 
   readonly filteredChapterInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
@@ -424,9 +436,10 @@ export class LynxInsightStateService {
   constructor(
     @Inject(EDITOR_INSIGHT_DEFAULTS) private defaults: LynxInsightConfig,
     private readonly insightFilterService: LynxInsightFilterService,
-    private readonly activatedBookChapter: ActivatedBookChapterService
+    private readonly activatedBookChapter: ActivatedBookChapterService,
+    private readonly activatedProjectUserConfig: ActivatedProjectUserConfigService
   ) {
-    // TODO: load stored filter from user project config
+    this.init();
   }
 
   getInsight(id: string): LynxInsight | undefined {
@@ -503,11 +516,11 @@ export class LynxInsightStateService {
   }
 
   updateFilter(filter: Partial<LynxInsightFilter>): void {
-    this.filter$.next({ ...this.filter$.value, ...filter });
+    this.filterSource$.next({ ...this.filterSource$.value, ...filter });
   }
 
   updateSort(sortOrder: LynxInsightSortOrder): void {
-    this.orderBy$.next(sortOrder);
+    this.orderBySource$.next(sortOrder);
   }
 
   /**
@@ -515,9 +528,42 @@ export class LynxInsightStateService {
    * @param insightType The type to toggle.
    */
   toggleFilterType(insightType: LynxInsightType): void {
-    const types = this.filter$.value.types;
+    const types = this.filterSource$.value.types;
     const updatedTypes = types.includes(insightType) ? types.filter(t => t !== insightType) : [...types, insightType];
 
-    this.filter$.next({ ...this.filter$.value, types: updatedTypes });
+    this.filterSource$.next({ ...this.filterSource$.value, types: updatedTypes });
+  }
+
+  private init(): void {
+    const stateLoaded$ = new BehaviorSubject<boolean>(false);
+
+    // Load stored state from  project user config
+    this.activatedProjectUserConfig.projectUserConfig$.pipe(filterNullish(), take(1)).subscribe(puc => {
+      const persistedUserState: LynxInsightUserData | undefined = puc?.lynxInsightState;
+
+      if (persistedUserState?.panelData != null) {
+        this.filterSource$.next(persistedUserState.panelData.filter);
+        this.orderBySource$.next(persistedUserState.panelData.sortOrder);
+        this.insightPanelVisibleSource$.next(persistedUserState.panelData.isOpen);
+      }
+
+      // Notify to start persisting changes to user state data
+      stateLoaded$.next(true);
+    });
+
+    // Save state to project user config
+    combineLatest([this.filter$, this.orderBy$, this.insightPanelVisible$, stateLoaded$.pipe(filter(loaded => loaded))])
+      .pipe(withLatestFrom(this.activatedProjectUserConfig.projectUserConfigDoc$))
+      .subscribe(([[filter, sortOrder, isOpen], pucDoc]) => {
+        pucDoc?.submitJson0Op(op =>
+          op.set(puc => puc.lynxInsightState, {
+            panelData: {
+              isOpen,
+              filter,
+              sortOrder
+            }
+          })
+        );
+      });
   }
 }
