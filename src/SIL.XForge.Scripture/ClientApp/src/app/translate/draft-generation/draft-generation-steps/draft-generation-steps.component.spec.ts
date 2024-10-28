@@ -287,9 +287,11 @@ describe('DraftGenerationStepsComponent', () => {
       fixture.detectChanges();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        translationBooks,
-        trainingDataFiles,
         trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
+        trainingDataFiles,
+        trainingScriptureRanges: [],
+        translationBooks,
+        translationScriptureRanges: [],
         fastTraining: false
       } as DraftGenerationStepsResult);
       expect(component.isStepsCompleted).toBe(true);
@@ -402,7 +404,9 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingBooks,
         trainingDataFiles,
+        trainingScriptureRanges: [],
         translationBooks,
+        translationScriptureRanges: [],
         fastTraining: true
       } as DraftGenerationStepsResult);
       expect(generateDraftButton['disabled']).toBe(true);
