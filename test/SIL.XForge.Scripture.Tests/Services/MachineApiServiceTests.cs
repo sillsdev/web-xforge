@@ -2208,14 +2208,6 @@ public class MachineApiServiceTests
             MachineProjectService
                 .GetTranslationEngineTypeAsync(preTranslate: true)
                 .Returns(Task.FromResult(Services.MachineProjectService.Nmt));
-            MachineProjectService
-                .TranslationEngineExistsAsync(
-                    Project01,
-                    TranslationEngine01,
-                    preTranslate: false,
-                    CancellationToken.None
-                )
-                .Returns(Task.FromResult(true));
             MockLogger = new MockLogger<MachineApiService>();
             ParatextService = Substitute.For<IParatextService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
