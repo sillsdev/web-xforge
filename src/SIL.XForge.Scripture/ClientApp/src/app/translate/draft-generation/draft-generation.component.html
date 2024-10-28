@@ -1,12 +1,12 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
   @if (currentPage == "initial") {
-    @if (isBackTranslationMode) {
-      <h1 class="mat-headline-4">{{ t("generate_back_translation_drafts_header") }}</h1>
-    } @else {
-      <h1 class="mat-headline-4">
+    <div class="title">
+      @if (isBackTranslationMode) {
+        {{ t("generate_back_translation_drafts_header") }}
+      } @else {
         {{ t("generate_forward_translation_drafts_header") }}
-      </h1>
-    }
+      }
+    </div>
 
     <section>
       @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {

@@ -6,8 +6,14 @@
   justify-content: flex-end;
   align-items: center;
   column-gap: 8px;
-  h2 {
+  .title {
     flex-grow: 1;
+  }
+
+  .title-icon {
+    font-size: 36px;
+    height: 36px;
+    width: 36px;
   }
 }
 
