@@ -155,7 +155,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
             {
                 await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, false, CancellationToken.None);
+                await _machineProjectService.AddProjectAsync(projectDoc.Id, false, CancellationToken.None);
                 trainEngine = true;
             }
         }
@@ -302,18 +302,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await RealtimeService.DeleteProjectAsync(projectId);
 
         // The machine service requires the project secrets, so call it before removing them
-        await _machineProjectService.RemoveProjectAsync(
-            curUserId,
-            projectId,
-            preTranslate: false,
-            CancellationToken.None
-        );
-        await _machineProjectService.RemoveProjectAsync(
-            curUserId,
-            projectId,
-            preTranslate: true,
-            CancellationToken.None
-        );
+        await _machineProjectService.RemoveProjectAsync(projectId, preTranslate: false, CancellationToken.None);
+        await _machineProjectService.RemoveProjectAsync(projectId, preTranslate: true, CancellationToken.None);
         await ProjectSecrets.DeleteAsync(projectId);
     }
 
@@ -503,7 +493,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     if (hasExistingMachineProject)
                     {
                         await _machineProjectService.RemoveProjectAsync(
-                            curUserId,
                             projectId,
                             preTranslate: false,
                             CancellationToken.None
@@ -512,7 +501,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
                     await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
                     await _machineProjectService.AddProjectAsync(
-                        curUserId,
                         projectId,
                         preTranslate: false,
                         CancellationToken.None
@@ -523,7 +511,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 {
                     // translation suggestions was disabled or source project set to null
                     await _machineProjectService.RemoveProjectAsync(
-                        curUserId,
                         projectId,
                         preTranslate: false,
                         CancellationToken.None
