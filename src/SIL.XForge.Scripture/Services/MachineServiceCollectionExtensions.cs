@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http;
 using IdentityModel.Client;
@@ -13,6 +14,7 @@ using SIL.XForge.Scripture.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
+[ExcludeFromCodeCoverage(Justification = "This logic will only work in a valid ASP.NET Core Context")]
 public static class MachineServiceCollectionExtensions
 {
     public static IServiceCollection AddSFMachine(
@@ -77,6 +79,13 @@ public static class MachineServiceCollectionExtensions
             var factory = sp.GetService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new DataFilesClient(httpClient);
+        });
+        services.AddSingleton<ICorporaClient, CorporaClient>(sp =>
+        {
+            // Instantiate the corpora client with our named HTTP client
+            var factory = sp.GetService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
+            return new CorporaClient(httpClient);
         });
         services.AddSingleton<IMachineApiService, MachineApiService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
