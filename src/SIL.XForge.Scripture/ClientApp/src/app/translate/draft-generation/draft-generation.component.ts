@@ -430,8 +430,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       trainingBooks: result.trainingBooks,
       trainingDataFiles: result.trainingDataFiles,
       trainingScriptureRange: result.trainingScriptureRange,
+      trainingScriptureRanges: result.trainingScriptureRanges,
       translationBooks: result.translationBooks,
       translationScriptureRange: result.translationScriptureRange,
+      translationScriptureRanges: result.trainingScriptureRanges,
       fastTraining: result.fastTraining
     });
   }
