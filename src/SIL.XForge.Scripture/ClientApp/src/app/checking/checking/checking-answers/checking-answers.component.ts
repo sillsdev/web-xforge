@@ -32,8 +32,8 @@ import { QuestionDialogData } from '../../question-dialog/question-dialog.compon
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { AudioAttachment } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
-import { CheckingResponse } from './checking-comment-form/checking-comment-form.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
+import { CheckingInput } from './checking-input-form/checking-input-form.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
 
 export interface AnswerAction {
@@ -470,7 +470,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.action.emit({ action: 'play-audio' });
   }
 
-  async submit(response: CheckingResponse): Promise<void> {
+  async submit(response: CheckingInput): Promise<void> {
     this.submittingAnswer = true;
     const userDoc = await this.userService.getCurrentUser();
     if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
@@ -558,7 +558,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private emitAnswerToSave(response: CheckingResponse): void {
+  private emitAnswerToSave(response: CheckingInput): void {
     this.action.emit({
       action: 'save',
       text: response.text,

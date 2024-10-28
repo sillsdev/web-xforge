@@ -7,11 +7,11 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { CheckingAudioRecorderComponent } from '../../checking-audio-recorder/checking-audio-recorder.component';
-import { CheckingCommentFormComponent } from './checking-comment-form.component';
+import { CheckingInputFormComponent } from './checking-input-form.component';
 
-const meta: Meta<CheckingCommentFormComponent> = {
+const meta: Meta<CheckingInputFormComponent> = {
   title: 'Checking/Comments/Comment Form',
-  component: CheckingCommentFormComponent,
+  component: CheckingInputFormComponent,
   decorators: [
     moduleMetadata({
       imports: [CommonModule, UICommonModule, I18nStoryModule],
@@ -21,7 +21,7 @@ const meta: Meta<CheckingCommentFormComponent> = {
 };
 export default meta;
 
-type Story = StoryObj<CheckingCommentFormComponent>;
+type Story = StoryObj<CheckingInputFormComponent>;
 
 export const NewForm: Story = {
   parameters: {
