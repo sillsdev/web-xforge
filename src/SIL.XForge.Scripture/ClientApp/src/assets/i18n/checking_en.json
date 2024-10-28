@@ -263,10 +263,11 @@
     "record_audio": "Record Audio",
     "stop_recording": "Stop Recording"
   },
-  "checking_comment_form": {
+  "checking_input_form": {
     "attach": "Attach Scripture",
     "cancel": "Cancel",
     "save": "Save",
+    "your_answer": "Your answer",
     "your_comment": "Your comment"
   },
   "checking_comments": {

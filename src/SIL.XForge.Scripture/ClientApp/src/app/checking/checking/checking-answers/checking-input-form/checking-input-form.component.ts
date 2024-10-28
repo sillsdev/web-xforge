@@ -22,7 +22,7 @@ import { CheckingUtils } from '../../../checking.utils';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
 import { AudioAttachment } from '../../checking-audio-recorder/checking-audio-recorder.component';
 
-export interface CheckingResponse {
+export interface CheckingInput {
   text?: string;
   audio?: AudioAttachment;
   selectedText?: string;
@@ -31,16 +31,21 @@ export interface CheckingResponse {
   verseRef?: VerseRefData;
 }
 
+function isAnswer(value: Answer | Comment | undefined): value is Answer {
+  return value != null && 'verseRef' in value;
+}
+
 @Component({
-  selector: 'app-checking-comment-form',
-  templateUrl: './checking-comment-form.component.html',
-  styleUrls: ['./checking-comment-form.component.scss']
+  selector: 'app-checking-input-form',
+  templateUrl: './checking-input-form.component.html',
+  styleUrls: ['./checking-input-form.component.scss']
 })
-export class CheckingCommentFormComponent extends SubscriptionDisposable implements AfterViewInit {
+export class CheckingInputFormComponent extends SubscriptionDisposable implements AfterViewInit {
   @Input() project?: SFProjectProfile;
   @Input() textSelectionEnabled: boolean = false;
   @Input() textsByBookId?: TextsByBookId;
-  @Output() save: EventEmitter<CheckingResponse> = new EventEmitter<CheckingResponse>();
+  @Input() label: 'comment' | 'answer' = 'comment';
+  @Output() save: EventEmitter<CheckingInput> = new EventEmitter<CheckingInput>();
   @Output() cancel: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild(TextAndAudioComponent) textAndAudio?: TextAndAudioComponent;
 
@@ -49,7 +54,6 @@ export class CheckingCommentFormComponent extends SubscriptionDisposable impleme
   submittingResponse: boolean = false;
   verseRef?: VerseRefData;
   textAndAudioInput?: { text?: string; audioUrl?: string };
-  compact: boolean = true;
 
   private selectionStartClipped?: boolean = false;
   private selectionEndClipped?: boolean = false;
@@ -69,14 +73,11 @@ export class CheckingCommentFormComponent extends SubscriptionDisposable impleme
     this._questionDoc = value;
   }
 
-  @Input() set answer(value: Answer | undefined) {
-    this.selectedText = value?.scriptureText;
-    this.verseRef = value?.verseRef;
-    this.compact = false;
-    this.textAndAudioInput = value;
-  }
-
-  @Input() set comment(value: Comment | undefined) {
+  @Input() set checkingInput(value: Comment | Answer | undefined) {
+    if (isAnswer(value) && this.textSelectionEnabled) {
+      this.selectedText = value?.scriptureText;
+      this.verseRef = value?.verseRef;
+    }
     this.textAndAudioInput = value;
   }
 
@@ -84,13 +85,14 @@ export class CheckingCommentFormComponent extends SubscriptionDisposable impleme
     this.subscribe(
       this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
       (state: BreakpointState) => {
-        this.isScreenSmall = state.matches;
+        // work-around for the NG0100 expression changed after checked error
+        setTimeout(() => (this.isScreenSmall = state.matches));
       }
     );
   }
 
   selectScripture(): void {
-    if (this.textsByBookId == null || this._questionDoc?.data == null) return;
+    if (!this.textSelectionEnabled || this.textsByBookId == null || this._questionDoc?.data == null) return;
     const verseRef = this._questionDoc.data.verseRef;
 
     const dialogData: TextChooserDialogData = {
@@ -115,6 +117,7 @@ export class CheckingCommentFormComponent extends SubscriptionDisposable impleme
   }
 
   clearSelection(): void {
+    if (!this.textSelectionEnabled) return;
     this.selectedText = '';
     this.verseRef = undefined;
     this.selectionStartClipped = undefined;
@@ -138,7 +141,7 @@ export class CheckingCommentFormComponent extends SubscriptionDisposable impleme
       return;
     }
     this.submittingResponse = true;
-    const response: CheckingResponse = {
+    const response: CheckingInput = {
       text: this.textAndAudio.text.value,
       audio: this.textAndAudio.audioAttachment,
       selectedText: this.selectedText,

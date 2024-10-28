@@ -1,11 +1,14 @@
 <ng-container *transloco="let t; read: 'checking_comments'">
   @for (comment of getSortedComments(); track comment.dataId; let i = $index) {
-    <div>
+    <div id="answer-comments">
       @if (
         (activeComment == null || (commentFormVisible && activeComment.dataId !== comment.dataId)) &&
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       ) {
-        <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment), shaded: i % 2 !== 0 }">
+        <div
+          class="comment"
+          [ngClass]="{ 'comment-unread': !hasUserReadComment(comment), shaded: alternateBackground && i % 2 !== 0 }"
+        >
           @if (comment.audioUrl != null) {
             <app-single-button-audio-player
               #audio
@@ -53,16 +56,16 @@
         </div>
       }
       @if (commentFormVisible && activeComment?.dataId === comment.dataId) {
-        <app-checking-comment-form
-          [comment]="activeComment"
+        <app-checking-input-form
+          [checkingInput]="activeComment"
           (save)="submit($event)"
           (cancel)="hideCommentForm()"
-        ></app-checking-comment-form>
+        ></app-checking-input-form>
       }
     </div>
   }
   @if (commentFormVisible && activeComment == null) {
-    <app-checking-comment-form (save)="submit($event)" (cancel)="hideCommentForm()"></app-checking-comment-form>
+    <app-checking-input-form (save)="submit($event)" (cancel)="hideCommentForm()"></app-checking-input-form>
   }
   @if (!commentFormVisible && commentCount > maxCommentsToShow && !showAllComments) {
     <button mat-button type="button" (click)="showComments()" class="show-all-comments">

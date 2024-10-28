@@ -48,16 +48,17 @@
           }
         </div>
       } @else {
-        <div id="answer-form">
-          <app-checking-comment-form
-            [answer]="this.activeAnswer"
+        <div id="answer-form" [ngClass]="{ hidden: !answerFormVisible }">
+          <app-checking-input-form
+            [textSelectionEnabled]="true"
+            [checkingInput]="this.activeAnswer"
             [project]="project"
             [questionDoc]="questionDoc"
             [textsByBookId]="textsByBookId"
-            [textSelectionEnabled]="true"
+            [label]="'answer'"
             (cancel)="hideAnswerForm()"
             (save)="submit($event)"
-          ></app-checking-comment-form>
+          ></app-checking-input-form>
         </div>
       }
       @if (shouldShowAnswers) {
