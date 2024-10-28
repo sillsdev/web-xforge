@@ -1750,7 +1750,9 @@ describe('DraftGenerationComponent', () => {
       env.component.startBuild({
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
       });
@@ -1760,7 +1762,9 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false
       });
       env.startedOrActiveBuild$.next(buildDto);
@@ -1777,7 +1781,9 @@ describe('DraftGenerationComponent', () => {
       env.component.startBuild({
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
       });
@@ -1786,7 +1792,9 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false
       });
       verify(mockDialogRef.getState()).never();
@@ -1802,7 +1810,9 @@ describe('DraftGenerationComponent', () => {
       env.component.startBuild({
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
       });
@@ -1811,7 +1821,9 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false
       });
       verify(mockDialogRef.getState()).never();
@@ -1827,7 +1839,9 @@ describe('DraftGenerationComponent', () => {
       env.component.startBuild({
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
       });
@@ -1836,7 +1850,9 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false
       });
       verify(mockDialogRef.getState()).never();
@@ -1853,7 +1869,9 @@ describe('DraftGenerationComponent', () => {
       env.component.startBuild({
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
       });
@@ -1862,7 +1880,9 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false
       });
       verify(mockDialogRef.close()).once();
@@ -1878,7 +1898,9 @@ describe('DraftGenerationComponent', () => {
       env.component.startBuild({
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false,
         projectId: projectId
       });
@@ -1888,7 +1910,9 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         trainingBooks: [],
         trainingDataFiles: [],
+        trainingScriptureRanges: [],
         translationBooks: [],
+        translationScriptureRanges: [],
         fastTraining: false
       });
       expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
