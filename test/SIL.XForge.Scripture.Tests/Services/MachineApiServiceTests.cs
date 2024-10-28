@@ -1761,6 +1761,56 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangesWithTrainingScriptureRange()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TrainingScriptureRange = "GEN",
+                        TrainingScriptureRanges =
+                        [
+                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                        ],
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void StartPreTranslationBuildAsync_DoNotAllowTrainingScriptureRangesWithTrainingBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TrainingBooks = [1],
+                        TrainingScriptureRanges =
+                        [
+                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                        ],
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangeWithTranslationBooks()
     {
         // Set up test environment
@@ -1776,6 +1826,56 @@ public class MachineApiServiceTests
                         ProjectId = Project01,
                         TranslationScriptureRange = "GEN",
                         TranslationBooks = [1],
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangesWithTranslationScriptureRange()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TranslationScriptureRange = "GEN",
+                        TranslationScriptureRanges =
+                        [
+                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                        ],
+                    },
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void StartPreTranslationBuildAsync_DoNotAllowTranslationScriptureRangesWithTranslationBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig
+                    {
+                        ProjectId = Project01,
+                        TranslationBooks = [1],
+                        TranslationScriptureRanges =
+                        [
+                            new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = "GEN" },
+                        ],
                     },
                     CancellationToken.None
                 )

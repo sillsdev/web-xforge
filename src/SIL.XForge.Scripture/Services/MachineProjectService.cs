@@ -1063,6 +1063,7 @@ public class MachineProjectService(
         }
 
         // Get the scripture ranges
+        // These scripture ranges will be used if no per project configuration was used
         string? trainOnScriptureRange = !string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange)
             ? buildConfig.TrainingScriptureRange
             : string.Join(';', buildConfig.TrainingBooks.Select(Canon.BookNumberToId));
@@ -1095,7 +1096,10 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange = preTranslateScriptureRange,
+                                ScriptureRange =
+                                    buildConfig
+                                        .TranslationScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                        ?.ScriptureRange ?? preTranslateScriptureRange,
                             }),
                     ],
                 },
@@ -1112,7 +1116,10 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange = trainOnScriptureRange,
+                                ScriptureRange =
+                                    buildConfig
+                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                        ?.ScriptureRange ?? trainOnScriptureRange,
                             }),
                     ],
                     TargetFilters =
@@ -1122,7 +1129,10 @@ public class MachineProjectService(
                             .Select(s => new ParallelCorpusFilterConfig
                             {
                                 CorpusId = s.CorpusId,
-                                ScriptureRange = trainOnScriptureRange,
+                                ScriptureRange =
+                                    buildConfig
+                                        .TrainingScriptureRanges.FirstOrDefault(t => t.ProjectId == s.ProjectId)
+                                        ?.ScriptureRange ?? trainOnScriptureRange,
                             }),
                     ],
                 },
