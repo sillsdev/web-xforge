@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'font_unsupported_message'">
   @if (showUnsupportedFontWarning || showGraphiteWarning) {
     <app-notice type="warning" mode="fill-dark" class="font-warning">
-      @for (portion of i18n.interpolateVariables(warningI18nKey, { selectedFont, fallbackFont }); track portion.text) {
+      @for (portion of i18n.interpolateVariables(warningI18nKey, { selectedFont, fallbackFont }); track $index) {
         @if (portion.id === "selectedFont" || portion.id === "fallbackFont") {
           <strong>{{ portion.text }}</strong>
         } @else if (portion.id === "graphite") {
@@ -11,7 +11,7 @@
         @if (portion.id == null) {{{ portion.text }}}
       }
 
-      @for (portion of suggestedRemedy | async; track portion.text) {
+      @for (portion of suggestedRemedy | async; track $index) {
         @if (portion.id === 1) {
           <a [href]="issueMailTo" target="_blank" rel="noreferrer">{{ portion.text }}</a>
         } @else if (portion.id == null) {

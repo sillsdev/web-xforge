@@ -1,5 +1,4 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBar } from '@angular/material/progress-bar';
@@ -59,7 +58,6 @@ describe('TranslateOverviewComponent', () => {
       RouterModule.forRoot([]),
       UICommonModule,
       TestTranslocoModule,
-      HttpClientTestingModule,
       TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       FontUnsupportedMessageComponent

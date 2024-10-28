@@ -177,7 +177,7 @@ export class NoteDialogComponent implements OnInit {
     if (verseRef == null) {
       return '';
     }
-    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum);
+    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum.toString());
   }
 
   get canInsertNote(): boolean {
@@ -293,7 +293,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   getAssignedUserString(assignedNoteUserRef: string | undefined): string | undefined {
-    if (assignedNoteUserRef == null) return;
+    if (assignedNoteUserRef == null) return undefined;
     switch (assignedNoteUserRef) {
       case AssignedUsers.TeamUser:
         return translate('note_dialog.team');
@@ -467,10 +467,10 @@ export class NoteDialogComponent implements OnInit {
   }
 
   private reattachedText(note: Note): string | undefined {
-    if (note.reattached == null) return;
+    if (note.reattached == null) return undefined;
     const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
     // If there are less than 5 parts, then the reattached string is invalid. Likely it was corrupted via XML editing
-    if (reattachedParts.length < 5) return;
+    if (reattachedParts.length < 5) return undefined;
     const selectedText: string = reattachedParts[1];
     const contextBefore: string = reattachedParts[3];
     const contextAfter: string = reattachedParts[4];
@@ -478,7 +478,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   private reattachedVerse(note: Note): string | undefined {
-    if (note.reattached == null) return;
+    if (note.reattached == null) return undefined;
     try {
       const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
       const verseStr: string = reattachedParts[0];
@@ -488,7 +488,7 @@ export class NoteDialogComponent implements OnInit {
       return `${verseRef} ${reattached}`;
     } catch {
       // Ignore any errors parsing the re-attached verse
-      return;
+      return undefined;
     }
   }
 }

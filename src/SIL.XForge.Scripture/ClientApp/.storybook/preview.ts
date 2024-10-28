@@ -51,3 +51,4 @@ export const decorators = [
 ];
 
 getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
+export const tags = ['autodocs'];

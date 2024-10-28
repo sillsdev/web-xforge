@@ -1,4 +1,3 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -35,8 +34,7 @@ describe('SyncProgressComponent', () => {
       TestOnlineStatusModule.forRoot(),
       UICommonModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      HttpClientTestingModule
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
       provideAnimations(),

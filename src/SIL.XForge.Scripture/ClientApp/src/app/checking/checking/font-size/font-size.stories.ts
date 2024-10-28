@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { AngularRenderer, componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { expect } from '@storybook/jest';
-import { userEvent } from '@storybook/testing-library';
-import { PlayFunction, PlayFunctionContext } from '@storybook/types';
+import { componentWrapperDecorator, Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { expect, userEvent } from '@storybook/test';
 import { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -34,12 +32,7 @@ type Story = StoryObj<FontSizeComponent>;
 export const Inactive: Story = {};
 
 export const OpenMenu: Story = {
-  play: async () => {
-    const menuTrigger: HTMLElement | null = document.body.querySelector('.font-size-menu-trigger');
-
-    expect(menuTrigger).not.toBeNull();
-    await userEvent.click(menuTrigger!);
-  }
+  play: playForOpenMenu()
 };
 
 export const OpenMenuWithEndSpace: Story = {
@@ -56,7 +49,7 @@ export const OpenMenuWithEndSpace: Story = {
 
 export const IncreaseFontAllowed: Story = {
   args: { fontSize: 2 },
-  play: playForAdjustFontButton('+')
+  play: playForOpenMenu('+')
 };
 
 export const IncreaseFontNotAllowed: Story = {
@@ -66,7 +59,7 @@ export const IncreaseFontNotAllowed: Story = {
 
 export const DecreaseFontAllowed: Story = {
   args: { fontSize: 2 },
-  play: playForAdjustFontButton('-')
+  play: playForOpenMenu('-')
 };
 
 export const DecreaseFontNotAllowed: Story = {
@@ -75,17 +68,24 @@ export const DecreaseFontNotAllowed: Story = {
 };
 
 /**
- * Return 'play' function to open menu and click the specified button.
+ * Return 'play' function to open menu with optional click on the specified button.
  */
-function playForAdjustFontButton(which: '+' | '-'): PlayFunction<AngularRenderer, FontSizeComponent> {
-  return async (context: PlayFunctionContext<AngularRenderer, FontSizeComponent>) => {
-    await OpenMenu.play?.(context);
+function playForOpenMenu(which?: '+' | '-'): Story['play'] {
+  return async () => {
+    const menuTrigger: HTMLElement | null = document.body.querySelector('.font-size-menu-trigger');
 
-    const adjustFontButton: HTMLElement | null = document.body.querySelector(
-      `.font-size-menu button:nth-of-type(${which === '-' ? 1 : 2})`
-    );
+    expect(menuTrigger).not.toBeNull();
+    await userEvent.click(menuTrigger!);
 
-    expect(adjustFontButton).not.toBeNull();
-    await userEvent.click(adjustFontButton!, { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    if (which != null) {
+      const adjustFontButton: HTMLElement | null = document.body.querySelector(
+        `.font-size-menu button:nth-of-type(${which === '-' ? 1 : 2})`
+      );
+
+      expect(adjustFontButton).not.toBeNull();
+      await userEvent.click(adjustFontButton!, {
+        pointerEventsCheck: PointerEventsCheckLevel.Never
+      });
+    }
   };
 }

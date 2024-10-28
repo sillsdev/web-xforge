@@ -572,7 +572,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             routeProjectId !== prevProjectId ||
             routeScope !== prevScope ||
             (routeScope !== 'all' && routeBookNum !== prevBookNum) ||
-            (routeScope === 'chapter' && routeChapter !== prevChapterNum)
+            (routeScope === 'chapter' && parseInt(routeChapter) !== prevChapterNum)
           ) {
             this.cleanup();
 

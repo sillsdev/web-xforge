@@ -65,7 +65,7 @@ export class TrainingDataMultiSelectComponent extends SubscriptionDisposable imp
   private getLanguageDisplayName(project: 'source' | 'target'): string | undefined {
     const projectDoc: SFProjectProfile | undefined = this.activatedProjectService.projectDoc?.data;
     if (projectDoc == null) {
-      return;
+      return undefined;
     } else if (project === 'source') {
       return this.i18n.getLanguageDisplayName(projectDoc.translateConfig.source?.writingSystem.tag);
     } else {

@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -14,9 +15,9 @@ describe('ServalAdministrationComponent', () => {
       ServalProjectsComponent,
       NoopAnimationsModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      HttpClientTestingModule
-    ]
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
+    providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
   }));
 
   it('should be created', () => {
