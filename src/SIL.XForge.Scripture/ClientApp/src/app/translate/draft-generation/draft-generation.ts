@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import { BuildStates } from '../../machine-api/build-states';
 
-/*
+/**
  * The build configuration for a pre-translation build.
  */
 export interface BuildConfig {
@@ -9,9 +9,19 @@ export interface BuildConfig {
   trainingBooks: number[];
   trainingDataFiles: string[];
   trainingScriptureRange?: string;
+  trainingScriptureRanges: ProjectScriptureRange[];
   translationBooks: number[];
   translationScriptureRange?: string;
+  translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
+}
+
+/**
+ * A per-project scripture range.
+ */
+export interface ProjectScriptureRange {
+  projectId: string;
+  scriptureRange: string;
 }
 
 /**
