@@ -235,9 +235,11 @@ describe('DraftGenerationStepsComponent', () => {
       component.tryAdvanceStep();
 
       expect(component.done.emit).toHaveBeenCalledWith({
-        translationBooks,
-        trainingDataFiles,
         trainingBooks: trainingBooks.filter(book => !translationBooks.includes(book)),
+        trainingDataFiles,
+        trainingScriptureRanges: [],
+        translationBooks,
+        translationScriptureRanges: [],
         fastTraining: false
       } as DraftGenerationStepsResult);
     });
@@ -330,7 +332,9 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.done.emit).toHaveBeenCalledWith({
         trainingBooks,
         trainingDataFiles,
+        trainingScriptureRanges: [],
         translationBooks,
+        translationScriptureRanges: [],
         fastTraining: true
       } as DraftGenerationStepsResult);
     });
