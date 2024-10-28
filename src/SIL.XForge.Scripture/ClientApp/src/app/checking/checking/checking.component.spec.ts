@@ -82,11 +82,11 @@ import { QuestionDialogData } from '../question-dialog/question-dialog.component
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
-import {
-  CheckingCommentFormComponent,
-  CheckingResponse
-} from './checking-answers/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
+import {
+  CheckingInput,
+  CheckingInputFormComponent
+} from './checking-answers/checking-input-form/checking-input-form.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
   AudioAttachment,
@@ -152,7 +152,7 @@ describe('CheckingComponent', () => {
       CheckingAnswersComponent,
       CheckingAudioPlayerComponent,
       CheckingAudioRecorderComponent,
-      CheckingCommentFormComponent,
+      CheckingInputFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,
       CheckingScriptureAudioPlayerComponent,
@@ -2861,7 +2861,7 @@ class TestEnvironment {
 
   answerQuestion(answer: string, audioFilename?: string): void {
     this.clickButton(this.addAnswerButton);
-    const response: CheckingResponse = { text: answer };
+    const response: CheckingInput = { text: answer };
     const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
     if (audioFilename != null) {
       response.audio = audio;

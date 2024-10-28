@@ -39,9 +39,3 @@
     padding-inline: 6px;
   }
 }
-
-.comment-input {
-  &.compact ::ng-deep textarea {
-    height: 24px;
-  }
-}

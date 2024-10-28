@@ -11,7 +11,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingCommentFormComponent } from '../checking-comment-form/checking-comment-form.component';
+import { CheckingInputFormComponent } from '../checking-input-form/checking-input-form.component';
 import { CheckingCommentsComponent } from './checking-comments.component';
 
 const mockedDialogService = mock(DialogService);
@@ -54,7 +54,7 @@ const meta: Meta<CheckingCommentsComponent> = {
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
       ],
-      declarations: [OwnerComponent, CheckingCommentFormComponent]
+      declarations: [OwnerComponent, CheckingInputFormComponent]
     })
   ],
   args: defaultArgs

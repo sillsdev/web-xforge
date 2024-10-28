@@ -1,12 +1,11 @@
-<ng-container *transloco="let t; read: 'checking_comment_form'">
+<ng-container *transloco="let t; read: 'checking_input_form'">
   <form autocomplete="off" appScrollIntoView>
     <app-text-and-audio
       #commentInput
       appAutofocus
       [input]="textAndAudioInput"
-      [textLabel]="t('your_comment')"
+      [textLabel]="label === 'comment' ? t('your_comment') : t('your_answer')"
       class="comment-input"
-      [ngClass]="{ compact }"
     ></app-text-and-audio>
     <div class="form-actions">
       <div class="flex-row">
@@ -42,8 +41,7 @@
               <mat-icon>check_circle</mat-icon>
             </button>
           </div>
-        }
-        @if (!isScreenSmall) {
+        } @else {
           <div class="large-form-action-buttons">
             <button mat-button type="button" (click)="submitCancel()" id="cancel-response">
               <mat-icon>close</mat-icon>
