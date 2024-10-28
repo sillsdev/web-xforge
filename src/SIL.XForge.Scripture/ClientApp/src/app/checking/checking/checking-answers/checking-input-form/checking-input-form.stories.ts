@@ -10,7 +10,7 @@ import { CheckingAudioRecorderComponent } from '../../checking-audio-recorder/ch
 import { CheckingInputFormComponent } from './checking-input-form.component';
 
 const meta: Meta<CheckingInputFormComponent> = {
-  title: 'Checking/Comments/Comment Form',
+  title: 'Checking/Comments/Input Form',
   component: CheckingInputFormComponent,
   decorators: [
     moduleMetadata({
@@ -33,7 +33,7 @@ export const NewForm: Story = {
 
 export const EditForm: Story = {
   args: {
-    answer: {
+    checkingInput: {
       dataId: 'c01',
       ownerRef: 'user01',
       text: 'This is a comment',
