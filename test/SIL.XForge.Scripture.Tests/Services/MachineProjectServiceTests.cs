@@ -1565,6 +1565,95 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public void GetTranslationBuildConfig_TranslationScriptureRangesAndTrainingScriptureRanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData
+        {
+            ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+            ParallelCorpusIdForTrainOn = ParallelCorpus02,
+        };
+        // The training and translation books will correspond to these two strings
+        const string project01ScriptureRange = "MAT;MRK";
+        // No scripture range is supported for target pre-translate translation (project02)
+        const string project03ScriptureRange = "LUK;JHN";
+        const string project04ScriptureRange = "ACT;ROM";
+        var buildConfig = new BuildConfig
+        {
+            TranslationScriptureRanges =
+            [
+                new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = project01ScriptureRange },
+            ],
+            TrainingScriptureRanges =
+            [
+                new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = project03ScriptureRange },
+                new ProjectScriptureRange { ProjectId = Project04, ScriptureRange = project04ScriptureRange },
+            ],
+        };
+        List<ServalCorpusSyncInfo> corporaSyncInfo =
+        [
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus01,
+                IsSource = true,
+                ParallelCorpusId = ParallelCorpus01,
+                ProjectId = Project01,
+            },
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus02,
+                IsSource = false,
+                ParallelCorpusId = ParallelCorpus01,
+                ProjectId = Project02,
+            },
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus03,
+                IsSource = true,
+                ParallelCorpusId = ParallelCorpus02,
+                ProjectId = Project03,
+            },
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus04,
+                IsSource = false,
+                ParallelCorpusId = ParallelCorpus02,
+                ProjectId = Project04,
+            },
+        ];
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig: null,
+            buildConfig,
+            corporaSyncInfo
+        );
+        Assert.AreEqual(
+            project01ScriptureRange,
+            actual
+                .Pretranslate!.Single(c => c.ParallelCorpusId == ParallelCorpus01)
+                .SourceFilters!.Single(f => f.CorpusId == Corpus01)
+                .ScriptureRange
+        );
+        Assert.AreEqual(
+            project03ScriptureRange,
+            actual
+                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
+                .SourceFilters!.Single(f => f.CorpusId == Corpus03)
+                .ScriptureRange
+        );
+        Assert.AreEqual(
+            project04ScriptureRange,
+            actual
+                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
+                .TargetFilters!.Single(f => f.CorpusId == Corpus04)
+                .ScriptureRange
+        );
+    }
+
+    [Test]
     public async Task GetTranslationEngineTypeAsync_Echo()
     {
         // Set up test environment

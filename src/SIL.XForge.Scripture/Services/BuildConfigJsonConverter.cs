@@ -42,6 +42,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.TrainingScriptureRange);
         }
 
+        if (value.TrainingScriptureRanges.Count > 0)
+        {
+            writer.WritePropertyName(nameof(value.TrainingScriptureRanges));
+            serializer.Serialize(writer, value.TrainingScriptureRanges);
+        }
+
         if (value.TranslationBooks.Count > 0)
         {
             writer.WritePropertyName(nameof(value.TranslationBooks));
@@ -52,6 +58,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
         {
             writer.WritePropertyName(nameof(value.TranslationScriptureRange));
             serializer.Serialize(writer, value.TranslationScriptureRange);
+        }
+
+        if (value.TranslationScriptureRanges.Count > 0)
+        {
+            writer.WritePropertyName(nameof(value.TranslationScriptureRanges));
+            serializer.Serialize(writer, value.TranslationScriptureRanges);
         }
 
         if (value.FastTraining)
