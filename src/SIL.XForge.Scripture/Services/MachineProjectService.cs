@@ -390,7 +390,7 @@ public class MachineProjectService(
             throw new DataNotFoundException("The project does not exist.");
         }
 
-        // If there is an alternate source, ensure that writing system and RTL is correct
+        // If there is an alternate source, ensure that name, writing system and RTL is correct
         if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource is not null)
         {
             ParatextSettings? alternateSourceSettings = paratextService.GetParatextSettings(
@@ -406,15 +406,24 @@ public class MachineProjectService(
                         alternateSourceSettings.IsRightToLeft
                     );
                     if (alternateSourceSettings.LanguageTag is not null)
+                    {
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.AlternateSource.WritingSystem.Tag,
                             alternateSourceSettings.LanguageTag
                         );
+                    }
+                    if (alternateSourceSettings.FullName is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AlternateSource.Name,
+                            alternateSourceSettings.FullName
+                        );
+                    }
                 });
             }
         }
 
-        // If there is an alternate training source, ensure that writing system and RTL is correct
+        // If there is an alternate training source, ensure that name, writing system and RTL is correct
         if (projectDoc.Data.TranslateConfig.DraftConfig.AlternateTrainingSource is not null)
         {
             ParatextSettings? alternateSourceSettings = paratextService.GetParatextSettings(
@@ -430,15 +439,24 @@ public class MachineProjectService(
                         alternateSourceSettings.IsRightToLeft
                     );
                     if (alternateSourceSettings.LanguageTag is not null)
+                    {
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.WritingSystem.Tag,
                             alternateSourceSettings.LanguageTag
                         );
+                    }
+                    if (alternateSourceSettings.FullName is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AlternateTrainingSource.Name,
+                            alternateSourceSettings.FullName
+                        );
+                    }
                 });
             }
         }
 
-        // If there is an additional training source, ensure that writing system and RTL is correct
+        // If there is an additional training source, ensure that name, writing system and RTL is correct
         if (projectDoc.Data.TranslateConfig.DraftConfig.AdditionalTrainingSource is not null)
         {
             ParatextSettings? additionalTrainingSourceSettings = paratextService.GetParatextSettings(
@@ -454,10 +472,19 @@ public class MachineProjectService(
                         additionalTrainingSourceSettings.IsRightToLeft
                     );
                     if (additionalTrainingSourceSettings.LanguageTag is not null)
+                    {
                         op.Set(
                             pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.WritingSystem.Tag,
                             additionalTrainingSourceSettings.LanguageTag
                         );
+                    }
+                    if (additionalTrainingSourceSettings.FullName is not null)
+                    {
+                        op.Set(
+                            pd => pd.TranslateConfig.DraftConfig.AdditionalTrainingSource.Name,
+                            additionalTrainingSourceSettings.FullName
+                        );
+                    }
                 });
             }
         }
@@ -1583,56 +1610,49 @@ public class MachineProjectService(
             );
         }
 
-        string preTranslateParallelCorpusId = null;
+        // Get the source project for the NMT/SMT translation corpus
+        string sourceProjectId = hasAlternateSource && preTranslate
+            ? project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef
+            : project.TranslateConfig.Source.ProjectRef;
+
+        // Set up the parallel corpus for NMT/SMT translation
+        List<ServalCorpusFile> sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
+        List<ServalCorpusFile> targetCorpora = [servalCorpusFiles.Single(f => f.ProjectId == project.Id)];
+        List<string> sourceCorpusIds = [.. sourceCorpora.Select(f => f.CorpusId)];
+        List<string> targetCorpusIds = [.. targetCorpora.Select(f => f.CorpusId)];
+
+        // Get the NMT/SMT translation parallel corpus id (might be null)
+        string translationParallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
+
+        // Create or update the NMT/SMT translation parallel corpora
+        translationParallelCorpusId = await CreateOrUpdateParallelCorpusAsync(
+            translationEngineId,
+            translationParallelCorpusId,
+            name: preTranslate ? "PreTranslation" : "SmtTranslation",
+            sourceCorpusIds,
+            targetCorpusIds,
+            cancellationToken
+            );
+
+        // Record the corpus sync info for the pre-translate corpora
+        corporaSyncInfo = RecordServalCorpusSyncInfo(
+            corporaSyncInfo,
+            sourceCorpora,
+            targetCorpora,
+            translationParallelCorpusId
+        );
+
+        // If we are NMT pre-translating, add the training parallel corpus
         string trainOnParallelCorpusId = null;
-        string translationParallelCorpusId = null;
         ServalAdditionalTrainingData? additionalTrainingData = projectSecret.ServalData.AdditionalTrainingData;
         if (preTranslate)
         {
-            // Get the source and target corpus ids for pre-translation
-            string preTranslateSourceProjectId = hasAlternateSource
-                ? project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef
-                : project.TranslateConfig.Source.ProjectRef;
-            List<ServalCorpusFile> preTranslateSourceCorpora =
-            [
-                servalCorpusFiles.Single(f => f.ProjectId == preTranslateSourceProjectId),
-            ];
-            List<string> preTranslateSourceCorpusIds = preTranslateSourceCorpora.Select(f => f.CorpusId).ToList();
-            List<ServalCorpusFile> preTranslateTargetCorpora =
-            [
-                servalCorpusFiles.Single(f => f.ProjectId == project.Id),
-            ];
-            List<string> preTranslateTargetCorpusIds = preTranslateTargetCorpora.Select(f => f.CorpusId).ToList();
-
-            // Get the pre-translate parallel corpus id (might be null)
-            preTranslateParallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
-
-            // Create or update the pre-translate parallel corpora
-            preTranslateParallelCorpusId = await CreateOrUpdateParallelCorpusAsync(
-                translationEngineId,
-                preTranslateParallelCorpusId,
-                name: "PreTranslation",
-                preTranslateSourceCorpusIds,
-                preTranslateTargetCorpusIds,
-                cancellationToken
-            );
-
-            // Record the corpus sync info for the pre-translate corpora
-            corporaSyncInfo = RecordServalCorpusSyncInfo(
-                corporaSyncInfo,
-                preTranslateSourceCorpora,
-                preTranslateTargetCorpora,
-                preTranslateParallelCorpusId
-            );
-
             // Build the source corpus ids for training
-            string trainOnSourceProjectId = hasAlternateTrainingSource
+            sourceProjectId = hasAlternateTrainingSource
                 ? project.TranslateConfig.DraftConfig.AlternateTrainingSource.ProjectRef
                 : project.TranslateConfig.Source.ProjectRef;
-            List<ServalCorpusFile> trainOnSourceCorpora =
-            [
-                servalCorpusFiles.Single(f => f.ProjectId == trainOnSourceProjectId),
-            ];
+
+            sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
 
             // Add the additional training source, if present and we are pre-translating
             if (hasAdditionalTrainingSource)
@@ -1642,16 +1662,16 @@ public class MachineProjectService(
                     .DraftConfig
                     .AdditionalTrainingSource
                     .ProjectRef;
-                trainOnSourceCorpora.Add(
+                sourceCorpora.Add(
                     servalCorpusFiles.Single(f => f.ProjectId == additionalTrainingSourceProjectId)
                 );
             }
 
-            List<string> trainOnSourceCorpusIds = trainOnSourceCorpora.Select(f => f.CorpusId).ToList();
+            sourceCorpusIds = [.. sourceCorpora.Select(f => f.CorpusId)];
 
             // Build the target corpus ids for training
-            List<ServalCorpusFile> trainOnTargetCorpora = [servalCorpusFiles.Single(f => f.ProjectId == project.Id)];
-            List<string> trainOnTargetCorpusIds = trainOnTargetCorpora.Select(f => f.CorpusId).ToList();
+            targetCorpora = [servalCorpusFiles.Single(f => f.ProjectId == project.Id)];
+            targetCorpusIds = [.. targetCorpora.Select(f => f.CorpusId)];
 
             // Get the train on parallel corpus id (might be null)
             trainOnParallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForTrainOn;
@@ -1661,16 +1681,16 @@ public class MachineProjectService(
                 translationEngineId,
                 trainOnParallelCorpusId,
                 name: "TrainOn",
-                trainOnSourceCorpusIds,
-                trainOnTargetCorpusIds,
+                sourceCorpusIds,
+                targetCorpusIds,
                 cancellationToken
             );
 
             // Record the corpus sync info for the train on corpora
             corporaSyncInfo = RecordServalCorpusSyncInfo(
                 corporaSyncInfo,
-                trainOnSourceCorpora,
-                trainOnTargetCorpora,
+                sourceCorpora,
+                targetCorpora,
                 trainOnParallelCorpusId
             );
 
@@ -1684,36 +1704,6 @@ public class MachineProjectService(
                 buildConfig,
                 additionalTrainingData,
                 cancellationToken
-            );
-        }
-        else
-        {
-            // Set up the parallel corpus for SMT translation
-            string sourceProjectId = project.TranslateConfig.Source.ProjectRef;
-            List<ServalCorpusFile> sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
-            List<ServalCorpusFile> targetCorpora = [servalCorpusFiles.Single(f => f.ProjectId == project.Id)];
-            List<string> sourceCorpusIds = sourceCorpora.Select(f => f.CorpusId).ToList();
-            List<string> targetCorpusIds = targetCorpora.Select(f => f.CorpusId).ToList();
-
-            // Get the pre-translate parallel corpus id (might be null)
-            translationParallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForSmt;
-
-            // Create or update the pre-translate parallel corpora
-            translationParallelCorpusId = await CreateOrUpdateParallelCorpusAsync(
-                translationEngineId,
-                translationParallelCorpusId,
-                name: "SmtTranslation",
-                sourceCorpusIds,
-                targetCorpusIds,
-                cancellationToken
-            );
-
-            // Record the corpus sync info
-            corporaSyncInfo = RecordServalCorpusSyncInfo(
-                corporaSyncInfo,
-                sourceCorpora,
-                targetCorpora,
-                translationParallelCorpusId
             );
         }
 
@@ -1732,7 +1722,7 @@ public class MachineProjectService(
                 u.Set(p => p.ServalData.CorpusFiles, servalCorpusFiles);
                 if (preTranslate)
                 {
-                    u.Set(p => p.ServalData.ParallelCorpusIdForPreTranslate, preTranslateParallelCorpusId);
+                    u.Set(p => p.ServalData.ParallelCorpusIdForPreTranslate, translationParallelCorpusId);
                     u.Set(p => p.ServalData.ParallelCorpusIdForTrainOn, trainOnParallelCorpusId);
                     u.Set(p => p.ServalData.AdditionalTrainingData, additionalTrainingData);
                 }

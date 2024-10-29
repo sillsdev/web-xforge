@@ -699,7 +699,7 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Ensure that there are no errors in the build configuration
+        // Ensure that there are no errors in the build configuration for training
         if (!string.IsNullOrWhiteSpace(buildConfig.TrainingScriptureRange) && buildConfig.TrainingBooks.Count > 0)
         {
             throw new DataNotFoundException(
@@ -727,6 +727,7 @@ public class MachineApiService(
             );
         }
 
+        // Ensure that there are no errors in the build configuration for translation
         if (!string.IsNullOrWhiteSpace(buildConfig.TranslationScriptureRange) && buildConfig.TranslationBooks.Count > 0)
         {
             throw new DataNotFoundException(
