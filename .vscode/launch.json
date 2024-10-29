@@ -17,7 +17,8 @@
       "request": "attach",
       "type": "pwa-chrome",
       "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "skipFiles": ["**/node_modules/**"]
     },
     {
       // Attach to and debug the running backend
@@ -47,7 +48,8 @@
       "sourceMaps": true,
       "pathMapping": {
         "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
-      }
+      },
+      "skipFiles": ["**/node_modules/**"]
     },
     {
       "name": "Docker: Attach to backend dotnet application",
