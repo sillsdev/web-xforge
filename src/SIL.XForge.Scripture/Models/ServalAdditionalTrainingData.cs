@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// Serval Configuration for Additional Training Data.
+/// Configuration for uploading Additional Training Data to Serval.
 /// </summary>
 public class ServalAdditionalTrainingData
 {
