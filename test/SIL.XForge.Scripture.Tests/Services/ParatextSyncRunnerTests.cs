@@ -100,6 +100,29 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_UserPermissionErrorBackTranslation()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(true, true, false, false);
+        env.ParatextService.GetParatextUsersAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<SFProject>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Throws(new ForbiddenException());
+        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(new ParatextSettings { ProjectType = ProjectType.BackTranslation.ToString(), });
+        await env.Runner.RunAsync("project01", "user02", "project01", false, CancellationToken.None);
+
+        SFProject project = env.VerifyProjectSync(false, projectSFId: "project01");
+        Assert.That(project.Sync.LastSyncSuccessful, Is.False);
+        Assert.That(project.Sync.LastSyncErrorCode, Is.EqualTo((int)SyncErrorCodes.UserPermissionError));
+
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
+    }
+
+    [Test]
     public async Task SyncAsync_KeepsErrorStateWhenRunningAgain()
     {
         var env = new TestEnvironment();
