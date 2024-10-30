@@ -3,6 +3,13 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 
+export interface AudioAttachment {
+  status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
+  url?: string;
+  fileName?: string;
+  blob?: Blob;
+}
+
 @Component({
   selector: 'app-checking-audio-player',
   templateUrl: './checking-audio-player.component.html',

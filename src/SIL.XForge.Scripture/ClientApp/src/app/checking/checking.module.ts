@@ -17,7 +17,6 @@ import { CheckingAnswersComponent } from './checking/checking-answers/checking-a
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingAudioPlayerComponent } from './checking/checking-audio-player/checking-audio-player.component';
-import { CheckingAudioRecorderComponent } from './checking/checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
@@ -43,8 +42,6 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
     FontSizeComponent,
     CheckingCommentsComponent,
     CheckingCommentFormComponent,
-    CheckingAudioRecorderComponent,
-    CheckingAudioRecorderComponent,
     CheckingAudioPlayerComponent,
     AudioPlayerComponent,
     CheckingScriptureAudioPlayerComponent,
@@ -62,6 +59,6 @@ import { TextAndAudioComponent } from './text-and-audio/text-and-audio.component
     ngfModule,
     TranslocoModule
   ],
-  exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent]
+  exports: [CheckingAudioPlayerComponent]
 })
 export class CheckingModule {}

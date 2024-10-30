@@ -47,7 +47,7 @@ import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/
 import { getTextDoc } from '../../shared/test-utils';
 import { EDITOR_READY_TIMEOUT } from '../../shared/text/text.component';
 import { CheckingModule } from '../checking.module';
-import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
 
 const mockedAuthService = mock(AuthService);

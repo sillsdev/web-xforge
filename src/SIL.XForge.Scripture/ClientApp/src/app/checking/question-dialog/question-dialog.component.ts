@@ -20,7 +20,7 @@ import {
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../shared/utils';
-import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.component';
 
 export interface QuestionDialogData {
