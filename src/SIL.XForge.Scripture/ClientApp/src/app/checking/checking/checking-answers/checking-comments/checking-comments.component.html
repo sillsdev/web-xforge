@@ -5,10 +5,7 @@
         (activeComment == null || (commentFormVisible && activeComment.dataId !== comment.dataId)) &&
         (i + 1 < maxCommentsToShow || commentCount === maxCommentsToShow || showAllComments)
       ) {
-        <div
-          class="comment"
-          [ngClass]="{ 'comment-unread': !hasUserReadComment(comment), shaded: alternateBackground && i % 2 !== 0 }"
-        >
+        <div class="comment" [ngClass]="{ 'comment-unread': !hasUserReadComment(comment), shaded: i % 2 !== 0 }">
           @if (comment.audioUrl != null) {
             <app-single-button-audio-player
               #audio

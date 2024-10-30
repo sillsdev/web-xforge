@@ -126,11 +126,14 @@
           display: flex;
           justify-content: space-between;
           .mat-icon {
-            @include checking-vars.md-icon-size(20px);
+            @include checking-vars.md-icon-size(18px);
           }
 
           button {
             height: 40px;
+            &:not(:hover) {
+              color: rgba(0, 0, 0, 0.7);
+            }
           }
         }
       }

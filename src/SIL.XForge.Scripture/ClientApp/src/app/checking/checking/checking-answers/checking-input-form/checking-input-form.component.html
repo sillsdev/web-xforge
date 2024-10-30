@@ -6,6 +6,7 @@
       [input]="textAndAudioInput"
       [textLabel]="label === 'comment' ? t('your_comment') : t('your_answer')"
       class="comment-input"
+      [ngClass]="{ compact: label === 'comment' }"
     ></app-text-and-audio>
     <div class="form-actions">
       <div class="flex-row">

@@ -73,10 +73,6 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     return this.answer != null ? this.answer.comments.filter(c => !c.deleted).length : 0;
   }
 
-  get alternateBackground(): boolean {
-    return this.commentCount > 2 && this.showAllComments;
-  }
-
   get canAddComment(): boolean {
     const userId = this.userService.currentUserId;
     return (

@@ -1,5 +1,5 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
@@ -40,7 +40,7 @@ function isAnswer(value: Answer | Comment | undefined): value is Answer {
   templateUrl: './checking-input-form.component.html',
   styleUrls: ['./checking-input-form.component.scss']
 })
-export class CheckingInputFormComponent extends SubscriptionDisposable implements AfterViewInit {
+export class CheckingInputFormComponent extends SubscriptionDisposable {
   @Input() project?: SFProjectProfile;
   @Input() textSelectionEnabled: boolean = false;
   @Input() textsByBookId?: TextsByBookId;
@@ -67,6 +67,12 @@ export class CheckingInputFormComponent extends SubscriptionDisposable implement
     private readonly mediaBreakpointService: MediaBreakpointService
   ) {
     super();
+    this.subscribe(
+      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
+      (state: BreakpointState) => {
+        this.isScreenSmall = state.matches;
+      }
+    );
   }
 
   @Input() set questionDoc(value: QuestionDoc | undefined) {
@@ -79,16 +85,6 @@ export class CheckingInputFormComponent extends SubscriptionDisposable implement
       this.verseRef = value?.verseRef;
     }
     this.textAndAudioInput = value;
-  }
-
-  ngAfterViewInit(): void {
-    this.subscribe(
-      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
-      (state: BreakpointState) => {
-        // work-around for the NG0100 expression changed after checked error
-        setTimeout(() => (this.isScreenSmall = state.matches));
-      }
-    );
   }
 
   selectScripture(): void {
