@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 
 @Component({
   selector: 'app-text-and-audio',

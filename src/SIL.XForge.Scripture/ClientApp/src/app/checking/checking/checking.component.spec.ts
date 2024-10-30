@@ -83,11 +83,7 @@ import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.componen
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
-import {
-  AudioAttachment,
-  CheckingAudioRecorderComponent
-} from './checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import { CheckingQuestionsService, QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
@@ -146,7 +142,6 @@ describe('CheckingComponent', () => {
       AudioPlayerComponent,
       CheckingAnswersComponent,
       CheckingAudioPlayerComponent,
-      CheckingAudioRecorderComponent,
       CheckingCommentFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,

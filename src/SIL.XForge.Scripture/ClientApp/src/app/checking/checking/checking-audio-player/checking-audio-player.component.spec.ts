@@ -15,7 +15,7 @@ import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { InfoComponent } from '../../../shared/info/info.component';
-import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 describe('CheckingAudioPlayerComponent', () => {

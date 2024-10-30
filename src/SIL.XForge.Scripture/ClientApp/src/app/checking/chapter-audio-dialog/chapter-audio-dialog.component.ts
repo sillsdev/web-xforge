@@ -21,7 +21,7 @@ import { QuestionDoc } from '../../core/models/question-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking/checking-audio-player/checking-audio-player.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 
 const TIMING_FILE_EXTENSION_REGEX = /.(tsv|csv|txt)$/i;
