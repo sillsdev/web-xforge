@@ -10,7 +10,7 @@
     var locale = LocOptions.Value.SupportedUICultures.Where(c =>
     SharedResource.Cultures[c.IetfLanguageTag].Tags.Contains(@requestCulture.RequestCulture.UICulture.Name)
     ).Select(c => SharedResource.Cultures[c.IetfLanguageTag]).First();
-    var helps = "https://help.scriptureforge.org/" + (locale.Helps ?? "en");
+    var helps = "https://help.scriptureforge.org/" + (locale.Helps ?? "");
 }
 
 <footer>
