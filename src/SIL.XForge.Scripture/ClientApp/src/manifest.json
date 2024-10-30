@@ -6,6 +6,7 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "/projects",
+  "permissions": ["storage", "microphone"],
   "icons": [
     {
       "src": "assets/icons/sf-72x72.png",

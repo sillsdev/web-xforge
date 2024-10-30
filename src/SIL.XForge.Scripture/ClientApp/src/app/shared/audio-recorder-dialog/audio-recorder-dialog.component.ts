@@ -137,7 +137,7 @@ export class AudioRecorderDialogComponent
       url: URL.createObjectURL(blob),
       status: 'processed',
       blob: blob,
-      fileName: objectId() + '.webm'
+      fileName: objectId() + '.wav'
     };
     this._onTouched.emit();
   }
