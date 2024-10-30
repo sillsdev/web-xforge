@@ -304,7 +304,7 @@ public class MachineProjectService(
                 translationEngineId = projectSecret.ServalData!.PreTranslationEngineId!;
 
                 // Execute a complete pre-translation
-                translationBuildConfig = GetTranslationBuildConfig(
+                translationBuildConfig = await GetTranslationBuildConfigAsync(
                     projectSecret.ServalData,
                     projectDoc.Data.TranslateConfig.DraftConfig,
                     buildConfig
@@ -1177,17 +1177,34 @@ public class MachineProjectService(
     /// <param name="buildConfig">The build configuration from the user, specified on the front end.</param>
     /// <returns>The TranslationBuildConfig for a Pre-Translate build.</returns>
     /// <remarks>Do not use with SMT builds.</remarks>
-    private static TranslationBuildConfig GetTranslationBuildConfig(
+    private async Task<TranslationBuildConfig> GetTranslationBuildConfigAsync(
         ServalData servalData,
         DraftConfig draftConfig,
         BuildConfig buildConfig
     )
     {
-        // Load the Serval Config from the Draft Config
         JObject? servalConfig = null;
         if (draftConfig.ServalConfig is not null)
         {
+            // Load the Serval Config from the Draft Config
             servalConfig = JObject.Parse(draftConfig.ServalConfig);
+        }
+        else if (await featureManager.IsEnabledAsync(FeatureFlags.UpdatedLearningRateForServal))
+        {
+            // Specify the updated learning rate
+            servalConfig = JObject.Parse(
+                """
+                {
+                    "train_params":
+                    {
+                        "warmup_steps": 1000,
+                        "learning_rate": 0.0002,
+                        "lr_scheduler_type": "cosine",
+                        "max_steps": 5000
+                    }
+                }
+                """
+            );
         }
 
         // If Fast Training is enabled, override the max_steps

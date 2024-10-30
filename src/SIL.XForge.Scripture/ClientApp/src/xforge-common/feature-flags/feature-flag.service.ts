@@ -306,6 +306,13 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  private readonly updatedLearningRateForServal: FeatureFlag = new ServerOnlyFeatureFlag(
+    'UpdatedLearningRateForServal',
+    'Updated Learning Rate For Serval',
+    14,
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }
