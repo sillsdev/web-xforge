@@ -1,16 +1,16 @@
 <ng-container *transloco="let t; read: 'checking_input_form'">
   <form autocomplete="off" appScrollIntoView>
     <app-text-and-audio
-      #commentInput
+      #responseInput
       appAutofocus
-      [input]="textAndAudioInput"
+      [input]="checkingInput"
       [textLabel]="label === 'comment' ? t('your_comment') : t('your_answer')"
-      class="comment-input"
+      class="response-input"
       [ngClass]="{ compact: label === 'comment' }"
     ></app-text-and-audio>
     <div class="form-actions">
-      <div class="flex-row">
-        <app-attach-audio [textAndAudio]="commentInput"></app-attach-audio>
+      <div class="attachments">
+        <app-attach-audio [textAndAudio]="responseInput"></app-attach-audio>
         @if (textSelectionEnabled) {
           @if (!selectedText) {
             <button mat-icon-button id="select-scripture" (click)="selectScripture()" [matTooltip]="t('attach')">
@@ -18,7 +18,7 @@
             </button>
           } @else {
             <div class="answer-scripture">
-              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+              <span class="answer-scripture-verse">{{ scriptureTextVerseRef() }}</span>
               <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
                 <mat-icon>clear</mat-icon>
               </button>

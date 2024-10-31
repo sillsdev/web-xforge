@@ -4,9 +4,10 @@
   justify-content: space-between;
   align-items: center;
 
-  .button-actions {
-    gap: 10px;
+  .attachments {
+    display: flex;
   }
+
   .attach-icon {
     rotate: 45deg;
   }
@@ -40,7 +41,7 @@
   }
 }
 
-.comment-input {
+.response-input {
   &.compact ::ng-deep textarea {
     height: 24px;
   }

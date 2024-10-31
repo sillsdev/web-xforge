@@ -1,5 +1,9 @@
 @import '../../checking-global-vars';
 
+.answer-comment:last-of-type {
+  margin-bottom: 4px;
+}
+
 .comment {
   display: flex;
   flex-wrap: wrap;
@@ -50,8 +54,4 @@
     display: flex;
     align-items: center;
   }
-}
-
-.add-comment {
-  margin-top: 4px;
 }
