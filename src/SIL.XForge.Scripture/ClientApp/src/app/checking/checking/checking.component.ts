@@ -1234,7 +1234,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   /** Upload the attached audio and updates the url on the comment if one exists. */
-  private async addAudioUrl(comment: Comment, audio?: AudioAttachment, questionDoc?: QuestionDoc): Promise<boolean> {
+  private async addAudioUrl(comment: Comment, audio: AudioAttachment, questionDoc?: QuestionDoc): Promise<boolean> {
     if (audio.fileName != null && audio.blob != null) {
       if (questionDoc != null) {
         // Get the amended filename and save it against the answer
