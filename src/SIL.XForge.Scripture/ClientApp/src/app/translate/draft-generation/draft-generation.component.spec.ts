@@ -127,7 +127,10 @@ describe('DraftGenerationComponent', () => {
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
         'FeatureFlagService',
         {},
-        { allowForwardTranslationNmtDrafting: createTestFeatureFlag(false) }
+        {
+          allowForwardTranslationNmtDrafting: createTestFeatureFlag(false),
+          updatedLearningRateForServal: createTestFeatureFlag(true)
+        }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(
@@ -1570,7 +1573,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            updatedLearningRateForServal: createTestFeatureFlag(true)
+          }
         );
       });
       env.component.isBackTranslation = false;
@@ -1588,7 +1594,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            updatedLearningRateForServal: createTestFeatureFlag(true)
+          }
         );
       });
       env.component.isBackTranslation = false;
@@ -1606,7 +1615,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            updatedLearningRateForServal: createTestFeatureFlag(true)
+          }
         );
       });
       env.component.isBackTranslation = true;
@@ -1642,7 +1654,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            updatedLearningRateForServal: createTestFeatureFlag(true)
+          }
         );
 
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
@@ -1678,7 +1693,10 @@ describe('DraftGenerationComponent', () => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
           'FeatureFlagService',
           {},
-          { allowForwardTranslationNmtDrafting: createTestFeatureFlag(true) }
+          {
+            allowForwardTranslationNmtDrafting: createTestFeatureFlag(true),
+            updatedLearningRateForServal: createTestFeatureFlag(true)
+          }
         );
 
         mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
