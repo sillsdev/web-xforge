@@ -755,11 +755,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         answer.selectionEndClipped = answerAction.selectionEndClipped;
         answer.dateModified = dateNow;
         // add the audio url
-        if (await this.addAudioUrl(answer, answerAction.questionDoc, answerAction.audio)) {
-          this.saveAnswer(answer, answerAction.questionDoc);
-          if (answerAction.savedCallback != null) {
-            answerAction.savedCallback();
+        if (answerAction.audio != null) {
+          if (!(await this.addAudioUrl(answer, answerAction.audio, answerAction.questionDoc))) {
+            break;
           }
+        }
+        this.saveAnswer(answer, answerAction.questionDoc);
+        if (answerAction.savedCallback != null) {
+          answerAction.savedCallback();
         }
         break;
       case 'delete':
@@ -824,9 +827,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           }
           comment.text = commentAction.text;
           comment.dateModified = dateNow;
-          if (await this.addAudioUrl(comment, this.questionsList.activeQuestionDoc!, commentAction.audio)) {
-            this.saveComment(commentAction.answer, comment);
+          if (commentAction.audio != null) {
+            if (!(await this.addAudioUrl(comment, commentAction.audio, this.questionsList.activeQuestionDoc!))) {
+              break;
+            }
           }
+          this.saveComment(commentAction.answer, comment);
         }
         break;
       case 'show-comments':
@@ -1228,18 +1234,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   /** Upload the attached audio and updates the url on the comment if one exists. */
-  private async addAudioUrl(comment: Comment, questionDoc?: QuestionDoc, audio?: AudioAttachment): Promise<boolean> {
-    if (audio != null) {
-      if (audio.fileName != null && audio.blob != null) {
-        if (questionDoc != null) {
-          // Get the amended filename and save it against the answer
-          const urlResult = await questionDoc.uploadFile(FileType.Audio, comment.dataId, audio.blob, audio.fileName);
-          if (urlResult == null) return false;
-          comment.audioUrl = urlResult;
-        }
-      } else if (audio.status === 'reset') {
-        comment.audioUrl = undefined;
+  private async addAudioUrl(comment: Comment, audio?: AudioAttachment, questionDoc?: QuestionDoc): Promise<boolean> {
+    if (audio.fileName != null && audio.blob != null) {
+      if (questionDoc != null) {
+        // Get the amended filename and save it against the answer
+        const urlResult = await questionDoc.uploadFile(FileType.Audio, comment.dataId, audio.blob, audio.fileName);
+        if (urlResult == null) return false;
+        comment.audioUrl = urlResult;
       }
+    } else if (audio.status === 'reset') {
+      comment.audioUrl = undefined;
     }
     return true;
   }

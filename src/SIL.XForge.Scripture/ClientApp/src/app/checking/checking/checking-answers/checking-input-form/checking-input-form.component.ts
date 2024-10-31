@@ -1,7 +1,6 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
-import { VerseRef } from '@sillsdev/scripture';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -52,12 +51,12 @@ export class CheckingInputFormComponent extends SubscriptionDisposable {
   selectedText?: string;
   isScreenSmall: boolean = false;
   submittingResponse: boolean = false;
-  verseRef?: VerseRefData;
-  textAndAudioInput?: { text?: string; audioUrl?: string };
 
+  private verseRef?: VerseRefData;
   private selectionStartClipped?: boolean = false;
   private selectionEndClipped?: boolean = false;
   private _questionDoc?: QuestionDoc;
+  private textAndAudioInput?: { text?: string; audioUrl?: string };
 
   constructor(
     readonly noticeService: NoticeService,
@@ -85,6 +84,10 @@ export class CheckingInputFormComponent extends SubscriptionDisposable {
       this.verseRef = value?.verseRef;
     }
     this.textAndAudioInput = value;
+  }
+
+  get checkingInput(): { text?: string; audioUrl?: string } | undefined {
+    return this.textAndAudioInput;
   }
 
   selectScripture(): void {
@@ -120,8 +123,8 @@ export class CheckingInputFormComponent extends SubscriptionDisposable {
     this.selectionEndClipped = undefined;
   }
 
-  scriptureTextVerseRef(verseRef: VerseRefData | VerseRef | undefined): string {
-    return CheckingUtils.scriptureTextVerseRef(verseRef, this.i18n);
+  scriptureTextVerseRef(): string {
+    return CheckingUtils.scriptureTextVerseRef(this.verseRef, this.i18n);
   }
 
   async submit(): Promise<void> {
