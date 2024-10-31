@@ -83,7 +83,15 @@ describe('CheckingTextComponent', () => {
     expect(env.segmentHasQuestion(1, 4)).toBe(false);
     expect(env.isSegmentHighlighted('verse_1_4')).toBe(false);
 
-    // change 2nd question from v3 to v4 and make it active
+    // change 1st question to include verse 2 (empty)
+    const verseRefWithBlank = VerseRef.tryParse('MAT 1:1-2');
+    env.component.activeVerse = verseRefWithBlank.verseRef;
+    env.component.questionVerses = [verseRefWithBlank.verseRef];
+    env.wait();
+    expect(env.isSegmentHighlighted('verse_1_1')).toBe(true);
+    expect(env.isSegmentHighlighted('verse_1_2')).toBe(true);
+
+    // // change 2nd question from v3 to v4 and make it active
     const activeVerse = new VerseRef(40, 1, 4);
     env.component.activeVerse = activeVerse;
     env.component.questionVerses = [new VerseRef(40, 1, 1), activeVerse];
