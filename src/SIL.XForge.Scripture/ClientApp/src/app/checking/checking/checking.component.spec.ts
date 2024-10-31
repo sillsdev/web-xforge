@@ -1207,8 +1207,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
-      env.component.answersPanel!.textAndAudio.resetAudio();
-      env.clickButton(env.saveAnswerButton);
+      env.component.answersPanel.submit({ text: 'Answer 6 on question', audio: { status: 'reset' } });
       env.waitForSliderUpdate();
       verify(
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
@@ -1769,7 +1768,6 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerCommentText(0, 0)).toContain('comment with audio');
         expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
         env.clickButton(env.getEditCommentButton(0, 0));
-        env.clickButton(env.removeAudioButton);
         env.clickButton(env.getSaveCommentButton(0));
         env.waitForSliderUpdate();
         verify(

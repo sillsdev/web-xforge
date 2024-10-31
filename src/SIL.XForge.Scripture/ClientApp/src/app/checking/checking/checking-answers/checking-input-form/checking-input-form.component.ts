@@ -1,6 +1,5 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -19,7 +18,7 @@ import {
 } from '../../../../text-chooser-dialog/text-chooser-dialog.component';
 import { CheckingUtils } from '../../../checking.utils';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
-import { AudioAttachment } from '../../checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
 
 export interface CheckingInput {
   text?: string;
@@ -130,10 +129,6 @@ export class CheckingInputFormComponent extends SubscriptionDisposable {
   async submit(): Promise<void> {
     if (this.textAndAudio != null) {
       this.textAndAudio.suppressErrors = false;
-      if (this.textAndAudio.audioComponent?.isRecording) {
-        await this.textAndAudio.audioComponent.stopRecording();
-        this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
-      }
     }
     if (!this.textAndAudio?.hasTextOrAudio()) {
       this.textAndAudio?.text.setErrors({ invalid: true });

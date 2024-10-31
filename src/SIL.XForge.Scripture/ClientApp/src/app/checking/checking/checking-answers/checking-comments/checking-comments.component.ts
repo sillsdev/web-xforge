@@ -13,7 +13,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
-import { AudioAttachment } from '../../checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';

@@ -44,7 +44,7 @@ import { QuestionDialogData } from '../question-dialog/question-dialog.component
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
-import { AudioAttachment } from './checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from './checking-audio-player/checking-audio-player.component';
 import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent, QuestionChangedEvent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
@@ -1234,7 +1234,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   /** Upload the attached audio and updates the url on the comment if one exists. */
-  private async addAudioUrl(comment: Comment, audio?: AudioAttachment, questionDoc?: QuestionDoc): Promise<boolean> {
+  private async addAudioUrl(comment: Comment, audio: AudioAttachment, questionDoc?: QuestionDoc): Promise<boolean> {
     if (audio.fileName != null && audio.blob != null) {
       if (questionDoc != null) {
         // Get the amended filename and save it against the answer
