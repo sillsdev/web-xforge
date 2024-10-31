@@ -24,6 +24,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { issuesEmailTemplate } from 'xforge-common/utils';
+import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -133,7 +134,19 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   cancelDialogRef?: MatDialogRef<any>;
 
-  readonly draftDurationHours = 8;
+  readonly legacyDraftDurationHours = 8;
+  readonly adjustedLearningRateDraftDurationHours = 2.5;
+  get draftDurationHours(): number {
+    return this.featureFlags.updatedLearningRateForServal.enabled
+      ? this.adjustedLearningRateDraftDurationHours
+      : this.legacyDraftDurationHours;
+  }
+
+  get issueEmail(): string {
+    return environment.issueEmail;
+  }
+
+  readonly learningRateNotice = this.i18n.interpolate('draft_generation.improved_learning_rate_notice');
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -143,7 +156,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftSourcesService: DraftSourcesService,
-    private readonly featureFlags: FeatureFlagService,
+    readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
