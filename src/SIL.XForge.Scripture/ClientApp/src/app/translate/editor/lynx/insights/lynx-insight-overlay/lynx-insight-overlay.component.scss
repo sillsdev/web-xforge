@@ -1,23 +1,77 @@
 @use 'sass:color';
+@use '../lynx-insights' as insights;
 
 $mainSectionBGColor: #343a32;
 $secondaryTextColor: #9b9b9b;
 $applyActionColor: #5485e7;
+$dismissActionColor: $applyActionColor;
 $borderRadius: 0.2em;
 
 :host {
-  max-width: 300px;
+  max-width: 320px;
   border-radius: $borderRadius;
   overflow: hidden;
 }
 
-.main-section,
+.main-section.focused,
 .more-info-section {
   padding: 0.6em 0.7em;
 }
 
 .main-section {
   background-color: $mainSectionBGColor;
+
+  // When prompt is for single insight, or insight is selected from multi-picker
+  &.focused > * {
+    animation: fade-in 0.3s;
+  }
+
+  // When prompt is for multiple insights, and one is not yet focused
+  &.list {
+    > h1 {
+      padding: 0.5em 0.8em;
+      color: #bdbdbd;
+      border-bottom: 1px solid #777;
+      font-size: 0.8em;
+    }
+
+    .insight-item {
+      position: relative;
+      padding: 0.4em 0.7em 0.4em 1.8em;
+      cursor: pointer;
+
+      &:not(:last-child) {
+        border-bottom: 1px solid #555;
+      }
+
+      &:hover {
+        background-color: #06395c;
+      }
+
+      // Colored indicator of insight type
+      &::before {
+        content: '\e0f0'; // 'lightbulb'
+        font-family: 'Material Icons';
+        position: absolute;
+        inset-inline-start: 0.2em;
+        top: 0;
+        bottom: 0;
+        width: auto;
+        height: auto;
+        font-size: 1.1em;
+        display: flex;
+        align-items: center;
+      }
+
+      @each $type in insights.$insightTypes {
+        &.#{$type} {
+          &::before {
+            color: insights.insight-color($type);
+          }
+        }
+      }
+    }
+  }
 }
 
 .more-info-section {
@@ -32,7 +86,7 @@ $borderRadius: 0.2em;
   font-size: 0.8em;
 }
 
-mat-icon {
+mat-icon:not(.apply-icon) {
   cursor: pointer;
   width: auto;
   height: auto;
@@ -73,14 +127,25 @@ h1 {
   align-items: baseline;
   gap: 1em;
   font-size: 0.75em;
-  line-height: 1.5em;
+  line-height: 2.5em;
 
   a {
+    position: relative;
+    padding-inline-start: 2.3em;
     color: $applyActionColor;
     cursor: pointer;
 
+    .apply-icon {
+      position: absolute;
+      inset-inline-start: 0;
+    }
+
     &:hover {
       text-decoration: underline;
+
+      .apply-icon {
+        transform: scale(1.1);
+      }
     }
   }
 
@@ -94,16 +159,8 @@ h1 {
 .secondary-actions {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  justify-content: space-between;
   font-size: 1.2em;
-
-  .apply-icon {
-    color: $applyActionColor;
-
-    &:hover {
-      color: color.adjust($applyActionColor, $lightness: 5%);
-    }
-  }
 
   .action-menu-trigger {
     color: $secondaryTextColor;
@@ -112,6 +169,12 @@ h1 {
       color: color.adjust($secondaryTextColor, $lightness: 20%);
     }
   }
+}
+
+.dismiss-icon {
+  color: $dismissActionColor;
+  font-size: 1em;
+  cursor: pointer;
 }
 
 .menu-item-wrapper {
@@ -128,5 +191,14 @@ h1 {
     color: $secondaryTextColor;
     font-size: 0.75em;
     line-height: normal;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

@@ -121,13 +121,13 @@ $insightTypes: 'info', 'warning', 'error';
   //   }
   // }
 
-  &.action-menu-active {
+  &.action-overlay-active {
   }
 }
 
-// Dim all but the insight whose action menu is open
+// Dim all but the insight whose action overlay is open
 .lynx-insight-attention {
-  .action-menu-active {
+  .action-overlay-active {
     z-index: 2;
   }
 
