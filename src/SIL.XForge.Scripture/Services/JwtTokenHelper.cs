@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -7,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
@@ -14,12 +16,8 @@ using SIL.XForge.Models;
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary> Helper methods to access information involving JWT tokens </summary>
-public class JwtTokenHelper : IJwtTokenHelper
+public class JwtTokenHelper(IExceptionHandler exceptionHandler, ILogger<JwtTokenHelper> logger) : IJwtTokenHelper
 {
-    private readonly IExceptionHandler _exceptionHandler;
-
-    public JwtTokenHelper(IExceptionHandler exceptionHandler) => _exceptionHandler = exceptionHandler;
-
     /// <summary> Get the Paratext username from the access token stored in the UserSecret. </summary>
     public string? GetParatextUsername(UserSecret userSecret)
     {
@@ -60,7 +58,10 @@ public class JwtTokenHelper : IJwtTokenHelper
             new JProperty("refresh_token", paratextTokens.RefreshToken)
         );
         request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
+        Stopwatch stopwatch = Stopwatch.StartNew();
         HttpResponseMessage response = await client.SendAsync(request, token);
+        stopwatch.Stop();
+        DateTime requestTime = DateTime.UtcNow;
 
         // Rethrow 400 errors as unauthorized, as these are related to invalid or expired tokens
         if (response.StatusCode == HttpStatusCode.BadRequest)
@@ -68,14 +69,29 @@ public class JwtTokenHelper : IJwtTokenHelper
             throw new UnauthorizedAccessException();
         }
 
-        await _exceptionHandler.EnsureSuccessStatusCode(response);
+        await exceptionHandler.EnsureSuccessStatusCode(response);
 
         string responseJson = await response.Content.ReadAsStringAsync(token);
         JObject responseObj = JObject.Parse(responseJson);
-        return new Tokens
+        Tokens tokens = new Tokens
         {
             AccessToken = (string)responseObj["access_token"],
             RefreshToken = (string)responseObj["refresh_token"]
         };
+
+        // Track the clock drift between the Scripture Forge and the Paratext Registry servers
+        if (
+            tokens.IssuedAt > requestTime.AddSeconds(15)
+            || tokens.IssuedAt < requestTime.Subtract(stopwatch.Elapsed).AddSeconds(-15)
+        )
+        {
+            TimeSpan difference = tokens.IssuedAt - requestTime;
+            string drift = @$"{(difference.TotalSeconds > 0 ? "+" : "-")}{difference:hh\:mm\:ss}";
+            string message = $"Registry Server Clock Drift: {drift}";
+            logger.LogWarning(message);
+            exceptionHandler.ReportException(new ArgumentOutOfRangeException(message));
+        }
+
+        return tokens;
     }
 }

@@ -1,11 +1,8 @@
-using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -25,7 +22,7 @@ public class AuthServiceTests
                 "identities":[
                     {
                        "provider":"google-oauth2",
-                       "access_token":"{{TestEnvironment.GenerateToken()}}",
+                       "access_token":"{{MockHttpMessageHandler.GenerateToken()}}",
                        "user_id":"google-user-01",
                        "connection":"google-oauth2",
                        "isSocial":true
@@ -37,13 +34,13 @@ public class AuthServiceTests
             [
                 (
                     url: "oauth/token",
-                    message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
+                    message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
                     statusCode: HttpStatusCode.OK
                 ),
                 (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
             ]
         );
-        var httpClient = TestEnvironment.CreateHttpClient(handler);
+        var httpClient = handler.CreateHttpClient();
 
         var env = new TestEnvironment(httpClient);
 
@@ -62,7 +59,7 @@ public class AuthServiceTests
             [
                 (
                     url: "oauth/token",
-                    message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
+                    message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
                     statusCode: HttpStatusCode.OK
                 ),
                 (
@@ -72,7 +69,7 @@ public class AuthServiceTests
                 ),
             ]
         );
-        var httpClient = TestEnvironment.CreateHttpClient(handler);
+        var httpClient = handler.CreateHttpClient();
 
         var env = new TestEnvironment(httpClient);
         env.ExceptionHandler.EnsureSuccessStatusCode(Arg.Is<HttpResponseMessage>(h => !h.IsSuccessStatusCode))
@@ -89,14 +86,14 @@ public class AuthServiceTests
     public async Task GetParatextTokensAsync_Success()
     {
         // Set up a mock Auth0 API
-        string accessToken = TestEnvironment.GenerateToken();
+        string accessToken = MockHttpMessageHandler.GenerateToken();
         const string refreshToken = "refresh_token_here";
         string userResponse = $$"""
             {
                 "identities":[
                     {
                        "provider":"google-oauth2",
-                       "access_token":"{{TestEnvironment.GenerateToken()}}",
+                       "access_token":"{{MockHttpMessageHandler.GenerateToken()}}",
                        "user_id":"google-user-01",
                        "connection":"google-oauth2",
                        "isSocial":true
@@ -116,13 +113,13 @@ public class AuthServiceTests
             [
                 (
                     url: "oauth/token",
-                    message: $$"""{"access_token": "{{TestEnvironment.GenerateToken()}}"}""",
+                    message: $$"""{"access_token": "{{MockHttpMessageHandler.GenerateToken()}}"}""",
                     statusCode: HttpStatusCode.OK
                 ),
                 (url: "users/auth01", message: userResponse, statusCode: HttpStatusCode.OK),
             ]
         );
-        var httpClient = TestEnvironment.CreateHttpClient(handler);
+        var httpClient = handler.CreateHttpClient();
 
         var env = new TestEnvironment(httpClient);
 
@@ -148,17 +145,5 @@ public class AuthServiceTests
 
         public IExceptionHandler ExceptionHandler { get; }
         public AuthService Service { get; }
-
-        public static HttpClient CreateHttpClient(HttpMessageHandler handler) =>
-            new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
-
-        public static string GenerateToken()
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken token = tokenHandler.CreateToken(
-                new SecurityTokenDescriptor { Expires = DateTime.UtcNow.AddDays(1) }
-            );
-            return tokenHandler.WriteToken(token);
-        }
     }
 }
