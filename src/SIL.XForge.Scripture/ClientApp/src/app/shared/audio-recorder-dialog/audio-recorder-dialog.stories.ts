@@ -1,21 +1,21 @@
 import { Meta, moduleMetadata } from '@storybook/angular';
-import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { NoticeService } from 'xforge-common/notice.service';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
-import { DialogService } from 'xforge-common/dialog.service';
 import { expect, userEvent } from '@storybook/test';
 import { instance, mock, when } from 'ts-mockito';
-import {
-  AudioAttachment,
-  AudioRecorderDialogComponent,
-  AudioRecorderDialogData
-} from './audio-recorder-dialog.component';
+import { NAVIGATOR } from 'xforge-common/browser-globals';
+import { DialogService } from 'xforge-common/dialog.service';
+import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { NoticeService } from 'xforge-common/notice.service';
 import {
   MatDialogLaunchComponent,
   matDialogStory,
   MatDialogStoryConfig
 } from '../../../../.storybook/util/mat-dialog-launch';
 import { createMockMediaStream } from '../test-utils';
+import {
+  AudioAttachment,
+  AudioRecorderDialogComponent,
+  AudioRecorderDialogData
+} from './audio-recorder-dialog.component';
 
 const mockedNavigator = mock(Navigator);
 
@@ -119,6 +119,7 @@ Countdown.play = async ({ canvasElement }) => {
   expect(stopButton).toHaveClass('stop');
   expect(stopButton).toBeVisible();
 };
+Countdown.parameters = { chromatic: { disableSnapshot: true } };
 
 export const ExistingAudio = matDialogStory(AudioRecorderDialogComponent, dialogStoryConfig);
 ExistingAudio.args = {

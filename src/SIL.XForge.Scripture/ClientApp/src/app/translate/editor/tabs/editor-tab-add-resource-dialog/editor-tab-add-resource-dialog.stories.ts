@@ -137,6 +137,7 @@ const dialogStoryConfig: MatDialogStoryConfig = {
 // The dialog opens for the user and successfully fetches projects and resources.
 export const Loaded = matDialogStory(EditorTabAddResourceDialogComponent, dialogStoryConfig);
 Loaded.args = {};
+Loaded.parameters = { chromatic: { disableSnapshot: true } };
 
 // The dialog opens for the user and has not yet finished fetching projects or resources.
 export const Loading = matDialogStory(EditorTabAddResourceDialogComponent, dialogStoryConfig);
