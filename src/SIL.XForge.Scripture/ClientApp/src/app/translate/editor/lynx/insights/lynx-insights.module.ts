@@ -7,6 +7,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
 import { SF_QUILL_FORMAT_NAMES } from '../../../../shared/text/quill-formats.service';
@@ -47,6 +48,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
     MatMenuModule,
     MatRippleModule,
     MatTabsModule,
+    MatTooltipModule,
     MatTreeModule,
     OverlayModule,
     IncludesPipe

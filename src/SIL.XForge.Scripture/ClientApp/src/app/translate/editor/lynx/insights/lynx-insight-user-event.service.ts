@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LynxInsight, LynxInsightDisplayState } from './lynx-insight';
+import { LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightStateService } from './lynx-insight-state.service';
 
 type EventType = 'click' | 'mouseover' | 'mouseout';
@@ -13,7 +13,7 @@ export class LynxInsightUserEventService {
 
   private readonly dataIdsProp = 'insightIds';
 
-  constructor(private readonly editorInsightState: LynxInsightStateService) {
+  constructor(private readonly insightState: LynxInsightStateService) {
     console.log('LynxInsightUserEventService initialized');
     this.addEventListeners();
   }
@@ -51,79 +51,97 @@ export class LynxInsightUserEventService {
 
   private handleClick(target: HTMLElement, event: MouseEvent): void {
     console.log('Click', target, event);
-    const id: string | undefined = this.getInsightIds(target)[0]; // TODO: handle multiple
-    let insight: LynxInsight | undefined;
+    const ids: string[] = this.getInsightIds(target);
 
-    if (id != null && target?.matches?.(this.insightSelector)) {
-      insight = this.editorInsightState.getInsight(id);
-    } else if (target?.closest(this.overlaySelector) != null) {
+    if (ids.length === 0) {
       // Ignore clicks in action overlay panel
+      if (target?.closest(this.overlaySelector) == null) {
+        this.insightState.clearDisplayState();
+      }
       return;
     }
 
-    if (insight == null || id == null) {
-      this.editorInsightState.clearDisplayState();
-      return;
-    }
-
-    let displayStateChanges: Partial<LynxInsightDisplayState> = { promptActive: true, actionMenuActive: false };
+    let displayStateChanges: Partial<LynxInsightDisplayState> = {
+      activeInsightIds: ids,
+      promptActive: true,
+      actionOverlayActive: false
+    };
 
     // if (!this.isPointInElement(target, event.clientX, event.clientY)) {
     //   console.log('%% Open insight id', id);
-    //   displayStateChanges.actionMenuActive = true;
+    //   displayStateChanges.actionOverlayActive = true;
     //   // displayStateChanges.promptActive = false;
     // } else {
     //   console.log('%% Prompt insight id', id);
     //   displayStateChanges.promptActive = true;
     // }
 
-    this.editorInsightState.updateDisplayState(id, displayStateChanges);
+    this.insightState.updateDisplayState(displayStateChanges);
   }
 
-  private handleMouseOver(target: HTMLElement, event: MouseEvent): void {
-    if (target.dataset[this.dataIdsProp] == null) {
-      return;
-    }
+  // private handleMouseOver(target: HTMLElement, event: MouseEvent): void {
+  //   if (target.dataset[this.dataIdsProp] == null) {
+  //     return;
+  //   }
 
-    const id: string = this.getInsightIds(target)[0] ?? []; // TODO: handle multiple
-    const insight: LynxInsight | undefined = this.editorInsightState.getInsight(id);
+  //   const id: string = this.getInsightIds(target)[0] ?? []; // TODO: handle multiple
+  //   const insight: LynxInsight | undefined = this.editorInsightState.getInsight(id);
 
-    if (insight == null) {
-      return;
-    }
+  //   if (insight == null) {
+  //     return;
+  //   }
 
-    console.log('Mouse over', id, target, insight);
+  //   console.log('Mouse over', id, target, insight);
 
-    this.editorInsightState.updateDisplayState(id, { promptActive: true });
-  }
+  //   this.editorInsightState.updateDisplayState(id, { promptActive: true });
+  // }
 
-  private handleMouseOut(target: HTMLElement, event: MouseEvent): void {
-    if (target.dataset[this.dataIdsProp] == null) {
-      return;
-    }
+  // private handleMouseOut(target: HTMLElement, event: MouseEvent): void {
+  //   if (target.dataset[this.dataIdsProp] == null) {
+  //     return;
+  //   }
 
-    const id: string = this.getInsightIds(target)[0] ?? []; // TODO: handle multiple
-    const insight: LynxInsight | undefined = this.editorInsightState.getInsight(id);
+  //   const id: string = this.getInsightIds(target)[0] ?? []; // TODO: handle multiple
+  //   const insight: LynxInsight | undefined = this.editorInsightState.getInsight(id);
 
-    if (insight == null) {
-      return;
-    }
+  //   if (insight == null) {
+  //     return;
+  //   }
 
-    console.log('Mouse out', id, target, insight);
+  //   console.log('Mouse out', id, target, insight);
 
-    // Only remove prompt active if action menu is not active
-    if (!insight?.displayState?.actionMenuActive) {
-      this.editorInsightState.updateDisplayState(id, { promptActive: false });
-    }
-  }
+  //   // Only remove prompt active if action menu is not active
+  //   if (!insight?.displayState?.actionOverlayActive) {
+  //     this.editorInsightState.updateDisplayState(id, { promptActive: false });
+  //   }
+  // }
 
-  private isPointInElement(el: HTMLElement, x: number, y: number): boolean {
-    const rect = el.getBoundingClientRect();
+  // private isPointInElement(el: HTMLElement, x: number, y: number): boolean {
+  //   const rect = el.getBoundingClientRect();
 
-    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-  }
+  //   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  // }
 
+  /**
+   * Get all insight ids from the element and its parents that match the lynx insight selector.
+   */
   private getInsightIds(el: HTMLElement): string[] {
-    return el.dataset[this.dataIdsProp]?.split(' ') ?? [];
+    const ids: string[] = [];
+
+    if (el.matches(this.insightSelector)) {
+      let currentEl: HTMLElement | null | undefined = el;
+
+      while (currentEl != null) {
+        const id = currentEl.dataset[this.dataIdsProp];
+
+        if (id != null) {
+          ids.push(id);
+        }
+
+        currentEl = currentEl.parentElement?.closest(this.insightSelector);
+      }
+    }
+
+    return ids;
   }
 }

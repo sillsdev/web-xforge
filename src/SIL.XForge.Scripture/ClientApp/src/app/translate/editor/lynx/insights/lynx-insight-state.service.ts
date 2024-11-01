@@ -25,6 +25,8 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig, LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightFilterService } from './lynx-insight-filter.service';
 
+type BooleanProp<T> = { [K in keyof T]: T[K] extends boolean | undefined ? K : never }[keyof T];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -358,26 +360,6 @@ export class LynxInsightStateService {
   );
 
   /**
-   * Filtered chapter insights without the 'displayState' property.
-   * This can be useful when display state changes should not trigger updates.
-   */
-  readonly filteredChapterInsightsSansDisplayState$: Observable<LynxInsight[]> = this.filteredChapterInsights$.pipe(
-    map(insights => insights.map(({ displayState, ...insight }) => insight)), // Strip out 'displayState' prop
-    distinctUntilChanged(isEqual),
-    shareReplay(1)
-  );
-
-  /**
-   * Filtered insights without the 'displayState' property.
-   * This can be useful when display state changes should not trigger updates.
-   */
-  readonly filteredInsightsSansDisplayState$: Observable<LynxInsight[]> = this.filteredInsights$.pipe(
-    map(insights => insights.map(({ displayState, ...insight }) => insight)), // Strip out 'displayState' prop
-    distinctUntilChanged(isEqual),
-    shareReplay(1)
-  );
-
-  /**
    * Insight counts for the currently filtered types grouped by scope.
    */
   readonly filteredInsightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
@@ -433,6 +415,13 @@ export class LynxInsightStateService {
   private readonly insightPanelVisibleSource$ = new BehaviorSubject<boolean>(false);
   readonly insightPanelVisible$ = this.insightPanelVisibleSource$.pipe(distinctUntilChanged());
 
+  private readonly displayStateSource$ = new BehaviorSubject<LynxInsightDisplayState>({ activeInsightIds: [] });
+  readonly displayState$: Observable<LynxInsightDisplayState> = this.displayStateSource$.pipe(
+    distinctUntilChanged(isEqual),
+    shareReplay(1),
+    tap(displayState => console.log('displayStateSource$ changed (LynxInsightStateService)', displayState))
+  );
+
   constructor(
     @Inject(EDITOR_INSIGHT_DEFAULTS) private defaults: LynxInsightConfig,
     private readonly insightFilterService: LynxInsightFilterService,
@@ -456,59 +445,90 @@ export class LynxInsightStateService {
     );
   }
 
-  /**
-   * Updates the display state for an insight.  If `isExclusive` is true, clears those flags from all other insights
-   * where it is set in the specified changes.
-   * @param id The id of the insight to update.
-   * @param displayStateChanges The changes to apply to the display state.
-   * @param isExclusive Whether or not to clear the given display state flags from all other insights.
-   */
-  updateDisplayState(id: string, displayStateChanges: Partial<LynxInsightDisplayState>, isExclusive?: boolean): void;
-  updateDisplayState(ids: string[], displayStateChanges: Partial<LynxInsightDisplayState>, isExclusive?: boolean): void;
-  updateDisplayState(
-    idOrIds: string | string[],
-    displayStateChanges: Partial<LynxInsightDisplayState>,
-    isExclusive = true
-  ): void {
-    let ids: Set<string> | undefined;
-    let id: string | undefined;
-
-    if (Array.isArray(idOrIds)) {
-      ids = new Set(idOrIds);
-    } else {
-      id = idOrIds;
-    }
-
-    this.rawInsightSource$.next(
-      this.rawInsightSource$.value.map(insight => {
-        const isInsightToUpdate = ids != null ? ids.has(insight.id) : insight.id === id;
-
-        if (isInsightToUpdate) {
-          return { ...insight, displayState: { ...insight.displayState, ...displayStateChanges } };
-        } else {
-          if (isExclusive) {
-            const itemChanges: Partial<LynxInsightDisplayState> = {};
-            let changed = false;
-
-            // Unset the flag on insight item if the flag is included in the display changes on the given insight
-            for (const key of Object.keys(displayStateChanges)) {
-              itemChanges[key] = false;
-              changed = true;
-            }
-
-            if (changed) {
-              return { ...insight, displayState: { ...insight.displayState, ...itemChanges } };
-            }
-          }
-
-          return insight;
-        }
-      })
-    );
+  setActiveInsights(ids: string[]): void {
+    this.displayStateSource$.next({ ...this.displayStateSource$.value, activeInsightIds: ids });
   }
 
+  /**
+   * Updates the display state with the given values.
+   * @param displayStateChanges The changes to apply to the display state.
+   */
+  updateDisplayState(displayStateChanges: Partial<LynxInsightDisplayState>): void {
+    this.displayStateSource$.next({ ...this.displayStateSource$.value, ...displayStateChanges });
+  }
+
+  /**
+   * Toggle the listed bool display state props.
+   */
+  toggleDisplayState(props: BooleanProp<LynxInsightDisplayState>[]): void {
+    const displayStateChanges: Partial<LynxInsightDisplayState> = {};
+
+    for (const prop of props) {
+      if (prop != null) {
+        const currentVal = this.displayStateSource$.value[prop];
+
+        if (typeof currentVal === 'boolean') {
+          displayStateChanges[prop] = !currentVal;
+        }
+      }
+    }
+
+    this.updateDisplayState(displayStateChanges);
+  }
+
+  // /**
+  //  * Updates the display state for an insight.  If `isExclusive` is true, clears those flags from all other insights
+  //  * where it is set in the specified changes.
+  //  * @param id The id of the insight to update.
+  //  * @param displayStateChanges The changes to apply to the display state.
+  //  * @param isExclusive Whether or not to clear the given display state flags from all other insights.
+  //  */
+  // updateDisplayState(id: string, displayStateChanges: Partial<LynxInsightDisplayState>, isExclusive?: boolean): void;
+  // updateDisplayState(ids: string[], displayStateChanges: Partial<LynxInsightDisplayState>, isExclusive?: boolean): void;
+  // updateDisplayState(
+  //   idOrIds: string | string[],
+  //   displayStateChanges: Partial<LynxInsightDisplayState>,
+  //   isExclusive = true
+  // ): void {
+  //   let ids: Set<string> | undefined;
+  //   let id: string | undefined;
+
+  //   if (Array.isArray(idOrIds)) {
+  //     ids = new Set(idOrIds);
+  //   } else {
+  //     id = idOrIds;
+  //   }
+
+  //   this.rawInsightSource$.next(
+  //     this.rawInsightSource$.value.map(insight => {
+  //       const isInsightToUpdate = ids != null ? ids.has(insight.id) : insight.id === id;
+
+  //       if (isInsightToUpdate) {
+  //         return { ...insight, displayState: { ...insight.displayState, ...displayStateChanges } };
+  //       } else {
+  //         if (isExclusive) {
+  //           const itemChanges: Partial<LynxInsightDisplayState> = {};
+  //           let changed = false;
+
+  //           // Unset the flag on insight item if the flag is included in the display changes on the given insight
+  //           for (const key of Object.keys(displayStateChanges)) {
+  //             itemChanges[key] = false;
+  //             changed = true;
+  //           }
+
+  //           if (changed) {
+  //             return { ...insight, displayState: { ...insight.displayState, ...itemChanges } };
+  //           }
+  //         }
+
+  //         return insight;
+  //       }
+  //     })
+  //   );
+  // }
+
   clearDisplayState(): void {
-    this.rawInsightSource$.next(this.rawInsightSource$.value.map(i => ({ ...i, displayState: {} })));
+    this.displayStateSource$.next({ activeInsightIds: [] });
   }
 
   togglePanelVisibility(): void {

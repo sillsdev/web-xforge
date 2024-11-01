@@ -92,9 +92,7 @@ export class LynxInsightsPanelComponent implements OnInit {
 
   ngOnInit(): void {
     combineLatest([
-      this.editorInsightState.filteredInsightsSansDisplayState$.pipe(
-        switchMap(insights => this.addRangeText(insights))
-      ),
+      this.editorInsightState.filteredInsights$.pipe(switchMap(insights => this.addRangeText(insights))),
       this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val)))
     ])
       .pipe(
@@ -130,9 +128,10 @@ export class LynxInsightsPanelComponent implements OnInit {
 
       // Show action menu overlay in editor
       this.navInsight(insight).then(() => {
-        this.editorInsightState.updateDisplayState(insight.id, {
+        this.editorInsightState.updateDisplayState({
+          activeInsightIds: [insight.id],
           promptActive: false,
-          actionMenuActive: true
+          actionOverlayActive: true
         });
       });
     }

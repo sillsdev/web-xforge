@@ -5,6 +5,7 @@ import { DeltaOperation } from 'rich-text';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
+import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
 
 const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
@@ -31,16 +32,6 @@ export class QuillInsightRenderService extends InsightRenderService {
     }
 
     this.refreshInsightFormatting(insights, editor);
-
-    let actionMenuInsight: LynxInsight | undefined;
-
-    for (const insight of insights) {
-      if (this.renderActionMenu(insight, editor)) {
-        actionMenuInsight = insight;
-      }
-    }
-
-    this.setEditorAttention(actionMenuInsight, editor);
   }
 
   /**
@@ -85,23 +76,29 @@ export class QuillInsightRenderService extends InsightRenderService {
     editor.setContents(delta, 'api');
   }
 
-  private renderActionMenu(insight: LynxInsight, editor: Quill): boolean {
-    if (!insight.displayState?.actionMenuActive) {
-      this.overlayService.close(insight.id);
-      return false;
+  renderActionOverlay(insights: LynxInsight[], editor: Quill, actionOverlayActive: boolean): void {
+    this.overlayService.closeAll();
+    let editorAttention = false;
+
+    if (actionOverlayActive) {
+      const leadingInsight: LynxInsight | undefined = getLeadingInsight(insights);
+      const overlayAnchorInsight: LynxInsight | undefined = getMostNestedInsight(insights);
+
+      if (leadingInsight != null && overlayAnchorInsight != null) {
+        // Scroll to the first occurring active insight in the editor
+        editor.setSelection(leadingInsight.range.index, 'api');
+
+        const overlayAnchor: HTMLElement = this.getElementAtIndex(editor, overlayAnchorInsight.range.index + 1);
+        this.overlayService.open(overlayAnchor, insights, editor.root);
+        editorAttention = true;
+      }
     }
 
-    // Scroll to the insight in the editor
-    editor.setSelection(insight.range.index, 'api');
-
-    const overlayAnchor: HTMLElement = this.getElementAtIndex(editor, insight.range.index + 1);
-    this.overlayService.open(overlayAnchor, insight, editor.root);
-
-    return true;
+    this.setEditorAttention(editorAttention, editor);
   }
 
-  private setEditorAttention(insight: LynxInsight | undefined, editor: Quill): void {
-    if (insight != null) {
+  private setEditorAttention(editorAttention: boolean, editor: Quill): void {
+    if (editorAttention) {
       editor.root.classList.add(this.editorAttentionClass);
     } else {
       editor.root.classList.remove(this.editorAttentionClass);
