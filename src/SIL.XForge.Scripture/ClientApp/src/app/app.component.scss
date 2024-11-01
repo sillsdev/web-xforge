@@ -192,11 +192,12 @@ header {
 }
 
 .offline-indicator {
-  position: absolute;
-  inset-inline-end: 0;
+  position: fixed !important;
   direction: inherit; // needed to override direction: rtl from .material-icons
   font-size: 12px;
   color: white;
+  top: 30px;
+  left: calc(100% - 35px);
 }
 
 .online-status {
