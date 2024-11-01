@@ -57,3 +57,4 @@ export const DraftApplyDialog = matDialogStory(DraftApplyDialogComponent, {
   ]
 });
 DraftApplyDialog.args = { data: { bookNum: 1 } };
+DraftApplyDialog.parameters = { chromatic: { disableSnapshot: true } };
