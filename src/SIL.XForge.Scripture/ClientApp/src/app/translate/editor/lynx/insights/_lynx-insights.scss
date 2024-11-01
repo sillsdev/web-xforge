@@ -16,6 +16,8 @@
 
   --lynx-insights-status-indicator-bg-color: #fff;
   --lynx-insights-status-indicator-offset: 19px;
+
+  --lynx-insights-multi-insight-prompt-color: #483d8b; // Something different from the insight colors
 }
 
 $insightTypes: 'info', 'warning', 'error';
