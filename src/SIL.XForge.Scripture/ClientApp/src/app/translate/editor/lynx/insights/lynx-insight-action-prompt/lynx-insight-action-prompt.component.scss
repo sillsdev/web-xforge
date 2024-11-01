@@ -22,6 +22,11 @@ mat-icon {
     }
   }
 
+  &.multi-insight-prompt {
+    color: var(--lynx-insights-multi-insight-prompt-color);
+    background-color: #fff9; // Let some background color show through
+  }
+
   &:hover {
     scale: 1.2;
   }

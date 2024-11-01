@@ -1,4 +1,8 @@
-@if (activeInsights.length > 0) {
+@if (activeInsights.length === 1) {
   <mat-icon [class]="activeInsights[0].type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
 }
-<!-- TODO: handle multi-insight prompt? -->
+@if (activeInsights.length > 1) {
+  <mat-icon class="multi-insight-prompt" (click)="onPromptClick($event)">
+    filter_{{ activeInsights.length < 10 ? activeInsights.length : "9_plus" }}
+  </mat-icon>
+}
