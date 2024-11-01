@@ -74,6 +74,30 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_UsesTheUpdatedLearningRateForServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.UpdatedLearningRateForServal).Returns(Task.FromResult(true));
+
+        // SUT
+        await env.Service.BuildProjectAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, FastTraining = true },
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env
+            .TranslationEnginesClient.Received()
+            .StartBuildAsync(
+                TranslationEngine01,
+                Arg.Is<TranslationBuildConfig>(b => ((int)((JObject)b.Options)["train_params"]["max_steps"]) == 5000),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public void BuildProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
@@ -2417,8 +2441,8 @@ public class MachineProjectServiceTests
                 .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(new ParatextSettings { IsRightToLeft = true, LanguageTag = LanguageTag });
 
-            var featureManager = Substitute.For<IFeatureManager>();
-            featureManager
+            FeatureManager = Substitute.For<IFeatureManager>();
+            FeatureManager
                 .IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation)
                 .Returns(Task.FromResult(options.UseEchoForPreTranslation));
 
@@ -2582,7 +2606,7 @@ public class MachineProjectServiceTests
             Service = new MachineProjectService(
                 DataFilesClient,
                 ExceptionHandler,
-                featureManager,
+                FeatureManager,
                 FileSystemService,
                 MockLogger,
                 ParatextService,
@@ -2597,6 +2621,7 @@ public class MachineProjectServiceTests
 
         public MachineProjectService Service { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public IFeatureManager FeatureManager { get; }
         public IFileSystemService FileSystemService { get; }
         public IParatextService ParatextService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
