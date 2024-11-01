@@ -38,4 +38,8 @@ export class LynxInsightActionService {
       }
     ];
   }
+
+  performAction(action: LynxInsightAction): void {
+    console.log('Performing action', action);
+  }
 }

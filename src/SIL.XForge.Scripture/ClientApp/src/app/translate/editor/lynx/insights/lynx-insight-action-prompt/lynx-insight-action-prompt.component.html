@@ -1,3 +1,4 @@
-@if (currentInsight != null) {
-  <mat-icon [class]="currentInsight.type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
+@if (activeInsights.length > 0) {
+  <mat-icon [class]="activeInsights[0].type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
 }
+<!-- TODO: handle multi-insight prompt? -->

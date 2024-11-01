@@ -1,7 +1,9 @@
 import { Component, DestroyRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isEqual } from 'lodash-es';
 import Quill from 'quill';
-import { filter, switchMap, tap } from 'rxjs';
+import { filter, map, merge, switchMap, tap } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 import { EditorReadyService } from '../base-services/editor-ready.service';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
@@ -38,11 +40,27 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
           // including those for insights from other books/chapters
           this.overlayService.closeAll();
         }),
-        switchMap(() => this.insightState.filteredChapterInsights$)
+        switchMap(() =>
+          merge(
+            // Render blots when insights change
+            this.insightState.filteredChapterInsights$.pipe(
+              tap(insights => this.insightRenderService.render(insights, this.editor))
+            ),
+            // Check display state to render action overlay
+            this.insightState.displayState$.pipe(
+              map(displayState => ({
+                activeInsights: displayState.activeInsightIds.map(id => this.insightState.getInsight(id)),
+                actionOverlayActive: displayState.actionOverlayActive
+              })),
+              distinctUntilChanged(isEqual),
+              tap(({ activeInsights, actionOverlayActive }) => {
+                this.insightRenderService.renderActionOverlay(activeInsights, this.editor, actionOverlayActive);
+              })
+            )
+          )
+        )
       )
-      .subscribe(chapterInsights => {
-        this.insightRenderService.render(chapterInsights, this.editor);
-      });
+      .subscribe();
   }
 
   ngOnDestroy(): void {
