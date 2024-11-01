@@ -1,32 +1,37 @@
-@if (insight != null) {
-  <div class="main-section">
+@if (focusedInsight != null) {
+  <div class="main-section focused">
     <h1>
-      <span class="description">{{ description }}</span>
-      <span class="code">({{ insight.code }})</span>
+      <span class="description">{{ focusedInsight.description }}</span>
+      <span class="code">({{ focusedInsight.code }})</span>
 
-      @if (moreInfo != null) {
-        <mat-icon class="more-info-icon" (click)="toggleMoreInfo()">help_outline</mat-icon>
+      @if (focusedInsight.moreInfo != null) {
+        <mat-icon matTooltip="More info" class="more-info-icon" (click)="toggleMoreInfo()">help_outline</mat-icon>
       }
     </h1>
     <div class="primary-action">
-      <a>{{ primaryAction?.label }}</a>
+      <a (click)="selectAction(primaryAction!)">
+        <mat-icon class="apply-icon">content_paste_go</mat-icon>
+        {{ primaryAction?.label }}
+      </a>
       <span class="shortcut">Alt + Shift + Enter</span>
     </div>
     <div class="secondary-actions">
-      <mat-icon class="apply-icon">content_paste_go</mat-icon>
-      <mat-icon [matMenuTriggerFor]="actionMenu" class="action-menu-trigger">more_horiz</mat-icon>
+      <mat-icon matTooltip="Actions" [matMenuTriggerFor]="actionMenu" class="action-menu-trigger">more_horiz</mat-icon>
+      <mat-icon matTooltip="Dismiss" (click)="dismissInsight(focusedInsight)" class="dismiss-icon">
+        visibility_off
+      </mat-icon>
     </div>
   </div>
 
-  @if (moreInfo != null && showMoreInfo) {
+  @if (focusedInsight.moreInfo != null && showMoreInfo) {
     <div class="more-info-section">
-      {{ moreInfo }}
+      {{ focusedInsight.moreInfo }}
     </div>
   }
 
   <mat-menu #actionMenu="matMenu" class="lynx-insight-action-menu">
     @for (action of menuActions; track action) {
-      <div mat-menu-item>
+      <div mat-menu-item (click)="selectAction(action)">
         <div class="menu-item-wrapper">
           <h2>{{ action.label }}</h2>
           <span>{{ action.description }}</span>
@@ -34,4 +39,16 @@
       </div>
     }
   </mat-menu>
+} @else if (insightsFlattened.length > 1) {
+  <div class="main-section list">
+    <h1>Select for details</h1>
+    @for (insight of insightsFlattened; track insight) {
+      <div class="insight-item" [class]="insight.type" (click)="focusInsight(insight)">
+        <h1>
+          <span class="description">{{ insight.description }}</span>
+          <span class="code">({{ insight.code }})</span>
+        </h1>
+      </div>
+    }
+  </div>
 }

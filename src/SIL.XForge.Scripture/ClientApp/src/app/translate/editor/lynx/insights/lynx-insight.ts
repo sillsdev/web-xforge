@@ -12,9 +12,10 @@ export interface LynxInsightRange {
 
 // Interface whose props are all boolean or undefined
 export interface LynxInsightDisplayState {
+  activeInsightIds: string[];
   promptActive?: boolean;
-  actionMenuActive?: boolean;
-  cursorActive?: boolean;
+  actionOverlayActive?: boolean;
+  // cursorActive?: boolean;
 }
 
 // TODO: include something like TextDocId?
@@ -25,7 +26,6 @@ export interface LynxInsight {
   book: number;
   range: LynxInsightRange;
   code: string;
-  displayState?: LynxInsightDisplayState;
 }
 
 export interface LynxInsightNode {

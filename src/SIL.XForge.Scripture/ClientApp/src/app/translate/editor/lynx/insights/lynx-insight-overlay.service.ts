@@ -8,6 +8,7 @@ import {
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { Injectable, NgZone } from '@angular/core';
+import { take } from 'rxjs';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 
@@ -24,13 +25,20 @@ export class LynxInsightOverlayService {
     private ngZone: NgZone
   ) {}
 
-  open(origin: HTMLElement, insight: LynxInsight, scrollContainerEl: HTMLElement): void {
+  open(origin: HTMLElement, insights: LynxInsight[], scrollContainerEl: HTMLElement): void {
+    if (insights.length === 0) {
+      return;
+    }
+
     this.registerScrollable(scrollContainerEl);
 
     const overlayRef: OverlayRef = this.overlay.create(this.getConfig(origin));
     const componentRef = overlayRef.attach(new ComponentPortal(LynxInsightOverlayComponent));
-    componentRef.instance.insight = insight;
-    this.openRefs.set(insight.id, overlayRef);
+    const key = insights[0].id;
+
+    componentRef.instance.insights = insights;
+    componentRef.instance.closeOverlay.pipe(take(1)).subscribe(() => this.close(key));
+    this.openRefs.set(key, overlayRef);
   }
 
   close(insightId: string): void {

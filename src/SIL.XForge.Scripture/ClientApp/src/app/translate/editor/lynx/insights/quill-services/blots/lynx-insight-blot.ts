@@ -48,20 +48,20 @@ class LynxInsightBlot extends Inline {
       //   node.removeAttribute('data-prompt-active'));
     }
 
-    if (value?.displayState?.actionMenuActive) {
-      node.classList.add('action-menu-active');
-      node.setAttribute('data-action-menu-active', value.type);
+    if (value?.displayState?.actionOverlayActive) {
+      node.classList.add('action-overlay-active');
+      node.setAttribute('data-action-overlay-active', value.type);
       // } else {
-      //   node.classList.remove('action-menu-active');
-      //   node.removeAttribute('data-action-menu-active');
+      //   node.classList.remove('action-overlay-active');
+      //   node.removeAttribute('data-action-overlay-active');
     }
 
     // if (value?.displayState?.cursorActive) {
     //   node.classList.add('cursor-active');
-    //   node.setAttribute('data-action-menu-active', value.type);
+    //   node.setAttribute('data-action-overlay-active', value.type);
     // } else {
     //   node.classList.remove('cursor-active');
-    //   node.removeAttribute('data-action-menu-active');
+    //   node.removeAttribute('data-action-overlay-active');
     // }
   }
 
