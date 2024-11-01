@@ -37,7 +37,7 @@ import {
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { TextAndAudioComponent } from '../../text-and-audio/text-and-audio.component';
-import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 import { CheckingQuestionComponent } from './checking-question/checking-question.component';
@@ -526,10 +526,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   async submit(): Promise<void> {
     if (this.textAndAudio != null) {
       this.textAndAudio.suppressErrors = false;
-      if (this.textAndAudio.audioComponent?.isRecording) {
-        await this.textAndAudio.audioComponent.stopRecording();
-        this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
-      }
     }
     if (!this.textAndAudio?.hasTextOrAudio()) {
       this.textAndAudio?.text.setErrors({ invalid: true });

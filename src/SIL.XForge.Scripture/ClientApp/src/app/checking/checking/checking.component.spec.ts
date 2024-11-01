@@ -83,11 +83,7 @@ import { TextAndAudioComponent } from '../text-and-audio/text-and-audio.componen
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
-import {
-  AudioAttachment,
-  CheckingAudioRecorderComponent
-} from './checking-audio-recorder/checking-audio-recorder.component';
+import { AudioAttachment, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import { CheckingQuestionsService, QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
@@ -146,7 +142,6 @@ describe('CheckingComponent', () => {
       AudioPlayerComponent,
       CheckingAnswersComponent,
       CheckingAudioPlayerComponent,
-      CheckingAudioRecorderComponent,
       CheckingCommentFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,
@@ -1207,7 +1202,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
-      env.clickButton(env.removeAudioButton);
+      env.component.answersPanel!.textAndAudio.resetAudio();
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       verify(
@@ -2641,10 +2636,6 @@ class TestEnvironment {
     return this.answerPanel.query(By.css('.record-question-button'));
   }
 
-  get removeAudioButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
-  }
-
   get saveAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#save-answer'));
   }
@@ -2819,7 +2810,7 @@ class TestEnvironment {
     this.setTextFieldValue(this.yourAnswerField, answer);
     if (audioFilename != null) {
       const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: audioFilename };
-      this.component.answersPanel?.textAndAudio?.audio.setValue(audio);
+      this.component.answersPanel?.textAndAudio?.setAudioAttachment(audio);
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
@@ -3025,10 +3016,10 @@ class TestEnvironment {
 
   /** To use if the Stop Recording button isn't showing up in the test DOM. */
   simulateAudioRecordingFinishedProcessing(): void {
-    this.component.answersPanel!.textAndAudio!.audioComponent!.audio = {
+    this.component.answersPanel!.textAndAudio!.setAudioAttachment({
       status: 'processed',
       url: 'test-audio-short.mp3'
-    };
+    });
     flush();
     this.fixture.detectChanges();
   }

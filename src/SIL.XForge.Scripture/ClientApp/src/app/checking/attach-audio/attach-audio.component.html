@@ -1,24 +1,14 @@
 <ng-container *transloco="let t; read: 'attach_audio'">
   <div class="add-audio">
-    @if (!textAndAudio?.input?.audioUrl && textAndAudio?.audioAttachment?.status !== "recording") {
+    @if (audioUrl == null && textAndAudio?.audioAttachment?.status !== "recording") {
       <button mat-icon-button (click)="startRecording()" [matTooltip]="t('tooltip_record')">
         <mat-icon>mic</mat-icon>
       </button>
     }
-    @if (textAndAudio?.audioAttachment?.status === "recording") {
-      <button mat-icon-button (click)="stopRecording()" [matTooltip]="t('tooltip_stop')">
-        <mat-icon class="stop-recording">stop</mat-icon>
-      </button>
-    }
   </div>
-  @if (textAndAudio?.input?.audioUrl) {
+  @if (audioUrl != null) {
     <div class="audio-added">
-      <app-single-button-audio-player
-        #audio
-        [source]="textAndAudio?.input?.audioUrl"
-        (click)="toggleAudio()"
-        theme="secondary"
-      >
+      <app-single-button-audio-player #audio [source]="audioUrl" (click)="toggleAudio()" theme="secondary">
         <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
       </app-single-button-audio-player>
       <button mat-icon-button (click)="deleteAudio()" class="clear">

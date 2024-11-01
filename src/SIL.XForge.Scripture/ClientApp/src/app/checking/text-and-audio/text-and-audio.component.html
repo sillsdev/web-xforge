@@ -5,17 +5,6 @@
         <mat-label>{{ textLabel }}</mat-label>
         <textarea matInput formControlName="text" id="textarea" (change)="trim($event)"></textarea>
       </mat-form-field>
-      <div class="audio-container">
-        <app-checking-audio-recorder
-          (status)="updateFormValidity()"
-          formControlName="audio"
-          class="border-button"
-          [ngClass]="{
-            invalid: text.invalid,
-            borderless: hasAudio()
-          }"
-        ></app-checking-audio-recorder>
-      </div>
     </div>
   </form>
 
