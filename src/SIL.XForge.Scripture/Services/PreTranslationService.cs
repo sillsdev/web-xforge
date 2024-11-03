@@ -340,7 +340,7 @@ public class PreTranslationService(
         if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.ParallelCorpusIdForPreTranslate))
         {
             corpusId = projectSecret
-                .ServalData?.CorpusFiles.FirstOrDefault(c => c.ProjectId == projectSecret.Id)
+                .ServalData.CorpusFiles.FirstOrDefault(c => c.ProjectId == projectSecret.Id)
                 ?.CorpusId;
             useParatextVerseRef = true;
         }
