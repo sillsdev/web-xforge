@@ -817,11 +817,18 @@ public class MachineProjectService(
         {
             throw new DataNotFoundException("The project secret does not contain Serval data.");
         }
+
+        // Set up the Serval Configuration
+        string? servalConfig = null;
+        if (projectDoc.Data.TranslateConfig.DraftConfig.ServalConfig is not null)
+        {
+            // Load the Serval Config from the Draft Config
+            servalConfig = projectDoc.Data.TranslateConfig.DraftConfig.ServalConfig;
+        }
         else if (await featureManager.IsEnabledAsync(FeatureFlags.UpdatedLearningRateForServal))
         {
             // Specify the updated learning rate
-            servalConfig = JObject.Parse(
-                """
+            servalConfig = """
                 {
                     "train_params":
                     {
@@ -831,8 +838,7 @@ public class MachineProjectService(
                         "max_steps": 5000
                     }
                 }
-                """
-            );
+                """;
         }
 
         // Get the appropriate translation engine
@@ -844,7 +850,7 @@ public class MachineProjectService(
             // Execute a complete pre-translation
             translationBuildConfig = GetTranslationBuildConfig(
                 projectSecret.ServalData,
-                projectDoc.Data.TranslateConfig.DraftConfig.ServalConfig,
+                servalConfig,
                 buildConfig,
                 corporaSyncInfo
             );
@@ -1871,9 +1877,10 @@ public class MachineProjectService(
         }
 
         // Get the source project for the NMT/SMT translation corpus
-        string sourceProjectId = hasAlternateSource && preTranslate
-            ? project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef
-            : project.TranslateConfig.Source.ProjectRef;
+        string sourceProjectId =
+            hasAlternateSource && preTranslate
+                ? project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef
+                : project.TranslateConfig.Source.ProjectRef;
 
         // Set up the parallel corpus for NMT/SMT translation
         List<ServalCorpusFile> sourceCorpora = [servalCorpusFiles.Single(f => f.ProjectId == sourceProjectId)];
@@ -1892,7 +1899,7 @@ public class MachineProjectService(
             sourceCorpusIds,
             targetCorpusIds,
             cancellationToken
-            );
+        );
 
         // Record the corpus sync info for the pre-translate corpora
         corporaSyncInfo = RecordServalCorpusSyncInfo(
@@ -1922,9 +1929,7 @@ public class MachineProjectService(
                     .DraftConfig
                     .AdditionalTrainingSource
                     .ProjectRef;
-                sourceCorpora.Add(
-                    servalCorpusFiles.Single(f => f.ProjectId == additionalTrainingSourceProjectId)
-                );
+                sourceCorpora.Add(servalCorpusFiles.Single(f => f.ProjectId == additionalTrainingSourceProjectId));
             }
 
             sourceCorpusIds = [.. sourceCorpora.Select(f => f.CorpusId)];
