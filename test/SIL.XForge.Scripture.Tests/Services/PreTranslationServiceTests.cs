@@ -88,6 +88,17 @@ public class PreTranslationServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenNullServalData()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectSecretAsync(servalData: null);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
+    }
+
+    [Test]
     public void GetPreTranslationParametersAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment

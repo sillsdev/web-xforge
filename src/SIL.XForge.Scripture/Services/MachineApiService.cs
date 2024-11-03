@@ -984,16 +984,23 @@ public class MachineApiService(
             AdditionalInfo = new ServalBuildAdditionalInfo
             {
                 BuildId = translationBuild.Id,
-                CorporaIds =
-                [
-                    .. translationBuild.Pretranslate?.Select(t => t.Corpus?.Id).Where(id => !string.IsNullOrEmpty(id))
-                        ?? [],
-                    .. translationBuild.Pretranslate?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id)
-                        ?? [],
-                    .. translationBuild.TrainOn?.Select(t => t.Corpus?.Id).Where(id => !string.IsNullOrEmpty(id)) ?? [],
-                    .. translationBuild.TrainOn?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id) ?? [],
-                    .. translationBuild.TrainOn?.SelectMany(t => t.TargetFilters ?? []).Select(f => f.Corpus.Id) ?? [],
-                ],
+                CorporaIds = new HashSet<string>(
+                    // Use a HashSet to ensure there are no duplicate corpus ids
+                    [
+                        .. translationBuild
+                            .Pretranslate?.Select(t => t.Corpus?.Id)
+                            .Where(id => !string.IsNullOrEmpty(id)) ?? [],
+                        .. translationBuild
+                            .Pretranslate?.SelectMany(t => t.SourceFilters ?? [])
+                            .Select(f => f.Corpus.Id) ?? [],
+                        .. translationBuild.TrainOn?.Select(t => t.Corpus?.Id).Where(id => !string.IsNullOrEmpty(id))
+                            ?? [],
+                        .. translationBuild.TrainOn?.SelectMany(t => t.SourceFilters ?? []).Select(f => f.Corpus.Id)
+                            ?? [],
+                        .. translationBuild.TrainOn?.SelectMany(t => t.TargetFilters ?? []).Select(f => f.Corpus.Id)
+                            ?? [],
+                    ]
+                ),
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,

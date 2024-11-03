@@ -409,6 +409,8 @@ public class MachineApiServiceTests
         const string engineId = "engineId1";
         const string corpusId1 = "corpusId1";
         const string corpusId2 = "corpusId2";
+        const string corpusId3 = "corpusId3";
+        const string corpusId4 = "corpusId4";
         const int step = 123;
         env.TranslationEnginesClient.GetBuildAsync(
                 TranslationEngine01,
@@ -434,12 +436,59 @@ public class MachineApiServiceTests
                         [
                             new PretranslateCorpus
                             {
+                                // Previous corpus format
                                 Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" },
                             },
                             new PretranslateCorpus
                             {
+                                // Previous corpus format
                                 Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" },
                             },
+                            new PretranslateCorpus
+                            {
+                                // New parallel corpus format
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" }
+                                    },
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" }
+                                    },
+                                ],
+                            },
+                            // Invalid corpus format
+                            new PretranslateCorpus(),
+                        ],
+                        TrainOn =
+                        [
+                            new TrainingCorpus
+                            {
+                                // Previous corpus format
+                                Corpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" },
+                            },
+                            new TrainingCorpus
+                            {
+                                // New parallel corpus format
+                                SourceFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" }
+                                    },
+                                ],
+                                TargetFilters =
+                                [
+                                    new ParallelCorpusFilter
+                                    {
+                                        Corpus = new ResourceLink { Id = corpusId4, Url = "https://example.com" }
+                                    },
+                                ],
+                            },
+                            // Invalid corpus format
+                            new TrainingCorpus(),
                         ],
                     }
                 )
@@ -472,9 +521,11 @@ public class MachineApiServiceTests
         Assert.AreEqual(step, actual.AdditionalInfo.Step);
         Assert.AreEqual(engineId, actual.AdditionalInfo.TranslationEngineId);
         Assert.IsNotNull(actual.AdditionalInfo.CorporaIds);
-        Assert.AreEqual(2, actual.AdditionalInfo.CorporaIds.Count());
-        Assert.AreEqual(corpusId1, actual.AdditionalInfo.CorporaIds.First());
-        Assert.AreEqual(corpusId2, actual.AdditionalInfo.CorporaIds.Last());
+        Assert.AreEqual(4, actual.AdditionalInfo.CorporaIds.Count());
+        Assert.AreEqual(corpusId1, actual.AdditionalInfo.CorporaIds.ElementAt(0));
+        Assert.AreEqual(corpusId2, actual.AdditionalInfo.CorporaIds.ElementAt(1));
+        Assert.AreEqual(corpusId3, actual.AdditionalInfo.CorporaIds.ElementAt(2));
+        Assert.AreEqual(corpusId4, actual.AdditionalInfo.CorporaIds.ElementAt(3));
     }
 
     [Test]
@@ -1969,6 +2020,71 @@ public class MachineApiServiceTests
         Assert.AreEqual(
             Data01,
             env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
+        );
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingAndTranslationScriptureRanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string scriptureRange1 = "GEN";
+        const string scriptureRange2 = "EXO";
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig
+            {
+                ProjectId = Project01,
+                TrainingScriptureRanges =
+                [
+                    new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = scriptureRange1 }
+                ],
+                TranslationScriptureRanges =
+                [
+                    new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = scriptureRange2 }
+                ],
+            },
+            CancellationToken.None
+        );
+
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.AreEqual(
+            1,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges.Count
+        );
+        Assert.AreEqual(
+            Project01,
+            env.Projects.Get(Project01)
+                .TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges.First()
+                .ProjectId
+        );
+        Assert.AreEqual(
+            scriptureRange1,
+            env.Projects.Get(Project01)
+                .TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges.First()
+                .ScriptureRange
+        );
+        Assert.AreEqual(
+            1,
+            env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges.Count
+        );
+        Assert.AreEqual(
+            Project02,
+            env.Projects.Get(Project01)
+                .TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges.First()
+                .ProjectId
+        );
+        Assert.AreEqual(
+            scriptureRange2,
+            env.Projects.Get(Project01)
+                .TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges.First()
+                .ScriptureRange
         );
     }
 
