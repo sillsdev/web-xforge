@@ -265,9 +265,7 @@ public class MachineProjectService(
         }
 
         // Ensure we have a translation engine id
-        string translationEngineId = preTranslate
-            ? projectSecret.ServalData?.PreTranslationEngineId
-            : projectSecret.ServalData?.TranslationEngineId;
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
             logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
@@ -627,12 +625,20 @@ public class MachineProjectService(
     /// Creates or Updates a Parallel Corpus on Serval.
     /// </summary>
     /// <param name="translationEngineId">The translation engine identifier.</param>
-    /// <param name="parallelCorpusId">The parallel corpus identifier.</param>
-    /// <param name="name">The name of the parallel corpus.</param>
+    /// <param name="parallelCorpusId">
+    /// The parallel corpus to be updated. If <c>null</c> or empty, a new parallel corpus will be created.
+    /// </param>
+    /// <param name="name">
+    /// The name of the parallel corpus. This will only be used if the parallel corpus is being created.
+    /// </param>
     /// <param name="sourceCorpusIds">The source corpus identifiers.</param>
     /// <param name="targetCorpusIds">The target corpus identifiers.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The parallel corpus identifier.</returns>
+    /// <returns>
+    /// The new or updated parallel corpus identifier. If <paramref name="parallelCorpusId"/> is not <c>null</c>,
+    /// this will be the same value as <paramref name="parallelCorpusId"/>. If <paramref name="parallelCorpusId"/>
+    /// is <c>null</c>, this will be the identifier of the new parallel corpus.
+    /// </returns>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task<string> CreateOrUpdateParallelCorpusAsync(
         string translationEngineId,
@@ -645,6 +651,7 @@ public class MachineProjectService(
     {
         if (string.IsNullOrWhiteSpace(parallelCorpusId))
         {
+            // Create a new parallel corpus
             TranslationParallelCorpus parallelCorpus = await translationEnginesClient.AddParallelCorpusAsync(
                 translationEngineId,
                 new TranslationParallelCorpusConfig
@@ -659,6 +666,7 @@ public class MachineProjectService(
         }
         else
         {
+            // Update the specified parallel corpus
             await translationEnginesClient.UpdateParallelCorpusAsync(
                 translationEngineId,
                 parallelCorpusId,
@@ -692,9 +700,7 @@ public class MachineProjectService(
     {
         // Get the existing project secret, so we can see how to create the engine and update the Serval data
         SFProjectSecret projectSecret = await projectSecrets.GetAsync(sfProject.Id);
-        string translationEngineId = preTranslate
-            ? projectSecret.ServalData?.PreTranslationEngineId
-            : projectSecret.ServalData?.TranslationEngineId;
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
@@ -856,9 +862,7 @@ public class MachineProjectService(
         CancellationToken cancellationToken
     )
     {
-        string translationEngineId = preTranslate
-            ? projectSecret.ServalData?.PreTranslationEngineId
-            : projectSecret.ServalData?.TranslationEngineId;
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (!await TranslationEngineExistsAsync(projectDoc.Id, translationEngineId, preTranslate, cancellationToken))
         {
             // We do not have one, likely because the translation is a back translation
@@ -952,7 +956,7 @@ public class MachineProjectService(
         // Ensure a translation engine id is present
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
-            throw new DataNotFoundException("The translation engine is not specified.");
+            throw new DataNotFoundException("Failed to create a translation engine.");
         }
 
         return translationEngineId;
@@ -1288,9 +1292,7 @@ public class MachineProjectService(
         }
 
         // Ensure we have a translation engine id
-        string translationEngineId = preTranslate
-            ? projectSecret.ServalData?.PreTranslationEngineId
-            : projectSecret.ServalData?.TranslationEngineId;
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
             logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
@@ -1345,7 +1347,7 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Synchronises the additional training data for a pre-translation project.
+    /// Synchronizes the additional training data for a pre-translation project.
     /// </summary>
     /// <param name="curUserId">The current user identifier</param>
     /// <param name="project">The project.</param>
@@ -1354,7 +1356,11 @@ public class MachineProjectService(
     /// <param name="additionalTrainingData">The additional training data.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The updated <paramref name="additionalTrainingData"/>.</returns>
-    /// <remarks>This can be mocked in unit tests.</remarks>
+    /// <remarks>
+    /// If there are no TrainingDataFiles specified in <paramref name="buildConfig"/>, then the additional training
+    /// data corpora will be removed from Serval. Otherwise, the corpora will be created or updated as required.
+    /// This can be mocked in unit tests.
+    /// </remarks>
     protected internal virtual async Task<ServalAdditionalTrainingData?> SyncAdditionalTrainingData(
         string curUserId,
         SFProject project,
@@ -1501,9 +1507,7 @@ public class MachineProjectService(
         List<ServalCorpusSyncInfo> corporaSyncInfo = [];
 
         // Ensure we have a translation engine ID
-        string translationEngineId = preTranslate
-            ? projectSecret.ServalData?.PreTranslationEngineId
-            : projectSecret.ServalData?.TranslationEngineId;
+        string translationEngineId = GetTranslationEngineId(projectSecret, preTranslate);
         if (string.IsNullOrWhiteSpace(translationEngineId))
         {
             throw new DataNotFoundException("The translation engine ID cannot be found.");
@@ -1986,6 +1990,16 @@ public class MachineProjectService(
         await UploadFileAsync(servalCorpusFile, stream, FileFormat.Text, cancellationToken);
         return true;
     }
+
+    /// <summary>
+    /// Gets the translation engine identifier from the project secret,
+    /// depending on whether we are pre-translating or not.
+    /// </summary>
+    /// <param name="projectSecret">The project secret.</param>
+    /// <param name="preTranslate">If <c>true</c>, we are pre-translating.</param>
+    /// <returns>The translation engine identifier.</returns>
+    private static string? GetTranslationEngineId(SFProjectSecret projectSecret, bool preTranslate) =>
+        preTranslate ? projectSecret.ServalData?.PreTranslationEngineId : projectSecret.ServalData?.TranslationEngineId;
 
     /// <summary>
     /// Records the Corpus Synchronization information.
