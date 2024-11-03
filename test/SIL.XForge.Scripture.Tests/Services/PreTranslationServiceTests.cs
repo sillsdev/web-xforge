@@ -77,11 +77,40 @@ public class PreTranslationServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenNoCorpusFilesConfiguredForProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectSecretAsync(
+            new ServalData
+            {
+                ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+                PreTranslationEngineId = TranslationEngine01,
+                CorpusFiles = [],
+            }
+        );
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
+    }
+
+    [Test]
     public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenNoPreTranslationConfigured()
     {
         // Set up test environment
         var env = new TestEnvironment();
         await env.SetupProjectSecretAsync(new ServalData());
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
+    }
+
+    [Test]
+    public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenNullServalData()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectSecretAsync(servalData: null);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
