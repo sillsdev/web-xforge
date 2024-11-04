@@ -1423,7 +1423,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (segmentRefs.length <= 1) return segmentRefs;
     const filteredSegments: string[] = [...segmentRefs];
     const lastSegment: string = filteredSegments[segmentRefs.length - 1];
-    const newLineSegment: boolean = lastSegment.includes('/');
+    const newLineSegment: boolean = lastSegment.includes('/p');
     if (newLineSegment && this.isSegmentBlank(lastSegment)) {
       // remove the last segment if it is blank and is on a new line
       filteredSegments.pop();
