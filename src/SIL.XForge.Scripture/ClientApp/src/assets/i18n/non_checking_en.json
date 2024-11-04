@@ -378,6 +378,19 @@
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
+  "lynx_insights_panel_header": {
+    "insights": "Insights",
+    "filter_menu_filter_header": "Show",
+    "filter_menu_filter_info": "Notices",
+    "filter_menu_filter_warning": "Warnings",
+    "filter_menu_filter_error": "Errors",
+    "filter_menu_sort_header": "Order by",
+    "filter_menu_sort_severity": "Severity",
+    "filter_menu_sort_appearance": "Appearance in text",
+    "scope_chapter": "Chapter",
+    "scope_book": "Book",
+    "scope_project": "Project"
+  },
   "multi_viewer": {
     "other_viewers": "{{ count }} other viewers"
   },
