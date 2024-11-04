@@ -309,7 +309,7 @@
               }
               @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
                 <section class="draft-complete">
-                  <mat-card>
+                  <mat-card class="preview-card">
                     <mat-card-header>
                       <mat-card-title>
                         {{ isDraftComplete(draftJob) ? t("draft_is_ready") : t("preview_last_draft_header") }}
@@ -320,7 +320,7 @@
                         <p>{{ t("preview_last_draft_detail") }}</p>
                       }
                       <p>{{ t("click_book_to_preview") }}</p>
-                      <app-draft-preview-books></app-draft-preview-books>
+                      <app-draft-preview-books #draftPreview></app-draft-preview-books>
                     </mat-card-content>
                     <mat-card-actions>
                       @if (hasDraftBooksAvailable) {
@@ -355,6 +355,9 @@
                       }
                     </mat-card-actions>
                   </mat-card>
+                  @if (draftPreview.draftApplyProgress$ | async; as progress) {
+                    <app-draft-apply-progress [draftApplyProgress]="progress"></app-draft-apply-progress>
+                  }
                 </section>
               }
             }
