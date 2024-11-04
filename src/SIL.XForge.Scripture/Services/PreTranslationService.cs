@@ -339,9 +339,7 @@ public class PreTranslationService(
         bool useParatextVerseRef = false;
         if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.ParallelCorpusIdForPreTranslate))
         {
-            corpusId = projectSecret
-                .ServalData.CorpusFiles.FirstOrDefault(c => c.ProjectId == projectSecret.Id)
-                ?.CorpusId;
+            corpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
             useParatextVerseRef = true;
         }
         else
