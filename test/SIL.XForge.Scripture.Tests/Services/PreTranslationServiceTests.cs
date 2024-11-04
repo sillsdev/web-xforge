@@ -64,7 +64,6 @@ public class PreTranslationServiceTests
             {
                 ParallelCorpusIdForPreTranslate = ParallelCorpus01,
                 PreTranslationEngineId = TranslationEngine01,
-                CorpusFiles = [new ServalCorpusFile { CorpusId = Corpus01, ProjectId = Project01 }],
             }
         );
 
@@ -72,23 +71,16 @@ public class PreTranslationServiceTests
         (string translationEngineId, string corpusId, bool useParatextVerseRef) =
             await env.Service.GetPreTranslationParametersAsync(Project01);
         Assert.AreEqual(TranslationEngine01, translationEngineId);
-        Assert.AreEqual(Corpus01, corpusId);
+        Assert.AreEqual(ParallelCorpus01, corpusId);
         Assert.IsTrue(useParatextVerseRef);
     }
 
     [Test]
-    public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenNoCorpusFilesConfiguredForProject()
+    public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenNoCorpusConfiguredForProject()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupProjectSecretAsync(
-            new ServalData
-            {
-                ParallelCorpusIdForPreTranslate = ParallelCorpus01,
-                PreTranslationEngineId = TranslationEngine01,
-                CorpusFiles = [],
-            }
-        );
+        await env.SetupProjectSecretAsync(new ServalData { PreTranslationEngineId = TranslationEngine01 });
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
