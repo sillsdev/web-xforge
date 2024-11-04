@@ -79,6 +79,17 @@ mat-divider.mat-divider-inset {
 .draft-complete {
   max-width: 500px;
   margin-inline-start: 1px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+
+  .preview-card {
+    flex-shrink: 0;
+  }
+
+  app-draft-apply-progress {
+    width: 100%;
+  }
 
   h2 {
     font-weight: 500;
