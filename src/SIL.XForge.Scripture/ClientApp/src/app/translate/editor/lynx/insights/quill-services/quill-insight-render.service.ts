@@ -15,6 +15,7 @@ const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaSt
 export class QuillInsightRenderService extends InsightRenderService {
   readonly prefix = 'lynx-insight';
   readonly editorAttentionClass = `${this.prefix}-attention`;
+  readonly activeInsightClass = `action-overlay-active`;
 
   constructor(private readonly overlayService: LynxInsightOverlayService) {
     super();
@@ -88,25 +89,47 @@ export class QuillInsightRenderService extends InsightRenderService {
         // Scroll to the first occurring active insight in the editor
         editor.setSelection(leadingInsight.range.index, 'api');
 
-        const overlayAnchor: HTMLElement = this.getElementAtIndex(editor, overlayAnchorInsight.range.index + 1);
-        this.overlayService.open(overlayAnchor, insights, editor.root);
-        editorAttention = true;
+        const overlayAnchor: HTMLElement | null = this.getElementAtIndex(editor, overlayAnchorInsight.range.index + 1);
+
+        if (overlayAnchor != null) {
+          this.overlayService.open(overlayAnchor, insights, editor.root);
+          editorAttention = true;
+        }
       }
     }
 
-    this.setEditorAttention(editorAttention, editor);
+    this.setEditorAttention(insights, editorAttention, editor);
   }
 
-  private setEditorAttention(editorAttention: boolean, editor: Quill): void {
+  private setEditorAttention(insights: LynxInsight[], editorAttention: boolean, editor: Quill): void {
+    // Set attention class on editor (dims the editor)
     if (editorAttention) {
       editor.root.classList.add(this.editorAttentionClass);
     } else {
       editor.root.classList.remove(this.editorAttentionClass);
     }
+
+    // Clear any previously set active insight classes
+    editor.root.querySelectorAll(`.${this.activeInsightClass}`).forEach(element => {
+      element.classList.remove(this.activeInsightClass);
+    });
+
+    // Set class on active insights to pull them above the editor dim overlay
+    if (editorAttention) {
+      for (const insight of insights) {
+        const element: HTMLElement | null = this.getElementAtIndex(editor, insight.range.index);
+        element?.classList.add(this.activeInsightClass);
+      }
+    }
   }
 
-  private getElementAtIndex(editor: Quill, index: number): HTMLElement {
-    const [leaf] = editor.getLeaf(index);
+  private getElementAtIndex(editor: Quill, index: number): HTMLElement | null {
+    const [leaf] = editor.getLeaf(index + 1);
+
+    if (leaf == null) {
+      return null;
+    }
+
     return leaf.domNode.nodeType === Node.TEXT_NODE ? leaf.parent.domNode : leaf;
   }
 }
