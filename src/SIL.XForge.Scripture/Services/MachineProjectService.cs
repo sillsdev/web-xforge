@@ -1901,7 +1901,9 @@ public class MachineProjectService(
         List<string> targetCorpusIds = [.. targetCorpora.Select(f => f.CorpusId)];
 
         // Get the NMT/SMT translation parallel corpus id (might be null)
-        string translationParallelCorpusId = projectSecret.ServalData.ParallelCorpusIdForPreTranslate;
+        string translationParallelCorpusId = preTranslate
+            ? projectSecret.ServalData.ParallelCorpusIdForPreTranslate
+            : projectSecret.ServalData.ParallelCorpusIdForSmt;
 
         // Create or update the NMT/SMT translation parallel corpora
         translationParallelCorpusId = await CreateOrUpdateParallelCorpusAsync(
