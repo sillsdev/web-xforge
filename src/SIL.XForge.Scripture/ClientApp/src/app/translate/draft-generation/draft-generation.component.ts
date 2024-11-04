@@ -33,6 +33,7 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
+import { DraftApplyProgressComponent } from './draft-apply-progress/draft-apply-progress.component';
 import { BuildConfig, DraftZipProgress, activeBuildStates } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
@@ -62,7 +63,8 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     DraftInformationComponent,
     SupportedBackTranslationLanguagesDialogComponent,
     ServalProjectComponent,
-    DraftPreviewBooksComponent
+    DraftPreviewBooksComponent,
+    DraftApplyProgressComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
