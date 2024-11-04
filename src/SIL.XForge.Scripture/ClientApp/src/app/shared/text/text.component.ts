@@ -588,7 +588,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     for (const verseRef of chapterFeaturedVerseRefs) {
       let featuredVerseSegments: string[] =
         featureName === 'question' ? this.getVerseSegmentsNoHeadings(verseRef) : this.getVerseSegments(verseRef);
-      featuredVerseSegments = this.filterBlankFinalSegment(featuredVerseSegments);
+      featuredVerseSegments = this.filterBlankNewlineSegment(featuredVerseSegments);
       if (featuredVerseSegments.length === 0) {
         continue;
       }
@@ -724,7 +724,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   toggleVerseSelection(verseRef: VerseRef): boolean {
     if (this.editor == null) return false;
-    const verseSegments: string[] = this.filterBlankFinalSegment(this.getCompatibleSegments(verseRef));
+    const verseSegments: string[] = this.filterBlankNewlineSegment(this.getCompatibleSegments(verseRef));
     const verseRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let selectionValue: true | null = true;
     if (verseRange != null) {
@@ -786,7 +786,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    segmentRefs = this.filterBlankFinalSegment(segmentRefs);
+    segmentRefs = this.filterBlankNewlineSegment(segmentRefs);
     // this changes the underlying HTML, which can mess up some Quill events, so defer this call
     Promise.resolve(segmentRefs).then(refs => {
       this.viewModel.highlight(refs);
@@ -1417,15 +1417,18 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     this._segment.update(text, segmentRange);
   }
 
-  private filterBlankFinalSegment(segmentRefs: string[]): string[] {
+  /** Filter the final segment if it is blank and a new line segment (i.e. verse_2_4/p_1) */
+  private filterBlankNewlineSegment(segmentRefs: string[]): string[] {
+    // do nothing if there is one or less segments
     if (segmentRefs.length <= 1) return segmentRefs;
-    const lastSegment: string = segmentRefs[segmentRefs.length - 1];
+    const filteredSegments: string[] = [...segmentRefs];
+    const lastSegment: string = filteredSegments[segmentRefs.length - 1];
     const newLineSegment: boolean = lastSegment.includes('/');
     if (newLineSegment && this.isSegmentBlank(lastSegment)) {
       // remove the last segment if it is blank and is on a new line
-      segmentRefs.pop();
+      filteredSegments.pop();
     }
-    return segmentRefs;
+    return filteredSegments;
   }
 
   /** Gets the embeds affected */
