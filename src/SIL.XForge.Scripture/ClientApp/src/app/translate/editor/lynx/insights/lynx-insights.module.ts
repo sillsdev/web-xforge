@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
+import { TranslocoModule } from '@ngneat/transloco';
 import { IncludesPipe } from 'xforge-common/includes.pipe';
 import { SF_QUILL_FORMAT_NAMES } from '../../../../shared/text/quill-formats.service';
 import { EditorReadyService } from './base-services/editor-ready.service';
@@ -42,6 +43,7 @@ import { QuillInsightRenderService } from './quill-services/quill-insight-render
   ],
   imports: [
     CommonModule,
+    TranslocoModule,
     MatButtonModule,
     MatDividerModule,
     MatIconModule,
