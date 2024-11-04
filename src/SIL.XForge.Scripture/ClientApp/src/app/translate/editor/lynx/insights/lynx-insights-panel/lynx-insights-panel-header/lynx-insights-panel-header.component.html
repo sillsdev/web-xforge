@@ -1,48 +1,48 @@
-<!-- TODO: i18n -->
-<div class="title" [matMenuTriggerFor]="filterMenu">
-  Insights
-  <mat-icon>visibility</mat-icon>
-</div>
-<mat-tab-group
-  mat-stretch-tabs="false"
-  [animationDuration]="100"
-  [selectedIndex]="selectedScopeIndex"
-  (selectedIndexChange)="setScopeIndex($event)"
->
-  @for (scope of scopes; track scope) {
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <span class="tab-header-label">
-          {{ scope }}
-          <span class="scope-count">{{ scopeCounts?.[scope] }}</span>
-        </span>
-      </ng-template>
-    </mat-tab>
-  }
-</mat-tab-group>
-
-<!-- TODO: i18n -->
-<mat-menu #filterMenu="matMenu" class="lynx-problems-panel-filter-menu">
-  <!-- Prevent default menu close on click. Closing on 'Order by' selection is handled manually. -->
-  <div (click)="$event.stopPropagation()">
-    <h2>Show</h2>
-    @for (insightType of insightTypes; track insightType) {
-      <button
-        mat-menu-item
-        [class.selected]="filter?.types | includes: insightType"
-        (click)="toggleFilterType(insightType)"
-      >
-        <mat-icon>check</mat-icon>
-        <span>{{ insightType }}</span>
-      </button>
-    }
-    <mat-divider />
-    <h2>Order by</h2>
-    @for (insightOrder of insightOrders; track insightOrder) {
-      <button mat-menu-item [class.selected]="orderBy === insightOrder" (click)="setOrder(insightOrder)">
-        <mat-icon>check</mat-icon>
-        <span>{{ insightOrder }}</span>
-      </button>
-    }
+<ng-container *transloco="let t; read: 'lynx_insights_panel_header'">
+  <div class="title" [matMenuTriggerFor]="filterMenu">
+    {{ t("insights") }}
+    <mat-icon>visibility</mat-icon>
   </div>
-</mat-menu>
+  <mat-tab-group
+    mat-stretch-tabs="false"
+    [animationDuration]="100"
+    [selectedIndex]="selectedScopeIndex"
+    (selectedIndexChange)="setScopeIndex($event)"
+  >
+    @for (scope of scopes; track scope) {
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <span class="tab-header-label">
+            {{ t("scope_" + scope) }}
+            <span class="scope-count">{{ scopeCounts?.[scope] }}</span>
+          </span>
+        </ng-template>
+      </mat-tab>
+    }
+  </mat-tab-group>
+
+  <mat-menu #filterMenu="matMenu" class="lynx-problems-panel-filter-menu">
+    <!-- Prevent default menu close on click. Closing on 'Order by' selection is handled manually. -->
+    <div (click)="$event.stopPropagation()">
+      <h2>{{ t("filter_menu_filter_header") }}</h2>
+      @for (insightType of insightTypes; track insightType) {
+        <button
+          mat-menu-item
+          [class.selected]="filter?.types | includes: insightType"
+          (click)="toggleFilterType(insightType)"
+        >
+          <mat-icon>check</mat-icon>
+          <span>{{ t("filter_menu_filter_" + insightType) }}</span>
+        </button>
+      }
+      <mat-divider />
+      <h2>{{ t("filter_menu_sort_header") }}</h2>
+      @for (insightOrder of insightOrders; track insightOrder) {
+        <button mat-menu-item [class.selected]="orderBy === insightOrder" (click)="setOrder(insightOrder)">
+          <mat-icon>check</mat-icon>
+          <span>{{ t("filter_menu_sort_" + insightOrder) }}</span>
+        </button>
+      }
+    </div>
+  </mat-menu>
+</ng-container>
