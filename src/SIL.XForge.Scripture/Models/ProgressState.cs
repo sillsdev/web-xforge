@@ -6,4 +6,6 @@ public class ProgressState
     public static readonly ProgressState NotStarted = new ProgressState { ProgressValue = 0.0 };
     public string? ProgressString { get; set; }
     public double ProgressValue { get; set; }
+    public SyncPhase SyncPhase { get; set; }
+    public double SyncProgress { get; set; }
 }

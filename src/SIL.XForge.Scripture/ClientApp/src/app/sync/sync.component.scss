@@ -11,7 +11,14 @@
 .sync-card {
   padding: 0;
   max-width: 37rem;
-  min-width: 18rem;
+  min-width: 25rem;
+}
+
+.sync-status {
+  display: flex;
+  padding: 1rem;
+  align-content: center;
+  justify-content: center;
 }
 
 .card-content {

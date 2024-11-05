@@ -5,3 +5,10 @@
   [bufferValue]="1"
   color="accent"
 ></mat-progress-bar>
+<div class="sync-status" *transloco="let t; read: 'sync'">
+  @if (syncPhaseMessage.includes("_Percent")) {
+    {{ t(syncPhaseMessage, { progressPercent: phasePercentage }) }}
+  } @else {
+    {{ t(syncPhaseMessage, { projectType: projectType }) }}
+  }
+</div>
