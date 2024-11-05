@@ -189,7 +189,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             ReportRepoRevs();
-            await NotifySyncProgress(SyncPhase.Phase1, 50.0);
+            await NotifySyncProgress(SyncPhase.Phase1, 90.0);
 
             if (_paratextService.IsResource(targetParatextId))
             {
@@ -1019,7 +1019,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             return false;
         }
 
-        await NotifySyncProgress(SyncPhase.Phase1, 10.0);
+        await NotifySyncProgress(SyncPhase.Phase1, 30.0);
 
         if (!(await _projectSecrets.TryGetAsync(projectSFId)).TryResult(out _projectSecret))
         {
@@ -1057,7 +1057,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         _notesMapper.Init(_userSecret, _paratextUsers);
 
-        await NotifySyncProgress(SyncPhase.Phase1, 20.0);
+        await NotifySyncProgress(SyncPhase.Phase1, 60.0);
         return true;
     }
 
@@ -2128,29 +2128,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     ProgressValue =
                         1.0 / _numberOfPhases * (double)syncPhase
                         + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / _numberOfPhases,
+                    SyncPhase = syncPhase,
+                    SyncProgress = progress
                 }
             );
         }
-    }
-
-    /// <summary>
-    /// The sync phase.
-    /// </summary>
-    /// <remarks>
-    /// The first phase must be 0, and each succeeding phase in numeric sequence, as the integer value of the
-    /// SyncPhase enum is used to calculate the progress value in <see cref="NotifySyncProgress"/>.
-    /// </remarks>
-    private enum SyncPhase
-    {
-        Phase1 = 0, // Initial methods
-        Phase2 = 1, // Update Paratext books and notes
-        Phase3 = 2, // Update Paratext biblical term renderings
-        Phase4 = 3, // Paratext Sync
-        Phase5 = 4, // Deleting texts and granting resource access
-        Phase6 = 5, // Getting the resource texts
-        Phase7 = 6, // Updating texts from Paratext books
-        Phase8 = 7, // Update biblical terms from Paratext
-        Phase9 = 8, // Final methods
     }
 
     private void Log(string message, string? projectSFId = null, string? userId = null)

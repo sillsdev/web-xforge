@@ -1,3 +1,15 @@
+<div *transloco="let t; read: 'sync'">
+  <div class="sync-header">
+    <h3>{{ activeSyncProjectName }}</h3>
+  </div>
+  <div class="sync-status">
+    @if (syncPhaseMessage.includes("_percent")) {
+      {{ t(syncPhaseMessage, { progressPercent: phasePercentage }) }}
+    } @else {
+      {{ t(syncPhaseMessage) }}
+    }
+  </div>
+</div>
 <mat-progress-bar
   class="progress-bar"
   [mode]="(syncProgressMode$ | async) ?? 'indeterminate'"

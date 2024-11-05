@@ -38,7 +38,6 @@
             </button>
           }
           @if (syncActive) {
-            <mat-hint id="sync-message">{{ t("your_project_is_being_synchronized") }}</mat-hint>
             <app-sync-progress [projectDoc]="projectDoc" (inProgress)="syncActive = $event"></app-sync-progress>
             <button
               mat-button
