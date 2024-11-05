@@ -10,6 +10,7 @@ public class RealtimeOptions
 {
     public string AppModuleName { get; set; }
     public int Port { get; set; }
+    public int SecurePort { get; set; }
     public bool MigrationsDisabled { get; set; }
     public bool DataValidationDisabled { get; set; }
     public bool DocumentCacheDisabled { get; set; }

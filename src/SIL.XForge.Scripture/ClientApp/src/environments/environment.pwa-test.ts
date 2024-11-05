@@ -12,6 +12,7 @@ export const environment = {
   helps: 'https://help.scriptureforge.org',
   bugsnagApiKey: 'b72a46a8924a3cd161d4c5534287923c',
   realtimePort: 5003,
+  realtimeSecurePort: 5005,
   realtimeUrl: '/',
   authDomain: 'sil-appbuilder.auth0.com',
   authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH',

@@ -27,6 +27,9 @@ interface RealtimeServerOptions {
   appModuleName: string;
   connectionString: string;
   port: number;
+  securePort: number;
+  certificatePath: string;
+  privateKeyPath: string;
   audience: string;
   scope: string;
   authority: string;
@@ -41,6 +44,7 @@ interface RealtimeServerOptions {
 
 let server: RealtimeServer | undefined;
 let streamListener: WebSocketStreamListener | undefined;
+let secureStreamListener: WebSocketStreamListener | undefined;
 const connections = new Map<number, Connection>();
 let connectionIndex = 0;
 let running = false;
@@ -82,11 +86,35 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       options.scope,
       options.authority,
       options.port,
+      undefined,
+      undefined,
       options.origin.split(';').filter(s => s !== ''),
       exceptionReporter
     );
     streamListener.listen(server);
     await streamListener.start();
+
+    // Open a secure port, if one was specified
+    if (
+      options.securePort !== 0 &&
+      options.certificatePath != '' &&
+      options.certificatePath != null &&
+      options.privateKeyPath != '' &&
+      options.privateKeyPath != null
+    ) {
+      secureStreamListener = new WebSocketStreamListener(
+        options.audience,
+        options.scope,
+        options.authority,
+        options.securePort,
+        options.certificatePath,
+        options.privateKeyPath,
+        options.origin.split(';').filter(s => s !== ''),
+        exceptionReporter
+      );
+      secureStreamListener.listen(server);
+      await secureStreamListener.start();
+    }
     running = true;
     console.log('Realtime Server started.');
   } catch (err) {
@@ -103,6 +131,10 @@ function stopServer(): void {
   if (streamListener != null) {
     streamListener.stop();
     streamListener = undefined;
+  }
+  if (secureStreamListener != null) {
+    secureStreamListener.stop();
+    secureStreamListener = undefined;
   }
   if (running) {
     running = false;

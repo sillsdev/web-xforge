@@ -1,5 +1,7 @@
 import express from 'express';
-import * as http from 'http';
+import fs from 'fs';
+import http from 'http';
+import https from 'https';
 import { JwtHeader, SigningKeyCallback, verify } from 'jsonwebtoken';
 import jwks from 'jwks-rsa';
 import ShareDB from 'sharedb';
@@ -21,6 +23,8 @@ export class WebSocketStreamListener {
     private readonly scope: string,
     authority: string,
     private readonly port: number,
+    certificatePath: string | undefined,
+    privateKeyPath: string | undefined,
     private readonly origin: string[],
     private exceptionReporter: ExceptionReporter
   ) {
@@ -32,7 +36,16 @@ export class WebSocketStreamListener {
       res.status(500).send('500 Internal Server Error');
       this.exceptionReporter.report(err);
     });
-    this.httpServer = http.createServer(app);
+    if (certificatePath != null && privateKeyPath != null) {
+      // Load SSL certificates
+      const options: https.ServerOptions = {
+        cert: fs.readFileSync(certificatePath),
+        key: fs.readFileSync(privateKeyPath)
+      };
+      this.httpServer = https.createServer(options, app);
+    } else {
+      this.httpServer = http.createServer(app);
+    }
 
     this.jwksClient = jwks({
       cache: true,

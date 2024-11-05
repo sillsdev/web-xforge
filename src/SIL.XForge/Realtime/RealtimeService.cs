@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Hangfire;
@@ -292,12 +293,33 @@ public class RealtimeService : DisposableBase, IRealtimeService
 
     private object CreateOptions()
     {
+        // Get the certificate and private key paths from the Kestrel configuration
+        string certificatePath = string.Empty;
+        string privateKeyPath = string.Empty;
+        if (_realtimeOptions.Value.SecurePort != 0)
+        {
+            certificatePath = _configuration.GetValue<string>("Kestrel:Certificates:Default:Path") ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(certificatePath))
+            {
+                certificatePath = Path.GetFullPath(certificatePath);
+            }
+
+            privateKeyPath = _configuration.GetValue<string>("Kestrel:Certificates:Default:KeyPath") ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(privateKeyPath))
+            {
+                privateKeyPath = Path.GetFullPath(privateKeyPath);
+            }
+        }
+
         string mongo = $"{_dataAccessOptions.Value.ConnectionString}/{_dataAccessOptions.Value.MongoDatabaseName}";
         return new
         {
             _realtimeOptions.Value.AppModuleName,
             ConnectionString = mongo,
             _realtimeOptions.Value.Port,
+            _realtimeOptions.Value.SecurePort,
+            CertificatePath = certificatePath,
+            PrivateKeyPath = privateKeyPath,
             Authority = $"https://{_authOptions.Value.Domain}/",
             _authOptions.Value.Audience,
             _authOptions.Value.Scope,
