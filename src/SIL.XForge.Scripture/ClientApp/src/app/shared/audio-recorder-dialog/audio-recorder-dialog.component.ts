@@ -191,7 +191,7 @@ export class AudioRecorderDialogComponent
       return;
     }
     this.refreshWaveformSub?.unsubscribe();
-    this.canvasContext?.reset();
+    this.canvasContext?.resetTransform();
     this.mediaRecorder.stop();
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.audio = { status: 'stopped' };
