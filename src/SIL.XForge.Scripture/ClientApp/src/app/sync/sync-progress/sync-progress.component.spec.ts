@@ -69,6 +69,7 @@ describe('SyncProgressComponent', () => {
     env.updateSyncProgress(0.5, 'testProject01');
     expect(env.host.inProgress).toBe(true);
     expect(await env.getPercent()).toEqual(50);
+    expect(env.syncStatus).not.toBeNull();
     env.emitSyncComplete(true, 'testProject01');
     expect(env.host.inProgress).toBe(false);
   }));
@@ -84,6 +85,7 @@ describe('SyncProgressComponent', () => {
     // Simulate sync in progress
     env.updateSyncProgress(0.5, 'testProject01');
     expect(await env.getMode()).toBe('determinate');
+    expect(env.syncStatus).not.toBeNull();
     // Simulate sync completed
     env.emitSyncComplete(true, 'testProject01');
     tick();
@@ -97,6 +99,7 @@ describe('SyncProgressComponent', () => {
     });
     env.setupProjectDoc();
     env.checkCombinedProgress();
+    expect(env.syncStatus).not.toBeNull();
     tick();
   }));
 
@@ -108,6 +111,7 @@ describe('SyncProgressComponent', () => {
     });
     env.setupProjectDoc();
     env.checkCombinedProgress();
+    expect(env.syncStatus).not.toBeNull();
     tick();
   }));
 
@@ -120,6 +124,7 @@ describe('SyncProgressComponent', () => {
     env.emitSyncComplete(true, 'sourceProject02');
     env.updateSyncProgress(0.5, 'testProject01');
     expect(await env.getPercent()).toEqual(50);
+    expect(env.syncStatus).not.toBeNull();
     env.emitSyncComplete(true, 'testProject01');
   }));
 
@@ -131,6 +136,7 @@ describe('SyncProgressComponent', () => {
     verify(mockedProjectService.get('sourceProject02')).never();
     verify(mockedErrorReportingService.silentError(anything(), anything())).once();
     expect(env.progressBar).not.toBeNull();
+    expect(env.syncStatus).not.toBeNull();
   }));
 });
 
@@ -225,6 +231,10 @@ class TestEnvironment {
 
   get progressBar(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('mat-progress-bar');
+  }
+
+  get syncStatus(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.sync-status');
   }
 
   set onlineStatus(isOnline: boolean) {
