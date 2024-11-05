@@ -189,7 +189,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             ReportRepoRevs();
-            await NotifySyncProgress(SyncPhase.Phase1, 50.0);
+            await NotifySyncProgress(SyncPhase.Phase1, 90.0);
 
             if (_paratextService.IsResource(targetParatextId))
             {
@@ -1019,7 +1019,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             return false;
         }
 
-        await NotifySyncProgress(SyncPhase.Phase1, 10.0);
+        await NotifySyncProgress(SyncPhase.Phase1, 30.0);
 
         if (!(await _projectSecrets.TryGetAsync(projectSFId)).TryResult(out _projectSecret))
         {
@@ -1057,7 +1057,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         _notesMapper.Init(_userSecret, _paratextUsers);
 
-        await NotifySyncProgress(SyncPhase.Phase1, 20.0);
+        await NotifySyncProgress(SyncPhase.Phase1, 60.0);
         return true;
     }
 
@@ -2128,6 +2128,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     ProgressValue =
                         1.0 / _numberOfPhases * (double)syncPhase
                         + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / _numberOfPhases,
+                    SyncPhase = (int)syncPhase,
+                    SyncProgress = progress
                 }
             );
         }

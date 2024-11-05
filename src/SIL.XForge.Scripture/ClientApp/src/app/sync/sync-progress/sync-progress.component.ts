@@ -14,18 +14,25 @@ import { SFProjectService } from '../../core/sf-project.service';
 export class ProgressState {
   constructor(
     public progressValue: number,
-    public progressString?: string
+    public progressString?: string,
+    public syncPhase?: number,
+    public syncProgress?: number
   ) {}
 }
 
 @Component({
   selector: 'app-sync-progress',
-  templateUrl: './sync-progress.component.html'
+  templateUrl: './sync-progress.component.html',
+  styleUrl: '../sync.component.scss'
 })
 export class SyncProgressComponent extends SubscriptionDisposable {
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   private progressPercent$ = new BehaviorSubject<number>(0);
+  syncPhase: number = 0;
+  syncProgress: number | undefined;
+  stagePercentage: string = '0.0';
+  projectType: string = '';
 
   /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
   syncProgressPercent$: Observable<number> = this.progressPercent$.pipe(map(p => p * 100));
@@ -55,6 +62,10 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) => {
       this.updateProgressState(projectId, progressState);
     });
+  }
+
+  get syncStatus(): string {
+    return `stage_${this.syncPhase}_${this.syncProgress ?? 0}`;
   }
 
   get appOnline(): boolean {
@@ -115,11 +126,18 @@ export class SyncProgressComponent extends SubscriptionDisposable {
 
   public updateProgressState(projectId: string, progressState: ProgressState): void {
     const hasSourceProject = this.sourceProjectDoc?.data != null;
+    this.syncPhase = progressState.syncPhase ?? 0;
+    this.syncProgress = progressState.syncProgress != null ? Math.floor(progressState.syncProgress) : 0;
+    this.stagePercentage =
+      progressState.syncProgress != null ? ((progressState.syncProgress - this.syncProgress) * 100).toFixed(2) : '0.00';
+
     if (projectId === this._projectDoc?.id) {
+      this.projectType = 'target';
       this.progressPercent$.next(
         hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue
       );
     } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
+      this.projectType = 'source';
       this.progressPercent$.next(progressState.progressValue * 0.5);
     }
   }
