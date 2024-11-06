@@ -1569,7 +1569,7 @@ public class MachineProjectService(
 
         // Remove the corpora and files
         foreach (
-            (string corpusId, _) in projectSecret.ServalData.Corpora?.Where(c => c.Value.PreTranslate == preTranslate)
+            (string corpusId, _) in projectSecret.ServalData?.Corpora?.Where(c => c.Value.PreTranslate == preTranslate)
                 ?? []
         )
         {
@@ -1608,7 +1608,7 @@ public class MachineProjectService(
         }
 
         // Remove the corpora property if it is empty
-        if (projectSecret.ServalData.Corpora?.Any(c => c.Value.PreTranslate != preTranslate) == false)
+        if (projectSecret.ServalData?.Corpora?.Any(c => c.Value.PreTranslate != preTranslate) == false)
         {
             await projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.Corpora));
         }
