@@ -1074,6 +1074,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
   }
 
+  get textHasFocus(): boolean {
+    const isAnswering = this.answersPanel?.answerInput != null;
+    const isCommenting = this.answersPanel?.allComments?.find(c => c.inputComponent != null) != null;
+    return isAnswering || isCommenting;
+  }
+
   /**
    * Retrieves the adjacent question based on the active question and the direction.
    * Adjacent question might be outside the current filtered scope.

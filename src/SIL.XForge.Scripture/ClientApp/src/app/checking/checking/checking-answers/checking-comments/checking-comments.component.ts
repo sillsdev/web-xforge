@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash-es/cloneDeep';
 import sortBy from 'lodash-es/sortBy';
@@ -14,6 +14,7 @@ import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { AudioAttachment } from '../../checking-audio-player/checking-audio-player.component';
+import { CheckingInputFormComponent } from '../checking-input-form/checking-input-form.component';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
@@ -29,6 +30,7 @@ export interface CommentAction {
   styleUrls: ['./checking-comments.component.scss']
 })
 export class CheckingCommentsComponent extends SubscriptionDisposable implements OnInit {
+  @ViewChild(CheckingInputFormComponent) inputComponent?: CheckingInputFormComponent;
   @Input() project?: SFProjectProfile;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() questionDoc?: QuestionDoc;
