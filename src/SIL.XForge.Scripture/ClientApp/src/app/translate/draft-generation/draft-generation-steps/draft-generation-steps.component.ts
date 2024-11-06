@@ -53,9 +53,6 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   @Output() readonly cancel = new EventEmitter();
   @ViewChild(MatStepper) stepper!: MatStepper;
 
-  languagesVerified = false;
-  nextClickedOnLanguageVerification = false;
-
   availableTranslateBooks?: number[] = undefined;
   availableTrainingBooks: number[] = [];
   availableTrainingData: Readonly<TrainingData>[] = [];
@@ -89,6 +86,9 @@ export class DraftGenerationStepsComponent extends SubscriptionDisposable implem
   expandUnusableTranslateBooks = false;
   expandUnusableTrainingBooks = false;
   isStepsCompleted = false;
+
+  protected languagesVerified = false;
+  protected nextClickedOnLanguageVerification = false;
 
   private trainingDataQuery?: RealtimeQuery<TrainingDataDoc>;
   private trainingDataSub?: Subscription;

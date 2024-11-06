@@ -14,7 +14,9 @@
         }
         <div class="button-strip">
           <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-          <button mat-flat-button (click)="tryAdvanceStep()" color="primary">{{ t("next") }}</button>
+          <button mat-flat-button (click)="tryAdvanceStep(); nextClickedOnLanguageVerification = true" color="primary">
+            {{ t("next") }}
+          </button>
         </div>
       </mat-step>
 
