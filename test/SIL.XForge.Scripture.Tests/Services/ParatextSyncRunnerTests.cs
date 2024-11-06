@@ -851,7 +851,6 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
-        var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is<SFProject>(project => project.ParatextId == "target"),
@@ -966,7 +965,6 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, true, false, books);
         env.SetupPTData(books);
 
-        var ptUserRoles = new Dictionary<string, string> { { "pt01", SFProjectRole.Administrator } };
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Is((SFProject project) => project.ParatextId == "target"),
