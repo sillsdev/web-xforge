@@ -308,6 +308,7 @@
     "error": "There was an error restoring the chapter. No changes were made.",
     "hide_changes": "Hide changes",
     "hide_diff": "Hide differences from the latest version",
+    "please_connect": "Please connect to the internet to restore this version.",
     "revert": "Restore this version",
     "revert_details": "Restore this previous version of the chapter",
     "show_changes": "Show changes",

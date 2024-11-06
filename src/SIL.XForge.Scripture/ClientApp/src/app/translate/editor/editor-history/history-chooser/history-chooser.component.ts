@@ -132,6 +132,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   }
 
   async revertToSnapshot(): Promise<void> {
+    if (!this.onlineStatusService.isOnline) {
+      this.noticeService.show(translate('history_chooser.please_connect'));
+      return;
+    }
     // Ensure the user wants to proceed
     const confirmation: boolean = await this.dialogService.confirm(
       'history_chooser.confirm_revert',

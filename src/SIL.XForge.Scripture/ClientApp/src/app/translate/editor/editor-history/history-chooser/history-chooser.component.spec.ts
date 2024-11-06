@@ -161,6 +161,24 @@ describe('HistoryChooserComponent', () => {
     verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), env.isSnapshotValid)).once();
   }));
 
+  it('should show message if user is offline and clicks revert button', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    env.triggerNgOnChanges();
+    env.wait();
+    expect(env.component.selectedRevision).toBeDefined();
+    expect(env.component.selectedSnapshot?.data.ops).toBeDefined();
+    expect(env.component.projectId).toBeDefined();
+    expect(env.component.bookNum).toBeDefined();
+    expect(env.component.chapter).toBeDefined();
+    env.testOnlineStatusService.setIsOnline(false);
+    env.clickRevertHistoryButton();
+    verify(mockedDialogService.confirm(anything(), anything())).never();
+    verify(mockedTextDocService.overwrite(anything(), anything(), anything())).never();
+    verify(mockedProjectService.onlineSetIsValid(anything(), anything(), anything(), env.isSnapshotValid)).never();
+    verify(mockedNoticeService.show(anything())).once();
+  }));
+
   class TestEnvironment {
     readonly component: HistoryChooserComponent;
     readonly fixture: ComponentFixture<HistoryChooserComponent>;
