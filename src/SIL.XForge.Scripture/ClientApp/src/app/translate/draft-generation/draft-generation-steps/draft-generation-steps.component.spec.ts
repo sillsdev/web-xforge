@@ -41,7 +41,10 @@ describe('DraftGenerationStepsComponent', () => {
       texts: [{ bookNum: 2 }, { bookNum: 1 }, { bookNum: 3 }, { bookNum: 6 }, { bookNum: 7 }, { bookNum: 100 }],
       writingSystem: { tag: 'eng' },
       translateConfig: {
-        source: { projectRef: 'test' }
+        source: {
+          projectRef: 'test',
+          writingSystem: { tag: 'eng' }
+        }
       }
     })
   } as SFProjectProfileDoc;
