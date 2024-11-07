@@ -4,7 +4,7 @@ import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/
 import { DeltaOperation } from 'rich-text';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsight } from '../lynx-insight';
-import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
+import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
 import { getLeadingInsight, getMostNestedInsight } from '../lynx-insight-util';
 
 const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
@@ -92,16 +92,22 @@ export class QuillInsightRenderService extends InsightRenderService {
         const overlayAnchor: HTMLElement | null = this.getElementAtIndex(editor, overlayAnchorInsight.range.index + 1);
 
         if (overlayAnchor != null) {
-          this.overlayService.open(overlayAnchor, insights, editor.root);
+          const ref: LynxInsightOverlayRef | undefined = this.overlayService.open(overlayAnchor, insights, editor.root);
+
+          // Clear editor attention when overlay is closed
+          if (ref != null) {
+            ref.onClose = () => this.setEditorAttention(false, editor);
+          }
+
           editorAttention = true;
         }
       }
     }
 
-    this.setEditorAttention(insights, editorAttention, editor);
+    this.setEditorAttention(editorAttention, editor, insights);
   }
 
-  private setEditorAttention(insights: LynxInsight[], editorAttention: boolean, editor: Quill): void {
+  private setEditorAttention(editorAttention: boolean, editor: Quill, insights?: LynxInsight[]): void {
     // Set attention class on editor (dims the editor)
     if (editorAttention) {
       editor.root.classList.add(this.editorAttentionClass);
@@ -115,7 +121,7 @@ export class QuillInsightRenderService extends InsightRenderService {
     });
 
     // Set class on active insights to pull them above the editor dim overlay
-    if (editorAttention) {
+    if (editorAttention && insights != null) {
       for (const insight of insights) {
         const element: HTMLElement | null = this.getElementAtIndex(editor, insight.range.index);
         element?.classList.add(this.activeInsightClass);
