@@ -154,10 +154,12 @@
     "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
     "select_alternate_project": "Select the project you want to add the draft to"
   },
-  "draft_apply_progress": {
+  "draft_apply_progress-dialog": {
     "add_draft_to_book": "Adding draft to {{ bookName }}",
+    "close": "Close",
     "failed_to_apply_chapters": "Failed to apply chapters",
-    "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}. Go to the chapter to try again.",
+    "go_to_chapter": "Go to the chapter to try again.",
+    "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
     "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
   },
   "draft_generation": {

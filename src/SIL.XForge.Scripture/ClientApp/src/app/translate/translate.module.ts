@@ -10,7 +10,7 @@ import { SFTabsModule } from '../shared/sf-tab-group';
 import { SharedModule } from '../shared/shared.module';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
-import { DraftApplyProgressComponent } from './draft-generation/draft-apply-progress/draft-apply-progress.component';
+import { DraftApplyProgressDialogComponent } from './draft-generation/draft-apply-progress-dialog/draft-apply-progress-dialog.component';
 import { DraftPreviewBooksComponent } from './draft-generation/draft-preview-books/draft-preview-books.component';
 import { EditorDraftComponent } from './editor/editor-draft/editor-draft.component';
 import { EditorHistoryComponent } from './editor/editor-history/editor-history.component';
@@ -58,7 +58,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SFTabsModule,
     BiblicalTermsComponent,
     DraftPreviewBooksComponent,
-    DraftApplyProgressComponent,
+    DraftApplyProgressDialogComponent,
     FontUnsupportedMessageComponent
   ]
 })

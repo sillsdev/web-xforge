@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, DestroyRef, Inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Observable } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 
@@ -15,13 +18,22 @@ export interface DraftApplyProgress {
   selector: 'app-draft-apply-progress',
   standalone: true,
   imports: [CommonModule, UICommonModule, TranslocoModule],
-  templateUrl: './draft-apply-progress.component.html',
-  styleUrl: './draft-apply-progress.component.scss'
+  templateUrl: './draft-apply-progress-dialog.component.html',
+  styleUrl: './draft-apply-progress-dialog.component.scss'
 })
-export class DraftApplyProgressComponent {
-  @Input() draftApplyProgress?: DraftApplyProgress;
+export class DraftApplyProgressDialogComponent {
+  draftApplyProgress?: DraftApplyProgress;
 
-  constructor(private readonly i18n: I18nService) {}
+  constructor(
+    @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftApplyProgressDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) data: { draftApplyProgress$: Observable<DraftApplyProgress> },
+    private readonly i18n: I18nService,
+    destroyRef: DestroyRef
+  ) {
+    data.draftApplyProgress$
+      .pipe(takeUntilDestroyed(destroyRef))
+      .subscribe(progress => (this.draftApplyProgress = progress));
+  }
 
   get progress(): number | undefined {
     if (this.draftApplyProgress == null) return undefined;
@@ -29,7 +41,8 @@ export class DraftApplyProgressComponent {
   }
 
   get bookName(): string {
-    return this.i18n.localizeBook(this.draftApplyProgress?.bookNum);
+    if (this.draftApplyProgress == null) return '';
+    return this.i18n.localizeBook(this.draftApplyProgress.bookNum);
   }
 
   get failedToApplyChapters(): string | undefined {
@@ -38,5 +51,9 @@ export class DraftApplyProgressComponent {
       c => !this.draftApplyProgress.chaptersApplied.includes(c)
     );
     return chapters.length > 0 ? chapters.join(', ') : undefined;
+  }
+
+  close(): void {
+    this.dialogRef.close();
   }
 }
