@@ -51,4 +51,10 @@
       </mat-chip-listbox>
     }
   </div>
+  @if (!loaded) {
+    <div class="loading-message">
+      <mat-spinner [diameter]="15"></mat-spinner>
+      {{ t("loading_message") }}
+    </div>
+  }
 </ng-container>
