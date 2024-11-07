@@ -67,10 +67,13 @@
         }
       </div>
       @if (canInsertNote) {
-        <mat-form-field class="full-width" appearance="outline">
-          <mat-label>{{ t("your_comment") }}</mat-label>
-          <textarea matInput [(ngModel)]="currentNoteContent"></textarea>
-        </mat-form-field>
+        <form [formGroup]="noteDialogForm">
+          <mat-form-field class="full-width" appearance="outline">
+            <mat-label>{{ t("your_comment") }}</mat-label>
+            <textarea matInput formControlName="comment"></textarea>
+            <mat-error>{{ t("required") }}</mat-error>
+          </mat-form-field>
+        </form>
       }
     </mat-dialog-content>
     <mat-dialog-actions align="end">
