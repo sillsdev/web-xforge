@@ -9,9 +9,17 @@
 }
 
 .sync-card {
+  justify-content: center;
   padding: 0;
+  min-height: 10rem;
   max-width: 37rem;
-  min-width: 18rem;
+  min-width: 25rem;
+}
+
+.sync-status,
+.sync-header {
+  display: flex;
+  justify-content: center;
 }
 
 .card-content {
@@ -20,6 +28,10 @@
 
 app-sync-progress {
   width: 100%;
+}
+
+mat-progress-bar {
+  padding-top: 2rem;
 }
 
 #btn-log-in {
