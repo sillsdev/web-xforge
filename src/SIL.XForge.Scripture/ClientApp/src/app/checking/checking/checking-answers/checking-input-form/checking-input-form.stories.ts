@@ -6,7 +6,6 @@ import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AttachAudioComponent } from '../../../attach-audio/attach-audio.component';
 import { TextAndAudioComponent } from '../../../text-and-audio/text-and-audio.component';
-import { CheckingAudioRecorderComponent } from '../../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingInputFormComponent } from './checking-input-form.component';
 
 const meta: Meta<CheckingInputFormComponent> = {
@@ -15,7 +14,7 @@ const meta: Meta<CheckingInputFormComponent> = {
   decorators: [
     moduleMetadata({
       imports: [CommonModule, UICommonModule, I18nStoryModule],
-      declarations: [TextAndAudioComponent, AttachAudioComponent, CheckingAudioRecorderComponent]
+      declarations: [TextAndAudioComponent, AttachAudioComponent]
     })
   ]
 };
