@@ -320,7 +320,7 @@
                         <p>{{ t("preview_last_draft_detail") }}</p>
                       }
                       <p>{{ t("click_book_to_preview") }}</p>
-                      <app-draft-preview-books #draftPreview></app-draft-preview-books>
+                      <app-draft-preview-books></app-draft-preview-books>
                     </mat-card-content>
                     <mat-card-actions>
                       @if (hasDraftBooksAvailable) {
@@ -355,9 +355,6 @@
                       }
                     </mat-card-actions>
                   </mat-card>
-                  @if (draftPreview.draftApplyProgress$ | async; as progress) {
-                    <app-draft-apply-progress [draftApplyProgress]="progress"></app-draft-apply-progress>
-                  }
                 </section>
               }
             }

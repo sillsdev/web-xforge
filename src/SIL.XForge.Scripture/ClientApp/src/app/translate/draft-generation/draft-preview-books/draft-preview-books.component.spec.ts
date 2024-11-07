@@ -20,7 +20,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { DraftApplyDialogComponent } from '../draft-apply-dialog/draft-apply-dialog.component';
-import { DraftApplyProgress } from '../draft-apply-progress/draft-apply-progress.component';
+import { DraftApplyProgress } from '../draft-apply-progress-dialog/draft-apply-progress-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
 import { BookWithDraft, DraftPreviewBooksComponent } from './draft-preview-books.component';
 
