@@ -66,4 +66,8 @@ export class LynxInsightsPanelHeaderComponent implements OnInit {
   toggleFilterType(insightType: LynxInsightType): void {
     this.state.toggleFilterType(insightType);
   }
+
+  toggleFilterDismissed(): void {
+    this.state.toggleFilterDismissed();
+  }
 }

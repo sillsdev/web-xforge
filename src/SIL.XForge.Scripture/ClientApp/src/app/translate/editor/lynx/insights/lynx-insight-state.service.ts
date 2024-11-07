@@ -332,14 +332,23 @@ export class LynxInsightStateService {
   private orderBySource$ = new BehaviorSubject<LynxInsightSortOrder>(this.defaults.sortOrder);
   readonly orderBy$ = this.orderBySource$.pipe(distinctUntilChanged());
 
+  private readonly dismissedInsightIdsSource$ = new BehaviorSubject<string[]>([]);
+  readonly dismissedInsightIds$ = this.dismissedInsightIdsSource$.pipe(distinctUntilChanged(), shareReplay(1));
+
   readonly filteredChapterInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish())
+    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish()),
+    this.dismissedInsightIds$
   ]).pipe(
-    map(([insights, filter, routeBookChapter]) =>
+    map(([insights, filter, routeBookChapter, dismissedIds]) =>
       insights.filter(insight =>
-        this.insightFilterService.matchesFilter(insight, { ...filter, scope: 'chapter' }, routeBookChapter)
+        this.insightFilterService.matchesFilter(
+          insight,
+          { ...filter, scope: 'chapter' },
+          routeBookChapter,
+          dismissedIds
+        )
       )
     ),
     distinctUntilChanged(isEqual),
@@ -350,10 +359,13 @@ export class LynxInsightStateService {
   readonly filteredInsights$: Observable<LynxInsight[]> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish())
+    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish()),
+    this.dismissedInsightIds$
   ]).pipe(
-    map(([insights, filter, routeBookChapter]) =>
-      insights.filter(insight => this.insightFilterService.matchesFilter(insight, filter, routeBookChapter))
+    map(([insights, filter, routeBookChapter, dismissedIds]) =>
+      insights.filter(insight =>
+        this.insightFilterService.matchesFilter(insight, filter, routeBookChapter, dismissedIds)
+      )
     ),
     distinctUntilChanged(isEqual),
     shareReplay(1)
@@ -365,13 +377,19 @@ export class LynxInsightStateService {
   readonly filteredInsightCountsByScope$: Observable<Record<LynxInsightFilterScope, number>> = combineLatest([
     this.rawInsights$,
     this.filter$,
-    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish())
+    this.activatedBookChapter.activatedBookChapter$.pipe(filterNullish()),
+    this.dismissedInsightIds$
   ]).pipe(
-    map(([insights, filter, routeBookChapter]) => {
+    map(([insights, filter, routeBookChapter, dismissedIds]) => {
       const result: Record<LynxInsightFilterScope, number> = { project: 0, book: 0, chapter: 0 };
       const filterTypes = new Set<LynxInsightType>(filter.types);
+      const dismissedIdSet: Set<string> = new Set(dismissedIds);
 
       for (const insight of insights) {
+        if (!filter.includeDismissed && dismissedIdSet.has(insight.id)) {
+          continue;
+        }
+
         if (!filterTypes.has(insight.type)) {
           continue;
         }
@@ -396,7 +414,7 @@ export class LynxInsightStateService {
   );
 
   /**
-   * Insight counts for the currently filtered types and scope grouped by type.
+   * Insight counts for the currently filtered types and scope, grouped by type.
    */
   readonly filteredInsightCountsByType$: Observable<Record<LynxInsightType, number>> = this.filteredInsights$.pipe(
     map((insights: LynxInsight[]) => {
@@ -535,6 +553,19 @@ export class LynxInsightStateService {
     this.insightPanelVisibleSource$.next(!this.insightPanelVisibleSource$.value);
   }
 
+  dismissInsights(ids: string[]): void {
+    // Ensure no duplicates
+    const dismissedIds = new Set(this.dismissedInsightIdsSource$.value);
+    ids.forEach(id => dismissedIds.add(id));
+    this.dismissedInsightIdsSource$.next(Array.from(dismissedIds));
+  }
+
+  restoreDismissedInsights(ids: string[]): void {
+    const dismissedIds = new Set(this.dismissedInsightIdsSource$.value);
+    ids.forEach(id => dismissedIds.delete(id));
+    this.dismissedInsightIdsSource$.next(Array.from(dismissedIds));
+  }
+
   updateFilter(filter: Partial<LynxInsightFilter>): void {
     this.filterSource$.next({ ...this.filterSource$.value, ...filter });
   }
@@ -554,6 +585,17 @@ export class LynxInsightStateService {
     this.filterSource$.next({ ...this.filterSource$.value, types: updatedTypes });
   }
 
+  /**
+   * Toggles whether or not dismissed insights are included in the filter.
+   */
+  toggleFilterDismissed(): void {
+    const includeDismissed: boolean = !this.filterSource$.value.includeDismissed;
+    this.filterSource$.next({
+      ...this.filterSource$.value,
+      includeDismissed
+    });
+  }
+
   private init(): void {
     const stateLoaded$ = new BehaviorSubject<boolean>(false);
 
@@ -567,21 +609,32 @@ export class LynxInsightStateService {
         this.insightPanelVisibleSource$.next(persistedUserState.panelData.isOpen);
       }
 
+      if (persistedUserState?.dismissedInsightIds != null) {
+        this.dismissedInsightIdsSource$.next(persistedUserState.dismissedInsightIds);
+      }
+
       // Notify to start persisting changes to user state data
       stateLoaded$.next(true);
     });
 
     // Save state to project user config
-    combineLatest([this.filter$, this.orderBy$, this.insightPanelVisible$, stateLoaded$.pipe(filter(loaded => loaded))])
+    combineLatest([
+      this.filter$,
+      this.orderBy$,
+      this.insightPanelVisible$,
+      this.dismissedInsightIds$,
+      stateLoaded$.pipe(filter(loaded => loaded))
+    ])
       .pipe(withLatestFrom(this.activatedProjectUserConfig.projectUserConfigDoc$))
-      .subscribe(([[filter, sortOrder, isOpen], pucDoc]) => {
+      .subscribe(([[filter, sortOrder, isOpen, dismissedInsightIds], pucDoc]) => {
         pucDoc?.submitJson0Op(op =>
           op.set(puc => puc.lynxInsightState, {
             panelData: {
               isOpen,
               filter,
               sortOrder
-            }
+            },
+            dismissedInsightIds
           })
         );
       });

@@ -12,4 +12,5 @@ export type LynxInsightSortOrder = (typeof LynxInsightSortOrders)[number];
 export interface LynxInsightFilter {
   types: LynxInsightType[];
   scope: LynxInsightFilterScope;
+  includeDismissed?: boolean;
 }
