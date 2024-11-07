@@ -31,6 +31,7 @@ interface InsightPanelNode {
   insight?: LynxInsight;
   range: RangeStatic;
   count?: number;
+  isDismissed?: boolean;
 }
 
 interface InsightPanelFlatNode {
@@ -40,6 +41,7 @@ interface InsightPanelFlatNode {
   level: number;
   insight?: LynxInsight;
   count?: number;
+  isDismissed?: boolean;
 }
 
 interface LynxInsightWithText extends LynxInsight {
@@ -62,7 +64,7 @@ export class LynxInsightsPanelComponent implements OnInit {
   dataSource = new MatTreeFlatDataSource(
     this.treeControl,
     new MatTreeFlattener(
-      this.transformer,
+      this.flattenTransformer,
       node => node.level,
       node => node.expandable,
       node => node.children
@@ -93,12 +95,12 @@ export class LynxInsightsPanelComponent implements OnInit {
   ngOnInit(): void {
     combineLatest([
       this.editorInsightState.filteredInsights$.pipe(switchMap(insights => this.addRangeText(insights))),
-      this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val)))
+      this.editorInsightState.orderBy$.pipe(tap(val => (this.orderBy = val))),
+      this.editorInsightState.dismissedInsightIds$
     ])
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-
-        map(([insights, orderBy]) => this.flatten(insights, orderBy))
+        map(([insights, orderBy, dismissedIds]) => this.flattenGrouping(insights, orderBy, dismissedIds))
       )
       .subscribe(flattenedInsightNodes => {
         this.dataSource.data = flattenedInsightNodes;
@@ -137,33 +139,63 @@ export class LynxInsightsPanelComponent implements OnInit {
     }
   }
 
-  private transformer(node: InsightPanelNode, level: number): InsightPanelFlatNode {
+  restoreDismissedInsight(insight: LynxInsight): void {
+    console.log('Restore', insight.id);
+    this.editorInsightState.restoreDismissedInsights([insight.id]);
+  }
+
+  /**
+   * Transforms InsightPanelNode to InsightPanelFlatNode.
+   */
+  private flattenTransformer(node: InsightPanelNode, level: number): InsightPanelFlatNode {
     return {
       expandable: !!node.children && node.children.length > 0,
       name: node.name,
       type: node.type,
       level: level,
       insight: node.insight,
-      count: node.count
+      count: node.count,
+      isDismissed: node.isDismissed
     };
   }
 
   // TODO: move to service?
-  private flatten(insights: LynxInsightWithText[], orderBy: LynxInsightSortOrder): InsightPanelNode[] {
+  /**
+   * Groups insights by code and flattens them into InsightPanelNode.
+   */
+  private flattenGrouping(
+    insights: LynxInsightWithText[],
+    orderBy: LynxInsightSortOrder,
+    dismissedIds: string[]
+  ): InsightPanelNode[] {
     const flattenedInsightNodes: InsightPanelNode[] = [];
+    const dismissedIdSet: Set<string> = new Set(dismissedIds);
 
     for (const [code, byCode] of Object.entries(groupBy(insights, 'code'))) {
-      const codeNode: InsightPanelNode = {
-        name: code,
-        type: byCode[0].type,
-        children: byCode.map(insight => ({
+      let codeNodeContainsAllDismissed = true;
+
+      const children: InsightPanelNode[] = byCode.map(insight => {
+        const isDismissed: boolean = dismissedIdSet.has(insight.id);
+        if (!isDismissed) {
+          codeNodeContainsAllDismissed = false;
+        }
+
+        return {
           name: this.getLinkText(insight),
           type: insight.type,
           insight,
-          range: insight.range
-        })),
+          range: insight.range,
+          isDismissed
+        };
+      });
+
+      const codeNode: InsightPanelNode = {
+        name: code,
+        type: byCode[0].type,
+        children,
         count: byCode.length,
-        range: byCode[0].range
+        range: byCode[0].range,
+        isDismissed: codeNodeContainsAllDismissed
       };
 
       flattenedInsightNodes.push(codeNode);

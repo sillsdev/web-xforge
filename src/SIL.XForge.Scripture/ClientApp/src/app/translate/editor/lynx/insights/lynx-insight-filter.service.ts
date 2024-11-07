@@ -10,9 +10,19 @@ import { LynxInsight } from './lynx-insight';
 export class LynxInsightFilterService {
   constructor() {}
 
-  matchesFilter(insight: LynxInsight, filter: LynxInsightFilter, bookChapter: RouteBookChapter): boolean {
+  matchesFilter(
+    insight: LynxInsight,
+    filter: LynxInsightFilter,
+    bookChapter: RouteBookChapter,
+    dismissedIds: string[]
+  ): boolean {
     const routeBookNum: number | undefined = bookChapter.bookId ? Canon.bookIdToNumber(bookChapter.bookId) : undefined;
     const routeChapter = bookChapter.chapter;
+    const dismissedIdSet: Set<string> = new Set(dismissedIds ?? []);
+
+    if (!filter.includeDismissed && dismissedIdSet.has(insight.id)) {
+      return false;
+    }
 
     if (!filter.types.includes(insight.type)) {
       return false;

@@ -4,6 +4,8 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightAction, LynxInsightActionService } from '../lynx-insight-action.service';
 import { LynxInsightCodeService } from '../lynx-insight-code.service';
+import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
+import { LynxInsightStateService } from '../lynx-insight-state.service';
 
 interface LynxInsightFlattened extends LynxInsight {
   description: string;
@@ -39,8 +41,10 @@ export class LynxInsightOverlayComponent {
   primaryAction?: LynxInsightAction;
 
   constructor(
+    private readonly insightState: LynxInsightStateService,
     private readonly codeService: LynxInsightCodeService,
     private readonly actionService: LynxInsightActionService,
+    private readonly overlayService: LynxInsightOverlayService,
     private readonly i18n: I18nService
   ) {}
 
@@ -55,12 +59,18 @@ export class LynxInsightOverlayComponent {
 
   selectAction(action: LynxInsightAction): void {
     this.actionService.performAction(action);
+
+    if (this.focusedInsight == null) {
+      throw new Error('No focused insight');
+    }
+
+    this.overlayService.close(this.focusedInsight.id);
   }
 
   dismissInsight(insight: LynxInsight): void {
-    // TODO: include in persisted user data
     console.log('Dismiss', insight.id);
     this.closeOverlay.emit();
+    this.insightState.dismissInsights([insight.id]);
   }
 
   private flattenInsight(insight: LynxInsight): LynxInsightFlattened {
