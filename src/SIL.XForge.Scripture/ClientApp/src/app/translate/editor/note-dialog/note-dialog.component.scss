@@ -122,8 +122,8 @@ h1 {
 }
 
 .save-options {
-  background-color: variables.$sf_grey;
-  color: white;
+  background-color: variables.$sf_grey !important;
+  color: white !important;
   ::ng-deep .mat-button-toggle-label-content {
     line-height: 36px;
   }

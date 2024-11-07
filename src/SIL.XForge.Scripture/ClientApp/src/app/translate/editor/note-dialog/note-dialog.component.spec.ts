@@ -350,8 +350,8 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1') });
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
+    expect(env.noteInputElement).toBeTruthy();
     verify(mockedProjectService.createNoteThread(anything(), anything())).never();
-    expect(env.dialogResult).toBeFalsy();
   }));
 
   it('does not show text area for users without write permissions', fakeAsync(() => {
