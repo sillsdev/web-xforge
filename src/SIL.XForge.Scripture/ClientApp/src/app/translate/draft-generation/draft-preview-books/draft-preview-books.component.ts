@@ -18,7 +18,10 @@ import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../../core/models/text-doc';
 import { DraftApplyDialogComponent, DraftApplyDialogResult } from '../draft-apply-dialog/draft-apply-dialog.component';
-import { DraftApplyProgress } from '../draft-apply-progress/draft-apply-progress.component';
+import {
+  DraftApplyProgress,
+  DraftApplyProgressDialogComponent
+} from '../draft-apply-progress-dialog/draft-apply-progress-dialog.component';
 import { DraftHandlingService } from '../draft-handling.service';
 
 export interface BookWithDraft {
@@ -151,6 +154,7 @@ export class DraftPreviewBooksComponent {
     }
 
     try {
+      this.openProgressDialog();
       const results: boolean[] = await Promise.all(promises);
       if (results.some(result => !result)) {
         this.updateProgress(undefined, true);
@@ -170,6 +174,13 @@ export class DraftPreviewBooksComponent {
   navigate(book: BookWithDraft): void {
     this.router.navigate(this.linkForBookAndChapter(book.bookNumber, book.chaptersWithDrafts[0]), {
       queryParams: { 'draft-active': true }
+    });
+  }
+
+  openProgressDialog(): void {
+    this.dialogService.openMatDialog(DraftApplyProgressDialogComponent, {
+      data: { draftApplyProgress$: this.draftApplyProgress$ },
+      disableClose: true
     });
   }
 
