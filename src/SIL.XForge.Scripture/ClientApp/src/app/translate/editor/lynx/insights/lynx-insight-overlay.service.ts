@@ -12,11 +12,16 @@ import { take } from 'rxjs';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 
+export interface LynxInsightOverlayRef {
+  ref: OverlayRef;
+  onClose: () => void;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class LynxInsightOverlayService {
-  private openRefs = new Map<string, OverlayRef>();
+  private openRefs = new Map<string, LynxInsightOverlayRef>();
   private scrollableContainer?: CdkScrollable;
 
   constructor(
@@ -25,34 +30,54 @@ export class LynxInsightOverlayService {
     private ngZone: NgZone
   ) {}
 
-  open(origin: HTMLElement, insights: LynxInsight[], scrollContainerEl: HTMLElement): void {
+  open(
+    origin: HTMLElement,
+    insights: LynxInsight[],
+    scrollContainerEl: HTMLElement
+  ): LynxInsightOverlayRef | undefined {
     if (insights.length === 0) {
-      return;
+      return undefined;
     }
 
     this.registerScrollable(scrollContainerEl);
 
-    const overlayRef: OverlayRef = this.overlay.create(this.getConfig(origin));
-    const componentRef = overlayRef.attach(new ComponentPortal(LynxInsightOverlayComponent));
+    const overlayRef: LynxInsightOverlayRef = this.createOverlayRef(origin);
+    const componentRef = overlayRef.ref.attach(new ComponentPortal(LynxInsightOverlayComponent));
     const key = insights[0].id;
 
     componentRef.instance.insights = insights;
     componentRef.instance.closeOverlay.pipe(take(1)).subscribe(() => this.close(key));
     this.openRefs.set(key, overlayRef);
+
+    return overlayRef;
   }
 
   close(insightId: string): void {
     if (this.openRefs.size > 0) {
-      this.openRefs.get(insightId)?.dispose();
-      this.openRefs.delete(insightId);
+      const overlayRef: LynxInsightOverlayRef | undefined = this.openRefs.get(insightId);
+
+      if (overlayRef != null) {
+        overlayRef.ref.dispose();
+        overlayRef.onClose();
+        this.openRefs.delete(insightId);
+      }
     }
   }
 
   closeAll(): void {
-    this.openRefs.forEach(overlayRef => {
-      overlayRef.dispose();
-    });
-    this.openRefs.clear();
+    for (const insightId of this.openRefs.keys()) {
+      this.close(insightId);
+    }
+  }
+
+  /**
+   * Create an overlay ref with an 'on close' callback.
+   */
+  private createOverlayRef(origin: HTMLElement): LynxInsightOverlayRef {
+    return {
+      ref: this.overlay.create(this.getConfig(origin)),
+      onClose: () => {}
+    };
   }
 
   private getConfig(origin: HTMLElement): OverlayConfig {

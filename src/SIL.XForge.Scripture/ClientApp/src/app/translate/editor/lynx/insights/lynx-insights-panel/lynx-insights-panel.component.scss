@@ -1,6 +1,8 @@
 @use 'src/variables' as vars;
+@use '../lynx-insights' as insights;
 
 $indentPadding: 2.5rem; // Per level indentation
+$restoreActionColor: #5485e7;
 
 :host {
   display: flex;
@@ -50,6 +52,25 @@ $indentPadding: 2.5rem; // Per level indentation
   &:hover {
     color: vars.$blueMedium;
   }
+
+  .restore-icon {
+    display: none;
+  }
+
+  &.dismissed {
+    color: #999;
+    font-style: italic;
+
+    .restore-icon {
+      display: flex;
+    }
+  }
+}
+
+.level-ref {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .level-code {
@@ -66,26 +87,14 @@ $indentPadding: 2.5rem; // Per level indentation
     font-size: 1.2rem;
     flex-shrink: 0;
 
-    &.info {
-      color: hsl(
-        var(--lynx-insights-info-color-h),
-        var(--lynx-insights-info-color-s),
-        var(--lynx-insights-info-color-l)
-      );
+    @each $type in insights.$insightTypes {
+      &.#{$type} {
+        color: insights.insight-color($type);
+      }
     }
-    &.warning {
-      color: hsl(
-        var(--lynx-insights-warning-color-h),
-        var(--lynx-insights-warning-color-s),
-        var(--lynx-insights-warning-color-l)
-      );
-    }
-    &.error {
-      color: hsl(
-        var(--lynx-insights-error-color-h),
-        var(--lynx-insights-error-color-s),
-        var(--lynx-insights-error-color-l)
-      );
+
+    &.dismissed {
+      color: #999;
     }
   }
 
@@ -106,4 +115,13 @@ $indentPadding: 2.5rem; // Per level indentation
     color: #999;
     flex-shrink: 0;
   }
+}
+
+.restore-icon {
+  color: $restoreActionColor;
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: auto;
+  display: flex;
+  align-items: center;
 }
