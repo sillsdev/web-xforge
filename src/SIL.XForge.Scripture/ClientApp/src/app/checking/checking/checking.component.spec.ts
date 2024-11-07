@@ -638,7 +638,6 @@ describe('CheckingComponent', () => {
         projectChapterRoute: 1,
         questionScope: 'chapter'
       });
-      let question = env.selectQuestion(1);
       const questionId = env.component.questionsList!.activeQuestionDoc!.id;
       expect(env.questions.length).toEqual(14);
       const dateNow = new Date();
@@ -658,7 +657,7 @@ describe('CheckingComponent', () => {
       env.waitForAudioPlayer();
       expect(env.component.questionsList!.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(15);
-      question = env.selectQuestion(15);
+      let question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
 

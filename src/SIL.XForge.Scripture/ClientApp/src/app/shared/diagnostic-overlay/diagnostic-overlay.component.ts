@@ -1,11 +1,11 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { DiagnosticOverlayService } from 'xforge-common/diagnostic-overlay.service';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
+import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { DiagnosticOverlayService } from '../../../xforge-common/diagnostic-overlay.service';
-import { LocalSettingsService } from '../../../xforge-common/local-settings.service';
-import { NoticeService } from '../../../xforge-common/notice.service';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
