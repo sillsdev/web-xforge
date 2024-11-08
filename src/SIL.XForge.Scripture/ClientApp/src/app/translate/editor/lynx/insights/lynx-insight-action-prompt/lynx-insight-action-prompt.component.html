@@ -2,7 +2,8 @@
   <mat-icon [class]="activeInsights[0].type" (click)="onPromptClick($event)">tips_and_updates</mat-icon>
 }
 @if (activeInsights.length > 1) {
-  <mat-icon class="multi-insight-prompt" (click)="onPromptClick($event)">
-    filter_{{ activeInsights.length < 10 ? activeInsights.length : "9_plus" }}
-  </mat-icon>
+  <div class="multi-insight-prompt" (click)="onPromptClick($event)">
+    <mat-icon>tips_and_updates</mat-icon>
+    <mat-icon class="count-icon"> filter_{{ activeInsights.length < 10 ? activeInsights.length : "9_plus" }} </mat-icon>
+  </div>
 }
