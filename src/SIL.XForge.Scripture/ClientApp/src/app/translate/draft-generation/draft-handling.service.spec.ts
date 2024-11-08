@@ -3,6 +3,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { Delta, DeltaOperation } from 'rich-text';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -16,6 +17,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedSFProject = mock(SFProjectProfileDoc);
+const mockedErrorReportingService = mock(ErrorReportingService);
 
 describe('DraftHandlingService', () => {
   let service: DraftHandlingService;
@@ -24,7 +26,8 @@ describe('DraftHandlingService', () => {
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
-      { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
   }));
 
@@ -428,10 +431,26 @@ describe('DraftHandlingService', () => {
       const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
       expect(result).toBe(false);
       verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
+      verify(mockedErrorReportingService.silentError(anything(), anything())).once();
       verify(mockedTextDocService.overwrite(textDocId, anything(), anything())).never();
       verify(
         mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
       ).once();
+    });
+
+    it('should return false if applying a draft fails at getting the draft', async () => {
+      const textDocId = new TextDocId('project01', 1, 1);
+      when(mockedTextDocService.canEdit(anything(), 1, 1)).thenReturn(true);
+      when(
+        mockedDraftGenerationService.getGeneratedDraftDeltaOperations(anything(), anything(), anything())
+      ).thenReturn(throwError(() => ({ message: 'Getting draft failed', status: 404 })));
+      const result: boolean = await service.getAndApplyDraftAsync(mockedSFProject.data!, textDocId, textDocId);
+      expect(result).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraftDeltaOperations('project01', 1, 1)).once();
+      verify(mockedErrorReportingService.silentError(anything(), anything())).once();
+      verify(
+        mockedProjectService.onlineSetDraftApplied(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true)
+      ).never();
     });
   });
 
