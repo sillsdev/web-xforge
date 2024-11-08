@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import Quill, { DeltaStatic, StringMap } from 'quill';
 import { LynxInsightTypes } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { DeltaOperation } from 'rich-text';
+import { take } from 'rxjs';
 import { InsightRenderService } from '../base-services/insight-render.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightOverlayRef, LynxInsightOverlayService } from '../lynx-insight-overlay.service';
@@ -96,7 +97,7 @@ export class QuillInsightRenderService extends InsightRenderService {
 
           // Clear editor attention when overlay is closed
           if (ref != null) {
-            ref.onClose = () => this.setEditorAttention(false, editor);
+            ref.closed$.pipe(take(1)).subscribe(() => this.setEditorAttention(false, editor));
           }
 
           editorAttention = true;
