@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
+import { take } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LynxInsight } from '../lynx-insight';
 import { LynxInsightAction, LynxInsightActionService } from '../lynx-insight-action.service';
@@ -34,7 +35,8 @@ export class LynxInsightOverlayComponent {
     }
   }
 
-  @Output() closeOverlay = new EventEmitter<void>();
+  @Output() insightDismiss = new EventEmitter<LynxInsight>();
+  @Output() insightFocus = new EventEmitter<LynxInsight>();
 
   focusedInsight?: LynxInsightFlattened;
   menuActions: LynxInsightAction[] = [];
@@ -55,6 +57,7 @@ export class LynxInsightOverlayComponent {
   focusInsight(insight: LynxInsightFlattened): void {
     this.focusedInsight = insight;
     this.fetchInsightActions(insight);
+    this.insightFocus.emit(insight);
   }
 
   selectAction(action: LynxInsightAction): void {
@@ -69,7 +72,7 @@ export class LynxInsightOverlayComponent {
 
   dismissInsight(insight: LynxInsight): void {
     console.log('Dismiss', insight.id);
-    this.closeOverlay.emit();
+    this.insightDismiss.emit(insight);
     this.insightState.dismissInsights([insight.id]);
   }
 
@@ -87,12 +90,21 @@ export class LynxInsightOverlayComponent {
       return;
     }
 
-    for (const action of this.actionService.getActions(insight.id, this.i18n.localeCode)) {
-      if (action.isPrimary) {
-        this.primaryAction = action;
-      } else {
-        this.menuActions.push(action);
-      }
-    }
+    this.actionService
+      .getActions(insight.id, this.i18n.localeCode)
+      .pipe(take(1))
+      .subscribe(actions => {
+        const menuActions: LynxInsightAction[] = [];
+
+        for (const action of actions) {
+          if (action.isPrimary) {
+            this.primaryAction = action;
+          } else {
+            menuActions.push(action);
+          }
+        }
+
+        this.menuActions = menuActions;
+      });
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
 
 export interface LynxInsightAction {
   id: string;
@@ -14,8 +15,9 @@ export class LynxInsightActionService {
   constructor() {}
 
   // TODO: send locale to server along with insightId
-  getActions(insightId: string, localeCode: string): LynxInsightAction[] {
-    return [
+  getActions(insightId: string, localeCode: string): Observable<LynxInsightAction[]> {
+    return of([
+      // TODO: confirm that primary action should be an additional action (to have more flexible text)
       {
         id: '0',
         label: 'Update quotation mark',
@@ -36,7 +38,7 @@ export class LynxInsightActionService {
         label: 'Reject',
         description: 'Suggestion not relevant'
       }
-    ];
+    ]);
   }
 
   performAction(action: LynxInsightAction): void {
