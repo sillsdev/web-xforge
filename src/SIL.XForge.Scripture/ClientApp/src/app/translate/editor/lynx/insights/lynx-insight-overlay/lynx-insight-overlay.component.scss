@@ -133,6 +133,7 @@ h1 {
     position: relative;
     padding-inline-start: 2.3em;
     color: $applyActionColor;
+    text-wrap: nowrap;
     cursor: pointer;
 
     .apply-icon {

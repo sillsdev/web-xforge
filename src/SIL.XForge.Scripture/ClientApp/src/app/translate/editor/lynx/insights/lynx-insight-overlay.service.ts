@@ -8,13 +8,13 @@ import {
 } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { Injectable, NgZone } from '@angular/core';
-import { take } from 'rxjs';
+import { Subject, asyncScheduler, observeOn, take, takeUntil } from 'rxjs';
 import { LynxInsight } from './lynx-insight';
 import { LynxInsightOverlayComponent } from './lynx-insight-overlay/lynx-insight-overlay.component';
 
 export interface LynxInsightOverlayRef {
   ref: OverlayRef;
-  onClose: () => void;
+  closed$: Subject<void>;
 }
 
 @Injectable({
@@ -46,7 +46,16 @@ export class LynxInsightOverlayService {
     const key = insights[0].id;
 
     componentRef.instance.insights = insights;
-    componentRef.instance.closeOverlay.pipe(take(1)).subscribe(() => this.close(key));
+    componentRef.instance.insightDismiss.pipe(take(1)).subscribe(() => this.close(key));
+
+    // Update overlay position when insight is focused (as in choosing from multi-insight)
+    componentRef.instance.insightFocus
+      .pipe(
+        takeUntil(overlayRef.closed$),
+        observeOn(asyncScheduler) // Delay to wait for DOM render (like setTimeout)
+      )
+      .subscribe(() => overlayRef.ref.updatePosition());
+
     this.openRefs.set(key, overlayRef);
 
     return overlayRef;
@@ -58,7 +67,8 @@ export class LynxInsightOverlayService {
 
       if (overlayRef != null) {
         overlayRef.ref.dispose();
-        overlayRef.onClose();
+        overlayRef.closed$.next();
+        overlayRef.closed$.complete();
         this.openRefs.delete(insightId);
       }
     }
@@ -76,7 +86,7 @@ export class LynxInsightOverlayService {
   private createOverlayRef(origin: HTMLElement): LynxInsightOverlayRef {
     return {
       ref: this.overlay.create(this.getConfig(origin)),
-      onClose: () => {}
+      closed$: new Subject<void>()
     };
   }
 
@@ -102,7 +112,8 @@ export class LynxInsightOverlayService {
         { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
         { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
         { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom' }
-      ]);
+      ])
+      .withGrowAfterOpen(true);
 
     return positionStrategy;
   }
