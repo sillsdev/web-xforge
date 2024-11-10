@@ -16,10 +16,10 @@
 
   <ItemGroup>
     <PackageReference Include="IdentityModel.AspNetCore" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="NPOI" Version="2.7.1" />
-    <PackageReference Include="Serval.Client" Version="1.4.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="NPOI" Version="2.7.2" />
+    <PackageReference Include="Serval.Client" Version="1.7.3" />
   </ItemGroup>
 
 </Project>

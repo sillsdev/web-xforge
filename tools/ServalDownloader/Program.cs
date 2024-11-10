@@ -129,11 +129,11 @@ static ServiceProvider SetupServices()
     return services.BuildServiceProvider();
 }
 
-public class ServalOptions
+internal class ServalOptions
 {
-    public string ApiServer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
-    public string ClientId { get; set; } = string.Empty;
-    public string ClientSecret { get; set; } = string.Empty;
-    public string TokenUrl { get; set; } = string.Empty;
+    public string ApiServer { get; init; } = string.Empty;
+    public string Audience { get; init; } = string.Empty;
+    public string ClientId { get; init; } = string.Empty;
+    public string ClientSecret { get; init; } = string.Empty;
+    public string TokenUrl { get; init; } = string.Empty;
 }
