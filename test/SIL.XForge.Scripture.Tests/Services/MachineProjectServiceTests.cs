@@ -3031,7 +3031,7 @@ public class MachineProjectServiceTests
                     new DraftConfig
                     {
                         AlternateSourceEnabled = true,
-                        AlternateSource = new TranslateSource { ParatextId = Paratext01 }
+                        AlternateSource = new TranslateSource { ParatextId = Paratext01 },
                     }
                 )
         );

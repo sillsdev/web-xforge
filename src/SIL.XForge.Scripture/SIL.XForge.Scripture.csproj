@@ -37,7 +37,7 @@
     <!-- When using a new major or minor version of ParatextData, update where dependencies.yml copies the
          InternetSettings.xml file. Also update server config scriptureforge.org_v2.yml. -->
     <PackageReference Include="ParatextData" Version="9.5.0.5" />
-    <PackageReference Include="Serval.Client" Version="1.7.0" />
+    <PackageReference Include="Serval.Client" Version="1.7.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.6.2" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
