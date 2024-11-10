@@ -451,11 +451,11 @@ public class MachineApiServiceTests
                                 [
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" }
+                                        Corpus = new ResourceLink { Id = corpusId1, Url = "https://example.com" },
                                     },
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" }
+                                        Corpus = new ResourceLink { Id = corpusId2, Url = "https://example.com" },
                                     },
                                 ],
                             },
@@ -476,14 +476,14 @@ public class MachineApiServiceTests
                                 [
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" }
+                                        Corpus = new ResourceLink { Id = corpusId3, Url = "https://example.com" },
                                     },
                                 ],
                                 TargetFilters =
                                 [
                                     new ParallelCorpusFilter
                                     {
-                                        Corpus = new ResourceLink { Id = corpusId4, Url = "https://example.com" }
+                                        Corpus = new ResourceLink { Id = corpusId4, Url = "https://example.com" },
                                     },
                                 ],
                             },
@@ -1131,7 +1131,7 @@ public class MachineApiServiceTests
                 Task.FromResult(
                     new PreTranslation[]
                     {
-                        new PreTranslation { Reference = reference, Translation = translation, },
+                        new PreTranslation { Reference = reference, Translation = translation },
                     }
                 )
             );
@@ -1643,7 +1643,7 @@ public class MachineApiServiceTests
                     {
                         EngineType = MachineProjectService.Nmt,
                         InternalCode = internalCode,
-                        IsNative = true
+                        IsNative = true,
                     }
                 )
             );
@@ -2038,11 +2038,11 @@ public class MachineApiServiceTests
                 ProjectId = Project01,
                 TrainingScriptureRanges =
                 [
-                    new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = scriptureRange1 }
+                    new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = scriptureRange1 },
                 ],
                 TranslationScriptureRanges =
                 [
-                    new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = scriptureRange2 }
+                    new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = scriptureRange2 },
                 ],
             },
             CancellationToken.None

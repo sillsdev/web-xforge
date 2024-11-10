@@ -40,7 +40,7 @@ public class PreTranslationServiceTests
                     },
                     {
                         Corpus01,
-                        new ServalCorpus { PreTranslate = true, UploadParatextZipFile = uploadParatextZipFile, }
+                        new ServalCorpus { PreTranslate = true, UploadParatextZipFile = uploadParatextZipFile }
                     },
                 },
             }
@@ -613,7 +613,7 @@ public class PreTranslationServiceTests
         public TestEnvironment(TestEnvironmentOptions? options = null)
         {
             options ??= new TestEnvironmentOptions();
-            ProjectSecrets = new MemoryRepository<SFProjectSecret>([new SFProjectSecret { Id = Project01 },]);
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>([new SFProjectSecret { Id = Project01 }]);
 
             RealtimeService = new SFMemoryRealtimeService();
             SFProject[] sfProjects =
