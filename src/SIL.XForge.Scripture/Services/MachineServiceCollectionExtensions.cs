@@ -23,37 +23,37 @@ public static class MachineServiceCollectionExtensions
         IWebHostEnvironment env
     )
     {
-        // Setup the Machine API
+        // Set up the Machine API
         var servalOptions = configuration.GetOptions<ServalOptions>();
-        services.AddAccessTokenManagement(options =>
-        {
-            options.Client.Clients.Add(
-                MachineApi.HttpClientName,
-                new ClientCredentialsTokenRequest
+        services.AddDistributedMemoryCache();
+        services
+            .AddClientCredentialsTokenManagement()
+            .AddClient(
+                MachineApi.TokenClientName,
+                client =>
                 {
-                    Address = servalOptions.TokenUrl,
-                    ClientId = servalOptions.ClientId,
-                    ClientSecret = servalOptions.ClientSecret,
-                    Parameters = new Parameters { { "audience", servalOptions.Audience } },
+                    client.TokenEndpoint = servalOptions.TokenUrl;
+                    client.ClientId = servalOptions.ClientId;
+                    client.ClientSecret = servalOptions.ClientSecret;
+                    client.Parameters = new Parameters { { "audience", servalOptions.Audience } };
                 }
             );
-        });
-        services
-            .AddClientAccessTokenHttpClient(
-                MachineApi.HttpClientName,
-                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
-            )
-            .ConfigurePrimaryHttpMessageHandler(() =>
+        services.AddClientCredentialsHttpClient(
+            MachineApi.HttpClientName,
+            MachineApi.TokenClientName,
+            configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
+        )
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            var handler = new HttpClientHandler();
+            if (env.IsDevelopment() || env.IsEnvironment("Testing"))
             {
-                var handler = new HttpClientHandler();
-                if (env.IsDevelopment() || env.IsEnvironment("Testing"))
-                {
-                    handler.ServerCertificateCustomValidationCallback =
-                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                }
+                handler.ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+            }
 
-                return handler;
-            });
+            return handler;
+        });
         services
             .AddHttpClient(MachineApi.HttpClientName)
             .SetHandlerLifetime(TimeSpan.FromMinutes(5))
