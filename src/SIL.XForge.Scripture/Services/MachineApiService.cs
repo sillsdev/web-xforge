@@ -476,7 +476,7 @@ public class MachineApiService(
                 {
                     State = BuildStateFaulted,
                     Message = errorMessage,
-                    AdditionalInfo = new ServalBuildAdditionalInfo { TranslationEngineId = engineId ?? string.Empty, },
+                    AdditionalInfo = new ServalBuildAdditionalInfo { TranslationEngineId = engineId ?? string.Empty },
                 };
             }
             else
