@@ -3,6 +3,7 @@ import { VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { catchError, Observable, throwError } from 'rxjs';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { isString } from '../../../type-utils';
 import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -27,7 +28,8 @@ export class DraftHandlingService {
   constructor(
     private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
-    private readonly draftGenerationService: DraftGenerationService
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly errorReportingService: ErrorReportingService
   ) {}
 
   /**
@@ -149,9 +151,7 @@ export class DraftHandlingService {
   ): Observable<DeltaOperation[] | DraftSegmentMap> {
     return isDraftLegacy
       ? // Fetch legacy draft
-        this.draftGenerationService
-          .getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
-          .pipe()
+        this.draftGenerationService.getGeneratedDraft(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
       : // Fetch draft in USFM format (fallback to legacy)
         this.draftGenerationService
           .getGeneratedDraftDeltaOperations(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
@@ -211,19 +211,30 @@ export class DraftHandlingService {
     }
 
     return await new Promise<boolean>(resolve => {
-      this.getDraft(draftTextDocId, { isDraftLegacy: false }).subscribe(async draft => {
-        let ops: DeltaOperation[] = [];
-        if (this.isDraftSegmentMap(draft)) {
-          // Do not support applying drafts for the legacy segment map format.
-          // This can be applied chapter by chapter.
+      this.getDraft(draftTextDocId, { isDraftLegacy: false }).subscribe({
+        next: async draft => {
+          let ops: DeltaOperation[] = [];
+          if (this.isDraftSegmentMap(draft)) {
+            // Do not support applying drafts for the legacy segment map format.
+            // This can be applied chapter by chapter.
+            resolve(false);
+            return;
+          } else {
+            ops = draft;
+          }
+          const draftDelta: DeltaStatic = new Delta(ops);
+          await this.applyChapterDraftAsync(targetTextDocId, draftDelta).catch(err => {
+            // report the error to bugsnag
+            this.errorReportingService.silentError('Error applying a draft', ErrorReportingService.normalizeError(err));
+            resolve(false);
+          });
+          resolve(true);
+        },
+        error: err => {
+          // report the error to bugsnag
+          this.errorReportingService.silentError('Error applying a draft', ErrorReportingService.normalizeError(err));
           resolve(false);
-          return;
-        } else {
-          ops = draft;
         }
-        const draftDelta: DeltaStatic = new Delta(ops);
-        await this.applyChapterDraftAsync(targetTextDocId, draftDelta).catch(() => resolve(false));
-        resolve(true);
       });
     });
   }
