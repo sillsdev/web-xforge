@@ -604,38 +604,39 @@ class TestEnvironment {
       questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId);
       questionDoc.onlineFetch();
     }
+    const textsByBookId = {
+      MAT: {
+        bookNum: 40,
+        hasSource: false,
+        chapters: [
+          { number: 1, lastVerse: 25, isValid: true, permissions: {} },
+          { number: 2, lastVerse: 23, isValid: true, permissions: {} }
+        ],
+        permissions: {}
+      },
+      LUK: {
+        bookNum: 42,
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 80, isValid: true, permissions: {} }],
+        permissions: {}
+      },
+      JHN: {
+        bookNum: 43,
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 0, isValid: true, permissions: {} }],
+        permissions: {}
+      }
+    };
     this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
-      data: createTestProjectProfile()
+      data: createTestProjectProfile({ texts: Object.values(textsByBookId) })
     });
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
     const config: MatDialogConfig<QuestionDialogData> = {
       data: {
         questionDoc,
         projectDoc,
-        textsByBookId: {
-          MAT: {
-            bookNum: 40,
-            hasSource: false,
-            chapters: [
-              { number: 1, lastVerse: 25, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 23, isValid: true, permissions: {} }
-            ],
-            permissions: {}
-          },
-          LUK: {
-            bookNum: 42,
-            hasSource: false,
-            chapters: [{ number: 1, lastVerse: 80, isValid: true, permissions: {} }],
-            permissions: {}
-          },
-          JHN: {
-            bookNum: 43,
-            hasSource: false,
-            chapters: [{ number: 1, lastVerse: 0, isValid: true, permissions: {} }],
-            permissions: {}
-          }
-        },
+        textsByBookId,
         projectId: 'project01',
         defaultVerse: defaultVerseRef,
         isRightToLeft: isRtl
@@ -665,7 +666,9 @@ class TestEnvironment {
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(mockedProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
+    when(mockedProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+    );
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', 'test-audio-short.mp3', getAudioBlob())
     );

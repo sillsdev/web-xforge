@@ -3,6 +3,8 @@ import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -440,8 +442,25 @@ class TestEnvironment {
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {
-    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    const textDocId1 = new TextDocId('project01', 40, 1, 'target');
+    const textDocId2 = new TextDocId('project02', 40, 1, 'target');
+    this.addTextDoc(textDocId1);
+    this.addTextDoc(textDocId2);
+    const textInfos: TextInfo[] = [
+      {
+        bookNum: 40,
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 7, isValid: true, permissions: {} }],
+        permissions: {}
+      }
+    ];
+    [textDocId1, textDocId2].forEach(textDocId => {
+      this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
+        id: textDocId.projectId,
+        data: createTestProjectProfile({ texts: textInfos })
+      });
+    });
+
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
       data: createTestUser()
@@ -451,7 +470,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
-    when(mockedSFProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
+    when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id.toString())
+    );
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );

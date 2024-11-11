@@ -14,7 +14,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { LocalPresence } from 'sharedb/lib/sharedb';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
@@ -64,6 +64,7 @@ describe('TextComponent', () => {
     ],
     providers: [
       { provide: BugsnagService, useMock: mockedBugsnagService },
+      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: UserService, useMock: mockedUserService },
@@ -74,28 +75,180 @@ describe('TextComponent', () => {
     mockedConsole.reset();
   });
 
-  it('display placeholder messages', fakeAsync(() => {
-    const env: TestEnvironment = new TestEnvironment();
+  it('shows proper placeholder messages for situations', fakeAsync(() => {
+    // Suppose a user comes to a page with a text component, which has no content to show. The placeholder will be a
+    // 'no-content' indication, or that specified as a placeholder Input. Here we will not specify the placeholder
+    // input.
+    const env: TestEnvironment = new TestEnvironment({ placeholderInput: undefined });
+    // No location is specified so no content is requested.
+    expect(env.id).withContext('setup').toBeUndefined();
     const mockedQuill = new MockQuill('quill-editor');
-    env.fixture.detectChanges();
     env.component.onEditorCreated(mockedQuill);
-    expect(env.component.placeholder).toEqual('initial placeholder text');
-    env.id = new TextDocId('project01', 40, 1);
-    tick();
-    expect(env.component.placeholder).toEqual('text.loading');
+    env.waitForEditor();
+    // Placeholder should be no-content, as there is nothing to show.
+    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    // The user goes offline, but 'no-content' is still the placeholder.
     env.onlineStatus = false;
-    env.fixture.detectChanges();
-    expect(env.component.placeholder).toEqual('text.not_available_offline');
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
     env.onlineStatus = true;
+    env.waitForEditor();
+
+    // The user goes to a location. The id input is set to a particular location. The text component is now expected to
+    // have content, so the placeholder should be 'loading'.
+    env.runWithDelayedGetText(env.matTextDocId, () => {
+      env.id = env.matTextDocId;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('text.loading');
+    });
+
+    // Suppose the user is offline, and navigates to a text. Set the placeholder to offline, to indicate to the user
+    // why they can't see the content if and while it has not loaded yet.
+    env.onlineStatus = false;
+    env.waitForEditor();
+    env.runWithDelayedGetText(env.lukTextDocId, () => {
+      env.id = env.lukTextDocId;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('text.not_available_offline');
+      // The user comes back online. We show 'loading' for the placeholder now, while working on getting the text
+      // loaded.
+      env.onlineStatus = true;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('text.loading');
+    });
+
+    // The user goes to a location that the project does not have. The placeholder should indicate 'no-content'.
+    env.runWithDelayedGetText(env.notPresentTextDocId, () => {
+      env.id = env.notPresentTextDocId;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    });
+
+    // The user is offline and goes to a location that the project does not have. The placeholder should indicate
+    // 'no-content'.
+    env.id = env.matTextDocId;
+    env.waitForEditor();
+    env.onlineStatus = false;
+    env.waitForEditor();
+    env.runWithDelayedGetText(env.notPresentTextDocId, () => {
+      env.id = env.notPresentTextDocId;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+    });
+    env.onlineStatus = true;
+    env.waitForEditor();
+
+    // If the text component is of the source text, id can be set to undefined by editor.component when the current book
+    // is not present in the source text. Suppose this is so. Then the placeholder should indicate 'no-content'.
+    env.id = undefined;
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+
+    // Suppose we are offline and id was set to undefined by editor.component because the current book is not present in
+    // the source text. The problem is that the book is not present, not that we are offline. So the placeholder should
+    // indicate 'no-content', not 'offline'.
+    env.onlineStatus = true;
+    env.waitForEditor();
+    env.id = env.matTextDocId;
+    env.waitForEditor();
+    env.id = undefined;
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
+  }));
+
+  it('placeholder uses specified placeholder input', fakeAsync(() => {
+    // TextComponent allows a placeholder to be specified to override the default no-content message.
+
+    // Suppose a user comes to a page with a text component, which has no content to show. The placeholder will be the
+    // custom 'no-content' indication.
+    const env: TestEnvironment = new TestEnvironment({ placeholderInput: 'my custom no-content message' });
+    // No location is specified so no content is requested.
+    expect(env.id).withContext('setup').toBeUndefined();
+    const mockedQuill = new MockQuill('quill-editor');
+    env.component.onEditorCreated(mockedQuill);
+    env.waitForEditor();
+    // Placeholder should be no-content, as there is nothing to show.
+    expect(env.component.placeholder).toEqual('my custom no-content message');
+    // The user goes offline, but 'no-content' is still the placeholder.
+    env.onlineStatus = false;
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('my custom no-content message');
+    env.onlineStatus = true;
+    env.waitForEditor();
+
+    // The user goes to a location. The id input is set to a particular location. The text component is now expected to
+    // have content, so the placeholder should be 'loading'.
+    env.runWithDelayedGetText(env.matTextDocId, () => {
+      env.id = env.matTextDocId;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('text.loading');
+    });
+
+    // The user goes to a location that the project does not have. The placeholder should indicate 'no-content'.
+    env.runWithDelayedGetText(env.notPresentTextDocId, () => {
+      env.id = env.notPresentTextDocId;
+      env.waitForEditor();
+      expect(env.component.placeholder).toEqual('my custom no-content message');
+    });
+
+    // If the text component is of the source text, id can be set to undefined by editor.component when the current book
+    // is not present in the source text. Suppose this is so. Then the placeholder should indicate 'no-content'.
+    env.id = undefined;
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('my custom no-content message');
+  }));
+
+  it('shows book is empty placeholder messages', fakeAsync(() => {
+    // Suppose the user navigates to a text location. We fetch the text, but some aspect of the received TextDoc
+    // indicates that it is considered "empty". The placeholder will indicate this.
+
+    const env: TestEnvironment = new TestEnvironment({ placeholderInput: undefined });
+    const mockedQuill = new MockQuill('quill-editor');
+    env.component.onEditorCreated(mockedQuill);
+    env.waitForEditor();
+
+    const textDocIdWithEmpty: TextDocId = env.matTextDocId;
+
+    let textDocBeingGotten: TextDoc = {} as TextDoc;
+    instance(mockedProjectService)
+      .getText(textDocIdWithEmpty.toString())
+      .then((value: TextDoc) => {
+        textDocBeingGotten = value;
+      });
+    tick();
+    // The textdoc will have an undefined data field.
+    Object.defineProperty(textDocBeingGotten, 'data', {
+      get: () => undefined
+    });
+    when(mockedProjectService.getText(textDocIdWithEmpty)).thenResolve(textDocBeingGotten);
+
+    // The user goes to a location that has an 'empty' textdoc. The placeholder indicates empty.
+    env.id = textDocIdWithEmpty;
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('text.book_is_empty');
+
+    // The placeholder indicates empty even if the user is offline.
+    env.id = env.mrkTextDocId;
+    env.waitForEditor();
+    env.onlineStatus = false;
+    env.waitForEditor();
+    env.id = textDocIdWithEmpty;
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('text.book_is_empty');
+    env.onlineStatus = true;
+    env.waitForEditor();
+
+    // The user goes to another location that does not have an 'empty' textdoc. The placeholder will not indicate empty.
+    env.id = env.lukTextDocId;
+    env.waitForEditor();
     expect(env.component.placeholder).toEqual('text.loading');
   }));
 
   it('does not apply right to left for placeholder message', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
     env.hostComponent.isTextRightToLeft = true;
-    env.fixture.detectChanges();
-    expect(env.component.placeholder).toEqual('initial placeholder text');
+    env.waitForEditor();
+    expect(env.component.placeholder).toEqual('text.book_does_not_exist');
     expect(env.component.isRtl).toBe(false);
     expect(env.fixture.nativeElement.querySelector('quill-editor[dir="auto"]')).not.toBeNull();
   }));
@@ -1291,6 +1444,82 @@ describe('TextComponent', () => {
 
     expect(wasLoaded).toBeUndefined();
   }));
+
+  it('knows if project has book with chapter', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    let result: boolean | undefined;
+    env.component.projectHasText().then(res => {
+      result = res;
+    });
+    tick();
+    expect(result).toBe(true);
+  }));
+
+  it('knows if project does not have chapter', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 99); // Non-existent chapter
+    tick();
+    env.fixture.detectChanges();
+
+    let result: boolean | undefined;
+    env.component.projectHasText().then(res => {
+      result = res;
+    });
+    tick();
+
+    expect(result).toBe(false);
+  }));
+
+  it('knows if project does not have book', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 3, 1); // Non-existent book
+    tick();
+    env.fixture.detectChanges();
+
+    let result: boolean | undefined;
+    env.component.projectHasText().then(res => {
+      result = res;
+    });
+    tick();
+
+    expect(result).toBe(false);
+  }));
+
+  it('error if id is null', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = undefined;
+    tick();
+    env.fixture.detectChanges();
+
+    expect(() => {
+      env.component.projectHasText();
+      tick();
+    }).toThrowError();
+  }));
+
+  it('should throw error if profile data is null', fakeAsync(() => {
+    const env: TestEnvironment = new TestEnvironment();
+    when(mockedProjectService.getProfile(anything())).thenResolve({
+      data: null
+    } as unknown as SFProjectProfileDoc);
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    expect(() => {
+      env.component.projectHasText();
+      tick();
+    }).toThrowError();
+  }));
 });
 
 /** Represents both what the TextComponent understand to be the text in a segment, and what the editor
@@ -1325,14 +1554,6 @@ interface PerformDropTestArgs {
   dropDistanceIn: number;
   topLevelNodeSeriesBeforeEvent: string[];
   expectedTopLevelNodeSeriesAfterEvent: string[];
-}
-
-/** Arguments to TestEnvironment constructor. */
-interface TestEnvCtorArgs {
-  callback?: (env: TestEnvironment) => void;
-  chapterNum?: number;
-  textDoc?: RichText.DeltaOperation[];
-  presenceEnabled?: boolean;
 }
 
 class MockDragEvent extends DragEvent {
@@ -1386,7 +1607,7 @@ class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;
 
   enablePresence: boolean = true;
-  initialPlaceHolder = 'initial placeholder text';
+  initialPlaceHolder: string | undefined;
   isTextRightToLeft: boolean = false;
   isReadOnly: boolean = false;
   id?: TextDocId;
@@ -1405,16 +1626,29 @@ class TestEnvironment {
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
+  readonly matTextDocId = new TextDocId('project01', 40, 1);
+  readonly mrkTextDocId = new TextDocId('project01', 41, 1);
+  readonly lukTextDocId = new TextDocId('project01', 42, 1);
+  readonly jhnTextDocId = new TextDocId('project01', 43, 1);
+  readonly notPresentTextDocId = new TextDocId('project01', 70, 1);
 
-  constructor({ textDoc, chapterNum, presenceEnabled = true, callback }: TestEnvCtorArgs = {}) {
+  constructor({
+    textDoc,
+    chapterNum,
+    presenceEnabled = true,
+    callback,
+    placeholderInput
+  }: {
+    textDoc?: RichText.DeltaOperation[];
+    chapterNum?: number;
+    presenceEnabled?: boolean;
+    callback?: (env: TestEnvironment) => void;
+    placeholderInput?: string;
+  } = {}) {
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
     );
 
-    const matTextDocId = new TextDocId('project01', 40, 1);
-    const mrkTextDocId = new TextDocId('project01', 41, 1);
-    const lukTextDocId = new TextDocId('project01', 42, 1);
-    const jhnTextDocId = new TextDocId('project01', 43, 1);
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
       data: createTestProjectProfile({
@@ -1432,27 +1666,54 @@ class TestEnvironment {
             ],
             hasSource: true,
             permissions: {}
+          },
+          {
+            bookNum: 41,
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+            ],
+            hasSource: true,
+            permissions: {}
+          },
+          {
+            bookNum: 42,
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+            ],
+            hasSource: true,
+            permissions: {}
+          },
+          {
+            bookNum: 43,
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+            ],
+            hasSource: true,
+            permissions: {}
           }
         ]
       })
     });
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
-        id: matTextDocId.toString(),
-        data: getTextDoc(matTextDocId),
+        id: this.matTextDocId.toString(),
+        data: getTextDoc(this.matTextDocId),
         type: RichText.type.name
       },
       {
-        id: mrkTextDocId.toString(),
-        data: getCombinedVerseTextDoc(mrkTextDocId),
+        id: this.mrkTextDocId.toString(),
+        data: getCombinedVerseTextDoc(this.mrkTextDocId),
         type: RichText.type.name
       },
       {
-        id: lukTextDocId.toString(),
-        data: getPoetryVerseTextDoc(lukTextDocId),
+        id: this.lukTextDocId.toString(),
+        data: getPoetryVerseTextDoc(this.lukTextDocId),
         type: RichText.type.name
       },
-      { id: jhnTextDocId.toString(), data: getEmptyChapterDoc(jhnTextDocId), type: RichText.type.name }
+      { id: this.jhnTextDocId.toString(), data: getEmptyChapterDoc(this.jhnTextDocId), type: RichText.type.name }
     ]);
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
@@ -1479,6 +1740,7 @@ class TestEnvironment {
     this.hostComponent = this.fixture.componentInstance;
 
     this.hostComponent.enablePresence = presenceEnabled;
+    this.hostComponent.initialPlaceHolder = placeholderInput;
 
     if (textDoc != null && chapterNum != null) {
       const textDocId: TextDocId = new TextDocId('project01', 40, chapterNum);
@@ -1499,10 +1761,14 @@ class TestEnvironment {
     tick(PRESENCE_EDITOR_ACTIVE_TIMEOUT);
   }
 
-  set id(value: TextDocId) {
+  set id(value: TextDocId | undefined) {
     this.hostComponent.id = value;
     tick();
     this.fixture.detectChanges();
+  }
+
+  get id(): TextDocId | undefined {
+    return this.hostComponent.id;
   }
 
   set onlineStatus(value: boolean) {
@@ -1783,6 +2049,32 @@ class TestEnvironment {
     this.component.editor!.history.undo();
     tick();
     this.fixture.detectChanges();
+  }
+
+  /** Run the specified code while waiting for getText() to resolve. This allows the placeholder to be examined while
+   * waiting for getText(), rather than examining the placeholder after getText() finishes. */
+  runWithDelayedGetText(textDocId: TextDocId, code: () => void): void {
+    let resolver: (_: TextDoc) => void = _ => {};
+    let textDocBeingGotten: TextDoc = {} as TextDoc;
+    instance(mockedProjectService)
+      .getText(textDocId.toString())
+      .then((value: TextDoc) => {
+        textDocBeingGotten = value;
+      });
+    tick();
+    when(mockedProjectService.getText(textDocId)).thenReturn(
+      new Promise(resolve => {
+        // (Don't resolve until we manually cause it.)
+        resolver = resolve;
+      })
+    );
+
+    code();
+
+    // Don't let getText() finish until now so that the placeholder is the message that is shown while the user is
+    // waiting.
+    resolver(textDocBeingGotten);
+    this.waitForEditor();
   }
 
   /** Assert that in `parentNode`, there are only immediate children with name and order specified in

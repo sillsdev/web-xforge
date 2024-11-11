@@ -1,9 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { IOutputAreaSizes } from 'angular-split';
 import clone from 'lodash-es/clone';
-import { fromEvent, Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, fromEvent } from 'rxjs';
 import { FontService } from 'xforge-common/font.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -46,8 +45,8 @@ export class CheckingTextComponent extends SubscriptionDisposable implements Aft
     this._placeholder = value;
   }
 
-  get placeholder(): string {
-    return this._placeholder || translate('text.loading');
+  get placeholder(): string | undefined {
+    return this._placeholder;
   }
 
   @Input() set activeVerse(verseRef: VerseRef | undefined) {
