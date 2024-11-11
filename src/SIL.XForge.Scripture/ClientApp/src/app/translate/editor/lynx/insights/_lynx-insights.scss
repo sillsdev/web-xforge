@@ -44,6 +44,11 @@ $insightTypes: 'info', 'warning', 'error';
   text-decoration-thickness: 1.2px;
   background-color: $bgColor;
 
+  &:hover {
+    // Darken the background color on hover of insight
+    background-color: hsl($color-h, $color-s, $bg-color-l - 4%);
+  }
+
   // TODO: figure out cursor-active state?
   // &.cursor-active {
   //   // background-color: hsl(var($color-h), var($color-s), $bg-color-l - 10);
