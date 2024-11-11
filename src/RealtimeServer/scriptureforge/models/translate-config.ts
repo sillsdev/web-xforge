@@ -4,6 +4,7 @@ export enum ProjectType {
   Standard = 'Standard',
   BackTranslation = 'BackTranslation',
   Daughter = 'Daughter',
+  Transliteration = 'Transliteration',
   TransliterationManual = 'TransliterationManual',
   TransliterationWithEncoder = 'TransliterationWithEncoder',
   StudyBible = 'StudyBible',
