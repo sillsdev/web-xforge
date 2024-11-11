@@ -8,6 +8,10 @@ quill-editor {
 
     ::ng-deep {
       .ql-cursor.local-cursor {
+        .ql-cursor-caret-container {
+          pointer-events: none; // Needed to prevent cursor from interfering with insight hover style
+        }
+
         .ql-cursor-caret {
           width: 1px;
           background-color: $local-cursor-color;
