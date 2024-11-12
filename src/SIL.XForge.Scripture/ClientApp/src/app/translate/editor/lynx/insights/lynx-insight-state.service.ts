@@ -132,18 +132,17 @@ export class LynxInsightStateService {
       },
       code: '2011'
     },
-    // TODO: this causes an error to be thrown when removing all formatting is called
-    // {
-    //   id: '3b',
-    //   type: 'info',
-    //   chapter: 1,
-    //   book: 41,
-    //   range: {
-    //     index: 88,
-    //     length: 13
-    //   },
-    //   code: '1012'
-    // },
+    {
+      id: '3b',
+      type: 'info',
+      chapter: 1,
+      book: 41,
+      range: {
+        index: 88,
+        length: 13
+      },
+      code: '1012'
+    },
     {
       id: '4',
       type: 'warning',
@@ -167,18 +166,17 @@ export class LynxInsightStateService {
       },
       code: '2005'
     },
-    // TODO: this causes an error to be thrown
-    // {
-    //   id: '5a',
-    //   type: 'info',
-    //   chapter: 1,
-    //   book: 41,
-    //   range: {
-    //     index: 112,
-    //     length: 5
-    //   },
-    //   code: '1005'
-    // },
+    {
+      id: '5a',
+      type: 'info',
+      chapter: 1,
+      book: 41,
+      range: {
+        index: 112,
+        length: 5
+      },
+      code: '1005'
+    },
     {
       id: '6',
       type: 'info',
