@@ -15,7 +15,7 @@ export class L10nNumberFormatService {
   private numberFormat: Intl.NumberFormat | undefined;
 
   getNumberFormat(): Intl.NumberFormat {
-    if (!this.numberFormat || this.lastLocale !== this.i18n.localeCode) {
+    if (this.numberFormat != null || this.lastLocale !== this.i18n.localeCode) {
       this.numberFormat = new Intl.NumberFormat(this.i18n.localeCode);
       this.lastLocale = this.i18n.localeCode;
     }

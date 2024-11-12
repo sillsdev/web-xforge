@@ -3,6 +3,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
+import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ProgressService } from '../progress-service/progress.service';
@@ -20,7 +21,7 @@ type Scope = 'OT' | 'NT' | 'DC';
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
   standalone: true,
-  imports: [UICommonModule, MatChipsModule, TranslocoModule],
+  imports: [UICommonModule, MatChipsModule, TranslocoModule, L10nPercentPipe],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent extends SubscriptionDisposable implements OnChanges {
@@ -122,5 +123,10 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
 
   isDeuterocanonAvailable(): boolean {
     return this.availableBooks.findIndex(n => Canon.isBookDC(n)) > -1;
+  }
+
+  getPercentage(book: BookOption): number {
+    // avoid showing 100% when it's not quite there
+    return (book.progressPercentage > 99 && book.progressPercentage < 100 ? 99 : book.progressPercentage) / 100;
   }
 }

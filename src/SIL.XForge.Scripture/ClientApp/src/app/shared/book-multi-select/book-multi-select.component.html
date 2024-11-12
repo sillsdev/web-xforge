@@ -44,7 +44,11 @@
         [disabled]="readonly"
         (change)="onChipListChange(book)"
       >
-        <mat-chip-option [value]="book" [selected]="book.selected">
+        <mat-chip-option
+          [value]="book"
+          [selected]="book.selected"
+          [matTooltip]="t('book_progress', { percent: getPercentage(book) | l10nPercent })"
+        >
           {{ "canon.book_names." + book.bookId | transloco }}
           <div class="border-fill" [style.width]="book.progressPercentage + '%'"></div>
         </mat-chip-option>
