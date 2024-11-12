@@ -2,8 +2,12 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Serval.Client;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -18,43 +22,38 @@ namespace SIL.XForge.Scripture.Controllers;
 /// </remarks>
 [Route("health-check")]
 [ApiController]
-public class HealthController : ControllerBase
+[AllowAnonymous]
+public class HealthController(
+    IOptions<AuthOptions> authOptions,
+    IExceptionHandler exceptionHandler,
+    IRealtimeService realtimeService,
+    ITranslationEnginesClient translationEnginesClient
+) : ControllerBase
 {
     public const int Status531MongoDown = 531;
     public const int Status532RealtimeServerDown = 532;
     public const int Status533ServalDown = 533;
 
-    private readonly IExceptionHandler _exceptionHandler;
-    private readonly IRealtimeService _realtimeService;
-    private readonly ITranslationEnginesClient _translationEnginesClient;
-
-    public HealthController(
-        IExceptionHandler exceptionHandler,
-        IRealtimeService realtimeService,
-        ITranslationEnginesClient translationEnginesClient
-    )
-    {
-        _exceptionHandler = exceptionHandler;
-        _realtimeService = realtimeService;
-        _translationEnginesClient = translationEnginesClient;
-    }
-
     /// <summary>
     /// Executes the health check.
     /// </summary>
+    /// <param name="apiKey">The API key to access this endpoint.</param>
     /// <returns>A JSON object containing values corresponding to the health of various systems.</returns>
     /// <response code="200">All systems are healthy.</response>
     /// <response code="403">You do not have permission to view the health check.</response>
     /// <response code="531">Mongo is down.</response>
     /// <response code="532">The Realtime Server is down.</response>
     /// <response code="533">Serval is down.</response>
-    [HttpGet]
-    public async Task<ActionResult<HealthCheckResponse>> HealthCheckAsync()
+    [HttpPost]
+    public async Task<ActionResult<HealthCheckResponse>> HealthCheckAsync(
+        [FromHeader(Name = "X-Api-Key")] string apiKey
+    )
     {
         // Restrict this endpoint to local requests
-        if (!IsLocal())
+        if (authOptions.Value.HealthCheckApiKey != apiKey)
         {
-            return Forbid();
+            // Returning Forbid() results in a 400 error when executed in a POST action
+            return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }
 
         // Create the object to return for the health check
@@ -66,7 +65,7 @@ public class HealthController : ControllerBase
         try
         {
             stopWatch = Stopwatch.StartNew();
-            project = await _realtimeService.QuerySnapshots<SFProject>().FirstOrDefaultAsync();
+            project = await realtimeService.QuerySnapshots<SFProject>().FirstOrDefaultAsync();
             stopWatch.Stop();
             response.Mongo.Up = project is not null;
             response.Mongo.Time = stopWatch.ElapsedMilliseconds;
@@ -75,7 +74,7 @@ public class HealthController : ControllerBase
         catch (Exception e)
         {
             response.Mongo.Status = e.Message;
-            _exceptionHandler.ReportException(e);
+            exceptionHandler.ReportException(e);
         }
 
         // Second, check the realtime server
@@ -84,7 +83,7 @@ public class HealthController : ControllerBase
             try
             {
                 stopWatch = Stopwatch.StartNew();
-                await using IConnection conn = await _realtimeService.ConnectAsync();
+                await using IConnection conn = await realtimeService.ConnectAsync();
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
                 stopWatch.Stop();
                 response.RealtimeServer.Up = projectDoc.IsLoaded;
@@ -96,7 +95,7 @@ public class HealthController : ControllerBase
             catch (Exception e)
             {
                 response.RealtimeServer.Status = e.Message;
-                _exceptionHandler.ReportException(e);
+                exceptionHandler.ReportException(e);
             }
         }
         else
@@ -108,7 +107,7 @@ public class HealthController : ControllerBase
         try
         {
             stopWatch = Stopwatch.StartNew();
-            var translationEngines = await _translationEnginesClient.GetAllAsync();
+            var translationEngines = await translationEnginesClient.GetAllAsync();
             stopWatch.Stop();
             response.Serval.Up = translationEngines.Any();
             response.Serval.Time = stopWatch.ElapsedMilliseconds;
@@ -117,7 +116,7 @@ public class HealthController : ControllerBase
         catch (Exception e)
         {
             response.Serval.Status = e.Message;
-            _exceptionHandler.ReportException(e);
+            exceptionHandler.ReportException(e);
         }
 
         // Calculate the status code and return the results
@@ -140,26 +139,5 @@ public class HealthController : ControllerBase
         }
 
         return StatusCode(statusCode, response);
-    }
-
-    /// <summary>
-    /// Returns if a request is from localhost.
-    /// </summary>
-    /// <returns><c>true</c> if the request is local; otherwise, <c>false</c>.</returns>
-    /// <remarks>This check uses similar logic to Hangfire's dashboard.</remarks>
-    private bool IsLocal()
-    {
-        // Get the local and remote IP addresses
-        string remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        string localIp = HttpContext.Connection.LocalIpAddress?.ToString();
-
-        // Assume not local if remote IP is unknown
-        if (string.IsNullOrEmpty(remoteIp))
-        {
-            return false;
-        }
-
-        // See if localhost
-        return remoteIp is "127.0.0.1" or "::1" || remoteIp == localIp;
     }
 }

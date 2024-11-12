@@ -31,7 +31,8 @@ cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
   },
   "Auth": {
     "BackendClientSecret": "${AUTH_BACKEND_SECRET}",
-    "WebhookPassword": "${AUTH_WEBHOOK_PASSWORD}"
+    "WebhookPassword": "${AUTH_WEBHOOK_PASSWORD}",
+    "HealthCheckApiKey": "${AUTH_HEALTH_CHECK_API_KEY}"
   },
   "Site": {
     "Origin": "https://${HOSTNAME};${ALTERNATE_DOMAIN}",
