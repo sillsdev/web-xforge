@@ -5,6 +5,8 @@ import { Canon } from '@sillsdev/scripture';
 import { filter, firstValueFrom } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { I18nService } from '../../../xforge-common/i18n.service';
+import { L10nPercentPipe } from '../../../xforge-common/l10n-percent.pipe';
 import { ProgressService } from '../progress-service/progress.service';
 
 export interface BookOption {
@@ -20,7 +22,7 @@ type Scope = 'OT' | 'NT' | 'DC';
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
   standalone: true,
-  imports: [UICommonModule, MatChipsModule, TranslocoModule],
+  imports: [UICommonModule, MatChipsModule, TranslocoModule, L10nPercentPipe],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent extends SubscriptionDisposable implements OnChanges {
@@ -45,7 +47,10 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
   selectedAllNT: boolean = false;
   selectedAllDC: boolean = false;
 
-  constructor(private readonly progressService: ProgressService) {
+  constructor(
+    private readonly progressService: ProgressService,
+    private readonly i18n: I18nService
+  ) {
     super();
   }
 
@@ -119,5 +124,10 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
 
   isDeuterocanonAvailable(): boolean {
     return this.availableBooks.findIndex(n => Canon.isBookDC(n)) > -1;
+  }
+
+  getPercentage(book: BookOption): number {
+    // avoid showing 100% when it's not quite there
+    return (book.progressPercentage > 99 && book.progressPercentage < 100 ? 99 : book.progressPercentage) / 100;
   }
 }
