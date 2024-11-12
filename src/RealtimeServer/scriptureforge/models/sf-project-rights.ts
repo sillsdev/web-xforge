@@ -108,7 +108,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     notes: ['view', 'create', 'edit_own', 'delete'],
     text_audio: ['view', 'edit', 'create', 'delete'],
     training_data: ['view', 'create', 'edit', 'delete'],
-    drafts: ['view']
+    drafts: ['view'],
+    user_invites: ['create']
   },
   none: {}
 };
