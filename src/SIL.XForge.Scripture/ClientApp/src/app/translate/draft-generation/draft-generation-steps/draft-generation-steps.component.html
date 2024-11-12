@@ -11,7 +11,7 @@
           <app-notice type="error" mode="fill-dark">{{ t("confirm_codes_correct_to_continue") }}</app-notice>
         }
         <div class="button-strip">
-          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
+          <button mat-stroked-button class="backout-button" (click)="cancel.emit()">{{ t("back") }}</button>
           <button mat-flat-button (click)="tryAdvanceStep(); nextClickedOnLanguageVerification = true" color="primary">
             {{ t("next") }}
           </button>
@@ -69,9 +69,7 @@
           </app-notice>
         }
         <div class="button-strip">
-          <button mat-stroked-button class="backout-button" (click)="cancel.emit()">
-            {{ t("back") }}
-          </button>
+          <button mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
           <button mat-flat-button (click)="tryAdvanceStep()" color="primary">
             {{ t("next") }}
           </button>
