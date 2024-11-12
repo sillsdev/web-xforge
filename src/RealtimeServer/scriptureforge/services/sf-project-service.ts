@@ -258,6 +258,7 @@ export class SFProjectService extends ProjectService<SFProject> {
               'Standard',
               'BackTranslation',
               'Daughter',
+              'Transliteration',
               'TransliterationManual',
               'TransliterationWithEncoder',
               'StudyBible',
