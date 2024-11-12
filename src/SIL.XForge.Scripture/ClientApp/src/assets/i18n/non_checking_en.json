@@ -47,7 +47,8 @@
     "deuterocanon": "Deuterocanon",
     "loading_message": "Loading available books...",
     "new_testament": "New Testament",
-    "old_testament": "Old Testament"
+    "old_testament": "Old Testament",
+    "book_progress": "{{ percent }} translated"
   },
   "checking": {
     "add_question": "Add question"
