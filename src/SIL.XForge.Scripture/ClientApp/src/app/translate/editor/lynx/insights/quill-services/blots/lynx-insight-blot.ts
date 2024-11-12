@@ -1,31 +1,36 @@
 import Parchment from 'parchment';
 import Quill from 'quill';
+import { LynxInsight } from '../../lynx-insight';
 
 const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
 
-class LynxInsightBlot extends Inline {
+export class LynxInsightBlot extends Inline {
   static tagName = 'span';
-  static idsAttributeName = 'data-insight-ids';
+  static idAttributeName = 'insightId';
 
-  static create(value: any): Node {
-    // console.log('LynxInsightBlot create', value);
+  /**
+   * This custom prop is used on the parent class instead of using 'className'
+   * so that it isn't registered to the wrong child blot type.
+   * This way 'lynx-insight' class can be added to all child insight blots in addition to the 'className'
+   * specified in the child blot classes.
+   */
+  static superClassName = 'lynx-insight';
+
+  static create(value: LynxInsight): Node {
     const node = super.create(value) as HTMLElement;
-    this.formatNode(node, value);
+    LynxInsightBlot.formatNode(node, value);
     return node;
   }
 
   static formats(node: HTMLElement): any {
-    // console.log('static formats()', node);
-    return this.value(node);
+    return LynxInsightBlot.value(node);
   }
 
   static value(node: HTMLElement): string | undefined {
-    return node.dataset.insightIds;
+    return node.dataset[LynxInsightBlot.idAttributeName];
   }
 
-  format(name: string, value: any): void {
-    // console.log('format()', name, value);
-
+  format(name: string, value?: LynxInsight): void {
     if (value && name === this.statics.blotName) {
       LynxInsightBlot.formatNode(this.domNode, value);
     } else {
@@ -33,46 +38,9 @@ class LynxInsightBlot extends Inline {
     }
   }
 
-  private static formatNode(node: HTMLElement, value: any): void {
-    // console.log('formatNode', node, value);
-    node.classList.add('lynx-insight'); // Set class here instead of 'className' so that it isn't registered to the wrong blot type
-    node.setAttribute('lynx-insight', ''); // needed for overlay // TODO: factor out attribute name
-
-    LynxInsightBlot.addInsightId(node, value.id);
-
-    if (value?.displayState?.promptActive) {
-      node.classList.add('prompt-active');
-      node.setAttribute('data-prompt-active', value.type);
-      // } else {
-      //   node.classList.remove('prompt-active');
-      //   node.removeAttribute('data-prompt-active'));
-    }
-
-    if (value?.displayState?.actionOverlayActive) {
-      node.classList.add('action-overlay-active');
-      node.setAttribute('data-action-overlay-active', value.type);
-      // } else {
-      //   node.classList.remove('action-overlay-active');
-      //   node.removeAttribute('data-action-overlay-active');
-    }
-
-    // if (value?.displayState?.cursorActive) {
-    //   node.classList.add('cursor-active');
-    //   node.setAttribute('data-action-overlay-active', value.type);
-    // } else {
-    //   node.classList.remove('cursor-active');
-    //   node.removeAttribute('data-action-overlay-active');
-    // }
-  }
-
-  private static addInsightId(node: HTMLElement, id: string): void {
-    const insightIdsStr = node.getAttribute(LynxInsightBlot.idsAttributeName);
-    const insightIdsArr = insightIdsStr?.length ? insightIdsStr.split(' ') : [];
-
-    if (!insightIdsArr.includes(id)) {
-      insightIdsArr.push(id);
-      node.setAttribute(LynxInsightBlot.idsAttributeName, insightIdsArr.join(' '));
-    }
+  private static formatNode(node: HTMLElement, value: LynxInsight): void {
+    node.classList.add(LynxInsightBlot.superClassName);
+    node.dataset[LynxInsightBlot.idAttributeName] = value.id;
   }
 }
 
