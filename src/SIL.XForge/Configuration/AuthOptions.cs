@@ -14,4 +14,5 @@ public class AuthOptions
     public string BackendClientSecret { get; set; }
     public string WebhookUsername { get; set; }
     public string WebhookPassword { get; set; }
+    public string HealthCheckApiKey { get; set; }
 }
