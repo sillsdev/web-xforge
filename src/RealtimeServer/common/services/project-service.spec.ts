@@ -147,6 +147,7 @@ class TestEnvironment {
         projectAdmin: 'admin',
         user: 'user'
       },
+      rolePermissions: {},
       userPermissions: {}
     });
   }

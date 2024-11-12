@@ -19,6 +19,7 @@ import { SFProjectRole } from '../models/sf-project-role';
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,
   paratextId: true,
+  rolePermissions: true,
   userRoles: true,
   userPermissions: true,
   shortName: true,

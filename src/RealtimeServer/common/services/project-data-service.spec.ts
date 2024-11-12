@@ -500,6 +500,7 @@ class TestEnvironment {
         userOwn: 'userOwn',
         observer: 'observer'
       },
+      rolePermissions: {},
       userPermissions: {}
     });
 

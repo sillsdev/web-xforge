@@ -12,6 +12,7 @@ import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -294,11 +295,11 @@ class TestEnvironment {
     this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [
       {
         id: 'project01',
-        data: {
+        data: createTestProject({
           name: 'Project 01',
           userRoles: { user01: 'admin', user03: 'user' },
           userPermissions: {}
-        }
+        })
       }
     ]);
   }
