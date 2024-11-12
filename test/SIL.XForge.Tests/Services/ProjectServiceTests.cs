@@ -17,10 +17,12 @@ public class ProjectServiceTests
 {
     private const string Project01 = "project01";
     private const string Project02 = "project02";
+    private const string Role01 = "role01";
     private const string User01 = "user01";
     private const string User02 = "user02";
     private const string User03 = "user03";
     private const string SiteId = "xf";
+    private static readonly string[] Permissions = ["questions.create", "questions.edit"];
 
     [Test]
     public async Task SaveAudioAsync_NonMp3File_AudioConverted()
@@ -144,7 +146,7 @@ public class ProjectServiceTests
 
         await env.Service.UpdateRoleAsync(
             User02,
-            new string[] { SystemRole.SystemAdmin },
+            [SystemRole.SystemAdmin],
             Project01,
             User02,
             TestProjectRole.Administrator
@@ -158,13 +160,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
 
-        await env.Service.UpdateRoleAsync(
-            User01,
-            new string[] { SystemRole.User },
-            Project01,
-            User02,
-            TestProjectRole.Administrator
-        );
+        await env.Service.UpdateRoleAsync(User01, [SystemRole.User], Project01, User02, TestProjectRole.Administrator);
         TestProject project = env.GetProject(Project01);
         Assert.That(project.UserRoles[User02], Is.EqualTo(TestProjectRole.Administrator));
     }
@@ -176,13 +172,7 @@ public class ProjectServiceTests
 
         Assert.ThrowsAsync<ForbiddenException>(
             () =>
-                env.Service.UpdateRoleAsync(
-                    User02,
-                    new string[] { SystemRole.User },
-                    Project01,
-                    User02,
-                    TestProjectRole.Administrator
-                )
+                env.Service.UpdateRoleAsync(User02, [SystemRole.User], Project01, User02, TestProjectRole.Administrator)
         );
     }
 
@@ -192,23 +182,15 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         // SUT 1
         Assert.ThrowsAsync<ForbiddenException>(
-            async () =>
-                await env.Service.SetSyncDisabledAsync(User03, new string[] { SystemRole.User }, Project01, false)
+            async () => await env.Service.SetSyncDisabledAsync(User03, [SystemRole.User], Project01, false)
         );
         // SUT 2
         Assert.ThrowsAsync<ForbiddenException>(
-            async () =>
-                await env.Service.SetSyncDisabledAsync(User03, new string[] { SystemRole.None }, Project01, false)
+            async () => await env.Service.SetSyncDisabledAsync(User03, [SystemRole.None], Project01, false)
         );
         // SUT 3
         Assert.DoesNotThrowAsync(
-            async () =>
-                await env.Service.SetSyncDisabledAsync(
-                    User03,
-                    new string[] { SystemRole.SystemAdmin },
-                    Project01,
-                    false
-                )
+            async () => await env.Service.SetSyncDisabledAsync(User03, [SystemRole.SystemAdmin], Project01, false)
         );
     }
 
@@ -219,12 +201,12 @@ public class ProjectServiceTests
 
         Assert.That(env.GetProject(Project01).SyncDisabled, Is.EqualTo(false));
         // SUT 1
-        await env.Service.SetSyncDisabledAsync(User01, new string[] { SystemRole.SystemAdmin }, Project01, true);
+        await env.Service.SetSyncDisabledAsync(User01, [SystemRole.SystemAdmin], Project01, true);
         Assert.That(env.GetProject(Project01).SyncDisabled, Is.EqualTo(true));
 
         Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(true));
         // SUT 2
-        await env.Service.SetSyncDisabledAsync(User01, new string[] { SystemRole.SystemAdmin }, Project02, false);
+        await env.Service.SetSyncDisabledAsync(User01, [SystemRole.SystemAdmin], Project02, false);
         Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(false));
     }
 
@@ -278,7 +260,7 @@ public class ProjectServiceTests
         string requestingUser = User01;
         string project = Project01;
         string userToDisassociate = User02;
-        await env.Service.SetUserProjectPermissions(User01, Project01, User02, new string[] { "questions.edit" });
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions);
         Assert.AreEqual(1, env.GetProject(project).UserPermissions.Count);
         Assert.That(env.GetProject(project).UserRoles, Does.ContainKey(userToDisassociate), "setup");
         Assert.That(env.GetProject(project).UserPermissions, Does.ContainKey(userToDisassociate), "setup");
@@ -301,7 +283,7 @@ public class ProjectServiceTests
         string requestingUser = User01;
         string project = Project01;
         string missingUser = "user_does_not_exist";
-        await env.Service.SetUserProjectPermissions(User01, Project01, missingUser, new string[] { "questions.edit" });
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project01, missingUser, Permissions);
         Assert.AreEqual(1, env.GetProject(project).UserPermissions.Count);
         Assert.That(env.GetProject(project).UserPermissions, Does.ContainKey(missingUser), "setup");
 
@@ -352,39 +334,72 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public async Task SetUserProjectPermissions_AdminHasPermission()
+    public async Task SetRoleProjectPermissionsAsync_AdminHasPermission()
     {
         var env = new TestEnvironment();
-        var permissions = new string[] { "questions.create", "questions.edit" };
+        Project project = env.GetProject(Project01);
+        Assert.AreEqual(0, project.RolePermissions.Count, "setup");
 
+        // Admin can give a role question permission
+        await env.Service.SetRoleProjectPermissionsAsync(User01, Project01, Role01, Permissions);
+        project = env.GetProject(Project01);
+        Assert.AreEqual(1, project.RolePermissions.Count);
+        project.RolePermissions.TryGetValue(Role01, out string[] value);
+        Assert.AreEqual(Permissions, value);
+
+        // Admin can revoke permission, which removes the key value pair from the RolePermissions property
+        await env.Service.SetRoleProjectPermissionsAsync(User01, Project01, Role01, []);
+        project = env.GetProject(Project01);
+        Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public void SetRoleProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    {
+        var env = new TestEnvironment();
+        Project project = env.GetProject(Project01);
+        Assert.AreEqual(0, project.RolePermissions.Count, "setup");
+
+        // Translator user cannot give permissions to a tole
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetRoleProjectPermissionsAsync(User02, Project01, Role01, Permissions)
+        );
+
+        // Permissions are not updated
+        project = env.GetProject(Project01);
+        Assert.AreEqual(0, project.RolePermissions.Count);
+    }
+
+    [Test]
+    public async Task SetUserProjectPermissionsAsync_AdminHasPermission()
+    {
+        var env = new TestEnvironment();
         Project project = env.GetProject(Project01);
         Assert.AreEqual(0, project.UserPermissions.Count, "setup");
 
         // Admin can give user question permission
-        await env.Service.SetUserProjectPermissions(User01, Project01, User02, permissions);
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions);
         project = env.GetProject(Project01);
         Assert.AreEqual(1, project.UserPermissions.Count);
         project.UserPermissions.TryGetValue(User02, out string[] value);
-        Assert.AreEqual(permissions, value);
+        Assert.AreEqual(Permissions, value);
 
-        // Admin can revoke permission, which removes the key value pair from the userPermissions property
-        await env.Service.SetUserProjectPermissions(User01, Project01, User02, Array.Empty<string>());
+        // Admin can revoke permission, which removes the key value pair from the UserPermissions property
+        await env.Service.SetUserProjectPermissionsAsync(User01, Project01, User02, []);
         project = env.GetProject(Project01);
         Assert.AreEqual(0, project.UserPermissions.Count);
     }
 
     [Test]
-    public void SetUserProjectPermissions_NonAdminDoesNotHavePermission()
+    public void SetUserProjectPermissionsAsync_NonAdminDoesNotHavePermission()
     {
         var env = new TestEnvironment();
-        var permissions = new string[] { "questions.create", "questions.edit" };
-
         Project project = env.GetProject(Project01);
         Assert.AreEqual(0, project.UserPermissions.Count, "setup");
 
         // Translator user cannot give permission to self
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.SetUserProjectPermissions(User02, Project01, User02, permissions)
+            () => env.Service.SetUserProjectPermissionsAsync(User02, Project01, User02, Permissions)
         );
 
         // Permissions are not updated
@@ -394,15 +409,14 @@ public class ProjectServiceTests
 
     private class TestEnvironment
     {
-        public TestEnvironment(bool isResetLinkExpired = false)
+        public TestEnvironment()
         {
             RealtimeService = new MemoryRealtimeService();
             RealtimeService.AddRepository(
                 "users",
                 OTType.Json0,
                 new MemoryRepository<User>(
-                    new[]
-                    {
+                    [
                         new User
                         {
                             Id = User01,
@@ -411,13 +425,9 @@ public class ProjectServiceTests
                             {
                                 {
                                     SiteId,
-                                    new Site()
-                                    {
-                                        CurrentProjectId = Project01,
-                                        Projects = new List<String>() { Project01, Project02 }
-                                    }
-                                }
-                            }
+                                    new Site { CurrentProjectId = Project01, Projects = [Project01, Project02] }
+                                },
+                            },
                         },
                         new User
                         {
@@ -427,29 +437,24 @@ public class ProjectServiceTests
                             {
                                 {
                                     SiteId,
-                                    new Site()
-                                    {
-                                        CurrentProjectId = Project01,
-                                        Projects = new List<String>() { Project01, Project02 }
-                                    }
-                                }
-                            }
+                                    new Site { CurrentProjectId = Project01, Projects = [Project01, Project02] }
+                                },
+                            },
                         },
                         new User
                         {
                             Id = User03,
                             Email = "user03@example.com",
-                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
-                        }
-                    }
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                        },
+                    ]
                 )
             );
             RealtimeService.AddRepository(
                 "projects",
                 OTType.Json0,
                 new MemoryRepository<TestProject>(
-                    new[]
-                    {
+                    [
                         new TestProject
                         {
                             Id = Project01,
@@ -457,8 +462,8 @@ public class ProjectServiceTests
                             UserRoles =
                             {
                                 { User01, TestProjectRole.Administrator },
-                                { User02, TestProjectRole.Reviewer }
-                            }
+                                { User02, TestProjectRole.Reviewer },
+                            },
                         },
                         new TestProject
                         {
@@ -467,21 +472,19 @@ public class ProjectServiceTests
                             UserRoles =
                             {
                                 { User01, TestProjectRole.Administrator },
-                                { User02, TestProjectRole.Reviewer }
+                                { User02, TestProjectRole.Reviewer },
                             },
-                            SyncDisabled = true
+                            SyncDisabled = true,
                         },
-                    }
+                    ]
                 )
             );
 
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(new SiteOptions { Id = SiteId, SiteDir = "site", });
+            siteOptions.Value.Returns(new SiteOptions { Id = SiteId, SiteDir = "site" });
             AudioService = Substitute.For<IAudioService>();
 
-            ProjectSecrets = new MemoryRepository<TestProjectSecret>(
-                new[] { new TestProjectSecret { Id = Project01 } }
-            );
+            ProjectSecrets = new MemoryRepository<TestProjectSecret>([new TestProjectSecret { Id = Project01 }]);
 
             FileSystemService = Substitute.For<IFileSystemService>();
 
