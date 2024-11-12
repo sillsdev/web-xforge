@@ -2,10 +2,12 @@ import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock, when } from 'ts-mockito';
 import { MetadataDB } from '../../common/metadata-db';
+import { Operation } from '../../common/models/project-rights';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { createDoc, fetchDoc } from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
@@ -31,6 +33,7 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.texts[1].chapters[1].isValid).toBe(true);
     });
   });
+
   describe('version 2', () => {
     it('migrates docs', async () => {
       const env = new TestEnvironment(1);
@@ -62,6 +65,7 @@ describe('SFProjectMigrations', () => {
       expect(Object.keys(projectDoc.data.texts[1].permissions).length).toBe(4);
     });
   });
+
   describe('version 3', () => {
     it('migrates docs', async () => {
       const env = new TestEnvironment(1, 3);
@@ -103,6 +107,7 @@ describe('SFProjectMigrations', () => {
       expect(Object.keys(projectDoc.data.texts[1].chapters[1].permissions).length).toBe(4);
     });
   });
+
   describe('version 4', () => {
     it('adds userPermissions property to project docs', async () => {
       const env = new TestEnvironment(3);
@@ -117,6 +122,7 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.userPermissions).toBeDefined();
     });
   });
+
   describe('version 5', () => {
     it('adds shareEnabled to translate config', async () => {
       const env = new TestEnvironment(4);
@@ -220,36 +226,36 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.translateConfig.preTranslate).toBe(false);
     });
   });
-});
 
-describe('version 11', () => {
-  it('adds biblical terms properties', async () => {
-    const env = new TestEnvironment(10);
-    const conn = env.server.connect();
-    await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
-    let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.biblicalTermsConfig).not.toBeDefined();
+  describe('version 11', () => {
+    it('adds biblical terms properties', async () => {
+      const env = new TestEnvironment(10);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.biblicalTermsConfig).not.toBeDefined();
 
-    await env.server.migrateIfNecessary();
+      await env.server.migrateIfNecessary();
 
-    projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled).toBe(false);
-    expect(projectDoc.data.biblicalTermsConfig.hasRenderings).toBe(false);
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled).toBe(false);
+      expect(projectDoc.data.biblicalTermsConfig.hasRenderings).toBe(false);
+    });
   });
-});
 
-describe('version 12', () => {
-  it('adds draftConfig to translateConfig', async () => {
-    const env = new TestEnvironment(11);
-    const conn = env.server.connect();
-    await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: {} });
-    let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.translateConfig.draftConfig).not.toBeDefined();
+  describe('version 12', () => {
+    it('adds draftConfig to translateConfig', async () => {
+      const env = new TestEnvironment(11);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: {} });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig).not.toBeDefined();
 
-    await env.server.migrateIfNecessary();
+      await env.server.migrateIfNecessary();
 
-    projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.translateConfig.draftConfig).toBeDefined();
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig).toBeDefined();
+    });
   });
 
   describe('version 13', () => {
@@ -453,6 +459,121 @@ describe('version 12', () => {
 
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.translateConfig.draftConfig.additionalTrainingSourceEnabled).toBe(false);
+    });
+  });
+
+  describe('version 21', () => {
+    it('does not change rolePermissions if it already exists', async () => {
+      const env = new TestEnvironment(20);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        rolePermissions: {}
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toEqual({});
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toEqual({});
+    });
+
+    it('does not add permissions if shareEnabled is false for checkingConfig and translateConfig', async () => {
+      const env = new TestEnvironment(20);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        checkingConfig: { shareEnabled: false },
+        translateConfig: { shareEnabled: false }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toBeUndefined();
+      expect(projectDoc.data.checkingConfig.shareEnabled).toBe(false);
+      expect(projectDoc.data.translateConfig.shareEnabled).toBe(false);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toEqual({});
+      expect(projectDoc.data.checkingConfig.shareEnabled).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.shareEnabled).not.toBeDefined();
+    });
+
+    it('adds permissions if shareEnabled is true for checkingConfig', async () => {
+      const env = new TestEnvironment(20);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        checkingConfig: { shareEnabled: true },
+        translateConfig: { shareEnabled: false }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toBeUndefined();
+      expect(projectDoc.data.checkingConfig.shareEnabled).toBe(true);
+      expect(projectDoc.data.translateConfig.shareEnabled).toBe(false);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
+      expect(projectDoc.data.rolePermissions).toEqual({
+        sf_community_checker: permissions
+      });
+      expect(projectDoc.data.checkingConfig.shareEnabled).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.shareEnabled).not.toBeDefined();
+    });
+
+    it('adds permissions if shareEnabled is true for translateConfig', async () => {
+      const env = new TestEnvironment(20);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        checkingConfig: { shareEnabled: false },
+        translateConfig: { shareEnabled: true }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toBeUndefined();
+      expect(projectDoc.data.checkingConfig.shareEnabled).toBe(false);
+      expect(projectDoc.data.translateConfig.shareEnabled).toBe(true);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
+      expect(projectDoc.data.rolePermissions).toEqual({
+        pt_translator: permissions,
+        pt_consultant: permissions,
+        pt_observer: permissions,
+        sf_commenter: permissions,
+        sf_observer: permissions
+      });
+      expect(projectDoc.data.checkingConfig.shareEnabled).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.shareEnabled).not.toBeDefined();
+    });
+
+    it('adds permissions if shareEnabled is true for checkingConfig and translateConfig', async () => {
+      const env = new TestEnvironment(20);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        checkingConfig: { shareEnabled: true },
+        translateConfig: { shareEnabled: true }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.rolePermissions).toBeUndefined();
+      expect(projectDoc.data.checkingConfig.shareEnabled).toBe(true);
+      expect(projectDoc.data.translateConfig.shareEnabled).toBe(true);
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
+      expect(projectDoc.data.rolePermissions).toEqual({
+        pt_translator: permissions,
+        pt_consultant: permissions,
+        pt_observer: permissions,
+        sf_community_checker: permissions,
+        sf_commenter: permissions,
+        sf_observer: permissions
+      });
+      expect(projectDoc.data.checkingConfig.shareEnabled).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.shareEnabled).not.toBeDefined();
     });
   });
 });
