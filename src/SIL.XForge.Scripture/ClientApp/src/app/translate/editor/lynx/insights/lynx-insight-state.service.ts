@@ -316,14 +316,9 @@ export class LynxInsightStateService {
   ]);
 
   private rawInsights$: Observable<LynxInsight[]> = this.rawInsightSource$.pipe(
-    // distinctUntilChanged((prev, curr) => {
-    //   const equal = isEqual(prev, curr);
-    //   console.log('rawInsights$ distinctUntilChanged (LynxInsightStateService)', prev, curr, equal);
-    //   return equal;
-    // }),
     distinctUntilChanged(isEqual),
-    shareReplay(1),
-    tap(insights => console.log('rawInsights$ changed (LynxInsightStateService)', insights))
+    tap(insights => console.log('rawInsights$ changed (LynxInsightStateService)', insights)),
+    shareReplay(1)
   );
 
   // Stored filter and order are loaded from project user config
@@ -352,8 +347,8 @@ export class LynxInsightStateService {
       )
     ),
     distinctUntilChanged(isEqual),
-    shareReplay(1),
-    tap(insights => console.log('filteredChapterInsights$ changed (LynxInsightStateService)', insights))
+    tap(insights => console.log('filteredChapterInsights$ changed (LynxInsightStateService)', insights)),
+    shareReplay(1)
   );
 
   readonly filteredInsights$: Observable<LynxInsight[]> = combineLatest([
@@ -368,6 +363,7 @@ export class LynxInsightStateService {
       )
     ),
     distinctUntilChanged(isEqual),
+    tap(val => console.log('filteredInsights$ changed (LynxInsightStateService)', val)),
     shareReplay(1)
   );
 
@@ -410,6 +406,7 @@ export class LynxInsightStateService {
       return result;
     }),
     distinctUntilChanged(isEqual),
+    tap(val => console.log('filteredInsightCountsByScope$ changed (LynxInsightStateService)', val)),
     shareReplay(1)
   );
 
@@ -427,6 +424,7 @@ export class LynxInsightStateService {
       return result;
     }),
     distinctUntilChanged(isEqual),
+    tap(val => console.log('filteredInsightCountsByType$ changed (LynxInsightStateService)', val)),
     shareReplay(1)
   );
 

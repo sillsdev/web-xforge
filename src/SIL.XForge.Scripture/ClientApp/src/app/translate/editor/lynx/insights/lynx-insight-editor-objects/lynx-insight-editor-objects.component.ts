@@ -33,7 +33,6 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
     this.editorReadyService
       .listenEditorReadyState(this.editor)
       .pipe(
-        takeUntilDestroyed(this.destroyRef),
         filter(ready => ready),
         tap(() => {
           // When editor becomes ready, close all action overlays,
@@ -58,7 +57,8 @@ export class LynxInsightEditorObjectsComponent implements OnInit, OnDestroy {
               })
             )
           )
-        )
+        ),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
   }
