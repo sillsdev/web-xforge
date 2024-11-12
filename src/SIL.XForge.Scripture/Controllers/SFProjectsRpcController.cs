@@ -758,11 +758,41 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SetRoleProjectPermissions(string projectId, string role, string[] permissions)
+    {
+        try
+        {
+            await projectService.SetRoleProjectPermissionsAsync(UserId, projectId, role, permissions);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetRoleProjectPermissions" },
+                    { "projectId", projectId },
+                    { "role", role },
+                    { "permissions", string.Join(',', permissions) },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetUserProjectPermissions(string projectId, string userId, string[] permissions)
     {
         try
         {
-            await projectService.SetUserProjectPermissions(UserId, projectId, userId, permissions);
+            await projectService.SetUserProjectPermissionsAsync(UserId, projectId, userId, permissions);
             return Ok();
         }
         catch (ForbiddenException)

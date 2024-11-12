@@ -21,8 +21,10 @@ public class SFProjectsRpcControllerTests
 {
     private const string Data01 = "data01";
     private const string Project01 = "project01";
+    private const string Role01 = "role01";
     private const string User01 = "user01";
     private const string User02 = "user02";
+    private static readonly string[] Permissions = ["questions.create", "questions.edit"];
     private static readonly string[] Roles = [SystemRole.User];
 
     // Constants for Invite
@@ -553,6 +555,112 @@ public class SFProjectsRpcControllerTests
 
         // SUT
         Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetServalConfig(Project01, servalConfig));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task SetRoleProjectPermissions_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetRoleProjectPermissionsAsync(User01, Project01, Role01, Permissions)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetRoleProjectPermissions_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetRoleProjectPermissionsAsync(User01, Project01, Role01, Permissions)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetRoleProjectPermissions_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SetRoleProjectPermissionsAsync(User01, Project01, Role01, Permissions);
+    }
+
+    [Test]
+    public void SetRoleProjectPermissions_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetRoleProjectPermissionsAsync(User01, Project01, Role01, Permissions)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task SetUserProjectPermissions_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.SetUserProjectPermissions(Project01, User02, Permissions);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetUserProjectPermissions_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetUserProjectPermissions(Project01, User02, Permissions);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetUserProjectPermissions_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.SetUserProjectPermissions(Project01, User02, Permissions);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions);
+    }
+
+    [Test]
+    public void SetUserProjectPermissions_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => env.Controller.SetUserProjectPermissions(Project01, User02, Permissions)
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
