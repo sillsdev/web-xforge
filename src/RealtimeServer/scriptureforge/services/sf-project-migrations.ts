@@ -1,7 +1,9 @@
 import { Doc, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor } from '../../common/migration';
+import { Operation } from '../../common/models/project-rights';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { NoteTag } from '../models/note-tag';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
 import { TranslateShareLevel } from '../models/translate-config';
@@ -343,6 +345,60 @@ class SFProjectMigration20 extends DocMigration {
   }
 }
 
+class SFProjectMigration21 extends DocMigration {
+  static readonly VERSION = 21;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.rolePermissions == null) {
+      ops.push({ p: ['rolePermissions'], oi: {} });
+
+      // Migrate and remove checkingConfig.shareEnabled
+      const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
+      const checkingConfigShareEnabled = doc.data.checkingConfig.shareEnabled;
+      if (checkingConfigShareEnabled === true) {
+        ops.push({
+          p: ['rolePermissions', SFProjectRole.CommunityChecker],
+          oi: permissions
+        });
+      }
+      if (checkingConfigShareEnabled != null) {
+        ops.push({ p: ['checkingConfig', 'shareEnabled'], od: checkingConfigShareEnabled });
+      }
+
+      // Migrate and remove translateConfig.shareEnabled
+      const translateConfigShareEnabled = doc.data.translateConfig.shareEnabled;
+      if (translateConfigShareEnabled === true) {
+        ops.push({
+          p: ['rolePermissions', SFProjectRole.ParatextTranslator],
+          oi: permissions
+        });
+        ops.push({
+          p: ['rolePermissions', SFProjectRole.ParatextConsultant],
+          oi: permissions
+        });
+        ops.push({
+          p: ['rolePermissions', SFProjectRole.ParatextObserver],
+          oi: permissions
+        });
+        ops.push({
+          p: ['rolePermissions', SFProjectRole.Commenter],
+          oi: permissions
+        });
+        ops.push({
+          p: ['rolePermissions', SFProjectRole.Viewer],
+          oi: permissions
+        });
+      }
+      if (translateConfigShareEnabled != null) {
+        ops.push({ p: ['translateConfig', 'shareEnabled'], od: translateConfigShareEnabled });
+      }
+    }
+
+    await submitMigrationOp(SFProjectMigration21.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -363,5 +419,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration17,
   SFProjectMigration18,
   SFProjectMigration19,
-  SFProjectMigration20
+  SFProjectMigration20,
+  SFProjectMigration21
 ];
