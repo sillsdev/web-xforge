@@ -27,9 +27,10 @@ export class ProjectRights {
   }
 
   hasRight(project: Project, userId: string, projectDomain: string, operation: Operation, data?: OwnedData): boolean {
-    const rights = (this.rights.get(project.userRoles[userId]) || []).concat(
-      (project.userPermissions || {})[userId] || []
-    );
+    const userRole: string = project.userRoles[userId];
+    const rights = (this.rights.get(userRole) || [])
+      .concat((project.userPermissions || {})[userId] || [])
+      .concat((project.rolePermissions || {})[userRole] || []);
 
     if (rights.includes(this.joinRight(projectDomain, operation))) {
       return operation === Operation.Create && userId != null && data != null ? userId === data.ownerRef : true;
