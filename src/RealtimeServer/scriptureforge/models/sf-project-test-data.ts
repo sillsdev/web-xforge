@@ -6,6 +6,7 @@ import { SFProject, SFProjectProfile } from './sf-project';
 function testProjectProfile(ordinal: number): SFProjectProfile {
   return {
     name: `Test project ${ordinal}`,
+    rolePermissions: {},
     userRoles: {},
     userPermissions: {},
     syncDisabled: false,
