@@ -1654,8 +1654,7 @@ class TestEnvironment {
       data: createTestProjectProfile({
         userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
         checkingConfig: {
-          checkingEnabled: false,
-          shareEnabled: true
+          checkingEnabled: false
         },
         texts: [
           {
