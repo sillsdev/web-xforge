@@ -172,10 +172,14 @@
           </div>
         </mat-menu>
       </mat-toolbar-row>
-      @if (hasUpdate) {
+      @if (hasUpdate || true) {
         <mat-toolbar-row class="update-banner">
-          <span class="refresh-message">{{ t("update_is_available") }}</span>
-          <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
+          <span class="refresh-message">
+            Please refresh to update. <a href="#" [style.color]="'white'">See what's new</a>
+          </span>
+          <button mat-raised-button color="accent" (click)="reloadWithUpdates()">
+            <mat-icon>refresh</mat-icon> {{ t("refresh") }}
+          </button>
         </mat-toolbar-row>
       }
     </mat-toolbar>
