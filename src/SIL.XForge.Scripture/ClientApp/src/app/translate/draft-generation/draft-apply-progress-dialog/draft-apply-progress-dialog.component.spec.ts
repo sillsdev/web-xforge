@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
-import { mock } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -69,6 +69,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(DraftApplyProgressDialogComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
+    when(mockI18nService.enumerateList(anything())).thenCall((items: string[]) => items.join(', '));
   }
 
   get progressContainer(): HTMLElement {

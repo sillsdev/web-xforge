@@ -7,12 +7,11 @@ import { Canon } from '@sillsdev/scripture';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { Observable, Subject, firstValueFrom, map } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, map } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
@@ -57,7 +56,9 @@ export class DraftPreviewBooksComponent {
     })
   );
 
-  draftApplyProgress$: Subject<DraftApplyProgress> = new Subject<DraftApplyProgress>();
+  draftApplyProgress$: BehaviorSubject<DraftApplyProgress | undefined> = new BehaviorSubject<
+    DraftApplyProgress | undefined
+  >(undefined);
 
   private applyChapters: number[] = [];
   private draftApplyBookNum: number = 0;
@@ -68,7 +69,6 @@ export class DraftPreviewBooksComponent {
     private readonly i18n: I18nService,
     private readonly userService: UserService,
     private readonly draftHandlingService: DraftHandlingService,
-    private readonly noticeService: NoticeService,
     private readonly dialogService: DialogService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly router: Router

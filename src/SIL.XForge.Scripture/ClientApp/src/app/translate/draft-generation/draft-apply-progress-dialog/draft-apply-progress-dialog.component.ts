@@ -26,7 +26,7 @@ export class DraftApplyProgressDialogComponent {
 
   constructor(
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftApplyProgressDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) data: { draftApplyProgress$: Observable<DraftApplyProgress> },
+    @Inject(MAT_DIALOG_DATA) data: { draftApplyProgress$: Observable<DraftApplyProgress | undefined> },
     private readonly i18n: I18nService,
     destroyRef: DestroyRef
   ) {
@@ -47,10 +47,10 @@ export class DraftApplyProgressDialogComponent {
 
   get failedToApplyChapters(): string | undefined {
     if (this.draftApplyProgress == null || !this.draftApplyProgress.completed) return undefined;
-    const chapters: number[] = this.draftApplyProgress.chapters.filter(
-      c => !this.draftApplyProgress.chaptersApplied.includes(c)
-    );
-    return chapters.length > 0 ? chapters.join(', ') : undefined;
+    const chapters: string[] = this.draftApplyProgress.chapters
+      .filter(c => !this.draftApplyProgress.chaptersApplied.includes(c))
+      .map(c => c.toString());
+    return chapters.length > 0 ? this.i18n.enumerateList(chapters) : undefined;
   }
 
   close(): void {

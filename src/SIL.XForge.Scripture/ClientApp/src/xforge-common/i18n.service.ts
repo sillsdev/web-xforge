@@ -261,6 +261,10 @@ export class I18nService {
         );
   }
 
+  enumerateList(list: string[]): string {
+    return new (Intl as any).ListFormat(this.localeCode, { style: 'long', type: 'conjunction' }).format(list) as string;
+  }
+
   translateTextAroundTemplateTags(key: I18nKey, params: object = {}): TextAroundTemplate | undefined {
     const boundary = '{{ boundary }}';
     const text: string = this.translateAndInsertTags(key, {
