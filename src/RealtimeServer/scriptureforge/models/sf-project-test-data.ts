@@ -16,7 +16,6 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     isRightToLeft: false,
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false,
       preTranslate: false,
       defaultNoteTagId: 1,
       draftConfig: {
@@ -32,7 +31,6 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     checkingConfig: {
       checkingEnabled: true,
       usersSeeEachOthersResponses: true,
-      shareEnabled: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport,
       hideCommunityCheckingText: false
     },

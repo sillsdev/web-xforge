@@ -5,7 +5,9 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -189,10 +191,9 @@ describe('ShareControlComponent', () => {
       isLinkSharingEnabled: true
     });
     env.wait();
-    const roles: string[] = env.component.availableRolesInfo.map(info => info.role);
-    expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Viewer);
-    expect(roles).toContain(SFProjectRole.Commenter);
+    expect(env.component.availableRoles).toContain(SFProjectRole.CommunityChecker);
+    expect(env.component.availableRoles).toContain(SFProjectRole.Viewer);
+    expect(env.component.availableRoles).toContain(SFProjectRole.Commenter);
   }));
 
   it('role should be visible for administrators', fakeAsync(() => {
@@ -211,14 +212,14 @@ describe('ShareControlComponent', () => {
     const env = new TestEnvironment({ userId: 'user02', projectId: 'project01' });
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_SHARE_ROLE);
-    expect(env.hostComponent.component.availableRolesInfo.length).toBe(3);
+    expect(env.hostComponent.component.availableRoles.length).toBe(3);
   }));
 
   it('default share role should be translation observer when checking is disabled', fakeAsync(() => {
     const env = new TestEnvironment({ userId: 'user02', projectId: 'project01', checkingEnabled: false });
     env.wait();
     expect(env.hostComponent.component.roleControl.value).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
-    expect(env.hostComponent.component.availableRolesInfo.length).toBe(2);
+    expect(env.hostComponent.component.availableRoles.length).toBe(2);
   }));
 
   it('should require setting the email before sending an invite', fakeAsync(() => {
@@ -297,6 +298,7 @@ class TestEnvironment {
       checkingEnabled: true
     };
     args = { ...defaultArgs, ...args };
+    const permissions = [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)];
     this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
       id: args.projectId,
       data: {
@@ -305,8 +307,11 @@ class TestEnvironment {
           user02: SFProjectRole.ParatextAdministrator,
           user03: SFProjectRole.Viewer
         },
-        translateConfig: { shareEnabled: true },
-        checkingConfig: { checkingEnabled: args.checkingEnabled, shareEnabled: true }
+        checkingConfig: { checkingEnabled: args.checkingEnabled },
+        rolePermissions: {
+          sf_community_checker: permissions,
+          sf_observer: permissions
+        }
       }
     });
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>

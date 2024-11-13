@@ -107,9 +107,6 @@ export class SFProjectService extends ProjectService<SFProject> {
             },
             additionalProperties: false
           },
-          shareEnabled: {
-            bsonType: 'bool'
-          },
           defaultNoteTagId: {
             bsonType: 'int'
           },
@@ -294,9 +291,6 @@ export class SFProjectService extends ProjectService<SFProject> {
             bsonType: 'bool'
           },
           usersSeeEachOthersResponses: {
-            bsonType: 'bool'
-          },
-          shareEnabled: {
             bsonType: 'bool'
           },
           answerExportMethod: {
