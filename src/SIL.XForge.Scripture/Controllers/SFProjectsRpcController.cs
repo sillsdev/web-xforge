@@ -155,8 +155,6 @@ public class SFProjectsRpcController(
                     { "AdditionalTrainingSourceEnabled", settings?.AdditionalTrainingSourceEnabled?.ToString() },
                     { "AdditionalTrainingSourceParatextId", settings?.AdditionalTrainingSourceParatextId },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
-                    { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
-                    { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
                     { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
                     { "HideCommunityCheckingText", settings?.HideCommunityCheckingText?.ToString() },
