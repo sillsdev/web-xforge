@@ -58,6 +58,21 @@ describe('BookMultiSelectComponent', () => {
     ]);
   });
 
+  it('should not crash when texts have not yet loaded', async () => {
+    when(mockedProgressService.texts).thenReturn([]);
+    await component.ngOnChanges();
+
+    expect(component.bookOptions).toEqual([
+      { bookNum: 1, bookId: 'GEN', selected: true, progressPercentage: 0 },
+      { bookNum: 2, bookId: 'EXO', selected: false, progressPercentage: 0 },
+      { bookNum: 3, bookId: 'LEV', selected: true, progressPercentage: 0 },
+      { bookNum: 40, bookId: 'MAT', selected: false, progressPercentage: 0 },
+      { bookNum: 42, bookId: 'LUK', selected: false, progressPercentage: 0 },
+      { bookNum: 67, bookId: 'TOB', selected: false, progressPercentage: 0 },
+      { bookNum: 70, bookId: 'WIS', selected: false, progressPercentage: 0 }
+    ]);
+  });
+
   it('can select all OT books and clear all OT books', async () => {
     expect(component.selectedBooks.length).toEqual(2);
 
