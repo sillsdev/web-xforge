@@ -132,7 +132,7 @@ jobs:
           SERVAL_CLIENT_ID: ${{secrets.serval_client_id}}
           AUTH_BACKEND_SECRET: ${{secrets.auth_backend_secret}}
           AUTH_WEBHOOK_PASSWORD: ${{secrets.auth_webhook_password}}
-          AUTH_HEALTH_CHECK_API_KEY: ${{secrets.auth_health_check_api_key}
+          AUTH_HEALTH_CHECK_API_KEY: ${{secrets.auth_health_check_api_key}}
           PARATEXT_API_TOKEN: ${{secrets.paratext_api_token}}
           PARATEXT_RESOURCE_PASSWORD_BASE64: ${{secrets.paratext_resource_password_base64}}
           PARATEXT_RESOURCE_PASSWORD_HASH: ${{secrets.paratext_resource_password_hash}}
