@@ -46,7 +46,6 @@ export interface DraftConfig {
 export interface TranslateConfig {
   translationSuggestionsEnabled: boolean;
   source?: TranslateSource;
-  shareEnabled: boolean;
   defaultNoteTagId?: number;
   preTranslate: boolean;
   draftConfig: DraftConfig;
