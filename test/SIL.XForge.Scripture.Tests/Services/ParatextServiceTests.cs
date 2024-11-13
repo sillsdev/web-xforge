@@ -6366,7 +6366,7 @@ public class ParatextServiceTests
                         WritingSystem = new WritingSystem { Tag = "qaa" },
                     },
                 },
-                CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                CheckingConfig = new CheckingConfig(),
                 UserRoles = new Dictionary<string, string>
                 {
                     { User01, SFProjectRole.Administrator },
