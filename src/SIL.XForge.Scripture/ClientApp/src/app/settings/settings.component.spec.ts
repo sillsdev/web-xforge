@@ -951,8 +951,7 @@ describe('SettingsComponent', () => {
       it('should show Translation Suggestions when Based On is set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false,
-          shareEnabled: false
+          translationSuggestionsEnabled: false
         });
         tick();
         env.fixture.detectChanges();
@@ -1045,8 +1044,7 @@ describe('SettingsComponent', () => {
       it('Translation Suggestions should remain unchanged when Based On is changed', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          translationSuggestionsEnabled: false,
-          shareEnabled: false
+          translationSuggestionsEnabled: false
         });
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
@@ -1077,7 +1075,6 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false,
           source: {
             paratextId: 'paratextId01',
             projectRef: 'paratext01',

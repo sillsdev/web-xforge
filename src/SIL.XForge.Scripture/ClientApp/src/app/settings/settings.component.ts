@@ -3,8 +3,11 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -489,10 +492,16 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         this.projectDoc.data.translateConfig.draftConfig?.additionalTrainingSource?.paratextId,
       additionalTrainingData: this.projectDoc.data.translateConfig.draftConfig.additionalTrainingData,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
-      translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
+      translateShareEnabled:
+        this.projectDoc.data.rolePermissions[SFProjectRole.Viewer]?.includes(
+          SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+        ) === true,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
-      checkingShareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
+      checkingShareEnabled:
+        this.projectDoc.data.rolePermissions[SFProjectRole.CommunityChecker]?.includes(
+          SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.UserInvites, Operation.Create)
+        ) === true,
       hideCommunityCheckingText: this.projectDoc.data.checkingConfig.hideCommunityCheckingText,
       checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All
     };
