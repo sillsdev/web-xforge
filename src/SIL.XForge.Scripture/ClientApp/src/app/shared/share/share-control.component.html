@@ -25,10 +25,10 @@
               <mat-select-trigger>
                 {{ roleControl.value ? i18n.localizeRole(roleControl.value) : "" }}
               </mat-select-trigger>
-              @for (roleInfo of availableRolesInfo; track roleInfo) {
-                <mat-option [value]="roleInfo.role">
-                  <div class="role-name">{{ i18n.localizeRole(roleInfo.role) }}</div>
-                  <div class="role-description">{{ i18n.localizeRoleDescription(roleInfo.role) }}</div>
+              @for (role of availableRoles; track role) {
+                <mat-option [value]="role">
+                  <div class="role-name">{{ i18n.localizeRole(role) }}</div>
+                  <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
                 </mat-option>
               }
             </mat-select>
