@@ -2519,7 +2519,7 @@ public class MachineProjectServiceTests
                         Name = "project01",
                         ShortName = "P01",
                         ParatextId = Paratext01,
-                        CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                        CheckingConfig = new CheckingConfig(),
                         UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
@@ -2540,7 +2540,7 @@ public class MachineProjectServiceTests
                         Name = "project02",
                         ShortName = "P02",
                         ParatextId = Paratext02,
-                        CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                        CheckingConfig = new CheckingConfig(),
                         UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
@@ -2585,7 +2585,7 @@ public class MachineProjectServiceTests
                         Name = "project03",
                         ShortName = "P03",
                         ParatextId = Paratext03,
-                        CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                        CheckingConfig = new CheckingConfig(),
                         UserRoles = [],
                         TranslateConfig = new TranslateConfig
                         {
