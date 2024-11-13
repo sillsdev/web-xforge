@@ -66,7 +66,7 @@ export class BookMultiSelectComponent extends SubscriptionDisposable implements 
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
       selected: selectedSet.has(bookNum),
-      progressPercentage: progress.find(p => p.text.bookNum === bookNum)!.percentage
+      progressPercentage: progress.find(p => p.text.bookNum === bookNum)?.percentage ?? 0
     }));
 
     this.booksOT = this.selectedBooks.filter(n => Canon.isBookOT(n));
