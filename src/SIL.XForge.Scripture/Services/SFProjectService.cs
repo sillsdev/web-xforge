@@ -424,7 +424,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
             UpdateSetting(op, p => p.BiblicalTermsConfig.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
-            UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
             UpdateSetting(
                 op,
                 p => p.TranslateConfig.DraftConfig.AlternateSourceEnabled,
@@ -466,7 +465,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
-            UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
             UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
             UpdateSetting(op, p => p.CheckingConfig.HideCommunityCheckingText, settings.HideCommunityCheckingText);
         });
@@ -632,19 +630,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
         SiteOptions siteOptions = SiteOptions.Value;
 
-        bool isAdmin = IsProjectAdmin(project, curUserId);
-        string[] availableRoles = new Dictionary<string, bool>
-        {
-            {
-                SFProjectRole.CommunityChecker,
-                project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled)
-            },
-            { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled || isAdmin },
-            { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled || isAdmin }
-        }
-            .Where(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToArray();
+        bool isProjectAdmin = IsProjectAdmin(project, curUserId);
+        string[] availableRoles = GetAvailableRoles(project, isProjectAdmin);
 
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
@@ -670,7 +657,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ExpirationTime = expTime,
                         ProjectRole = role,
                         ShareLinkType = ShareLinkType.Recipient,
-                        CreatedByAdmin = isAdmin
+                        CreatedByAdmin = isProjectAdmin
                     }
                 )
         );
@@ -723,20 +710,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new ForbiddenException();
 
         bool isProjectAdmin = IsProjectAdmin(project, curUserId);
-
-        string[] availableRoles = new Dictionary<string, bool>
-        {
-            {
-                SFProjectRole.CommunityChecker,
-                project.CheckingConfig.CheckingEnabled && (isProjectAdmin || project.CheckingConfig.ShareEnabled)
-            },
-            { SFProjectRole.Viewer, isProjectAdmin || project.TranslateConfig.ShareEnabled },
-            { SFProjectRole.Commenter, isProjectAdmin || project.TranslateConfig.ShareEnabled }
-        }
-            .Where(entry => entry.Value)
-            .Select(entry => entry.Key)
-            .ToArray();
-
+        string[] availableRoles = GetAvailableRoles(project, isProjectAdmin);
         if (!availableRoles.Contains(role))
             throw new ForbiddenException();
 
@@ -754,7 +728,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         ProjectRole = role,
                         ShareLinkType = shareLinkType,
                         ExpirationTime = DateTime.UtcNow.AddDays(daysBeforeExpiration),
-                        CreatedByAdmin = isProjectAdmin
+                        CreatedByAdmin = isProjectAdmin,
                     }
                 )
         );
@@ -816,12 +790,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
-    public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
+    public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string? email)
     {
         SFProject project = await GetProjectAsync(projectId);
+        string[] availableRoles = GetAvailableRoles(project, isProjectAdmin: false);
         bool sharingEnabled =
-            project.TranslateConfig.ShareEnabled
-            || (project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled);
+            availableRoles.Contains(SFProjectRole.Viewer) || availableRoles.Contains(SFProjectRole.CommunityChecker);
         if (!IsProjectAdmin(project, curUserId) && !(IsOnProject(project, curUserId) && sharingEnabled))
             throw new ForbiddenException();
 
@@ -849,7 +823,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 Email = sk.Email,
                 Role = sk.ProjectRole,
-                Expired = sk.ExpirationTime < now
+                Expired = sk.ExpirationTime < now,
             })
             .ToArray();
     }
@@ -945,23 +919,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // If the link was sent by a non-admin and an admin has since disabled non-admin sharing
         if (!projectSecretShareKey.CreatedByAdmin)
         {
-            string[] availableRoles = new Dictionary<string, bool>
-            {
-                { SFProjectRole.CommunityChecker, project.CheckingConfig.ShareEnabled },
-                { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
-            }
-                .Where(entry => entry.Value)
-                .Select(entry => entry.Key)
-                .ToArray();
-
+            string[] availableRoles = GetAvailableRoles(project, isProjectAdmin: false);
             if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
             {
                 throw new DataNotFoundException("role_not_found");
             }
         }
 
-        return new ValidShareKey()
+        return new ValidShareKey
         {
             Project = project,
             ProjectSecret = projectSecret,
@@ -1841,4 +1806,38 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
     }
+
+    // TODO: User similar role checking system to node backend/frontend
+    private static string[] GetAvailableRoles(SFProject project, bool isProjectAdmin) =>
+        new Dictionary<string, bool>
+        {
+            {
+                SFProjectRole.CommunityChecker,
+                project.CheckingConfig.CheckingEnabled
+                    && (
+                        isProjectAdmin
+                        || (
+                            project.RolePermissions.ContainsKey(SFProjectRole.CommunityChecker)
+                            && project.RolePermissions[SFProjectRole.CommunityChecker].Contains("user_invites.create")
+                        )
+                    )
+            },
+            {
+                SFProjectRole.Viewer,
+                (
+                    project.RolePermissions.ContainsKey(SFProjectRole.Viewer)
+                    && project.RolePermissions[SFProjectRole.Viewer].Contains("user_invites.create")
+                ) || isProjectAdmin
+            },
+            {
+                SFProjectRole.Commenter,
+                (
+                    project.RolePermissions.ContainsKey(SFProjectRole.Commenter)
+                    && project.RolePermissions[SFProjectRole.Commenter].Contains("user_invites.create")
+                ) || isProjectAdmin
+            },
+        }
+            .Where(entry => entry.Value)
+            .Select(entry => entry.Key)
+            .ToArray();
 }
