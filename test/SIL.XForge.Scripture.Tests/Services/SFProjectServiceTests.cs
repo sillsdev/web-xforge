@@ -255,7 +255,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
-        Assert.That(project.CheckingConfig.ShareEnabled, Is.True, "setup");
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         // SUT
@@ -585,10 +584,11 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        await env.Service.UpdateSettingsAsync(
+        await env.Service.SetRoleProjectPermissionsAsync(
             User02,
             Project02,
-            new SFProjectSettings { CheckingShareEnabled = false }
+            SFProjectRole.CommunityChecker,
+            permissions: []
         );
         Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
     }
@@ -599,10 +599,11 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        await env.Service.UpdateSettingsAsync(
+        await env.Service.SetRoleProjectPermissionsAsync(
             User02,
             Project02,
-            new SFProjectSettings { CheckingShareEnabled = false }
+            SFProjectRole.CommunityChecker,
+            permissions: []
         );
         Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "reusableLinkFromAdmin"));
     }
@@ -827,13 +828,13 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(4), "setup");
 
-        await env.Service.UpdateSettingsAsync(
+        await env.Service.SetRoleProjectPermissionsAsync(
             User01,
             Project03,
-            new SFProjectSettings { CheckingShareEnabled = false }
+            SFProjectRole.CommunityChecker,
+            permissions: []
         );
         project = env.GetProject(Project03);
-        Assert.That(project.CheckingConfig.ShareEnabled, Is.False, "setup");
         await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
@@ -1455,7 +1456,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.GetProject(Project06).CheckingConfig.CheckingEnabled, Is.False);
-        Assert.That(env.GetProject(Project06).CheckingConfig.ShareEnabled, Is.True);
         Assert.That(
             env.GetProject(Project06).UserRoles.GetValueOrDefault(User01, null),
             Is.EqualTo(SFProjectRole.CommunityChecker)
@@ -1470,8 +1470,6 @@ public class SFProjectServiceTests
     public async Task IsAlreadyInvitedAsync_CheckingSharingDisabledTranslateSharingEnabled_False()
     {
         var env = new TestEnvironment();
-        Assert.That(env.GetProject(Project04).CheckingConfig.ShareEnabled, Is.False);
-        Assert.That(env.GetProject(Project04).TranslateConfig.ShareEnabled, Is.True);
         Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project04, "user@example.com"), Is.False);
     }
 
@@ -1480,7 +1478,6 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         Assert.That(env.GetProject(Project02).CheckingConfig.CheckingEnabled, Is.True);
-        Assert.That(env.GetProject(Project02).CheckingConfig.ShareEnabled, Is.True);
         Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User01, null), Is.Null);
 
         Assert.ThrowsAsync<ForbiddenException>(
@@ -1504,12 +1501,12 @@ public class SFProjectServiceTests
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
         Assert.That(invitees.Count, Is.EqualTo(4));
         string[] expectedEmailList =
-        {
+        [
             "bob@example.com",
             "expired@example.com",
             "user03@example.com",
-            "bill@example.com"
-        };
+            "bill@example.com",
+        ];
         Assert.That(invitees.Select(i => i.Email), Is.EquivalentTo(expectedEmailList));
     }
 
@@ -2655,25 +2652,6 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_EnableSharing_NoSync()
-    {
-        var env = new TestEnvironment();
-
-        await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { CheckingShareEnabled = true });
-
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.CheckingConfig.ShareEnabled, Is.True);
-
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
-    }
-
-    [Test]
     public async Task DeleteProjectAsync_Success()
     {
         var env = new TestEnvironment();
@@ -2753,8 +2731,7 @@ public class SFProjectServiceTests
             Is.EqualTo(projectCount + 1),
             "should have increased"
         );
-        SFProject newProject = env.RealtimeService.GetRepository<SFProject>().Get(sfProjectId);
-        Assert.That(newProject.CheckingConfig.ShareEnabled, Is.False, "Should default to not shared (SF-1142)");
+        _ = env.RealtimeService.GetRepository<SFProject>().Get(sfProjectId);
     }
 
     [Test]
@@ -4056,7 +4033,6 @@ public class SFProjectServiceTests
                             {
                                 PreTranslate = true,
                                 TranslationSuggestionsEnabled = true,
-                                ShareEnabled = true,
                                 Source = new TranslateSource
                                 {
                                     ProjectRef = Resource01,
@@ -4067,13 +4043,18 @@ public class SFProjectServiceTests
                                 },
                                 DraftConfig = new DraftConfig { ServalConfig = "{ existingConfig: true }" },
                             },
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.CommunityChecker },
                                 { User05, SFProjectRole.Translator },
                                 { User06, SFProjectRole.Viewer },
+                            },
+                            RolePermissions =
+                            {
+                                { SFProjectRole.Viewer, ["user_invites.create"] },
+                                { SFProjectRole.Translator, ["user_invites.create"] }, // TODO: remove?
                             },
                             UserPermissions = new Dictionary<string, string[]>
                             {
@@ -4127,7 +4108,8 @@ public class SFProjectServiceTests
                             Name = "project02",
                             ShortName = "P02",
                             ParatextId = "paratext_" + Project02,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
+                            RolePermissions = { { SFProjectRole.CommunityChecker, ["user_invites.create"] } },
                             UserRoles =
                             {
                                 { User02, SFProjectRole.Administrator },
@@ -4140,7 +4122,7 @@ public class SFProjectServiceTests
                             Name = "project03",
                             ShortName = "P03",
                             ParatextId = "paratext_" + Project03,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = true },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             TranslateConfig =
                             {
                                 TranslationSuggestionsEnabled = false,
@@ -4151,6 +4133,7 @@ public class SFProjectServiceTests
                                     Name = "Source Only Project",
                                 },
                             },
+                            RolePermissions = { { SFProjectRole.CommunityChecker, ["user_invites.create"] } },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -4166,8 +4149,8 @@ public class SFProjectServiceTests
                             {
                                 TranslationSuggestionsEnabled = true,
                                 Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
-                                ShareEnabled = true,
                             },
+                            RolePermissions = { { SFProjectRole.Viewer, ["user_invites.create"] } },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },
@@ -4192,7 +4175,7 @@ public class SFProjectServiceTests
                                     WritingSystem = new WritingSystem { Tag = "qaa" },
                                 },
                             },
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRole.Administrator },
@@ -4242,7 +4225,8 @@ public class SFProjectServiceTests
                             Id = Project06,
                             Name = "project06",
                             ParatextId = "paratext_" + Project06,
-                            CheckingConfig = new CheckingConfig { CheckingEnabled = false, ShareEnabled = true },
+                            CheckingConfig = new CheckingConfig { CheckingEnabled = false },
+                            RolePermissions = { { SFProjectRole.CommunityChecker, ["user_invites.create"] } },
                             UserRoles =
                             {
                                 { User01, SFProjectRole.CommunityChecker },

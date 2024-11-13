@@ -1,3 +1,5 @@
+using System;
+
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
@@ -10,6 +12,8 @@ public class SFProjectSettings
     public bool? TranslationSuggestionsEnabled { get; set; }
     public string? SourceParatextId { get; set; }
     public bool? BiblicalTermsEnabled { get; set; }
+
+    [Obsolete("For backwards compatibility with older frontend clients. Deprecated November 2024.")]
     public bool? TranslateShareEnabled { get; set; }
 
     // pre-translation settings
@@ -24,6 +28,8 @@ public class SFProjectSettings
     // checking settings
     public bool? CheckingEnabled { get; set; }
     public bool? UsersSeeEachOthersResponses { get; set; }
+
+    [Obsolete("For backwards compatibility with older frontend clients. Deprecated November 2024.")]
     public bool? CheckingShareEnabled { get; set; }
     public string? CheckingAnswerExport { get; set; }
     public bool? HideCommunityCheckingText { get; set; }
