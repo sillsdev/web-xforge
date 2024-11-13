@@ -6,19 +6,13 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
-import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import {
-  SF_DEFAULT_SHARE_ROLE,
-  SF_DEFAULT_TRANSLATE_SHARE_ROLE,
-  SF_PROJECT_ROLES
-} from '../../core/models/sf-project-role-info';
+import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ShareBaseComponent } from './share-base.component';
 
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
@@ -26,7 +20,7 @@ import { SFProjectService } from '../../core/sf-project.service';
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss']
 })
-export class ShareControlComponent extends SubscriptionDisposable {
+export class ShareControlComponent extends ShareBaseComponent {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
@@ -47,7 +41,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
 
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
-  private projectDoc?: SFProjectProfileDoc;
 
   constructor(
     readonly i18n: I18nService,
@@ -55,9 +48,9 @@ export class ShareControlComponent extends SubscriptionDisposable {
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly userService: UserService
+    userService: UserService
   ) {
-    super();
+    super(userService);
     this.subscribe(combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$]), async ([projectId]) => {
       if (projectId === '') {
         return;
@@ -84,10 +77,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
     this.projectId$.next(id);
   }
 
-  get availableRolesInfo(): ProjectRoleInfo[] {
-    return SF_PROJECT_ROLES.filter(info => info.canBeShared && this.userShareableRoles.includes(info.role));
-  }
-
   get shareRole(): SFProjectRole {
     return this.roleControl.value;
   }
@@ -107,44 +96,14 @@ export class ShareControlComponent extends SubscriptionDisposable {
       return true;
     }
 
-    const linkSharingSettings = {
-      [SFProjectRole.CommunityChecker]: project.checkingConfig.shareEnabled,
-      [SFProjectRole.Viewer]: project.translateConfig.shareEnabled,
-      [SFProjectRole.Commenter]: project.translateConfig.shareEnabled
-    };
-    return linkSharingSettings[this.shareRole] && this.userShareableRoles.includes(this.shareRole);
-  }
-
-  private get userShareableRoles(): string[] {
-    const project = this.projectDoc?.data;
-    if (project == null) {
-      return [];
-    }
-    const userRole = project.userRoles[this.userService.currentUserId];
-    return [
-      {
-        role: SFProjectRole.CommunityChecker,
-        available: project.checkingConfig.checkingEnabled,
-        permission:
-          project.checkingConfig.shareEnabled &&
-          SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.View)
-      },
-      {
-        role: SFProjectRole.Viewer,
-        available: true,
-        permission:
-          project.translateConfig.shareEnabled &&
-          SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View) &&
-          userRole !== SFProjectRole.CommunityChecker
-      },
-      {
-        role: SFProjectRole.Commenter,
-        available: true,
-        permission: this.isProjectAdmin
-      }
-    ]
-      .filter(info => info.available && (info.permission || this.isProjectAdmin))
-      .map(info => info.role as string);
+    return (
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.UserInvites,
+        Operation.Create
+      ) && this.userShareableRoles.includes(this.shareRole)
+    );
   }
 
   private get defaultShareRole(): string | undefined {

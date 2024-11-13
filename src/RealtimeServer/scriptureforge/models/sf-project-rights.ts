@@ -16,7 +16,8 @@ export enum SFProjectDomain {
   Notes = 'notes',
   TextAudio = 'text_audio',
   TrainingData = 'training_data',
-  Drafts = 'drafts'
+  Drafts = 'drafts',
+  UserInvites = 'user_invites'
 }
 
 // See https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
