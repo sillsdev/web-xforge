@@ -1,3 +1,4 @@
+import { kebabCase } from 'lodash-es';
 import Parchment from 'parchment';
 import Quill from 'quill';
 import { LynxInsight } from '../../lynx-insight';
@@ -6,7 +7,8 @@ const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
 
 export class LynxInsightBlot extends Inline {
   static tagName = 'span';
-  static idAttributeName = 'insightId';
+  static idDatasetPropName = 'insightId';
+  static idAttributeName = kebabCase(LynxInsightBlot.idDatasetPropName);
 
   /**
    * This custom prop is used on the parent class instead of using 'className'
@@ -27,7 +29,7 @@ export class LynxInsightBlot extends Inline {
   }
 
   static value(node: HTMLElement): string | undefined {
-    return node.dataset[LynxInsightBlot.idAttributeName];
+    return node.dataset[LynxInsightBlot.idDatasetPropName];
   }
 
   format(name: string, value?: LynxInsight): void {
@@ -40,7 +42,7 @@ export class LynxInsightBlot extends Inline {
 
   private static formatNode(node: HTMLElement, value: LynxInsight): void {
     node.classList.add(LynxInsightBlot.superClassName);
-    node.dataset[LynxInsightBlot.idAttributeName] = value.id;
+    node.dataset[LynxInsightBlot.idDatasetPropName] = value.id;
   }
 }
 
