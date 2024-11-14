@@ -5,7 +5,7 @@ $mainSectionBGColor: #343a32;
 $secondaryTextColor: #9b9b9b;
 $applyActionColor: #5485e7;
 $dismissActionColor: $applyActionColor;
-$borderRadius: 0.2em;
+$borderRadius: 0.3em;
 
 :host {
   max-width: 340px;
@@ -13,9 +13,15 @@ $borderRadius: 0.2em;
   overflow: hidden;
 }
 
+mat-icon {
+  width: auto;
+  height: auto;
+  cursor: pointer;
+}
+
 .main-section.focused,
 .more-info-section {
-  padding: 0.7em 0.8em 0.4em;
+  padding: 0.7em 0.8em 0.4em 1em;
 }
 
 .main-section {
@@ -46,6 +52,12 @@ $borderRadius: 0.2em;
         }
       }
     }
+
+    mat-icon:not(.apply-icon) {
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
   }
 
   // When prompt is for multiple insights, and one is not yet focused
@@ -59,8 +71,15 @@ $borderRadius: 0.2em;
 
     .insight-item {
       position: relative;
-      padding: 0.4em 0.7em 0.4em 1.8em;
+      padding: 0.3em 0.7em;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
       cursor: pointer;
+
+      h1 {
+        font-size: 0.8em;
+      }
 
       &:not(:last-child) {
         border-bottom: 1px solid #555;
@@ -70,27 +89,22 @@ $borderRadius: 0.2em;
         background-color: #06395c;
       }
 
-      // Colored indicator of insight type
-      &::before {
-        content: '\e0f0'; // 'lightbulb'
-        font-family: 'Material Icons';
-        position: absolute;
-        inset-inline-start: 0.2em;
-        top: 0;
-        bottom: 0;
-        width: auto;
-        height: auto;
-        font-size: 1.1em;
-        display: flex;
-        align-items: center;
+      .bulb-icon {
+        font-size: 1.2em;
       }
 
       @each $type in insights.$insightTypes {
         &.#{$type} {
-          &::before {
+          .bulb-icon {
             color: insights.insight-color($type);
           }
         }
+      }
+
+      .ellipsis-icon {
+        color: $secondaryTextColor;
+        margin-inline-start: auto; // Push to right
+        padding-inline-start: 1em;
       }
     }
   }
@@ -106,16 +120,6 @@ $borderRadius: 0.2em;
 .more-info-section {
   background-color: #fff;
   font-size: 0.8em;
-}
-
-mat-icon:not(.apply-icon) {
-  cursor: pointer;
-  width: auto;
-  height: auto;
-
-  &:hover {
-    transform: scale(1.1);
-  }
 }
 
 h1 {
@@ -137,6 +141,7 @@ h1 {
     color: $secondaryTextColor;
     font-size: 1.2em;
     align-self: normal;
+    padding-inline-start: 1em;
 
     &:hover {
       color: color.adjust($secondaryTextColor, $lightness: 20%);
@@ -157,10 +162,13 @@ h1 {
     color: $applyActionColor;
     text-wrap: nowrap;
     cursor: pointer;
+    display: flex;
+    align-items: center;
 
     .apply-icon {
       position: absolute;
       inset-inline-start: 0;
+      font-size: 1.7em;
     }
 
     &:hover {
