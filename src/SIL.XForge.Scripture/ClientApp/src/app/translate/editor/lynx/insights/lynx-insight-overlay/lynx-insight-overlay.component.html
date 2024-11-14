@@ -1,5 +1,5 @@
 @if (focusedInsight != null) {
-  <div class="main-section focused">
+  <div class="main-section focused" [class]="focusedInsight.type">
     <h1>
       <span class="description">{{ focusedInsight.description }}</span>
       <span class="code">({{ focusedInsight.code }})</span>
