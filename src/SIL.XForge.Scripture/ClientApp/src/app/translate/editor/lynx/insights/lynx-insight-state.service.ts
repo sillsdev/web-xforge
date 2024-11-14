@@ -77,17 +77,17 @@ export class LynxInsightStateService {
       },
       code: '1001'
     },
-    {
-      id: '1b',
-      type: 'info',
-      chapter: 1,
-      book: 41,
-      range: {
-        index: 1,
-        length: 6
-      },
-      code: '1001'
-    },
+    // {
+    //   id: '1b',
+    //   type: 'info',
+    //   chapter: 1,
+    //   book: 41,
+    //   range: {
+    //     index: 1,
+    //     length: 6
+    //   },
+    //   code: '1001'
+    // },
     {
       id: '2',
       type: 'warning',
