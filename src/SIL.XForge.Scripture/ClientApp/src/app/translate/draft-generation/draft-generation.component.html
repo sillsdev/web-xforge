@@ -309,7 +309,7 @@
               }
               @if (isDraftComplete(draftJob) || hasAnyCompletedBuild) {
                 <section class="draft-complete">
-                  <mat-card>
+                  <mat-card class="preview-card">
                     <mat-card-header>
                       <mat-card-title>
                         {{ isDraftComplete(draftJob) ? t("draft_is_ready") : t("preview_last_draft_header") }}

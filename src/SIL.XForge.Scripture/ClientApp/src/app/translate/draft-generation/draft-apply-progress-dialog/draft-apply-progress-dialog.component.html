@@ -1,0 +1,35 @@
+<ng-container *transloco="let t; read: 'draft_apply_progress-dialog'">
+  <mat-dialog-content>
+    <div class="progress-content">
+      @if (draftApplyProgress?.completed !== true) {
+        <div class="progress-container">
+          <mat-progress-bar mode="determinate" color="primary" [value]="progress"></mat-progress-bar>
+          <p>{{ t("add_draft_to_book", { bookName }) }}</p>
+        </div>
+      } @else {
+        <div class="result-container">
+          @if (failedToApplyChapters != null && failedToApplyChapters.length > 0) {
+            <div class="error-result">
+              <h2 class="failed-message">
+                <mat-icon>warning</mat-icon>
+                <span>{{ t("some_chapters_not_applied", { bookName }) }}</span>
+              </h2>
+              <p>{{ t("go_to_chapter") }}</p>
+              <span>{{ t("failed_to_apply_chapters") }}</span>
+              <span class="failed-chapters">{{ failedToApplyChapters }}</span>
+            </div>
+          } @else {
+            <h2>
+              <span>{{ t("successfully_applied_all_chapters", { bookName }) }}</span>
+            </h2>
+          }
+        </div>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    @if (draftApplyProgress?.completed === true) {
+      <button mat-flat-button (click)="close()">{{ t("close") }}</button>
+    }
+  </mat-dialog-actions>
+</ng-container>

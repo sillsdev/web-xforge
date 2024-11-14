@@ -17,13 +17,6 @@
       @if (!isAppOnline) {
         <mat-error class="offline-message">{{ t("connect_to_the_internet") }}</mat-error>
       }
-      <div class="unlisted-project-message">
-        <a
-          [appRouterLink]="['projects']"
-          (click)="close()"
-          [innerHtml]="i18n.translateAndInsertTags('draft_apply_dialog.looking_for_unlisted_project')"
-        ></a>
-      </div>
       @if (targetProject$ | async; as project) {
         <div class="target-project-content">
           @if (targetChapters$ | async; as chapters) {
@@ -44,6 +37,13 @@
         }}</mat-error>
       }
     </form>
+    <div class="unlisted-project-message">
+      <a
+        [appRouterLink]="['projects']"
+        (click)="close()"
+        [innerHtml]="i18n.translateAndInsertTags('draft_apply_dialog.looking_for_unlisted_project')"
+      ></a>
+    </div>
   </div>
   <div mat-dialog-actions>
     <button mat-button class="cancel-button" [mat-dialog-close]="false">{{ t("cancel") }}</button>
