@@ -47,7 +47,8 @@
     "deuterocanon": "Deuterocanon",
     "loading_message": "Loading available books...",
     "new_testament": "New Testament",
-    "old_testament": "Old Testament"
+    "old_testament": "Old Testament",
+    "book_progress": "{{ percent }} translated"
   },
   "checking": {
     "add_question": "Adicionar pergunta"
@@ -155,6 +156,14 @@
     "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
     "select_alternate_project": "Select the project you want to add the draft to"
   },
+  "draft_apply_progress-dialog": {
+    "add_draft_to_book": "Adding draft to {{ bookName }}",
+    "close": "Fechar",
+    "failed_to_apply_chapters": "Failed to apply chapters",
+    "go_to_chapter": "Go to the chapter to try again.",
+    "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
+    "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
+  },
   "draft_generation": {
     "back_translation_requirement": "Back translation drafts can only be generated into the roughly 200 [link:supportedLanguagesUrl]supported languages[/link].",
     "cancel_generation_button": "Cancelar",
@@ -241,8 +250,6 @@
   "draft_preview_books": {
     "add_to_project": "Add to project",
     "add_to_different_project": "Add to a different project",
-    "draft_successfully_applied": "The draft for {{ bookName }} has been successfully applied to your project.",
-    "one_or_more_drafts_failed": "Drafts of one or more chapters failed to be applied. View the chapters in the book to see which chapters had drafts applied successfully.",
     "no_books_have_drafts": "No books have any drafts.",
     "no_permission_to_edit_book": "You do not have permission to write to this book. Contact your project administrator to get permission.",
     "readd_to_project": "Re-add to project"

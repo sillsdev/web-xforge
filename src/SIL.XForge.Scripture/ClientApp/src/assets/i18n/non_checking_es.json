@@ -47,7 +47,8 @@
     "deuterocanon": "Deuterocanónico",
     "loading_message": "Cargando libros disponibles...",
     "new_testament": "Nuevo Testamento",
-    "old_testament": "Antiguo Testamento"
+    "old_testament": "Antiguo Testamento",
+    "book_progress": "‎{{ percent }}% traducido"
   },
   "checking": {
     "add_question": "Agregar pregunta"
@@ -155,6 +156,14 @@
     "project_has_text_in_chapters": "{{ bookName }} en {{ projectName }} tiene texto en los capítulos {{ numChapters }}",
     "select_alternate_project": "Seleccione el proyecto al que desea añadir el borrador"
   },
+  "draft_apply_progress-dialog": {
+    "add_draft_to_book": "Añadir borrador a {{ bookName }}",
+    "close": "Cerrar",
+    "failed_to_apply_chapters": "Capítulos no aplicados",
+    "go_to_chapter": "Ve al capítulo para volver a intentarlo.",
+    "some_chapters_not_applied": "Los borradores de uno o más capítulos no pudieron aplicarse a {{ bookName }}",
+    "successfully_applied_all_chapters": "Aplicación exitosa de todos los capítulos a {{ bookName }}"
+  },
   "draft_generation": {
     "back_translation_requirement": "Un borrador de una retrotraducción sólo puede generarse en los aproximadamente 200 [link:supportedLanguagesUrl]idiomas compatibles[/link].",
     "cancel_generation_button": "Cancelar",
@@ -241,8 +250,6 @@
   "draft_preview_books": {
     "add_to_project": "Añadir al proyecto",
     "add_to_different_project": "Añadir a un proyecto diferente",
-    "draft_successfully_applied": "El borrador para {{ bookName }} se ha aplicado con éxito a su proyecto.",
-    "one_or_more_drafts_failed": "Los borradores de uno o más capítulos no se aplicaron. Vea los capítulos del libro para ver a qué capítulos se aplicaron borradores con éxito.",
     "no_books_have_drafts": "Ningún libro tiene borradores.",
     "no_permission_to_edit_book": "No tiene permiso para escribir en este libro. Póngase en contacto con el administrador de su proyecto para obtener el permiso.",
     "readd_to_project": "Volver a añadir al proyecto"

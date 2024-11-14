@@ -47,7 +47,8 @@
     "deuterocanon": "Deuterokanonika",
     "loading_message": "Loading available books...",
     "new_testament": "Perjanjian Baru",
-    "old_testament": "Perjanjian Lama"
+    "old_testament": "Perjanjian Lama",
+    "book_progress": "{{ percent }} translated"
   },
   "checking": {
     "add_question": "Tambah pertanyaan"
@@ -155,6 +156,14 @@
     "project_has_text_in_chapters": "{{ bookName }} dalam {{ projectName }} memiliki teks dalam pasal {{ numChapters }}",
     "select_alternate_project": "Pilih proyek yang ingin Anda tambahkan konsepnya"
   },
+  "draft_apply_progress-dialog": {
+    "add_draft_to_book": "Adding draft to {{ bookName }}",
+    "close": "Tutup",
+    "failed_to_apply_chapters": "Failed to apply chapters",
+    "go_to_chapter": "Go to the chapter to try again.",
+    "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
+    "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
+  },
   "draft_generation": {
     "back_translation_requirement": "Konsep terjemahan balik hanya dapat dibuat ke dalam sekitar 200 bahasa yang didukung [link:supportedLanguagesUrl].",
     "cancel_generation_button": "Batal",
@@ -241,8 +250,6 @@
   "draft_preview_books": {
     "add_to_project": "Tambahkan ke proyek",
     "add_to_different_project": "Tambahkan ke proyek yang berbeda",
-    "draft_successfully_applied": "Draf untuk {{ bookName }} telah berhasil diterapkan ke proyek Anda.",
-    "one_or_more_drafts_failed": "Draf dari satu atau beberapa pasal gagal diterapkan. Lihat pasal-pasal dalam kitab untuk melihat pasal mana yang drafnya berhasil diterapkan.",
     "no_books_have_drafts": "Tidak ada kitab yang memiliki draf.",
     "no_permission_to_edit_book": "Anda tidak memiliki izin untuk menulis pada kitab ini. Hubungi administrator proyek Anda untuk mendapatkan izin.",
     "readd_to_project": "Tambahkan kembali ke proyek"
