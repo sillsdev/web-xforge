@@ -38,6 +38,7 @@ export interface LynxInsightConfig {
   sortOrder: LynxInsightSortOrder;
   queryParamName: string;
   panelLinkTextMaxLength: number;
+  actionOverlayApplyPrimaryActionChord: Partial<KeyboardEvent>;
 }
 
 export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('EDITOR_INSIGHT_DEFAULTS', {
@@ -46,6 +47,7 @@ export const EDITOR_INSIGHT_DEFAULTS = new InjectionToken<LynxInsightConfig>('ED
     filter: { types: ['info', 'warning', 'error'], scope: 'chapter' },
     sortOrder: 'severity',
     queryParamName: 'insight',
-    panelLinkTextMaxLength: 30
+    panelLinkTextMaxLength: 30,
+    actionOverlayApplyPrimaryActionChord: { altKey: true, shiftKey: true, key: 'Enter' }
   })
 });
