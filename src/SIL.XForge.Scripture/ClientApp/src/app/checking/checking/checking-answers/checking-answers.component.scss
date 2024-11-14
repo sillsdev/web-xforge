@@ -27,32 +27,6 @@
   }
 }
 
-#answer-form {
-  display: flex;
-  flex-direction: column;
-  row-gap: 2px;
-  .attach-icon {
-    rotate: 45deg;
-  }
-  .bottom-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  .attachments {
-    display: flex;
-    flex-direction: row;
-    .clear,
-    .answer-scripture-clear {
-      padding: 6px;
-    }
-  }
-  .large-form-action-buttons {
-    display: flex;
-    align-items: center;
-    column-gap: 8px;
-  }
-}
-
 .answers-container {
   .answer {
     display: flex;
@@ -102,12 +76,6 @@
         flex: 1;
         align-items: flex-end;
 
-        @include breakpoints.media-breakpoint-down(sm) {
-          align-items: flex-start;
-          flex-direction: column;
-          row-gap: 5px;
-        }
-
         button {
           &.answer-status {
             &.status-exportable {
@@ -152,10 +120,21 @@
         display: flex;
         flex-direction: column;
         row-gap: 10px;
-        border-bottom: 1px solid checking-vars.$borderColor;
         padding: 10px 0;
-        app-owner {
-          align-self: flex-end;
+
+        .bottom-row {
+          display: flex;
+          justify-content: space-between;
+          .mat-icon {
+            @include checking-vars.md-icon-size(18px);
+          }
+
+          button {
+            height: 40px;
+            &:not(:hover) {
+              color: rgba(0, 0, 0, 0.7);
+            }
+          }
         }
       }
     }
@@ -175,7 +154,6 @@
   padding-block: 6px;
 }
 
-.answer-scripture-clear,
 .clear {
   width: 36px;
   height: 36px;

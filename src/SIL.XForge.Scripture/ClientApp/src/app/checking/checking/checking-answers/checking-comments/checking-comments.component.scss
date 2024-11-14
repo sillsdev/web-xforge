@@ -1,10 +1,16 @@
 @import '../../checking-global-vars';
 
+.answer-comment:last-of-type {
+  margin-bottom: 4px;
+}
+
 .comment {
   display: flex;
   flex-wrap: wrap;
-  border-bottom: 1px solid $borderColor;
-  padding: 10px 0;
+  align-items: center;
+  row-gap: 4px;
+  column-gap: 8px;
+  padding: 4px 8px 0;
 
   &.comment-unread {
     animation-name: comment-unread;
@@ -21,22 +27,31 @@
     }
   }
 
-  .divider {
-    padding: 0 10px;
+  &.shaded {
+    background-color: $shadedBackgroundColor;
   }
 
-  .actions {
-    flex: 1;
+  .comment-text {
     display: flex;
-    justify-content: flex-end;
+    flex: 1;
+  }
 
-    button {
-      height: auto;
+  .comment-footer {
+    display: flex;
+    justify-content: space-between;
+    flex: 1 1 100%;
+
+    .mat-icon {
+      @include md-icon-size(18px);
     }
 
-    .mat-mdc-button {
-      line-height: unset;
-      padding: 0 8px;
+    button:not(:hover) {
+      color: rgba(0, 0, 0, 0.7);
     }
+  }
+
+  .owner {
+    display: flex;
+    align-items: center;
   }
 }

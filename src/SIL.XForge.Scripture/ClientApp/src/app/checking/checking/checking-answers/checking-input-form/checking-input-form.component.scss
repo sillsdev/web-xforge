@@ -1,0 +1,48 @@
+.form-actions {
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .attachments {
+    display: flex;
+  }
+
+  .attach-icon {
+    rotate: 45deg;
+  }
+
+  .large-form-action-buttons {
+    display: flex;
+    align-items: center;
+    column-gap: 8px;
+  }
+
+  .answer-scripture,
+  .scripture-text {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.05);
+    padding-inline-start: 6px;
+    border-radius: 4px;
+  }
+
+  .answer-scripture-clear {
+    width: 36px;
+    height: 36px;
+    line-height: 24px;
+    padding: 6px;
+  }
+
+  .answer-scripture-verse {
+    font-size: 0.75em;
+    font-style: italic;
+    padding-inline: 6px;
+  }
+}
+
+.response-input {
+  &.compact ::ng-deep textarea {
+    height: 24px;
+  }
+}

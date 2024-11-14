@@ -11,7 +11,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingCommentFormComponent } from './checking-comment-form/checking-comment-form.component';
+import { CheckingInputFormComponent } from '../checking-input-form/checking-input-form.component';
 import { CheckingCommentsComponent } from './checking-comments.component';
 
 const mockedDialogService = mock(DialogService);
@@ -54,7 +54,7 @@ const meta: Meta<CheckingCommentsComponent> = {
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
       ],
-      declarations: [OwnerComponent, CheckingCommentFormComponent]
+      declarations: [OwnerComponent, CheckingInputFormComponent]
     })
   ],
   args: defaultArgs
@@ -90,10 +90,10 @@ export const OwnComments: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const editButtons = root.getAllByRole('button', { name: /Edit/i });
+    const editButtons = root.getAllByTestId('comment-edit');
     expect(editButtons.length).toBe(3);
 
-    const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
+    const deleteButtons = root.getAllByTestId('comment-delete');
     expect(deleteButtons.length).toBe(3);
   }
 };
@@ -108,10 +108,10 @@ export const OthersComments: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const editButtons = root.queryAllByRole('button', { name: /Edit/i });
+    const editButtons = root.queryAllByTestId('comment-edit');
     expect(editButtons.length).toBe(0);
 
-    const deleteButtons = root.queryAllByRole('button', { name: /Delete/i });
+    const deleteButtons = root.queryAllByTestId('comment-delete');
     expect(deleteButtons.length).toBe(0);
   }
 };
@@ -132,10 +132,10 @@ export const Admin: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const editButtons = root.getAllByRole('button', { name: /Edit/i });
+    const editButtons = root.getAllByTestId('comment-edit');
     expect(editButtons.length).toBe(1);
 
-    const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
+    const deleteButtons = root.getAllByTestId('comment-delete');
     expect(deleteButtons.length).toBe(3);
   }
 };

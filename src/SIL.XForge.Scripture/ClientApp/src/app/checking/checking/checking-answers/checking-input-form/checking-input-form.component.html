@@ -1,0 +1,66 @@
+<ng-container *transloco="let t; read: 'checking_input_form'">
+  <form autocomplete="off" appScrollIntoView>
+    <app-text-and-audio
+      #responseInput
+      appAutofocus
+      [input]="checkingInput"
+      [textLabel]="label === 'comment' ? t('your_comment') : t('your_answer')"
+      class="response-input"
+      [ngClass]="{ compact: label === 'comment' }"
+    ></app-text-and-audio>
+    <div class="form-actions">
+      <div class="attachments">
+        <app-attach-audio [textAndAudio]="responseInput"></app-attach-audio>
+        @if (textSelectionEnabled) {
+          @if (!selectedText) {
+            <button mat-icon-button id="select-scripture" (click)="selectScripture()" [matTooltip]="t('attach')">
+              <mat-icon class="attach-icon">attach_file</mat-icon>
+            </button>
+          } @else {
+            <div class="answer-scripture">
+              <span class="answer-scripture-verse">{{ scriptureTextVerseRef() }}</span>
+              <button mat-icon-button (click)="clearSelection()" class="answer-scripture-clear">
+                <mat-icon>clear</mat-icon>
+              </button>
+            </div>
+          }
+        }
+      </div>
+      <div>
+        @if (isScreenSmall) {
+          <div>
+            <button mat-icon-button type="button" (click)="submitCancel()" id="cancel-response">
+              <mat-icon class="material-icons-outlined">cancel</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="primary"
+              id="save-response"
+              (click)="submit()"
+              [disabled]="submittingResponse"
+            >
+              <mat-icon>check_circle</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <div class="large-form-action-buttons">
+            <button mat-button type="button" (click)="submitCancel()" id="cancel-response">
+              <mat-icon>close</mat-icon>
+              {{ t("cancel") }}
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              id="save-response"
+              (click)="submit()"
+              [disabled]="submittingResponse"
+            >
+              <mat-icon>check</mat-icon>
+              {{ t("save") }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </form>
+</ng-container>

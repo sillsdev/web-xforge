@@ -11,12 +11,12 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { asyncScheduler, combineLatest, merge, Subscription } from 'rxjs';
+import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Subscription, asyncScheduler, combineLatest, merge } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -39,11 +39,12 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
+import { BookChapter, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
+import { AudioAttachment } from './checking-audio-player/checking-audio-player.component';
 import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent, QuestionChangedEvent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
@@ -753,23 +754,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         answer.selectionStartClipped = answerAction.selectionStartClipped;
         answer.selectionEndClipped = answerAction.selectionEndClipped;
         answer.dateModified = dateNow;
+        // add the audio url
         if (answerAction.audio != null) {
-          if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
-            if (answerAction.questionDoc != null) {
-              // Get the amended filename and save it against the answer
-              const urlResult = await answerAction.questionDoc.uploadFile(
-                FileType.Audio,
-                answer.dataId,
-                answerAction.audio.blob,
-                answerAction.audio.fileName
-              );
-              if (urlResult == null) {
-                break;
-              }
-              answer.audioUrl = urlResult;
-            }
-          } else if (answerAction.audio.status === 'reset') {
-            answer.audioUrl = undefined;
+          if (!(await this.addAudioUrl(answer, answerAction.audio, answerAction.questionDoc))) {
+            break;
           }
         }
         this.saveAnswer(answer, answerAction.questionDoc);
@@ -818,11 +806,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.isQuestionsOverlayVisible = visible;
   }
 
-  commentAction(commentAction: CommentAction): void {
+  async commentAction(commentAction: CommentAction): Promise<void> {
     if (this.questionsList == null) {
       return;
     }
-
     switch (commentAction.action) {
       case 'save':
         if (commentAction.answer != null) {
@@ -840,6 +827,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           }
           comment.text = commentAction.text;
           comment.dateModified = dateNow;
+          if (commentAction.audio != null) {
+            if (!(await this.addAudioUrl(comment, commentAction.audio, this.questionsList.activeQuestionDoc!))) {
+              break;
+            }
+          }
           this.saveComment(commentAction.answer, comment);
         }
         break;
@@ -1241,6 +1233,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.setQuestionFilter(QuestionFilter.None);
   }
 
+  /** Upload the attached audio and updates the url on the comment if one exists. */
+  private async addAudioUrl(comment: Comment, audio: AudioAttachment, questionDoc?: QuestionDoc): Promise<boolean> {
+    if (audio.fileName != null && audio.blob != null) {
+      if (questionDoc != null) {
+        // Get the amended filename and save it against the answer
+        const urlResult = await questionDoc.uploadFile(FileType.Audio, comment.dataId, audio.blob, audio.fileName);
+        if (urlResult == null) return false;
+        comment.audioUrl = urlResult;
+      }
+    } else if (audio.status === 'reset') {
+      comment.audioUrl = undefined;
+    }
+    return true;
+  }
+
   private saveAnswer(answer: Answer, questionDoc: QuestionDoc | undefined): void {
     if (this.questionsList == null || questionDoc?.data == null) {
       return;
@@ -1294,11 +1301,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      activeQuestionDoc.submitJson0Op(op =>
+      const deleteAudio: boolean = answer.comments[commentIndex].audioUrl != null && answer.audioUrl == null;
+      const submitPromise: Promise<boolean> = activeQuestionDoc.submitJson0Op(op =>
         op
           .set(q => q.answers[answerIndex].comments[commentIndex].text, comment.text)
+          .set(q => q.answers[answerIndex].comments[commentIndex].audioUrl, comment.audioUrl)
           .set(q => q.answers[answerIndex].comments[commentIndex].dateModified, comment.dateModified)
       );
+      if (deleteAudio) {
+        submitPromise.then(() => activeQuestionDoc.deleteFile(FileType.Audio, comment.dataId, comment.ownerRef));
+      }
     } else {
       activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers[answerIndex].comments, 0, comment));
     }
@@ -1316,7 +1328,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      activeQuestionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true));
+      activeQuestionDoc
+        .submitJson0Op(op => op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true))
+        .then(() => activeQuestionDoc.deleteFile(FileType.Audio, comment.dataId, comment.ownerRef));
     }
   }
 

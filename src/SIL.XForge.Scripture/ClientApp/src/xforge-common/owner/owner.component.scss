@@ -4,12 +4,10 @@
   &.layout-inline {
     > div {
       display: flex;
+      flex-direction: column;
       img {
         width: 1em;
         height: 1em;
-      }
-      .name {
-        margin-inline-end: 5px;
       }
     }
   }
@@ -24,7 +22,12 @@
 }
 .owner-text {
   line-height: 1.14em;
+  font-size: 0.85em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
+
 .date-time {
   opacity: 0.5;
   .time {

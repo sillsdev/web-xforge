@@ -5,6 +5,7 @@ export interface Comment extends OwnedData {
   deleted: boolean;
   syncUserRef?: string;
   text?: string;
+  audioUrl?: string;
   dateModified: string;
   dateCreated: string;
 }
