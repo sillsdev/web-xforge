@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, EventEmitter, Inject, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS } from '@angular/material/tooltip';
 import { take } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
-import { LynxInsight } from '../lynx-insight';
+import { EDITOR_INSIGHT_DEFAULTS, LynxInsight, LynxInsightConfig } from '../lynx-insight';
 import { LynxInsightAction, LynxInsightActionService } from '../lynx-insight-action.service';
 import { LynxInsightCodeService } from '../lynx-insight-code.service';
 import { LynxInsightOverlayService } from '../lynx-insight-overlay.service';
@@ -19,7 +20,7 @@ interface LynxInsightFlattened extends LynxInsight {
   styleUrl: './lynx-insight-overlay.component.scss',
   providers: [{ provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: { showDelay: 500 } }]
 })
-export class LynxInsightOverlayComponent {
+export class LynxInsightOverlayComponent implements OnInit, OnDestroy {
   showMoreInfo = false;
 
   insightsFlattened: LynxInsightFlattened[] = [];
@@ -42,13 +43,37 @@ export class LynxInsightOverlayComponent {
   menuActions: LynxInsightAction[] = [];
   primaryAction?: LynxInsightAction;
 
+  // Create single reference to bound method so it can be removed in ngOnDestroy
+  private readonly handleKeyDownBound = this.handleKeyDown.bind(this);
+
   constructor(
     private readonly insightState: LynxInsightStateService,
     private readonly codeService: LynxInsightCodeService,
     private readonly actionService: LynxInsightActionService,
     private readonly overlayService: LynxInsightOverlayService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    @Inject(DOCUMENT) private readonly document: Document,
+    @Inject(EDITOR_INSIGHT_DEFAULTS) private readonly config: LynxInsightConfig
   ) {}
+
+  ngOnInit(): void {
+    this.document.addEventListener('keydown', this.handleKeyDownBound);
+  }
+
+  ngOnDestroy(): void {
+    this.document.removeEventListener('keydown', this.handleKeyDownBound);
+  }
+
+  handleKeyDown(event: KeyboardEvent): void {
+    if (this.primaryAction == null) {
+      return;
+    }
+
+    // Apply primary action if configured hotkey chord is pressed
+    if (this.chordPressed(event, this.config.actionOverlayApplyPrimaryActionChord)) {
+      this.selectAction(this.primaryAction);
+    }
+  }
 
   toggleMoreInfo(): void {
     this.showMoreInfo = !this.showMoreInfo;
@@ -106,5 +131,18 @@ export class LynxInsightOverlayComponent {
 
         this.menuActions = menuActions;
       });
+  }
+
+  /**
+   * Check if the keyboard event matches the given chord.
+   */
+  private chordPressed(event: KeyboardEvent, chord: Partial<KeyboardEvent>): boolean {
+    for (const key of Object.keys(chord)) {
+      if (event[key] !== chord[key]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
