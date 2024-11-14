@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Inject, Injectable } from '@angular/core';
 import { LynxInsightDisplayState } from './lynx-insight';
 import { LynxInsightStateService } from './lynx-insight-state.service';
 import { LynxInsightBlot } from './quill-services/blots/lynx-insight-blot';
@@ -14,7 +15,10 @@ export class LynxInsightUserEventService {
 
   private readonly dataIdProp = LynxInsightBlot.idDatasetPropName;
 
-  constructor(private readonly insightState: LynxInsightStateService) {
+  constructor(
+    private readonly insightState: LynxInsightStateService,
+    @Inject(DOCUMENT) private readonly document: Document
+  ) {
     console.log('LynxInsightUserEventService initialized');
     this.addEventListeners();
   }
@@ -24,7 +28,7 @@ export class LynxInsightUserEventService {
   }
 
   private addEventListener(eventType: EventType): void {
-    document.addEventListener(eventType, this.handleEvent.bind(this, eventType));
+    this.document.addEventListener(eventType, this.handleEvent.bind(this, eventType));
   }
 
   private handleEvent(eventType: EventType, event: MouseEvent): void {
