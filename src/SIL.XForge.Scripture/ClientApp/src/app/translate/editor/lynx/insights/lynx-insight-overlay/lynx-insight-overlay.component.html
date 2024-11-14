@@ -44,10 +44,12 @@
     <h1>Select for details</h1>
     @for (insight of insightsFlattened; track insight) {
       <div class="insight-item" [class]="insight.type" (click)="focusInsight(insight)">
+        <mat-icon class="bulb-icon">lightbulb</mat-icon>
         <h1>
           <span class="description">{{ insight.description }}</span>
           <span class="code">({{ insight.code }})</span>
         </h1>
+        <mat-icon class="ellipsis-icon">more_horiz</mat-icon>
       </div>
     }
   </div>
